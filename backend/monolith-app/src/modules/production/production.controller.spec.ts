@@ -10,7 +10,12 @@ import { UpdateMaterialDto } from './dto/update-material.dto';
 import { CreateMoldDto } from './dto/create-mold.dto';
 import { UpdateMoldDto } from './dto/update-mold.dto';
 import { CreateBomDto } from './dto/create-bom.dto';
-import { Upce: ProductionService;
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { TenantGuard } from '../../common/guards/tenant.guard';
+
+describe('ProductionController', () => {
+  let controller: ProductionController;
+  let service: jest.Mocked<ProductionService>;
 
   const mockProductionService = {
     findAllMaterials: jest.fn(),
@@ -68,7 +73,7 @@ import { Upce: ProductionService;
       .compile();
 
     controller = module.get<ProductionController>(ProductionController);
-    service = module.get<ProductionService>(ProductionService);
+    service = module.get(ProductionService) as jest.Mocked<ProductionService>;
   });
 
   afterEach(() => {

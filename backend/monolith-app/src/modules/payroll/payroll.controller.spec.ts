@@ -1,6 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PayrollController } from './payroll.controller';
 import { PayrollService } from './payroll.service';
+import { PayrollPeriod } from './entities/payroll-period.entity';
+import { PieceRateWork } from './entities/piece-rate-work.entity';
+import { WorkOrder, WorkOrderStatus } from './entities/work-order.entity';
+import { Payslip } from './entities/payslip.entity';
 
 describe('PayrollController', () => {
   let controller: PayrollController;
@@ -9,10 +13,6 @@ describe('PayrollController', () => {
   const mockPayrollService = {
     findAllPeriods: jest.fn(),
     createPeriod: jest.fn(),
-    createPieceRateWork: jest.fn(),
-    findPieceRateWorksByEmployee: jest.fn(),
-    approvePieceRateWork: jest.fn(),
-    findAllWorkOrdeest.fn(),
     createPieceRateWork: jest.fn(),
     findPieceRateWorksByEmployee: jest.fn(),
     approvePieceRateWork: jest.fn(),

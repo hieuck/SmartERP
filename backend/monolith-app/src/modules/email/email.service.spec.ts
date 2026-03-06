@@ -154,7 +154,13 @@ describe('EmailService', () => {
         code: '12345',
       });
 
-      expect(mockLogRepository.update).toHaveBeenCalledWith({ id: '1' }, { templateId: 'tmpl-1' });
+      // Should be called twice: once for status update, once for templateId
+      expect(mockLogRepository.update).toHaveBeenCalledTimes(2);
+      expect(mockLogRepository.update).toHaveBeenNthCalledWith(
+        2,
+        { id: '1', tenantId: 'tenant-1' },
+        { templateId: 'tmpl-1' },
+      );
     });
   });
 
