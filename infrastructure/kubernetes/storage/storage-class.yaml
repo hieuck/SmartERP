@@ -1,0 +1,37 @@
+---
+# Storage Class for SSD-backed storage (for databases)
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: fast-ssd
+provisioner: kubernetes.io/aws-ebs # Change based on cloud provider
+parameters:
+  type: gp3
+  fsType: ext4
+  encrypted: 'true'
+allowVolumeExpansion: true
+volumeBindingMode: WaitForFirstConsumer
+---
+# Storage Class for standard storage (for general use)
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: standard
+provisioner: kubernetes.io/aws-ebs # Change based on cloud provider
+parameters:
+  type: gp2
+  fsType: ext4
+allowVolumeExpansion: true
+volumeBindingMode: WaitForFirstConsumer
+---
+# Storage Class for file storage (for MinIO/S3)
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: file-storage
+provisioner: kubernetes.io/aws-ebs # Change based on cloud provider
+parameters:
+  type: gp3
+  fsType: ext4
+allowVolumeExpansion: true
+volumeBindingMode: WaitForFirstConsumer

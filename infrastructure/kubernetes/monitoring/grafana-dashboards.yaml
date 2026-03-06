@@ -1,0 +1,281 @@
+# Grafana Dashboard ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards
+  namespace: monitoring
+  labels:
+    grafana_dashboard: '1'
+data:
+  # System Overview Dashboard
+  system-overview.json: |
+    {
+      "dashboard": {
+        "title": "SmartERP - System Overview",
+        "tags": ["smart-erp", "overview"],
+        "timezone": "browser",
+        "panels": [
+          {
+            "title": "Service Health",
+            "type": "stat",
+            "targets": [
+              {
+                "expr": "up{namespace=~\"production|staging\"}"
+              }
+            ]
+          },
+          {
+            "title": "Request Rate",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "sum(rate(http_requests_total{namespace=\"production\"}[5m])) by (service)"
+              }
+            ]
+          },
+          {
+            "title": "Error Rate",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "sum(rate(http_requests_total{status=~\"5..\",namespace=\"production\"}[5m])) by (service)"
+              }
+            ]
+          },
+          {
+            "title": "Response Time (p95)",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{namespace=\"production\"}[5m])) by (service, le))"
+              }
+            ]
+          }
+        ]
+      }
+    }
+
+  # API Gateway Dashboard
+  api-gateway.json: |
+    {
+      "dashboard": {
+        "title": "SmartERP - API Gateway",
+        "tags": ["smart-erp", "api-gateway"],
+        "panels": [
+          {
+            "title": "Requests per Second",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "sum(rate(http_requests_total{service=\"api-gateway\",namespace=\"production\"}[5m])) by (method, path)"
+              }
+            ]
+          },
+          {
+            "title": "Response Time Distribution",
+            "type": "heatmap",
+            "targets": [
+              {
+                "expr": "sum(rate(http_request_duration_seconds_bucket{service=\"api-gateway\",namespace=\"production\"}[5m])) by (le)"
+              }
+            ]
+          },
+          {
+            "title": "Status Codes",
+            "type": "piechart",
+            "targets": [
+              {
+                "expr": "sum(rate(http_requests_total{service=\"api-gateway\",namespace=\"production\"}[5m])) by (status)"
+              }
+            ]
+          },
+          {
+            "title": "Top Endpoints by Traffic",
+            "type": "table",
+            "targets": [
+              {
+                "expr": "topk(10, sum(rate(http_requests_total{service=\"api-gateway\",namespace=\"production\"}[5m])) by (path))"
+              }
+            ]
+          }
+        ]
+      }
+    }
+
+  # Database Performance Dashboard
+  database-performance.json: |
+    {
+      "dashboard": {
+        "title": "SmartERP - Database Performance",
+        "tags": ["smart-erp", "database"],
+        "panels": [
+          {
+            "title": "PostgreSQL Connections",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "pg_stat_database_numbackends"
+              }
+            ]
+          },
+          {
+            "title": "Query Duration (p95)",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "histogram_quantile(0.95, rate(pg_stat_statements_mean_time_seconds_bucket[5m]))"
+              }
+            ]
+          },
+          {
+            "title": "MongoDB Operations",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(mongodb_op_counters_total[5m])"
+              }
+            ]
+          },
+          {
+            "title": "Redis Memory Usage",
+            "type": "gauge",
+            "targets": [
+              {
+                "expr": "redis_memory_used_bytes / redis_memory_max_bytes * 100"
+              }
+            ]
+          },
+          {
+            "title": "Cache Hit Rate",
+            "type": "stat",
+            "targets": [
+              {
+                "expr": "rate(redis_keyspace_hits_total[5m]) / (rate(redis_keyspace_hits_total[5m]) + rate(redis_keyspace_misses_total[5m])) * 100"
+              }
+            ]
+          }
+        ]
+      }
+    }
+
+  # Business Metrics Dashboard
+  business-metrics.json: |
+    {
+      "dashboard": {
+        "title": "SmartERP - Business Metrics",
+        "tags": ["smart-erp", "business"],
+        "panels": [
+          {
+            "title": "Orders Created (Today)",
+            "type": "stat",
+            "targets": [
+              {
+                "expr": "sum(increase(orders_created_total{namespace=\"production\"}[24h]))"
+              }
+            ]
+          },
+          {
+            "title": "Revenue (Today)",
+            "type": "stat",
+            "targets": [
+              {
+                "expr": "sum(increase(revenue_total{namespace=\"production\"}[24h]))"
+              }
+            ]
+          },
+          {
+            "title": "Orders Over Time",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "sum(rate(orders_created_total{namespace=\"production\"}[5m])) by (status)"
+              }
+            ]
+          },
+          {
+            "title": "Low Stock Products",
+            "type": "table",
+            "targets": [
+              {
+                "expr": "inventory_stock_level < inventory_min_threshold"
+              }
+            ]
+          },
+          {
+            "title": "Active Users",
+            "type": "stat",
+            "targets": [
+              {
+                "expr": "count(user_sessions_active{namespace=\"production\"})"
+              }
+            ]
+          },
+          {
+            "title": "Payment Success Rate",
+            "type": "gauge",
+            "targets": [
+              {
+                "expr": "sum(rate(payments_successful_total{namespace=\"production\"}[5m])) / sum(rate(payments_total{namespace=\"production\"}[5m])) * 100"
+              }
+            ]
+          }
+        ]
+      }
+    }
+
+  # Resource Utilization Dashboard
+  resource-utilization.json: |
+    {
+      "dashboard": {
+        "title": "Plaster ERP - Resource Utilization",
+        "tags": ["plaster-erp", "resources"],
+        "panels": [
+          {
+            "title": "CPU Usage by Pod",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"production\",container!=\"\"}[5m])) by (pod)"
+              }
+            ]
+          },
+          {
+            "title": "Memory Usage by Pod",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "sum(container_memory_working_set_bytes{namespace=\"production\",container!=\"\"}) by (pod)"
+              }
+            ]
+          },
+          {
+            "title": "Network I/O",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "sum(rate(container_network_receive_bytes_total{namespace=\"production\"}[5m])) by (pod)",
+                "legendFormat": "Receive - {{pod}}"
+              },
+              {
+                "expr": "sum(rate(container_network_transmit_bytes_total{namespace=\"production\"}[5m])) by (pod)",
+                "legendFormat": "Transmit - {{pod}}"
+              }
+            ]
+          },
+          {
+            "title": "Disk I/O",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "sum(rate(container_fs_reads_bytes_total{namespace=\"production\"}[5m])) by (pod)",
+                "legendFormat": "Read - {{pod}}"
+              },
+              {
+                "expr": "sum(rate(container_fs_writes_bytes_total{namespace=\"production\"}[5m])) by (pod)",
+                "legendFormat": "Write - {{pod}}"
+              }
+            ]
+          }
+        ]
+      }
+    }

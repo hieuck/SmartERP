@@ -1,0 +1,73 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: staging
+  labels:
+    environment: staging
+data:
+  # Application Configuration
+  NODE_ENV: 'staging'
+  LOG_LEVEL: 'debug'
+
+  # API Configuration
+  API_PORT: '3000'
+  API_PREFIX: '/api/v1'
+
+  # Database Configuration
+  POSTGRES_HOST: 'postgres-service'
+  POSTGRES_PORT: '5432'
+  POSTGRES_DB: 'plaster_erp_staging'
+
+  MONGODB_HOST: 'mongodb-service'
+  MONGODB_PORT: '27017'
+  MONGODB_DB: 'plaster_erp_staging'
+
+  REDIS_HOST: 'redis-service'
+  REDIS_PORT: '6379'
+  REDIS_DB: '0'
+
+  # Message Queue Configuration
+  RABBITMQ_HOST: 'rabbitmq-service'
+  RABBITMQ_PORT: '5672'
+  RABBITMQ_MANAGEMENT_PORT: '15672'
+
+  # Elasticsearch Configuration
+  ELASTICSEARCH_HOST: 'elasticsearch-service'
+  ELASTICSEARCH_PORT: '9200'
+
+  # Service URLs
+  AUTH_SERVICE_URL: 'http://auth-service:3001'
+  PRODUCT_SERVICE_URL: 'http://product-service:3002'
+  INVENTORY_SERVICE_URL: 'http://inventory-service:3003'
+  ORDER_SERVICE_URL: 'http://order-service:3004'
+  CUSTOMER_SERVICE_URL: 'http://customer-service:3005'
+  SUPPLIER_SERVICE_URL: 'http://supplier-service:3006'
+
+  # CORS Configuration
+  CORS_ORIGIN: 'https://app.staging.plaster-erp.com'
+
+  # File Upload Configuration
+  MAX_FILE_SIZE: '10485760' # 10MB
+  UPLOAD_PATH: '/uploads'
+
+  # Session Configuration
+  SESSION_TIMEOUT: '1800' # 30 minutes
+
+  # Rate Limiting
+  RATE_LIMIT_WINDOW: '900000' # 15 minutes
+  RATE_LIMIT_MAX: '100'
+
+  # Feature Flags
+  ENABLE_SWAGGER: 'true'
+  ENABLE_METRICS: 'true'
+  ENABLE_TRACING: 'true'
+
+  # Email Configuration (if using external SMTP)
+  SMTP_HOST: 'smtp.example.com'
+  SMTP_PORT: '587'
+  SMTP_SECURE: 'false'
+
+  # Domain Configuration
+  FRONTEND_URL: 'https://app.staging.plaster-erp.com'
+  API_URL: 'https://api.staging.plaster-erp.com'

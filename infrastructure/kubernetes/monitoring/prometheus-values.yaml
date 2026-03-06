@@ -1,0 +1,96 @@
+# Prometheus Helm Chart Values
+# Install with: helm install prometheus prometheus-community/kube-prometheus-stack -f prometheus-values.yaml -n monitoring
+
+# Prometheus configuration
+prometheus:
+  prometheusSpec:
+    retention: 30d
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: standard
+          accessModes: ['ReadWriteOnce']
+          resources:
+            requests:
+              storage: 50Gi
+
+    # Service monitors for our services
+    additionalServiceMonitors:
+      - name: smart-erp-services
+        selector:
+          matchLabels:
+            monitoring: 'true'
+        namespaceSelector:
+          matchNames:
+            - production
+            - staging
+        endpoints:
+          - port: http
+            path: /metrics
+            interval: 30s
+
+# Grafana configuration
+grafana:
+  enabled: true
+  adminPassword: 'CHANGE_ME_ADMIN_PASSWORD'
+
+  persistence:
+    enabled: true
+    storageClassName: standard
+    size: 10Gi
+
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    hosts:
+      - grafana.smart-erp.com
+    tls:
+      - secretName: grafana-tls
+        hosts:
+          - grafana.smart-erp.com
+
+  # Pre-configured dashboards
+  dashboardProviders:
+    dashboardproviders.yaml:
+      apiVersion: 1
+      providers:
+        - name: 'default'
+          orgId: 1
+          folder: ''
+          type: file
+          disableDeletion: false
+          editable: true
+          options:
+            path: /var/lib/grafana/dashboards/default
+
+# AlertManager configuration
+alertmanager:
+  enabled: true
+
+  config:
+    global:
+      resolve_timeout: 5m
+
+    route:
+      group_by: ['alertname', 'cluster', 'service']
+      group_wait: 10s
+      group_interval: 10s
+      repeat_interval: 12h
+      receiver: 'default'
+
+    receivers:
+      - name: 'default'
+        email_configs:
+          - to: 'alerts@smart-erp.com'
+            from: 'prometheus@smart-erp.com'
+            smarthost: 'smtp.gmail.com:587'
+            auth_username: 'prometheus@smart-erp.com'
+            auth_password: 'CHANGE_ME_EMAIL_PASSWORD'
+
+# Node exporter
+nodeExporter:
+  enabled: true
+
+# Kube-state-metrics
+kubeStateMetrics:
+  enabled: true

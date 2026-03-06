@@ -1,0 +1,269 @@
+name: Rollback Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to rollback'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+      rollback_type:
+        description: 'Rollback type'
+        required: true
+        type: choice
+        default: 'switch-version'
+        options:
+          - switch-version # Switch back to previous blue/green deployment
+          - previous-revision # Rollback to previous revision
+          - specific-revision # Rollback to specific revision
+      revision_number:
+        description: 'Revision number (for specific-revision rollback)'
+        required: false
+        type: string
+
+jobs:
+  rollback:
+    name: Rollback Deployment
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.event.inputs.environment }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.0'
+
+      - name: Configure kubectl
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+
+      - name: Set namespace
+        id: namespace
+        run: |
+          if [ "${{ github.event.inputs.environment }}" == "production" ]; then
+            echo "namespace=production" >> $GITHUB_OUTPUT
+          else
+            echo "namespace=staging" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Backup current state
+        run: |
+          NAMESPACE="${{ steps.namespace.outputs.namespace }}"
+          BACKUP_DIR="rollback-backup-$(date +%Y%m%d-%H%M%S)"
+          mkdir -p $BACKUP_DIR
+
+          echo "Backing up current deployment state..."
+
+          # Backup deployments
+          kubectl get deployments -n $NAMESPACE -o yaml > $BACKUP_DIR/deployments.yaml
+
+          # Backup services
+          kubectl get services -n $NAMESPACE -o yaml > $BACKUP_DIR/services.yaml
+
+          # Backup configmaps
+          kubectl get configmaps -n $NAMESPACE -o yaml > $BACKUP_DIR/configmaps.yaml
+
+          echo "Backup saved to $BACKUP_DIR"
+
+      - name: Rollback - Switch Version (Blue/Green)
+        if: github.event.inputs.rollback_type == 'switch-version'
+        run: |
+          NAMESPACE="${{ steps.namespace.outputs.namespace }}"
+
+          echo "Performing blue-green version switch rollback..."
+
+          # Determine current active version
+          CURRENT_ACTIVE=$(kubectl get service api-gateway -n $NAMESPACE -o jsonpath='{.spec.selector.version}' 2>/dev/null || echo "blue")
+
+          if [ "$CURRENT_ACTIVE" == "blue" ]; then
+            ROLLBACK_TO="green"
+          else
+            ROLLBACK_TO="blue"
+          fi
+
+          echo "Current active: $CURRENT_ACTIVE"
+          echo "Rolling back to: $ROLLBACK_TO"
+
+          # Check if rollback target exists and has pods
+          POD_COUNT=$(kubectl get pods -n $NAMESPACE -l version=$ROLLBACK_TO --no-headers | wc -l)
+
+          if [ $POD_COUNT -eq 0 ]; then
+            echo "Error: No pods found for version $ROLLBACK_TO"
+            echo "Scaling up $ROLLBACK_TO deployment..."
+            
+            for service in api-gateway auth-service product-service inventory-service order-service customer-service supplier-service; do
+              kubectl scale deployment/${service}-${ROLLBACK_TO} --replicas=3 -n $NAMESPACE
+            done
+            
+            # Wait for pods to be ready
+            sleep 30
+            kubectl wait --for=condition=ready pod -l version=$ROLLBACK_TO -n $NAMESPACE --timeout=5m
+          fi
+
+          # Switch traffic back
+          echo "Switching traffic to $ROLLBACK_TO..."
+
+          for service in api-gateway auth-service product-service inventory-service order-service customer-service supplier-service; do
+            kubectl patch service ${service} \
+              -n $NAMESPACE \
+              -p '{"spec":{"selector":{"version":"'${ROLLBACK_TO}'"}}}'
+          done
+
+          echo "Traffic switched to $ROLLBACK_TO"
+
+          # Scale down current active
+          echo "Scaling down $CURRENT_ACTIVE deployment..."
+          for service in api-gateway auth-service product-service inventory-service order-service customer-service supplier-service; do
+            kubectl scale deployment/${service}-${CURRENT_ACTIVE} --replicas=0 -n $NAMESPACE
+          done
+
+          echo "Rollback complete!"
+
+      - name: Rollback - Previous Revision
+        if: github.event.inputs.rollback_type == 'previous-revision'
+        run: |
+          NAMESPACE="${{ steps.namespace.outputs.namespace }}"
+
+          echo "Rolling back to previous revision..."
+
+          for service in api-gateway auth-service product-service inventory-service order-service customer-service supplier-service; do
+            echo "Rolling back $service..."
+            kubectl rollout undo deployment/${service} -n $NAMESPACE
+            kubectl rollout status deployment/${service} -n $NAMESPACE --timeout=5m
+          done
+
+          echo "Rollback to previous revision complete!"
+
+      - name: Rollback - Specific Revision
+        if: github.event.inputs.rollback_type == 'specific-revision'
+        run: |
+          NAMESPACE="${{ steps.namespace.outputs.namespace }}"
+          REVISION="${{ github.event.inputs.revision_number }}"
+
+          if [ -z "$REVISION" ]; then
+            echo "Error: Revision number is required for specific-revision rollback"
+            exit 1
+          fi
+
+          echo "Rolling back to revision $REVISION..."
+
+          for service in api-gateway auth-service product-service inventory-service order-service customer-service supplier-service; do
+            echo "Rolling back $service to revision $REVISION..."
+            kubectl rollout undo deployment/${service} --to-revision=$REVISION -n $NAMESPACE
+            kubectl rollout status deployment/${service} -n $NAMESPACE --timeout=5m
+          done
+
+          echo "Rollback to revision $REVISION complete!"
+
+      - name: Verify rollback
+        run: |
+          NAMESPACE="${{ steps.namespace.outputs.namespace }}"
+
+          echo "Verifying rollback..."
+
+          # Check pod status
+          echo "Pod status:"
+          kubectl get pods -n $NAMESPACE
+
+          # Check deployment status
+          echo "Deployment status:"
+          kubectl get deployments -n $NAMESPACE
+
+          # Wait for stabilization
+          sleep 30
+
+          # Check for errors in logs
+          echo "Checking for errors in logs..."
+          ERROR_COUNT=$(kubectl logs -n $NAMESPACE -l app=api-gateway --tail=50 | grep -i error | wc -l)
+
+          if [ $ERROR_COUNT -gt 5 ]; then
+            echo "Warning: Found $ERROR_COUNT errors in logs after rollback"
+          else
+            echo "No critical errors found in logs"
+          fi
+
+      - name: Run health checks
+        run: |
+          NAMESPACE="${{ steps.namespace.outputs.namespace }}"
+
+          echo "Running health checks..."
+
+          # Port-forward to API Gateway
+          kubectl port-forward -n $NAMESPACE svc/api-gateway 8080:3000 &
+          PF_PID=$!
+          sleep 5
+
+          # Health check
+          if curl -f http://localhost:8080/health; then
+            echo "✅ Health check passed"
+          else
+            echo "❌ Health check failed"
+            kill $PF_PID
+            exit 1
+          fi
+
+          # API check
+          if curl -f http://localhost:8080/api/v1/health; then
+            echo "✅ API health check passed"
+          else
+            echo "❌ API health check failed"
+            kill $PF_PID
+            exit 1
+          fi
+
+          kill $PF_PID
+
+          echo "All health checks passed!"
+
+      - name: Notify rollback status
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "✅ Rollback to ${{ github.event.inputs.environment }} completed successfully"
+            echo "Rollback type: ${{ github.event.inputs.rollback_type }}"
+          else
+            echo "❌ Rollback to ${{ github.event.inputs.environment }} failed"
+            echo "Manual intervention may be required"
+          fi
+
+          # Add Slack/email notification here if configured
+
+      - name: Create rollback report
+        if: always()
+        run: |
+          NAMESPACE="${{ steps.namespace.outputs.namespace }}"
+          REPORT_FILE="rollback-report-$(date +%Y%m%d-%H%M%S).txt"
+
+          cat > $REPORT_FILE << EOF
+          Rollback Report
+          ===============
+
+          Environment: ${{ github.event.inputs.environment }}
+          Namespace: $NAMESPACE
+          Rollback Type: ${{ github.event.inputs.rollback_type }}
+          Timestamp: $(date)
+          Status: ${{ job.status }}
+
+          Deployment Status:
+          $(kubectl get deployments -n $NAMESPACE)
+
+          Pod Status:
+          $(kubectl get pods -n $NAMESPACE)
+
+          Service Status:
+          $(kubectl get services -n $NAMESPACE)
+
+          Recent Events:
+          $(kubectl get events -n $NAMESPACE --sort-by='.lastTimestamp' | tail -20)
+          EOF
+
+          echo "Rollback report saved to $REPORT_FILE"
+          cat $REPORT_FILE

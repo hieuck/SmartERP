@@ -1,0 +1,173 @@
+config:
+  target: "http://localhost:3000"
+  phases:
+    - duration: 60
+      arrivalRate: 5
+      name: "Warm up"
+    - duration: 120
+      arrivalRate: 10
+      name: "Ramp up load"
+    - duration: 180
+      arrivalRate: 20
+      name: "Sustained load"
+    - duration: 60
+      arrivalRate: 50
+      name: "Spike test"
+  processor: "./processor.js"
+  
+scenarios:
+  - name: "Authentication Flow"
+    weight: 20
+    flow:
+      - post:
+          url: "/auth/register"
+          json:
+            email: "loadtest-{{ $randomString() }}@example.com"
+            password: "password123"
+            firstName: "Load"
+            lastName: "Test"
+            tenantId: "tenant-load-{{ $randomString() }}"
+          capture:
+            - json: "$.accessToken"
+              as: "authToken"
+      - post:
+          url: "/auth/login"
+          json:
+            email: "{{ email }}"
+            password: "password123"
+          expect:
+            - statusCode: 200
+
+  - name: "Product Operations"
+    weight: 30
+    flow:
+      - post:
+          url: "/auth/login"
+          json:
+            email: "{{ testUser.email }}"
+            password: "{{ testUser.password }}"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+      - post:
+          url: "/products"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            name: "Load Test Product {{ $randomString() }}"
+            sku: "LT-{{ $randomNumber(1000, 9999) }}"
+            price: "{{ $randomNumber(10, 1000) }}"
+          capture:
+            - json: "$.id"
+              as: "productId"
+          expect:
+            - statusCode: 201
+      - get:
+          url: "/products"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+      - get:
+          url: "/products/{{ productId }}"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+      - patch:
+          url: "/products/{{ productId }}"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            price: "{{ $randomNumber(10, 1000) }}"
+          expect:
+            - statusCode: 200
+
+  - name: "Order Processing"
+    weight: 25
+    flow:
+      - post:
+          url: "/auth/login"
+          json:
+            email: "{{ testUser.email }}"
+            password: "{{ testUser.password }}"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+      - post:
+          url: "/customers"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            name: "Load Test Customer"
+            email: "customer-{{ $randomString() }}@example.com"
+          capture:
+            - json: "$.id"
+              as: "customerId"
+      - post:
+          url: "/orders"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            customerId: "{{ customerId }}"
+            items:
+              - productId: "{{ testProduct.id }}"
+                quantity: "{{ $randomNumber(1, 10) }}"
+                price: 100
+          capture:
+            - json: "$.id"
+              as: "orderId"
+          expect:
+            - statusCode: 201
+      - get:
+          url: "/orders/{{ orderId }}"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+
+  - name: "Inventory Operations"
+    weight: 15
+    flow:
+      - post:
+          url: "/auth/login"
+          json:
+            email: "{{ testUser.email }}"
+            password: "{{ testUser.password }}"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+      - post:
+          url: "/inventory"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            productId: "{{ testProduct.id }}"
+            quantity: "{{ $randomNumber(10, 100) }}"
+            location: "Warehouse {{ $randomString() }}"
+          expect:
+            - statusCode: 201
+      - get:
+          url: "/inventory"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+
+  - name: "Search Operations"
+    weight: 10
+    flow:
+      - post:
+          url: "/auth/login"
+          json:
+            email: "{{ testUser.email }}"
+            password: "{{ testUser.password }}"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+      - get:
+          url: "/search?query=test"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200

@@ -1,0 +1,537 @@
+---
+# Elasticsearch Production Cluster (3 nodes)
+# Provides distributed search and high availability
+
+# Headless Service for StatefulSet
+apiVersion: v1
+kind: Service
+metadata:
+  name: elasticsearch-cluster
+  namespace: production
+  labels:
+    app: elasticsearch-cluster
+spec:
+  ports:
+    - port: 9200
+      name: http
+    - port: 9300
+      name: transport
+  clusterIP: None
+  selector:
+    app: elasticsearch-cluster
+
+---
+# Service for Client Connections
+apiVersion: v1
+kind: Service
+metadata:
+  name: elasticsearch
+  namespace: production
+  labels:
+    app: elasticsearch-cluster
+spec:
+  type: ClusterIP
+  ports:
+    - port: 9200
+      targetPort: 9200
+      name: http
+    - port: 9300
+      targetPort: 9300
+      name: transport
+  selector:
+    app: elasticsearch-cluster
+
+---
+# ConfigMap for Elasticsearch Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: elasticsearch-cluster-config
+  namespace: production
+data:
+  elasticsearch.yml: |
+    # Cluster Settings
+    cluster.name: plaster-erp-cluster
+    node.name: ${HOSTNAME}
+
+    # Network Settings
+    network.host: 0.0.0.0
+    http.port: 9200
+    transport.port: 9300
+
+    # Discovery Settings
+    discovery.seed_hosts:
+      - elasticsearch-cluster-0.elasticsearch-cluster.production.svc.cluster.local
+      - elasticsearch-cluster-1.elasticsearch-cluster.production.svc.cluster.local
+      - elasticsearch-cluster-2.elasticsearch-cluster.production.svc.cluster.local
+
+    cluster.initial_master_nodes:
+      - elasticsearch-cluster-0
+      - elasticsearch-cluster-1
+      - elasticsearch-cluster-2
+
+    # Node Roles
+    node.roles: [ master, data, ingest ]
+
+    # Path Settings
+    path.data: /usr/share/elasticsearch/data
+    path.logs: /usr/share/elasticsearch/logs
+
+    # Memory Settings
+    bootstrap.memory_lock: false
+
+    # Security Settings (X-Pack)
+    xpack.security.enabled: true
+    xpack.security.transport.ssl.enabled: true
+    xpack.security.transport.ssl.verification_mode: certificate
+    xpack.security.transport.ssl.keystore.path: elastic-certificates.p12
+    xpack.security.transport.ssl.truststore.path: elastic-certificates.p12
+
+    # Monitoring
+    xpack.monitoring.collection.enabled: true
+
+    # Index Settings
+    action.auto_create_index: true
+    action.destructive_requires_name: true
+
+    # Thread Pool Settings
+    thread_pool.write.queue_size: 1000
+    thread_pool.search.queue_size: 1000
+
+  jvm.options: |
+    ## JVM configuration
+
+    ## GC configuration
+    -XX:+UseG1GC
+
+    ## JVM temporary directory
+    -Djava.io.tmpdir=${ES_TMPDIR}
+
+    ## heap dumps
+    -XX:+HeapDumpOnOutOfMemoryError
+    -XX:HeapDumpPath=/usr/share/elasticsearch/logs
+
+    ## JVM fatal error logs
+    -XX:ErrorFile=/usr/share/elasticsearch/logs/hs_err_pid%p.log
+
+    ## Locale
+    -Dfile.encoding=UTF-8
+
+    ## Security manager
+    -Djava.security.manager=allow
+
+  log4j2.properties: |
+    status = error
+
+    appender.console.type = Console
+    appender.console.name = console
+    appender.console.layout.type = PatternLayout
+    appender.console.layout.pattern = [%d{ISO8601}][%-5p][%-25c{1.}] [%node_name]%marker %m%n
+
+    appender.rolling.type = RollingFile
+    appender.rolling.name = rolling
+    appender.rolling.fileName = ${sys:es.logs.base_path}${sys:file.separator}${sys:es.logs.cluster_name}.log
+    appender.rolling.layout.type = PatternLayout
+    appender.rolling.layout.pattern = [%d{ISO8601}][%-5p][%-25c{1.}] [%node_name]%marker %m%n
+    appender.rolling.filePattern = ${sys:es.logs.base_path}${sys:file.separator}${sys:es.logs.cluster_name}-%d{yyyy-MM-dd}-%i.log.gz
+    appender.rolling.policies.type = Policies
+    appender.rolling.policies.time.type = TimeBasedTriggeringPolicy
+    appender.rolling.policies.time.interval = 1
+    appender.rolling.policies.time.modulate = true
+    appender.rolling.policies.size.type = SizeBasedTriggeringPolicy
+    appender.rolling.policies.size.size = 256MB
+    appender.rolling.strategy.type = DefaultRolloverStrategy
+    appender.rolling.strategy.fileIndex = nomax
+    appender.rolling.strategy.action.type = Delete
+    appender.rolling.strategy.action.basepath = ${sys:es.logs.base_path}
+    appender.rolling.strategy.action.condition.type = IfFileName
+    appender.rolling.strategy.action.condition.glob = ${sys:es.logs.cluster_name}-*
+    appender.rolling.strategy.action.condition.nested_condition.type = IfLastModified
+    appender.rolling.strategy.action.condition.nested_condition.age = 7D
+
+    rootLogger.level = info
+    rootLogger.appenderRef.console.ref = console
+    rootLogger.appenderRef.rolling.ref = rolling
+
+  setup-certificates.sh: |
+    #!/bin/bash
+    set -e
+
+    if [ ! -f /usr/share/elasticsearch/config/elastic-certificates.p12 ]; then
+      echo "Generating certificates..."
+      
+      elasticsearch-certutil ca --silent --pem -out /tmp/ca.zip
+      unzip /tmp/ca.zip -d /tmp
+      
+      elasticsearch-certutil cert \
+        --silent \
+        --pem \
+        --ca-cert /tmp/ca/ca.crt \
+        --ca-key /tmp/ca/ca.key \
+        --dns elasticsearch-cluster-0.elasticsearch-cluster.production.svc.cluster.local \
+        --dns elasticsearch-cluster-1.elasticsearch-cluster.production.svc.cluster.local \
+        --dns elasticsearch-cluster-2.elasticsearch-cluster.production.svc.cluster.local \
+        --dns elasticsearch \
+        --dns localhost \
+        --ip 127.0.0.1 \
+        -out /tmp/cert.zip
+      
+      unzip /tmp/cert.zip -d /tmp
+      
+      # Create PKCS12 keystore
+      openssl pkcs12 \
+        -export \
+        -in /tmp/cert/cert.crt \
+        -inkey /tmp/cert/cert.key \
+        -out /usr/share/elasticsearch/config/elastic-certificates.p12 \
+        -name elasticsearch \
+        -passout pass:changeit
+      
+      chmod 644 /usr/share/elasticsearch/config/elastic-certificates.p12
+      
+      echo "Certificates generated successfully"
+    fi
+
+---
+# StatefulSet for Elasticsearch Cluster
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: elasticsearch-cluster
+  namespace: production
+spec:
+  serviceName: elasticsearch-cluster
+  replicas: 3
+  selector:
+    matchLabels:
+      app: elasticsearch-cluster
+  template:
+    metadata:
+      labels:
+        app: elasticsearch-cluster
+    spec:
+      terminationGracePeriodSeconds: 120
+
+      initContainers:
+        # Increase vm.max_map_count
+        - name: increase-vm-max-map
+          image: busybox
+          command:
+            - sysctl
+            - -w
+            - vm.max_map_count=262144
+          securityContext:
+            privileged: true
+
+        # Increase file descriptor limit
+        - name: increase-fd-ulimit
+          image: busybox
+          command:
+            - sh
+            - -c
+            - ulimit -n 65536
+          securityContext:
+            privileged: true
+
+        # Fix permissions
+        - name: fix-permissions
+          image: busybox
+          command:
+            - sh
+            - -c
+            - |
+              chown -R 1000:1000 /usr/share/elasticsearch/data
+              chown -R 1000:1000 /usr/share/elasticsearch/logs
+          volumeMounts:
+            - name: elasticsearch-storage
+              mountPath: /usr/share/elasticsearch/data
+            - name: logs
+              mountPath: /usr/share/elasticsearch/logs
+          securityContext:
+            privileged: true
+
+      containers:
+        - name: elasticsearch
+          image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+          ports:
+            - containerPort: 9200
+              name: http
+            - containerPort: 9300
+              name: transport
+
+          env:
+            - name: cluster.name
+              value: plaster-erp-cluster
+            - name: node.name
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: ES_JAVA_OPTS
+              value: '-Xms2g -Xmx2g'
+            - name: ELASTIC_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: database-secrets
+                  key: ELASTICSEARCH_PASSWORD
+
+          volumeMounts:
+            - name: elasticsearch-storage
+              mountPath: /usr/share/elasticsearch/data
+            - name: elasticsearch-config
+              mountPath: /usr/share/elasticsearch/config/elasticsearch.yml
+              subPath: elasticsearch.yml
+            - name: elasticsearch-config
+              mountPath: /usr/share/elasticsearch/config/jvm.options
+              subPath: jvm.options
+            - name: elasticsearch-config
+              mountPath: /usr/share/elasticsearch/config/log4j2.properties
+              subPath: log4j2.properties
+            - name: logs
+              mountPath: /usr/share/elasticsearch/logs
+
+          resources:
+            requests:
+              memory: '4Gi'
+              cpu: '1000m'
+            limits:
+              memory: '6Gi'
+              cpu: '2000m'
+
+          livenessProbe:
+            httpGet:
+              path: /_cluster/health?local=true
+              port: 9200
+              scheme: HTTP
+            initialDelaySeconds: 90
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          readinessProbe:
+            httpGet:
+              path: /_cluster/health?wait_for_status=yellow&timeout=5s
+              port: 9200
+              scheme: HTTP
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+      volumes:
+        - name: elasticsearch-config
+          configMap:
+            name: elasticsearch-cluster-config
+        - name: logs
+          emptyDir: {}
+
+  volumeClaimTemplates:
+    - metadata:
+        name: elasticsearch-storage
+      spec:
+        accessModes: ['ReadWriteOnce']
+        storageClassName: fast-ssd
+        resources:
+          requests:
+            storage: 100Gi
+
+---
+# PodDisruptionBudget for High Availability
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: elasticsearch-cluster-pdb
+  namespace: production
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: elasticsearch-cluster
+
+---
+# Kibana Deployment (Optional - for monitoring)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kibana
+  namespace: production
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kibana
+  template:
+    metadata:
+      labels:
+        app: kibana
+    spec:
+      containers:
+        - name: kibana
+          image: docker.elastic.co/kibana/kibana:8.11.0
+          ports:
+            - containerPort: 5601
+              name: http
+          env:
+            - name: ELASTICSEARCH_HOSTS
+              value: 'http://elasticsearch:9200'
+            - name: ELASTICSEARCH_USERNAME
+              value: 'elastic'
+            - name: ELASTICSEARCH_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: database-secrets
+                  key: ELASTICSEARCH_PASSWORD
+          resources:
+            requests:
+              memory: '1Gi'
+              cpu: '500m'
+            limits:
+              memory: '2Gi'
+              cpu: '1000m'
+          livenessProbe:
+            httpGet:
+              path: /api/status
+              port: 5601
+            initialDelaySeconds: 60
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /api/status
+              port: 5601
+            initialDelaySeconds: 30
+            periodSeconds: 5
+
+---
+# Service for Kibana
+apiVersion: v1
+kind: Service
+metadata:
+  name: kibana
+  namespace: production
+  labels:
+    app: kibana
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5601
+      targetPort: 5601
+      name: http
+  selector:
+    app: kibana
+
+---
+# Backup CronJob
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: elasticsearch-backup
+  namespace: production
+spec:
+  schedule: '0 1 * * *' # Daily at 1 AM
+  successfulJobsHistoryLimit: 7
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: backup
+              image: curlimages/curl:latest
+              command:
+                - sh
+                - -c
+                - |
+                  BACKUP_NAME="backup-$(date +%Y%m%d-%H%M%S)"
+
+                  # Create snapshot repository if not exists
+                  curl -X PUT "elasticsearch:9200/_snapshot/backup_repo" \
+                    -H 'Content-Type: application/json' \
+                    -u elastic:$ELASTICSEARCH_PASSWORD \
+                    -d '{
+                      "type": "fs",
+                      "settings": {
+                        "location": "/backups",
+                        "compress": true
+                      }
+                    }'
+
+                  # Create snapshot
+                  curl -X PUT "elasticsearch:9200/_snapshot/backup_repo/$BACKUP_NAME?wait_for_completion=true" \
+                    -u elastic:$ELASTICSEARCH_PASSWORD
+
+                  echo "Backup completed: $BACKUP_NAME"
+
+                  # Delete snapshots older than 30 days
+                  curl -X GET "elasticsearch:9200/_snapshot/backup_repo/_all" \
+                    -u elastic:$ELASTICSEARCH_PASSWORD | \
+                    jq -r '.snapshots[] | select(.start_time_in_millis < (now - 2592000000)) | .snapshot' | \
+                    xargs -I {} curl -X DELETE "elasticsearch:9200/_snapshot/backup_repo/{}" \
+                      -u elastic:$ELASTICSEARCH_PASSWORD
+              env:
+                - name: ELASTICSEARCH_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: database-secrets
+                      key: ELASTICSEARCH_PASSWORD
+          restartPolicy: OnFailure
+
+---
+# Elasticsearch Exporter for Monitoring
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: elasticsearch-exporter
+  namespace: production
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: elasticsearch-exporter
+  template:
+    metadata:
+      labels:
+        app: elasticsearch-exporter
+    spec:
+      containers:
+        - name: elasticsearch-exporter
+          image: quay.io/prometheuscommunity/elasticsearch-exporter:latest
+          ports:
+            - containerPort: 9114
+              name: metrics
+          args:
+            - --es.uri=http://elasticsearch:9200
+            - --es.all
+            - --es.indices
+            - --es.cluster_settings
+          env:
+            - name: ES_USERNAME
+              value: 'elastic'
+            - name: ES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: database-secrets
+                  key: ELASTICSEARCH_PASSWORD
+          resources:
+            requests:
+              memory: '128Mi'
+              cpu: '100m'
+            limits:
+              memory: '256Mi'
+              cpu: '200m'
+
+---
+# Service for Elasticsearch Exporter
+apiVersion: v1
+kind: Service
+metadata:
+  name: elasticsearch-exporter
+  namespace: production
+  labels:
+    app: elasticsearch-exporter
+spec:
+  type: ClusterIP
+  ports:
+    - port: 9114
+      targetPort: 9114
+      name: metrics
+  selector:
+    app: elasticsearch-exporter

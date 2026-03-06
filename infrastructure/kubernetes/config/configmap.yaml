@@ -1,0 +1,90 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: production
+data:
+  NODE_ENV: 'production'
+  LOG_LEVEL: 'info'
+  API_VERSION: 'v1'
+
+  # Database hosts
+  POSTGRES_HOST: 'postgres-service'
+  POSTGRES_PORT: '5432'
+  POSTGRES_DB: 'plaster_erp'
+
+  MONGODB_HOST: 'mongodb-service'
+  MONGODB_PORT: '27017'
+  MONGODB_DB: 'plaster_erp'
+
+  REDIS_HOST: 'redis-service'
+  REDIS_PORT: '6379'
+
+  ELASTICSEARCH_HOST: 'elasticsearch-service'
+  ELASTICSEARCH_PORT: '9200'
+
+  # RabbitMQ
+  RABBITMQ_HOST: 'rabbitmq-service'
+  RABBITMQ_PORT: '5672'
+
+  # MinIO/S3
+  MINIO_ENDPOINT: 'minio-service'
+  MINIO_PORT: '9000'
+  MINIO_BUCKET: 'plaster-erp-files'
+
+  # JWT
+  JWT_EXPIRATION: '15m'
+  JWT_REFRESH_EXPIRATION: '7d'
+
+  # CORS
+  CORS_ORIGIN: '*'
+
+  # Rate Limiting
+  RATE_LIMIT_WINDOW: '15m'
+  RATE_LIMIT_MAX: '100'
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: staging
+data:
+  NODE_ENV: 'staging'
+  LOG_LEVEL: 'debug'
+  API_VERSION: 'v1'
+
+  # Database hosts
+  POSTGRES_HOST: 'postgres-service'
+  POSTGRES_PORT: '5432'
+  POSTGRES_DB: 'plaster_erp_staging'
+
+  MONGODB_HOST: 'mongodb-service'
+  MONGODB_PORT: '27017'
+  MONGODB_DB: 'plaster_erp_staging'
+
+  REDIS_HOST: 'redis-service'
+  REDIS_PORT: '6379'
+
+  ELASTICSEARCH_HOST: 'elasticsearch-service'
+  ELASTICSEARCH_PORT: '9200'
+
+  # RabbitMQ
+  RABBITMQ_HOST: 'rabbitmq-service'
+  RABBITMQ_PORT: '5672'
+
+  # MinIO/S3
+  MINIO_ENDPOINT: 'minio-service'
+  MINIO_PORT: '9000'
+  MINIO_BUCKET: 'plaster-erp-files-staging'
+
+  # JWT
+  JWT_EXPIRATION: '15m'
+  JWT_REFRESH_EXPIRATION: '7d'
+
+  # CORS
+  CORS_ORIGIN: '*'
+
+  # Rate Limiting
+  RATE_LIMIT_WINDOW: '15m'
+  RATE_LIMIT_MAX: '100'

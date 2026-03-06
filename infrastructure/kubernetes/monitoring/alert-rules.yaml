@@ -1,0 +1,374 @@
+# Prometheus Alert Rules for Plaster ERP
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: plaster-erp-alerts
+  namespace: monitoring
+  labels:
+    prometheus: kube-prometheus
+spec:
+  groups:
+    # Application Health Alerts
+    - name: application-health
+      interval: 30s
+      rules:
+        - alert: ServiceDown
+          expr: up{namespace=~"production|staging"} == 0
+          for: 2m
+          labels:
+            severity: critical
+            category: availability
+          annotations:
+            summary: 'Service {{ $labels.job }} is down'
+            description: '{{ $labels.job }} in namespace {{ $labels.namespace }} has been down for more than 2 minutes.'
+            runbook: 'Check pod status: kubectl get pods -n {{ $labels.namespace }} -l app={{ $labels.job }}'
+
+        - alert: HighErrorRate
+          expr: |
+            (
+              sum(rate(http_requests_total{status=~"5..",namespace=~"production|staging"}[5m])) by (service, namespace)
+              /
+              sum(rate(http_requests_total{namespace=~"production|staging"}[5m])) by (service, namespace)
+            ) > 0.05
+          for: 5m
+          labels:
+            severity: warning
+            category: errors
+          annotations:
+            summary: 'High error rate on {{ $labels.service }}'
+            description: 'Error rate is {{ $value | humanizePercentage }} for {{ $labels.service }} in {{ $labels.namespace }}'
+            runbook: 'Check logs: kubectl logs -n {{ $labels.namespace }} -l app={{ $labels.service }} --tail=100'
+
+        - alert: CriticalErrorRate
+          expr: |
+            (
+              sum(rate(http_requests_total{status=~"5..",namespace=~"production|staging"}[5m])) by (service, namespace)
+              /
+              sum(rate(http_requests_total{namespace=~"production|staging"}[5m])) by (service, namespace)
+            ) > 0.20
+          for: 2m
+          labels:
+            severity: critical
+            category: errors
+          annotations:
+            summary: 'Critical error rate on {{ $labels.service }}'
+            description: 'Error rate is {{ $value | humanizePercentage }} for {{ $labels.service }} in {{ $labels.namespace }}'
+            runbook: 'Immediate action required. Check logs and consider rollback.'
+
+        - alert: HighResponseTime
+          expr: |
+            histogram_quantile(0.95,
+              sum(rate(http_request_duration_seconds_bucket{namespace=~"production|staging"}[5m])) by (service, le)
+            ) > 2
+          for: 10m
+          labels:
+            severity: warning
+            category: performance
+          annotations:
+            summary: 'High response time on {{ $labels.service }}'
+            description: '95th percentile response time is {{ $value }}s for {{ $labels.service }}'
+            runbook: 'Check service performance and database queries'
+
+    # Resource Utilization Alerts
+    - name: resource-utilization
+      interval: 30s
+      rules:
+        - alert: HighCPUUsage
+          expr: |
+            (
+              sum(rate(container_cpu_usage_seconds_total{namespace=~"production|staging",container!=""}[5m])) by (pod, namespace)
+              /
+              sum(container_spec_cpu_quota{namespace=~"production|staging",container!=""}/container_spec_cpu_period{namespace=~"production|staging",container!=""}) by (pod, namespace)
+            ) > 0.80
+          for: 10m
+          labels:
+            severity: warning
+            category: resources
+          annotations:
+            summary: 'High CPU usage on {{ $labels.pod }}'
+            description: 'CPU usage is {{ $value | humanizePercentage }} for {{ $labels.pod }} in {{ $labels.namespace }}'
+            runbook: 'Consider scaling up or optimizing the application'
+
+        - alert: CriticalCPUUsage
+          expr: |
+            (
+              sum(rate(container_cpu_usage_seconds_total{namespace=~"production|staging",container!=""}[5m])) by (pod, namespace)
+              /
+              sum(container_spec_cpu_quota{namespace=~"production|staging",container!=""}/container_spec_cpu_period{namespace=~"production|staging",container!=""}) by (pod, namespace)
+            ) > 0.95
+          for: 5m
+          labels:
+            severity: critical
+            category: resources
+          annotations:
+            summary: 'Critical CPU usage on {{ $labels.pod }}'
+            description: 'CPU usage is {{ $value | humanizePercentage }} for {{ $labels.pod }} in {{ $labels.namespace }}'
+            runbook: 'Immediate scaling required'
+
+        - alert: HighMemoryUsage
+          expr: |
+            (
+              sum(container_memory_working_set_bytes{namespace=~"production|staging",container!=""}) by (pod, namespace)
+              /
+              sum(container_spec_memory_limit_bytes{namespace=~"production|staging",container!=""}) by (pod, namespace)
+            ) > 0.85
+          for: 10m
+          labels:
+            severity: warning
+            category: resources
+          annotations:
+            summary: 'High memory usage on {{ $labels.pod }}'
+            description: 'Memory usage is {{ $value | humanizePercentage }} for {{ $labels.pod }} in {{ $labels.namespace }}'
+            runbook: 'Check for memory leaks or increase memory limits'
+
+        - alert: CriticalMemoryUsage
+          expr: |
+            (
+              sum(container_memory_working_set_bytes{namespace=~"production|staging",container!=""}) by (pod, namespace)
+              /
+              sum(container_spec_memory_limit_bytes{namespace=~"production|staging",container!=""}) by (pod, namespace)
+            ) > 0.95
+          for: 5m
+          labels:
+            severity: critical
+            category: resources
+          annotations:
+            summary: 'Critical memory usage on {{ $labels.pod }}'
+            description: 'Memory usage is {{ $value | humanizePercentage }} for {{ $labels.pod }} in {{ $labels.namespace }}'
+            runbook: 'Pod may be OOMKilled soon. Immediate action required.'
+
+        - alert: PodRestartingFrequently
+          expr: rate(kube_pod_container_status_restarts_total{namespace=~"production|staging"}[15m]) > 0.1
+          for: 5m
+          labels:
+            severity: warning
+            category: stability
+          annotations:
+            summary: 'Pod {{ $labels.pod }} is restarting frequently'
+            description: 'Pod {{ $labels.pod }} in {{ $labels.namespace }} has restarted {{ $value }} times in the last 15 minutes'
+            runbook: 'Check pod logs for crash reasons: kubectl logs -n {{ $labels.namespace }} {{ $labels.pod }} --previous'
+
+    # Database Alerts
+    - name: database-health
+      interval: 30s
+      rules:
+        - alert: PostgreSQLDown
+          expr: pg_up == 0
+          for: 2m
+          labels:
+            severity: critical
+            category: database
+          annotations:
+            summary: 'PostgreSQL is down'
+            description: 'PostgreSQL instance {{ $labels.instance }} is down'
+            runbook: 'Check PostgreSQL pod status and logs'
+
+        - alert: PostgreSQLHighConnections
+          expr: |
+            (
+              sum(pg_stat_database_numbackends) by (instance)
+              /
+              pg_settings_max_connections
+            ) > 0.80
+          for: 5m
+          labels:
+            severity: warning
+            category: database
+          annotations:
+            summary: 'PostgreSQL high connection usage'
+            description: 'PostgreSQL connection usage is {{ $value | humanizePercentage }} on {{ $labels.instance }}'
+            runbook: 'Check for connection leaks or increase max_connections'
+
+        - alert: PostgreSQLSlowQueries
+          expr: rate(pg_stat_activity_max_tx_duration{state="active"}[5m]) > 60
+          for: 10m
+          labels:
+            severity: warning
+            category: database
+          annotations:
+            summary: 'PostgreSQL has slow queries'
+            description: 'Slow queries detected on {{ $labels.instance }}'
+            runbook: 'Check pg_stat_statements for slow queries'
+
+        - alert: MongoDBDown
+          expr: mongodb_up == 0
+          for: 2m
+          labels:
+            severity: critical
+            category: database
+          annotations:
+            summary: 'MongoDB is down'
+            description: 'MongoDB instance {{ $labels.instance }} is down'
+            runbook: 'Check MongoDB pod status and logs'
+
+        - alert: RedisDown
+          expr: redis_up == 0
+          for: 2m
+          labels:
+            severity: critical
+            category: database
+          annotations:
+            summary: 'Redis is down'
+            description: 'Redis instance {{ $labels.instance }} is down'
+            runbook: 'Check Redis pod status and logs'
+
+        - alert: RedisHighMemoryUsage
+          expr: |
+            (
+              redis_memory_used_bytes
+              /
+              redis_memory_max_bytes
+            ) > 0.90
+          for: 5m
+          labels:
+            severity: warning
+            category: database
+          annotations:
+            summary: 'Redis high memory usage'
+            description: 'Redis memory usage is {{ $value | humanizePercentage }} on {{ $labels.instance }}'
+            runbook: 'Check Redis keys and consider increasing memory or eviction policy'
+
+    # Storage Alerts
+    - name: storage-alerts
+      interval: 30s
+      rules:
+        - alert: PersistentVolumeFillingUp
+          expr: |
+            (
+              kubelet_volume_stats_used_bytes
+              /
+              kubelet_volume_stats_capacity_bytes
+            ) > 0.80
+          for: 10m
+          labels:
+            severity: warning
+            category: storage
+          annotations:
+            summary: 'PersistentVolume {{ $labels.persistentvolumeclaim }} is filling up'
+            description: 'PersistentVolume {{ $labels.persistentvolumeclaim }} in {{ $labels.namespace }} is {{ $value | humanizePercentage }} full'
+            runbook: 'Consider expanding the volume or cleaning up old data'
+
+        - alert: PersistentVolumeAlmostFull
+          expr: |
+            (
+              kubelet_volume_stats_used_bytes
+              /
+              kubelet_volume_stats_capacity_bytes
+            ) > 0.95
+          for: 5m
+          labels:
+            severity: critical
+            category: storage
+          annotations:
+            summary: 'PersistentVolume {{ $labels.persistentvolumeclaim }} is almost full'
+            description: 'PersistentVolume {{ $labels.persistentvolumeclaim }} in {{ $labels.namespace }} is {{ $value | humanizePercentage }} full'
+            runbook: 'Immediate action required. Expand volume or free up space.'
+
+    # Business Metrics Alerts
+    - name: business-metrics
+      interval: 1m
+      rules:
+        - alert: NoOrdersProcessed
+          expr: |
+            sum(increase(orders_created_total{namespace="production"}[1h])) == 0
+          for: 2h
+          labels:
+            severity: warning
+            category: business
+          annotations:
+            summary: 'No orders processed in the last 2 hours'
+            description: "The system hasn't processed any orders in the last 2 hours during business hours"
+            runbook: 'Check if the order service is functioning correctly'
+
+        - alert: HighOrderFailureRate
+          expr: |
+            (
+              sum(rate(orders_failed_total{namespace="production"}[10m]))
+              /
+              sum(rate(orders_created_total{namespace="production"}[10m]))
+            ) > 0.10
+          for: 5m
+          labels:
+            severity: warning
+            category: business
+          annotations:
+            summary: 'High order failure rate'
+            description: 'Order failure rate is {{ $value | humanizePercentage }}'
+            runbook: 'Check order service logs and payment gateway status'
+
+        - alert: LowStockCriticalProducts
+          expr: inventory_stock_level{critical="true"} < inventory_min_threshold
+          for: 30m
+          labels:
+            severity: warning
+            category: business
+          annotations:
+            summary: 'Low stock on critical product {{ $labels.product }}'
+            description: 'Product {{ $labels.product }} has only {{ $value }} units left'
+            runbook: 'Create purchase order for restocking'
+
+    # Network Alerts
+    - name: network-alerts
+      interval: 30s
+      rules:
+        - alert: HighNetworkErrors
+          expr: rate(node_network_receive_errs_total[5m]) > 10
+          for: 5m
+          labels:
+            severity: warning
+            category: network
+          annotations:
+            summary: 'High network errors on {{ $labels.instance }}'
+            description: 'Network interface {{ $labels.device }} on {{ $labels.instance }} is experiencing errors'
+            runbook: 'Check network connectivity and hardware'
+
+        - alert: IngressHighLatency
+          expr: |
+            histogram_quantile(0.95,
+              sum(rate(nginx_ingress_controller_request_duration_seconds_bucket[5m])) by (ingress, le)
+            ) > 5
+          for: 10m
+          labels:
+            severity: warning
+            category: network
+          annotations:
+            summary: 'High latency on ingress {{ $labels.ingress }}'
+            description: '95th percentile latency is {{ $value }}s for ingress {{ $labels.ingress }}'
+            runbook: 'Check backend service performance'
+
+    # Kubernetes Cluster Alerts
+    - name: kubernetes-cluster
+      interval: 30s
+      rules:
+        - alert: NodeNotReady
+          expr: kube_node_status_condition{condition="Ready",status="true"} == 0
+          for: 5m
+          labels:
+            severity: critical
+            category: infrastructure
+          annotations:
+            summary: 'Node {{ $labels.node }} is not ready'
+            description: 'Node {{ $labels.node }} has been in NotReady state for more than 5 minutes'
+            runbook: 'Check node status: kubectl describe node {{ $labels.node }}'
+
+        - alert: NodeHighDiskPressure
+          expr: kube_node_status_condition{condition="DiskPressure",status="true"} == 1
+          for: 5m
+          labels:
+            severity: warning
+            category: infrastructure
+          annotations:
+            summary: 'Node {{ $labels.node }} has disk pressure'
+            description: 'Node {{ $labels.node }} is experiencing disk pressure'
+            runbook: 'Clean up disk space on the node'
+
+        - alert: NodeHighMemoryPressure
+          expr: kube_node_status_condition{condition="MemoryPressure",status="true"} == 1
+          for: 5m
+          labels:
+            severity: warning
+            category: infrastructure
+          annotations:
+            summary: 'Node {{ $labels.node }} has memory pressure'
+            description: 'Node {{ $labels.node }} is experiencing memory pressure'
+            runbook: 'Check pod memory usage and consider adding more nodes'

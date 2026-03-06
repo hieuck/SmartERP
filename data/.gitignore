@@ -1,0 +1,6 @@
+# PostgreSQL data
+postgres/
+
+# Backups
+*.sql
+*.dump

@@ -1,0 +1,480 @@
+---
+# Redis Cluster with Sentinel for High Availability
+# Provides automatic failover and monitoring
+
+# Headless Service for Redis
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-cluster
+  namespace: production
+  labels:
+    app: redis-cluster
+spec:
+  ports:
+    - port: 6379
+      name: redis
+    - port: 26379
+      name: sentinel
+  clusterIP: None
+  selector:
+    app: redis-cluster
+
+---
+# Service for Redis Master
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-master
+  namespace: production
+  labels:
+    app: redis-cluster
+spec:
+  type: ClusterIP
+  ports:
+    - port: 6379
+      targetPort: 6379
+      name: redis
+  selector:
+    app: redis-cluster
+
+---
+# Service for Sentinel
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-sentinel
+  namespace: production
+  labels:
+    app: redis-cluster
+spec:
+  type: ClusterIP
+  ports:
+    - port: 26379
+      targetPort: 26379
+      name: sentinel
+  selector:
+    app: redis-cluster
+
+---
+# ConfigMap for Redis Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-cluster-config
+  namespace: production
+data:
+  redis.conf: |
+    # Redis Configuration
+
+    # Network
+    bind 0.0.0.0
+    port 6379
+    tcp-backlog 511
+    timeout 0
+    tcp-keepalive 300
+
+    # General
+    daemonize no
+    supervised no
+    pidfile /var/run/redis.pid
+    loglevel notice
+    logfile ""
+    databases 16
+
+    # Snapshotting
+    save 900 1
+    save 300 10
+    save 60 10000
+    stop-writes-on-bgsave-error yes
+    rdbcompression yes
+    rdbchecksum yes
+    dbfilename dump.rdb
+    dir /data
+
+    # Replication
+    replica-serve-stale-data yes
+    replica-read-only yes
+    repl-diskless-sync no
+    repl-diskless-sync-delay 5
+    repl-disable-tcp-nodelay no
+    replica-priority 100
+
+    # Security
+    requirepass REDIS_PASSWORD_PLACEHOLDER
+    masterauth REDIS_PASSWORD_PLACEHOLDER
+
+    # Limits
+    maxclients 10000
+    maxmemory 2gb
+    maxmemory-policy allkeys-lru
+
+    # Append Only File
+    appendonly yes
+    appendfilename "appendonly.aof"
+    appendfsync everysec
+    no-appendfsync-on-rewrite no
+    auto-aof-rewrite-percentage 100
+    auto-aof-rewrite-min-size 64mb
+
+    # Slow Log
+    slowlog-log-slower-than 10000
+    slowlog-max-len 128
+
+  sentinel.conf: |
+    # Sentinel Configuration
+
+    port 26379
+    dir /data
+
+    # Monitor master
+    sentinel monitor mymaster redis-cluster-0.redis-cluster.production.svc.cluster.local 6379 2
+    sentinel auth-pass mymaster REDIS_PASSWORD_PLACEHOLDER
+
+    # Failover settings
+    sentinel down-after-milliseconds mymaster 5000
+    sentinel parallel-syncs mymaster 1
+    sentinel failover-timeout mymaster 10000
+
+    # Notification script (optional)
+    # sentinel notification-script mymaster /path/to/notification.sh
+
+    # Client reconfig script (optional)
+    # sentinel client-reconfig-script mymaster /path/to/reconfig.sh
+
+  init-redis.sh: |
+    #!/bin/bash
+    set -e
+
+    REDIS_PASSWORD="${REDIS_PASSWORD}"
+
+    # Replace password placeholder in config
+    sed -i "s/REDIS_PASSWORD_PLACEHOLDER/${REDIS_PASSWORD}/g" /etc/redis/redis.conf
+    sed -i "s/REDIS_PASSWORD_PLACEHOLDER/${REDIS_PASSWORD}/g" /etc/redis/sentinel.conf
+
+    # Determine if this is master or replica
+    if [ "$HOSTNAME" = "redis-cluster-0" ]; then
+      echo "Starting as Redis Master"
+      redis-server /etc/redis/redis.conf
+    else
+      echo "Starting as Redis Replica"
+      redis-server /etc/redis/redis.conf --replicaof redis-cluster-0.redis-cluster.production.svc.cluster.local 6379
+    fi
+
+  init-sentinel.sh: |
+    #!/bin/bash
+    set -e
+
+    REDIS_PASSWORD="${REDIS_PASSWORD}"
+
+    # Replace password placeholder in sentinel config
+    sed -i "s/REDIS_PASSWORD_PLACEHOLDER/${REDIS_PASSWORD}/g" /etc/redis/sentinel.conf
+
+    # Wait for Redis to be ready
+    sleep 10
+
+    echo "Starting Redis Sentinel"
+    redis-sentinel /etc/redis/sentinel.conf
+
+---
+# StatefulSet for Redis Cluster
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis-cluster
+  namespace: production
+spec:
+  serviceName: redis-cluster
+  replicas: 3 # 1 master + 2 replicas
+  selector:
+    matchLabels:
+      app: redis-cluster
+  template:
+    metadata:
+      labels:
+        app: redis-cluster
+    spec:
+      terminationGracePeriodSeconds: 30
+
+      initContainers:
+        - name: config-setup
+          image: redis:7-alpine
+          command:
+            - sh
+            - -c
+            - |
+              cp /tmp/redis/redis.conf /etc/redis/redis.conf
+              cp /tmp/redis/sentinel.conf /etc/redis/sentinel.conf
+              chmod 644 /etc/redis/*.conf
+          volumeMounts:
+            - name: redis-config
+              mountPath: /tmp/redis
+            - name: config-storage
+              mountPath: /etc/redis
+
+      containers:
+        # Redis Container
+        - name: redis
+          image: redis:7-alpine
+          ports:
+            - containerPort: 6379
+              name: redis
+
+          command:
+            - sh
+            - /scripts/init-redis.sh
+
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: database-secrets
+                  key: REDIS_PASSWORD
+
+          volumeMounts:
+            - name: redis-storage
+              mountPath: /data
+            - name: config-storage
+              mountPath: /etc/redis
+            - name: scripts
+              mountPath: /scripts
+
+          resources:
+            requests:
+              memory: '1Gi'
+              cpu: '500m'
+            limits:
+              memory: '2Gi'
+              cpu: '1000m'
+
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - redis-cli -a $REDIS_PASSWORD ping
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - redis-cli -a $REDIS_PASSWORD ping
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+
+        # Sentinel Container
+        - name: sentinel
+          image: redis:7-alpine
+          ports:
+            - containerPort: 26379
+              name: sentinel
+
+          command:
+            - sh
+            - /scripts/init-sentinel.sh
+
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: database-secrets
+                  key: REDIS_PASSWORD
+
+          volumeMounts:
+            - name: redis-storage
+              mountPath: /data
+            - name: config-storage
+              mountPath: /etc/redis
+            - name: scripts
+              mountPath: /scripts
+
+          resources:
+            requests:
+              memory: '256Mi'
+              cpu: '100m'
+            limits:
+              memory: '512Mi'
+              cpu: '200m'
+
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - redis-cli -p 26379 ping
+            initialDelaySeconds: 30
+            periodSeconds: 10
+
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - redis-cli -p 26379 ping
+            initialDelaySeconds: 10
+            periodSeconds: 5
+
+      volumes:
+        - name: redis-config
+          configMap:
+            name: redis-cluster-config
+        - name: scripts
+          configMap:
+            name: redis-cluster-config
+            defaultMode: 0755
+        - name: config-storage
+          emptyDir: {}
+
+  volumeClaimTemplates:
+    - metadata:
+        name: redis-storage
+      spec:
+        accessModes: ['ReadWriteOnce']
+        storageClassName: fast-ssd
+        resources:
+          requests:
+            storage: 20Gi
+
+---
+# PodDisruptionBudget for High Availability
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: redis-cluster-pdb
+  namespace: production
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: redis-cluster
+
+---
+# Backup CronJob
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: redis-backup
+  namespace: production
+spec:
+  schedule: '0 4 * * *' # Daily at 4 AM
+  successfulJobsHistoryLimit: 7
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: backup
+              image: redis:7-alpine
+              command:
+                - sh
+                - -c
+                - |
+                  BACKUP_FILE="/backups/redis-backup-$(date +%Y%m%d-%H%M%S).rdb"
+
+                  # Trigger BGSAVE on master
+                  redis-cli -h redis-cluster-0.redis-cluster -a $REDIS_PASSWORD BGSAVE
+
+                  # Wait for save to complete
+                  sleep 10
+
+                  # Copy RDB file
+                  kubectl cp production/redis-cluster-0:/data/dump.rdb $BACKUP_FILE
+
+                  echo "Backup completed: $BACKUP_FILE"
+
+                  # Keep only last 30 days of backups
+                  find /backups -name "redis-backup-*.rdb" -mtime +30 -delete
+              env:
+                - name: REDIS_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: database-secrets
+                      key: REDIS_PASSWORD
+              volumeMounts:
+                - name: backup-storage
+                  mountPath: /backups
+          restartPolicy: OnFailure
+          volumes:
+            - name: backup-storage
+              persistentVolumeClaim:
+                claimName: redis-backup-pvc
+
+---
+# PVC for Backups
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-backup-pvc
+  namespace: production
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: standard
+  resources:
+    requests:
+      storage: 50Gi
+
+---
+# Redis Exporter for Monitoring (Optional)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-exporter
+  namespace: production
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis-exporter
+  template:
+    metadata:
+      labels:
+        app: redis-exporter
+    spec:
+      containers:
+        - name: redis-exporter
+          image: oliver006/redis_exporter:latest
+          ports:
+            - containerPort: 9121
+              name: metrics
+          env:
+            - name: REDIS_ADDR
+              value: 'redis-master:6379'
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: database-secrets
+                  key: REDIS_PASSWORD
+          resources:
+            requests:
+              memory: '64Mi'
+              cpu: '50m'
+            limits:
+              memory: '128Mi'
+              cpu: '100m'
+
+---
+# Service for Redis Exporter
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-exporter
+  namespace: production
+  labels:
+    app: redis-exporter
+spec:
+  type: ClusterIP
+  ports:
+    - port: 9121
+      targetPort: 9121
+      name: metrics
+  selector:
+    app: redis-exporter

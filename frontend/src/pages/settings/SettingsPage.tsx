@@ -1,0 +1,331 @@
+import { useState, useEffect } from 'react';
+import { Card, Tabs, Form, Input, Select, Switch, Button, Space, message, Table, Popconfirm, Modal } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, SaveOutlined } from '@ant-design/icons';
+import { settingsService, Setting, SettingType, SettingCategory } from '../../services/settingsService';
+
+const { TabPane } = Tabs;
+const { TextArea } = Input;
+
+const categoryLabels: Record<SettingCategory, string> = {
+  [SettingCategory.GENERAL]: 'Chung',
+  [SettingCategory.BUSINESS]: 'Kinh doanh',
+  [SettingCategory.INVENTORY]: 'Kho hàng',
+  [SettingCategory.SALES]: 'Bán hàng',
+  [SettingCategory.PURCHASE]: 'Mua hàng',
+  [SettingCategory.FINANCIAL]: 'Tài chính',
+  [SettingCategory.NOTIFICATION]: 'Thông báo',
+  [SettingCategory.SECURITY]: 'Bảo mật',
+};
+
+const typeLabels: Record<SettingType, string> = {
+  [SettingType.STRING]: 'Chuỗi',
+  [SettingType.NUMBER]: 'Số',
+  [SettingType.BOOLEAN]: 'Đúng/Sai',
+  [SettingType.JSON]: 'JSON',
+};
+
+export default function SettingsPage() {
+  const [loading, setLoading] = useState(false);
+  const [settings, setSettings] = useState<Setting[]>([]);
+  const [activeCategory, setActiveCategory] = useState<SettingCategory>(SettingCategory.GENERAL);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [editingSetting, setEditingSetting] = useState<Setting | null>(null);
+  const [form] = Form.useForm();
+
+  useEffect(() => {
+    fetchSettings();
+  }, [activeCategory]);
+
+  const fetchSettings = async () => {
+    setLoading(true);
+    try {
+      const data = await settingsService.getByCategory(activeCategory);
+      setSettings(data);
+    } catch (error: any) {
+      message.error('Không thể tải cài đặt: ' + (error.message || 'Lỗi không xác định'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async (values: any) => {
+    try {
+      if (editingSetting) {
+        await settingsService.update(editingSetting.key, {
+          value: values.value,
+          description: values.description,
+          isPublic: values.isPublic,
+        });
+        message.success('Cập nhật cài đặt thành công');
+      } else {
+        await settingsService.create({
+          key: values.key,
+          value: values.value,
+          type: values.type,
+          category: activeCategory,
+          description: values.description,
+          isPublic: values.isPublic,
+        });
+        message.success('Tạo cài đặt thành công');
+      }
+      setModalVisible(false);
+      setEditingSetting(null);
+      form.resetFields();
+      fetchSettings();
+    } catch (error: any) {
+      message.error('Không thể lưu cài đặt: ' + (error.message || 'Lỗi không xác định'));
+    }
+  };
+
+  const handleDelete = async (key: string) => {
+    try {
+      await settingsService.delete(key);
+      message.success('Xóa cài đặt thành công');
+      fetchSettings();
+    } catch (error: any) {
+      message.error('Không thể xóa cài đặt: ' + (error.message || 'Lỗi không xác định'));
+    }
+  };
+
+  const handleEdit = (setting: Setting) => {
+    setEditingSetting(setting);
+    form.setFieldsValue({
+      key: setting.key,
+      value: setting.value,
+      type: setting.type,
+      description: setting.description,
+      isPublic: setting.isPublic,
+    });
+    setModalVisible(true);
+  };
+
+  const handleAdd = () => {
+    setEditingSetting(null);
+    form.resetFields();
+    form.setFieldsValue({
+      type: SettingType.STRING,
+      isPublic: false,
+    });
+    setModalVisible(true);
+  };
+
+  const renderValue = (value: string, type: SettingType) => {
+    if (type === SettingType.BOOLEAN) {
+      return value === 'true' ? 'Có' : 'Không';
+    }
+    if (type === SettingType.JSON) {
+      try {
+        return <pre style={{ margin: 0 }}>{JSON.stringify(JSON.parse(value), null, 2)}</pre>;
+      } catch {
+        return value;
+      }
+    }
+    return value;
+  };
+
+  const columns = [
+    {
+      title: 'Khóa',
+      dataIndex: 'key',
+      key: 'key',
+      width: 200,
+    },
+    {
+      title: 'Giá trị',
+      dataIndex: 'value',
+      key: 'value',
+      ellipsis: true,
+      render: (value: string, record: Setting) => renderValue(value, record.type),
+    },
+    {
+      title: 'Loại',
+      dataIndex: 'type',
+      key: 'type',
+      width: 100,
+      render: (type: SettingType) => typeLabels[type],
+    },
+    {
+      title: 'Mô tả',
+      dataIndex: 'description',
+      key: 'description',
+      ellipsis: true,
+    },
+    {
+      title: 'Công khai',
+      dataIndex: 'isPublic',
+      key: 'isPublic',
+      width: 100,
+      render: (isPublic: boolean) => (isPublic ? 'Có' : 'Không'),
+    },
+    {
+      title: 'Thao tác',
+      key: 'action',
+      width: 150,
+      fixed: 'right' as const,
+      render: (_: any, record: Setting) => (
+        <Space size="small">
+          <Button
+            type="link"
+            size="small"
+            icon={<EditOutlined />}
+            onClick={() => handleEdit(record)}
+          >
+            Sửa
+          </Button>
+          <Popconfirm
+            title="Bạn có chắc muốn xóa cài đặt này?"
+            onConfirm={() => handleDelete(record.key)}
+            okText="Xóa"
+            cancelText="Hủy"
+          >
+            <Button type="link" size="small" danger icon={<DeleteOutlined />}>
+              Xóa
+            </Button>
+          </Popconfirm>
+        </Space>
+      ),
+    },
+  ];
+
+  return (
+    <div>
+      <Card
+        title="Cài đặt hệ thống"
+        extra={
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+            Thêm cài đặt
+          </Button>
+        }
+      >
+        <Tabs activeKey={activeCategory} onChange={(key) => setActiveCategory(key as SettingCategory)}>
+          {Object.entries(categoryLabels).map(([key, label]) => (
+            <TabPane tab={label} key={key}>
+              <Table
+                loading={loading}
+                dataSource={settings}
+                columns={columns}
+                rowKey="key"
+                scroll={{ x: 'max-content' }}
+                pagination={false}
+              />
+            </TabPane>
+          ))}
+        </Tabs>
+      </Card>
+
+      <Modal
+        title={editingSetting ? 'Sửa cài đặt' : 'Thêm cài đặt'}
+        open={modalVisible}
+        onCancel={() => {
+          setModalVisible(false);
+          setEditingSetting(null);
+          form.resetFields();
+        }}
+        footer={null}
+        width={600}
+      >
+        <Form form={form} layout="vertical" onFinish={handleSave}>
+          <Form.Item
+            label="Khóa"
+            name="key"
+            rules={[{ required: true, message: 'Vui lòng nhập khóa' }]}
+          >
+            <Input placeholder="VD: company_name" disabled={!!editingSetting} />
+          </Form.Item>
+
+          <Form.Item
+            label="Loại"
+            name="type"
+            rules={[{ required: true, message: 'Vui lòng chọn loại' }]}
+          >
+            <Select disabled={!!editingSetting}>
+              {Object.entries(typeLabels).map(([key, label]) => (
+                <Select.Option key={key} value={key}>
+                  {label}
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
+
+          <Form.Item
+            noStyle
+            shouldUpdate={(prevValues, currentValues) => prevValues.type !== currentValues.type}
+          >
+            {({ getFieldValue }) => {
+              const type = getFieldValue('type');
+              if (type === SettingType.BOOLEAN) {
+                return (
+                  <Form.Item
+                    label="Giá trị"
+                    name="value"
+                    valuePropName="checked"
+                    rules={[{ required: true }]}
+                  >
+                    <Switch checkedChildren="Có" unCheckedChildren="Không" />
+                  </Form.Item>
+                );
+              }
+              if (type === SettingType.JSON) {
+                return (
+                  <Form.Item
+                    label="Giá trị (JSON)"
+                    name="value"
+                    rules={[
+                      { required: true, message: 'Vui lòng nhập giá trị' },
+                      {
+                        validator: (_, value) => {
+                          try {
+                            JSON.parse(value);
+                            return Promise.resolve();
+                          } catch {
+                            return Promise.reject('JSON không hợp lệ');
+                          }
+                        },
+                      },
+                    ]}
+                  >
+                    <TextArea rows={6} placeholder='{"key": "value"}' />
+                  </Form.Item>
+                );
+              }
+              return (
+                <Form.Item
+                  label="Giá trị"
+                  name="value"
+                  rules={[{ required: true, message: 'Vui lòng nhập giá trị' }]}
+                >
+                  <Input placeholder="Nhập giá trị" />
+                </Form.Item>
+              );
+            }}
+          </Form.Item>
+
+          <Form.Item label="Mô tả" name="description">
+            <TextArea rows={3} placeholder="Mô tả cài đặt" />
+          </Form.Item>
+
+          <Form.Item label="Công khai" name="isPublic" valuePropName="checked">
+            <Switch checkedChildren="Có" unCheckedChildren="Không" />
+          </Form.Item>
+
+          <Form.Item>
+            <Space>
+              <Button type="primary" htmlType="submit" icon={<SaveOutlined />}>
+                Lưu
+              </Button>
+              <Button
+                onClick={() => {
+                  setModalVisible(false);
+                  setEditingSetting(null);
+                  form.resetFields();
+                }}
+              >
+                Hủy
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Modal>
+    </div>
+  );
+}

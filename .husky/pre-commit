@@ -1,0 +1,19 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Pre-commit hook - Docker-based checks
+echo "🔍 Running pre-commit checks (Docker)..."
+
+# 1. Lint staged files
+echo "📝 Linting code..."
+npm run lint-staged
+
+# 2. Type check (in Docker)
+echo "🔤 Type checking..."
+npm run type-check || {
+  echo "❌ Type check failed. Please fix type errors."
+  echo "💡 To skip: git commit --no-verify"
+  exit 1
+}
+
+echo "✅ Pre-commit checks passed!"

@@ -1,0 +1,14 @@
+.main-content {
+  margin: 24px;
+  padding: 24px;
+  background: #fff;
+  min-height: 280px;
+  border-radius: 8px;
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    margin: 16px;
+    padding: 16px;
+  }
+}

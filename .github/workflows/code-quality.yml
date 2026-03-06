@@ -1,0 +1,343 @@
+name: Code Quality Checks
+
+on:
+  push:
+    branches: [main, develop, feature/**]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+jobs:
+  eslint:
+    name: ESLint Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+        continue-on-error: false
+
+      - name: Annotate code linting results
+        uses: ataylorme/eslint-annotate-action@v2
+        if: failure()
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          report-json: 'eslint-report.json'
+
+  prettier:
+    name: Prettier Format Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check code formatting
+        run: npm run format -- --check
+
+      - name: Show formatting diff
+        if: failure()
+        run: |
+          echo "❌ Code formatting issues detected!"
+          echo "Run 'npm run format' to fix formatting issues"
+
+  typescript:
+    name: TypeScript Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript type check
+        run: npx turbo run type-check
+
+      - name: Report type errors
+        if: failure()
+        run: |
+          echo "❌ TypeScript type errors detected!"
+          echo "Fix type errors before merging"
+
+  code-coverage:
+    name: Code Coverage Check
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+      mongodb:
+        image: mongo:7-jammy
+        options: >-
+          --health-cmd "mongosh --eval 'db.runCommand({ ping: 1 })'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 27017:27017
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests with coverage
+        run: npm test -- --coverage --coverageReporters=json --coverageReporters=lcov --coverageReporters=text
+        env:
+          NODE_ENV: test
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: test_db
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+          MONGODB_URI: mongodb://localhost:27017/test_db
+
+      - name: Check coverage thresholds
+        run: |
+          echo "Checking code coverage thresholds..."
+          node -e "
+          const fs = require('fs');
+          const coverage = JSON.parse(fs.readFileSync('./coverage/coverage-summary.json', 'utf8'));
+          const total = coverage.total;
+
+          const thresholds = {
+            statements: 80,
+            branches: 75,
+            functions: 80,
+            lines: 80
+          };
+
+          let failed = false;
+
+          for (const [key, threshold] of Object.entries(thresholds)) {
+            const actual = total[key].pct;
+            const status = actual >= threshold ? '✅' : '❌';
+            console.log(\`\${status} \${key}: \${actual.toFixed(2)}% (threshold: \${threshold}%)\`);
+            if (actual < threshold) {
+              failed = true;
+            }
+          }
+
+          if (failed) {
+            console.error('\\n❌ Code coverage below thresholds!');
+            process.exit(1);
+          } else {
+            console.log('\\n✅ All coverage thresholds met!');
+          }
+          "
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage/lcov.info
+          flags: unittests
+          name: code-coverage
+          fail_ci_if_error: false
+
+      - name: Generate coverage badge
+        uses: cicirello/jacoco-badge-generator@v2
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        with:
+          badges-directory: badges
+          generate-branches-badge: true
+          generate-summary: true
+
+  security-scan:
+    name: Security Vulnerability Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm audit
+        run: |
+          echo "Running npm audit..."
+          npm audit --audit-level=moderate || true
+          npm audit --json > npm-audit.json || true
+
+      - name: Check for high/critical vulnerabilities
+        run: |
+          echo "Checking for high and critical vulnerabilities..."
+          HIGH_VULNS=$(npm audit --json | jq '.metadata.vulnerabilities.high // 0')
+          CRITICAL_VULNS=$(npm audit --json | jq '.metadata.vulnerabilities.critical // 0')
+
+          echo "High vulnerabilities: $HIGH_VULNS"
+          echo "Critical vulnerabilities: $CRITICAL_VULNS"
+
+          if [ "$CRITICAL_VULNS" -gt 0 ]; then
+            echo "❌ Critical vulnerabilities found! Please fix immediately."
+            exit 1
+          fi
+
+          if [ "$HIGH_VULNS" -gt 0 ]; then
+            echo "⚠️  High vulnerabilities found. Please review and fix."
+            exit 1
+          fi
+
+          echo "✅ No high or critical vulnerabilities found"
+
+      - name: Run Snyk security scan
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high
+
+      - name: Upload Snyk results to GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: snyk.sarif
+
+  codeql-analysis:
+    name: CodeQL Security Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ['javascript', 'typescript']
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-and-quality
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v2
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+        with:
+          category: '/language:${{ matrix.language }}'
+
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v3
+        with:
+          fail-on-severity: moderate
+          deny-licenses: GPL-2.0, GPL-3.0
+
+  quality-gate:
+    name: Quality Gate
+    runs-on: ubuntu-latest
+    needs: [eslint, prettier, typescript, code-coverage, security-scan]
+    if: always()
+    steps:
+      - name: Check all quality checks passed
+        run: |
+          echo "ESLint: ${{ needs.eslint.result }}"
+          echo "Prettier: ${{ needs.prettier.result }}"
+          echo "TypeScript: ${{ needs.typescript.result }}"
+          echo "Code Coverage: ${{ needs.code-coverage.result }}"
+          echo "Security Scan: ${{ needs.security-scan.result }}"
+
+          if [ "${{ needs.eslint.result }}" != "success" ]; then
+            echo "❌ ESLint check failed"
+            exit 1
+          fi
+
+          if [ "${{ needs.prettier.result }}" != "success" ]; then
+            echo "❌ Prettier check failed"
+            exit 1
+          fi
+
+          if [ "${{ needs.typescript.result }}" != "success" ]; then
+            echo "❌ TypeScript check failed"
+            exit 1
+          fi
+
+          if [ "${{ needs.code-coverage.result }}" != "success" ]; then
+            echo "❌ Code coverage check failed"
+            exit 1
+          fi
+
+          if [ "${{ needs.security-scan.result }}" != "success" ]; then
+            echo "❌ Security scan failed"
+            exit 1
+          fi
+
+          echo "✅ All quality checks passed!"

@@ -1,0 +1,22 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Pre-push hook - Docker-based tests
+echo "🚀 Running pre-push checks (Docker)..."
+
+# 1. Run unit tests (in Docker)
+echo "🧪 Running unit tests..."
+npm run test:unit || {
+  echo "❌ Unit tests failed. Please fix failing tests."
+  echo "💡 To skip: git push --no-verify"
+  exit 1
+}
+
+# 2. Security audit
+echo "🔒 Security audit..."
+npm run security:audit || {
+  echo "⚠️  Security vulnerabilities found. Consider fixing."
+  # Don't block - just warn
+}
+
+echo "✅ Pre-push checks passed!"

@@ -1,0 +1,130 @@
+{
+  "dashboard": {
+    "title": "Smart ERP - Business Metrics",
+    "tags": ["smart-erp", "business"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Orders Created (per hour)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(smart_erp_orders_created_total[1h]) * 3600",
+            "legendFormat": "Tenant {{tenant_id}}"
+          }
+        ],
+        "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 }
+      },
+      {
+        "id": 2,
+        "title": "Orders Completed (per hour)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(smart_erp_orders_completed_total[1h]) * 3600",
+            "legendFormat": "Tenant {{tenant_id}}"
+          }
+        ],
+        "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 }
+      },
+      {
+        "id": 3,
+        "title": "Revenue (per hour)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(smart_erp_revenue_total[1h]) * 3600",
+            "legendFormat": "Tenant {{tenant_id}}"
+          }
+        ],
+        "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 }
+      },
+      {
+        "id": 4,
+        "title": "Products Created (per day)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(smart_erp_products_created_total[1d]) * 86400",
+            "legendFormat": "Tenant {{tenant_id}}"
+          }
+        ],
+        "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 }
+      },
+      {
+        "id": 5,
+        "title": "Customers Created (per day)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(smart_erp_customers_created_total[1d]) * 86400",
+            "legendFormat": "Tenant {{tenant_id}}"
+          }
+        ],
+        "gridPos": { "x": 0, "y": 16, "w": 12, "h": 8 }
+      },
+      {
+        "id": 6,
+        "title": "Active Users by Tenant",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "smart_erp_active_users",
+            "legendFormat": "Tenant {{tenant_id}}"
+          }
+        ],
+        "gridPos": { "x": 12, "y": 16, "w": 12, "h": 8 }
+      },
+      {
+        "id": 7,
+        "title": "Total Active Tenants",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "smart_erp_active_tenants"
+          }
+        ],
+        "gridPos": { "x": 0, "y": 24, "w": 6, "h": 4 }
+      },
+      {
+        "id": 8,
+        "title": "Total Orders (24h)",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "increase(smart_erp_orders_created_total[24h])"
+          }
+        ],
+        "gridPos": { "x": 6, "y": 24, "w": 6, "h": 4 }
+      },
+      {
+        "id": 9,
+        "title": "Total Revenue (24h)",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "increase(smart_erp_revenue_total[24h])"
+          }
+        ],
+        "gridPos": { "x": 12, "y": 24, "w": 6, "h": 4 }
+      },
+      {
+        "id": 10,
+        "title": "Completion Rate",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "(sum(rate(smart_erp_orders_completed_total[24h])) / sum(rate(smart_erp_orders_created_total[24h]))) * 100"
+          }
+        ],
+        "gridPos": { "x": 18, "y": 24, "w": 6, "h": 4 }
+      }
+    ],
+    "refresh": "30s",
+    "time": {
+      "from": "now-24h",
+      "to": "now"
+    }
+  }
+}

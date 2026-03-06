@@ -1,0 +1,55 @@
+{
+  "company": {
+    "name": "CÔNG TY TNHH TƯỜNG THẠCH CAO",
+    "address": "123 Đường ABC, Quận XYZ, TP.HCM",
+    "phone": "(028) 1234 5678",
+    "taxCode": "0123456789",
+    "logo": ""
+  },
+  "templates": {
+    "stockReceipt": {
+      "title": "PHIẾU NHẬP KHO",
+      "showLogo": true,
+      "showCompanyInfo": true,
+      "showNotes": true,
+      "showSignatures": true,
+      "signatures": ["Người lập phiếu", "Thủ kho", "Giám đốc"]
+    },
+    "stockIssue": {
+      "title": "PHIẾU XUẤT KHO",
+      "showLogo": true,
+      "showCompanyInfo": true,
+      "showNotes": true,
+      "showSignatures": true,
+      "signatures": ["Người lập phiếu", "Thủ kho", "Giám đốc"]
+    },
+    "salesOrder": {
+      "title": "ĐƠN HÀNG BÁN",
+      "showLogo": true,
+      "showCompanyInfo": true,
+      "showCustomerInfo": true,
+      "showNotes": true,
+      "showSignatures": true,
+      "signatures": ["Người lập đơn", "Khách hàng", "Giám đốc"]
+    },
+    "invoice": {
+      "title": "HÓA ĐƠN BÁN HÀNG",
+      "showLogo": true,
+      "showCompanyInfo": true,
+      "showCustomerInfo": true,
+      "showTax": true,
+      "taxRate": 0,
+      "showAmountInWords": true,
+      "showSignatures": true,
+      "signatures": ["Người mua hàng", "Người bán hàng", "Thủ trưởng đơn vị"]
+    }
+  },
+  "styles": {
+    "fontSize": "12pt",
+    "fontFamily": "Arial, sans-serif",
+    "lineHeight": "1.6",
+    "padding": "20mm",
+    "headerFontSize": "18pt",
+    "companyFontSize": "16pt"
+  }
+}

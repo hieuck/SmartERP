@@ -1,0 +1,161 @@
+# Sentry Helm Chart Values
+# Install with: helm install sentry sentry/sentry -f sentry-values.yaml -n monitoring
+
+# User configuration
+user:
+  email: admin@plaster-erp.com
+  password: 'CHANGE_ME_ADMIN_PASSWORD'
+
+# Ingress configuration
+ingress:
+  enabled: true
+  hostname: sentry.plaster-erp.com
+  ingressClassName: nginx
+  tls: true
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: 'true'
+    nginx.ingress.kubernetes.io/proxy-body-size: '50m'
+
+# PostgreSQL for Sentry
+postgresql:
+  enabled: true
+  auth:
+    username: sentry
+    password: 'CHANGE_ME_DB_PASSWORD'
+    database: sentry
+  primary:
+    persistence:
+      enabled: true
+      size: 20Gi
+      storageClass: standard
+
+# Redis for Sentry
+redis:
+  enabled: true
+  auth:
+    enabled: false
+  master:
+    persistence:
+      enabled: true
+      size: 10Gi
+      storageClass: standard
+
+# Kafka for event processing
+kafka:
+  enabled: true
+  persistence:
+    enabled: true
+    size: 20Gi
+    storageClass: standard
+  zookeeper:
+    persistence:
+      enabled: true
+      size: 10Gi
+      storageClass: standard
+
+# Sentry configuration
+sentry:
+  web:
+    replicas: 2
+    resources:
+      requests:
+        memory: '1Gi'
+        cpu: '500m'
+      limits:
+        memory: '2Gi'
+        cpu: '1000m'
+
+  worker:
+    replicas: 3
+    resources:
+      requests:
+        memory: '1Gi'
+        cpu: '500m'
+      limits:
+        memory: '2Gi'
+        cpu: '1000m'
+
+  cron:
+    resources:
+      requests:
+        memory: '500Mi'
+        cpu: '250m'
+      limits:
+        memory: '1Gi'
+        cpu: '500m'
+
+# File storage
+filestore:
+  backend: filesystem
+  filesystem:
+    persistence:
+      enabled: true
+      size: 50Gi
+      storageClass: standard
+
+# Email configuration
+mail:
+  backend: smtp
+  useTls: true
+  username: sentry@smart-erp.com
+  password: 'CHANGE_ME_EMAIL_PASSWORD'
+  port: 587
+  host: smtp.gmail.com
+  from: sentry@smart-erp.com
+
+# System configuration
+system:
+  secretKey: 'CHANGE_ME_SECRET_KEY_MINIMUM_32_CHARS'
+  url: 'https://sentry.smart-erp.com'
+
+# Performance monitoring
+config:
+  snubaSettingsPy: |
+    CLUSTERS = [
+        {
+            "host": "clickhouse",
+            "port": 9000,
+            "http_port": 8123,
+            "storage_sets": {"events", "transactions"},
+            "single_node": True,
+        },
+    ]
+
+# ClickHouse for performance data
+clickhouse:
+  enabled: true
+  persistence:
+    enabled: true
+    size: 50Gi
+    storageClass: standard
+  resources:
+    requests:
+      memory: '2Gi'
+      cpu: '1000m'
+    limits:
+      memory: '4Gi'
+      cpu: '2000m'
+
+# Relay for event ingestion
+relay:
+  enabled: true
+  replicas: 2
+  resources:
+    requests:
+      memory: '500Mi'
+      cpu: '250m'
+    limits:
+      memory: '1Gi'
+      cpu: '500m'
+
+# Symbolicator for native crash reports
+symbolicator:
+  enabled: true
+  resources:
+    requests:
+      memory: '1Gi'
+      cpu: '500m'
+    limits:
+      memory: '2Gi'
+      cpu: '1000m'

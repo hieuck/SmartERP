@@ -1,0 +1,27 @@
+# Snyk (https://snyk.io) policy file
+
+version: v1.25.0
+
+# Ignore specific vulnerabilities (with justification)
+ignore: {}
+
+# Patch specific vulnerabilities
+patch: {}
+
+# Exclude paths from scanning
+exclude:
+  global:
+    - node_modules/**
+    - dist/**
+    - build/**
+    - coverage/**
+    - '**/*.test.ts'
+    - '**/*.spec.ts'
+
+# Language settings
+language-settings:
+  javascript:
+    # Fail on high severity and above
+    fail-on: high
+    # Include dev dependencies in scan
+    dev: true

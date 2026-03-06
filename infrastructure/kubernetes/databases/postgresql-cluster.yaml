@@ -1,0 +1,363 @@
+---
+# PostgreSQL Production Cluster with Master-Slave Replication
+# This configuration provides high availability with streaming replication
+
+# Headless Service for StatefulSet
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-cluster
+  namespace: production
+  labels:
+    app: postgres-cluster
+spec:
+  ports:
+    - port: 5432
+      name: postgres
+  clusterIP: None
+  selector:
+    app: postgres-cluster
+
+---
+# Service for Master (Read-Write)
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-master
+  namespace: production
+  labels:
+    app: postgres-cluster
+    role: master
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5432
+      targetPort: 5432
+      name: postgres
+  selector:
+    app: postgres-cluster
+    role: master
+
+---
+# Service for Replicas (Read-Only)
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-replica
+  namespace: production
+  labels:
+    app: postgres-cluster
+    role: replica
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5432
+      targetPort: 5432
+      name: postgres
+  selector:
+    app: postgres-cluster
+    role: replica
+
+---
+# ConfigMap for PostgreSQL Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-cluster-config
+  namespace: production
+data:
+  postgresql.conf: |
+    # Connection Settings
+    listen_addresses = '*'
+    max_connections = 200
+
+    # Memory Settings
+    shared_buffers = 512MB
+    effective_cache_size = 1536MB
+    maintenance_work_mem = 128MB
+    work_mem = 5MB
+
+    # WAL Settings for Replication
+    wal_level = replica
+    max_wal_senders = 10
+    max_replication_slots = 10
+    wal_keep_size = 1GB
+    hot_standby = on
+
+    # Checkpoint Settings
+    checkpoint_completion_target = 0.9
+    checkpoint_timeout = 10min
+    max_wal_size = 2GB
+    min_wal_size = 1GB
+
+    # Logging
+    logging_collector = on
+    log_directory = 'log'
+    log_filename = 'postgresql-%Y-%m-%d_%H%M%S.log'
+    log_rotation_age = 1d
+    log_rotation_size = 100MB
+    log_line_prefix = '%t [%p]: [%l-1] user=%u,db=%d,app=%a,client=%h '
+    log_checkpoints = on
+    log_connections = on
+    log_disconnections = on
+    log_duration = off
+    log_lock_waits = on
+
+    # Performance
+    random_page_cost = 1.1
+    effective_io_concurrency = 200
+
+  pg_hba.conf: |
+    # TYPE  DATABASE        USER            ADDRESS                 METHOD
+    local   all             all                                     trust
+    host    all             all             127.0.0.1/32            trust
+    host    all             all             ::1/128                 trust
+    host    all             all             0.0.0.0/0               md5
+    host    replication     replicator      0.0.0.0/0               md5
+
+  master-setup.sh: |
+    #!/bin/bash
+    set -e
+
+    echo "Setting up PostgreSQL Master..."
+
+    # Create replication user
+    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
+        CREATE USER replicator WITH REPLICATION ENCRYPTED PASSWORD '${REPLICATION_PASSWORD}';
+        SELECT pg_create_physical_replication_slot('replica_slot_1');
+        SELECT pg_create_physical_replication_slot('replica_slot_2');
+    EOSQL
+
+    echo "Master setup completed"
+
+  replica-setup.sh: |
+    #!/bin/bash
+    set -e
+
+    echo "Setting up PostgreSQL Replica..."
+
+    # Wait for master to be ready
+    until pg_isready -h postgres-cluster-0.postgres-cluster -p 5432 -U postgres; do
+      echo "Waiting for master to be ready..."
+      sleep 2
+    done
+
+    # Remove existing data
+    rm -rf /var/lib/postgresql/data/*
+
+    # Create base backup from master
+    PGPASSWORD=${REPLICATION_PASSWORD} pg_basebackup \
+      -h postgres-cluster-0.postgres-cluster \
+      -D /var/lib/postgresql/data \
+      -U replicator \
+      -v -P -W -R
+
+    # Create standby.signal file
+    touch /var/lib/postgresql/data/standby.signal
+
+    echo "Replica setup completed"
+
+---
+# StatefulSet for PostgreSQL Cluster
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-cluster
+  namespace: production
+spec:
+  serviceName: postgres-cluster
+  replicas: 3 # 1 master + 2 replicas
+  selector:
+    matchLabels:
+      app: postgres-cluster
+  template:
+    metadata:
+      labels:
+        app: postgres-cluster
+    spec:
+      initContainers:
+        - name: init-postgres
+          image: postgres:15-alpine
+          command:
+            - sh
+            - -c
+            - |
+              if [ ! -f /var/lib/postgresql/data/PG_VERSION ]; then
+                if [ "$HOSTNAME" = "postgres-cluster-0" ]; then
+                  echo "Initializing master node..."
+                  # Master initialization will be done by postgres container
+                else
+                  echo "Initializing replica node..."
+                  # Replica will sync from master
+                fi
+              fi
+          volumeMounts:
+            - name: postgres-storage
+              mountPath: /var/lib/postgresql/data
+
+      containers:
+        - name: postgres
+          image: postgres:15-alpine
+          ports:
+            - containerPort: 5432
+              name: postgres
+          env:
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: POSTGRES_DB
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: database-secrets
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: database-secrets
+                  key: POSTGRES_PASSWORD
+            - name: REPLICATION_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: database-secrets
+                  key: POSTGRES_REPLICATION_PASSWORD
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+
+          volumeMounts:
+            - name: postgres-storage
+              mountPath: /var/lib/postgresql/data
+            - name: postgres-config
+              mountPath: /etc/postgresql
+            - name: scripts
+              mountPath: /docker-entrypoint-initdb.d
+
+          resources:
+            requests:
+              memory: '2Gi'
+              cpu: '1000m'
+            limits:
+              memory: '4Gi'
+              cpu: '2000m'
+
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - pg_isready -U $POSTGRES_USER -d $POSTGRES_DB
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - pg_isready -U $POSTGRES_USER -d $POSTGRES_DB
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+
+      volumes:
+        - name: postgres-config
+          configMap:
+            name: postgres-cluster-config
+        - name: scripts
+          configMap:
+            name: postgres-cluster-config
+            defaultMode: 0755
+
+  volumeClaimTemplates:
+    - metadata:
+        name: postgres-storage
+      spec:
+        accessModes: ['ReadWriteOnce']
+        storageClassName: fast-ssd
+        resources:
+          requests:
+            storage: 100Gi
+
+---
+# PodDisruptionBudget for High Availability
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: postgres-cluster-pdb
+  namespace: production
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: postgres-cluster
+
+---
+# Backup CronJob
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: postgres-backup
+  namespace: production
+spec:
+  schedule: '0 2 * * *' # Daily at 2 AM
+  successfulJobsHistoryLimit: 7
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: backup
+              image: postgres:15-alpine
+              command:
+                - sh
+                - -c
+                - |
+                  BACKUP_FILE="/backups/postgres-backup-$(date +%Y%m%d-%H%M%S).sql.gz"
+                  pg_dumpall -h postgres-master -U $POSTGRES_USER | gzip > $BACKUP_FILE
+                  echo "Backup completed: $BACKUP_FILE"
+
+                  # Keep only last 30 days of backups
+                  find /backups -name "postgres-backup-*.sql.gz" -mtime +30 -delete
+              env:
+                - name: POSTGRES_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: database-secrets
+                      key: POSTGRES_USER
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: database-secrets
+                      key: POSTGRES_PASSWORD
+              volumeMounts:
+                - name: backup-storage
+                  mountPath: /backups
+          restartPolicy: OnFailure
+          volumes:
+            - name: backup-storage
+              persistentVolumeClaim:
+                claimName: postgres-backup-pvc
+
+---
+# PVC for Backups
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-backup-pvc
+  namespace: production
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: standard
+  resources:
+    requests:
+      storage: 200Gi
