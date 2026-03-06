@@ -7,19 +7,20 @@ echo ========================================
 echo.
 
 REM Set paths
-set RUNTIME_NODE=%~dp0runtime\nodejs
 set BACKEND_DIR=%~dp0backend\monolith-app
 set FRONTEND_DIR=%~dp0frontend
 
-REM Check runtime Node.js
-if not exist "%RUNTIME_NODE%\node.exe" (
-    echo [ERROR] Runtime Node.js not found
-    echo Please ensure runtime/nodejs folder exists
+REM Check system Node.js
+where node >nul 2>&1
+if %errorlevel% neq 0 (
+    echo [ERROR] Node.js not found in system PATH
+    echo Please install Node.js from https://nodejs.org/
     pause
     exit /b 1
 )
 
-echo [OK] Runtime Node.js found
+echo [OK] System Node.js found
+node --version
 echo.
 
 REM Display menu
@@ -46,14 +47,14 @@ cd "%BACKEND_DIR%"
 REM Check if node_modules exists
 if not exist "node_modules" (
     echo [INFO] Installing backend dependencies...
-    "%RUNTIME_NODE%\npm.cmd" install
+    npm install
 )
 
 echo Starting backend server...
 echo Backend will run at: http://localhost:3000
 echo API Docs: http://localhost:3000/api/docs
 echo.
-start "SmartERP Backend" "%RUNTIME_NODE%\npm.cmd" run start:dev
+start "SmartERP Backend" npm run start:dev
 echo [OK] Backend started in new window
 pause
 goto end
@@ -68,13 +69,13 @@ cd "%FRONTEND_DIR%"
 REM Check if node_modules exists
 if not exist "node_modules" (
     echo [INFO] Installing frontend dependencies...
-    "%RUNTIME_NODE%\npm.cmd" install
+    npm install
 )
 
 echo Starting frontend server...
 echo Frontend will run at: http://localhost:5173
 echo.
-start "SmartERP Frontend" "%RUNTIME_NODE%\npm.cmd" run dev
+start "SmartERP Frontend" npm run dev
 echo [OK] Frontend started in new window
 pause
 goto end
@@ -89,20 +90,20 @@ REM Start Backend
 cd "%BACKEND_DIR%"
 if not exist "node_modules" (
     echo [INFO] Installing backend dependencies...
-    "%RUNTIME_NODE%\npm.cmd" install
+    npm install
 )
 echo Starting backend server...
-start "SmartERP Backend" "%RUNTIME_NODE%\npm.cmd" run start:dev
+start "SmartERP Backend" npm run start:dev
 timeout /t 3 /nobreak >nul
 
 REM Start Frontend
 cd "%FRONTEND_DIR%"
 if not exist "node_modules" (
     echo [INFO] Installing frontend dependencies...
-    "%RUNTIME_NODE%\npm.cmd" install
+    npm install
 )
 echo Starting frontend server...
-start "SmartERP Frontend" "%RUNTIME_NODE%\npm.cmd" run dev
+start "SmartERP Frontend" npm run dev
 
 echo.
 echo [OK] Both services started
