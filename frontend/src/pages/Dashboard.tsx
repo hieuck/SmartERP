@@ -25,7 +25,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import { dashboardService } from '../services/dashboardService';
+import { dashboardService } from '../services/reporting/dashboardService';
 import dayjs from 'dayjs';
 import { useResponsive } from '../hooks/useResponsive';
 

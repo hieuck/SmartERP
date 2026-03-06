@@ -80,7 +80,7 @@ describe('HealthController', () => {
   });
 
   describe('check', () => {
-    it('should return health check result', async () => {
+    it('should return health check result when all services are healthy', async () => {
       const mockResult = {
         status: 'ok',
         info: {
@@ -94,6 +94,48 @@ describe('HealthController', () => {
       mockCacheManager.set.mockResolvedValue(undefined);
       mockCacheManager.get.mockResolvedValue('ok');
       mockCacheManager.del.mockResolvedValue(undefined);
+
+      const result = await controller.check();
+
+      expect(result).toEqual(mockResult);
+      expect(healthCheckService.check).toHaveBeenCalled();
+    });
+
+    it('should handle redis health check when cache returns wrong value', async () => {
+      const mockResult = {
+        status: 'ok',
+        info: {
+          database: { status: 'up' },
+          redis: { status: 'down' },
+          memory_heap: { status: 'up' },
+          memory_rss: { status: 'up' },
+        },
+      };
+      mockHealthCheckService.check.mockResolvedValue(mockResult);
+      mockCacheManager.set.mockResolvedValue(undefined);
+      mockCacheManager.get.mockResolvedValue('wrong-value');
+      mockCacheManager.del.mockResolvedValue(undefined);
+
+      const result = await controller.check();
+
+      expect(result).toEqual(mockResult);
+      expect(healthCheckService.check).toHaveBeenCalled();
+    });
+
+    it('should handle redis health check failure', async () => {
+      const mockResult = {
+        status: 'error',
+        info: {
+          database: { status: 'up' },
+          memory_heap: { status: 'up' },
+          memory_rss: { status: 'up' },
+        },
+        error: {
+          redis: { status: 'down', message: 'Redis connection failed' },
+        },
+      };
+      mockHealthCheckService.check.mockResolvedValue(mockResult);
+      mockCacheManager.set.mockRejectedValue(new Error('Redis connection failed'));
 
       const result = await controller.check();
 

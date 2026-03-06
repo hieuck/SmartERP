@@ -5,6 +5,10 @@ import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RegisterTenantDto } from './dto/register-tenant.dto';
+import { RegisterDto } from './dto/register.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
 
 class LoginDto {
   email: string;
@@ -38,14 +42,20 @@ export class AuthController {
   }
 
   @UseGuards(ThrottlerGuard)
-  @Throttle({ default: { limit: 3, ttl: 3600000 } }) // 3 registrations per hour
+  @Throttle({ default: { limit: 3, ttl: 3600000 } })
   @Post('register')
   @ApiOperation({ summary: 'User registration' })
-  async register(@Body() _body: unknown) {
-    // TODO: Implement user registration
-    return {
-      message: 'Registration endpoint - to be implemented',
-    };
+  @ApiBody({ type: RegisterDto })
+  async register(@Body() registerDto: RegisterDto) {
+    return this.authService.registerTenant({
+      companyName: registerDto.companyName,
+      subdomain: registerDto.companyName.toLowerCase().replace(/\s+/g, '-'),
+      email: registerDto.email,
+      password: registerDto.password,
+      firstName: registerDto.fullName.split(' ')[0],
+      lastName: registerDto.fullName.split(' ').slice(1).join(' '),
+      phone: registerDto.phone,
+    });
   }
 
   @Get('verify-email')
@@ -71,11 +81,36 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'User logout' })
   async logout(@Request() _req) {
-    // In a stateless JWT system, logout is handled client-side
-    // But we can return success to indicate the action
     return {
       message: 'Logged out successfully',
       statusCode: 200,
     };
+  }
+
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 3, ttl: 3600000 } })
+  @Post('forgot-password')
+  @ApiOperation({ summary: 'Request password reset' })
+  @ApiBody({ type: ForgotPasswordDto })
+  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(forgotPasswordDto.email);
+  }
+
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 5, ttl: 3600000 } })
+  @Post('reset-password')
+  @ApiOperation({ summary: 'Reset password with token' })
+  @ApiBody({ type: ResetPasswordDto })
+  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+    return this.authService.resetPassword(resetPasswordDto.token, resetPasswordDto.newPassword);
+  }
+
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Post('refresh')
+  @ApiOperation({ summary: 'Refresh access token' })
+  @ApiBody({ type: RefreshTokenDto })
+  async refresh(@Body() refreshTokenDto: RefreshTokenDto) {
+    return this.authService.refreshToken(refreshTokenDto.refreshToken);
   }
 }

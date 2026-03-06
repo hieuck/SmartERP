@@ -1,0 +1,780 @@
+{
+  "config": {
+    "configFile": "E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\playwright.config.ts",
+    "rootDir": "E:/GitHub/QuanLyKhoTuongThachCao/smart-erp/frontend/e2e",
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 9
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "E:/GitHub/QuanLyKhoTuongThachCao/smart-erp/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 9
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "E:/GitHub/QuanLyKhoTuongThachCao/smart-erp/frontend/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "E:/GitHub/QuanLyKhoTuongThachCao/smart-erp/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 9
+        },
+        "id": "firefox",
+        "name": "firefox",
+        "testDir": "E:/GitHub/QuanLyKhoTuongThachCao/smart-erp/frontend/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "E:/GitHub/QuanLyKhoTuongThachCao/smart-erp/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 9
+        },
+        "id": "webkit",
+        "name": "webkit",
+        "testDir": "E:/GitHub/QuanLyKhoTuongThachCao/smart-erp/frontend/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "E:/GitHub/QuanLyKhoTuongThachCao/smart-erp/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 9
+        },
+        "id": "Mobile Chrome",
+        "name": "Mobile Chrome",
+        "testDir": "E:/GitHub/QuanLyKhoTuongThachCao/smart-erp/frontend/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "E:/GitHub/QuanLyKhoTuongThachCao/smart-erp/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 9
+        },
+        "id": "Mobile Safari",
+        "name": "Mobile Safari",
+        "testDir": "E:/GitHub/QuanLyKhoTuongThachCao/smart-erp/frontend/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "html",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "playwright-report/results.json"
+        }
+      ],
+      [
+        "junit",
+        {
+          "outputFile": "playwright-report/results.xml"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "runAgents": "none",
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.58.2",
+    "workers": 18,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "dashboard.spec.ts",
+      "file": "dashboard.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Dashboard",
+          "file": "dashboard.spec.ts",
+          "line": 8,
+          "column": 6,
+          "specs": [
+            {
+              "title": "should display all KPI cards",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 3218,
+                      "error": {
+                        "message": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5173/login\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5173/login\", waiting until \"load\"\u001b[22m\n",
+                        "stack": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5173/login\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5173/login\", waiting until \"load\"\u001b[22m\n\n    at E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\e2e\\dashboard.spec.ts:11:16",
+                        "location": {
+                          "file": "E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\e2e\\dashboard.spec.ts",
+                          "column": 16,
+                          "line": 11
+                        },
+                        "snippet": "\u001b[0m \u001b[90m  9 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m 10 |\u001b[39m     \u001b[90m// Login before each test\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 11 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m'/login'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 12 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByLabel(\u001b[35m/email/i\u001b[39m)\u001b[33m.\u001b[39mfill(\u001b[32m'admin@example.com'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 13 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByLabel(\u001b[35m/password/i\u001b[39m)\u001b[33m.\u001b[39mfill(\u001b[32m'Admin123!'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 14 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m { name\u001b[33m:\u001b[39m \u001b[35m/đăng nhập/i\u001b[39m })\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\e2e\\dashboard.spec.ts",
+                            "column": 16,
+                            "line": 11
+                          },
+                          "message": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5173/login\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5173/login\", waiting until \"load\"\u001b[22m\n\n\n\u001b[0m \u001b[90m  9 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m 10 |\u001b[39m     \u001b[90m// Login before each test\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 11 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m'/login'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 12 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByLabel(\u001b[35m/email/i\u001b[39m)\u001b[33m.\u001b[39mfill(\u001b[32m'admin@example.com'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 13 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByLabel(\u001b[35m/password/i\u001b[39m)\u001b[33m.\u001b[39mfill(\u001b[32m'Admin123!'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 14 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m { name\u001b[33m:\u001b[39m \u001b[35m/đăng nhập/i\u001b[39m })\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\e2e\\dashboard.spec.ts:11:16\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-06T10:50:10.784Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\test-results\\dashboard-Dashboard-should-display-all-KPI-cards-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\test-results\\dashboard-Dashboard-should-display-all-KPI-cards-chromium\\video.webm"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\e2e\\dashboard.spec.ts",
+                        "column": 16,
+                        "line": 11
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-97da4a5b0f419e5e7790",
+              "file": "dashboard.spec.ts",
+              "line": 18,
+              "column": 3
+            },
+            {
+              "title": "should display sales chart",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 3252,
+                      "error": {
+                        "message": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5173/login\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5173/login\", waiting until \"load\"\u001b[22m\n",
+                        "stack": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5173/login\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5173/login\", waiting until \"load\"\u001b[22m\n\n    at E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\e2e\\dashboard.spec.ts:11:16",
+                        "location": {
+                          "file": "E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\e2e\\dashboard.spec.ts",
+                          "column": 16,
+                          "line": 11
+                        },
+                        "snippet": "\u001b[0m \u001b[90m  9 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m 10 |\u001b[39m     \u001b[90m// Login before each test\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 11 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m'/login'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 12 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByLabel(\u001b[35m/email/i\u001b[39m)\u001b[33m.\u001b[39mfill(\u001b[32m'admin@example.com'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 13 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByLabel(\u001b[35m/password/i\u001b[39m)\u001b[33m.\u001b[39mfill(\u001b[32m'Admin123!'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 14 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m { name\u001b[33m:\u001b[39m \u001b[35m/đăng nhập/i\u001b[39m })\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\e2e\\dashboard.spec.ts",
+                            "column": 16,
+                            "line": 11
+                          },
+                          "message": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5173/login\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5173/login\", waiting until \"load\"\u001b[22m\n\n\n\u001b[0m \u001b[90m  9 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m 10 |\u001b[39m     \u001b[90m// Login before each test\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 11 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m'/login'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 12 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByLabel(\u001b[35m/email/i\u001b[39m)\u001b[33m.\u001b[39mfill(\u001b[32m'admin@example.com'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 13 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByLabel(\u001b[35m/password/i\u001b[39m)\u001b[33m.\u001b[39mfill(\u001b[32m'Admin123!'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 14 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m { name\u001b[33m:\u001b[39m \u001b[35m/đăng nhập/i\u001b[39m })\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\e2e\\dashboard.spec.ts:11:16\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-06T10:50:10.798Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\test-results\\dashboard-Dashboard-should-display-sales-chart-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\test-results\\dashboard-Dashboard-should-display-sales-chart-chromium\\video.webm"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\e2e\\dashboard.spec.ts",
+                        "column": 16,
+                        "line": 11
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-1345ffbe2ad109ddc5fe",
+              "file": "dashboard.spec.ts",
+              "line": 26,
+              "column": 3
+            },
+            {
+              "title": "should display top products table",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "failed",
+                      "duration": 3180,
+                      "error": {
+                        "message": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5173/login\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5173/login\", waiting until \"load\"\u001b[22m\n",
+                        "stack": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5173/login\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5173/login\", waiting until \"load\"\u001b[22m\n\n    at E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\e2e\\dashboard.spec.ts:11:16",
+                        "location": {
+                          "file": "E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\e2e\\dashboard.spec.ts",
+                          "column": 16,
+                          "line": 11
+                        },
+                        "snippet": "\u001b[0m \u001b[90m  9 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m 10 |\u001b[39m     \u001b[90m// Login before each test\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 11 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m'/login'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 12 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByLabel(\u001b[35m/email/i\u001b[39m)\u001b[33m.\u001b[39mfill(\u001b[32m'admin@example.com'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 13 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByLabel(\u001b[35m/password/i\u001b[39m)\u001b[33m.\u001b[39mfill(\u001b[32m'Admin123!'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 14 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m { name\u001b[33m:\u001b[39m \u001b[35m/đăng nhập/i\u001b[39m })\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\e2e\\dashboard.spec.ts",
+                            "column": 16,
+                            "line": 11
+                          },
+                          "message": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5173/login\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5173/login\", waiting until \"load\"\u001b[22m\n\n\n\u001b[0m \u001b[90m  9 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m 10 |\u001b[39m     \u001b[90m// Login before each test\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 11 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m'/login'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 12 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByLabel(\u001b[35m/email/i\u001b[39m)\u001b[33m.\u001b[39mfill(\u001b[32m'admin@example.com'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 13 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByLabel(\u001b[35m/password/i\u001b[39m)\u001b[33m.\u001b[39mfill(\u001b[32m'Admin123!'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 14 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m { name\u001b[33m:\u001b[39m \u001b[35m/đăng nhập/i\u001b[39m })\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\e2e\\dashboard.spec.ts:11:16\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-06T10:50:10.879Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\test-results\\dashboard-Dashboard-should-display-top-products-table-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\test-results\\dashboard-Dashboard-should-display-top-products-table-chromium\\video.webm"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\e2e\\dashboard.spec.ts",
+                        "column": 16,
+                        "line": 11
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-df0358ccf513b530eb17",
+              "file": "dashboard.spec.ts",
+              "line": 32,
+              "column": 3
+            },
+            {
+              "title": "should display top customers table",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
+                      "status": "failed",
+                      "duration": 3156,
+                      "error": {
+                        "message": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5173/login\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5173/login\", waiting until \"load\"\u001b[22m\n",
+                        "stack": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5173/login\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5173/login\", waiting until \"load\"\u001b[22m\n\n    at E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\e2e\\dashboard.spec.ts:11:16",
+                        "location": {
+                          "file": "E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\e2e\\dashboard.spec.ts",
+                          "column": 16,
+                          "line": 11
+                        },
+                        "snippet": "\u001b[0m \u001b[90m  9 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m 10 |\u001b[39m     \u001b[90m// Login before each test\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 11 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m'/login'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 12 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByLabel(\u001b[35m/email/i\u001b[39m)\u001b[33m.\u001b[39mfill(\u001b[32m'admin@example.com'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 13 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByLabel(\u001b[35m/password/i\u001b[39m)\u001b[33m.\u001b[39mfill(\u001b[32m'Admin123!'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 14 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m { name\u001b[33m:\u001b[39m \u001b[35m/đăng nhập/i\u001b[39m })\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\e2e\\dashboard.spec.ts",
+                            "column": 16,
+                            "line": 11
+                          },
+                          "message": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5173/login\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5173/login\", waiting until \"load\"\u001b[22m\n\n\n\u001b[0m \u001b[90m  9 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m 10 |\u001b[39m     \u001b[90m// Login before each test\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 11 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m'/login'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 12 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByLabel(\u001b[35m/email/i\u001b[39m)\u001b[33m.\u001b[39mfill(\u001b[32m'admin@example.com'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 13 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByLabel(\u001b[35m/password/i\u001b[39m)\u001b[33m.\u001b[39mfill(\u001b[32m'Admin123!'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 14 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m { name\u001b[33m:\u001b[39m \u001b[35m/đăng nhập/i\u001b[39m })\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\e2e\\dashboard.spec.ts:11:16\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-06T10:50:10.799Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\test-results\\dashboard-Dashboard-should-display-top-customers-table-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\test-results\\dashboard-Dashboard-should-display-top-customers-table-chromium\\video.webm"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\e2e\\dashboard.spec.ts",
+                        "column": 16,
+                        "line": 11
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-da06c8851d79371d7c71",
+              "file": "dashboard.spec.ts",
+              "line": 40,
+              "column": 3
+            },
+            {
+              "title": "should navigate to products page from sidebar",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 4,
+                      "status": "failed",
+                      "duration": 3210,
+                      "error": {
+                        "message": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5173/login\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5173/login\", waiting until \"load\"\u001b[22m\n",
+                        "stack": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5173/login\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5173/login\", waiting until \"load\"\u001b[22m\n\n    at E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\e2e\\dashboard.spec.ts:11:16",
+                        "location": {
+                          "file": "E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\e2e\\dashboard.spec.ts",
+                          "column": 16,
+                          "line": 11
+                        },
+                        "snippet": "\u001b[0m \u001b[90m  9 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m 10 |\u001b[39m     \u001b[90m// Login before each test\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 11 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m'/login'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 12 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByLabel(\u001b[35m/email/i\u001b[39m)\u001b[33m.\u001b[39mfill(\u001b[32m'admin@example.com'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 13 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByLabel(\u001b[35m/password/i\u001b[39m)\u001b[33m.\u001b[39mfill(\u001b[32m'Admin123!'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 14 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m { name\u001b[33m:\u001b[39m \u001b[35m/đăng nhập/i\u001b[39m })\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\e2e\\dashboard.spec.ts",
+                            "column": 16,
+                            "line": 11
+                          },
+                          "message": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5173/login\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5173/login\", waiting until \"load\"\u001b[22m\n\n\n\u001b[0m \u001b[90m  9 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m 10 |\u001b[39m     \u001b[90m// Login before each test\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 11 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m'/login'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 12 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByLabel(\u001b[35m/email/i\u001b[39m)\u001b[33m.\u001b[39mfill(\u001b[32m'admin@example.com'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 13 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByLabel(\u001b[35m/password/i\u001b[39m)\u001b[33m.\u001b[39mfill(\u001b[32m'Admin123!'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 14 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m { name\u001b[33m:\u001b[39m \u001b[35m/đăng nhập/i\u001b[39m })\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\e2e\\dashboard.spec.ts:11:16\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-06T10:50:10.830Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\test-results\\dashboard-Dashboard-should-9ff5e--products-page-from-sidebar-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\test-results\\dashboard-Dashboard-should-9ff5e--products-page-from-sidebar-chromium\\video.webm"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\e2e\\dashboard.spec.ts",
+                        "column": 16,
+                        "line": 11
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-70afe307c5c892b6ac7a",
+              "file": "dashboard.spec.ts",
+              "line": 48,
+              "column": 3
+            },
+            {
+              "title": "should navigate to orders page from sidebar",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 5,
+                      "status": "failed",
+                      "duration": 3225,
+                      "error": {
+                        "message": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5173/login\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5173/login\", waiting until \"load\"\u001b[22m\n",
+                        "stack": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5173/login\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5173/login\", waiting until \"load\"\u001b[22m\n\n    at E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\e2e\\dashboard.spec.ts:11:16",
+                        "location": {
+                          "file": "E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\e2e\\dashboard.spec.ts",
+                          "column": 16,
+                          "line": 11
+                        },
+                        "snippet": "\u001b[0m \u001b[90m  9 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m 10 |\u001b[39m     \u001b[90m// Login before each test\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 11 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m'/login'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 12 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByLabel(\u001b[35m/email/i\u001b[39m)\u001b[33m.\u001b[39mfill(\u001b[32m'admin@example.com'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 13 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByLabel(\u001b[35m/password/i\u001b[39m)\u001b[33m.\u001b[39mfill(\u001b[32m'Admin123!'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 14 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m { name\u001b[33m:\u001b[39m \u001b[35m/đăng nhập/i\u001b[39m })\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\e2e\\dashboard.spec.ts",
+                            "column": 16,
+                            "line": 11
+                          },
+                          "message": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5173/login\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5173/login\", waiting until \"load\"\u001b[22m\n\n\n\u001b[0m \u001b[90m  9 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m 10 |\u001b[39m     \u001b[90m// Login before each test\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 11 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m'/login'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 12 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByLabel(\u001b[35m/email/i\u001b[39m)\u001b[33m.\u001b[39mfill(\u001b[32m'admin@example.com'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 13 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByLabel(\u001b[35m/password/i\u001b[39m)\u001b[33m.\u001b[39mfill(\u001b[32m'Admin123!'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 14 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m { name\u001b[33m:\u001b[39m \u001b[35m/đăng nhập/i\u001b[39m })\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\e2e\\dashboard.spec.ts:11:16\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-06T10:50:10.830Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\test-results\\dashboard-Dashboard-should-5427b-to-orders-page-from-sidebar-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\test-results\\dashboard-Dashboard-should-5427b-to-orders-page-from-sidebar-chromium\\video.webm"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\e2e\\dashboard.spec.ts",
+                        "column": 16,
+                        "line": 11
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-3e4f96d7f43065bf6f81",
+              "file": "dashboard.spec.ts",
+              "line": 53,
+              "column": 3
+            },
+            {
+              "title": "should navigate to customers page from sidebar",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 6,
+                      "status": "failed",
+                      "duration": 3240,
+                      "error": {
+                        "message": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5173/login\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5173/login\", waiting until \"load\"\u001b[22m\n",
+                        "stack": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5173/login\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5173/login\", waiting until \"load\"\u001b[22m\n\n    at E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\e2e\\dashboard.spec.ts:11:16",
+                        "location": {
+                          "file": "E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\e2e\\dashboard.spec.ts",
+                          "column": 16,
+                          "line": 11
+                        },
+                        "snippet": "\u001b[0m \u001b[90m  9 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m 10 |\u001b[39m     \u001b[90m// Login before each test\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 11 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m'/login'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 12 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByLabel(\u001b[35m/email/i\u001b[39m)\u001b[33m.\u001b[39mfill(\u001b[32m'admin@example.com'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 13 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByLabel(\u001b[35m/password/i\u001b[39m)\u001b[33m.\u001b[39mfill(\u001b[32m'Admin123!'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 14 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m { name\u001b[33m:\u001b[39m \u001b[35m/đăng nhập/i\u001b[39m })\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\e2e\\dashboard.spec.ts",
+                            "column": 16,
+                            "line": 11
+                          },
+                          "message": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5173/login\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5173/login\", waiting until \"load\"\u001b[22m\n\n\n\u001b[0m \u001b[90m  9 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m 10 |\u001b[39m     \u001b[90m// Login before each test\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 11 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m'/login'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 12 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByLabel(\u001b[35m/email/i\u001b[39m)\u001b[33m.\u001b[39mfill(\u001b[32m'admin@example.com'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 13 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByLabel(\u001b[35m/password/i\u001b[39m)\u001b[33m.\u001b[39mfill(\u001b[32m'Admin123!'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 14 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m { name\u001b[33m:\u001b[39m \u001b[35m/đăng nhập/i\u001b[39m })\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\e2e\\dashboard.spec.ts:11:16\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-06T10:50:10.834Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\test-results\\dashboard-Dashboard-should-df4ca-customers-page-from-sidebar-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\test-results\\dashboard-Dashboard-should-df4ca-customers-page-from-sidebar-chromium\\video.webm"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\e2e\\dashboard.spec.ts",
+                        "column": 16,
+                        "line": 11
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-a9465eac94e9ab5780c6",
+              "file": "dashboard.spec.ts",
+              "line": 58,
+              "column": 3
+            },
+            {
+              "title": "should refresh data when clicking refresh button",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 7,
+                      "status": "failed",
+                      "duration": 3207,
+                      "error": {
+                        "message": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5173/login\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5173/login\", waiting until \"load\"\u001b[22m\n",
+                        "stack": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5173/login\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5173/login\", waiting until \"load\"\u001b[22m\n\n    at E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\e2e\\dashboard.spec.ts:11:16",
+                        "location": {
+                          "file": "E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\e2e\\dashboard.spec.ts",
+                          "column": 16,
+                          "line": 11
+                        },
+                        "snippet": "\u001b[0m \u001b[90m  9 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m 10 |\u001b[39m     \u001b[90m// Login before each test\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 11 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m'/login'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 12 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByLabel(\u001b[35m/email/i\u001b[39m)\u001b[33m.\u001b[39mfill(\u001b[32m'admin@example.com'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 13 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByLabel(\u001b[35m/password/i\u001b[39m)\u001b[33m.\u001b[39mfill(\u001b[32m'Admin123!'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 14 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m { name\u001b[33m:\u001b[39m \u001b[35m/đăng nhập/i\u001b[39m })\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\e2e\\dashboard.spec.ts",
+                            "column": 16,
+                            "line": 11
+                          },
+                          "message": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5173/login\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5173/login\", waiting until \"load\"\u001b[22m\n\n\n\u001b[0m \u001b[90m  9 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m 10 |\u001b[39m     \u001b[90m// Login before each test\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 11 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m'/login'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 12 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByLabel(\u001b[35m/email/i\u001b[39m)\u001b[33m.\u001b[39mfill(\u001b[32m'admin@example.com'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 13 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByLabel(\u001b[35m/password/i\u001b[39m)\u001b[33m.\u001b[39mfill(\u001b[32m'Admin123!'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 14 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m { name\u001b[33m:\u001b[39m \u001b[35m/đăng nhập/i\u001b[39m })\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\e2e\\dashboard.spec.ts:11:16\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-06T10:50:10.829Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\test-results\\dashboard-Dashboard-should-c54ae-hen-clicking-refresh-button-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\test-results\\dashboard-Dashboard-should-c54ae-hen-clicking-refresh-button-chromium\\video.webm"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\e2e\\dashboard.spec.ts",
+                        "column": 16,
+                        "line": 11
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-8f5059c1d51ff3aa3052",
+              "file": "dashboard.spec.ts",
+              "line": 63,
+              "column": 3
+            },
+            {
+              "title": "should be responsive on mobile",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 8,
+                      "status": "failed",
+                      "duration": 3213,
+                      "error": {
+                        "message": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5173/login\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5173/login\", waiting until \"load\"\u001b[22m\n",
+                        "stack": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5173/login\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5173/login\", waiting until \"load\"\u001b[22m\n\n    at E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\e2e\\dashboard.spec.ts:11:16",
+                        "location": {
+                          "file": "E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\e2e\\dashboard.spec.ts",
+                          "column": 16,
+                          "line": 11
+                        },
+                        "snippet": "\u001b[0m \u001b[90m  9 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m 10 |\u001b[39m     \u001b[90m// Login before each test\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 11 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m'/login'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 12 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByLabel(\u001b[35m/email/i\u001b[39m)\u001b[33m.\u001b[39mfill(\u001b[32m'admin@example.com'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 13 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByLabel(\u001b[35m/password/i\u001b[39m)\u001b[33m.\u001b[39mfill(\u001b[32m'Admin123!'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 14 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m { name\u001b[33m:\u001b[39m \u001b[35m/đăng nhập/i\u001b[39m })\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\e2e\\dashboard.spec.ts",
+                            "column": 16,
+                            "line": 11
+                          },
+                          "message": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5173/login\nCall log:\n\u001b[2m  - navigating to \"http://localhost:5173/login\", waiting until \"load\"\u001b[22m\n\n\n\u001b[0m \u001b[90m  9 |\u001b[39m   test\u001b[33m.\u001b[39mbeforeEach(\u001b[36masync\u001b[39m ({ page }) \u001b[33m=>\u001b[39m {\n \u001b[90m 10 |\u001b[39m     \u001b[90m// Login before each test\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 11 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgoto(\u001b[32m'/login'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 12 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByLabel(\u001b[35m/email/i\u001b[39m)\u001b[33m.\u001b[39mfill(\u001b[32m'admin@example.com'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 13 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByLabel(\u001b[35m/password/i\u001b[39m)\u001b[33m.\u001b[39mfill(\u001b[32m'Admin123!'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m 14 |\u001b[39m     \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m { name\u001b[33m:\u001b[39m \u001b[35m/đăng nhập/i\u001b[39m })\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m\n\u001b[2m    at E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\e2e\\dashboard.spec.ts:11:16\u001b[22m"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-03-06T10:50:10.829Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\test-results\\dashboard-Dashboard-should-be-responsive-on-mobile-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\test-results\\dashboard-Dashboard-should-be-responsive-on-mobile-chromium\\video.webm"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "E:\\GitHub\\QuanLyKhoTuongThachCao\\smart-erp\\frontend\\e2e\\dashboard.spec.ts",
+                        "column": 16,
+                        "line": 11
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "90cda532ab82d274b30b-7036cde7cb3054f87671",
+              "file": "dashboard.spec.ts",
+              "line": 77,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-03-06T10:50:08.372Z",
+    "duration": 6147.705,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 9,
+    "flaky": 0
+  }
+}

@@ -1,24 +1,40 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
+import { UpdateProfileDto } from './dto/update-profile.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { NotFoundException, BadRequestException } from '@nestjs/common';
 
-describe('UserController (Unit)', () => {
+describe('UserController', () => {
   let controller: UserController;
   let service: UserService;
 
   const mockUserService = {
-    findAll: jest.fn(),
-    findByRole: jest.fn(),
-    findOne: jest.fn(),
-    count: jest.fn(),
-    create: jest.fn(),
-    update: jest.fn(),
-    changePassword: jest.fn(),
+    getProfile: jest.fn(),
     updateProfile: jest.fn(),
-    activate: jest.fn(),
-    deactivate: jest.fn(),
-    suspend: jest.fn(),
-    remove: jest.fn(),
+    changePassword: jest.fn(),
+  };
+
+  const mockRequest = {
+    user: {
+      userId: 'user-123',
+      email: 'test@example.com',
+      tenantId: 'tenant-123',
+    },
+  };
+
+  const mockUserProfile = {
+    id: 'user-123',
+    email: 'test@example.com',
+    firstName: 'John',
+    lastName: 'Doe',
+    phone: '0901234567',
+    avatar: null,
+    role: 'user',
+    status: 'active',
+    emailVerified: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
   };
 
   beforeEach(async () => {
@@ -34,194 +50,384 @@ describe('UserController (Unit)', () => {
 
     controller = module.get<UserController>(UserController);
     service = module.get<UserService>(UserService);
-  });
 
-  afterEach(() => {
     jest.clearAllMocks();
   });
 
-  describe('findAll', () => {
-    it('should return all users for tenant', async () => {
-      // Arrange
-      const tenantId = 'tenant-123';
-      const mockUsers = [
-        { id: 'user-1', email: 'user1@example.com', tenantId },
-        { id: 'user-2', email: 'user2@example.com', tenantId },
-      ];
-      mockUserService.findAll.mockResolvedValue(mockUsers);
+  it('should be defined', () => {
+    expect(controller).toBeDefined();
+  });
 
-      // Act
-      const result = await controller.findAll(tenantId);
+  describe('getProfile', () => {
+    it('should return user profile successfully', async () => {
+      mockUserService.getProfile.mockResolvedValue(mockUserProfile);
 
-      // Assert
-      expect(result).toEqual(mockUsers);
-      expect(service.findAll).toHaveBeenCalledWith(tenantId);
+      const result = await controller.getProfile(mockRequest);
+
+      expect(result).toEqual(mockUserProfile);
+      expect(service.getProfile).toHaveBeenCalledWith('user-123');
+      expect(service.getProfile).toHaveBeenCalledTimes(1);
     });
 
-    it('should filter users by role', async () => {
-      // Arrange
-      const tenantId = 'tenant-123';
-      const role = 'admin';
-      const mockAdmins = [{ id: 'user-1', role: 'admin', tenantId }];
-      mockUserService.findByRole.mockResolvedValue(mockAdmins);
+    it('should throw NotFoundException when user not found', async () => {
+      mockUserService.getProfile.mockRejectedValue(
+        new NotFoundException('User not found'),
+      );
 
-      // Act
-      const result = await controller.findAll(tenantId, role);
+      await expect(controller.getProfile(mockRequest)).rejects.toThrow(
+        NotFoundException,
+      );
+      await expect(controller.getProfile(mockRequest)).rejects.toThrow(
+        'User not found',
+      );
+      expect(service.getProfile).toHaveBeenCalledWith('user-123');
+    });
 
-      // Assert
-      expect(result).toEqual(mockAdmins);
-      expect(service.findByRole).toHaveBeenCalledWith(role, tenantId);
+    it('should handle service errors gracefully', async () => {
+      mockUserService.getProfile.mockRejectedValue(
+        new Error('Database connection failed'),
+      );
+
+      await expect(controller.getProfile(mockRequest)).rejects.toThrow(Error);
+      expect(service.getProfile).toHaveBeenCalledWith('user-123');
     });
   });
 
-  describe('count', () => {
-    it('should return user count', async () => {
-      // Arrange
-      const tenantId = 'tenant-123';
-      mockUserService.count.mockResolvedValue(5);
-
-      // Act
-      const result = await controller.count(tenantId);
-
-      // Assert
-      expect(result).toBe(5);
-      expect(service.count).toHaveBeenCalledWith(tenantId);
-    });
-  });
-
-  describe('findOne', () => {
-    it('should return user by id', async () => {
-      // Arrange
-      const userId = 'user-123';
-      const tenantId = 'tenant-123';
-      const mockUser = { id: userId, email: 'test@example.com', tenantId };
-      mockUserService.findOne.mockResolvedValue(mockUser);
-
-      // Act
-      const result = await controller.findOne(userId, tenantId);
-
-      // Assert
-      expect(result).toEqual(mockUser);
-      expect(service.findOne).toHaveBeenCalledWith(userId, tenantId);
-    });
-  });
-
-  describe('create', () => {
-    it('should create new user', async () => {
-      // Arrange
-      const tenantId = 'tenant-123';
-      const createDto = {
-        email: 'new@example.com',
-        password: 'Password123!',
-        firstName: 'New',
-        lastName: 'User',
+  describe('updateProfile', () => {
+    it('should update profile with full name successfully', async () => {
+      const updateDto: UpdateProfileDto = {
+        fullName: 'Jane Smith',
+        phone: '0987654321',
+        avatar: 'https://example.com/avatar.jpg',
       };
-      const mockCreatedUser = { id: 'user-new', ...createDto, tenantId };
-      mockUserService.create.mockResolvedValue(mockCreatedUser);
 
-      // Act
-      const result = await controller.create(createDto as any, tenantId);
+      const updatedProfile = {
+        ...mockUserProfile,
+        firstName: 'Jane',
+        lastName: 'Smith',
+        phone: '0987654321',
+        avatar: 'https://example.com/avatar.jpg',
+      };
 
-      // Assert
-      expect(result).toEqual(mockCreatedUser);
-      expect(service.create).toHaveBeenCalledWith(createDto, tenantId);
+      mockUserService.updateProfile.mockResolvedValue(updatedProfile);
+
+      const result = await controller.updateProfile(mockRequest, updateDto);
+
+      expect(result).toEqual(updatedProfile);
+      expect(service.updateProfile).toHaveBeenCalledWith('user-123', updateDto);
+      expect(service.updateProfile).toHaveBeenCalledTimes(1);
     });
-  });
 
-  describe('update', () => {
-    it('should update user', async () => {
-      // Arrange
-      const userId = 'user-123';
-      const tenantId = 'tenant-123';
-      const updateDto = { firstName: 'Updated', lastName: 'Name' };
-      const mockUpdatedUser = { id: userId, ...updateDto, tenantId };
-      mockUserService.update.mockResolvedValue(mockUpdatedUser);
+    it('should update only phone number', async () => {
+      const updateDto: UpdateProfileDto = {
+        phone: '0999999999',
+      };
 
-      // Act
-      const result = await controller.update(userId, updateDto as any, tenantId);
+      const updatedProfile = {
+        ...mockUserProfile,
+        phone: '0999999999',
+      };
 
-      // Assert
-      expect(result).toEqual(mockUpdatedUser);
-      expect(service.update).toHaveBeenCalledWith(userId, updateDto, tenantId);
+      mockUserService.updateProfile.mockResolvedValue(updatedProfile);
+
+      const result = await controller.updateProfile(mockRequest, updateDto);
+
+      expect(result).toEqual(updatedProfile);
+      expect(result.phone).toBe('0999999999');
+      expect(result.firstName).toBe('John');
+      expect(result.lastName).toBe('Doe');
+      expect(service.updateProfile).toHaveBeenCalledWith('user-123', updateDto);
+    });
+
+    it('should update only avatar', async () => {
+      const updateDto: UpdateProfileDto = {
+        avatar: 'https://example.com/new-avatar.jpg',
+      };
+
+      const updatedProfile = {
+        ...mockUserProfile,
+        avatar: 'https://example.com/new-avatar.jpg',
+      };
+
+      mockUserService.updateProfile.mockResolvedValue(updatedProfile);
+
+      const result = await controller.updateProfile(mockRequest, updateDto);
+
+      expect(result).toEqual(updatedProfile);
+      expect(result.avatar).toBe('https://example.com/new-avatar.jpg');
+      expect(service.updateProfile).toHaveBeenCalledWith('user-123', updateDto);
+    });
+
+    it('should throw NotFoundException when user not found', async () => {
+      const updateDto: UpdateProfileDto = {
+        fullName: 'Jane Smith',
+      };
+
+      mockUserService.updateProfile.mockRejectedValue(
+        new NotFoundException('User not found'),
+      );
+
+      await expect(
+        controller.updateProfile(mockRequest, updateDto),
+      ).rejects.toThrow(NotFoundException);
+      expect(service.updateProfile).toHaveBeenCalledWith('user-123', updateDto);
+    });
+
+    it('should handle empty update dto', async () => {
+      const updateDto: UpdateProfileDto = {};
+
+      mockUserService.updateProfile.mockResolvedValue(mockUserProfile);
+
+      const result = await controller.updateProfile(mockRequest, updateDto);
+
+      expect(result).toEqual(mockUserProfile);
+      expect(service.updateProfile).toHaveBeenCalledWith('user-123', updateDto);
+    });
+
+    it('should handle service errors gracefully', async () => {
+      const updateDto: UpdateProfileDto = {
+        fullName: 'Jane Smith',
+      };
+
+      mockUserService.updateProfile.mockRejectedValue(
+        new Error('Database connection failed'),
+      );
+
+      await expect(
+        controller.updateProfile(mockRequest, updateDto),
+      ).rejects.toThrow(Error);
+      expect(service.updateProfile).toHaveBeenCalledWith('user-123', updateDto);
     });
   });
 
   describe('changePassword', () => {
-    it('should change user password', async () => {
-      // Arrange
-      const userId = 'user-123';
-      const tenantId = 'tenant-123';
-      const changePasswordDto = {
-        oldPassword: 'Old123!',
-        newPassword: 'New123!',
+    it('should change password successfully', async () => {
+      const changePasswordDto: ChangePasswordDto = {
+        currentPassword: 'OldPass123!',
+        newPassword: 'NewPass123!',
+        confirmPassword: 'NewPass123!',
       };
-      const mockResponse = { success: true, message: 'Password changed' };
-      mockUserService.changePassword.mockResolvedValue(mockResponse);
 
-      // Act
+      const successResponse = {
+        success: true,
+        message: 'Password changed successfully',
+      };
+
+      mockUserService.changePassword.mockResolvedValue(successResponse);
+
       const result = await controller.changePassword(
-        userId,
-        changePasswordDto as any,
-        tenantId,
-      );
-
-      // Assert
-      expect(result).toEqual(mockResponse);
-      expect(service.changePassword).toHaveBeenCalledWith(
-        userId,
+        mockRequest,
         changePasswordDto,
-        tenantId,
+      );
+
+      expect(result).toEqual(successResponse);
+      expect(result.success).toBe(true);
+      expect(result.message).toBe('Password changed successfully');
+      expect(service.changePassword).toHaveBeenCalledWith(
+        'user-123',
+        changePasswordDto,
+      );
+      expect(service.changePassword).toHaveBeenCalledTimes(1);
+    });
+
+    it('should throw BadRequestException when passwords do not match', async () => {
+      const changePasswordDto: ChangePasswordDto = {
+        currentPassword: 'OldPass123!',
+        newPassword: 'NewPass123!',
+        confirmPassword: 'DifferentPass123!',
+      };
+
+      mockUserService.changePassword.mockRejectedValue(
+        new BadRequestException('New password and confirmation do not match'),
+      );
+
+      await expect(
+        controller.changePassword(mockRequest, changePasswordDto),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        controller.changePassword(mockRequest, changePasswordDto),
+      ).rejects.toThrow('New password and confirmation do not match');
+      expect(service.changePassword).toHaveBeenCalledWith(
+        'user-123',
+        changePasswordDto,
+      );
+    });
+
+    it('should throw BadRequestException when current password is incorrect', async () => {
+      const changePasswordDto: ChangePasswordDto = {
+        currentPassword: 'WrongPass123!',
+        newPassword: 'NewPass123!',
+        confirmPassword: 'NewPass123!',
+      };
+
+      mockUserService.changePassword.mockRejectedValue(
+        new BadRequestException('Current password is incorrect'),
+      );
+
+      await expect(
+        controller.changePassword(mockRequest, changePasswordDto),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        controller.changePassword(mockRequest, changePasswordDto),
+      ).rejects.toThrow('Current password is incorrect');
+      expect(service.changePassword).toHaveBeenCalledWith(
+        'user-123',
+        changePasswordDto,
+      );
+    });
+
+    it('should throw NotFoundException when user not found', async () => {
+      const changePasswordDto: ChangePasswordDto = {
+        currentPassword: 'OldPass123!',
+        newPassword: 'NewPass123!',
+        confirmPassword: 'NewPass123!',
+      };
+
+      mockUserService.changePassword.mockRejectedValue(
+        new NotFoundException('User not found'),
+      );
+
+      await expect(
+        controller.changePassword(mockRequest, changePasswordDto),
+      ).rejects.toThrow(NotFoundException);
+      expect(service.changePassword).toHaveBeenCalledWith(
+        'user-123',
+        changePasswordDto,
+      );
+    });
+
+    it('should handle service errors gracefully', async () => {
+      const changePasswordDto: ChangePasswordDto = {
+        currentPassword: 'OldPass123!',
+        newPassword: 'NewPass123!',
+        confirmPassword: 'NewPass123!',
+      };
+
+      mockUserService.changePassword.mockRejectedValue(
+        new Error('Database connection failed'),
+      );
+
+      await expect(
+        controller.changePassword(mockRequest, changePasswordDto),
+      ).rejects.toThrow(Error);
+      expect(service.changePassword).toHaveBeenCalledWith(
+        'user-123',
+        changePasswordDto,
+      );
+    });
+
+    it('should validate password complexity requirements', async () => {
+      const changePasswordDto: ChangePasswordDto = {
+        currentPassword: 'OldPass123!',
+        newPassword: 'NewPass123!',
+        confirmPassword: 'NewPass123!',
+      };
+
+      const successResponse = {
+        success: true,
+        message: 'Password changed successfully',
+      };
+
+      mockUserService.changePassword.mockResolvedValue(successResponse);
+
+      const result = await controller.changePassword(
+        mockRequest,
+        changePasswordDto,
+      );
+
+      expect(result.success).toBe(true);
+      expect(service.changePassword).toHaveBeenCalledWith(
+        'user-123',
+        changePasswordDto,
       );
     });
   });
 
-  describe('activate', () => {
-    it('should activate user', async () => {
-      // Arrange
-      const userId = 'user-123';
-      const tenantId = 'tenant-123';
-      const mockUser = { id: userId, status: 'active', tenantId };
-      mockUserService.activate.mockResolvedValue(mockUser);
+  describe('Authentication & Authorization', () => {
+    it('should extract userId from JWT token', async () => {
+      mockUserService.getProfile.mockResolvedValue(mockUserProfile);
 
-      // Act
-      const result = await controller.activate(userId, tenantId);
+      await controller.getProfile(mockRequest);
 
-      // Assert
-      expect(result).toEqual(mockUser);
-      expect(service.activate).toHaveBeenCalledWith(userId, tenantId);
+      expect(service.getProfile).toHaveBeenCalledWith('user-123');
+    });
+
+    it('should handle requests with different user IDs', async () => {
+      const differentUserRequest = {
+        user: {
+          userId: 'user-456',
+          email: 'another@example.com',
+          tenantId: 'tenant-123',
+        },
+      };
+
+      mockUserService.getProfile.mockResolvedValue({
+        ...mockUserProfile,
+        id: 'user-456',
+        email: 'another@example.com',
+      });
+
+      await controller.getProfile(differentUserRequest);
+
+      expect(service.getProfile).toHaveBeenCalledWith('user-456');
     });
   });
 
-  describe('deactivate', () => {
-    it('should deactivate user', async () => {
-      // Arrange
-      const userId = 'user-123';
-      const tenantId = 'tenant-123';
-      const mockUser = { id: userId, status: 'inactive', tenantId };
-      mockUserService.deactivate.mockResolvedValue(mockUser);
+  describe('Edge Cases', () => {
+    it('should handle concurrent profile updates', async () => {
+      const updateDto1: UpdateProfileDto = { phone: '0901111111' };
+      const updateDto2: UpdateProfileDto = { phone: '0902222222' };
 
-      // Act
-      const result = await controller.deactivate(userId, tenantId);
+      mockUserService.updateProfile
+        .mockResolvedValueOnce({ ...mockUserProfile, phone: '0901111111' })
+        .mockResolvedValueOnce({ ...mockUserProfile, phone: '0902222222' });
 
-      // Assert
-      expect(result).toEqual(mockUser);
-      expect(service.deactivate).toHaveBeenCalledWith(userId, tenantId);
+      const [result1, result2] = await Promise.all([
+        controller.updateProfile(mockRequest, updateDto1),
+        controller.updateProfile(mockRequest, updateDto2),
+      ]);
+
+      expect(result1.phone).toBe('0901111111');
+      expect(result2.phone).toBe('0902222222');
+      expect(service.updateProfile).toHaveBeenCalledTimes(2);
     });
-  });
 
-  describe('remove', () => {
-    it('should delete user', async () => {
-      // Arrange
-      const userId = 'user-123';
-      const tenantId = 'tenant-123';
-      mockUserService.remove.mockResolvedValue(undefined);
+    it('should handle special characters in full name', async () => {
+      const updateDto: UpdateProfileDto = {
+        fullName: "O'Brien-Smith",
+      };
 
-      // Act
-      const result = await controller.remove(userId, tenantId);
+      const updatedProfile = {
+        ...mockUserProfile,
+        firstName: "O'Brien-Smith",
+        lastName: '',
+      };
 
-      // Assert
-      expect(result).toBeUndefined();
-      expect(service.remove).toHaveBeenCalledWith(userId, tenantId);
+      mockUserService.updateProfile.mockResolvedValue(updatedProfile);
+
+      const result = await controller.updateProfile(mockRequest, updateDto);
+
+      expect(result.firstName).toBe("O'Brien-Smith");
+      expect(service.updateProfile).toHaveBeenCalledWith('user-123', updateDto);
+    });
+
+    it('should handle very long avatar URLs', async () => {
+      const longUrl = 'https://example.com/' + 'a'.repeat(500) + '.jpg';
+      const updateDto: UpdateProfileDto = {
+        avatar: longUrl,
+      };
+
+      const updatedProfile = {
+        ...mockUserProfile,
+        avatar: longUrl,
+      };
+
+      mockUserService.updateProfile.mockResolvedValue(updatedProfile);
+
+      const result = await controller.updateProfile(mockRequest, updateDto);
+
+      expect(result.avatar).toBe(longUrl);
+      expect(service.updateProfile).toHaveBeenCalledWith('user-123', updateDto);
     });
   });
 });

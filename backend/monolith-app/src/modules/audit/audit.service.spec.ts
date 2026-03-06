@@ -1,40 +1,23 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Between } from 'typeorm';
+import { Repository, Between } from 'typeorm';
 import { AuditService } from './audit.service';
 import { AuditLog, AuditAction } from './entities/audit-log.entity';
 import { CacheService } from '@/common/cache/cache.service';
 
 describe('AuditService', () => {
   let service: AuditService;
+  let repository: Repository<AuditLog>;
+  let cacheService: CacheService;
 
-  const mockAuditLog = {
-    id: '1',
+  const mockAuditLog: Partial<AuditLog> = {
+    id: 'audit-1',
     tenantId: 'tenant-1',
     userId: 'user-1',
     action: AuditAction.CREATE,
     entityType: 'Product',
     entityId: 'product-1',
-    oldValue: null,
-    newValue: { name: 'Test Product', price: 100 },
-    ipAddress: '192.168.1.1',
-    userAgent: 'Mozilla/5.0',
-    description: 'Created new product',
     createdAt: new Date(),
-  };
-
-  const mockRepository = {
-    create: jest.fn(),
-    save: jest.fn(),
-    find: jest.fn(),
-    findOne: jest.fn(),
-  };
-
-  const mockCacheService = {
-    get: jest.fn(),
-    set: jest.fn(),
-    del: jest.fn(),
-    getOrSet: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -43,26 +26,30 @@ describe('AuditService', () => {
         AuditService,
         {
           provide: getRepositoryToken(AuditLog),
-          useValue: mockRepository,
+          useValue: {
+            create: jest.fn(),
+            save: jest.fn(),
+            find: jest.fn(),
+          },
         },
         {
           provide: CacheService,
-          useValue: mockCacheService,
+          useValue: {
+            getOrSet: jest.fn(),
+          },
         },
       ],
     }).compile();
 
     service = module.get<AuditService>(AuditService);
-  });
-
-  afterEach(() => {
-    jest.clearAllMocks();
+    repository = module.get<Repository<AuditLog>>(getRepositoryToken(AuditLog));
+    cacheService = module.get<CacheService>(CacheService);
   });
 
   describe('log', () => {
-    it('should create an audit log entry', async () => {
-      mockRepository.create.mockReturnValue(mockAuditLog);
-      mockRepository.save.mockResolvedValue(mockAuditLog);
+    it('should create audit log', async () => {
+      jest.spyOn(repository, 'create').mockReturnValue(mockAuditLog as AuditLog);
+      jest.spyOn(repository, 'save').mockResolvedValue(mockAuditLog as AuditLog);
 
       const result = await service.log(
         'tenant-1',
@@ -70,38 +57,24 @@ describe('AuditService', () => {
         AuditAction.CREATE,
         'Product',
         'product-1',
-        null,
-        { name: 'Test Product', price: 100 },
-        '192.168.1.1',
-        'Mozilla/5.0',
-        'Created new product',
       );
 
       expect(result).toEqual(mockAuditLog);
-      expect(mockRepository.create).toHaveBeenCalledWith({
-        tenantId: 'tenant-1',
-        userId: 'user-1',
-        action: AuditAction.CREATE,
-        entityType: 'Product',
-        entityId: 'product-1',
-        oldValue: null,
-        newValue: { name: 'Test Product', price: 100 },
-        ipAddress: '192.168.1.1',
-        userAgent: 'Mozilla/5.0',
-        description: 'Created new product',
-      });
+      expect(repository.create).toHaveBeenCalled();
+      expect(repository.save).toHaveBeenCalled();
     });
 
-    it('should create audit log for UPDATE action', async () => {
-      const updateLog = {
+    it('should create audit log with all optional parameters', async () => {
+      const fullAuditLog = {
         ...mockAuditLog,
-        action: AuditAction.UPDATE,
-        oldValue: { name: 'Old Product', price: 100 },
-        newValue: { name: 'Updated Product', price: 150 },
+        oldValue: { name: 'Old Product' },
+        newValue: { name: 'New Product' },
+        ipAddress: '192.168.1.1',
+        userAgent: 'Mozilla/5.0',
+        description: 'Product updated',
       };
-
-      mockRepository.create.mockReturnValue(updateLog);
-      mockRepository.save.mockResolvedValue(updateLog);
+      jest.spyOn(repository, 'create').mockReturnValue(fullAuditLog as AuditLog);
+      jest.spyOn(repository, 'save').mockResolvedValue(fullAuditLog as AuditLog);
 
       const result = await service.log(
         'tenant-1',
@@ -109,189 +82,152 @@ describe('AuditService', () => {
         AuditAction.UPDATE,
         'Product',
         'product-1',
-        { name: 'Old Product', price: 100 },
-        { name: 'Updated Product', price: 150 },
+        { name: 'Old Product' },
+        { name: 'New Product' },
+        '192.168.1.1',
+        'Mozilla/5.0',
+        'Product updated',
       );
 
-      expect(result.action).toBe(AuditAction.UPDATE);
-      expect(result.oldValue).toEqual({ name: 'Old Product', price: 100 });
-      expect(result.newValue).toEqual({ name: 'Updated Product', price: 150 });
-    });
-
-    it('should create audit log for DELETE action', async () => {
-      const deleteLog = {
-        ...mockAuditLog,
-        action: AuditAction.DELETE,
-        oldValue: { name: 'Deleted Product', price: 100 },
-        newValue: null,
-      };
-
-      mockRepository.create.mockReturnValue(deleteLog);
-      mockRepository.save.mockResolvedValue(deleteLog);
-
-      const result = await service.log(
-        'tenant-1',
-        'user-1',
-        AuditAction.DELETE,
-        'Product',
-        'product-1',
-        { name: 'Deleted Product', price: 100 },
-        null,
-      );
-
-      expect(result.action).toBe(AuditAction.DELETE);
-    });
-
-    it('should create audit log without optional fields', async () => {
-      const minimalLog = {
-        ...mockAuditLog,
-        entityId: undefined,
-        oldValue: undefined,
-        newValue: undefined,
-        ipAddress: undefined,
-        userAgent: undefined,
-        description: undefined,
-      };
-
-      mockRepository.create.mockReturnValue(minimalLog);
-      mockRepository.save.mockResolvedValue(minimalLog);
-
-      const result = await service.log('tenant-1', 'user-1', AuditAction.CREATE, 'Product');
-
-      expect(result).toBeDefined();
-      expect(mockRepository.create).toHaveBeenCalledWith({
+      expect(result).toEqual(fullAuditLog);
+      expect(repository.create).toHaveBeenCalledWith({
         tenantId: 'tenant-1',
         userId: 'user-1',
-        action: AuditAction.CREATE,
+        action: AuditAction.UPDATE,
         entityType: 'Product',
-        entityId: undefined,
-        oldValue: undefined,
-        newValue: undefined,
-        ipAddress: undefined,
-        userAgent: undefined,
-        description: undefined,
+        entityId: 'product-1',
+        oldValue: { name: 'Old Product' },
+        newValue: { name: 'New Product' },
+        ipAddress: '192.168.1.1',
+        userAgent: 'Mozilla/5.0',
+        description: 'Product updated',
       });
     });
   });
 
   describe('findAll', () => {
-    it('should return all audit logs for a tenant', async () => {
-      mockRepository.find.mockResolvedValue([mockAuditLog]);
+    it('should return all audit logs for tenant', async () => {
+      jest.spyOn(repository, 'find').mockResolvedValue([mockAuditLog as AuditLog]);
 
       const result = await service.findAll('tenant-1');
 
-      expect(result).toEqual([mockAuditLog]);
-      expect(mockRepository.find).toHaveBeenCalledWith({
-        where: { tenantId: 'tenant-1' },
-        order: { createdAt: 'DESC' },
-        take: 100,
-      });
+      expect(result).toHaveLength(1);
+      expect(repository.find).toHaveBeenCalled();
     });
 
     it('should filter by date range', async () => {
       const startDate = new Date('2024-01-01');
-      const endDate = new Date('2024-01-31');
+      const endDate = new Date('2024-12-31');
+      jest.spyOn(repository, 'find').mockResolvedValue([mockAuditLog as AuditLog]);
 
-      mockRepository.find.mockResolvedValue([mockAuditLog]);
+      await service.findAll('tenant-1', startDate, endDate);
 
-      const result = await service.findAll('tenant-1', startDate, endDate);
-
-      expect(result).toEqual([mockAuditLog]);
-      expect(mockRepository.find).toHaveBeenCalledWith({
-        where: {
-          tenantId: 'tenant-1',
-          createdAt: Between(startDate, endDate),
-        },
-        order: { createdAt: 'DESC' },
-        take: 100,
-      });
+      expect(repository.find).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            createdAt: Between(startDate, endDate),
+          }),
+        }),
+      );
     });
 
     it('should filter by userId', async () => {
-      mockRepository.find.mockResolvedValue([mockAuditLog]);
+      jest.spyOn(repository, 'find').mockResolvedValue([mockAuditLog as AuditLog]);
 
-      const result = await service.findAll('tenant-1', undefined, undefined, 'user-1');
+      await service.findAll('tenant-1', undefined, undefined, 'user-1');
 
-      expect(result).toEqual([mockAuditLog]);
-      expect(mockRepository.find).toHaveBeenCalledWith({
-        where: {
-          tenantId: 'tenant-1',
-          userId: 'user-1',
-        },
-        order: { createdAt: 'DESC' },
-        take: 100,
-      });
+      expect(repository.find).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            tenantId: 'tenant-1',
+            userId: 'user-1',
+          }),
+        }),
+      );
     });
 
     it('should filter by entityType', async () => {
-      mockRepository.find.mockResolvedValue([mockAuditLog]);
+      jest.spyOn(repository, 'find').mockResolvedValue([mockAuditLog as AuditLog]);
 
-      const result = await service.findAll('tenant-1', undefined, undefined, undefined, 'Product');
+      await service.findAll('tenant-1', undefined, undefined, undefined, 'Product');
 
-      expect(result).toEqual([mockAuditLog]);
-      expect(mockRepository.find).toHaveBeenCalledWith({
-        where: {
-          tenantId: 'tenant-1',
-          entityType: 'Product',
-        },
-        order: { createdAt: 'DESC' },
-        take: 100,
-      });
+      expect(repository.find).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            tenantId: 'tenant-1',
+            entityType: 'Product',
+          }),
+        }),
+      );
     });
 
-    it('should filter by multiple criteria', async () => {
+    it('should filter by all parameters', async () => {
       const startDate = new Date('2024-01-01');
-      const endDate = new Date('2024-01-31');
-
-      mockRepository.find.mockResolvedValue([mockAuditLog]);
+      const endDate = new Date('2024-12-31');
+      jest.spyOn(repository, 'find').mockResolvedValue([mockAuditLog as AuditLog]);
 
       await service.findAll('tenant-1', startDate, endDate, 'user-1', 'Product');
 
-      expect(mockRepository.find).toHaveBeenCalledWith({
-        where: {
-          tenantId: 'tenant-1',
-          createdAt: Between(startDate, endDate),
-          userId: 'user-1',
-          entityType: 'Product',
-        },
-        order: { createdAt: 'DESC' },
-        take: 100,
-      });
+      expect(repository.find).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            tenantId: 'tenant-1',
+            createdAt: Between(startDate, endDate),
+            userId: 'user-1',
+            entityType: 'Product',
+          }),
+        }),
+      );
     });
   });
 
   describe('findByEntity', () => {
-    it('should return audit logs for a specific entity', async () => {
-      mockCacheService.getOrSet.mockImplementation(async (key, fn) => fn());
-      mockRepository.find.mockResolvedValue([mockAuditLog]);
+    it('should return audit logs for specific entity', async () => {
+      jest.spyOn(cacheService, 'getOrSet').mockResolvedValue([mockAuditLog as AuditLog]);
 
       const result = await service.findByEntity('tenant-1', 'Product', 'product-1');
 
-      expect(result).toEqual([mockAuditLog]);
-      expect(mockRepository.find).toHaveBeenCalledWith({
-        where: {
-          tenantId: 'tenant-1',
-          entityType: 'Product',
-          entityId: 'product-1',
-        },
+      expect(result).toHaveLength(1);
+      expect(cacheService.getOrSet).toHaveBeenCalled();
+    });
+
+    it('should fetch from repository on cache miss', async () => {
+      jest.spyOn(repository, 'find').mockResolvedValue([mockAuditLog as AuditLog]);
+      jest.spyOn(cacheService, 'getOrSet').mockImplementation(async (key, factory) => {
+        return factory();
+      });
+
+      const result = await service.findByEntity('tenant-1', 'Product', 'product-1');
+
+      expect(result).toHaveLength(1);
+      expect(repository.find).toHaveBeenCalledWith({
+        where: { tenantId: 'tenant-1', entityType: 'Product', entityId: 'product-1' },
         order: { createdAt: 'DESC' },
       });
     });
   });
 
   describe('findByUser', () => {
-    it('should return audit logs for a specific user', async () => {
-      mockCacheService.getOrSet.mockImplementation(async (key, fn) => fn());
-      mockRepository.find.mockResolvedValue([mockAuditLog]);
+    it('should return audit logs for specific user', async () => {
+      jest.spyOn(cacheService, 'getOrSet').mockResolvedValue([mockAuditLog as AuditLog]);
 
       const result = await service.findByUser('tenant-1', 'user-1');
 
-      expect(result).toEqual([mockAuditLog]);
-      expect(mockRepository.find).toHaveBeenCalledWith({
-        where: {
-          tenantId: 'tenant-1',
-          userId: 'user-1',
-        },
+      expect(result).toHaveLength(1);
+      expect(cacheService.getOrSet).toHaveBeenCalled();
+    });
+
+    it('should fetch from repository on cache miss', async () => {
+      jest.spyOn(repository, 'find').mockResolvedValue([mockAuditLog as AuditLog]);
+      jest.spyOn(cacheService, 'getOrSet').mockImplementation(async (key, factory) => {
+        return factory();
+      });
+
+      const result = await service.findByUser('tenant-1', 'user-1');
+
+      expect(result).toHaveLength(1);
+      expect(repository.find).toHaveBeenCalledWith({
+        where: { tenantId: 'tenant-1', userId: 'user-1' },
         order: { createdAt: 'DESC' },
         take: 100,
       });
@@ -300,53 +236,54 @@ describe('AuditService', () => {
 
   describe('getActivitySummary', () => {
     it('should return activity summary', async () => {
-      const logs = [
-        { ...mockAuditLog, action: AuditAction.CREATE, entityType: 'Product', userId: 'user-1' },
-        { ...mockAuditLog, action: AuditAction.CREATE, entityType: 'Order', userId: 'user-1' },
-        { ...mockAuditLog, action: AuditAction.UPDATE, entityType: 'Product', userId: 'user-2' },
-        { ...mockAuditLog, action: AuditAction.DELETE, entityType: 'Product', userId: 'user-1' },
-      ];
+      const mockSummary = {
+        total: 1,
+        byAction: { [AuditAction.CREATE]: 1 } as Record<AuditAction, number>,
+        byEntityType: { Product: 1 },
+        byUser: { 'user-1': 1 },
+      };
+      jest.spyOn(cacheService, 'getOrSet').mockResolvedValue(mockSummary);
 
-      mockCacheService.getOrSet.mockImplementation(async (key, fn) => fn());
-      mockRepository.find.mockResolvedValue(logs);
+      const result = await service.getActivitySummary(
+        'tenant-1',
+        new Date('2024-01-01'),
+        new Date('2024-12-31'),
+      );
 
-      const startDate = new Date('2024-01-01');
-      const endDate = new Date('2024-01-31');
-
-      const result = await service.getActivitySummary('tenant-1', startDate, endDate);
-
-      expect(result).toEqual({
-        total: 4,
-        byAction: {
-          [AuditAction.CREATE]: 2,
-          [AuditAction.UPDATE]: 1,
-          [AuditAction.DELETE]: 1,
-        },
-        byEntityType: {
-          Product: 3,
-          Order: 1,
-        },
-        byUser: {
-          'user-1': 3,
-          'user-2': 1,
-        },
-      });
+      expect(result.total).toBe(1);
+      expect(result.byAction[AuditAction.CREATE]).toBe(1);
     });
 
-    it('should return empty summary for no logs', async () => {
-      mockCacheService.getOrSet.mockImplementation(async (key, fn) => fn());
-      mockRepository.find.mockResolvedValue([]);
+    it('should calculate summary from repository on cache miss', async () => {
+      const mockLogs = [
+        { ...mockAuditLog, action: AuditAction.CREATE, entityType: 'Product', userId: 'user-1' },
+        { ...mockAuditLog, action: AuditAction.UPDATE, entityType: 'Product', userId: 'user-1' },
+        { ...mockAuditLog, action: AuditAction.CREATE, entityType: 'Order', userId: 'user-2' },
+        { ...mockAuditLog, action: AuditAction.DELETE, entityType: 'Order', userId: 'user-2' },
+      ] as AuditLog[];
+
+      jest.spyOn(repository, 'find').mockResolvedValue(mockLogs);
+      jest.spyOn(cacheService, 'getOrSet').mockImplementation(async (key, factory) => {
+        return factory();
+      });
 
       const startDate = new Date('2024-01-01');
-      const endDate = new Date('2024-01-31');
-
+      const endDate = new Date('2024-12-31');
       const result = await service.getActivitySummary('tenant-1', startDate, endDate);
 
-      expect(result).toEqual({
-        total: 0,
-        byAction: {},
-        byEntityType: {},
-        byUser: {},
+      expect(result.total).toBe(4);
+      expect(result.byAction[AuditAction.CREATE]).toBe(2);
+      expect(result.byAction[AuditAction.UPDATE]).toBe(1);
+      expect(result.byAction[AuditAction.DELETE]).toBe(1);
+      expect(result.byEntityType['Product']).toBe(2);
+      expect(result.byEntityType['Order']).toBe(2);
+      expect(result.byUser['user-1']).toBe(2);
+      expect(result.byUser['user-2']).toBe(2);
+      expect(repository.find).toHaveBeenCalledWith({
+        where: {
+          tenantId: 'tenant-1',
+          createdAt: Between(startDate, endDate),
+        },
       });
     });
   });

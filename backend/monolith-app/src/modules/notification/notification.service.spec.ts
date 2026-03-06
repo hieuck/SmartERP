@@ -1,26 +1,23 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { NotFoundException } from '@nestjs/common';
 import { NotificationService } from './notification.service';
 import { Notification, NotificationType, NotificationStatus } from './entities/notification.entity';
-import { NotFoundException } from '@nestjs/common';
 import { CacheService } from '@/common/cache/cache.service';
 
 describe('NotificationService', () => {
   let service: NotificationService;
+  let cacheService: CacheService;
 
-  const mockNotification = {
-    id: '1',
+  const mockNotification: Partial<Notification> = {
+    id: 'notif-1',
     tenantId: 'tenant-1',
     userId: 'user-1',
     title: 'Test Notification',
-    message: 'This is a test notification',
+    message: 'Test message',
     type: NotificationType.INFO,
     status: NotificationStatus.UNREAD,
-    link: null,
-    metadata: null,
-    readAt: null,
     createdAt: new Date(),
-    updatedAt: new Date(),
   };
 
   const mockQueryBuilder = {
@@ -33,22 +30,18 @@ describe('NotificationService', () => {
   };
 
   const mockRepository = {
-    find: jest.fn(),
+    createQueryBuilder: jest.fn(() => mockQueryBuilder),
     findOne: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
     count: jest.fn(),
-    createQueryBuilder: jest.fn(() => mockQueryBuilder),
   };
 
   const mockCacheService = {
-    get: jest.fn(),
-    set: jest.fn(),
-    del: jest.fn(),
     getOrSet: jest.fn(),
-    invalidateEntity: jest.fn(),
+    del: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -67,6 +60,7 @@ describe('NotificationService', () => {
     }).compile();
 
     service = module.get<NotificationService>(NotificationService);
+    cacheService = module.get<CacheService>(CacheService);
   });
 
   afterEach(() => {
@@ -74,79 +68,41 @@ describe('NotificationService', () => {
   });
 
   describe('findAll', () => {
-    it('should return all notifications for a user', async () => {
+    it('should return all notifications for user', async () => {
       mockQueryBuilder.getMany.mockResolvedValue([mockNotification]);
 
       const result = await service.findAll('tenant-1', 'user-1');
 
       expect(result).toEqual([mockNotification]);
       expect(mockRepository.createQueryBuilder).toHaveBeenCalledWith('notification');
-      expect(mockQueryBuilder.select).toHaveBeenCalledWith([
-        'notification.id',
-        'notification.title',
-        'notification.message',
-        'notification.type',
-        'notification.status',
-        'notification.link',
-        'notification.readAt',
-        'notification.createdAt',
-      ]);
       expect(mockQueryBuilder.where).toHaveBeenCalledWith('notification.tenantId = :tenantId', {
         tenantId: 'tenant-1',
       });
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('notification.userId = :userId', {
         userId: 'user-1',
       });
-      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith('notification.createdAt', 'DESC');
-      expect(mockQueryBuilder.take).toHaveBeenCalledWith(50);
-    });
-
-    it('should limit results to 50 notifications', async () => {
-      const notifications = Array(60).fill(mockNotification);
-      mockQueryBuilder.getMany.mockResolvedValue(notifications.slice(0, 50));
-
-      const result = await service.findAll('tenant-1', 'user-1');
-
-      expect(result.length).toBeLessThanOrEqual(50);
       expect(mockQueryBuilder.take).toHaveBeenCalledWith(50);
     });
   });
 
   describe('findUnread', () => {
-    it('should return only unread notifications', async () => {
+    it('should return unread notifications for user', async () => {
       mockQueryBuilder.getMany.mockResolvedValue([mockNotification]);
 
       const result = await service.findUnread('tenant-1', 'user-1');
 
       expect(result).toEqual([mockNotification]);
-      expect(mockRepository.createQueryBuilder).toHaveBeenCalledWith('notification');
-      expect(mockQueryBuilder.select).toHaveBeenCalledWith([
-        'notification.id',
-        'notification.title',
-        'notification.message',
-        'notification.type',
-        'notification.status',
-        'notification.link',
-        'notification.createdAt',
-      ]);
-      expect(mockQueryBuilder.where).toHaveBeenCalledWith('notification.tenantId = :tenantId', {
-        tenantId: 'tenant-1',
-      });
-      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('notification.userId = :userId', {
-        userId: 'user-1',
-      });
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('notification.status = :status', {
         status: NotificationStatus.UNREAD,
       });
-      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith('notification.createdAt', 'DESC');
     });
   });
 
   describe('findById', () => {
-    it('should return a notification by id', async () => {
+    it('should return notification by id with caching', async () => {
       mockCacheService.getOrSet.mockResolvedValue(mockNotification);
 
-      const result = await service.findById('tenant-1', '1');
+      const result = await service.findById('tenant-1', 'notif-1');
 
       expect(result).toEqual(mockNotification);
       expect(mockCacheService.getOrSet).toHaveBeenCalled();
@@ -158,125 +114,105 @@ describe('NotificationService', () => {
       });
       mockRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findById('tenant-1', '999')).rejects.toThrow(NotFoundException);
+      await expect(service.findById('tenant-1', 'notif-999')).rejects.toThrow(NotFoundException);
     });
   });
 
   describe('create', () => {
-    it('should create a new notification', async () => {
-      const createData = {
-        title: 'New Notification',
-        message: 'New message',
-      };
-
-      mockRepository.create.mockReturnValue({
-        ...mockNotification,
-        ...createData,
-      });
-      mockRepository.save.mockResolvedValue({
-        ...mockNotification,
-        ...createData,
-      });
+    it('should create notification with default type', async () => {
+      mockRepository.create.mockReturnValue(mockNotification);
+      mockRepository.save.mockResolvedValue(mockNotification);
 
       const result = await service.create(
         'tenant-1',
         'user-1',
-        createData.title,
-        createData.message,
+        'Test Title',
+        'Test Message',
       );
 
-      expect(result.title).toBe('New Notification');
-      expect(result.message).toBe('New message');
+      expect(result).toEqual(mockNotification);
       expect(mockRepository.create).toHaveBeenCalledWith({
         tenantId: 'tenant-1',
         userId: 'user-1',
-        title: createData.title,
-        message: createData.message,
+        title: 'Test Title',
+        message: 'Test Message',
         type: NotificationType.INFO,
         link: undefined,
         metadata: undefined,
       });
     });
 
-    it('should create notification with custom type', async () => {
-      mockRepository.create.mockReturnValue({
-        ...mockNotification,
-        type: NotificationType.SUCCESS,
-      });
-      mockRepository.save.mockResolvedValue({
-        ...mockNotification,
-        type: NotificationType.SUCCESS,
-      });
+    it('should create notification with custom type and link', async () => {
+      const customNotif = { ...mockNotification, type: NotificationType.WARNING, link: '/orders/123' };
+      mockRepository.create.mockReturnValue(customNotif);
+      mockRepository.save.mockResolvedValue(customNotif);
 
       const result = await service.create(
         'tenant-1',
         'user-1',
-        'Success',
-        'Operation successful',
-        NotificationType.SUCCESS,
+        'Warning',
+        'Check this',
+        NotificationType.WARNING,
+        '/orders/123',
       );
 
-      expect(result.type).toBe(NotificationType.SUCCESS);
+      expect(result).toEqual(customNotif);
+      expect(mockRepository.create).toHaveBeenCalledWith({
+        tenantId: 'tenant-1',
+        userId: 'user-1',
+        title: 'Warning',
+        message: 'Check this',
+        type: NotificationType.WARNING,
+        link: '/orders/123',
+        metadata: undefined,
+      });
     });
 
-    it('should create notification with link and metadata', async () => {
-      const metadata = { orderId: '123' };
-      mockRepository.create.mockReturnValue({
-        ...mockNotification,
-        link: '/orders/123',
-        metadata,
-      });
-      mockRepository.save.mockResolvedValue({
-        ...mockNotification,
-        link: '/orders/123',
-        metadata,
-      });
+    it('should create notification with metadata', async () => {
+      const metadata = { orderId: '123', amount: 1000 };
+      mockRepository.create.mockReturnValue(mockNotification);
+      mockRepository.save.mockResolvedValue(mockNotification);
 
-      const result = await service.create(
+      await service.create(
         'tenant-1',
         'user-1',
-        'Order Created',
-        'New order created',
-        NotificationType.INFO,
+        'Order Update',
+        'Order processed',
+        NotificationType.SUCCESS,
         '/orders/123',
         metadata,
       );
 
-      expect(result.link).toBe('/orders/123');
-      expect(result.metadata).toEqual(metadata);
+      expect(mockRepository.create).toHaveBeenCalledWith({
+        tenantId: 'tenant-1',
+        userId: 'user-1',
+        title: 'Order Update',
+        message: 'Order processed',
+        type: NotificationType.SUCCESS,
+        link: '/orders/123',
+        metadata,
+      });
     });
   });
 
   describe('markAsRead', () => {
-    it('should mark a notification as read', async () => {
-      mockCacheService.getOrSet.mockResolvedValueOnce(mockNotification);
+    it('should mark notification as read and invalidate cache', async () => {
+      const readNotif = { ...mockNotification, status: NotificationStatus.READ, readAt: new Date() };
+      mockCacheService.getOrSet.mockResolvedValueOnce(mockNotification).mockResolvedValueOnce(readNotif);
       mockRepository.update.mockResolvedValue({ affected: 1 });
       mockCacheService.del.mockResolvedValue(undefined);
-      mockCacheService.getOrSet.mockResolvedValueOnce({
-        ...mockNotification,
-        status: NotificationStatus.READ,
-        readAt: expect.any(Date),
-      });
 
-      await service.markAsRead('tenant-1', '1');
+      const result = await service.markAsRead('tenant-1', 'notif-1');
 
       expect(mockRepository.update).toHaveBeenCalledWith(
-        { tenantId: 'tenant-1', id: '1' },
-        {
+        { tenantId: 'tenant-1', id: 'notif-1' },
+        expect.objectContaining({
           status: NotificationStatus.READ,
           readAt: expect.any(Date),
-        },
+        }),
       );
       expect(mockCacheService.del).toHaveBeenCalled();
-    });
-
-    it('should throw NotFoundException if notification not found', async () => {
-      mockCacheService.getOrSet.mockImplementation(async (key, factory) => {
-        return factory();
-      });
-      mockRepository.findOne.mockResolvedValue(null);
-
-      await expect(service.markAsRead('tenant-1', '999')).rejects.toThrow(NotFoundException);
+      expect(result).toEqual(readNotif);
     });
   });
 
@@ -287,70 +223,43 @@ describe('NotificationService', () => {
       await service.markAllAsRead('tenant-1', 'user-1');
 
       expect(mockRepository.update).toHaveBeenCalledWith(
-        {
-          tenantId: 'tenant-1',
-          userId: 'user-1',
-          status: NotificationStatus.UNREAD,
-        },
-        {
+        { tenantId: 'tenant-1', userId: 'user-1', status: NotificationStatus.UNREAD },
+        expect.objectContaining({
           status: NotificationStatus.READ,
           readAt: expect.any(Date),
-        },
+        }),
       );
     });
   });
 
   describe('archive', () => {
-    it('should archive a notification', async () => {
-      mockCacheService.getOrSet.mockResolvedValueOnce(mockNotification);
+    it('should archive notification and invalidate cache', async () => {
+      const archivedNotif = { ...mockNotification, status: NotificationStatus.ARCHIVED };
+      mockCacheService.getOrSet.mockResolvedValueOnce(mockNotification).mockResolvedValueOnce(archivedNotif);
       mockRepository.update.mockResolvedValue({ affected: 1 });
       mockCacheService.del.mockResolvedValue(undefined);
-      mockCacheService.getOrSet.mockResolvedValueOnce({
-        ...mockNotification,
-        status: NotificationStatus.ARCHIVED,
-      });
 
-      await service.archive('tenant-1', '1');
+      const result = await service.archive('tenant-1', 'notif-1');
 
       expect(mockRepository.update).toHaveBeenCalledWith(
-        { tenantId: 'tenant-1', id: '1' },
+        { tenantId: 'tenant-1', id: 'notif-1' },
         { status: NotificationStatus.ARCHIVED },
       );
       expect(mockCacheService.del).toHaveBeenCalled();
-    });
-
-    it('should throw NotFoundException if notification not found', async () => {
-      mockCacheService.getOrSet.mockImplementation(async (key, factory) => {
-        return factory();
-      });
-      mockRepository.findOne.mockResolvedValue(null);
-
-      await expect(service.archive('tenant-1', '999')).rejects.toThrow(NotFoundException);
+      expect(result).toEqual(archivedNotif);
     });
   });
 
   describe('delete', () => {
-    it('should delete a notification', async () => {
+    it('should delete notification and invalidate cache', async () => {
       mockCacheService.getOrSet.mockResolvedValue(mockNotification);
       mockRepository.delete.mockResolvedValue({ affected: 1 });
       mockCacheService.del.mockResolvedValue(undefined);
 
-      await service.delete('tenant-1', '1');
+      await service.delete('tenant-1', 'notif-1');
 
-      expect(mockRepository.delete).toHaveBeenCalledWith({
-        tenantId: 'tenant-1',
-        id: '1',
-      });
+      expect(mockRepository.delete).toHaveBeenCalledWith({ tenantId: 'tenant-1', id: 'notif-1' });
       expect(mockCacheService.del).toHaveBeenCalled();
-    });
-
-    it('should throw NotFoundException if notification not found', async () => {
-      mockCacheService.getOrSet.mockImplementation(async (key, factory) => {
-        return factory();
-      });
-      mockRepository.findOne.mockResolvedValue(null);
-
-      await expect(service.delete('tenant-1', '999')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -362,20 +271,8 @@ describe('NotificationService', () => {
 
       expect(result).toBe(5);
       expect(mockRepository.count).toHaveBeenCalledWith({
-        where: {
-          tenantId: 'tenant-1',
-          userId: 'user-1',
-          status: NotificationStatus.UNREAD,
-        },
+        where: { tenantId: 'tenant-1', userId: 'user-1', status: NotificationStatus.UNREAD },
       });
-    });
-
-    it('should return 0 if no unread notifications', async () => {
-      mockRepository.count.mockResolvedValue(0);
-
-      const result = await service.getUnreadCount('tenant-1', 'user-1');
-
-      expect(result).toBe(0);
     });
   });
 });

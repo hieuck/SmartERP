@@ -502,4 +502,328 @@ describe('ProductionService', () => {
       expect(result.totalQuantityPassed).toBe(175);
     });
   });
+
+  describe('Additional Materials Tests', () => {
+    it('should create material', async () => {
+      const materialData = { name: 'New Material', type: MaterialType.RAW };
+      mockMaterialRepository.create.mockReturnValue(materialData);
+      mockMaterialRepository.save.mockResolvedValue({ id: '1', ...materialData });
+
+      const result = await service.createMaterial(materialData, 'tenant-1');
+
+      expect(result.id).toBe('1');
+      expect(mockMaterialRepository.create).toHaveBeenCalledWith({
+        ...materialData,
+        tenantId: 'tenant-1',
+      });
+    });
+  });
+
+  describe('Additional Molds Tests', () => {
+    it('should find all molds', async () => {
+      const mockMolds = [{ id: '1', code: 'M001' }];
+      mockQueryBuilder.getMany.mockResolvedValue(mockMolds);
+
+      const result = await service.findAllMolds('tenant-1');
+
+      expect(result).toEqual(mockMolds);
+      expect(mockMoldRepository.createQueryBuilder).toHaveBeenCalledWith('mold');
+    });
+
+    it('should find molds by status', async () => {
+      mockQueryBuilder.getMany.mockResolvedValue([]);
+
+      await service.findAllMolds('tenant-1', MoldStatus.ACTIVE);
+
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('mold.status = :status', {
+        status: MoldStatus.ACTIVE,
+      });
+    });
+
+    it('should create mold', async () => {
+      const moldData = { code: 'M001', name: 'Mold 1' };
+      mockMoldRepository.create.mockReturnValue(moldData);
+      mockMoldRepository.save.mockResolvedValue({ id: '1', ...moldData });
+
+      const result = await service.createMold(moldData, 'tenant-1');
+
+      expect(result.id).toBe('1');
+      expect(mockMoldRepository.create).toHaveBeenCalledWith({
+        ...moldData,
+        tenantId: 'tenant-1',
+      });
+    });
+
+    it('should update mold and invalidate cache', async () => {
+      const mockMold = { id: '1', name: 'Updated Mold' };
+      mockMoldRepository.update.mockResolvedValue({ affected: 1 });
+      mockCacheService.getOrSet.mockResolvedValue(mockMold);
+      mockCacheService.del.mockResolvedValue(undefined);
+
+      const result = await service.updateMold('1', { name: 'Updated Mold' }, 'tenant-1');
+
+      expect(result).toEqual(mockMold);
+      expect(mockCacheService.del).toHaveBeenCalled();
+    });
+
+    it('should delete mold and invalidate cache', async () => {
+      mockMoldRepository.softDelete.mockResolvedValue({ affected: 1 });
+      mockCacheService.del.mockResolvedValue(undefined);
+
+      await service.deleteMold('1', 'tenant-1');
+
+      expect(mockMoldRepository.softDelete).toHaveBeenCalledWith({
+        id: '1',
+        tenantId: 'tenant-1',
+      });
+      expect(mockCacheService.del).toHaveBeenCalled();
+    });
+  });
+
+  describe('Additional BOM Tests', () => {
+    it('should find all BOMs', async () => {
+      const mockBoms = [{ id: '1', code: 'BOM001' }];
+      mockQueryBuilder.getMany.mockResolvedValue(mockBoms);
+
+      const result = await service.findAllBoms('tenant-1');
+
+      expect(result).toEqual(mockBoms);
+      expect(mockBomRepository.createQueryBuilder).toHaveBeenCalledWith('bom');
+    });
+
+    it('should find BOMs by product', async () => {
+      mockQueryBuilder.getMany.mockResolvedValue([]);
+
+      await service.findAllBoms('tenant-1', 'product-1');
+
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('bom.productId = :productId', {
+        productId: 'product-1',
+      });
+    });
+
+    it('should find BOM by id', async () => {
+      const mockBom = { id: '1', code: 'BOM001' };
+      mockCacheService.getOrSet.mockResolvedValue(mockBom);
+
+      const result = await service.findBomById('1', 'tenant-1');
+
+      expect(result).toEqual(mockBom);
+      expect(mockCacheService.getOrSet).toHaveBeenCalled();
+    });
+
+    it('should throw NotFoundException if BOM not found', async () => {
+      mockCacheService.getOrSet.mockImplementation(async (key, factory) => {
+        return factory();
+      });
+      mockBomRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.findBomById('999', 'tenant-1')).rejects.toThrow(NotFoundException);
+    });
+
+    it('should delete BOM and invalidate cache', async () => {
+      mockBomRepository.softDelete.mockResolvedValue({ affected: 1 });
+      mockCacheService.del.mockResolvedValue(undefined);
+
+      await service.deleteBom('1', 'tenant-1');
+
+      expect(mockBomRepository.softDelete).toHaveBeenCalledWith({
+        id: '1',
+        tenantId: 'tenant-1',
+      });
+      expect(mockCacheService.del).toHaveBeenCalled();
+    });
+  });
+
+  describe('Additional Work Order Tests', () => {
+    it('should find all work orders', async () => {
+      const mockOrders = [{ id: '1', orderNumber: 'WO-000001' }];
+      mockQueryBuilder.getMany.mockResolvedValue(mockOrders);
+
+      const result = await service.findAllWorkOrders('tenant-1');
+
+      expect(result).toEqual(mockOrders);
+      expect(mockWorkOrderRepository.createQueryBuilder).toHaveBeenCalledWith('workOrder');
+    });
+
+    it('should find work orders by status', async () => {
+      mockQueryBuilder.getMany.mockResolvedValue([]);
+
+      await service.findAllWorkOrders('tenant-1', WorkOrderStatus.IN_PROGRESS);
+
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('workOrder.status = :status', {
+        status: WorkOrderStatus.IN_PROGRESS,
+      });
+    });
+
+    it('should find work order by id', async () => {
+      const mockOrder = { id: '1', orderNumber: 'WO-000001' };
+      mockCacheService.getOrSet.mockResolvedValue(mockOrder);
+
+      const result = await service.findWorkOrderById('1', 'tenant-1');
+
+      expect(result).toEqual(mockOrder);
+      expect(mockCacheService.getOrSet).toHaveBeenCalled();
+    });
+
+    it('should throw NotFoundException if work order not found', async () => {
+      mockCacheService.getOrSet.mockImplementation(async (key, factory) => {
+        return factory();
+      });
+      mockWorkOrderRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.findWorkOrderById('999', 'tenant-1')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('should update work order and invalidate cache', async () => {
+      const mockOrder = { id: '1', notes: 'Updated notes' };
+      mockWorkOrderRepository.update.mockResolvedValue({ affected: 1 });
+      mockCacheService.getOrSet.mockResolvedValue(mockOrder);
+      mockCacheService.del.mockResolvedValue(undefined);
+
+      const result = await service.updateWorkOrder('1', { notes: 'Updated notes' }, 'tenant-1');
+
+      expect(result).toEqual(mockOrder);
+      expect(mockCacheService.del).toHaveBeenCalled();
+    });
+
+    it('should delete work order and invalidate cache', async () => {
+      mockWorkOrderRepository.softDelete.mockResolvedValue({ affected: 1 });
+      mockCacheService.del.mockResolvedValue(undefined);
+
+      await service.deleteWorkOrder('1', 'tenant-1');
+
+      expect(mockWorkOrderRepository.softDelete).toHaveBeenCalledWith({
+        id: '1',
+        tenantId: 'tenant-1',
+      });
+      expect(mockCacheService.del).toHaveBeenCalled();
+    });
+
+    it('should resume work order', async () => {
+      const mockWorkOrder = {
+        id: '1',
+        status: WorkOrderStatus.PAUSED,
+      };
+      mockCacheService.getOrSet.mockResolvedValue(mockWorkOrder);
+      mockCacheService.del.mockResolvedValue(undefined);
+      mockWorkOrderRepository.save.mockResolvedValue({
+        ...mockWorkOrder,
+        status: WorkOrderStatus.IN_PROGRESS,
+      });
+
+      const result = await service.resumeWorkOrder('1', 'tenant-1');
+
+      expect(result.status).toBe(WorkOrderStatus.IN_PROGRESS);
+      expect(mockCacheService.del).toHaveBeenCalled();
+    });
+
+    it('should throw error if work order not in correct status to resume', async () => {
+      const mockWorkOrder = {
+        id: '1',
+        status: WorkOrderStatus.COMPLETED,
+      };
+      mockCacheService.getOrSet.mockResolvedValue(mockWorkOrder);
+
+      await expect(service.resumeWorkOrder('1', 'tenant-1')).rejects.toThrow();
+    });
+  });
+
+  describe('Additional Quality Check Tests', () => {
+    it('should find all quality checks', async () => {
+      const mockChecks = [{ id: '1', checkNumber: 'QC-000001' }];
+      mockQueryBuilder.getMany.mockResolvedValue(mockChecks);
+
+      const result = await service.findAllQualityChecks('tenant-1');
+
+      expect(result).toEqual(mockChecks);
+      expect(mockQualityCheckRepository.createQueryBuilder).toHaveBeenCalledWith('qualityCheck');
+    });
+
+    it('should find quality checks by work order', async () => {
+      mockQueryBuilder.getMany.mockResolvedValue([]);
+
+      await service.findAllQualityChecks('tenant-1', 'wo-1');
+
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        'qualityCheck.workOrderId = :workOrderId',
+        {
+          workOrderId: 'wo-1',
+        },
+      );
+    });
+
+    it('should find quality check by id', async () => {
+      const mockCheck = { id: '1', checkNumber: 'QC-000001' };
+      mockCacheService.getOrSet.mockResolvedValue(mockCheck);
+
+      const result = await service.findQualityCheckById('1', 'tenant-1');
+
+      expect(result).toEqual(mockCheck);
+      expect(mockCacheService.getOrSet).toHaveBeenCalled();
+    });
+
+    it('should throw NotFoundException if quality check not found', async () => {
+      mockCacheService.getOrSet.mockImplementation(async (key, factory) => {
+        return factory();
+      });
+      mockQualityCheckRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.findQualityCheckById('999', 'tenant-1')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('should update quality check and invalidate cache', async () => {
+      const mockCheck = { id: '1', notes: 'Updated notes' };
+      mockQualityCheckRepository.update.mockResolvedValue({ affected: 1 });
+      mockCacheService.getOrSet.mockResolvedValue(mockCheck);
+      mockCacheService.del.mockResolvedValue(undefined);
+
+      const result = await service.updateQualityCheck('1', { notes: 'Updated notes' }, 'tenant-1');
+
+      expect(result).toEqual(mockCheck);
+      expect(mockCacheService.del).toHaveBeenCalled();
+    });
+
+    it('should delete quality check and invalidate cache', async () => {
+      mockQualityCheckRepository.softDelete.mockResolvedValue({ affected: 1 });
+      mockCacheService.del.mockResolvedValue(undefined);
+
+      await service.deleteQualityCheck('1', 'tenant-1');
+
+      expect(mockQualityCheckRepository.softDelete).toHaveBeenCalledWith({
+        id: '1',
+        tenantId: 'tenant-1',
+      });
+      expect(mockCacheService.del).toHaveBeenCalled();
+    });
+
+    it('should get quality statistics with date range', async () => {
+      const mockChecks = [
+        {
+          result: QualityCheckResult.PASSED,
+          quantityChecked: 100,
+          quantityPassed: 100,
+          quantityFailed: 0,
+        },
+      ];
+
+      mockQueryBuilder.getMany.mockResolvedValue(mockChecks);
+
+      const startDate = new Date('2024-01-01');
+      const endDate = new Date('2024-12-31');
+
+      const result = await service.getQualityStatistics('tenant-1', startDate, endDate);
+
+      expect(result.totalChecks).toBe(1);
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('qc.checkDate >= :startDate', {
+        startDate,
+      });
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('qc.checkDate <= :endDate', {
+        endDate,
+      });
+    });
+  });
 });

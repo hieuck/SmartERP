@@ -41,7 +41,6 @@ import { ImportExportModule } from './modules/import-export/import-export.module
 import { IntegrationModule } from './modules/integration/integration.module';
 import { ShippingModule } from './modules/shipping/shipping.module';
 import { ScheduledJobsModule } from './modules/scheduled-jobs/scheduled-jobs.module';
-import { PayrollModule } from './modules/payroll/payroll.module';
 import { PaymentGatewayModule } from './modules/payment-gateway/payment-gateway.module';
 import { CategoryModule } from './modules/category/category.module';
 import { PermissionModule } from './modules/permission/permission.module';
@@ -129,7 +128,6 @@ import { TenantModule } from './modules/tenant/tenant.module';
     IntegrationModule,
     ShippingModule,
     ScheduledJobsModule,
-    PayrollModule,
     PaymentGatewayModule,
     CategoryModule,
     PermissionModule,

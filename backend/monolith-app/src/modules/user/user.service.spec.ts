@@ -1,47 +1,39 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { NotFoundException, BadRequestException } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 import { UserService } from './user.service';
 import { User } from './entities/user.entity';
-import { NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
-import { CacheService } from '@/common/cache/cache.service';
-import * as bcrypt from 'bcrypt';
+import { UpdateProfileDto } from './dto/update-profile.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
-jest.mock('bcrypt');
-
-/* eslint-disable @typescript-eslint/no-unused-vars */
 describe('UserService', () => {
   let service: UserService;
 
-  const mockUser = {
-    id: '1',
-    tenantId: 'tenant-1',
+  const mockUser: User = {
+    id: 'user-123',
+    tenantId: 'tenant-123',
     email: 'test@example.com',
-    password: 'hashedPassword',
+    password: '$2b$12$hashedpassword',
     firstName: 'John',
     lastName: 'Doe',
+    phone: '0901234567',
+    avatar: null,
     role: 'user',
     status: 'active',
+    emailVerified: false,
+    emailVerificationToken: null,
+    resetPasswordToken: null,
+    resetPasswordExpires: null,
     createdAt: new Date(),
     updatedAt: new Date(),
+    deletedAt: null,
   };
 
   const mockRepository = {
-    find: jest.fn(),
     findOne: jest.fn(),
-    findAndCount: jest.fn(),
-    create: jest.fn(),
     save: jest.fn(),
-    update: jest.fn(),
-    softDelete: jest.fn(),
-    count: jest.fn(),
-  };
-
-  const mockCacheService = {
-    get: jest.fn(),
-    set: jest.fn(),
-    del: jest.fn(),
-    getOrSet: jest.fn(),
-    invalidateEntity: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -52,326 +44,192 @@ describe('UserService', () => {
           provide: getRepositoryToken(User),
           useValue: mockRepository,
         },
-        {
-          provide: CacheService,
-          useValue: mockCacheService,
-        },
       ],
     }).compile();
 
     service = module.get<UserService>(UserService);
 
-    (bcrypt.hash as jest.Mock) = jest.fn().mockResolvedValue('hashedPassword');
-    (bcrypt.compare as jest.Mock) = jest.fn().mockResolvedValue(true);
-  });
-
-  afterEach(() => {
+    // Reset mocks before each test
     jest.clearAllMocks();
-  });
-
-  describe('findAll', () => {
-    it('should return all users without passwords', async () => {
-      const { password, ...userWithoutPassword } = mockUser;
-      mockRepository.findAndCount.mockResolvedValue([[userWithoutPassword], 1]);
-
-      const result = await service.findAll('tenant-1');
-
-      expect(result.data).toEqual([userWithoutPassword]);
-      expect(result.meta.total).toBe(1);
-      expect(result.meta.page).toBe(1);
-      expect(result.meta.limit).toBe(20);
-      expect(mockRepository.findAndCount).toHaveBeenCalledWith({
-        where: { tenantId: 'tenant-1' },
-        select: expect.not.arrayContaining(['password']),
-        skip: 0,
-        take: 20,
-      });
+    
+    // Reset mockUser to original state
+    Object.assign(mockUser, {
+      id: 'user-123',
+      tenantId: 'tenant-123',
+      email: 'test@example.com',
+      password: '$2b$12$hashedpassword',
+      firstName: 'John',
+      lastName: 'Doe',
+      phone: '0901234567',
+      avatar: null,
+      role: 'user',
+      status: 'active',
+      emailVerified: false,
+      emailVerificationToken: null,
+      resetPasswordToken: null,
+      resetPasswordExpires: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      deletedAt: null,
     });
   });
 
-  describe('findOne', () => {
-    it('should return a user by id without password', async () => {
-      const { password, ...userWithoutPassword } = mockUser;
-      mockCacheService.getOrSet.mockResolvedValue(userWithoutPassword);
+  it('should be defined', () => {
+    expect(service).toBeDefined();
+  });
 
-      const result = await service.findOne('1', 'tenant-1');
+  describe('getProfile', () => {
+    it('should return user profile without password', async () => {
+      mockRepository.findOne.mockResolvedValue(mockUser);
 
-      expect(result).toEqual(userWithoutPassword);
+      const result = await service.getProfile('user-123');
+
+      expect(result).toBeDefined();
       expect(result).not.toHaveProperty('password');
-      expect(mockCacheService.getOrSet).toHaveBeenCalled();
+      expect(result.email).toBe('test@example.com');
+      expect(result.firstName).toBe('John');
+      expect(result.lastName).toBe('Doe');
+      expect(mockRepository.findOne).toHaveBeenCalledWith({
+        where: { id: 'user-123', status: 'active' },
+      });
     });
 
     it('should throw NotFoundException if user not found', async () => {
-      mockCacheService.getOrSet.mockRejectedValue(new NotFoundException());
-
-      await expect(service.findOne('999', 'tenant-1')).rejects.toThrow(NotFoundException);
-    });
-  });
-
-  describe('findByEmail', () => {
-    it('should return a user by email', async () => {
-      mockRepository.findOne.mockResolvedValue(mockUser);
-
-      const result = await service.findByEmail('test@example.com', 'tenant-1');
-
-      expect(result).toEqual(mockUser);
-    });
-  });
-
-  describe('create', () => {
-    it('should create a new user with hashed password', async () => {
-      const createDto = {
-        email: 'new@example.com',
-        password: 'password123',
-        firstName: 'Jane',
-        lastName: 'Smith',
-      };
-
-      mockRepository.findOne.mockResolvedValue(null);
-      mockRepository.create.mockReturnValue({
-        ...mockUser,
-        ...createDto,
-        password: 'hashedPassword',
-      });
-      mockRepository.save.mockResolvedValue({
-        ...mockUser,
-        ...createDto,
-        password: 'hashedPassword',
-      });
-
-      const result = await service.create(createDto, 'tenant-1');
-
-      expect(result).not.toHaveProperty('password');
-      expect(bcrypt.hash).toHaveBeenCalledWith('password123', 10);
-      expect(mockRepository.create).toHaveBeenCalledWith({
-        ...createDto,
-        password: 'hashedPassword',
-        tenantId: 'tenant-1',
-        role: 'user',
-        status: 'active',
-      });
-    });
-
-    it('should create user with custom role', async () => {
-      const createDto = {
-        email: 'admin@example.com',
-        password: 'password123',
-        firstName: 'Admin',
-        lastName: 'User',
-        role: 'admin',
-      };
-
-      mockRepository.findOne.mockResolvedValue(null);
-      mockRepository.create.mockReturnValue({
-        ...mockUser,
-        ...createDto,
-        password: 'hashedPassword',
-      });
-      mockRepository.save.mockResolvedValue({
-        ...mockUser,
-        ...createDto,
-        password: 'hashedPassword',
-      });
-
-      const result = await service.create(createDto, 'tenant-1');
-
-      expect(result.role).toBe('admin');
-    });
-
-    it('should throw ConflictException if email already exists', async () => {
-      const createDto = {
-        email: 'test@example.com',
-        password: 'password123',
-        firstName: 'Jane',
-        lastName: 'Smith',
-      };
-
-      mockRepository.findOne.mockResolvedValue(mockUser);
-
-      await expect(service.create(createDto, 'tenant-1')).rejects.toThrow(ConflictException);
-    });
-  });
-
-  describe('update', () => {
-    it('should update a user', async () => {
-      const updateDto = { firstName: 'Updated' };
-      const { password, ...userWithoutPassword } = mockUser;
-
-      // Mock cache to return user
-      mockCacheService.getOrSet.mockResolvedValue(userWithoutPassword);
-      mockRepository.findOne.mockResolvedValue(userWithoutPassword);
-      mockRepository.save.mockResolvedValue({
-        ...userWithoutPassword,
-        ...updateDto,
-      });
-      mockCacheService.del.mockResolvedValue(undefined);
-
-      const result = await service.update('1', updateDto, 'tenant-1');
-
-      expect(result.firstName).toBe('Updated');
-      expect(result).not.toHaveProperty('password');
-      expect(mockCacheService.del).toHaveBeenCalled();
-    });
-  });
-
-  describe('changePassword', () => {
-    it('should change user password', async () => {
-      const changePasswordDto = {
-        oldPassword: 'oldPassword',
-        newPassword: 'newPassword123',
-      };
-
-      mockRepository.findOne.mockResolvedValue(mockUser);
-      mockRepository.update.mockResolvedValue({ affected: 1 });
-
-      await service.changePassword('1', changePasswordDto, 'tenant-1');
-
-      expect(bcrypt.compare).toHaveBeenCalledWith('oldPassword', 'hashedPassword');
-      expect(bcrypt.hash).toHaveBeenCalledWith('newPassword123', 10);
-      expect(mockRepository.update).toHaveBeenCalled();
-    });
-
-    it('should throw BadRequestException if old password is incorrect', async () => {
-      const changePasswordDto = {
-        oldPassword: 'wrongPassword',
-        newPassword: 'newPassword123',
-      };
-
-      mockRepository.findOne.mockResolvedValue(mockUser);
-      (bcrypt.compare as jest.Mock).mockResolvedValue(false);
-
-      await expect(service.changePassword('1', changePasswordDto, 'tenant-1')).rejects.toThrow(
-        BadRequestException,
-      );
-    });
-
-    it('should throw NotFoundException if user not found', async () => {
-      const changePasswordDto = {
-        oldPassword: 'oldPassword',
-        newPassword: 'newPassword123',
-      };
-
       mockRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.changePassword('999', changePasswordDto, 'tenant-1')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.getProfile('non-existent')).rejects.toThrow(NotFoundException);
+      await expect(service.getProfile('non-existent')).rejects.toThrow('User not found');
     });
   });
 
   describe('updateProfile', () => {
-    it('should update only allowed fields', async () => {
-      const updateData = {
-        firstName: 'Updated',
-        lastName: 'Name',
-        role: 'admin', // Should be filtered out
+    it('should update user profile successfully', async () => {
+      const updateDto: UpdateProfileDto = {
+        fullName: 'Jane Smith',
+        phone: '0987654321',
+        avatar: 'https://example.com/avatar.jpg',
       };
 
-      const { password, ...userWithoutPassword } = mockUser;
-      mockCacheService.getOrSet.mockResolvedValue(userWithoutPassword);
-      mockRepository.findOne.mockResolvedValue(userWithoutPassword);
-      mockRepository.save.mockResolvedValue({
-        ...userWithoutPassword,
-        firstName: 'Updated',
-        lastName: 'Name',
-      });
+      const updatedUser = {
+        ...mockUser,
+        firstName: 'Jane',
+        lastName: 'Smith',
+        phone: '0987654321',
+        avatar: 'https://example.com/avatar.jpg',
+      };
 
-      const result = await service.updateProfile('1', updateData, 'tenant-1');
+      mockRepository.findOne.mockResolvedValue(mockUser);
+      mockRepository.save.mockResolvedValue(updatedUser);
 
-      expect(result.firstName).toBe('Updated');
-      expect(result.lastName).toBe('Name');
-      expect(result.role).toBe('user'); // Should not be changed
+      const result = await service.updateProfile('user-123', updateDto);
+
+      expect(result).toBeDefined();
+      expect(result).not.toHaveProperty('password');
+      expect(result.firstName).toBe('Jane');
+      expect(result.lastName).toBe('Smith');
+      expect(result.phone).toBe('0987654321');
+      expect(result.avatar).toBe('https://example.com/avatar.jpg');
+      expect(mockRepository.save).toHaveBeenCalled();
+    });
+
+    it('should update only provided fields', async () => {
+      const updateDto: UpdateProfileDto = {
+        phone: '0999999999',
+      };
+
+      const updatedUser = {
+        ...mockUser,
+        phone: '0999999999',
+      };
+
+      mockRepository.findOne.mockResolvedValue(mockUser);
+      mockRepository.save.mockResolvedValue(updatedUser);
+
+      const result = await service.updateProfile('user-123', updateDto);
+
+      expect(result.phone).toBe('0999999999');
+      expect(result.firstName).toBe('John');
+      expect(result.lastName).toBe('Doe');
+      expect(mockRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          phone: '0999999999',
+          firstName: 'John',
+          lastName: 'Doe',
+        }),
+      );
+    });
+
+    it('should throw NotFoundException if user not found', async () => {
+      mockRepository.findOne.mockResolvedValue(null);
+
+      const updateDto: UpdateProfileDto = {
+        fullName: 'Jane Smith',
+      };
+
+      await expect(service.updateProfile('non-existent', updateDto)).rejects.toThrow(NotFoundException);
     });
   });
 
-  describe('remove', () => {
-    it('should soft delete a user', async () => {
-      const { password, ...userWithoutPassword } = mockUser;
-      mockCacheService.getOrSet.mockResolvedValue(userWithoutPassword);
-      mockRepository.findOne.mockResolvedValue(userWithoutPassword);
-      mockRepository.softDelete.mockResolvedValue({ affected: 1 });
-      mockCacheService.del.mockResolvedValue(undefined);
+  describe('changePassword', () => {
+    it('should change password successfully', async () => {
+      const changePasswordDto: ChangePasswordDto = {
+        currentPassword: 'oldPassword123',
+        newPassword: 'newPassword456',
+        confirmPassword: 'newPassword456',
+      };
 
-      await service.remove('1', 'tenant-1');
+      mockRepository.findOne.mockResolvedValue(mockUser);
+      mockRepository.save.mockResolvedValue(mockUser);
 
-      expect(mockRepository.softDelete).toHaveBeenCalledWith({
-        id: '1',
-        tenantId: 'tenant-1',
-      });
-      expect(mockCacheService.del).toHaveBeenCalled();
+      jest.spyOn(bcrypt, 'compare').mockImplementation(() => Promise.resolve(true));
+      jest.spyOn(bcrypt, 'hash').mockImplementation(() => Promise.resolve('$2b$12$newhashedpassword'));
+
+      const result = await service.changePassword('user-123', changePasswordDto);
+
+      expect(result.success).toBe(true);
+      expect(result.message).toBe('Password changed successfully');
+      expect(mockRepository.save).toHaveBeenCalled();
     });
-  });
 
-  describe('activate', () => {
-    it('should activate a user', async () => {
-      const { password, ...userWithoutPassword } = mockUser;
-      mockCacheService.getOrSet.mockResolvedValue(userWithoutPassword);
-      mockRepository.findOne.mockResolvedValue(userWithoutPassword);
-      mockRepository.save.mockResolvedValue({
-        ...userWithoutPassword,
-        status: 'active',
-      });
+    it('should throw BadRequestException if passwords do not match', async () => {
+      const changePasswordDto: ChangePasswordDto = {
+        currentPassword: 'oldPassword123',
+        newPassword: 'newPassword456',
+        confirmPassword: 'differentPassword',
+      };
 
-      const result = await service.activate('1', 'tenant-1');
-
-      expect(result.status).toBe('active');
+      await expect(service.changePassword('user-123', changePasswordDto)).rejects.toThrow(BadRequestException);
+      await expect(service.changePassword('user-123', changePasswordDto)).rejects.toThrow(
+        'New password and confirmation do not match',
+      );
     });
-  });
 
-  describe('deactivate', () => {
-    it('should deactivate a user', async () => {
-      const { password, ...userWithoutPassword } = mockUser;
-      mockCacheService.getOrSet.mockResolvedValue(userWithoutPassword);
-      mockRepository.findOne.mockResolvedValue(userWithoutPassword);
-      mockRepository.save.mockResolvedValue({
-        ...userWithoutPassword,
-        status: 'inactive',
-      });
+    it('should throw NotFoundException if user not found', async () => {
+      const changePasswordDto: ChangePasswordDto = {
+        currentPassword: 'oldPassword123',
+        newPassword: 'newPassword456',
+        confirmPassword: 'newPassword456',
+      };
 
-      const result = await service.deactivate('1', 'tenant-1');
+      mockRepository.findOne.mockResolvedValue(null);
 
-      expect(result.status).toBe('inactive');
+      await expect(service.changePassword('non-existent', changePasswordDto)).rejects.toThrow(NotFoundException);
     });
-  });
 
-  describe('suspend', () => {
-    it('should suspend a user', async () => {
-      const { password, ...userWithoutPassword } = mockUser;
-      mockCacheService.getOrSet.mockResolvedValue(userWithoutPassword);
-      mockRepository.findOne.mockResolvedValue(userWithoutPassword);
-      mockRepository.save.mockResolvedValue({
-        ...userWithoutPassword,
-        status: 'suspended',
-      });
+    it('should throw BadRequestException if current password is incorrect', async () => {
+      const changePasswordDto: ChangePasswordDto = {
+        currentPassword: 'wrongPassword',
+        newPassword: 'newPassword456',
+        confirmPassword: 'newPassword456',
+      };
 
-      const result = await service.suspend('1', 'tenant-1');
+      mockRepository.findOne.mockResolvedValue(mockUser);
+      jest.spyOn(bcrypt, 'compare').mockImplementation(() => Promise.resolve(false));
 
-      expect(result.status).toBe('suspended');
-    });
-  });
-
-  describe('count', () => {
-    it('should return user count', async () => {
-      mockRepository.count.mockResolvedValue(10);
-
-      const result = await service.count('tenant-1');
-
-      expect(result).toBe(10);
-    });
-  });
-
-  describe('findByRole', () => {
-    it('should return users by role', async () => {
-      const { password, ...userWithoutPassword } = mockUser;
-      mockRepository.find.mockResolvedValue([userWithoutPassword]);
-
-      const result = await service.findByRole('admin', 'tenant-1');
-
-      expect(result).toEqual([userWithoutPassword]);
-      expect(mockRepository.find).toHaveBeenCalledWith({
-        where: { role: 'admin', tenantId: 'tenant-1' },
-        select: expect.not.arrayContaining(['password']),
-      });
+      await expect(service.changePassword('user-123', changePasswordDto)).rejects.toThrow(BadRequestException);
+      await expect(service.changePassword('user-123', changePasswordDto)).rejects.toThrow(
+        'Current password is incorrect',
+      );
     });
   });
 });

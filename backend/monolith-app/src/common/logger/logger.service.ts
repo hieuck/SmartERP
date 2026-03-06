@@ -2,7 +2,7 @@ import { Injectable, LoggerService as NestLoggerService, Scope } from '@nestjs/c
 import * as winston from 'winston';
 import { loggerConfig } from './logger.config';
 
-@Injectable({ scope: Scope.TRANSIENT })
+@Injectable() // Default scope (singleton) - logger should be shared across the app
 export class LoggerService implements NestLoggerService {
   private logger: winston.Logger;
   private context?: string;

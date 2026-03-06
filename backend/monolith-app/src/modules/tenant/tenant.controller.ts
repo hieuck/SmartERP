@@ -22,6 +22,7 @@ import { UpgradeSubscriptionDto } from './dto/upgrade-subscription.dto';
 import { CompleteOnboardingDto } from './dto/complete-onboarding.dto';
 import { TenantStatus } from './entities/tenant.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Public } from '../../common/decorators/public.decorator';
 
 @ApiTags('tenants')
 @ApiBearerAuth()
@@ -119,6 +120,7 @@ export class TenantController {
   }
 
   // Subscription Management Endpoints
+  @Public()
   @Get('subscription/pricing')
   @ApiOperation({ summary: 'Get pricing information for all plans' })
   getPricing() {

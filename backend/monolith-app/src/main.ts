@@ -12,9 +12,9 @@ import { MetricsService } from './common/metrics/metrics.service';
 import { MetricsInterceptor } from './common/metrics/metrics.interceptor';
 
 async function bootstrap() {
-  // Create app with custom logger
+  // Create app with default logger for debugging
   const app = await NestFactory.create(AppModule, {
-    logger: false, // Disable default logger, use our custom one
+    logger: ['error', 'warn', 'log', 'debug', 'verbose'], // Enable all logs for debugging
   });
 
   // Get logger instance

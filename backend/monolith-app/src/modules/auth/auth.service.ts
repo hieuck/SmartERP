@@ -432,4 +432,71 @@ export class AuthService {
       },
     };
   }
+
+
+    async forgotPassword(email: string): Promise<{
+      success: boolean;
+      message: string;
+      resetToken?: string;
+    }> {
+      const user = await this.userRepository.findOne({
+        where: { email, status: 'active' },
+      });
+
+      if (!user) {
+        return {
+          success: true,
+          message: 'If the email exists, a password reset link has been sent',
+        };
+      }
+
+      const resetToken = uuidv4();
+      const resetExpires = new Date();
+      resetExpires.setHours(resetExpires.getHours() + 1);
+
+      user.resetPasswordToken = resetToken;
+      user.resetPasswordExpires = resetExpires;
+      await this.userRepository.save(user);
+
+      const cacheKey = generateCacheKey('user-email', 'global', email);
+      await this.cacheService.del(cacheKey);
+
+      return {
+        success: true,
+        message: 'If the email exists, a password reset link has been sent',
+        resetToken,
+      };
+    }
+
+    async resetPassword(token: string, newPassword: string): Promise<{
+      success: boolean;
+      message: string;
+    }> {
+      const user = await this.userRepository.findOne({
+        where: { resetPasswordToken: token },
+      });
+
+      if (!user) {
+        throw new BadRequestException('Invalid or expired reset token');
+      }
+
+      if (!user.resetPasswordExpires || user.resetPasswordExpires < new Date()) {
+        throw new BadRequestException('Reset token has expired');
+      }
+
+      const hashedPassword = await this.hashPassword(newPassword);
+      user.password = hashedPassword;
+      user.resetPasswordToken = null;
+      user.resetPasswordExpires = null;
+      await this.userRepository.save(user);
+
+      const cacheKey = generateCacheKey('user-email', 'global', user.email);
+      await this.cacheService.del(cacheKey);
+
+      return {
+        success: true,
+        message: 'Password reset successfully',
+      };
+    }
+
 }

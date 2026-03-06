@@ -1,11 +1,14 @@
 import { ExecutionContext } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import { JwtAuthGuard } from './jwt-auth.guard';
 
 describe('JwtAuthGuard', () => {
   let guard: JwtAuthGuard;
+  let reflector: Reflector;
 
   beforeEach(() => {
-    guard = new JwtAuthGuard();
+    reflector = new Reflector();
+    guard = new JwtAuthGuard(reflector);
   });
 
   it('should be defined', () => {
@@ -22,8 +25,25 @@ describe('JwtAuthGuard', () => {
   });
 
   describe('canActivate', () => {
-    it('should call parent canActivate', () => {
+    it('should allow access to public routes', () => {
       const mockContext = {
+        getHandler: jest.fn(),
+        getClass: jest.fn(),
+        switchToHttp: jest.fn().mockReturnValue({
+          getRequest: jest.fn().mockReturnValue({}),
+        }),
+      } as unknown as ExecutionContext;
+
+      jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue(true);
+
+      const result = guard.canActivate(mockContext);
+      expect(result).toBe(true);
+    });
+
+    it('should call parent canActivate for protected routes', () => {
+      const mockContext = {
+        getHandler: jest.fn(),
+        getClass: jest.fn(),
         switchToHttp: jest.fn().mockReturnValue({
           getRequest: jest.fn().mockReturnValue({
             headers: {
@@ -32,6 +52,8 @@ describe('JwtAuthGuard', () => {
           }),
         }),
       } as unknown as ExecutionContext;
+
+      jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue(false);
 
       // This will fail in actual execution without proper JWT setup
       // but we're testing that the guard is properly configured

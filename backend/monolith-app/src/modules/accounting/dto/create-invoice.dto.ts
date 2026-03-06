@@ -6,8 +6,40 @@ import {
   IsNotEmpty,
   IsArray,
   IsDateString,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { InvoiceType } from '../entities/invoice.entity';
+
+export class InvoiceItemDto {
+  @IsString()
+  @IsOptional()
+  productId?: string;
+
+  @IsString()
+  @IsNotEmpty()
+  description: string;
+
+  @IsNumber()
+  @IsNotEmpty()
+  quantity: number;
+
+  @IsNumber()
+  @IsNotEmpty()
+  unitPrice: number;
+
+  @IsNumber()
+  @IsNotEmpty()
+  amount: number;
+
+  @IsNumber()
+  @IsOptional()
+  discount?: number;
+
+  @IsNumber()
+  @IsOptional()
+  tax?: number;
+}
 
 export class CreateInvoiceDto {
   @IsString()
@@ -52,12 +84,9 @@ export class CreateInvoiceDto {
 
   @IsArray()
   @IsOptional()
-  items?: Array<{
-    description: string;
-    quantity: number;
-    unitPrice: number;
-    amount: number;
-  }>;
+  @ValidateNested({ each: true })
+  @Type(() => InvoiceItemDto)
+  items?: InvoiceItemDto[];
 
   @IsString()
   @IsOptional()

@@ -91,7 +91,7 @@ describe('CrmService', () => {
     });
 
     it('should create lead', async () => {
-      const leadData = { email: 'new@lead.com', firstName: 'John' };
+      const leadData = { email: 'new@lead.com', name: 'John Doe' };
       mockLeadRepository.findOne.mockResolvedValue(null);
       mockLeadRepository.create.mockReturnValue(leadData);
       mockLeadRepository.save.mockResolvedValue(leadData);
@@ -143,6 +143,131 @@ describe('CrmService', () => {
       const result = await service.qualifyLead('tenant-1', '1');
 
       expect(result.status).toBe(LeadStatus.QUALIFIED);
+    });
+
+    it('should disqualify lead', async () => {
+      const mockLead = { id: '1', status: LeadStatus.NEW };
+      mockCacheService.getOrSet.mockResolvedValue(mockLead);
+      mockLeadRepository.save.mockResolvedValue({
+        ...mockLead,
+        status: LeadStatus.UNQUALIFIED,
+      });
+
+      const result = await service.disqualifyLead('tenant-1', '1');
+
+      expect(result.status).toBe(LeadStatus.UNQUALIFIED);
+    });
+
+    it('should find lead by email', async () => {
+      const mockLead = { id: '1', email: 'test@example.com' };
+      mockLeadRepository.findOne.mockResolvedValue(mockLead);
+
+      const result = await service.findLeadByEmail('tenant-1', 'test@example.com');
+
+      expect(result).toEqual(mockLead);
+      expect(mockLeadRepository.findOne).toHaveBeenCalledWith({
+        where: { email: 'test@example.com', tenantId: 'tenant-1' },
+      });
+    });
+
+    it('should return null if lead email not found', async () => {
+      mockLeadRepository.findOne.mockResolvedValue(null);
+
+      const result = await service.findLeadByEmail('tenant-1', 'notfound@example.com');
+
+      expect(result).toBeNull();
+    });
+
+    it('should update lead', async () => {
+      const existingLead = { id: '1', email: 'old@example.com', name: 'John Doe' };
+      const updateData = { name: 'Jane Doe' };
+      mockCacheService.getOrSet.mockResolvedValue(existingLead);
+      mockLeadRepository.save.mockResolvedValue({ ...existingLead, ...updateData });
+      mockCacheService.del.mockResolvedValue(undefined);
+
+      const result = await service.updateLead('tenant-1', '1', updateData);
+
+      expect(result.name).toBe('Jane Doe');
+      expect(mockCacheService.del).toHaveBeenCalled();
+    });
+
+    it('should update lead email if unique', async () => {
+      const existingLead = { id: '1', email: 'old@example.com' };
+      const updateData = { email: 'new@example.com' };
+      mockCacheService.getOrSet.mockResolvedValue(existingLead);
+      mockLeadRepository.findOne.mockResolvedValue(null); // Email not taken
+      mockLeadRepository.save.mockResolvedValue({ ...existingLead, ...updateData });
+      mockCacheService.del.mockResolvedValue(undefined);
+
+      const result = await service.updateLead('tenant-1', '1', updateData);
+
+      expect(result.email).toBe('new@example.com');
+    });
+
+    it('should throw ConflictException if updated email exists', async () => {
+      const existingLead = { id: '1', email: 'old@example.com' };
+      const updateData = { email: 'taken@example.com' };
+      mockCacheService.getOrSet.mockResolvedValue(existingLead);
+      mockLeadRepository.findOne.mockResolvedValue({ id: '2', email: 'taken@example.com' });
+
+      await expect(service.updateLead('tenant-1', '1', updateData)).rejects.toThrow(
+        ConflictException,
+      );
+    });
+
+    it('should delete lead', async () => {
+      const mockLead = { id: '1', email: 'test@example.com' };
+      mockCacheService.getOrSet.mockResolvedValue(mockLead);
+      mockLeadRepository.softDelete.mockResolvedValue({ affected: 1 });
+      mockCacheService.del.mockResolvedValue(undefined);
+
+      await service.deleteLead('tenant-1', '1');
+
+      expect(mockLeadRepository.softDelete).toHaveBeenCalledWith('1');
+      expect(mockCacheService.del).toHaveBeenCalled();
+    });
+
+    it('should find leads by status', async () => {
+      const mockLeads = [
+        { id: '1', status: LeadStatus.QUALIFIED },
+        { id: '2', status: LeadStatus.QUALIFIED },
+      ];
+      mockLeadRepository.find.mockResolvedValue(mockLeads);
+
+      const result = await service.findLeadsByStatus('tenant-1', LeadStatus.QUALIFIED);
+
+      expect(result).toEqual(mockLeads);
+      expect(mockLeadRepository.find).toHaveBeenCalledWith({
+        where: { tenantId: 'tenant-1', status: LeadStatus.QUALIFIED },
+        order: { createdAt: 'DESC' },
+      });
+    });
+
+    it('should find leads by assignee', async () => {
+      const mockLeads = [
+        { id: '1', assignedTo: 'user-1' },
+        { id: '2', assignedTo: 'user-1' },
+      ];
+      mockLeadRepository.find.mockResolvedValue(mockLeads);
+
+      const result = await service.findLeadsByAssignee('tenant-1', 'user-1');
+
+      expect(result).toEqual(mockLeads);
+      expect(mockLeadRepository.find).toHaveBeenCalledWith({
+        where: { tenantId: 'tenant-1', assignedTo: 'user-1' },
+        order: { createdAt: 'DESC' },
+      });
+    });
+
+    it('should count leads', async () => {
+      mockLeadRepository.count.mockResolvedValue(10);
+
+      const result = await service.countLeads('tenant-1');
+
+      expect(result).toBe(10);
+      expect(mockLeadRepository.count).toHaveBeenCalledWith({
+        where: { tenantId: 'tenant-1' },
+      });
     });
 
     it('should get lead statistics', async () => {
@@ -253,6 +378,88 @@ describe('CrmService', () => {
 
       expect(result.stage).toBe(OpportunityStage.CLOSED_LOST);
       expect(result.probability).toBe(0);
+    });
+
+    it('should create opportunity', async () => {
+      const opportunityData = { name: 'New Deal', amount: 5000 };
+      mockOpportunityRepository.create.mockReturnValue(opportunityData);
+      mockOpportunityRepository.save.mockResolvedValue(opportunityData);
+
+      const result = await service.createOpportunity('tenant-1', opportunityData);
+
+      expect(result).toEqual(opportunityData);
+      expect(mockOpportunityRepository.create).toHaveBeenCalledWith({
+        ...opportunityData,
+        tenantId: 'tenant-1',
+      });
+    });
+
+    it('should update opportunity', async () => {
+      const existingOpportunity = { id: '1', name: 'Old Deal', amount: 1000 };
+      const updateData = { amount: 2000 };
+      mockCacheService.getOrSet.mockResolvedValue(existingOpportunity);
+      mockOpportunityRepository.save.mockResolvedValue({ ...existingOpportunity, ...updateData });
+      mockCacheService.del.mockResolvedValue(undefined);
+
+      const result = await service.updateOpportunity('tenant-1', '1', updateData);
+
+      expect(result.amount).toBe(2000);
+      expect(mockCacheService.del).toHaveBeenCalled();
+    });
+
+    it('should delete opportunity', async () => {
+      const mockOpportunity = { id: '1', name: 'Deal 1' };
+      mockCacheService.getOrSet.mockResolvedValue(mockOpportunity);
+      mockOpportunityRepository.softDelete.mockResolvedValue({ affected: 1 });
+      mockCacheService.del.mockResolvedValue(undefined);
+
+      await service.deleteOpportunity('tenant-1', '1');
+
+      expect(mockOpportunityRepository.softDelete).toHaveBeenCalledWith('1');
+      expect(mockCacheService.del).toHaveBeenCalled();
+    });
+
+    it('should find opportunities by stage', async () => {
+      const mockOpportunities = [
+        { id: '1', stage: OpportunityStage.PROPOSAL },
+        { id: '2', stage: OpportunityStage.PROPOSAL },
+      ];
+      mockOpportunityRepository.find.mockResolvedValue(mockOpportunities);
+
+      const result = await service.findOpportunitiesByStage('tenant-1', OpportunityStage.PROPOSAL);
+
+      expect(result).toEqual(mockOpportunities);
+      expect(mockOpportunityRepository.find).toHaveBeenCalledWith({
+        where: { tenantId: 'tenant-1', stage: OpportunityStage.PROPOSAL },
+        order: { createdAt: 'DESC' },
+      });
+    });
+
+    it('should find opportunities by customer', async () => {
+      const mockOpportunities = [
+        { id: '1', customerId: 'customer-1' },
+        { id: '2', customerId: 'customer-1' },
+      ];
+      mockOpportunityRepository.find.mockResolvedValue(mockOpportunities);
+
+      const result = await service.findOpportunitiesByCustomer('tenant-1', 'customer-1');
+
+      expect(result).toEqual(mockOpportunities);
+      expect(mockOpportunityRepository.find).toHaveBeenCalledWith({
+        where: { tenantId: 'tenant-1', customerId: 'customer-1' },
+        order: { createdAt: 'DESC' },
+      });
+    });
+
+    it('should count opportunities', async () => {
+      mockOpportunityRepository.count.mockResolvedValue(15);
+
+      const result = await service.countOpportunities('tenant-1');
+
+      expect(result).toBe(15);
+      expect(mockOpportunityRepository.count).toHaveBeenCalledWith({
+        where: { tenantId: 'tenant-1' },
+      });
     });
 
     it('should get opportunity statistics', async () => {

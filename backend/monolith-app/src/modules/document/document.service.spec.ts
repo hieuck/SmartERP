@@ -161,6 +161,64 @@ describe('DocumentService', () => {
     });
   });
 
+  describe('update', () => {
+    it('should update document and invalidate cache', async () => {
+      const mockDoc = { id: '1', name: 'Old Name', tenantId: 'tenant-1' };
+      const updatedDoc = { id: '1', name: 'New Name', tenantId: 'tenant-1' };
+
+      mockCacheService.getOrSet.mockResolvedValueOnce(mockDoc).mockResolvedValueOnce(updatedDoc);
+      mockDocumentRepository.update.mockResolvedValue({ affected: 1 });
+      mockCacheService.del.mockResolvedValue(undefined);
+
+      const result = await service.update('tenant-1', '1', { name: 'New Name' });
+
+      expect(mockDocumentRepository.update).toHaveBeenCalledWith(
+        { tenantId: 'tenant-1', id: '1' },
+        { name: 'New Name' },
+      );
+      expect(mockCacheService.del).toHaveBeenCalled();
+      expect(result).toEqual(updatedDoc);
+    });
+
+    it('should throw NotFoundException if document not found', async () => {
+      mockCacheService.getOrSet.mockImplementation(async (key, factory) => {
+        return factory();
+      });
+      mockDocumentRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.update('tenant-1', '999', { name: 'New Name' })).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
+
+  describe('delete', () => {
+    it('should soft delete document and invalidate cache', async () => {
+      const mockDoc = { id: '1', name: 'Doc to Delete', tenantId: 'tenant-1' };
+
+      mockCacheService.getOrSet.mockResolvedValue(mockDoc);
+      mockDocumentRepository.softDelete.mockResolvedValue({ affected: 1 });
+      mockCacheService.del.mockResolvedValue(undefined);
+
+      await service.delete('tenant-1', '1');
+
+      expect(mockDocumentRepository.softDelete).toHaveBeenCalledWith({
+        tenantId: 'tenant-1',
+        id: '1',
+      });
+      expect(mockCacheService.del).toHaveBeenCalled();
+    });
+
+    it('should throw NotFoundException if document not found', async () => {
+      mockCacheService.getOrSet.mockImplementation(async (key, factory) => {
+        return factory();
+      });
+      mockDocumentRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.delete('tenant-1', '999')).rejects.toThrow(NotFoundException);
+    });
+  });
+
   describe('createVersion', () => {
     it('should create new version of document', async () => {
       const mockDoc = {
@@ -188,6 +246,33 @@ describe('DocumentService', () => {
 
       expect(result.version).toBe(2);
       expect(mockCacheService.del).toHaveBeenCalled();
+    });
+  });
+
+  describe('findVersions', () => {
+    it('should find all versions of a document by name', async () => {
+      const mockVersions = [
+        { id: '1', name: 'document.pdf', version: 3 },
+        { id: '2', name: 'document.pdf', version: 2 },
+        { id: '3', name: 'document.pdf', version: 1 },
+      ];
+      mockDocumentRepository.find.mockResolvedValue(mockVersions);
+
+      const result = await service.findVersions('tenant-1', 'document.pdf');
+
+      expect(result).toEqual(mockVersions);
+      expect(mockDocumentRepository.find).toHaveBeenCalledWith({
+        where: { tenantId: 'tenant-1', name: 'document.pdf' },
+        order: { version: 'DESC' },
+      });
+    });
+
+    it('should return empty array if no versions found', async () => {
+      mockDocumentRepository.find.mockResolvedValue([]);
+
+      const result = await service.findVersions('tenant-1', 'nonexistent.pdf');
+
+      expect(result).toEqual([]);
     });
   });
 

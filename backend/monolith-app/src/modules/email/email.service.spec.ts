@@ -59,50 +59,237 @@ describe('EmailService', () => {
   });
 
   describe('Template Management', () => {
-    it('should find all templates', async () => {
-      const mockTemplates = [{ id: '1', name: 'Welcome Email' }];
-      mockCacheManager.get.mockResolvedValue(null); // Cache miss
-      mockTemplateRepository.find.mockResolvedValue(mockTemplates);
-      mockCacheManager.set.mockResolvedValue(undefined);
+    describe('findAllTemplates', () => {
+      it('should find all templates from database (cache miss)', async () => {
+        const mockTemplates = [{ id: '1', name: 'Welcome Email' }];
+        mockCacheManager.get.mockResolvedValue(null); // Cache miss
+        mockTemplateRepository.find.mockResolvedValue(mockTemplates);
+        mockCacheManager.set.mockResolvedValue(undefined);
 
-      const result = await service.findAllTemplates('tenant-1');
+        const result = await service.findAllTemplates('tenant-1');
 
-      expect(result).toEqual(mockTemplates);
-      expect(mockCacheManager.get).toHaveBeenCalledWith('email-template:all:tenant-1');
-      expect(mockCacheManager.set).toHaveBeenCalledWith(
-        'email-template:all:tenant-1',
-        mockTemplates,
-        300000,
-      );
+        expect(result).toEqual(mockTemplates);
+        expect(mockCacheManager.get).toHaveBeenCalledWith('email-template:all:tenant-1');
+        expect(mockCacheManager.set).toHaveBeenCalledWith(
+          'email-template:all:tenant-1',
+          mockTemplates,
+          300000,
+        );
+      });
+
+      it('should return templates from cache (cache hit)', async () => {
+        const mockTemplates = [{ id: '1', name: 'Welcome Email' }];
+        mockCacheManager.get.mockResolvedValue(mockTemplates); // Cache hit
+
+        const result = await service.findAllTemplates('tenant-1');
+
+        expect(result).toEqual(mockTemplates);
+        expect(mockCacheManager.get).toHaveBeenCalledWith('email-template:all:tenant-1');
+        expect(mockTemplateRepository.find).not.toHaveBeenCalled();
+        expect(mockCacheManager.set).not.toHaveBeenCalled();
+      });
     });
 
-    it('should find template by type', async () => {
-      const mockTemplate = {
-        id: '1',
-        type: TemplateType.WELCOME,
-        isActive: true,
-      };
-      mockCacheManager.get.mockResolvedValue(null); // Cache miss
-      mockTemplateRepository.findOne.mockResolvedValue(mockTemplate);
-      mockCacheManager.set.mockResolvedValue(undefined);
+    describe('findTemplateById', () => {
+      it('should find template by id from database (cache miss)', async () => {
+        const mockTemplate = { id: '1', name: 'Welcome Email' };
+        mockCacheManager.get.mockResolvedValue(null); // Cache miss
+        mockTemplateRepository.findOne.mockResolvedValue(mockTemplate);
+        mockCacheManager.set.mockResolvedValue(undefined);
 
-      const result = await service.findTemplateByType('tenant-1', TemplateType.WELCOME);
+        const result = await service.findTemplateById('tenant-1', '1');
 
-      expect(result).toEqual(mockTemplate);
+        expect(result).toEqual(mockTemplate);
+        expect(mockCacheManager.get).toHaveBeenCalledWith('email-template:tenant-1:1');
+        expect(mockCacheManager.set).toHaveBeenCalledWith(
+          'email-template:tenant-1:1',
+          mockTemplate,
+          300000,
+        );
+      });
+
+      it('should return template from cache (cache hit)', async () => {
+        const mockTemplate = { id: '1', name: 'Welcome Email' };
+        mockCacheManager.get.mockResolvedValue(mockTemplate); // Cache hit
+
+        const result = await service.findTemplateById('tenant-1', '1');
+
+        expect(result).toEqual(mockTemplate);
+        expect(mockCacheManager.get).toHaveBeenCalledWith('email-template:tenant-1:1');
+        expect(mockTemplateRepository.findOne).not.toHaveBeenCalled();
+        expect(mockCacheManager.set).not.toHaveBeenCalled();
+      });
+
+      it('should throw NotFoundException if template not found', async () => {
+        mockCacheManager.get.mockResolvedValue(null); // Cache miss
+        mockTemplateRepository.findOne.mockResolvedValue(null);
+
+        await expect(service.findTemplateById('tenant-1', '999')).rejects.toThrow(
+          NotFoundException,
+        );
+      });
     });
 
-    it('should throw NotFoundException if template not found', async () => {
-      mockCacheManager.get.mockResolvedValue(null); // Cache miss
-      mockTemplateRepository.findOne.mockResolvedValue(null);
+    describe('findTemplateByType', () => {
+      it('should find template by type from database (cache miss)', async () => {
+        const mockTemplate = {
+          id: '1',
+          type: TemplateType.WELCOME,
+          isActive: true,
+        };
+        mockCacheManager.get.mockResolvedValue(null); // Cache miss
+        mockTemplateRepository.findOne.mockResolvedValue(mockTemplate);
+        mockCacheManager.set.mockResolvedValue(undefined);
 
-      await expect(service.findTemplateByType('tenant-1', TemplateType.WELCOME)).rejects.toThrow(
-        NotFoundException,
-      );
+        const result = await service.findTemplateByType('tenant-1', TemplateType.WELCOME);
+
+        expect(result).toEqual(mockTemplate);
+        expect(mockCacheManager.get).toHaveBeenCalledWith(
+          'email-template:tenant-1:type:welcome',
+        );
+        expect(mockCacheManager.set).toHaveBeenCalledWith(
+          'email-template:tenant-1:type:welcome',
+          mockTemplate,
+          300000,
+        );
+      });
+
+      it('should return template from cache (cache hit)', async () => {
+        const mockTemplate = {
+          id: '1',
+          type: TemplateType.WELCOME,
+          isActive: true,
+        };
+        mockCacheManager.get.mockResolvedValue(mockTemplate); // Cache hit
+
+        const result = await service.findTemplateByType('tenant-1', TemplateType.WELCOME);
+
+        expect(result).toEqual(mockTemplate);
+        expect(mockCacheManager.get).toHaveBeenCalledWith(
+          'email-template:tenant-1:type:welcome',
+        );
+        expect(mockTemplateRepository.findOne).not.toHaveBeenCalled();
+        expect(mockCacheManager.set).not.toHaveBeenCalled();
+      });
+
+      it('should throw NotFoundException if template not found', async () => {
+        mockCacheManager.get.mockResolvedValue(null); // Cache miss
+        mockTemplateRepository.findOne.mockResolvedValue(null);
+
+        await expect(service.findTemplateByType('tenant-1', TemplateType.WELCOME)).rejects.toThrow(
+          NotFoundException,
+        );
+      });
+    });
+
+    describe('createTemplate', () => {
+      it('should create a new template', async () => {
+        const templateData = {
+          name: 'New Template',
+          subject: 'Test Subject',
+          body: 'Test Body',
+          type: TemplateType.WELCOME,
+        };
+        const mockTemplate = { id: '1', ...templateData, tenantId: 'tenant-1' };
+        mockTemplateRepository.create.mockReturnValue(mockTemplate);
+        mockTemplateRepository.save.mockResolvedValue(mockTemplate);
+
+        const result = await service.createTemplate('tenant-1', templateData);
+
+        expect(result).toEqual(mockTemplate);
+        expect(mockTemplateRepository.create).toHaveBeenCalledWith({
+          ...templateData,
+          tenantId: 'tenant-1',
+        });
+        expect(mockTemplateRepository.save).toHaveBeenCalledWith(mockTemplate);
+      });
+    });
+
+    describe('updateTemplate', () => {
+      it('should update template and invalidate caches', async () => {
+        const existingTemplate = { id: '1', name: 'Old Name', tenantId: 'tenant-1' };
+        const updatedTemplate = { id: '1', name: 'New Name', tenantId: 'tenant-1' };
+        const updateData = { name: 'New Name' };
+
+        // First call to findTemplateById (in updateTemplate)
+        mockCacheManager.get.mockResolvedValueOnce(null);
+        mockTemplateRepository.findOne.mockResolvedValueOnce(existingTemplate);
+        mockCacheManager.set.mockResolvedValue(undefined);
+
+        mockTemplateRepository.update.mockResolvedValue({ affected: 1 });
+        mockCacheManager.del.mockResolvedValue(undefined);
+
+        // Second call to findTemplateById (return updated template)
+        mockCacheManager.get.mockResolvedValueOnce(null);
+        mockTemplateRepository.findOne.mockResolvedValueOnce(updatedTemplate);
+
+        const result = await service.updateTemplate('tenant-1', '1', updateData);
+
+        expect(result).toEqual(updatedTemplate);
+        expect(mockTemplateRepository.update).toHaveBeenCalledWith(
+          { tenantId: 'tenant-1', id: '1' },
+          updateData,
+        );
+        expect(mockCacheManager.del).toHaveBeenCalledWith('email-template:tenant-1:1');
+        expect(mockCacheManager.del).toHaveBeenCalledWith('email-template:all:tenant-1');
+      });
+    });
+
+    describe('deleteTemplate', () => {
+      it('should delete template and invalidate caches', async () => {
+        const mockTemplate = {
+          id: '1',
+          name: 'Template',
+          type: TemplateType.WELCOME,
+          tenantId: 'tenant-1',
+        };
+        mockCacheManager.get.mockResolvedValue(null);
+        mockTemplateRepository.findOne.mockResolvedValue(mockTemplate);
+        mockCacheManager.set.mockResolvedValue(undefined);
+        mockTemplateRepository.softDelete.mockResolvedValue({ affected: 1 });
+        mockCacheManager.del.mockResolvedValue(undefined);
+
+        await service.deleteTemplate('tenant-1', '1');
+
+        expect(mockTemplateRepository.softDelete).toHaveBeenCalledWith({
+          tenantId: 'tenant-1',
+          id: '1',
+        });
+        expect(mockCacheManager.del).toHaveBeenCalledWith('email-template:tenant-1:1');
+        expect(mockCacheManager.del).toHaveBeenCalledWith('email-template:all:tenant-1');
+        expect(mockCacheManager.del).toHaveBeenCalledWith(
+          'email-template:tenant-1:type:welcome',
+        );
+      });
+
+      it('should delete template without type cache invalidation', async () => {
+        const mockTemplate = {
+          id: '1',
+          name: 'Template',
+          type: null,
+          tenantId: 'tenant-1',
+        };
+        mockCacheManager.get.mockResolvedValue(null);
+        mockTemplateRepository.findOne.mockResolvedValue(mockTemplate);
+        mockCacheManager.set.mockResolvedValue(undefined);
+        mockTemplateRepository.softDelete.mockResolvedValue({ affected: 1 });
+        mockCacheManager.del.mockResolvedValue(undefined);
+
+        await service.deleteTemplate('tenant-1', '1');
+
+        expect(mockTemplateRepository.softDelete).toHaveBeenCalledWith({
+          tenantId: 'tenant-1',
+          id: '1',
+        });
+        expect(mockCacheManager.del).toHaveBeenCalledWith('email-template:tenant-1:1');
+        expect(mockCacheManager.del).toHaveBeenCalledWith('email-template:all:tenant-1');
+        expect(mockCacheManager.del).toHaveBeenCalledTimes(2); // Only 2 calls, no type cache
+      });
     });
   });
 
   describe('Email Sending', () => {
-    it('should send email', async () => {
+    it('should send email successfully', async () => {
       const mockLog = {
         id: '1',
         to: 'test@example.com',
@@ -123,6 +310,49 @@ describe('EmailService', () => {
 
       expect(mockLogRepository.create).toHaveBeenCalled();
       expect(mockLogRepository.save).toHaveBeenCalled();
+      expect(mockLogRepository.update).toHaveBeenCalledWith(
+        { id: '1', tenantId: 'tenant-1' },
+        expect.objectContaining({
+          status: EmailStatus.SENT,
+          sentAt: expect.any(Date),
+        }),
+      );
+    });
+
+    it('should handle email sending failure', async () => {
+      const mockLog = {
+        id: '1',
+        to: 'test@example.com',
+        subject: 'Test',
+        body: 'Test body',
+        status: EmailStatus.PENDING,
+      };
+      mockLogRepository.create.mockReturnValue(mockLog);
+      mockLogRepository.save.mockResolvedValue(mockLog);
+      
+      // Mock update to throw error on first call (simulating SMTP failure)
+      const error = new Error('SMTP connection failed');
+      mockLogRepository.update.mockRejectedValueOnce(error);
+      
+      // Second update call should succeed (updating status to FAILED)
+      mockLogRepository.update.mockResolvedValueOnce({ affected: 1 });
+      
+      mockLogRepository.findOne.mockResolvedValue({
+        ...mockLog,
+        status: EmailStatus.FAILED,
+        error: 'SMTP connection failed',
+      });
+
+      const result = await service.sendEmail('tenant-1', 'test@example.com', 'Test', 'Test body');
+
+      expect(result.status).toBe(EmailStatus.FAILED);
+      expect(mockLogRepository.update).toHaveBeenCalledWith(
+        { id: '1', tenantId: 'tenant-1' },
+        expect.objectContaining({
+          status: EmailStatus.FAILED,
+          error: 'SMTP connection failed',
+        }),
+      );
     });
 
     it('should send template email with variables', async () => {
