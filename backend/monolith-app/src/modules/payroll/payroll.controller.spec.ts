@@ -83,7 +83,7 @@ describe('PayrollController', () => {
       const data: Partial<PieceRateWork> = {
         employeeId: 'emp-1',
         workDate: new Date(),
-        quantity: 100,
+        quantityCompleted: 100,
         ratePerUnit: 5000,
       };
 
@@ -99,8 +99,8 @@ describe('PayrollController', () => {
   describe('findPieceRateWorksByEmployee', () => {
     it('should find piece rate works by employee', async () => {
       const works: PieceRateWork[] = [
-        { id: '1', employeeId: 'emp-1', quantity: 100 } as PieceRateWork,
-        { id: '2', employeeId: 'emp-1', quantity: 150 } as PieceRateWork,
+        { id: '1', employeeId: 'emp-1', quantityCompleted: 100 } as PieceRateWork,
+        { id: '2', employeeId: 'emp-1', quantityCompleted: 150 } as PieceRateWork,
       ];
 
       service.findPieceRateWorksByEmployee.mockResolvedValue(works);
@@ -123,7 +123,7 @@ describe('PayrollController', () => {
 
     it('should find piece rate works without date range', async () => {
       const works: PieceRateWork[] = [
-        { id: '1', employeeId: 'emp-1', quantity: 100 } as PieceRateWork,
+        { id: '1', employeeId: 'emp-1', quantityCompleted: 100 } as PieceRateWork,
       ];
 
       service.findPieceRateWorksByEmployee.mockResolvedValue(works);
@@ -145,8 +145,20 @@ describe('PayrollController', () => {
       const approved: PieceRateWork = {
         id: '1',
         employeeId: 'emp-1',
-        approved: true,
+        tenantId: 'tenant-1',
+        workOrderId: 'wo-1',
+        workDate: new Date(),
+        taskName: 'Task 1',
+        quantityCompleted: 100,
+        unit: 'pcs',
+        ratePerUnit: 5000,
+        totalEarnings: 500000,
+        status: 'approved' as any,
         approvedBy: 'manager-1',
+        approvedAt: new Date(),
+        notes: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       } as PieceRateWork;
 
       service.approvePieceRateWork.mockResolvedValue(approved);
@@ -159,7 +171,7 @@ describe('PayrollController', () => {
   describe('findAllWorkOrders', () => {
     it('should find all work orders', async () => {
       const orders: WorkOrder[] = [
-        { id: '1', status: WorkOrderStatus.PENDING } as WorkOrder,
+        { id: '1', status: WorkOrderStatus.DRAFT } as WorkOrder,
         { id: '2', status: WorkOrderStatus.IN_PROGRESS } as WorkOrder,
       ];
 
@@ -171,13 +183,13 @@ describe('PayrollController', () => {
 
     it('should find work orders by status', async () => {
       const orders: WorkOrder[] = [
-        { id: '1', status: WorkOrderStatus.PENDING } as WorkOrder,
+        { id: '1', status: WorkOrderStatus.DRAFT } as WorkOrder,
       ];
 
       service.findAllWorkOrders.mockResolvedValue(orders);
 
-      expect(await controller.findAllWorkOrders('tenant-1', WorkOrderStatus.PENDING)).toEqual(orders);
-      expect(service.findAllWorkOrders).toHaveBeenCalledWith('tenant-1', WorkOrderStatus.PENDING);
+      expect(await controller.findAllWorkOrders('tenant-1', WorkOrderStatus.DRAFT)).toEqual(orders);
+      expect(service.findAllWorkOrders).toHaveBeenCalledWith('tenant-1', WorkOrderStatus.DRAFT);
     });
   });
 
@@ -185,8 +197,9 @@ describe('PayrollController', () => {
     it('should create work order', async () => {
       const data: Partial<WorkOrder> = {
         productId: 'prod-1',
-        quantity: 1000,
-        dueDate: new Date(),
+        quantityPlanned: 1000,
+        plannedStartDate: new Date(),
+        plannedEndDate: new Date(),
       };
 
       const created: WorkOrder = { id: '1', ...data } as WorkOrder;
@@ -215,8 +228,8 @@ describe('PayrollController', () => {
   describe('generatePayslips', () => {
     it('should generate payslips for period', async () => {
       const payslips: Payslip[] = [
-        { id: '1', employeeId: 'emp-1', grossPay: 10000000 } as Payslip,
-        { id: '2', employeeId: 'emp-2', grossPay: 12000000 } as Payslip,
+        { id: '1', employeeId: 'emp-1', netSalary: 10000000 } as Payslip,
+        { id: '2', employeeId: 'emp-2', netSalary: 12000000 } as Payslip,
       ];
 
       service.generatePayslips.mockResolvedValue(payslips);
@@ -229,7 +242,7 @@ describe('PayrollController', () => {
   describe('findPayslipsByPeriod', () => {
     it('should find payslips by period', async () => {
       const payslips: Payslip[] = [
-        { id: '1', employeeId: 'emp-1', grossPay: 10000000 } as Payslip,
+        { id: '1', employeeId: 'emp-1', netSalary: 10000000 } as Payslip,
       ];
 
       service.findPayslipsByPeriod.mockResolvedValue(payslips);
@@ -243,8 +256,24 @@ describe('PayrollController', () => {
     it('should confirm payslip', async () => {
       const confirmed: Payslip = {
         id: '1',
+        tenantId: 'tenant-1',
         employeeId: 'emp-1',
-        confirmed: true,
+        payrollPeriodId: 'period-1',
+        baseSalary: 10000000,
+        attendanceBonus: 0,
+        pieceRateEarnings: 0,
+        overtimePay: 0,
+        allowances: 0,
+        deductions: 0,
+        netSalary: 10000000,
+        workingDays: 22,
+        absentDays: 0,
+        overtimeHours: 0,
+        status: 'confirmed' as any,
+        breakdown: null,
+        notes: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       } as Payslip;
 
       service.confirmPayslip.mockResolvedValue(confirmed);
