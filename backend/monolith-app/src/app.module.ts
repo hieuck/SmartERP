@@ -46,6 +46,7 @@ import { CategoryModule } from './modules/category/category.module';
 import { PermissionModule } from './modules/permission/permission.module';
 import { RoleModule } from './modules/role/role.module';
 import { TenantModule } from './modules/tenant/tenant.module';
+import { SettingsModule } from './modules/settings/settings.module';
 
 @Module({
   imports: [
@@ -133,6 +134,7 @@ import { TenantModule } from './modules/tenant/tenant.module';
     PermissionModule,
     RoleModule,
     TenantModule,
+    SettingsModule,
   ],
 })
 export class AppModule implements NestModule {
