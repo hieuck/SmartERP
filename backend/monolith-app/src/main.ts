@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
+import * as compression from 'compression';
 import { AppModule } from './app.module';
 import { LoggerService } from './common/logger/logger.service';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
@@ -45,6 +46,10 @@ async function bootstrap() {
   );
 
   logger.log('🔒 Security headers enabled (Helmet.js)');
+
+  // Enable compression for responses
+  app.use(compression());
+  logger.log('📦 Response compression enabled');
 
   // Apply global exception filter
   app.useGlobalFilters(new HttpExceptionFilter());

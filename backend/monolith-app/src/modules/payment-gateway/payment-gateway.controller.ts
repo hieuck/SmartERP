@@ -9,9 +9,9 @@ export class PaymentGatewayController {
 
   /**
    * Create payment
-   * POST /payment-gateway/create
+   * POST /payment-gateway
    */
-  @Post('create')
+  @Post()
   async createPayment(@Req() req: Request & { tenantId?: string }, @Body() dto: CreatePaymentDto) {
     const tenantId = req.tenantId || 'default-tenant';
     return this.paymentGatewayService.createPayment(tenantId, dto);

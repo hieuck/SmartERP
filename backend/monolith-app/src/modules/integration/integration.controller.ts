@@ -53,7 +53,7 @@ export class IntegrationController {
     return this.integrationService.processPayment(tenantId, gateway, amount, orderId);
   }
 
-  @Post('shipping/create')
+  @Post('shipments')
   async createShipment(
     @TenantId() tenantId: string,
     @Body('provider') provider: string,

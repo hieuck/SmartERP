@@ -14,9 +14,9 @@ export class ShippingController {
 
   /**
    * Create shipment
-   * POST /shipping/create
+   * POST /shipping
    */
-  @Post('create')
+  @Post()
   async createShipment(
     @Req() req: Request & { tenantId?: string },
     @Body() dto: CreateShipmentDto,
