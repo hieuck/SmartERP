@@ -1,9 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { PermissionService } from '../../../common/security/permission.service';
+import { PermissionService, User } from '../../../common/security/permission.service';
 import { SecureRepository } from '../../../common/security/secure-repository';
-import { User } from '../../../core/user/entities/user.entity';
 import { ProcessPaymentDto, VerifyPaymentDto } from './dto/payment.dto';
 import { RefundDto } from './dto/refund.dto';
 import { Order, PaymentStatus } from './entities/order.entity';

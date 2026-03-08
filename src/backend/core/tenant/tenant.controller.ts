@@ -131,33 +131,26 @@ export class TenantController {
 
   @Get(':id/subscription')
   @ApiOperation({ summary: 'Get current subscription details' })
-  getSubscription(@Param('id') id: string) {
-    return this.subscriptionService.getSubscription(id);
+  getSubscription(@CurrentUser() user: User) {
+    return this.subscriptionService.getSubscription(user);
   }
 
   @Post(':id/subscription/upgrade')
   @ApiOperation({ summary: 'Upgrade or change subscription plan' })
-  upgradeSubscription(
-    @Param('id') id: string,
-    @Body() upgradeDto: UpgradeSubscriptionDto,
-    @Request() req: ExpressRequest & { user?: { id: string } },
-  ) {
-    return this.subscriptionService.upgradeSubscription(id, upgradeDto, req.user?.id);
+  upgradeSubscription(@CurrentUser() user: User, @Body() upgradeDto: UpgradeSubscriptionDto) {
+    return this.subscriptionService.upgradeSubscription(user, upgradeDto);
   }
 
   @Post(':id/subscription/cancel')
   @ApiOperation({ summary: 'Cancel subscription (downgrade to free)' })
-  cancelSubscription(
-    @Param('id') id: string,
-    @Request() req: ExpressRequest & { user?: { id: string } },
-  ) {
-    return this.subscriptionService.cancelSubscription(id, req.user?.id);
+  cancelSubscription(@CurrentUser() user: User) {
+    return this.subscriptionService.cancelSubscription(user);
   }
 
   @Get(':id/subscription/history')
   @ApiOperation({ summary: 'Get subscription history' })
-  getSubscriptionHistory(@Param('id') id: string) {
-    return this.subscriptionService.getSubscriptionHistory(id);
+  getSubscriptionHistory(@CurrentUser() user: User) {
+    return this.subscriptionService.getSubscriptionHistory(user);
   }
 
   @Put(':id')

@@ -51,7 +51,6 @@ export class OrderService {
       couponCode: dto.couponCode,
       customerNotes: dto.customerNotes,
       tenantId: user.tenantId,
-      createdBy: user.id,
     });
 
     const orderItems = dto.items.map((item) =>
@@ -65,7 +64,6 @@ export class OrderService {
         selectedVariant: item.selectedVariant,
         notes: item.notes,
         tenantId: user.tenantId,
-        createdBy: user.id,
       }),
     );
 
@@ -202,7 +200,7 @@ export class OrderService {
     id: string,
     paymentStatus: PaymentStatus,
     transactionId: string,
-    tenantId: string,
+    user: User,
   ): Promise<Order> {
     const order = await this.findOne(id, user);
 
@@ -223,7 +221,7 @@ export class OrderService {
     id: string,
     shippingStatus: ShippingStatus,
     trackingNumber: string,
-    tenantId: string,
+    user: User,
   ): Promise<Order> {
     const order = await this.findOne(id, user);
 
