@@ -32,13 +32,15 @@ describe('NotificationService', () => {
   };
 
   const mockRepository = {
-    createQueryBuilder: jest.fn(() => mockQueryBuilder),
+    find: jest.fn(),
     findOne: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
+    remove: jest.fn(),
     count: jest.fn(),
+    createQueryBuilder: jest.fn(() => mockQueryBuilder),
   };
 
   const mockCacheService = {
@@ -60,6 +62,14 @@ describe('NotificationService', () => {
           provide: CacheService,
           useValue: mockCacheService,
         },
+        {
+          provide: PermissionService,
+          useValue: {
+            canRead: jest.fn().mockReturnValue(true),
+            canWrite: jest.fn().mockReturnValue(true),
+            buildSecureQuery: jest.fn((user, where) => where),
+          },
+        },
       ],
     }).compile();
 
@@ -75,17 +85,13 @@ describe('NotificationService', () => {
     it('should return all notifications for user', async () => {
       mockQueryBuilder.getMany.mockResolvedValue([mockNotification]);
 
-      const result = await service.findAll(mockUser, 'user-1');
+      const result = await service.findAll(mockUser);
 
       expect(result).toEqual([mockNotification]);
       expect(mockRepository.createQueryBuilder).toHaveBeenCalledWith('notification');
-      expect(mockQueryBuilder.where).toHaveBeenCalledWith('notification.tenantId = :tenantId', {
-        tenantId: 'tenant-1',
-      });
-      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('notification.userId = :userId', {
+      expect(mockQueryBuilder.where).toHaveBeenCalledWith('notification.userId = :userId', {
         userId: 'user-1',
       });
-      expect(mockQueryBuilder.take).toHaveBeenCalledWith(50);
     });
   });
 
@@ -93,7 +99,7 @@ describe('NotificationService', () => {
     it('should return unread notifications for user', async () => {
       mockQueryBuilder.getMany.mockResolvedValue([mockNotification]);
 
-      const result = await service.findUnread(mockUser, 'user-1');
+      const result = await service.findUnread(mockUser);
 
       expect(result).toEqual([mockNotification]);
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('notification.status = :status', {
@@ -129,14 +135,12 @@ describe('NotificationService', () => {
 
       const result = await service.create(
         mockUser,
-        'user-1',
         'Test Title',
         'Test Message',
       );
 
       expect(result).toEqual(mockNotification);
       expect(mockRepository.create).toHaveBeenCalledWith({
-        tenantId: 'tenant-1',
         userId: 'user-1',
         title: 'Test Title',
         message: 'Test Message',
@@ -153,7 +157,6 @@ describe('NotificationService', () => {
 
       const result = await service.create(
         mockUser,
-        'user-1',
         'Warning',
         'Check this',
         NotificationType.WARNING,
@@ -162,7 +165,6 @@ describe('NotificationService', () => {
 
       expect(result).toEqual(customNotif);
       expect(mockRepository.create).toHaveBeenCalledWith({
-        tenantId: 'tenant-1',
         userId: 'user-1',
         title: 'Warning',
         message: 'Check this',
@@ -179,7 +181,6 @@ describe('NotificationService', () => {
 
       await service.create(
         mockUser,
-        'user-1',
         'Order Update',
         'Order processed',
         NotificationType.SUCCESS,
@@ -188,7 +189,6 @@ describe('NotificationService', () => {
       );
 
       expect(mockRepository.create).toHaveBeenCalledWith({
-        tenantId: 'tenant-1',
         userId: 'user-1',
         title: 'Order Update',
         message: 'Order processed',
@@ -224,10 +224,10 @@ describe('NotificationService', () => {
     it('should mark all unread notifications as read', async () => {
       mockRepository.update.mockResolvedValue({ affected: 5 });
 
-      await service.markAllAsRead(mockUser, 'user-1');
+      await service.markAllAsRead(mockUser);
 
       expect(mockRepository.update).toHaveBeenCalledWith(
-        { tenantId: 'tenant-1', userId: 'user-1', status: NotificationStatus.UNREAD },
+        { userId: 'user-1', status: NotificationStatus.UNREAD },
         expect.objectContaining({
           status: NotificationStatus.READ,
           readAt: expect.any(Date),
@@ -271,11 +271,11 @@ describe('NotificationService', () => {
     it('should return count of unread notifications', async () => {
       mockRepository.count.mockResolvedValue(5);
 
-      const result = await service.getUnreadCount(mockUser, 'user-1');
+      const result = await service.getUnreadCount(mockUser);
 
       expect(result).toBe(5);
       expect(mockRepository.count).toHaveBeenCalledWith({
-        where: { tenantId: 'tenant-1', userId: 'user-1', status: NotificationStatus.UNREAD },
+        where: { userId: 'user-1', status: NotificationStatus.UNREAD },
       });
     });
   });
