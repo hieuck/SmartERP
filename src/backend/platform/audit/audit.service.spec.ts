@@ -105,7 +105,6 @@ const mockUser = {
 
       expect(result).toEqual(fullAuditLog);
       expect(repository.create).toHaveBeenCalledWith({
-        tenantId: 'tenant-1',
         userId: 'user-1',
         action: AuditAction.UPDATE,
         entityType: 'Product',
@@ -153,7 +152,6 @@ const mockUser = {
       expect(repository.find).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
-            tenantId: 'tenant-1',
             userId: 'user-1',
           }),
         }),
@@ -168,7 +166,6 @@ const mockUser = {
       expect(repository.find).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
-            tenantId: 'tenant-1',
             entityType: 'Product',
           }),
         }),
@@ -185,7 +182,6 @@ const mockUser = {
       expect(repository.find).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
-            tenantId: 'tenant-1',
             createdAt: Between(startDate, endDate),
             userId: 'user-1',
             entityType: 'Product',
@@ -215,7 +211,7 @@ const mockUser = {
 
       expect(result).toHaveLength(1);
       expect(repository.find).toHaveBeenCalledWith({
-        where: { tenantId: 'tenant-1', entityType: 'Product', entityId: 'product-1' },
+        where: { entityType: 'Product', entityId: 'product-1' },
         order: { createdAt: 'DESC' },
       });
     });
@@ -241,7 +237,7 @@ const mockUser = {
 
       expect(result).toHaveLength(1);
       expect(repository.find).toHaveBeenCalledWith({
-        where: { tenantId: 'tenant-1', userId: 'user-1' },
+        where: { userId: 'user-1' },
         order: { createdAt: 'DESC' },
         take: 100,
       });
@@ -295,7 +291,6 @@ const mockUser = {
       expect(result.byUser['user-2']).toBe(2);
       expect(repository.find).toHaveBeenCalledWith({
         where: {
-          tenantId: 'tenant-1',
           createdAt: Between(startDate, endDate),
         },
       });

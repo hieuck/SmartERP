@@ -61,10 +61,12 @@ const mockUser = {
         {
           provide: getRepositoryToken(Workflow),
           useValue: {
+            find: jest.fn(),
             findOne: jest.fn(),
             create: jest.fn(),
             save: jest.fn(),
             update: jest.fn(),
+            remove: jest.fn(),
             softDelete: jest.fn(),
             createQueryBuilder: jest.fn(() => mockQueryBuilder),
           },
@@ -72,10 +74,12 @@ const mockUser = {
         {
           provide: getRepositoryToken(WorkflowInstance),
           useValue: {
+            find: jest.fn(),
             findOne: jest.fn(),
             create: jest.fn(),
             save: jest.fn(),
             update: jest.fn(),
+            remove: jest.fn(),
             createQueryBuilder: jest.fn(() => mockQueryBuilder),
           },
         },
@@ -84,6 +88,14 @@ const mockUser = {
           useValue: {
             getOrSet: jest.fn(),
             del: jest.fn(),
+          },
+        },
+        {
+          provide: PermissionService,
+          useValue: {
+            canRead: jest.fn().mockReturnValue(true),
+            canWrite: jest.fn().mockReturnValue(true),
+            buildSecureQuery: jest.fn((user, where) => where),
           },
         },
       ],
@@ -228,11 +240,10 @@ const mockUser = {
       jest.spyOn(instanceRepository, 'create').mockReturnValue(mockInstance as WorkflowInstance);
       jest.spyOn(instanceRepository, 'save').mockResolvedValue(mockInstance as WorkflowInstance);
 
-      const result = await service.startWorkflow(mockUser, 'workflow-1', 'order', 'order-1', 'user-1');
+      const result = await service.startWorkflow(mockUser, 'workflow-1', 'order', 'order-1');
 
       expect(result).toEqual(mockInstance);
       expect(instanceRepository.create).toHaveBeenCalledWith({
-        tenantId: 'tenant-1',
         workflowId: 'workflow-1',
         entityType: 'order',
         entityId: 'order-1',
@@ -248,7 +259,7 @@ const mockUser = {
       jest.spyOn(cacheService, 'getOrSet').mockResolvedValue(inactiveWorkflow as Workflow);
 
       await expect(
-        service.startWorkflow(mockUser, 'workflow-1', 'order', 'order-1', 'user-1'),
+        service.startWorkflow(mockUser, 'workflow-1', 'order', 'order-1'),
       ).rejects.toThrow(BadRequestException);
     });
   });
@@ -262,7 +273,7 @@ const mockUser = {
       jest.spyOn(instanceRepository, 'update').mockResolvedValue(undefined);
       jest.spyOn(cacheService, 'del').mockResolvedValue(undefined);
 
-      const result = await service.approveStep(mockUser, 'instance-1', 'manager-1', 'Approved');
+      const result = await service.approveStep(mockUser, 'instance-1', 'Approved');
 
       expect(instanceRepository.update).toHaveBeenCalled();
       expect(cacheService.del).toHaveBeenCalled();
@@ -296,10 +307,10 @@ const mockUser = {
       jest.spyOn(instanceRepository, 'update').mockResolvedValue(undefined);
       jest.spyOn(cacheService, 'del').mockResolvedValue(undefined);
 
-      const result = await service.rejectStep(mockUser, 'instance-1', 'manager-1', 'Not approved');
+      const result = await service.rejectStep(mockUser, 'instance-1', 'Not approved');
 
       expect(instanceRepository.update).toHaveBeenCalledWith(
-        { tenantId: 'tenant-1', id: 'instance-1' },
+        { id: 'instance-1' },
         expect.objectContaining({
           status: WorkflowInstanceStatus.REJECTED,
         }),
