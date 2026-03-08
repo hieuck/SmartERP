@@ -1,64 +1,62 @@
+# Prometheus Configuration for SmartERP
+# This file configures Prometheus to scrape metrics from SmartERP backend
+
 global:
-  scrape_interval: 15s
-  evaluation_interval: 15s
+  scrape_interval: 15s # Scrape metrics every 15 seconds
+  evaluation_interval: 15s # Evaluate rules every 15 seconds
+  external_labels:
+    cluster: 'smarterp-production'
+    environment: 'production'
 
 # Alertmanager configuration
 alerting:
   alertmanagers:
     - static_configs:
-        - targets: []
+        - targets:
+            - 'alertmanager:9093'
 
 # Load rules once and periodically evaluate them
 rule_files:
-  # - "alerts.yml"
+  - 'alerts.yml'
 
 # Scrape configurations
 scrape_configs:
-  # Prometheus itself
-  - job_name: 'prometheus'
+  # SmartERP Backend
+  - job_name: 'smarterp-backend'
+    metrics_path: '/api/metrics'
     static_configs:
-      - targets: ['localhost:9090']
+      - targets:
+          - 'backend:3000'
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'smarterp-backend'
 
-  # Node Exporter - System metrics
-  - job_name: 'node-exporter'
+  # Health checks (for uptime monitoring)
+  - job_name: 'smarterp-health'
+    metrics_path: '/api/health'
     static_configs:
-      - targets: ['node-exporter:9100']
+      - targets:
+          - 'backend:3000'
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'smarterp-backend'
 
-  # cAdvisor - Container metrics
-  - job_name: 'cadvisor'
-    static_configs:
-      - targets: ['cadvisor:8080']
-
-  # PostgreSQL
+  # PostgreSQL Exporter (if using postgres_exporter)
   - job_name: 'postgres'
     static_configs:
-      - targets: ['postgres:5432']
+      - targets:
+          - 'postgres-exporter:9187'
 
-  # Redis
+  # Redis Exporter (if using redis_exporter)
   - job_name: 'redis'
     static_configs:
-      - targets: ['redis:6379']
+      - targets:
+          - 'redis-exporter:9121'
 
-  # API Gateway
-  - job_name: 'api-gateway'
-    metrics_path: '/metrics'
+  # Node Exporter (for system metrics)
+  - job_name: 'node'
     static_configs:
-      - targets: ['api-gateway:3000']
-
-  # Subscription Service
-  - job_name: 'subscription-service'
-    metrics_path: '/metrics'
-    static_configs:
-      - targets: ['subscription-service:3013']
-
-  # Payment Service
-  - job_name: 'payment-service'
-    metrics_path: '/metrics'
-    static_configs:
-      - targets: ['payment-service:3014']
-
-  # Email Service
-  - job_name: 'email-service'
-    metrics_path: '/metrics'
-    static_configs:
-      - targets: ['email-service:3015']
+      - targets:
+          - 'node-exporter:9100'

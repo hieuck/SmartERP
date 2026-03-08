@@ -17,7 +17,7 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { ProductStatus } from './entities/product.entity';
 import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
-import { TenantGuard } from '../../common/guards/tenant.guard';
+import { TenantGuard } from '@/common/guards/tenant.guard';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { User } from '@/common/security/permission.service';
 @ApiTags('products')
@@ -30,11 +30,10 @@ export class ProductController {
   @Post()
   @ApiOperation({ summary: 'Create product' })
   create(
-    @Body() createProductDto: CreateProductDto,
-    @CurrentUser() user: User,
+    @CurrentUser() user: User, @Body() createProductDto: CreateProductDto,
     @Request() req: Express.Request & { user?: { id: string } },
   ) {
-    return this.productService.create(createProductDto, user, req.user?.id);
+    return this.productService.create(user, createProductDto);
   }
 
   @Get()
@@ -47,10 +46,10 @@ export class ProductController {
     @Query('categoryId') categoryId?: string,
   ) {
     if (status) {
-      return this.productService.findByStatus(status, user);
+      return this.productService.findByStatus(user, status);
     }
     if (categoryId) {
-      return this.productService.findByCategory(categoryId, user);
+      return this.productService.findByCategory(user, categoryId);
     }
     return this.productService.findAll(user);
   }
@@ -60,7 +59,7 @@ export class ProductController {
   @ApiQuery({ name: 'status', enum: ProductStatus, required: false })
   count(@CurrentUser() user: User, @Query('status') status?: ProductStatus) {
     if (status) {
-      return this.productService.countByStatus(status, user);
+      return this.productService.countByStatus(user, status);
     }
     return this.productService.count(user);
   }
@@ -68,8 +67,8 @@ export class ProductController {
   @Get('search')
   @ApiOperation({ summary: 'Search products' })
   @ApiQuery({ name: 'q', required: true })
-  search(@Query('q') query: string, @CurrentUser() user: User) {
-    return this.productService.search(query, user);
+  search(@CurrentUser() user: User, @Query('q') query: string) {
+    return this.productService.search(user, query);
   }
 
   @Get('low-stock')
@@ -86,36 +85,34 @@ export class ProductController {
 
   @Get('sku/:sku')
   @ApiOperation({ summary: 'Get product by SKU' })
-  findBySku(@Param('sku') sku: string, @CurrentUser() user: User) {
-    return this.productService.findBySku(sku, user);
+  findBySku(@CurrentUser() user: User, @Param('sku') sku: string) {
+    return this.productService.findBySku(user, sku);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get product by ID' })
-  findOne(@Param('id') id: string, @CurrentUser() user: User) {
-    return this.productService.findOne(id, user);
+  findOne(@CurrentUser() user: User, @Param('id') id: string) {
+    return this.productService.findOne(user, id);
   }
 
   @Put(':id')
   @ApiOperation({ summary: 'Update product' })
   update(
     @Param('id') id: string,
-    @Body() updateProductDto: UpdateProductDto,
-    @CurrentUser() user: User,
+    @CurrentUser() user: User, @Body() updateProductDto: UpdateProductDto,
     @Request() req: Express.Request & { user?: { id: string } },
   ) {
-    return this.productService.update(id, updateProductDto, user, req.user?.id);
+    return this.productService.update(user, id, updateProductDto);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Partially update product' })
   partialUpdate(
     @Param('id') id: string,
-    @Body() updateProductDto: UpdateProductDto,
-    @CurrentUser() user: User,
+    @CurrentUser() user: User, @Body() updateProductDto: UpdateProductDto,
     @Request() req: Express.Request & { user?: { id: string } },
   ) {
-    return this.productService.update(id, updateProductDto, user, req.user?.id);
+    return this.productService.update(user, id, updateProductDto);
   }
 
   @Patch(':id/stock')
@@ -125,7 +122,7 @@ export class ProductController {
     @Body() body: { quantity: number },
     @CurrentUser() user: User,
   ) {
-    return this.productService.updateStock(id, body.quantity, user);
+    return this.productService.updateStock(user, id, body.quantity);
   }
 
   @Patch(':id/stock/adjust')
@@ -135,25 +132,25 @@ export class ProductController {
     @Body() body: { adjustment: number },
     @CurrentUser() user: User,
   ) {
-    return this.productService.adjustStock(id, body.adjustment, user);
+    return this.productService.adjustStock(user, id, body.adjustment);
   }
 
   @Patch(':id/activate')
   @ApiOperation({ summary: 'Activate product' })
-  activate(@Param('id') id: string, @CurrentUser() user: User) {
-    return this.productService.activate(id, user);
+  activate(@CurrentUser() user: User, @Param('id') id: string) {
+    return this.productService.activate(user, id);
   }
 
   @Patch(':id/deactivate')
   @ApiOperation({ summary: 'Deactivate product' })
-  deactivate(@Param('id') id: string, @CurrentUser() user: User) {
-    return this.productService.deactivate(id, user);
+  deactivate(@CurrentUser() user: User, @Param('id') id: string) {
+    return this.productService.deactivate(user, id);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete product' })
-  async remove(@Param('id') id: string, @CurrentUser() user: User) {
-    await this.productService.remove(id, user);
+  async remove(@CurrentUser() user: User, @Param('id') id: string) {
+    await this.productService.remove(user, id);
     return { message: 'Product deleted successfully' };
   }
 }

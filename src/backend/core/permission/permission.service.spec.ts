@@ -9,7 +9,13 @@ import { Permission, PermissionAction } from './entities/permission.entity';
 import { CreatePermissionDto } from './dto/create-permission.dto';
 import { UpdatePermissionDto } from './dto/update-permission.dto';
 
-describe('PermissionService', () => {
+const mockUser = {
+    id: 'user1',
+    tenantId: 'tenant1',
+    roles: ['admin'],
+  };
+
+  describe('PermissionService', () => {
   let service: PermissionService;
   let repository: Repository<Permission>;
   let cacheManager: Cache;
@@ -78,7 +84,7 @@ describe('PermissionService', () => {
       mockRepository.create.mockReturnValue(mockPermission);
       mockRepository.save.mockResolvedValue(mockPermission);
 
-      const result = await service.create(createDto, 'tenant1');
+      const result = await service.create(mockUser, createDto);
 
       expect(result).toEqual(mockPermission);
       expect(mockRepository.findOne).toHaveBeenCalledWith({
@@ -94,8 +100,8 @@ describe('PermissionService', () => {
     it('should throw ConflictException if permission already exists', async () => {
       mockRepository.findOne.mockResolvedValue(mockPermission);
 
-      await expect(service.create(createDto, 'tenant1')).rejects.toThrow(ConflictException);
-      await expect(service.create(createDto, 'tenant1')).rejects.toThrow(
+      await expect(service.create(mockUser, createDto)).rejects.toThrow(ConflictException);
+      await expect(service.create(mockUser, createDto)).rejects.toThrow(
         "Permission for resource 'products' already exists",
       );
     });
@@ -106,7 +112,7 @@ describe('PermissionService', () => {
       const permissions = [mockPermission];
       mockCacheManager.get.mockResolvedValue(permissions);
 
-      const result = await service.findAll('tenant1');
+      const result = await service.findAll(mockUser);
 
       expect(result).toEqual(permissions);
       expect(mockCacheManager.get).toHaveBeenCalledWith('permission:all:tenant1');
@@ -125,7 +131,7 @@ describe('PermissionService', () => {
       };
       mockRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
 
-      const result = await service.findAll('tenant1');
+      const result = await service.findAll(mockUser);
 
       expect(result).toEqual(permissions);
       expect(mockRepository.createQueryBuilder).toHaveBeenCalledWith('permission');
@@ -140,7 +146,7 @@ describe('PermissionService', () => {
     it('should return cached permission', async () => {
       mockCacheManager.get.mockResolvedValue(mockPermission);
 
-      const result = await service.findOne('1', 'tenant1');
+      const result = await service.findOne(mockUser, '1');
 
       expect(result).toEqual(mockPermission);
       expect(mockCacheManager.get).toHaveBeenCalledWith('permission:tenant1:1');
@@ -151,7 +157,7 @@ describe('PermissionService', () => {
       mockCacheManager.get.mockResolvedValue(null);
       mockRepository.findOne.mockResolvedValue(mockPermission);
 
-      const result = await service.findOne('1', 'tenant1');
+      const result = await service.findOne(mockUser, '1');
 
       expect(result).toEqual(mockPermission);
       expect(mockRepository.findOne).toHaveBeenCalledWith({
@@ -164,8 +170,8 @@ describe('PermissionService', () => {
       mockCacheManager.get.mockResolvedValue(null);
       mockRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findOne('999', 'tenant1')).rejects.toThrow(NotFoundException);
-      await expect(service.findOne('999', 'tenant1')).rejects.toThrow(
+      await expect(service.findOne(mockUser, '999')).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(mockUser, '999')).rejects.toThrow(
         'Permission with ID 999 not found',
       );
     });
@@ -189,7 +195,7 @@ describe('PermissionService', () => {
     it('should return cached permission by resource', async () => {
       mockCacheManager.get.mockResolvedValue(mockPermission);
 
-      const result = await service.findByResource('products', 'tenant1');
+      const result = await service.findByResource(mockUser, 'products');
 
       expect(result).toEqual(mockPermission);
       expect(mockCacheManager.get).toHaveBeenCalledWith('permission:tenant1:resource:products');
@@ -200,7 +206,7 @@ describe('PermissionService', () => {
       mockCacheManager.get.mockResolvedValue(null);
       mockRepository.findOne.mockResolvedValue(mockPermission);
 
-      const result = await service.findByResource('products', 'tenant1');
+      const result = await service.findByResource(mockUser, 'products');
 
       expect(result).toEqual(mockPermission);
       expect(mockRepository.findOne).toHaveBeenCalledWith({
@@ -217,10 +223,10 @@ describe('PermissionService', () => {
       mockCacheManager.get.mockResolvedValue(null);
       mockRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findByResource('nonexistent', 'tenant1')).rejects.toThrow(
+      await expect(service.findByResource(mockUser, 'nonexistent')).rejects.toThrow(
         NotFoundException,
       );
-      await expect(service.findByResource('nonexistent', 'tenant1')).rejects.toThrow(
+      await expect(service.findByResource(mockUser, 'nonexistent')).rejects.toThrow(
         "Permission for resource 'nonexistent' not found",
       );
     });
@@ -235,7 +241,7 @@ describe('PermissionService', () => {
       mockCacheManager.get.mockResolvedValue(mockPermission);
       mockRepository.save.mockResolvedValue({ ...mockPermission, ...updateDto });
 
-      const result = await service.update('1', updateDto, 'tenant1');
+      const result = await service.update(mockUser, '1', updateDto);
 
       expect(result.description).toBe('Updated description');
       expect(mockRepository.save).toHaveBeenCalled();
@@ -253,10 +259,10 @@ describe('PermissionService', () => {
         resource: 'orders',
       };
 
-      await expect(service.update('1', updateDtoWithResource, 'tenant1')).rejects.toThrow(
+      await expect(service.update(mockUser, '1', updateDtoWithResource)).rejects.toThrow(
         ConflictException,
       );
-      await expect(service.update('1', updateDtoWithResource, 'tenant1')).rejects.toThrow(
+      await expect(service.update(mockUser, '1', updateDtoWithResource)).rejects.toThrow(
         "Permission for resource 'orders' already exists",
       );
     });
@@ -270,7 +276,7 @@ describe('PermissionService', () => {
         resource: 'products',
       };
 
-      const result = await service.update('1', updateDtoSameResource, 'tenant1');
+      const result = await service.update(mockUser, '1', updateDtoSameResource);
 
       expect(result).toEqual(mockPermission);
       expect(mockRepository.save).toHaveBeenCalled();
@@ -282,7 +288,7 @@ describe('PermissionService', () => {
       mockCacheManager.get.mockResolvedValue(mockPermission);
       mockRepository.softDelete.mockResolvedValue({ affected: 1, raw: {} });
 
-      await service.remove('1', 'tenant1');
+      await service.remove(mockUser, '1');
 
       expect(mockRepository.softDelete).toHaveBeenCalledWith({ id: '1', tenantId: 'tenant1' });
       expect(mockCacheManager.del).toHaveBeenCalledWith('permission:tenant1:1');
@@ -294,7 +300,7 @@ describe('PermissionService', () => {
       mockCacheManager.get.mockResolvedValue(null);
       mockRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.remove('999', 'tenant1')).rejects.toThrow(NotFoundException);
+      await expect(service.remove(mockUser, '999')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -302,7 +308,7 @@ describe('PermissionService', () => {
     it('should return count of permissions', async () => {
       mockRepository.count.mockResolvedValue(5);
 
-      const result = await service.count('tenant1');
+      const result = await service.count(mockUser);
 
       expect(result).toBe(5);
       expect(mockRepository.count).toHaveBeenCalledWith({

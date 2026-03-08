@@ -5,18 +5,14 @@ import { MaterialType } from './entities/material.entity';
 import { MoldStatus } from './entities/mold.entity';
 import { BomStatus } from './entities/bom.entity';
 import { WorkOrderStatus } from './entities/work-order.entity';
-import { CreateMaterialDto } from './dto/create-material.dto';
-import { UpdateMaterialDto } from './dto/update-material.dto';
-import { CreateMoldDto } from './dto/create-mold.dto';
-import { UpdateMoldDto } from './dto/update-mold.dto';
-import { CreateBomDto } from './dto/create-bom.dto';
 import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
-import { TenantGuard } from '../../common/guards/tenant.guard';
 import { createMockUser } from '@/common/test/test-helpers';
 
 describe('ProductionController', () => {
   let controller: ProductionController;
   let service: jest.Mocked<ProductionService>;
+
+  const mockUser = createMockUser({ tenantId: 'tenant1' });
 
   const mockProductionService = {
     findAllMaterials: jest.fn(),
@@ -57,8 +53,6 @@ describe('ProductionController', () => {
     approveQualityCheck: jest.fn(),
   };
 
-  const mockUser = createMockUser();
-
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ProductionController],
@@ -70,8 +64,6 @@ describe('ProductionController', () => {
       ],
     })
       .overrideGuard(JwtAuthGuard)
-      .useValue({ canActivate: jest.fn(() => true) })
-      .overrideGuard(TenantGuard)
       .useValue({ canActivate: jest.fn(() => true) })
       .compile();
 
@@ -93,16 +85,16 @@ describe('ProductionController', () => {
       const materials = [{ id: '1', name: 'Material 1' }];
       mockProductionService.findAllMaterials.mockResolvedValue(materials);
 
-      expect(await controller.findAllMaterials('tenant-1')).toEqual(materials);
-      expect(service.findAllMaterials).toHaveBeenCalledWith('tenant-1', undefined);
+      expect(await controller.findAllMaterials(mockUser)).toEqual(materials);
+      expect(service.findAllMaterials).toHaveBeenCalledWith(mockUser, undefined);
     });
 
     it('should filter materials by type', async () => {
       const materials = [{ id: '1', name: 'Material 1', type: MaterialType.RAW }];
       mockProductionService.findAllMaterials.mockResolvedValue(materials);
 
-      expect(await controller.findAllMaterials('tenant-1', MaterialType.RAW)).toEqual(materials);
-      expect(service.findAllMaterials).toHaveBeenCalledWith('tenant-1', MaterialType.RAW);
+      expect(await controller.findAllMaterials(mockUser, MaterialType.RAW)).toEqual(materials);
+      expect(service.findAllMaterials).toHaveBeenCalledWith(mockUser, MaterialType.RAW);
     });
   });
 
@@ -111,8 +103,8 @@ describe('ProductionController', () => {
       const materials = [{ id: '1', name: 'Material 1', stock: 5 }];
       mockProductionService.findLowStockMaterials.mockResolvedValue(materials);
 
-      expect(await controller.findLowStockMaterials('tenant-1')).toEqual(materials);
-      expect(service.findLowStockMaterials).toHaveBeenCalledWith('tenant-1');
+      expect(await controller.findLowStockMaterials(mockUser)).toEqual(materials);
+      expect(service.findLowStockMaterials).toHaveBeenCalledWith(mockUser);
     });
   });
 
@@ -122,8 +114,8 @@ describe('ProductionController', () => {
       const material = { id: '1', ...dto };
       mockProductionService.createMaterial.mockResolvedValue(material);
 
-      expect(await controller.createMaterial(dto as any, 'tenant-1')).toEqual(material);
-      expect(service.createMaterial).toHaveBeenCalledWith(dto, 'tenant-1');
+      expect(await controller.createMaterial(mockUser, dto as any)).toEqual(material);
+      expect(service.createMaterial).toHaveBeenCalledWith(dto, mockUser);
     });
   });
 
@@ -133,16 +125,16 @@ describe('ProductionController', () => {
       const molds = [{ id: '1', code: 'MOLD-001' }];
       mockProductionService.findAllMolds.mockResolvedValue(molds);
 
-      expect(await controller.findAllMolds('tenant-1')).toEqual(molds);
-      expect(service.findAllMolds).toHaveBeenCalledWith('tenant-1', undefined);
+      expect(await controller.findAllMolds(mockUser)).toEqual(molds);
+      expect(service.findAllMolds).toHaveBeenCalledWith(mockUser, undefined);
     });
 
     it('should filter molds by status', async () => {
       const molds = [{ id: '1', code: 'MOLD-001', status: MoldStatus.ACTIVE }];
       mockProductionService.findAllMolds.mockResolvedValue(molds);
 
-      expect(await controller.findAllMolds('tenant-1', MoldStatus.ACTIVE)).toEqual(molds);
-      expect(service.findAllMolds).toHaveBeenCalledWith('tenant-1', MoldStatus.ACTIVE);
+      expect(await controller.findAllMolds(mockUser, MoldStatus.ACTIVE)).toEqual(molds);
+      expect(service.findAllMolds).toHaveBeenCalledWith(mockUser, MoldStatus.ACTIVE);
     });
   });
 
@@ -151,8 +143,8 @@ describe('ProductionController', () => {
       const mold = { id: '1', usageCount: 101 };
       mockProductionService.recordMoldUsage.mockResolvedValue(mold);
 
-      expect(await controller.recordMoldUsage('1', 'tenant-1')).toEqual(mold);
-      expect(service.recordMoldUsage).toHaveBeenCalledWith('1', 'tenant-1');
+      expect(await controller.recordMoldUsage(mockUser, '1')).toEqual(mold);
+      expect(service.recordMoldUsage).toHaveBeenCalledWith('1', mockUser);
     });
   });
 
@@ -162,16 +154,16 @@ describe('ProductionController', () => {
       const boms = [{ id: '1', version: '1.0' }];
       mockProductionService.findAllBoms.mockResolvedValue(boms);
 
-      expect(await controller.findAllBoms('tenant-1')).toEqual(boms);
-      expect(service.findAllBoms).toHaveBeenCalledWith('tenant-1', undefined, undefined);
+      expect(await controller.findAllBoms(mockUser)).toEqual(boms);
+      expect(service.findAllBoms).toHaveBeenCalledWith(mockUser, undefined, undefined);
     });
 
     it('should filter BOMs by product and status', async () => {
       const boms = [{ id: '1', productId: 'prod-1', status: BomStatus.ACTIVE }];
       mockProductionService.findAllBoms.mockResolvedValue(boms);
 
-      expect(await controller.findAllBoms('tenant-1', 'prod-1', BomStatus.ACTIVE)).toEqual(boms);
-      expect(service.findAllBoms).toHaveBeenCalledWith('tenant-1', 'prod-1', BomStatus.ACTIVE);
+      expect(await controller.findAllBoms(mockUser, 'prod-1', BomStatus.ACTIVE)).toEqual(boms);
+      expect(service.findAllBoms).toHaveBeenCalledWith(mockUser, 'prod-1', BomStatus.ACTIVE);
     });
   });
 
@@ -180,8 +172,8 @@ describe('ProductionController', () => {
       const bom = { id: '1', isDefault: true };
       mockProductionService.setDefaultBom.mockResolvedValue(bom);
 
-      expect(await controller.setDefaultBom('1', 'prod-1', 'tenant-1')).toEqual(bom);
-      expect(service.setDefaultBom).toHaveBeenCalledWith('1', 'prod-1', 'tenant-1');
+      expect(await controller.setDefaultBom('1', mockUser, 'prod-1')).toEqual(bom);
+      expect(service.setDefaultBom).toHaveBeenCalledWith('1', 'prod-1', mockUser);
     });
   });
 
@@ -191,8 +183,8 @@ describe('ProductionController', () => {
       const orders = [{ id: '1', status: WorkOrderStatus.DRAFT }];
       mockProductionService.findAllWorkOrders.mockResolvedValue(orders);
 
-      expect(await controller.findAllWorkOrders('tenant-1')).toEqual(orders);
-      expect(service.findAllWorkOrders).toHaveBeenCalledWith('tenant-1', undefined);
+      expect(await controller.findAllWorkOrders(mockUser)).toEqual(orders);
+      expect(service.findAllWorkOrders).toHaveBeenCalledWith(mockUser, undefined);
     });
   });
 
@@ -201,8 +193,8 @@ describe('ProductionController', () => {
       const order = { id: '1', status: WorkOrderStatus.IN_PROGRESS };
       mockProductionService.startWorkOrder.mockResolvedValue(order);
 
-      expect(await controller.startWorkOrder('1', 'tenant-1')).toEqual(order);
-      expect(service.startWorkOrder).toHaveBeenCalledWith('1', 'tenant-1');
+      expect(await controller.startWorkOrder(mockUser, '1')).toEqual(order);
+      expect(service.startWorkOrder).toHaveBeenCalledWith('1', mockUser);
     });
   });
 
@@ -211,8 +203,8 @@ describe('ProductionController', () => {
       const order = { id: '1', status: WorkOrderStatus.COMPLETED };
       mockProductionService.completeWorkOrder.mockResolvedValue(order);
 
-      expect(await controller.completeWorkOrder('1', 'tenant-1')).toEqual(order);
-      expect(service.completeWorkOrder).toHaveBeenCalledWith('1', 'tenant-1');
+      expect(await controller.completeWorkOrder(mockUser, '1')).toEqual(order);
+      expect(service.completeWorkOrder).toHaveBeenCalledWith('1', mockUser);
     });
   });
 
@@ -221,8 +213,8 @@ describe('ProductionController', () => {
       const order = { id: '1', status: WorkOrderStatus.PAUSED };
       mockProductionService.pauseWorkOrder.mockResolvedValue(order);
 
-      expect(await controller.pauseWorkOrder('1', 'Machine breakdown', 'tenant-1')).toEqual(order);
-      expect(service.pauseWorkOrder).toHaveBeenCalledWith('1', 'tenant-1', 'Machine breakdown');
+      expect(await controller.pauseWorkOrder('1', mockUser, 'Machine breakdown')).toEqual(order);
+      expect(service.pauseWorkOrder).toHaveBeenCalledWith('1', mockUser, 'Machine breakdown');
     });
   });
 
@@ -231,8 +223,8 @@ describe('ProductionController', () => {
       const order = { id: '1', status: WorkOrderStatus.IN_PROGRESS };
       mockProductionService.resumeWorkOrder.mockResolvedValue(order);
 
-      expect(await controller.resumeWorkOrder('1', 'tenant-1')).toEqual(order);
-      expect(service.resumeWorkOrder).toHaveBeenCalledWith('1', 'tenant-1');
+      expect(await controller.resumeWorkOrder(mockUser, '1')).toEqual(order);
+      expect(service.resumeWorkOrder).toHaveBeenCalledWith('1', mockUser);
     });
   });
 
@@ -241,8 +233,8 @@ describe('ProductionController', () => {
       const order = { id: '1', quantityProduced: 50, quantityRejected: 2 };
       mockProductionService.updateWorkOrderProgress.mockResolvedValue(order);
 
-      expect(await controller.updateWorkOrderProgress('1', 50, 2, 'tenant-1')).toEqual(order);
-      expect(service.updateWorkOrderProgress).toHaveBeenCalledWith('1', 50, 2, 'tenant-1');
+      expect(await controller.updateWorkOrderProgress('1', 50, mockUser, 2)).toEqual(order);
+      expect(service.updateWorkOrderProgress).toHaveBeenCalledWith('1', 50, 2, mockUser);
     });
   });
 
@@ -252,16 +244,16 @@ describe('ProductionController', () => {
       const checks = [{ id: '1', passed: true }];
       mockProductionService.findAllQualityChecks.mockResolvedValue(checks);
 
-      expect(await controller.findAllQualityChecks('tenant-1')).toEqual(checks);
-      expect(service.findAllQualityChecks).toHaveBeenCalledWith('tenant-1', undefined);
+      expect(await controller.findAllQualityChecks(mockUser)).toEqual(checks);
+      expect(service.findAllQualityChecks).toHaveBeenCalledWith(mockUser, undefined);
     });
 
     it('should filter quality checks by work order', async () => {
       const checks = [{ id: '1', workOrderId: 'wo-1', passed: true }];
       mockProductionService.findAllQualityChecks.mockResolvedValue(checks);
 
-      expect(await controller.findAllQualityChecks('tenant-1', 'wo-1')).toEqual(checks);
-      expect(service.findAllQualityChecks).toHaveBeenCalledWith('tenant-1', 'wo-1');
+      expect(await controller.findAllQualityChecks(mockUser, 'wo-1')).toEqual(checks);
+      expect(service.findAllQualityChecks).toHaveBeenCalledWith(mockUser, 'wo-1');
     });
   });
 
@@ -271,10 +263,10 @@ describe('ProductionController', () => {
       mockProductionService.getQualityStatistics.mockResolvedValue(stats);
 
       expect(
-        await controller.getQualityStatistics('tenant-1', '2026-03-01', '2026-03-31'),
+        await controller.getQualityStatistics(mockUser, '2026-03-01', '2026-03-31'),
       ).toEqual(stats);
       expect(service.getQualityStatistics).toHaveBeenCalledWith(
-        'tenant-1',
+        mockUser,
         new Date('2026-03-01'),
         new Date('2026-03-31'),
       );
@@ -284,9 +276,9 @@ describe('ProductionController', () => {
       const stats = { totalChecks: 100, passedChecks: 95, failedChecks: 5 };
       mockProductionService.getQualityStatistics.mockResolvedValue(stats);
 
-      expect(await controller.getQualityStatistics('tenant-1')).toEqual(stats);
+      expect(await controller.getQualityStatistics(mockUser)).toEqual(stats);
       expect(service.getQualityStatistics).toHaveBeenCalledWith(
-        'tenant-1',
+        mockUser,
         undefined,
         undefined,
       );
@@ -298,8 +290,8 @@ describe('ProductionController', () => {
       const check = { id: '1', approved: true, approvedBy: 'manager-1' };
       mockProductionService.approveQualityCheck.mockResolvedValue(check);
 
-      expect(await controller.approveQualityCheck('1', 'manager-1', 'tenant-1')).toEqual(check);
-      expect(service.approveQualityCheck).toHaveBeenCalledWith('1', 'manager-1', 'tenant-1');
+      expect(await controller.approveQualityCheck('1', mockUser, 'manager-1')).toEqual(check);
+      expect(service.approveQualityCheck).toHaveBeenCalledWith('1', 'manager-1', mockUser);
     });
   });
 });

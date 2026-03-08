@@ -4,10 +4,11 @@ import { Repository } from 'typeorm';
 import { Task, TaskStatus } from './entities/task.entity';
 import { TaskDependency, DependencyType } from './entities/task-dependency.entity';
 import { Project } from './entities/project.entity';
-import { User } from '../../core/user/entities/user.entity';
+import { User as UserEntity } from '../../core/user/entities/user.entity';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { CreateTaskDependencyDto } from './dto/create-task-dependency.dto';
+import { User } from '@/common/security/permission.service';
 
 /**
  * TaskService handles task CRUD, dependencies, and Gantt chart data
@@ -324,7 +325,7 @@ export class TaskService {
       startDate: task.startDate || null,
       dueDate: task.dueDate || null,
       progress: task.progress,
-      assignee: task.assignee?.email || null,
+      assignee: (task.assignee as any)?.email || null,
       dependencies: task.dependencies.map((dep) => ({
         taskId: dep.dependsOnTaskId,
         type: dep.type,

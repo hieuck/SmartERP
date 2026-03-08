@@ -10,8 +10,9 @@ import {
   BeforeInsert,
   BeforeUpdate,
 } from 'typeorm';
-import { User } from '../../../core/user/entities/user.entity';
+import { User as UserEntity } from '../../../core/user/entities/user.entity';
 import { ReportColumn } from './report-column.entity';
+import { User } from '@/common/security/permission.service';
 
 export enum ReportType {
   TABLE = 'table',
@@ -95,7 +96,7 @@ export class Report {
   @Column()
   tenantId: string;
 
-  @ManyToOne(() => User)
+  @ManyToOne('User')
   @JoinColumn({ name: 'createdBy' })
   creator: User;
 

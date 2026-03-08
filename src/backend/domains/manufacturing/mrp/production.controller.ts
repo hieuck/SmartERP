@@ -1,8 +1,9 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { ProductionService } from './production.service';
 import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
-import { TenantGuard } from '../../common/guards/tenant.guard';
+import { TenantGuard } from '@/common/guards/tenant.guard';
 import { MaterialType } from './entities/material.entity';
 import { MoldStatus } from './entities/mold.entity';
 import { BomStatus } from './entities/bom.entity';
@@ -18,7 +19,6 @@ import { UpdateWorkOrderDto } from './dto/update-work-order.dto';
 import { CreateQualityCheckDto } from './dto/create-quality-check.dto';
 import { UpdateQualityCheckDto } from './dto/update-quality-check.dto';
 
-import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { User } from '@/common/security/permission.service';
 @ApiTags('production')
 @ApiBearerAuth()
@@ -43,13 +43,13 @@ export class ProductionController {
 
   @Get('materials/:id')
   @ApiOperation({ summary: 'Get material by ID' })
-  findMaterialById(@Param('id') id: string, @CurrentUser() user: User) {
+  findMaterialById(@CurrentUser() user: User, @Param('id') id: string) {
     return this.productionService.findMaterialById(id, user);
   }
 
   @Post('materials')
   @ApiOperation({ summary: 'Create material' })
-  createMaterial(@Body() createMaterialDto: CreateMaterialDto, @CurrentUser() user: User) {
+  createMaterial(@CurrentUser() user: User, @Body() createMaterialDto: CreateMaterialDto) {
     return this.productionService.createMaterial(createMaterialDto, user);
   }
 
@@ -57,15 +57,14 @@ export class ProductionController {
   @ApiOperation({ summary: 'Update material' })
   updateMaterial(
     @Param('id') id: string,
-    @Body() updateMaterialDto: UpdateMaterialDto,
-    @CurrentUser() user: User,
+    @CurrentUser() user: User, @Body() updateMaterialDto: UpdateMaterialDto,
   ) {
     return this.productionService.updateMaterial(id, updateMaterialDto, user);
   }
 
   @Delete('materials/:id')
   @ApiOperation({ summary: 'Delete material' })
-  deleteMaterial(@Param('id') id: string, @CurrentUser() user: User) {
+  deleteMaterial(@CurrentUser() user: User, @Param('id') id: string) {
     return this.productionService.deleteMaterial(id, user);
   }
 
@@ -85,13 +84,13 @@ export class ProductionController {
 
   @Get('molds/:id')
   @ApiOperation({ summary: 'Get mold by ID' })
-  findMoldById(@Param('id') id: string, @CurrentUser() user: User) {
+  findMoldById(@CurrentUser() user: User, @Param('id') id: string) {
     return this.productionService.findMoldById(id, user);
   }
 
   @Post('molds')
   @ApiOperation({ summary: 'Create mold' })
-  createMold(@Body() createMoldDto: CreateMoldDto, @CurrentUser() user: User) {
+  createMold(@CurrentUser() user: User, @Body() createMoldDto: CreateMoldDto) {
     return this.productionService.createMold(createMoldDto, user);
   }
 
@@ -99,21 +98,20 @@ export class ProductionController {
   @ApiOperation({ summary: 'Update mold' })
   updateMold(
     @Param('id') id: string,
-    @Body() updateMoldDto: UpdateMoldDto,
-    @CurrentUser() user: User,
+    @CurrentUser() user: User, @Body() updateMoldDto: UpdateMoldDto,
   ) {
     return this.productionService.updateMold(id, updateMoldDto, user);
   }
 
   @Delete('molds/:id')
   @ApiOperation({ summary: 'Delete mold' })
-  deleteMold(@Param('id') id: string, @CurrentUser() user: User) {
+  deleteMold(@CurrentUser() user: User, @Param('id') id: string) {
     return this.productionService.deleteMold(id, user);
   }
 
   @Post('molds/:id/record-usage')
   @ApiOperation({ summary: 'Record mold usage' })
-  recordMoldUsage(@Param('id') id: string, @CurrentUser() user: User) {
+  recordMoldUsage(@CurrentUser() user: User, @Param('id') id: string) {
     return this.productionService.recordMoldUsage(id, user);
   }
 
@@ -131,13 +129,13 @@ export class ProductionController {
 
   @Get('boms/:id')
   @ApiOperation({ summary: 'Get BOM by ID' })
-  findBomById(@Param('id') id: string, @CurrentUser() user: User) {
+  findBomById(@CurrentUser() user: User, @Param('id') id: string) {
     return this.productionService.findBomById(id, user);
   }
 
   @Post('boms')
   @ApiOperation({ summary: 'Create BOM' })
-  createBom(@Body() createBomDto: CreateBomDto, @CurrentUser() user: User) {
+  createBom(@CurrentUser() user: User, @Body() createBomDto: CreateBomDto) {
     return this.productionService.createBom(createBomDto, user);
   }
 
@@ -145,15 +143,14 @@ export class ProductionController {
   @ApiOperation({ summary: 'Update BOM' })
   updateBom(
     @Param('id') id: string,
-    @Body() updateBomDto: UpdateBomDto,
-    @CurrentUser() user: User,
+    @CurrentUser() user: User, @Body() updateBomDto: UpdateBomDto,
   ) {
     return this.productionService.updateBom(id, updateBomDto, user);
   }
 
   @Delete('boms/:id')
   @ApiOperation({ summary: 'Delete BOM' })
-  deleteBom(@Param('id') id: string, @CurrentUser() user: User) {
+  deleteBom(@CurrentUser() user: User, @Param('id') id: string) {
     return this.productionService.deleteBom(id, user);
   }
 
@@ -161,8 +158,7 @@ export class ProductionController {
   @ApiOperation({ summary: 'Set BOM as default for product' })
   setDefaultBom(
     @Param('id') id: string,
-    @Body('productId') productId: string,
-    @CurrentUser() user: User,
+    @CurrentUser() user: User, @Body('productId') productId: string,
   ) {
     return this.productionService.setDefaultBom(id, productId, user);
   }
@@ -177,13 +173,13 @@ export class ProductionController {
 
   @Get('work-orders/:id')
   @ApiOperation({ summary: 'Get work order by ID' })
-  findWorkOrderById(@Param('id') id: string, @CurrentUser() user: User) {
+  findWorkOrderById(@CurrentUser() user: User, @Param('id') id: string) {
     return this.productionService.findWorkOrderById(id, user);
   }
 
   @Post('work-orders')
   @ApiOperation({ summary: 'Create work order' })
-  createWorkOrder(@Body() createWorkOrderDto: CreateWorkOrderDto, @CurrentUser() user: User) {
+  createWorkOrder(@CurrentUser() user: User, @Body() createWorkOrderDto: CreateWorkOrderDto) {
     return this.productionService.createWorkOrder(createWorkOrderDto, user);
   }
 
@@ -191,27 +187,26 @@ export class ProductionController {
   @ApiOperation({ summary: 'Update work order' })
   updateWorkOrder(
     @Param('id') id: string,
-    @Body() updateWorkOrderDto: UpdateWorkOrderDto,
-    @CurrentUser() user: User,
+    @CurrentUser() user: User, @Body() updateWorkOrderDto: UpdateWorkOrderDto,
   ) {
     return this.productionService.updateWorkOrder(id, updateWorkOrderDto, user);
   }
 
   @Delete('work-orders/:id')
   @ApiOperation({ summary: 'Delete work order' })
-  deleteWorkOrder(@Param('id') id: string, @CurrentUser() user: User) {
+  deleteWorkOrder(@CurrentUser() user: User, @Param('id') id: string) {
     return this.productionService.deleteWorkOrder(id, user);
   }
 
   @Post('work-orders/:id/start')
   @ApiOperation({ summary: 'Start work order' })
-  startWorkOrder(@Param('id') id: string, @CurrentUser() user: User) {
+  startWorkOrder(@CurrentUser() user: User, @Param('id') id: string) {
     return this.productionService.startWorkOrder(id, user);
   }
 
   @Post('work-orders/:id/complete')
   @ApiOperation({ summary: 'Complete work order' })
-  completeWorkOrder(@Param('id') id: string, @CurrentUser() user: User) {
+  completeWorkOrder(@CurrentUser() user: User, @Param('id') id: string) {
     return this.productionService.completeWorkOrder(id, user);
   }
 
@@ -219,15 +214,14 @@ export class ProductionController {
   @ApiOperation({ summary: 'Pause work order' })
   pauseWorkOrder(
     @Param('id') id: string,
-    @Body('reason') reason: string,
-    @CurrentUser() user: User,
+    @CurrentUser() user: User, @Body('reason') reason: string,
   ) {
     return this.productionService.pauseWorkOrder(id, user, reason);
   }
 
   @Post('work-orders/:id/resume')
   @ApiOperation({ summary: 'Resume work order' })
-  resumeWorkOrder(@Param('id') id: string, @CurrentUser() user: User) {
+  resumeWorkOrder(@CurrentUser() user: User, @Param('id') id: string) {
     return this.productionService.resumeWorkOrder(id, user);
   }
 
@@ -236,14 +230,14 @@ export class ProductionController {
   updateWorkOrderProgress(
     @Param('id') id: string,
     @Body('quantityProduced') quantityProduced: number,
-    @Body('quantityRejected') quantityRejected: number,
     @CurrentUser() user: User,
+    @Body('quantityRejected') quantityRejected: number,
   ) {
     return this.productionService.updateWorkOrderProgress(
       id,
       quantityProduced,
       quantityRejected,
-      tenantId,
+      user,
     );
   }
 
@@ -269,15 +263,14 @@ export class ProductionController {
 
   @Get('quality-checks/:id')
   @ApiOperation({ summary: 'Get quality check by ID' })
-  findQualityCheckById(@Param('id') id: string, @CurrentUser() user: User) {
+  findQualityCheckById(@CurrentUser() user: User, @Param('id') id: string) {
     return this.productionService.findQualityCheckById(id, user);
   }
 
   @Post('quality-checks')
   @ApiOperation({ summary: 'Create quality check' })
   createQualityCheck(
-    @Body() createQualityCheckDto: CreateQualityCheckDto,
-    @CurrentUser() user: User,
+    @CurrentUser() user: User, @Body() createQualityCheckDto: CreateQualityCheckDto,
   ) {
     return this.productionService.createQualityCheck(createQualityCheckDto, user);
   }
@@ -286,15 +279,14 @@ export class ProductionController {
   @ApiOperation({ summary: 'Update quality check' })
   updateQualityCheck(
     @Param('id') id: string,
-    @Body() updateQualityCheckDto: UpdateQualityCheckDto,
-    @CurrentUser() user: User,
+    @CurrentUser() user: User, @Body() updateQualityCheckDto: UpdateQualityCheckDto,
   ) {
     return this.productionService.updateQualityCheck(id, updateQualityCheckDto, user);
   }
 
   @Delete('quality-checks/:id')
   @ApiOperation({ summary: 'Delete quality check' })
-  deleteQualityCheck(@Param('id') id: string, @CurrentUser() user: User) {
+  deleteQualityCheck(@CurrentUser() user: User, @Param('id') id: string) {
     return this.productionService.deleteQualityCheck(id, user);
   }
 
@@ -302,8 +294,7 @@ export class ProductionController {
   @ApiOperation({ summary: 'Approve quality check' })
   async approveQualityCheck(
     @Param('id') id: string,
-    @Body('approvedBy') approvedBy: string,
-    @CurrentUser() user: User,
+    @CurrentUser() user: User, @Body('approvedBy') approvedBy: string,
   ): Promise<unknown> {
     return this.productionService.approveQualityCheck(id, approvedBy, user);
   }

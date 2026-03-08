@@ -13,11 +13,11 @@ import { AdjustInventoryDto } from './dto/adjust-inventory.dto';
 import { CacheService } from '@/common/cache/cache.service';
 import { CacheTTL, generateCacheKey } from '@/common/cache/cache.config';
 import { SecureRepository } from '@/common/security/secure-repository';
-import { PermissionService, User } from '@/common/security/permission.service';
+import { PermissionService, User, BaseRecord as PermissionRecord } from '@/common/security/permission.service';
 
 @Injectable()
 export class InventoryService {
-  private secureInventoryRepo: SecureRepository<Inventory>;
+  private secureInventoryRepo: SecureRepository<Inventory & PermissionRecord>;
 
   constructor(
     @InjectRepository(Inventory)
@@ -26,7 +26,7 @@ export class InventoryService {
     private readonly permissionService: PermissionService,
   ) {
     this.secureInventoryRepo = new SecureRepository(
-      inventoryRepository,
+      inventoryRepository as any,
       permissionService,
       'Inventory',
     );

@@ -1,9 +1,9 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { DashboardService } from './dashboard.service';
 import { JwtAuthGuard } from '../../core/auth/guards/jwt-auth.guard';
 import { TenantGuard } from '../../common/guards/tenant.guard';
-import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { User } from '@/common/security/permission.service';
 import {
   DashboardOverviewDto,

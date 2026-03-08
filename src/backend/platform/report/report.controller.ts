@@ -186,7 +186,7 @@ export class ReportController {
   @ApiOperation({ summary: 'Get templates by category' })
   @ApiResponse({ status: 200, description: 'Templates retrieved successfully' })
   async getTemplatesByCategory(@Param('category') category: string) {
-    return this.templateService.getTemplatesByCategory(category);
+    return this.templateService.getTemplatesByCategory(category as any);
   }
 
   @Post('templates/:templateName/create')

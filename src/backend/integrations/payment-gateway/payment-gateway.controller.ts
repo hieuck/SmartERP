@@ -1,9 +1,10 @@
 import { Controller, Post, Get, Body, Param, Query, Req, Headers } from '@nestjs/common';
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { User } from '@/common/security/permission.service';
 import { Request } from 'express';
 import { PaymentGatewayService } from './payment-gateway.service';
 import { CreatePaymentDto, VerifyPaymentDto, RefundPaymentDto } from './dto/create-payment.dto';
 
-import { User } from '@/common/security/permission.service';
 @Controller('payment-gateway')
 export class PaymentGatewayController {
   constructor(private readonly paymentGatewayService: PaymentGatewayService) {}
@@ -13,8 +14,7 @@ export class PaymentGatewayController {
    * POST /payment-gateway
    */
   @Post()
-  async createPayment(@Req() req: Request & { tenantId?: string }, @Body() dto: CreatePaymentDto) {
-    const tenantId = req.tenantId || 'default-tenant';
+  async createPayment(@CurrentUser() user: User, @Req() req: Request & { tenantId?: string }, @Body() dto: CreatePaymentDto) {
     return this.paymentGatewayService.createPayment(user, dto);
   }
 
@@ -23,8 +23,7 @@ export class PaymentGatewayController {
    * POST /payment-gateway/verify
    */
   @Post('verify')
-  async verifyPayment(@Req() req: Request & { tenantId?: string }, @Body() dto: VerifyPaymentDto) {
-    const tenantId = req.tenantId || 'default-tenant';
+  async verifyPayment(@CurrentUser() user: User, @Req() req: Request & { tenantId?: string }, @Body() dto: VerifyPaymentDto) {
     return this.paymentGatewayService.verifyPayment(user, dto);
   }
 
@@ -48,11 +47,11 @@ export class PaymentGatewayController {
    */
   @Post('vnpay/ipn')
   async vnpayIPN(
+    @CurrentUser() user: User,
     @Req() req: Request & { tenantId?: string },
     @Body() body: Record<string, unknown>,
   ) {
-    const tenantId = req.tenantId || 'default-tenant';
-    await this.paymentGatewayService.handleWebhook(user, 'vnpay', body);
+    await this.paymentGatewayService.handleWebhook(user.tenantId, 'vnpay', body);
     return { RspCode: '00', Message: 'success' };
   }
 
@@ -74,11 +73,11 @@ export class PaymentGatewayController {
    */
   @Post('momo/ipn')
   async momoIPN(
+    @CurrentUser() user: User,
     @Req() req: Request & { tenantId?: string },
     @Body() body: Record<string, unknown>,
   ) {
-    const tenantId = req.tenantId || 'default-tenant';
-    await this.paymentGatewayService.handleWebhook(user, 'momo', body);
+    await this.paymentGatewayService.handleWebhook(user.tenantId, 'momo', body);
     return { resultCode: 0, message: 'success' };
   }
 
@@ -87,13 +86,12 @@ export class PaymentGatewayController {
    * POST /payment-gateway/stripe/webhook
    */
   @Post('stripe/webhook')
-  async stripeWebhook(
+  async stripeWebhook(@CurrentUser() user: User, 
     @Req() req: Request & { tenantId?: string },
     @Body() body: Record<string, unknown>,
     @Headers('stripe-signature') signature: string,
   ) {
-    const tenantId = req.tenantId || 'default-tenant';
-    await this.paymentGatewayService.handleWebhook(user, 'stripe', body, signature);
+    await this.paymentGatewayService.handleWebhook(user.tenantId, 'stripe', body, signature);
     return { received: true };
   }
 
@@ -102,8 +100,7 @@ export class PaymentGatewayController {
    * POST /payment-gateway/refund
    */
   @Post('refund')
-  async refundPayment(@Req() req: Request & { tenantId?: string }, @Body() dto: RefundPaymentDto) {
-    const tenantId = req.tenantId || 'default-tenant';
+  async refundPayment(@CurrentUser() user: User, @Req() req: Request & { tenantId?: string }, @Body() dto: RefundPaymentDto) {
     return this.paymentGatewayService.refundPayment(user, dto);
   }
 
@@ -112,8 +109,7 @@ export class PaymentGatewayController {
    * GET /payment-gateway/transactions/:id
    */
   @Get('transactions/:id')
-  async getTransaction(@Req() req: Request & { tenantId?: string }, @Param('id') id: string) {
-    const tenantId = req.tenantId || 'default-tenant';
+  async getTransaction(@CurrentUser() user: User, @Req() req: Request & { tenantId?: string }, @Param('id') id: string) {
     return this.paymentGatewayService.getTransaction(user, id);
   }
 
@@ -122,7 +118,7 @@ export class PaymentGatewayController {
    * GET /payment-gateway/transactions
    */
   @Get('transactions')
-  async listTransactions(
+  async listTransactions(@CurrentUser() user: User, 
     @Req() req: Request & { tenantId?: string },
     @Query('orderId') orderId?: string,
     @Query('gateway') gateway?: string,
@@ -130,8 +126,7 @@ export class PaymentGatewayController {
     @Query('limit') limit?: number,
     @Query('offset') offset?: number,
   ) {
-    const tenantId = req.tenantId || 'default-tenant';
-    return this.paymentGatewayService.listTransactions(user, {
+    return this.paymentGatewayService.listTransactions(user.tenantId, {
       orderId,
       gateway,
       status,

@@ -10,8 +10,9 @@ import {
   BeforeInsert,
   BeforeUpdate,
 } from 'typeorm';
-import { User } from '../../../../core/user/entities/user.entity';
+import { User as UserEntity } from '../../../../core/user/entities/user.entity';
 import { CartItem } from './cart-item.entity';
+import { User } from '@/common/security/permission.service';
 
 export enum CartStatus {
   ACTIVE = 'active',
@@ -34,7 +35,7 @@ export class ShoppingCart {
   @Column({ nullable: true })
   userId: string; // For logged-in users
 
-  @ManyToOne(() => User, { nullable: true })
+  @ManyToOne(() => UserEntity, { nullable: true })
   @JoinColumn({ name: 'userId' })
   user: User;
 

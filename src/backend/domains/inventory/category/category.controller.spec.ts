@@ -27,7 +27,6 @@ describe('CategoryController', () => {
 
   const mockUser = createMockUser();
 
-  const mockTenantId = 'tenant-123';
   const mockUserId = 'user-123';
   const mockRequest = { user: { id: mockUserId } } as any;
   const mockCategory = {
@@ -38,8 +37,8 @@ describe('CategoryController', () => {
     parentId: null,
     sortOrder: 1,
     isActive: true,
-    tenantId: mockTenantId,
     level: 0,
+    tenantId: 'tenant-123',
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -72,10 +71,10 @@ describe('CategoryController', () => {
       };
       service.create.mockResolvedValue(mockCategory);
 
-      const result = await controller.create(createDto, mockTenantId, mockRequest);
+      const result = await controller.create(mockUser, createDto, mockRequest);
 
       expect(result).toEqual(mockCategory);
-      expect(service.create).toHaveBeenCalledWith(createDto, mockTenantId, mockUserId);
+      expect(service.create).toHaveBeenCalledWith(mockUser, createDto);
     });
   });
 
@@ -84,10 +83,10 @@ describe('CategoryController', () => {
       const categories = [mockCategory];
       service.findAll.mockResolvedValue(categories);
 
-      const result = await controller.findAll(mockTenantId);
+      const result = await controller.findAll(mockUser);
 
       expect(result).toEqual(categories);
-      expect(service.findAll).toHaveBeenCalledWith(mockTenantId);
+      expect(service.findAll).toHaveBeenCalledWith(mockUser);
     });
   });
 
@@ -96,10 +95,10 @@ describe('CategoryController', () => {
       const count = 10;
       service.count.mockResolvedValue(count);
 
-      const result = await controller.count(mockTenantId);
+      const result = await controller.count(mockUser);
 
-      expect(result).toEqual(count);
-      expect(service.count).toHaveBeenCalledWith(mockTenantId);
+      expect(result).toBe(count);
+      expect(service.count).toHaveBeenCalledWith(mockUser);
     });
   });
 
@@ -108,22 +107,22 @@ describe('CategoryController', () => {
       const tree = [mockCategory];
       service.findTree.mockResolvedValue(tree);
 
-      const result = await controller.getTree(mockTenantId);
+      const result = await controller.getTree(mockUser);
 
       expect(result).toEqual(tree);
-      expect(service.findTree).toHaveBeenCalledWith(mockTenantId);
+      expect(service.findTree).toHaveBeenCalledWith(mockUser);
     });
   });
 
   describe('getRootCategories', () => {
     it('should return root categories', async () => {
-      const categories = [mockCategory];
-      service.findRootCategories.mockResolvedValue(categories);
+      const rootCategories = [mockCategory];
+      service.findRootCategories.mockResolvedValue(rootCategories);
 
-      const result = await controller.getRootCategories(mockTenantId);
+      const result = await controller.getRootCategories(mockUser);
 
-      expect(result).toEqual(categories);
-      expect(service.findRootCategories).toHaveBeenCalledWith(mockTenantId);
+      expect(result).toEqual(rootCategories);
+      expect(service.findRootCategories).toHaveBeenCalledWith(mockUser);
     });
   });
 
@@ -131,10 +130,10 @@ describe('CategoryController', () => {
     it('should return category by code', async () => {
       service.findByCode.mockResolvedValue(mockCategory);
 
-      const result = await controller.findByCode(mockCategory.code, mockTenantId);
+      const result = await controller.findByCode(mockUser, mockCategory.code);
 
       expect(result).toEqual(mockCategory);
-      expect(service.findByCode).toHaveBeenCalledWith(mockCategory.code, mockTenantId);
+      expect(service.findByCode).toHaveBeenCalledWith(mockUser, mockCategory.code);
     });
   });
 
@@ -142,10 +141,10 @@ describe('CategoryController', () => {
     it('should return category by id', async () => {
       service.findOne.mockResolvedValue(mockCategory);
 
-      const result = await controller.findOne(mockCategory.id, mockTenantId);
+      const result = await controller.findOne(mockUser, mockCategory.id);
 
       expect(result).toEqual(mockCategory);
-      expect(service.findOne).toHaveBeenCalledWith(mockCategory.id, mockTenantId);
+      expect(service.findOne).toHaveBeenCalledWith(mockUser, mockCategory.id);
     });
   });
 
@@ -154,10 +153,10 @@ describe('CategoryController', () => {
       const children = [mockCategory];
       service.findChildren.mockResolvedValue(children);
 
-      const result = await controller.getChildren(mockCategory.id, mockTenantId);
+      const result = await controller.getChildren(mockUser, mockCategory.id);
 
       expect(result).toEqual(children);
-      expect(service.findChildren).toHaveBeenCalledWith(mockCategory.id, mockTenantId);
+      expect(service.findChildren).toHaveBeenCalledWith(mockUser, mockCategory.id);
     });
   });
 
@@ -169,10 +168,10 @@ describe('CategoryController', () => {
       const updatedCategory = { ...mockCategory, ...updateDto };
       service.update.mockResolvedValue(updatedCategory);
 
-      const result = await controller.update(mockCategory.id, updateDto, mockTenantId, mockRequest);
+      const result = await controller.update(mockCategory.id, mockUser, updateDto, mockRequest);
 
       expect(result).toEqual(updatedCategory);
-      expect(service.update).toHaveBeenCalledWith(mockCategory.id, updateDto, mockTenantId, mockUserId);
+      expect(service.update).toHaveBeenCalledWith(mockUser, mockCategory.id, updateDto);
     });
   });
 
@@ -181,10 +180,10 @@ describe('CategoryController', () => {
       const activatedCategory = { ...mockCategory, isActive: true };
       service.activate.mockResolvedValue(activatedCategory);
 
-      const result = await controller.activate(mockCategory.id, mockTenantId);
+      const result = await controller.activate(mockUser, mockCategory.id);
 
       expect(result).toEqual(activatedCategory);
-      expect(service.activate).toHaveBeenCalledWith(mockCategory.id, mockTenantId);
+      expect(service.activate).toHaveBeenCalledWith(mockUser, mockCategory.id);
     });
   });
 
@@ -193,10 +192,10 @@ describe('CategoryController', () => {
       const deactivatedCategory = { ...mockCategory, isActive: false };
       service.deactivate.mockResolvedValue(deactivatedCategory);
 
-      const result = await controller.deactivate(mockCategory.id, mockTenantId);
+      const result = await controller.deactivate(mockUser, mockCategory.id);
 
       expect(result).toEqual(deactivatedCategory);
-      expect(service.deactivate).toHaveBeenCalledWith(mockCategory.id, mockTenantId);
+      expect(service.deactivate).toHaveBeenCalledWith(mockUser, mockCategory.id);
     });
   });
 
@@ -206,10 +205,10 @@ describe('CategoryController', () => {
       const reorderedCategory = { ...mockCategory, sortOrder };
       service.reorder.mockResolvedValue(reorderedCategory);
 
-      const result = await controller.reorder(mockCategory.id, { sortOrder }, mockTenantId);
+      const result = await controller.reorder(mockCategory.id, { sortOrder }, mockUser);
 
       expect(result).toEqual(reorderedCategory);
-      expect(service.reorder).toHaveBeenCalledWith(mockCategory.id, sortOrder, mockTenantId);
+      expect(service.reorder).toHaveBeenCalledWith(mockUser, mockCategory.id, sortOrder);
     });
   });
 
@@ -217,10 +216,10 @@ describe('CategoryController', () => {
     it('should delete category', async () => {
       service.remove.mockResolvedValue(undefined);
 
-      const result = await controller.remove(mockCategory.id, mockTenantId);
+      const result = await controller.remove(mockUser, mockCategory.id);
 
       expect(result).toEqual({ message: 'Category deleted successfully' });
-      expect(service.remove).toHaveBeenCalledWith(mockCategory.id, mockTenantId);
+      expect(service.remove).toHaveBeenCalledWith(mockUser, mockCategory.id);
     });
   });
 });

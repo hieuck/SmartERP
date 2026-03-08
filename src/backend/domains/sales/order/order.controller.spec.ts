@@ -51,72 +51,66 @@ describe('OrderController (Unit)', () => {
 
   describe('findAll', () => {
     it('should return all orders', async () => {
-      const tenantId = 'tenant-123';
       const mockOrders = [
-        { id: 'order-1', total: 100, tenantId },
-        { id: 'order-2', total: 200, tenantId },
+        { id: 'order-1', total: 100, tenantId: mockUser.tenantId },
+        { id: 'order-2', total: 200, tenantId: mockUser.tenantId },
       ];
       mockOrderService.findAll.mockResolvedValue(mockOrders);
 
-      const result = await controller.findAll(tenantId);
+      const result = await controller.findAll(mockUser);
 
       expect(result).toEqual(mockOrders);
-      expect(service.findAll).toHaveBeenCalledWith(tenantId);
+      expect(service.findAll).toHaveBeenCalledWith(mockUser);
     });
   });
 
   describe('getPendingOrders', () => {
     it('should return pending orders', async () => {
-      const tenantId = 'tenant-123';
-      const mockOrders = [{ id: 'order-1', status: 'pending', tenantId }];
+      const mockOrders = [{ id: 'order-1', status: 'pending', tenantId: mockUser.tenantId }];
       mockOrderService.getPendingOrders.mockResolvedValue(mockOrders);
 
-      const result = await controller.getPendingOrders(tenantId);
+      const result = await controller.getPendingOrders(mockUser);
 
       expect(result).toEqual(mockOrders);
-      expect(service.getPendingOrders).toHaveBeenCalledWith(tenantId);
+      expect(service.getPendingOrders).toHaveBeenCalledWith(mockUser);
     });
   });
 
   describe('count', () => {
     it('should return order count', async () => {
-      const tenantId = 'tenant-123';
       mockOrderService.count.mockResolvedValue(50);
 
-      const result = await controller.count(tenantId);
+      const result = await controller.count(mockUser);
 
       expect(result).toBe(50);
-      expect(service.count).toHaveBeenCalledWith(tenantId);
+      expect(service.count).toHaveBeenCalledWith(mockUser);
     });
   });
 
   describe('getRecentOrders', () => {
     it('should return recent orders with valid limit', async () => {
-      const tenantId = 'tenant-123';
       const limit = '10';
-      const mockOrders = [{ id: 'order-1', tenantId }];
+      const mockOrders = [{ id: 'order-1', tenantId: mockUser.tenantId }];
       mockOrderService.getRecentOrders.mockResolvedValue(mockOrders);
 
-      const result = await controller.getRecentOrders(limit, tenantId);
+      const result = await controller.getRecentOrders(mockUser, limit);
 
       expect(result).toEqual(mockOrders);
-      expect(service.getRecentOrders).toHaveBeenCalledWith(10, tenantId);
+      expect(service.getRecentOrders).toHaveBeenCalledWith(mockUser, 10);
     });
 
     it('should throw BadRequestException for invalid limit', () => {
-      const tenantId = 'tenant-123';
       const invalidLimit = 'invalid';
 
-      expect(() => controller.getRecentOrders(invalidLimit, tenantId)).toThrow(
+      expect(() => controller.getRecentOrders(mockUser, invalidLimit)).toThrow(
         BadRequestException,
       );
     });
 
     it('should throw BadRequestException for negative limit', () => {
-      const tenantId = 'tenant-123';
       const negativeLimit = '-5';
 
-      expect(() => controller.getRecentOrders(negativeLimit, tenantId)).toThrow(
+      expect(() => controller.getRecentOrders(mockUser, negativeLimit)).toThrow(
         BadRequestException,
       );
     });
@@ -124,195 +118,182 @@ describe('OrderController (Unit)', () => {
 
   describe('getTotalRevenue', () => {
     it('should return total revenue', async () => {
-      const tenantId = 'tenant-123';
       mockOrderService.getTotalRevenue.mockResolvedValue(10000);
 
-      const result = await controller.getTotalRevenue(tenantId);
+      const result = await controller.getTotalRevenue(mockUser);
 
       expect(result).toBe(10000);
-      expect(service.getTotalRevenue).toHaveBeenCalledWith(tenantId);
+      expect(service.getTotalRevenue).toHaveBeenCalledWith(mockUser);
     });
   });
 
   describe('getRevenueByDateRange', () => {
     it('should return revenue by date range', async () => {
-      const tenantId = 'tenant-123';
       const startDate = '2026-01-01';
       const endDate = '2026-01-31';
       mockOrderService.getRevenueByDateRange.mockResolvedValue(5000);
 
-      const result = await controller.getRevenueByDateRange(startDate, endDate, tenantId);
+      const result = await controller.getRevenueByDateRange(startDate, mockUser, endDate);
 
       expect(result).toBe(5000);
       expect(service.getRevenueByDateRange).toHaveBeenCalledWith(
+        mockUser,
         new Date(startDate),
         new Date(endDate),
-        tenantId,
       );
     });
   });
 
   describe('findByDateRange', () => {
     it('should return orders by date range', async () => {
-      const tenantId = 'tenant-123';
       const startDate = '2026-01-01';
       const endDate = '2026-01-31';
-      const mockOrders = [{ id: 'order-1', tenantId }];
+      const mockOrders = [{ id: 'order-1', tenantId: mockUser.tenantId }];
       mockOrderService.findByDateRange.mockResolvedValue(mockOrders);
 
-      const result = await controller.findByDateRange(startDate, endDate, tenantId);
+      const result = await controller.findByDateRange(startDate, mockUser, endDate);
 
       expect(result).toEqual(mockOrders);
       expect(service.findByDateRange).toHaveBeenCalledWith(
+        mockUser,
         new Date(startDate),
         new Date(endDate),
-        tenantId,
       );
     });
   });
 
   describe('findByCustomer', () => {
     it('should return orders by customer', async () => {
-      const tenantId = 'tenant-123';
       const customerId = 'customer-1';
-      const mockOrders = [{ id: 'order-1', customerId, tenantId }];
+      const mockOrders = [{ id: 'order-1', customerId, tenantId: mockUser.tenantId }];
       mockOrderService.findByCustomer.mockResolvedValue(mockOrders);
 
-      const result = await controller.findByCustomer(customerId, tenantId);
+      const result = await controller.findByCustomer(mockUser, customerId);
 
       expect(result).toEqual(mockOrders);
-      expect(service.findByCustomer).toHaveBeenCalledWith(customerId, tenantId);
+      expect(service.findByCustomer).toHaveBeenCalledWith(mockUser, customerId);
     });
   });
 
   describe('findByStatus', () => {
     it('should return orders by status', async () => {
-      const tenantId = 'tenant-123';
       const status = 'completed';
-      const mockOrders = [{ id: 'order-1', status, tenantId }];
+      const mockOrders = [{ id: 'order-1', status, tenantId: mockUser.tenantId }];
       mockOrderService.findByStatus.mockResolvedValue(mockOrders);
 
-      const result = await controller.findByStatus(status, tenantId);
+      const result = await controller.findByStatus(mockUser, status);
 
       expect(result).toEqual(mockOrders);
-      expect(service.findByStatus).toHaveBeenCalledWith(status, tenantId);
+      expect(service.findByStatus).toHaveBeenCalledWith(mockUser, status);
     });
   });
 
   describe('findOne', () => {
     it('should return order by id', async () => {
-      const tenantId = 'tenant-123';
       const orderId = 'order-1';
-      const mockOrder = { id: orderId, total: 100, tenantId };
+      const mockOrder = { id: orderId, total: 100, tenantId: mockUser.tenantId };
       mockOrderService.findOne.mockResolvedValue(mockOrder);
 
-      const result = await controller.findOne(orderId, tenantId);
+      const result = await controller.findOne(mockUser, orderId);
 
       expect(result).toEqual(mockOrder);
-      expect(service.findOne).toHaveBeenCalledWith(orderId, tenantId);
+      expect(service.findOne).toHaveBeenCalledWith(mockUser, orderId);
     });
   });
 
   describe('create', () => {
     it('should create new order', async () => {
-      const tenantId = 'tenant-123';
       const createDto = {
         customerId: 'customer-1',
         items: [{ productId: 'prod-1', quantity: 2 }],
       };
-      const mockOrder = { id: 'order-1', ...createDto, tenantId };
+      const mockOrder = { id: 'order-1', ...createDto, tenantId: mockUser.tenantId };
       mockOrderService.create.mockResolvedValue(mockOrder);
 
-      const result = await controller.create(createDto as any, tenantId);
+      const result = await controller.create(mockUser, createDto as any);
 
       expect(result).toEqual(mockOrder);
-      expect(service.create).toHaveBeenCalledWith(createDto, tenantId);
+      expect(service.create).toHaveBeenCalledWith(mockUser, createDto);
     });
   });
 
   describe('update', () => {
     it('should update order', async () => {
-      const tenantId = 'tenant-123';
       const orderId = 'order-1';
       const updateDto = { status: 'processing' };
-      const mockOrder = { id: orderId, ...updateDto, tenantId };
+      const mockOrder = { id: orderId, ...updateDto, tenantId: mockUser.tenantId };
       mockOrderService.update.mockResolvedValue(mockOrder);
 
-      const result = await controller.update(orderId, updateDto as any, tenantId);
+      const result = await controller.update(orderId, mockUser, updateDto as any);
 
       expect(result).toEqual(mockOrder);
-      expect(service.update).toHaveBeenCalledWith(orderId, updateDto, tenantId);
+      expect(service.update).toHaveBeenCalledWith(mockUser, orderId, updateDto);
     });
   });
 
   describe('updateStatus', () => {
     it('should update order status', async () => {
-      const tenantId = 'tenant-123';
       const orderId = 'order-1';
       const status = 'shipped';
-      const mockOrder = { id: orderId, status, tenantId };
+      const mockOrder = { id: orderId, status, tenantId: mockUser.tenantId };
       mockOrderService.updateStatus.mockResolvedValue(mockOrder);
 
-      const result = await controller.updateStatus(orderId, status, tenantId);
+      const result = await controller.updateStatus(orderId, mockUser, status);
 
       expect(result).toEqual(mockOrder);
-      expect(service.updateStatus).toHaveBeenCalledWith(orderId, status, tenantId);
+      expect(service.updateStatus).toHaveBeenCalledWith(mockUser, orderId, status);
     });
   });
 
   describe('cancel', () => {
     it('should cancel order', async () => {
-      const tenantId = 'tenant-123';
       const orderId = 'order-1';
-      const mockOrder = { id: orderId, status: 'cancelled', tenantId };
+      const mockOrder = { id: orderId, status: 'cancelled', tenantId: mockUser.tenantId };
       mockOrderService.cancel.mockResolvedValue(mockOrder);
 
-      const result = await controller.cancel(orderId, tenantId);
+      const result = await controller.cancel(mockUser, orderId);
 
       expect(result).toEqual(mockOrder);
-      expect(service.cancel).toHaveBeenCalledWith(orderId, tenantId);
+      expect(service.cancel).toHaveBeenCalledWith(mockUser, orderId);
     });
   });
 
   describe('ship', () => {
     it('should ship order', async () => {
-      const tenantId = 'tenant-123';
       const orderId = 'order-1';
       const trackingNumber = 'TRACK123';
-      const mockOrder = { id: orderId, status: 'shipped', trackingNumber, tenantId };
+      const mockOrder = { id: orderId, status: 'shipped', trackingNumber, tenantId: mockUser.tenantId };
       mockOrderService.ship.mockResolvedValue(mockOrder);
 
-      const result = await controller.ship(orderId, trackingNumber, tenantId);
+      const result = await controller.ship(orderId, mockUser, trackingNumber);
 
       expect(result).toEqual(mockOrder);
-      expect(service.ship).toHaveBeenCalledWith(orderId, trackingNumber, tenantId);
+      expect(service.ship).toHaveBeenCalledWith(mockUser, orderId, trackingNumber);
     });
   });
 
   describe('deliver', () => {
     it('should deliver order', async () => {
-      const tenantId = 'tenant-123';
       const orderId = 'order-1';
-      const mockOrder = { id: orderId, status: 'delivered', tenantId };
+      const mockOrder = { id: orderId, status: 'delivered', tenantId: mockUser.tenantId };
       mockOrderService.deliver.mockResolvedValue(mockOrder);
 
-      const result = await controller.deliver(orderId, tenantId);
+      const result = await controller.deliver(mockUser, orderId);
 
       expect(result).toEqual(mockOrder);
-      expect(service.deliver).toHaveBeenCalledWith(orderId, tenantId);
+      expect(service.deliver).toHaveBeenCalledWith(mockUser, orderId);
     });
   });
 
   describe('remove', () => {
     it('should delete order', async () => {
-      const tenantId = 'tenant-123';
       const orderId = 'order-1';
       mockOrderService.remove.mockResolvedValue(undefined);
 
-      const result = await controller.remove(orderId, tenantId);
+      const result = await controller.remove(mockUser, orderId);
 
       expect(result).toEqual({ message: 'Order deleted successfully' });
-      expect(service.remove).toHaveBeenCalledWith(orderId, tenantId);
+      expect(service.remove).toHaveBeenCalledWith(mockUser, orderId);
     });
   });
 });

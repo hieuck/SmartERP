@@ -4,7 +4,8 @@ import { Repository, Between } from 'typeorm';
 import { Leave, LeaveType, LeaveStatus } from './entities/leave.entity';
 import { LeaveBalance } from './entities/leave-balance.entity';
 import { Employee } from '../employee/entities/employee.entity';
-import { User } from '../user/entities/user.entity';
+import { User as UserEntity } from '../user/entities/user.entity';
+import { User } from '@/common/security/permission.service';
 
 @Injectable()
 export class LeaveService {

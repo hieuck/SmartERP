@@ -1,8 +1,8 @@
 import { Entity, Column, Index, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
-import { BaseEntity } from '../../../common/entities/base.entity';
+import { BaseEntity } from '../../../../common/entities/base.entity';
 import { Customer } from '../../customer/entities/customer.entity';
-import { Invoice } from '../../accounting/entities/invoice.entity';
-import { Payment } from '../../payment/entities/payment.entity';
+import { Invoice } from '../../../accounting/account/entities/invoice.entity';
+import { Payment } from '../../../accounting/payment/entities/payment.entity';
 
 @Entity('orders')
 @Index(['tenantId', 'orderNumber'], { unique: true })
@@ -33,7 +33,7 @@ export class Order extends BaseEntity {
   notes?: string;
 
   // Relations for test compatibility
-  @OneToMany(() => Invoice, (invoice) => invoice.id, { nullable: true })
+  @OneToMany(() => Invoice, (invoice) => (invoice as any).order, { nullable: true })
   invoices?: Invoice[];
 
   @OneToMany(() => Payment, (payment) => payment.orderId, { nullable: true })

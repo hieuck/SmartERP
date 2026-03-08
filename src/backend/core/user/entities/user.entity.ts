@@ -18,6 +18,9 @@ export class User extends BaseEntity {
   @Column({ default: 'user' })
   role: string;
 
+  @Column('simple-array', { default: '' })
+  roles: string[];
+
   @Column({ default: 'active' })
   status: string;
 

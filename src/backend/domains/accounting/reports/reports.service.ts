@@ -176,8 +176,8 @@ export class ReportsService {
       }
 
       transactions.push({
-        date: line.journalEntry.entryDate,
-        reference: line.journalEntry.number,
+        date: line.entry.date,
+        reference: line.entry.number,
         description: line.description || '',
         debit,
         credit,

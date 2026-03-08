@@ -13,7 +13,7 @@ export class RoutingService {
     private readonly operationRepository: Repository<Operation>,
   ) {}
 
-  async create(tenantId: string, dto: any): Promise<Routing> {
+  async create(dto: any, tenantId: string, user: any): Promise<Routing> {
     const routing = this.routingRepository.create({
       tenantId,
       bomId: dto.bomId,
@@ -42,7 +42,7 @@ export class RoutingService {
     return savedRouting;
   }
 
-  async findOne(tenantId: string, id: string): Promise<Routing> {
+  async findOne(id: string, tenantId: string): Promise<Routing> {
     const routing = await this.routingRepository.findOne({
       where: { id, tenantId },
       relations: ['bom', 'operations', 'operations.workCenter'],
@@ -55,7 +55,7 @@ export class RoutingService {
     return routing;
   }
 
-  async addOperation(tenantId: string, routingId: string, dto: any): Promise<Operation> {
+  async addOperation(routingId: string, dto: any, tenantId: string, user: any): Promise<Operation> {
     const routing = await this.findOne(tenantId, routingId);
 
     const operation = this.operationRepository.create({
@@ -71,7 +71,7 @@ export class RoutingService {
     return this.operationRepository.save(operation);
   }
 
-  async update(tenantId: string, id: string, dto: any): Promise<Routing> {
+  async update(id: string, dto: any, tenantId: string, user: any): Promise<Routing> {
     const routing = await this.findOne(tenantId, id);
 
     Object.assign(routing, dto);

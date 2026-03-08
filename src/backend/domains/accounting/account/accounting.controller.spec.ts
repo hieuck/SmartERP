@@ -94,7 +94,7 @@ describe('AccountingController', () => {
         const result = await controller.findAccountById('1', mockTenantId);
 
         expect(result).toEqual(mockAccount);
-        expect(service.findAccountById).toHaveBeenCalledWith('1', mockTenantId);
+        expect(service.findAccountById).toHaveBeenCalledWith(mockUser, '1');
       });
     });
 
@@ -112,7 +112,7 @@ describe('AccountingController', () => {
         const result = await controller.createAccount(dto, mockTenantId);
 
         expect(result).toEqual(mockAccount);
-        expect(service.createAccount).toHaveBeenCalledWith(dto, mockTenantId);
+        expect(service.createAccount).toHaveBeenCalledWith(mockUser, dto);
       });
     });
 
@@ -128,7 +128,7 @@ describe('AccountingController', () => {
         const result = await controller.updateAccount('1', dto, mockTenantId);
 
         expect(result).toEqual(mockAccount);
-        expect(service.updateAccount).toHaveBeenCalledWith('1', dto, mockTenantId);
+        expect(service.updateAccount).toHaveBeenCalledWith(mockUser, '1', dto);
       });
     });
 
@@ -139,7 +139,7 @@ describe('AccountingController', () => {
         const result = await controller.deleteAccount('1', mockTenantId);
 
         expect(result).toBeUndefined();
-        expect(service.deleteAccount).toHaveBeenCalledWith('1', mockTenantId);
+        expect(service.deleteAccount).toHaveBeenCalledWith(mockUser, '1');
       });
     });
   });
@@ -184,7 +184,7 @@ describe('AccountingController', () => {
         const result = await controller.findJournalEntryById('1', mockTenantId);
 
         expect(result).toEqual(mockEntry);
-        expect(service.findJournalEntryById).toHaveBeenCalledWith('1', mockTenantId);
+        expect(service.findJournalEntryById).toHaveBeenCalledWith(mockUser, '1');
       });
     });
 
@@ -204,7 +204,7 @@ describe('AccountingController', () => {
         const result = await controller.createJournalEntry(dto, mockTenantId);
 
         expect(result).toEqual(mockEntry);
-        expect(service.createJournalEntry).toHaveBeenCalledWith(dto, mockTenantId);
+        expect(service.createJournalEntry).toHaveBeenCalledWith(mockUser, dto);
       });
     });
 
@@ -216,7 +216,7 @@ describe('AccountingController', () => {
         const result = await controller.postJournalEntry('1', mockTenantId);
 
         expect(result).toEqual(mockEntry);
-        expect(service.postJournalEntry).toHaveBeenCalledWith('1', mockTenantId);
+        expect(service.postJournalEntry).toHaveBeenCalledWith(mockUser, '1');
       });
     });
   });
@@ -255,7 +255,7 @@ describe('AccountingController', () => {
         const result = await controller.findInvoiceById('1', mockTenantId);
 
         expect(result).toEqual(mockInvoice);
-        expect(service.findInvoiceById).toHaveBeenCalledWith('1', mockTenantId);
+        expect(service.findInvoiceById).toHaveBeenCalledWith(mockUser, '1');
       });
     });
 
@@ -273,7 +273,7 @@ describe('AccountingController', () => {
         const result = await controller.createInvoice(data, mockTenantId);
 
         expect(result).toEqual(mockInvoice);
-        expect(service.createInvoice).toHaveBeenCalledWith(data, mockTenantId);
+        expect(service.createInvoice).toHaveBeenCalledWith(mockUser, data);
       });
     });
 
@@ -286,7 +286,7 @@ describe('AccountingController', () => {
         const result = await controller.updateInvoice('1', data, mockTenantId);
 
         expect(result).toEqual(mockInvoice);
-        expect(service.updateInvoice).toHaveBeenCalledWith('1', data, mockTenantId);
+        expect(service.updateInvoice).toHaveBeenCalledWith(mockUser, '1', data);
       });
     });
 
@@ -297,7 +297,7 @@ describe('AccountingController', () => {
         const result = await controller.deleteInvoice('1', mockTenantId);
 
         expect(result).toBeUndefined();
-        expect(service.deleteInvoice).toHaveBeenCalledWith('1', mockTenantId);
+        expect(service.deleteInvoice).toHaveBeenCalledWith(mockUser, '1');
       });
     });
   });

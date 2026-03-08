@@ -1,11 +1,11 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards } from '@nestjs/common';
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { PermissionService } from './permission.service';
 import { CreatePermissionDto } from './dto/create-permission.dto';
 import { UpdatePermissionDto } from './dto/update-permission.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { TenantGuard } from '../../common/guards/tenant.guard';
-import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { User } from '@/common/security/permission.service';
 @ApiTags('permissions')
 @ApiBearerAuth()
@@ -16,8 +16,8 @@ export class PermissionController {
 
   @Post()
   @ApiOperation({ summary: 'Create permission' })
-  create(@Body() createPermissionDto: CreatePermissionDto, @CurrentUser() user: User) {
-    return this.permissionService.create(createPermissionDto, user);
+  create(@CurrentUser() user: User, @Body() createPermissionDto: CreatePermissionDto) {
+    return this.permissionService.create(user, createPermissionDto);
   }
 
   @Get()
@@ -34,30 +34,30 @@ export class PermissionController {
 
   @Get('resource/:resource')
   @ApiOperation({ summary: 'Get permission by resource' })
-  findByResource(@Param('resource') resource: string, @CurrentUser() user: User) {
-    return this.permissionService.findByResource(resource, user);
+  findByResource(@CurrentUser() user: User, @Param('resource') resource: string) {
+    return this.permissionService.findByResource(user, resource);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get permission by ID' })
-  findOne(@Param('id') id: string, @CurrentUser() user: User) {
-    return this.permissionService.findOne(id, user);
+  findOne(@CurrentUser() user: User, @Param('id') id: string) {
+    return this.permissionService.findOne(user, id);
   }
 
   @Put(':id')
   @ApiOperation({ summary: 'Update permission' })
   update(
+    @CurrentUser() user: User,
     @Param('id') id: string,
     @Body() updatePermissionDto: UpdatePermissionDto,
-    @CurrentUser() user: User,
   ) {
-    return this.permissionService.update(id, updatePermissionDto, user);
+    return this.permissionService.update(user, id, updatePermissionDto);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete permission' })
-  async remove(@Param('id') id: string, @CurrentUser() user: User) {
-    await this.permissionService.remove(id, user);
+  async remove(@CurrentUser() user: User, @Param('id') id: string) {
+    await this.permissionService.remove(user, id);
     return { message: 'Permission deleted successfully' };
   }
 }

@@ -15,8 +15,8 @@ import { TimeTrackingService } from './time-tracking.service';
 import { CreateTimeEntryDto } from './dto/create-time-entry.dto';
 import { TimeEntry } from './entities/time-entry.entity';
 import { JwtAuthGuard } from '../../core/auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../../core/auth/guards/roles.guard';
-import { Roles } from '../../core/auth/decorators/roles.decorator';
+import { RolesGuard } from '@/common/guards/roles.guard';
+import { Roles } from '@/common/decorators/roles.decorator';
 
 import { User } from '@/common/security/permission.service';
 @ApiTags('time-tracking')

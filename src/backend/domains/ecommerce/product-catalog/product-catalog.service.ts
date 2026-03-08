@@ -2,7 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ProductCatalog, ProductStatus } from './entities/product-catalog.entity';
-import { User } from '../../../core/user/entities/user.entity';
+import { User as UserEntity } from '../../../core/user/entities/user.entity';
+import { User } from '@/common/security/permission.service';
 
 @Injectable()
 export class ProductCatalogService {

@@ -3,11 +3,11 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 import { SerialBatchService } from './serial-batch.service';
 import { CreateSerialNumberDto } from './dto/create-serial-number.dto';
 import { CreateBatchDto } from './dto/create-batch.dto';
-import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../common/guards/roles.guard';
 import { Roles } from '../../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
-import { User } from '../../hr/user/entities/user.entity';
+import { User } from '@/common/security/permission.service';
 
 @ApiTags('Serial/Batch Tracking')
 @ApiBearerAuth()
@@ -23,8 +23,7 @@ export class SerialBatchController {
   @ApiResponse({ status: 400, description: 'Serial number already exists' })
   @ApiResponse({ status: 404, description: 'Product not found' })
   async createSerialNumber(
-    @Body() dto: CreateSerialNumberDto,
-    @CurrentUser() user: User,
+    @CurrentUser() user: User, @Body() dto: CreateSerialNumberDto,
   ) {
     return this.serialBatchService.createSerialNumber(dto, user);
   }
@@ -36,8 +35,7 @@ export class SerialBatchController {
   @ApiResponse({ status: 400, description: 'Batch number already exists' })
   @ApiResponse({ status: 404, description: 'Product not found' })
   async createBatch(
-    @Body() dto: CreateBatchDto,
-    @CurrentUser() user: User,
+    @CurrentUser() user: User, @Body() dto: CreateBatchDto,
   ) {
     return this.serialBatchService.createBatch(dto, user);
   }
@@ -47,8 +45,7 @@ export class SerialBatchController {
   @ApiOperation({ summary: 'Get serial numbers by product' })
   @ApiResponse({ status: 200, description: 'Serial numbers retrieved successfully' })
   async getSerialNumbersByProduct(
-    @Param('productId') productId: string,
-    @CurrentUser() user: User,
+    @CurrentUser() user: User, @Param('productId') productId: string,
   ) {
     return this.serialBatchService.getSerialNumbersByProduct(productId, user.tenantId);
   }
@@ -58,8 +55,7 @@ export class SerialBatchController {
   @ApiOperation({ summary: 'Get batches by product' })
   @ApiResponse({ status: 200, description: 'Batches retrieved successfully' })
   async getBatchesByProduct(
-    @Param('productId') productId: string,
-    @CurrentUser() user: User,
+    @CurrentUser() user: User, @Param('productId') productId: string,
   ) {
     return this.serialBatchService.getBatchesByProduct(productId, user.tenantId);
   }
@@ -70,8 +66,7 @@ export class SerialBatchController {
   @ApiResponse({ status: 200, description: 'Batch stock retrieved successfully' })
   async getBatchStockByWarehouse(
     @Param('batchId') batchId: string,
-    @Param('warehouseId') warehouseId: string,
-    @CurrentUser() user: User,
+    @CurrentUser() user: User, @Param('warehouseId') warehouseId: string,
   ) {
     return this.serialBatchService.getBatchStockByWarehouse(batchId, warehouseId, user.tenantId);
   }

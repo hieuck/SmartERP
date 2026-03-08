@@ -7,20 +7,21 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Tenant, TenantStatus } from './entities/tenant.entity';
-import { User } from '../user/entities/user.entity';
+import { User as UserEntity } from '../user/entities/user.entity';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
 import { v4 as uuidv4 } from 'uuid';
 import { CacheService } from '@/common/cache/cache.service';
 import { CacheTTL, generateCacheKey } from '@/common/cache/cache.config';
+import { User } from '@/common/security/permission.service';
 
 @Injectable()
 export class TenantService {
   constructor(
     @InjectRepository(Tenant)
     private readonly tenantRepository: Repository<Tenant>,
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
+    @InjectRepository(UserEntity)
+    private readonly userRepository: Repository<UserEntity>,
     private readonly cacheService: CacheService,
   ) {}
 
@@ -64,7 +65,8 @@ export class TenantService {
       .getMany();
   }
 
-  async findOne(id: string): Promise<Tenant> {
+  async findOne(user: User): Promise<Tenant> {
+    const id = user.tenantId;
     const cacheKey = generateCacheKey('tenant', 'global', id);
     return this.cacheService.getOrSet(
       cacheKey,
@@ -94,8 +96,8 @@ export class TenantService {
     );
   }
 
-  async update(id: string, updateTenantDto: UpdateTenantDto, userId?: string): Promise<Tenant> {
-    const tenant = await this.findOne(id);
+  async update(user: User, updateTenantDto: UpdateTenantDto): Promise<Tenant> {
+    const tenant = await this.findOne(user);
 
     // If code is being updated, check for conflicts
     if (updateTenantDto.code && updateTenantDto.code !== tenant.code) {
@@ -108,12 +110,12 @@ export class TenantService {
     }
 
     Object.assign(tenant, updateTenantDto);
-    tenant.updatedBy = userId || 'system';
+    tenant.updatedBy = user.id;
 
     const updated = await this.tenantRepository.save(tenant);
 
     // Invalidate caches
-    const cacheKey = generateCacheKey('tenant', 'global', id);
+    const cacheKey = generateCacheKey('tenant', 'global', user.tenantId);
     await this.cacheService.del(cacheKey);
 
     if (tenant.code) {
@@ -124,12 +126,12 @@ export class TenantService {
     return updated;
   }
 
-  async remove(id: string): Promise<void> {
-    await this.findOne(id);
+  async remove(user: User): Promise<void> {
+    await this.findOne(user);
 
     // Check if tenant has users
     const userCount = await this.userRepository.count({
-      where: { tenantId: id },
+      where: { tenantId: user.tenantId },
     });
 
     if (userCount > 0) {
@@ -138,17 +140,17 @@ export class TenantService {
       );
     }
 
-    await this.tenantRepository.softDelete(id);
+    await this.tenantRepository.softDelete(user.tenantId);
   }
 
-  async suspend(id: string, userId?: string): Promise<Tenant> {
-    const tenant = await this.findOne(id);
+  async suspend(user: User): Promise<Tenant> {
+    const tenant = await this.findOne(user);
     tenant.status = TenantStatus.SUSPENDED;
-    tenant.updatedBy = userId || 'system';
+    tenant.updatedBy = user.id;
     const updated = await this.tenantRepository.save(tenant);
 
     // Invalidate caches
-    const cacheKey = generateCacheKey('tenant', 'global', id);
+    const cacheKey = generateCacheKey('tenant', 'global', user.tenantId);
     await this.cacheService.del(cacheKey);
 
     if (tenant.code) {
@@ -159,14 +161,14 @@ export class TenantService {
     return updated;
   }
 
-  async activate(id: string, userId?: string): Promise<Tenant> {
-    const tenant = await this.findOne(id);
+  async activate(user: User): Promise<Tenant> {
+    const tenant = await this.findOne(user);
     tenant.status = TenantStatus.ACTIVE;
-    tenant.updatedBy = userId || 'system';
+    tenant.updatedBy = user.id;
     const updated = await this.tenantRepository.save(tenant);
 
     // Invalidate caches
-    const cacheKey = generateCacheKey('tenant', 'global', id);
+    const cacheKey = generateCacheKey('tenant', 'global', user.tenantId);
     await this.cacheService.del(cacheKey);
 
     if (tenant.code) {
@@ -177,14 +179,14 @@ export class TenantService {
     return updated;
   }
 
-  async cancel(id: string, userId?: string): Promise<Tenant> {
-    const tenant = await this.findOne(id);
+  async cancel(user: User): Promise<Tenant> {
+    const tenant = await this.findOne(user);
     tenant.status = TenantStatus.CANCELLED;
-    tenant.updatedBy = userId || 'system';
+    tenant.updatedBy = user.id;
     const updated = await this.tenantRepository.save(tenant);
 
     // Invalidate caches
-    const cacheKey = generateCacheKey('tenant', 'global', id);
+    const cacheKey = generateCacheKey('tenant', 'global', user.tenantId);
     await this.cacheService.del(cacheKey);
 
     if (tenant.code) {
@@ -196,7 +198,11 @@ export class TenantService {
   }
 
   async getUsersByTenant(tenantId: string): Promise<User[]> {
-    await this.findOne(tenantId); // Verify tenant exists
+    // Note: This method keeps tenantId parameter as it's used by admin to query any tenant
+    const tenant = await this.tenantRepository.findOne({ where: { id: tenantId } });
+    if (!tenant) {
+      throw new NotFoundException(`Tenant with ID ${tenantId} not found`);
+    }
 
     return await this.userRepository.find({
       where: { tenantId },
@@ -214,7 +220,7 @@ export class TenantService {
     });
   }
 
-  async getUsageReport(tenantId: string): Promise<{
+  async getUsageReport(user: User): Promise<{
     tenantId: string;
     tenantName: string;
     tenantCode: string;
@@ -238,10 +244,10 @@ export class TenantService {
     };
     features: string[];
   }> {
-    const tenant = await this.findOne(tenantId);
+    const tenant = await this.findOne(user);
 
     const userCount = await this.userRepository.count({
-      where: { tenantId, status: 'active' },
+      where: { tenantId: user.tenantId, status: 'active' },
     });
 
     return {
@@ -296,8 +302,8 @@ export class TenantService {
       .getMany();
   }
 
-  async updateStorage(tenantId: string, storageUsed: number): Promise<Tenant> {
-    const tenant = await this.findOne(tenantId);
+  async updateStorage(user: User, storageUsed: number): Promise<Tenant> {
+    const tenant = await this.findOne(user);
 
     if (storageUsed > Number(tenant.maxStorage)) {
       throw new BadRequestException('Storage limit exceeded');
@@ -307,7 +313,7 @@ export class TenantService {
     const updated = await this.tenantRepository.save(tenant);
 
     // Invalidate caches
-    const cacheKey = generateCacheKey('tenant', 'global', tenantId);
+    const cacheKey = generateCacheKey('tenant', 'global', user.tenantId);
     await this.cacheService.del(cacheKey);
 
     if (tenant.code) {

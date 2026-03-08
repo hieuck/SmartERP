@@ -10,8 +10,9 @@ import {
   BeforeInsert,
   BeforeUpdate,
 } from 'typeorm';
-import { User } from '../../../../core/user/entities/user.entity';
+import { User as UserEntity } from '../../../../core/user/entities/user.entity';
 import { OrderItem } from './order-item.entity';
+import { User } from '@/common/security/permission.service';
 
 export enum OrderStatus {
   PENDING = 'pending',
@@ -53,7 +54,7 @@ export class Order {
   @Column({ nullable: true })
   customerId: string;
 
-  @ManyToOne(() => User, { nullable: true })
+  @ManyToOne('User', { nullable: true })
   @JoinColumn({ name: 'customerId' })
   customer: User;
 

@@ -10,9 +10,10 @@ import {
   BeforeUpdate,
   Index,
 } from 'typeorm';
-import { User } from '../../../core/user/entities/user.entity';
+import { User as UserEntity } from '../../../core/user/entities/user.entity';
 import { Task } from './task.entity';
 import { Project } from './project.entity';
+import { User } from '@/common/security/permission.service';
 
 @Entity('time_entries')
 @Index(['tenantId', 'userId'])
@@ -27,7 +28,7 @@ export class TimeEntry {
   @Index()
   tenantId: string;
 
-  @ManyToOne(() => User, { nullable: false })
+  @ManyToOne('User', { nullable: false })
   @JoinColumn({ name: 'user_id' })
   user: User;
 

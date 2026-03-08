@@ -2,8 +2,9 @@ import { Injectable, Logger, NotFoundException, BadRequestException } from '@nes
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Tenant } from './entities/tenant.entity';
-import { User } from '../user/entities/user.entity';
+import { User as UserEntity } from '../user/entities/user.entity';
 import { CompleteOnboardingDto } from './dto/complete-onboarding.dto';
+import { User } from '@/common/security/permission.service';
 
 @Injectable()
 export class OnboardingService {
@@ -12,8 +13,8 @@ export class OnboardingService {
   constructor(
     @InjectRepository(Tenant)
     private readonly tenantRepository: Repository<Tenant>,
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
+    @InjectRepository(UserEntity)
+    private readonly userRepository: Repository<UserEntity>,
   ) {}
 
   /**

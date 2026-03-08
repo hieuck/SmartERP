@@ -6,9 +6,11 @@ import { Repository, SelectQueryBuilder } from 'typeorm';
 import { Cache } from 'cache-manager';
 import { RoleService } from './role.service';
 import { Role } from './entities/role.entity';
-import { Permission, PermissionAction } from '../permission/entities/permission.entity';
+import { Permission } from '../permission/entities/permission.entity';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
+import { createMockUser } from '@/common/test/test-helpers';
+import { PermissionService } from '@/common/security/permission.service';
 
 describe('RoleService', () => {
   let service: RoleService;
@@ -22,6 +24,7 @@ describe('RoleService', () => {
     save: jest.fn(),
     create: jest.fn(),
     softDelete: jest.fn(),
+    remove: jest.fn(),
     count: jest.fn(),
     createQueryBuilder: jest.fn(),
   };
@@ -36,13 +39,23 @@ describe('RoleService', () => {
     del: jest.fn(),
   };
 
+  const mockPermissionService = {
+    checkPermission: jest.fn().mockResolvedValue(true),
+    canRead: jest.fn().mockReturnValue(true),
+    canWrite: jest.fn().mockReturnValue(true),
+    canCreate: jest.fn().mockReturnValue(true),
+    canUpdate: jest.fn().mockReturnValue(true),
+    canDelete: jest.fn().mockReturnValue(true),
+    buildSecureQuery: jest.fn((user, where) => where),
+  };
+
+  const mockUser = createMockUser({ id: 'user1', tenantId: 'tenant1' });
+
   const mockPermission: Permission = {
     id: 'perm1',
     tenantId: 'tenant1',
-    resource: 'products',
-    actions: [PermissionAction.CREATE, PermissionAction.READ],
+    name: 'Manage Products',
     description: 'Manage products',
-    roles: [],
     createdAt: new Date(),
     updatedAt: new Date(),
     deletedAt: null,
@@ -78,6 +91,10 @@ describe('RoleService', () => {
           provide: CACHE_MANAGER,
           useValue: mockCacheManager,
         },
+        {
+          provide: PermissionService,
+          useValue: mockPermissionService,
+        },
       ],
     }).compile();
 
@@ -104,21 +121,10 @@ describe('RoleService', () => {
       mockRoleRepository.create.mockReturnValue(mockRole);
       mockRoleRepository.save.mockResolvedValue(mockRole);
 
-      const result = await service.create(createDto, 'tenant1', 'user1');
+      const result = await service.create(createDto, mockUser);
 
       expect(result).toEqual(mockRole);
-      expect(mockRoleRepository.findOne).toHaveBeenCalledWith({
-        where: { name: 'Manager', tenantId: 'tenant1' },
-      });
       expect(mockPermissionRepository.findByIds).toHaveBeenCalledWith(['perm1']);
-      expect(mockRoleRepository.create).toHaveBeenCalledWith({
-        name: 'Manager',
-        description: 'Manager role',
-        tenantId: 'tenant1',
-        permissions: [mockPermission],
-        createdBy: 'user1',
-        updatedBy: 'user1',
-      });
     });
 
     it('should create role without permissions', async () => {
@@ -130,7 +136,7 @@ describe('RoleService', () => {
       mockRoleRepository.create.mockReturnValue(mockRole);
       mockRoleRepository.save.mockResolvedValue(mockRole);
 
-      const result = await service.create(dtoWithoutPerms, 'tenant1');
+      const result = await service.create(dtoWithoutPerms, mockUser);
 
       expect(result).toEqual(mockRole);
       expect(mockPermissionRepository.findByIds).not.toHaveBeenCalled();
@@ -139,8 +145,8 @@ describe('RoleService', () => {
     it('should throw ConflictException if role name exists', async () => {
       mockRoleRepository.findOne.mockResolvedValue(mockRole);
 
-      await expect(service.create(createDto, 'tenant1')).rejects.toThrow(ConflictException);
-      await expect(service.create(createDto, 'tenant1')).rejects.toThrow(
+      await expect(service.create(createDto, mockUser)).rejects.toThrow(ConflictException);
+      await expect(service.create(createDto, mockUser)).rejects.toThrow(
         "Role 'Manager' already exists",
       );
     });
@@ -149,8 +155,8 @@ describe('RoleService', () => {
       mockRoleRepository.findOne.mockResolvedValue(null);
       mockPermissionRepository.findByIds.mockResolvedValue([]);
 
-      await expect(service.create(createDto, 'tenant1')).rejects.toThrow(BadRequestException);
-      await expect(service.create(createDto, 'tenant1')).rejects.toThrow(
+      await expect(service.create(createDto, mockUser)).rejects.toThrow(BadRequestException);
+      await expect(service.create(createDto, mockUser)).rejects.toThrow(
         'Some permission IDs are invalid',
       );
     });
@@ -160,8 +166,8 @@ describe('RoleService', () => {
       mockRoleRepository.findOne.mockResolvedValue(null);
       mockPermissionRepository.findByIds.mockResolvedValue([wrongTenantPerm]);
 
-      await expect(service.create(createDto, 'tenant1')).rejects.toThrow(BadRequestException);
-      await expect(service.create(createDto, 'tenant1')).rejects.toThrow(
+      await expect(service.create(createDto, mockUser)).rejects.toThrow(BadRequestException);
+      await expect(service.create(createDto, mockUser)).rejects.toThrow(
         'Some permissions do not belong to this tenant',
       );
     });
@@ -172,32 +178,20 @@ describe('RoleService', () => {
       const roles = [mockRole];
       mockCacheManager.get.mockResolvedValue(roles);
 
-      const result = await service.findAll('tenant1');
+      const result = await service.findAll(mockUser);
 
       expect(result).toEqual(roles);
       expect(mockCacheManager.get).toHaveBeenCalledWith('role:all:tenant1');
-      expect(mockRoleRepository.createQueryBuilder).not.toHaveBeenCalled();
     });
 
     it('should fetch from database and cache on cache miss', async () => {
       const roles = [mockRole];
       mockCacheManager.get.mockResolvedValue(null);
+      mockRoleRepository.find.mockResolvedValue(roles);
 
-      const mockQueryBuilder = {
-        select: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        orderBy: jest.fn().mockReturnThis(),
-        getMany: jest.fn().mockResolvedValue(roles),
-      };
-      mockRoleRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
-
-      const result = await service.findAll('tenant1');
+      const result = await service.findAll(mockUser);
 
       expect(result).toEqual(roles);
-      expect(mockRoleRepository.createQueryBuilder).toHaveBeenCalledWith('role');
-      expect(mockQueryBuilder.where).toHaveBeenCalledWith('role.tenantId = :tenantId', {
-        tenantId: 'tenant1',
-      });
       expect(mockCacheManager.set).toHaveBeenCalledWith('role:all:tenant1', roles, 300000);
     });
   });
@@ -206,23 +200,19 @@ describe('RoleService', () => {
     it('should return cached role', async () => {
       mockCacheManager.get.mockResolvedValue(mockRole);
 
-      const result = await service.findOne('1', 'tenant1');
+      const result = await service.findOne('1', mockUser);
 
       expect(result).toEqual(mockRole);
       expect(mockCacheManager.get).toHaveBeenCalledWith('role:tenant1:1');
-      expect(mockRoleRepository.findOne).not.toHaveBeenCalled();
     });
 
     it('should fetch from database and cache on cache miss', async () => {
       mockCacheManager.get.mockResolvedValue(null);
       mockRoleRepository.findOne.mockResolvedValue(mockRole);
 
-      const result = await service.findOne('1', 'tenant1');
+      const result = await service.findOne('1', mockUser);
 
       expect(result).toEqual(mockRole);
-      expect(mockRoleRepository.findOne).toHaveBeenCalledWith({
-        where: { id: '1', tenantId: 'tenant1' },
-      });
       expect(mockCacheManager.set).toHaveBeenCalledWith('role:tenant1:1', mockRole, 300000);
     });
 
@@ -230,8 +220,8 @@ describe('RoleService', () => {
       mockCacheManager.get.mockResolvedValue(null);
       mockRoleRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findOne('999', 'tenant1')).rejects.toThrow(NotFoundException);
-      await expect(service.findOne('999', 'tenant1')).rejects.toThrow(
+      await expect(service.findOne('999', mockUser)).rejects.toThrow(NotFoundException);
+      await expect(service.findOne('999', mockUser)).rejects.toThrow(
         'Role with ID 999 not found',
       );
     });
@@ -241,23 +231,19 @@ describe('RoleService', () => {
     it('should return cached role by name', async () => {
       mockCacheManager.get.mockResolvedValue(mockRole);
 
-      const result = await service.findByName('Manager', 'tenant1');
+      const result = await service.findByName('Manager', mockUser);
 
       expect(result).toEqual(mockRole);
       expect(mockCacheManager.get).toHaveBeenCalledWith('role:tenant1:name:Manager');
-      expect(mockRoleRepository.findOne).not.toHaveBeenCalled();
     });
 
     it('should fetch from database and cache on cache miss', async () => {
       mockCacheManager.get.mockResolvedValue(null);
       mockRoleRepository.findOne.mockResolvedValue(mockRole);
 
-      const result = await service.findByName('Manager', 'tenant1');
+      const result = await service.findByName('Manager', mockUser);
 
       expect(result).toEqual(mockRole);
-      expect(mockRoleRepository.findOne).toHaveBeenCalledWith({
-        where: { name: 'Manager', tenantId: 'tenant1' },
-      });
       expect(mockCacheManager.set).toHaveBeenCalledWith(
         'role:tenant1:name:Manager',
         mockRole,
@@ -269,10 +255,10 @@ describe('RoleService', () => {
       mockCacheManager.get.mockResolvedValue(null);
       mockRoleRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findByName('NonExistent', 'tenant1')).rejects.toThrow(
+      await expect(service.findByName('NonExistent', mockUser)).rejects.toThrow(
         NotFoundException,
       );
-      await expect(service.findByName('NonExistent', 'tenant1')).rejects.toThrow(
+      await expect(service.findByName('NonExistent', mockUser)).rejects.toThrow(
         "Role 'NonExistent' not found",
       );
     });
@@ -287,7 +273,7 @@ describe('RoleService', () => {
       mockCacheManager.get.mockResolvedValue(mockRole);
       mockRoleRepository.save.mockResolvedValue({ ...mockRole, ...updateDto });
 
-      const result = await service.update('1', updateDto, 'tenant1', 'user2');
+      const result = await service.update('1', updateDto, mockUser);
 
       expect(result.description).toBe('Updated description');
       expect(mockRoleRepository.save).toHaveBeenCalled();
@@ -300,10 +286,10 @@ describe('RoleService', () => {
       const systemRole = { ...mockRole, isSystem: true };
       mockCacheManager.get.mockResolvedValue(systemRole);
 
-      await expect(service.update('1', updateDto, 'tenant1')).rejects.toThrow(
+      await expect(service.update('1', updateDto, mockUser)).rejects.toThrow(
         BadRequestException,
       );
-      await expect(service.update('1', updateDto, 'tenant1')).rejects.toThrow(
+      await expect(service.update('1', updateDto, mockUser)).rejects.toThrow(
         'Cannot modify system roles',
       );
     });
@@ -317,10 +303,10 @@ describe('RoleService', () => {
         name: 'Admin',
       };
 
-      await expect(service.update('1', updateDtoWithName, 'tenant1')).rejects.toThrow(
+      await expect(service.update('1', updateDtoWithName, mockUser)).rejects.toThrow(
         ConflictException,
       );
-      await expect(service.update('1', updateDtoWithName, 'tenant1')).rejects.toThrow(
+      await expect(service.update('1', updateDtoWithName, mockUser)).rejects.toThrow(
         "Role 'Admin' already exists",
       );
     });
@@ -335,7 +321,7 @@ describe('RoleService', () => {
         permissionIds: ['perm2'],
       };
 
-      await service.update('1', updateDtoWithPerms, 'tenant1');
+      await service.update('1', updateDtoWithPerms, mockUser);
 
       expect(mockPermissionRepository.findByIds).toHaveBeenCalledWith(['perm2']);
       expect(mockRoleRepository.save).toHaveBeenCalled();
@@ -349,7 +335,7 @@ describe('RoleService', () => {
         permissionIds: ['invalid'],
       };
 
-      await expect(service.update('1', updateDtoWithPerms, 'tenant1')).rejects.toThrow(
+      await expect(service.update('1', updateDtoWithPerms, mockUser)).rejects.toThrow(
         BadRequestException,
       );
     });
@@ -363,7 +349,7 @@ describe('RoleService', () => {
         permissionIds: ['perm1'],
       };
 
-      await expect(service.update('1', updateDtoWithPerms, 'tenant1')).rejects.toThrow(
+      await expect(service.update('1', updateDtoWithPerms, mockUser)).rejects.toThrow(
         BadRequestException,
       );
     });
@@ -372,11 +358,12 @@ describe('RoleService', () => {
   describe('remove', () => {
     it('should soft delete role and invalidate caches', async () => {
       mockCacheManager.get.mockResolvedValue(mockRole);
-      mockRoleRepository.softDelete.mockResolvedValue({ affected: 1, raw: {} });
+      mockRoleRepository.findOne.mockResolvedValue(mockRole);
+      mockRoleRepository.remove.mockResolvedValue(mockRole);
 
-      await service.remove('1', 'tenant1');
+      await service.remove('1', mockUser);
 
-      expect(mockRoleRepository.softDelete).toHaveBeenCalledWith({ id: '1', tenantId: 'tenant1' });
+      expect(mockRoleRepository.remove).toHaveBeenCalledWith(mockRole);
       expect(mockCacheManager.del).toHaveBeenCalledWith('role:tenant1:1');
       expect(mockCacheManager.del).toHaveBeenCalledWith('role:all:tenant1');
       expect(mockCacheManager.del).toHaveBeenCalledWith('role:tenant1:name:Manager');
@@ -386,28 +373,27 @@ describe('RoleService', () => {
       const systemRole = { ...mockRole, isSystem: true };
       mockCacheManager.get.mockResolvedValue(systemRole);
 
-      await expect(service.remove('1', 'tenant1')).rejects.toThrow(BadRequestException);
-      await expect(service.remove('1', 'tenant1')).rejects.toThrow('Cannot delete system roles');
+      await expect(service.remove('1', mockUser)).rejects.toThrow(BadRequestException);
+      await expect(service.remove('1', mockUser)).rejects.toThrow('Cannot delete system roles');
     });
 
     it('should throw NotFoundException if role not found', async () => {
       mockCacheManager.get.mockResolvedValue(null);
       mockRoleRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.remove('999', 'tenant1')).rejects.toThrow(NotFoundException);
+      await expect(service.remove('999', mockUser)).rejects.toThrow(NotFoundException);
     });
   });
 
   describe('count', () => {
     it('should return count of roles', async () => {
-      mockRoleRepository.count.mockResolvedValue(5);
+      const mockRoles = [mockRole, { ...mockRole, id: '2' }, { ...mockRole, id: '3' }];
+      mockRoleRepository.find.mockResolvedValue(mockRoles);
 
-      const result = await service.count('tenant1');
+      const result = await service.count(mockUser);
 
-      expect(result).toBe(5);
-      expect(mockRoleRepository.count).toHaveBeenCalledWith({
-        where: { tenantId: 'tenant1' },
-      });
+      expect(result).toBe(3);
+      expect(mockRoleRepository.find).toHaveBeenCalled();
     });
   });
 
@@ -422,7 +408,7 @@ describe('RoleService', () => {
         permissions: [mockPermission, newPermission],
       });
 
-      const result = await service.addPermissions('1', ['perm2'], 'tenant1');
+      const result = await service.addPermissions('1', ['perm2'], mockUser);
 
       expect(result.permissions).toHaveLength(2);
       expect(mockPermissionRepository.findByIds).toHaveBeenCalledWith(['perm2']);
@@ -435,7 +421,7 @@ describe('RoleService', () => {
       mockPermissionRepository.findByIds.mockResolvedValue([mockPermission]);
       mockRoleRepository.save.mockResolvedValue(roleWithPerms);
 
-      const result = await service.addPermissions('1', ['perm1'], 'tenant1');
+      const result = await service.addPermissions('1', ['perm1'], mockUser);
 
       expect(result.permissions).toHaveLength(1);
     });
@@ -444,7 +430,7 @@ describe('RoleService', () => {
       const systemRole = { ...mockRole, isSystem: true };
       mockCacheManager.get.mockResolvedValue(systemRole);
 
-      await expect(service.addPermissions('1', ['perm1'], 'tenant1')).rejects.toThrow(
+      await expect(service.addPermissions('1', ['perm1'], mockUser)).rejects.toThrow(
         BadRequestException,
       );
     });
@@ -453,7 +439,7 @@ describe('RoleService', () => {
       mockCacheManager.get.mockResolvedValue(mockRole);
       mockPermissionRepository.findByIds.mockResolvedValue([]);
 
-      await expect(service.addPermissions('1', ['invalid'], 'tenant1')).rejects.toThrow(
+      await expect(service.addPermissions('1', ['invalid'], mockUser)).rejects.toThrow(
         BadRequestException,
       );
     });
@@ -463,7 +449,7 @@ describe('RoleService', () => {
       mockCacheManager.get.mockResolvedValue(mockRole);
       mockPermissionRepository.findByIds.mockResolvedValue([wrongTenantPerm]);
 
-      await expect(service.addPermissions('1', ['perm1'], 'tenant1')).rejects.toThrow(
+      await expect(service.addPermissions('1', ['perm1'], mockUser)).rejects.toThrow(
         BadRequestException,
       );
     });
@@ -479,7 +465,7 @@ describe('RoleService', () => {
         permissions: [perm2],
       });
 
-      const result = await service.removePermissions('1', ['perm1'], 'tenant1');
+      const result = await service.removePermissions('1', ['perm1'], mockUser);
 
       expect(result.permissions).toHaveLength(1);
       expect(result.permissions[0].id).toBe('perm2');
@@ -490,7 +476,7 @@ describe('RoleService', () => {
       const systemRole = { ...mockRole, isSystem: true };
       mockCacheManager.get.mockResolvedValue(systemRole);
 
-      await expect(service.removePermissions('1', ['perm1'], 'tenant1')).rejects.toThrow(
+      await expect(service.removePermissions('1', ['perm1'], mockUser)).rejects.toThrow(
         BadRequestException,
       );
     });

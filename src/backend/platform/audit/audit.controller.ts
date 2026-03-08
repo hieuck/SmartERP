@@ -1,4 +1,5 @@
 import { Controller, Get, Query, Param, UseGuards } from '@nestjs/common';
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { AuditService } from './audit.service';
 import { JwtAuthGuard } from '../../core/auth/guards/jwt-auth.guard';
 import { TenantId } from '../../common/decorators/tenant-id.decorator';

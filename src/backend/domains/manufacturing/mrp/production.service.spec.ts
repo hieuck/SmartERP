@@ -8,6 +8,7 @@ import { WorkOrder, WorkOrderStatus } from './entities/work-order.entity';
 import { QualityCheck, QualityCheckResult } from './entities/quality-check.entity';
 import { NotFoundException } from '@nestjs/common';
 import { CacheService } from '@/common/cache/cache.service';
+import { PermissionService } from '@/common/security/permission.service';
 import { createMockUser } from '@/common/test/test-helpers';
 
 describe('ProductionService', () => {
@@ -22,54 +23,54 @@ describe('ProductionService', () => {
   };
 
   const mockMaterialRepository = {
-    find: jest.fn(),
-    findOne: jest.fn(),
-    create: jest.fn(),
-    save: jest.fn(),
-    update: jest.fn(),
-    softDelete: jest.fn(),
+    find: jest.fn().mockResolvedValue([]),
+    findOne: jest.fn().mockResolvedValue(null),
+    create: jest.fn((data) => data),
+    save: jest.fn((data) => Promise.resolve({ id: '1', ...data })),
+    update: jest.fn().mockResolvedValue({ affected: 1 }),
+    softDelete: jest.fn().mockResolvedValue({ affected: 1 }),
     createQueryBuilder: jest.fn(() => mockQueryBuilder),
   };
 
   const mockMoldRepository = {
-    find: jest.fn(),
-    findOne: jest.fn(),
-    create: jest.fn(),
-    save: jest.fn(),
-    update: jest.fn(),
-    softDelete: jest.fn(),
+    find: jest.fn().mockResolvedValue([]),
+    findOne: jest.fn().mockResolvedValue(null),
+    create: jest.fn((data) => data),
+    save: jest.fn((data) => Promise.resolve({ id: '1', ...data })),
+    update: jest.fn().mockResolvedValue({ affected: 1 }),
+    softDelete: jest.fn().mockResolvedValue({ affected: 1 }),
     createQueryBuilder: jest.fn(() => mockQueryBuilder),
   };
 
   const mockBomRepository = {
-    find: jest.fn(),
-    findOne: jest.fn(),
-    create: jest.fn(),
-    save: jest.fn(),
-    update: jest.fn(),
-    softDelete: jest.fn(),
+    find: jest.fn().mockResolvedValue([]),
+    findOne: jest.fn().mockResolvedValue(null),
+    create: jest.fn((data) => data),
+    save: jest.fn((data) => Promise.resolve({ id: '1', ...data })),
+    update: jest.fn().mockResolvedValue({ affected: 1 }),
+    softDelete: jest.fn().mockResolvedValue({ affected: 1 }),
     createQueryBuilder: jest.fn(() => mockQueryBuilder),
   };
 
   const mockWorkOrderRepository = {
-    find: jest.fn(),
-    findOne: jest.fn(),
-    create: jest.fn(),
-    save: jest.fn(),
-    update: jest.fn(),
-    softDelete: jest.fn(),
-    count: jest.fn(),
+    find: jest.fn().mockResolvedValue([]),
+    findOne: jest.fn().mockResolvedValue(null),
+    create: jest.fn((data) => data),
+    save: jest.fn((data) => Promise.resolve({ id: '1', ...data })),
+    update: jest.fn().mockResolvedValue({ affected: 1 }),
+    softDelete: jest.fn().mockResolvedValue({ affected: 1 }),
+    count: jest.fn().mockResolvedValue(0),
     createQueryBuilder: jest.fn(() => mockQueryBuilder),
   };
 
   const mockQualityCheckRepository = {
-    find: jest.fn(),
-    findOne: jest.fn(),
-    create: jest.fn(),
-    save: jest.fn(),
-    update: jest.fn(),
-    softDelete: jest.fn(),
-    count: jest.fn(),
+    find: jest.fn().mockResolvedValue([]),
+    findOne: jest.fn().mockResolvedValue(null),
+    create: jest.fn((data) => data),
+    save: jest.fn((data) => Promise.resolve({ id: '1', ...data })),
+    update: jest.fn().mockResolvedValue({ affected: 1 }),
+    softDelete: jest.fn().mockResolvedValue({ affected: 1 }),
+    count: jest.fn().mockResolvedValue(0),
     createQueryBuilder: jest.fn(() => mockQueryBuilder),
   };
 
@@ -110,6 +111,15 @@ describe('ProductionService', () => {
         {
           provide: CacheService,
           useValue: mockCacheService,
+        },
+        {
+          provide: PermissionService,
+          useValue: {
+            canRead: jest.fn().mockReturnValue(true),
+            canWrite: jest.fn().mockReturnValue(true),
+            canDelete: jest.fn().mockReturnValue(true),
+            buildSecureQuery: jest.fn((user, baseWhere) => ({ ...baseWhere, tenantId: user.tenantId })),
+          },
         },
       ],
     }).compile();

@@ -6,7 +6,7 @@ export interface User {
   roles: string[];
 }
 
-export interface Record {
+export interface BaseRecord {
   id: string;
   tenantId: string;
   createdBy?: string;
@@ -14,7 +14,7 @@ export interface Record {
 
 @Injectable()
 export class PermissionService {
-  canRead(user: User, record: Record, entityName: string): boolean {
+  canRead(user: User, record: BaseRecord, entityName: string): boolean {
     if (user.tenantId !== record.tenantId) {
       return false;
     }
@@ -30,7 +30,7 @@ export class PermissionService {
     return record.createdBy === user.id;
   }
 
-  canWrite(user: User, record: Record, entityName: string): boolean {
+  canWrite(user: User, record: BaseRecord, entityName: string): boolean {
     if (user.tenantId !== record.tenantId) {
       return false;
     }
@@ -46,7 +46,7 @@ export class PermissionService {
     return record.createdBy === user.id;
   }
 
-  canDelete(user: User, record: Record, entityName: string): boolean {
+  canDelete(user: User, record: BaseRecord, entityName: string): boolean {
     if (user.tenantId !== record.tenantId) {
       return false;
     }
@@ -56,9 +56,9 @@ export class PermissionService {
 
   buildSecureQuery(
     user: User,
-    baseWhere: Record<string, any>,
+    baseWhere: { [key: string]: any },
     entityName: string,
-  ): Record<string, any> {
+  ): { [key: string]: any } {
     const secureWhere = { ...baseWhere };
     secureWhere.tenantId = user.tenantId;
 

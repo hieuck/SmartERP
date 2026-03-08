@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { ShoppingCart, CartStatus } from './entities/shopping-cart.entity';
 import { CartItem } from './entities/cart-item.entity';
 import { ProductCatalog } from '../product-catalog/entities/product-catalog.entity';
-import { User } from '../../../core/user/entities/user.entity';
+import { User } from '@/common/security/permission.service';
 
 @Injectable()
 export class ShoppingCartService {
@@ -17,17 +17,17 @@ export class ShoppingCartService {
     private readonly productRepository: Repository<ProductCatalog>,
   ) {}
 
-  async getOrCreateCart(sessionId: string, tenantId: string, userId?: string): Promise<ShoppingCart> {
+  async getOrCreateCart(user: User, sessionId: string): Promise<ShoppingCart> {
     let cart = await this.cartRepository.findOne({
-      where: { sessionId, tenantId, status: CartStatus.ACTIVE },
+      where: { sessionId, tenantId: user.tenantId, status: CartStatus.ACTIVE },
       relations: ['items'],
     });
 
     if (!cart) {
       cart = this.cartRepository.create({
         sessionId,
-        userId,
-        tenantId,
+        userId: user.id,
+        tenantId: user.tenantId,
         status: CartStatus.ACTIVE,
         expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       });
@@ -36,9 +36,9 @@ export class ShoppingCartService {
     return cart;
   }
 
-  async findOne(id: string, tenantId: string): Promise<ShoppingCart> {
+  async findOne(user: User, id: string): Promise<ShoppingCart> {
     const cart = await this.cartRepository.findOne({
-      where: { id, tenantId },
+      where: { id, tenantId: user.tenantId },
       relations: ['items', 'items.product'],
     });
     if (!cart) {
@@ -47,9 +47,9 @@ export class ShoppingCartService {
     return cart;
   }
 
-  async findBySession(sessionId: string, tenantId: string): Promise<ShoppingCart> {
+  async findBySession(user: User, sessionId: string): Promise<ShoppingCart> {
     const cart = await this.cartRepository.findOne({
-      where: { sessionId, tenantId, status: CartStatus.ACTIVE },
+      where: { sessionId, tenantId: user.tenantId, status: CartStatus.ACTIVE },
       relations: ['items', 'items.product'],
     });
     if (!cart) {
@@ -59,35 +59,32 @@ export class ShoppingCartService {
   }
 
   async addItem(
+    user: User,
     sessionId: string,
-    productId: string,
-    quantity: number,
-    tenantId: string,
-    userId?: string,
-    selectedVariant?: any,
+    dto: { productId: string; quantity: number; selectedVariant?: any },
   ): Promise<ShoppingCart> {
-    const cart = await this.getOrCreateCart(sessionId, tenantId, userId);
+    const cart = await this.getOrCreateCart(user, sessionId);
     const product = await this.productRepository.findOne({
-      where: { id: productId, tenantId },
+      where: { id: dto.productId, tenantId: user.tenantId },
     });
 
     if (!product) {
-      throw new NotFoundException(`Product with ID ${productId} not found`);
+      throw new NotFoundException(`Product with ID ${dto.productId} not found`);
     }
     if (!product.isPublished) {
       throw new BadRequestException('Product is not available');
     }
-    if (product.trackInventory && product.stockQuantity < quantity) {
+    if (product.trackInventory && product.stockQuantity < dto.quantity) {
       throw new BadRequestException('Insufficient stock');
     }
 
     const existingItem = cart.items?.find(
-      (item) => item.productId === productId &&
-        JSON.stringify(item.selectedVariant) === JSON.stringify(selectedVariant),
+      (item) => item.productId === dto.productId &&
+        JSON.stringify(item.selectedVariant) === JSON.stringify(dto.selectedVariant),
     );
 
     if (existingItem) {
-      existingItem.quantity += quantity;
+      existingItem.quantity += dto.quantity;
       await this.cartItemRepository.save(existingItem);
     } else {
       const cartItem = this.cartItemRepository.create({
@@ -97,23 +94,23 @@ export class ShoppingCartService {
         productSku: product.sku,
         productImage: product.featuredImage,
         price: product.price,
-        quantity,
-        selectedVariant,
-        tenantId,
+        quantity: dto.quantity,
+        selectedVariant: dto.selectedVariant,
+        tenantId: user.tenantId,
       });
       await this.cartItemRepository.save(cartItem);
     }
 
-    return this.findOne(cart.id, tenantId);
+    return this.findOne(user, cart.id);
   }
 
   async updateItemQuantity(
+    user: User,
     cartId: string,
     itemId: string,
     quantity: number,
-    tenantId: string,
   ): Promise<ShoppingCart> {
-    const cart = await this.findOne(cartId, tenantId);
+    const cart = await this.findOne(user, cartId);
     const item = cart.items.find((i) => i.id === itemId);
 
     if (!item) {
@@ -124,7 +121,7 @@ export class ShoppingCartService {
       await this.cartItemRepository.remove(item);
     } else {
       const product = await this.productRepository.findOne({
-        where: { id: item.productId, tenantId },
+        where: { id: item.productId, tenantId: user.tenantId },
       });
 
       if (product?.trackInventory && product.stockQuantity < quantity) {
@@ -135,15 +132,15 @@ export class ShoppingCartService {
       await this.cartItemRepository.save(item);
     }
 
-    return this.findOne(cartId, tenantId);
+    return this.findOne(user, cartId);
   }
 
   async removeItem(
+    user: User,
     cartId: string,
     itemId: string,
-    tenantId: string,
   ): Promise<ShoppingCart> {
-    const cart = await this.findOne(cartId, tenantId);
+    const cart = await this.findOne(user, cartId);
     const item = cart.items.find((i) => i.id === itemId);
 
     if (!item) {
@@ -151,64 +148,64 @@ export class ShoppingCartService {
     }
 
     await this.cartItemRepository.remove(item);
-    return this.findOne(cartId, tenantId);
+    return this.findOne(user, cartId);
   }
 
-  async clearCart(cartId: string, tenantId: string): Promise<ShoppingCart> {
-    const cart = await this.findOne(cartId, tenantId);
+  async clearCart(user: User, cartId: string): Promise<ShoppingCart> {
+    const cart = await this.findOne(user, cartId);
     if (cart.items && cart.items.length > 0) {
       await this.cartItemRepository.remove(cart.items);
     }
-    return this.findOne(cartId, tenantId);
+    return this.findOne(user, cartId);
   }
 
   async applyCoupon(
+    user: User,
     cartId: string,
     couponCode: string,
-    tenantId: string,
   ): Promise<ShoppingCart> {
-    const cart = await this.findOne(cartId, tenantId);
+    const cart = await this.findOne(user, cartId);
     cart.couponCode = couponCode;
     await this.cartRepository.save(cart);
-    return this.findOne(cartId, tenantId);
+    return this.findOne(user, cartId);
   }
 
-  async removeCoupon(cartId: string, tenantId: string): Promise<ShoppingCart> {
-    const cart = await this.findOne(cartId, tenantId);
+  async removeCoupon(user: User, cartId: string): Promise<ShoppingCart> {
+    const cart = await this.findOne(user, cartId);
     cart.couponCode = null;
     cart.discount = 0;
     await this.cartRepository.save(cart);
-    return this.findOne(cartId, tenantId);
+    return this.findOne(user, cartId);
   }
 
   async updateShippingAddress(
+    user: User,
     cartId: string,
     address: any,
-    tenantId: string,
   ): Promise<ShoppingCart> {
-    const cart = await this.findOne(cartId, tenantId);
+    const cart = await this.findOne(user, cartId);
     cart.shippingAddress = address;
     await this.cartRepository.save(cart);
-    return this.findOne(cartId, tenantId);
+    return this.findOne(user, cartId);
   }
 
   async updateBillingAddress(
+    user: User,
     cartId: string,
     address: any,
-    tenantId: string,
   ): Promise<ShoppingCart> {
-    const cart = await this.findOne(cartId, tenantId);
+    const cart = await this.findOne(user, cartId);
     cart.billingAddress = address;
     await this.cartRepository.save(cart);
-    return this.findOne(cartId, tenantId);
+    return this.findOne(user, cartId);
   }
 
   async convertToOrder(
+    user: User,
     cartId: string,
     orderId: string,
-    tenantId: string,
   ): Promise<ShoppingCart> {
-    const cart = await this.findOne(cartId, tenantId);
+    const cart = await this.findOne(user, cartId);
     cart.status = CartStatus.CONVERTED;
     cart.orderId = orderId;
     cart.convertedAt = new Date();
@@ -216,18 +213,18 @@ export class ShoppingCartService {
     return cart;
   }
 
-  async markAsAbandoned(cartId: string, tenantId: string): Promise<ShoppingCart> {
-    const cart = await this.findOne(cartId, tenantId);
+  async markAsAbandoned(user: User, cartId: string): Promise<ShoppingCart> {
+    const cart = await this.findOne(user, cartId);
     cart.status = CartStatus.ABANDONED;
     await this.cartRepository.save(cart);
     return cart;
   }
 
-  async findAbandonedCarts(tenantId: string): Promise<ShoppingCart[]> {
+  async findAbandonedCarts(user: User): Promise<ShoppingCart[]> {
     const cutoffDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
     return this.cartRepository
       .createQueryBuilder('cart')
-      .where('cart.tenantId = :tenantId', { tenantId })
+      .where('cart.tenantId = :tenantId', { tenantId: user.tenantId })
       .andWhere('cart.status = :status', { status: CartStatus.ACTIVE })
       .andWhere('cart.updatedAt < :cutoffDate', { cutoffDate })
       .andWhere('cart.items IS NOT NULL')

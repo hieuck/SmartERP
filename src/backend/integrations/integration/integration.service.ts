@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { User } from '@/common/security/permission.service';
 
 export interface IntegrationConfig {
   name: string;
@@ -14,35 +15,35 @@ export class IntegrationService {
   private readonly logger = new Logger(IntegrationService.name);
   private integrations: Map<string, IntegrationConfig> = new Map();
 
-  async configure(tenantId: string, integration: IntegrationConfig): Promise<void> {
-    const key = `${tenantId}:${integration.name}`;
+  async configure(user: User, integration: IntegrationConfig): Promise<void> {
+    const key = `${user.tenantId}:${integration.name}`;
     this.integrations.set(key, integration);
-    this.logger.log(`Configured integration ${integration.name} for tenant ${tenantId}`);
+    this.logger.log(`Configured integration ${integration.name} for tenant ${user.tenantId}`);
   }
 
-  async getIntegration(tenantId: string, name: string): Promise<IntegrationConfig | undefined> {
-    const key = `${tenantId}:${name}`;
+  async getIntegration(user: User, name: string): Promise<IntegrationConfig | undefined> {
+    const key = `${user.tenantId}:${name}`;
     return this.integrations.get(key);
   }
 
-  async listIntegrations(tenantId: string): Promise<IntegrationConfig[]> {
+  async listIntegrations(user: User): Promise<IntegrationConfig[]> {
     const results: IntegrationConfig[] = [];
     this.integrations.forEach((value, key) => {
-      if (key.startsWith(`${tenantId}:`)) {
+      if (key.startsWith(`${user.tenantId}:`)) {
         results.push(value);
       }
     });
     return results;
   }
 
-  async removeIntegration(tenantId: string, name: string): Promise<void> {
-    const key = `${tenantId}:${name}`;
+  async removeIntegration(user: User, name: string): Promise<void> {
+    const key = `${user.tenantId}:${name}`;
     this.integrations.delete(key);
   }
 
   // Payment Gateway Integration (VNPay, Momo, etc.)
   async processPayment(
-    tenantId: string,
+    user: User,
     gateway: string,
     amount: number,
     orderId: string,
@@ -66,7 +67,7 @@ export class IntegrationService {
 
   // Shipping Provider Integration
   async createShipment(
-    tenantId: string,
+    user: User,
     provider: string,
     shipmentData: Record<string, unknown>,
   ): Promise<{
@@ -75,7 +76,7 @@ export class IntegrationService {
     provider: string;
     shipmentData: Record<string, unknown>;
   }> {
-    this.logger.log(`Creating shipment with ${provider} for tenant ${tenantId}`);
+    this.logger.log(`Creating shipment with ${provider} for tenant ${user.tenantId}`);
     // TODO: Implement actual shipping provider integration
     return {
       success: true,

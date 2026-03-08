@@ -1,28 +1,29 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { User } from '@/common/security/permission.service';
 
 @Injectable()
 export class ImportExportService {
   private readonly logger = new Logger(ImportExportService.name);
 
   async exportToExcel(
-    tenantId: string,
+    user: User,
     entityType: string,
     data: Record<string, unknown>[],
   ): Promise<Buffer> {
     // TODO: Implement Excel export using exceljs or xlsx library
     this.logger.log(
-      `Exporting ${data.length} ${entityType} records to Excel for tenant ${tenantId}`,
+      `Exporting ${data.length} ${entityType} records to Excel for tenant ${user.tenantId}`,
     );
     return Buffer.from('Excel export placeholder');
   }
 
   async exportToCSV(
-    tenantId: string,
+    user: User,
     entityType: string,
     data: Record<string, unknown>[],
   ): Promise<string> {
     // TODO: Implement CSV export
-    this.logger.log(`Exporting ${data.length} ${entityType} records to CSV for tenant ${tenantId}`);
+    this.logger.log(`Exporting ${data.length} ${entityType} records to CSV for tenant ${user.tenantId}`);
 
     if (data.length === 0) return '';
 
@@ -33,22 +34,22 @@ export class ImportExportService {
   }
 
   async importFromExcel(
-    tenantId: string,
+    user: User,
     entityType: string,
     _file: Buffer,
   ): Promise<Record<string, unknown>[]> {
     // TODO: Implement Excel import using exceljs or xlsx library
-    this.logger.log(`Importing ${entityType} from Excel for tenant ${tenantId}`);
+    this.logger.log(`Importing ${entityType} from Excel for tenant ${user.tenantId}`);
     return [];
   }
 
   async importFromCSV(
-    tenantId: string,
+    user: User,
     entityType: string,
     csvContent: string,
   ): Promise<Record<string, unknown>[]> {
     // TODO: Implement CSV import with validation
-    this.logger.log(`Importing ${entityType} from CSV for tenant ${tenantId}`);
+    this.logger.log(`Importing ${entityType} from CSV for tenant ${user.tenantId}`);
 
     const lines = csvContent.split('\n');
     if (lines.length < 2) return [];

@@ -6,9 +6,16 @@ import { WorkflowService } from './workflow.service';
 import { Workflow, WorkflowStatus } from './entities/workflow.entity';
 import { WorkflowInstance, WorkflowInstanceStatus } from './entities/workflow-instance.entity';
 import { CacheService } from '@/common/cache/cache.service';
+import { PermissionService } from '@/common/security/permission.service';
 import { createMockUser } from '@/common/test/test-helpers';
 
-describe('WorkflowService', () => {
+const mockUser = {
+    id: 'user1',
+    tenantId: 'tenant1',
+    roles: ['admin'],
+  };
+
+  describe('WorkflowService', () => {
   let service: WorkflowService;
   let workflowRepository: Repository<Workflow>;
   let instanceRepository: Repository<WorkflowInstance>;

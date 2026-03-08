@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { DocumentService } from './document.service';
 import { JwtAuthGuard } from '../../core/auth/guards/jwt-auth.guard';
 import { TenantId } from '../../common/decorators/tenant-id.decorator';
@@ -41,7 +42,7 @@ export class DocumentController {
     @Body('parentId') parentId: string | null,
     @Body('uploadedBy') uploadedBy: string,
   ): Promise<Document> {
-    return this.documentService.createFolder(user, name, parentId, uploadedBy);
+    return this.documentService.createFolder(user, name, parentId);
   }
 
   @Post('files')
@@ -59,7 +60,7 @@ export class DocumentController {
     @Body('filePath') filePath: string,
     @Body('uploadedBy') uploadedBy: string,
   ): Promise<Document> {
-    return this.documentService.createVersion(user, id, filePath, uploadedBy);
+    return this.documentService.createVersion(user, id, filePath);
   }
 
   @Put(':id')

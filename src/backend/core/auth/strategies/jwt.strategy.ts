@@ -4,7 +4,8 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User } from '../../user/entities/user.entity';
+import { User as UserEntity } from '../../user/entities/user.entity';
+import { User } from '@/common/security/permission.service';
 
 interface JwtPayload {
   sub: string;
@@ -19,8 +20,8 @@ interface JwtPayload {
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
     private readonly configService: ConfigService,
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
+    @InjectRepository(UserEntity)
+    private readonly userRepository: Repository<UserEntity>,
   ) {
     // Validate JWT_SECRET exists and is strong
     const jwtSecret = configService.get<string>('JWT_SECRET');

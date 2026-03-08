@@ -8,7 +8,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { BankStatement } from './bank-statement.entity';
-import { JournalEntry } from '../../journal-entry/entities/journal-entry.entity';
+import { JournalEntry } from '../../account/entities/journal-entry.entity';
 
 @Entity('bank_transactions')
 export class BankTransaction {

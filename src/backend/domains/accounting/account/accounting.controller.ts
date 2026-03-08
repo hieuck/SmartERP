@@ -1,8 +1,9 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { AccountingService } from './accounting.service';
 import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
-import { TenantGuard } from '../../common/guards/tenant.guard';
+import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { AccountType } from './entities/account.entity';
 import { InvoiceType } from './entities/invoice.entity';
 import { JournalEntry } from './entities/journal-entry.entity';
@@ -10,7 +11,6 @@ import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import { CreateJournalEntryDto } from './dto/create-journal-entry.dto';
 
-import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { User } from '@/common/security/permission.service';
 @ApiTags('accounting')
 @ApiBearerAuth()
@@ -29,30 +29,30 @@ export class AccountingController {
 
   @Get('accounts/:id')
   @ApiOperation({ summary: 'Get account by ID' })
-  findAccountById(@Param('id') id: string, @CurrentUser() user: User) {
-    return this.accountingService.findAccountById(id, user);
+  findAccountById(@CurrentUser() user: User, @Param('id') id: string) {
+    return this.accountingService.findAccountById(user, id);
   }
 
   @Post('accounts')
   @ApiOperation({ summary: 'Create account' })
-  createAccount(@Body() data: CreateAccountDto, @CurrentUser() user: User) {
-    return this.accountingService.createAccount(data, user);
+  createAccount(@CurrentUser() user: User, @Body() data: CreateAccountDto) {
+    return this.accountingService.createAccount(user, data);
   }
 
   @Put('accounts/:id')
   @ApiOperation({ summary: 'Update account' })
   updateAccount(
+    @CurrentUser() user: User,
     @Param('id') id: string,
     @Body() data: UpdateAccountDto,
-    @CurrentUser() user: User,
   ) {
-    return this.accountingService.updateAccount(id, data, user);
+    return this.accountingService.updateAccount(user, id, data);
   }
 
   @Delete('accounts/:id')
   @ApiOperation({ summary: 'Delete account' })
-  deleteAccount(@Param('id') id: string, @CurrentUser() user: User) {
-    return this.accountingService.deleteAccount(id, user);
+  deleteAccount(@CurrentUser() user: User, @Param('id') id: string) {
+    return this.accountingService.deleteAccount(user, id);
   }
 
   // Chart of Accounts - Advanced
@@ -70,13 +70,13 @@ export class AccountingController {
 
   @Get('accounts/validate/:code')
   @ApiOperation({ summary: 'Validate account code uniqueness' })
-  validateAccountCode(@Param('code') code: string, @CurrentUser() user: User) {
-    return this.accountingService.validateAccountCode(code, user);
+  validateAccountCode(@CurrentUser() user: User, @Param('code') code: string) {
+    return this.accountingService.validateAccountCode(user, code);
   }
 
   @Get('accounts/by-type/:type')
   @ApiOperation({ summary: 'Get accounts by type' })
-  getAccountsByType(@Param('type') type: AccountType, @CurrentUser() user: User) {
+  getAccountsByType(@CurrentUser() user: User, @Param('type') type: AccountType) {
     return this.accountingService.getAccountsByType(user, type);
   }
 
@@ -101,22 +101,23 @@ export class AccountingController {
 
   @Get('journal-entries/:id')
   @ApiOperation({ summary: 'Get journal entry by ID' })
-  findJournalEntryById(@Param('id') id: string, @CurrentUser() user: User) {
-    return this.accountingService.findJournalEntryById(id, user);
+  findJournalEntryById(@CurrentUser() user: User, @Param('id') id: string) {
+    return this.accountingService.findJournalEntryById(user, id);
   }
 
   @Post('journal-entries')
   @ApiOperation({ summary: 'Create journal entry' })
-  createJournalEntry(@Body() data: CreateJournalEntryDto, @CurrentUser() user: User) {
+  createJournalEntry(@CurrentUser() user: User, @Body() data: CreateJournalEntryDto) {
     return this.accountingService.createJournalEntry(
-      data as unknown as Partial<JournalEntry>, user,
+      user,
+      data as unknown as Partial<JournalEntry>,
     );
   }
 
   @Post('journal-entries/:id/post')
   @ApiOperation({ summary: 'Post journal entry' })
-  postJournalEntry(@Param('id') id: string, @CurrentUser() user: User) {
-    return this.accountingService.postJournalEntry(id, user);
+  postJournalEntry(@CurrentUser() user: User, @Param('id') id: string) {
+    return this.accountingService.postJournalEntry(user, id);
   }
 
   // Invoices
@@ -129,14 +130,14 @@ export class AccountingController {
 
   @Get('invoices/:id')
   @ApiOperation({ summary: 'Get invoice by ID' })
-  findInvoiceById(@Param('id') id: string, @CurrentUser() user: User) {
-    return this.accountingService.findInvoiceById(id, user);
+  findInvoiceById(@CurrentUser() user: User, @Param('id') id: string) {
+    return this.accountingService.findInvoiceById(user, id);
   }
 
   @Post('invoices')
   @ApiOperation({ summary: 'Create invoice' })
-  createInvoice(@Body() data: Record<string, unknown>, @CurrentUser() user: User) {
-    return this.accountingService.createInvoice(data, user);
+  createInvoice(@CurrentUser() user: User, @Body() data: Record<string, unknown>) {
+    return this.accountingService.createInvoice(user, data);
   }
 
   @Put('invoices/:id')
@@ -146,13 +147,13 @@ export class AccountingController {
     @Body() data: Record<string, unknown>,
     @CurrentUser() user: User,
   ) {
-    return this.accountingService.updateInvoice(id, data, user);
+    return this.accountingService.updateInvoice(user, id, data);
   }
 
   @Delete('invoices/:id')
   @ApiOperation({ summary: 'Delete invoice' })
-  deleteInvoice(@Param('id') id: string, @CurrentUser() user: User) {
-    return this.accountingService.deleteInvoice(id, user);
+  deleteInvoice(@CurrentUser() user: User, @Param('id') id: string) {
+    return this.accountingService.deleteInvoice(user, id);
   }
 
   // Financial Reports
@@ -174,26 +175,23 @@ export class AccountingController {
     const end = new Date(endDate);
     return this.accountingService.getProfitAndLoss(user, start, end);
   }
-}
 
   // Journal Entries - New Methods
   @Post('journal-entries/create')
   @ApiOperation({ summary: 'Create journal entry with validation' })
-  createJournalEntryNew(
-    @Body() dto: any,
+  async createJournalEntryNew(
     @CurrentUser() user: User,
-    @Request() req: any,
+    @Body() dto: any,
   ) {
-    return this.accountingService.createJournalEntry(dto, user, req.user.id);
+    return this.accountingService.createJournalEntry(user, dto);
   }
 
   @Post('journal-entries/:id/post')
   @ApiOperation({ summary: 'Post journal entry and update balances' })
-  postJournalEntryNew(
-    @Param('id') id: string,
+  async postJournalEntryNew(
     @CurrentUser() user: User,
-    @Request() req: any,
+    @Param('id') id: string,
   ) {
-    return this.accountingService.postJournalEntry(id, user, req.user.id);
+    return this.accountingService.postJournalEntry(user, id);
   }
 }

@@ -70,25 +70,27 @@ export class DocumentService {
     name: string,
     parentId: string | null,
   ): Promise<Document> {
-    return this.secureDocumentRepo.create(user, {
+    const doc = this.documentRepository.create({
       name,
       type: DocumentType.FOLDER,
       parentId,
       uploadedBy: user.id,
     });
+    return this.documentRepository.save(doc);
   }
 
   async createFile(user: User, data: Partial<Document>): Promise<Document> {
-    return this.secureDocumentRepo.create(user, {
+    const doc = this.documentRepository.create({
       ...data,
       type: DocumentType.FILE,
       uploadedBy: user.id,
     });
+    return this.documentRepository.save(doc);
   }
 
   async update(user: User, id: string, data: Partial<Document>): Promise<Document> {
     await this.findById(user, id);
-    await this.secureDocumentRepo.update(user, { where: { id } }, data);
+    await this.documentRepository.update({ id }, data);
 
     const cacheKey = generateCacheKey('document', user.tenantId, id);
     await this.cacheService.del(cacheKey);
@@ -98,7 +100,7 @@ export class DocumentService {
 
   async delete(user: User, id: string): Promise<void> {
     await this.findById(user, id);
-    await this.secureDocumentRepo.softDelete(user, { where: { id } });
+    await this.documentRepository.softDelete({ id });
 
     const cacheKey = generateCacheKey('document', user.tenantId, id);
     await this.cacheService.del(cacheKey);
@@ -110,7 +112,7 @@ export class DocumentService {
     filePath: string,
   ): Promise<Document> {
     const original = await this.findById(user, id);
-    const saved = await this.secureDocumentRepo.create(user, {
+    const saved = await this.secureDocumentRepo.save(user, {
       name: original.name,
       type: original.type,
       parentId: original.parentId,

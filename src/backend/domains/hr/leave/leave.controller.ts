@@ -1,15 +1,15 @@
 import { Controller, Post, Get, Body, Param, UseGuards } from '@nestjs/common';
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { LeaveService } from './leave.service';
 import { RequestLeaveDto } from './dto/request-leave.dto';
 import { ApproveLeaveDto } from './dto/approve-leave.dto';
 import { RejectLeaveDto } from './dto/reject-leave.dto';
 import { AllocateLeaveDto } from './dto/allocate-leave.dto';
-import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../../auth/guards/roles.guard';
-import { Roles } from '../../auth/decorators/roles.decorator';
-import { CurrentUser } from '../../auth/decorators/current-user.decorator';
-import { User } from '../user/entities/user.entity';
+import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
+import { RolesGuard } from '@/common/guards/roles.guard';
+import { Roles } from '@/common/decorators/roles.decorator';
+import { User } from '@/common/security/permission.service';
 
 @ApiTags('Leave')
 @ApiBearerAuth()
@@ -21,7 +21,7 @@ export class LeaveController {
   @Post('request')
   @Roles('employee', 'manager', 'admin', 'hr_manager')
   @ApiOperation({ summary: 'Request leave' })
-  async requestLeave(@Body() dto: RequestLeaveDto, @CurrentUser() user: User) {
+  async requestLeave(@CurrentUser() user: User, @Body() dto: RequestLeaveDto) {
     return this.leaveService.requestLeave(
       dto.employeeId,
       dto.leaveType,
@@ -35,21 +35,21 @@ export class LeaveController {
   @Post('approve')
   @Roles('manager', 'admin', 'hr_manager')
   @ApiOperation({ summary: 'Approve leave request' })
-  async approveLeave(@Body() dto: ApproveLeaveDto, @CurrentUser() user: User) {
+  async approveLeave(@CurrentUser() user: User, @Body() dto: ApproveLeaveDto) {
     return this.leaveService.approveLeave(dto.leaveId, user);
   }
 
   @Post('reject')
   @Roles('manager', 'admin', 'hr_manager')
   @ApiOperation({ summary: 'Reject leave request' })
-  async rejectLeave(@Body() dto: RejectLeaveDto, @CurrentUser() user: User) {
+  async rejectLeave(@CurrentUser() user: User, @Body() dto: RejectLeaveDto) {
     return this.leaveService.rejectLeave(dto.leaveId, dto.rejectionReason, user);
   }
 
   @Post('allocate')
   @Roles('admin', 'hr_manager')
   @ApiOperation({ summary: 'Allocate leave days to employee' })
-  async allocateLeave(@Body() dto: AllocateLeaveDto, @CurrentUser() user: User) {
+  async allocateLeave(@CurrentUser() user: User, @Body() dto: AllocateLeaveDto) {
     return this.leaveService.allocateLeave(
       dto.employeeId,
       dto.leaveType,

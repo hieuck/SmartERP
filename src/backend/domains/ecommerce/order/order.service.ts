@@ -3,10 +3,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Order, OrderStatus, PaymentStatus, ShippingStatus } from './entities/order.entity';
 import { OrderItem } from './entities/order-item.entity';
-import { User } from '../../../core/user/entities/user.entity';
+import { User as UserEntity } from '../../../core/user/entities/user.entity';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { CancelOrderDto } from './dto/cancel-order.dto';
+import { User } from '@/common/security/permission.service';
 
 /**
  * OrderService handles order CRUD and status management

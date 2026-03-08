@@ -1,13 +1,14 @@
 import { Controller, Post, Get, Body, Query, UseGuards } from '@nestjs/common';
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AttendanceService } from './attendance.service';
 import { CheckInDto } from './dto/check-in.dto';
 import { CheckOutDto } from './dto/check-out.dto';
-import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../../auth/guards/roles.guard';
-import { Roles } from '../../auth/decorators/roles.decorator';
-import { CurrentUser } from '../../auth/decorators/current-user.decorator';
-import { User } from '../user/entities/user.entity';
+import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
+import { RolesGuard } from '@/common/guards/roles.guard';
+import { Roles } from '@/common/decorators/roles.decorator';
+import { User as UserEntity } from '@/core/user/entities/user.entity';
+import { User } from '@/common/security/permission.service';
 
 @ApiTags('Attendance')
 @ApiBearerAuth()
@@ -19,7 +20,7 @@ export class AttendanceController {
   @Post('check-in')
   @Roles('employee', 'manager', 'admin', 'hr_manager')
   @ApiOperation({ summary: 'Check-in employee' })
-  async checkIn(@Body() dto: CheckInDto, @CurrentUser() user: User) {
+  async checkIn(@CurrentUser() user: User, @Body() dto: CheckInDto) {
     return this.attendanceService.checkIn(
       dto.employeeId,
       new Date(dto.date),
@@ -31,7 +32,7 @@ export class AttendanceController {
   @Post('check-out')
   @Roles('employee', 'manager', 'admin', 'hr_manager')
   @ApiOperation({ summary: 'Check-out employee' })
-  async checkOut(@Body() dto: CheckOutDto, @CurrentUser() user: User) {
+  async checkOut(@CurrentUser() user: User, @Body() dto: CheckOutDto) {
     return this.attendanceService.checkOut(
       dto.employeeId,
       new Date(dto.date),
@@ -46,8 +47,7 @@ export class AttendanceController {
   async getByEmployee(
     @Query('employeeId') employeeId: string,
     @Query('startDate') startDate: string,
-    @Query('endDate') endDate: string,
-    @CurrentUser() user: User,
+    @CurrentUser() user: User, @Query('endDate') endDate: string,
   ) {
     return this.attendanceService.getAttendanceByEmployee(
       employeeId,
@@ -63,8 +63,7 @@ export class AttendanceController {
   async getReport(
     @Query('employeeId') employeeId: string,
     @Query('startDate') startDate: string,
-    @Query('endDate') endDate: string,
-    @CurrentUser() user: User,
+    @CurrentUser() user: User, @Query('endDate') endDate: string,
   ) {
     return this.attendanceService.getAttendanceReport(
       employeeId,

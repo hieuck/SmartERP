@@ -6,9 +6,16 @@ import { TenantService } from './tenant.service';
 import { Tenant, TenantStatus, SubscriptionPlan, BillingCycle } from './entities/tenant.entity';
 import { User } from '../user/entities/user.entity';
 import { CacheService } from '@/common/cache/cache.service';
+import { PermissionService } from '@/common/security/permission.service';
 import { createMockUser } from '@/common/test/test-helpers';
 
-describe('TenantService', () => {
+const mockUser = {
+    id: 'user1',
+    tenantId: 'tenant1',
+    roles: ['admin'],
+  };
+
+  describe('TenantService', () => {
   let service: TenantService;
   let tenantRepository: Repository<Tenant>;
   let userRepository: Repository<User>;
@@ -113,12 +120,13 @@ describe('TenantService', () => {
     });
 
     it('should throw NotFoundException when tenant not found', async () => {
+      const nonExistentUser = { ...mockUser, tenantId: 'nonexistent' };
       jest.spyOn(cacheService, 'getOrSet').mockImplementation(async (key, fn) => {
         return fn();
       });
       jest.spyOn(tenantRepository, 'findOne').mockResolvedValue(null);
 
-      await expect(service.findOne('nonexistent')).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(nonExistentUser)).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -160,7 +168,7 @@ describe('TenantService', () => {
 
       await service.remove(mockUser);
 
-      expect(tenantRepository.softDelete).toHaveBeenCalledWith('tenant-1');
+      expect(tenantRepository.softDelete).toHaveBeenCalledWith('tenant1');
     });
   });
 

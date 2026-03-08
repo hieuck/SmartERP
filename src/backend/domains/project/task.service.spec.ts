@@ -103,7 +103,7 @@ describe('TaskService', () => {
       mockTaskRepository.create.mockReturnValue({ ...dto, tenantId: 'tenant-1' });
       mockTaskRepository.save.mockResolvedValue(mockTask);
 
-      const result = await service.create(dto, mockUser, mockUser);
+      const result = await service.create(mockUser, dto, mockUser);
 
       expect(mockProjectRepository.findOne).toHaveBeenCalled();
       expect(mockTaskRepository.save).toHaveBeenCalled();
@@ -114,7 +114,7 @@ describe('TaskService', () => {
       const dto = { title: 'New Task', projectId: 'invalid-project' };
       mockProjectRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.create(dto, mockUser, mockUser)).rejects.toThrow(NotFoundException);
+      await expect(service.create(mockUser, dto, mockUser)).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -122,7 +122,7 @@ describe('TaskService', () => {
     it('should return a task by ID', async () => {
       mockTaskRepository.findOne.mockResolvedValue(mockTask);
 
-      const result = await service.findOne('task-1', mockUser);
+      const result = await service.findOne(mockUser, 'task-1');
 
       expect(result).toEqual(mockTask);
     });
@@ -130,7 +130,7 @@ describe('TaskService', () => {
     it('should throw NotFoundException if task not found', async () => {
       mockTaskRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findOne('invalid-id', mockUser)).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(mockUser, 'invalid-id')).rejects.toThrow(NotFoundException);
     });
   });
 

@@ -16,6 +16,7 @@ describe('BOMService', () => {
     save: jest.fn(),
     findOne: jest.fn(),
     find: jest.fn(),
+    count: jest.fn(),
     createQueryBuilder: jest.fn(),
   };
 
@@ -71,19 +72,29 @@ describe('BOMService', () => {
         unitCost: 0,
       };
 
-      mockBomRepository.create.mockReturnValue(mockBom);
-      mockBomRepository.save.mockResolvedValue({
+      const savedLines = dto.lines.map((line, idx) => ({
+        id: `line${idx}`,
+        tenantId,
+        bomId: 'bom1',
+        ...line,
+        totalCost: line.quantity * line.unitCost,
+      }));
+
+      const savedBomWithLines = {
         ...mockBom,
-        lines: dto.lines.map((line, idx) => ({
-          id: `line${idx}`,
-          tenantId,
-          bomId: 'bom1',
-          ...line,
-          totalCost: line.quantity * line.unitCost,
-        })),
+        lines: savedLines,
         totalCost: 40, // 2*10 + 1*20
         unitCost: 40,
-      });
+      };
+
+      mockBomRepository.count.mockResolvedValue(0);
+      mockBomRepository.create.mockReturnValue(mockBom);
+      mockBomLineRepository.create.mockImplementation((lineDto) => lineDto as any);
+      mockBomLineRepository.save.mockResolvedValue(savedLines);
+      // findOne is called by calculateCosts at the end
+      mockBomRepository.findOne.mockResolvedValue(savedBomWithLines);
+      // save is called twice: once for BOM, once in calculateCosts
+      mockBomRepository.save.mockResolvedValue(savedBomWithLines);
 
       const result = await service.create(tenantId, dto);
 

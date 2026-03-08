@@ -318,7 +318,7 @@ export default function Dashboard() {
           <Card title="Top 10 khách hàng">
             <Table
               size={isMobile ? 'small' : 'middle'}
-              scroll={{ x: 'max-content' }}
+              scroll={{ x: 'max-content', y: 300 }}
               dataSource={topCustomers}
               rowKey="id"
               columns={[
@@ -349,8 +349,6 @@ export default function Dashboard() {
                 },
               ]}
               pagination={false}
-              size="small"
-              scroll={{ y: 300 }}
             />
           </Card>
         </Col>

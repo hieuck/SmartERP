@@ -1,0 +1,129 @@
+# Alertmanager Configuration for SmartERP
+# This file configures how alerts are routed and sent
+
+global:
+  resolve_timeout: 5m
+  # SMTP configuration for email alerts
+  smtp_smarthost: 'smtp.gmail.com:587'
+  smtp_from: 'alerts@smarterp.com'
+  smtp_auth_username: 'alerts@smarterp.com'
+  smtp_auth_password: 'your-app-password'
+  smtp_require_tls: true
+
+# Templates for alert messages
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# Route tree for alerts
+route:
+  # Default receiver
+  receiver: 'team-email'
+  
+  # Group alerts by these labels
+  group_by: ['alertname', 'cluster', 'service']
+  
+  # Wait time before sending first notification
+  group_wait: 10s
+  
+  # Wait time before sending notification about new alerts in group
+  group_interval: 10s
+  
+  # Wait time before re-sending notification
+  repeat_interval: 12h
+
+  # Child routes
+  routes:
+    # Critical alerts - immediate notification
+    - match:
+        severity: critical
+      receiver: 'team-pagerduty'
+      group_wait: 0s
+      group_interval: 5m
+      repeat_interval: 4h
+      continue: true
+
+    # Critical alerts also go to email
+    - match:
+        severity: critical
+      receiver: 'team-email'
+      group_wait: 0s
+      group_interval: 5m
+      repeat_interval: 4h
+
+    # Warning alerts - email only
+    - match:
+        severity: warning
+      receiver: 'team-email'
+      group_wait: 30s
+      group_interval: 10m
+      repeat_interval: 12h
+
+    # Database alerts - DBA team
+    - match:
+        component: database
+      receiver: 'dba-team'
+      group_wait: 10s
+      group_interval: 5m
+      repeat_interval: 8h
+
+# Alert receivers
+receivers:
+  # Email notifications
+  - name: 'team-email'
+    email_configs:
+      - to: 'team@smarterp.com'
+        headers:
+          Subject: '[SmartERP] {{ .GroupLabels.alertname }}'
+        html: |
+          <h2>Alert: {{ .GroupLabels.alertname }}</h2>
+          <p><strong>Severity:</strong> {{ .CommonLabels.severity }}</p>
+          <p><strong>Component:</strong> {{ .CommonLabels.component }}</p>
+          <p><strong>Summary:</strong> {{ .CommonAnnotations.summary }}</p>
+          <p><strong>Description:</strong> {{ .CommonAnnotations.description }}</p>
+          <p><strong>Time:</strong> {{ .StartsAt }}</p>
+
+  # PagerDuty for critical alerts
+  - name: 'team-pagerduty'
+    pagerduty_configs:
+      - service_key: 'your-pagerduty-service-key'
+        description: '{{ .CommonAnnotations.summary }}'
+        details:
+          severity: '{{ .CommonLabels.severity }}'
+          component: '{{ .CommonLabels.component }}'
+          description: '{{ .CommonAnnotations.description }}'
+
+  # Slack notifications
+  - name: 'team-slack'
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#smarterp-alerts'
+        title: '{{ .GroupLabels.alertname }}'
+        text: |
+          *Severity:* {{ .CommonLabels.severity }}
+          *Component:* {{ .CommonLabels.component }}
+          *Summary:* {{ .CommonAnnotations.summary }}
+          *Description:* {{ .CommonAnnotations.description }}
+        color: '{{ if eq .CommonLabels.severity "critical" }}danger{{ else if eq .CommonLabels.severity "warning" }}warning{{ else }}good{{ end }}'
+
+  # DBA team email
+  - name: 'dba-team'
+    email_configs:
+      - to: 'dba@smarterp.com'
+        headers:
+          Subject: '[SmartERP Database] {{ .GroupLabels.alertname }}'
+
+# Inhibition rules - suppress certain alerts when others are firing
+inhibit_rules:
+  # Suppress warning if critical is firing
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'cluster', 'service']
+
+  # Suppress all alerts if service is down
+  - source_match:
+      alertname: 'ServiceDown'
+    target_match_re:
+      alertname: '.*'
+    equal: ['cluster', 'service']

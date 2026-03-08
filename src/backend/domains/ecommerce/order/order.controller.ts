@@ -10,6 +10,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { OrderService } from './order.service';
 import { PaymentService } from './payment.service';
@@ -39,22 +40,21 @@ export class OrderController {
   async create(@Body() dto: CreateOrderDto, @Req() req: any) {
     const tenantId = req.user?.tenantId || 'default';
     const user = req.user;
-    return this.orderService.create(dto, user, user);
+    return this.orderService.create(dto, user);
   }
 
   @Get()
   @ApiOperation({ summary: 'Get all orders' })
   @ApiResponse({ status: 200, description: 'Orders retrieved successfully' })
   async findAll(
+    @CurrentUser() user: User,
     @Query('status') status?: OrderStatus,
     @Query('paymentStatus') paymentStatus?: PaymentStatus,
     @Query('shippingStatus') shippingStatus?: ShippingStatus,
     @Query('customerId') customerId?: string,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
-    @Req() req?: any,
   ) {
-    const tenantId = req.user?.tenantId || 'default';
     const filters = {
       status,
       paymentStatus,
@@ -63,7 +63,7 @@ export class OrderController {
       startDate: startDate ? new Date(startDate) : undefined,
       endDate: endDate ? new Date(endDate) : undefined,
     };
-    return this.orderService.findAll(user, filters);
+    return this.orderService.findAll(user.tenantId, filters);
   }
 
   @Get('statistics')
@@ -85,18 +85,16 @@ export class OrderController {
   @Get('customer/:customerId')
   @ApiOperation({ summary: 'Get orders by customer' })
   @ApiResponse({ status: 200, description: 'Orders retrieved successfully' })
-  async findByCustomer(@Param('customerId') customerId: string, @Req() req: any) {
-    const tenantId = req.user?.tenantId || 'default';
-    return this.orderService.findByCustomer(customerId, user);
+  async findByCustomer(@Param('customerId') customerId: string, @CurrentUser() user: User) {
+    return this.orderService.findByCustomer(customerId, user.tenantId);
   }
 
   @Get('number/:orderNumber')
   @ApiOperation({ summary: 'Get order by order number' })
   @ApiResponse({ status: 200, description: 'Order retrieved successfully' })
   @ApiResponse({ status: 404, description: 'Order not found' })
-  async findByOrderNumber(@Param('orderNumber') orderNumber: string, @Req() req: any) {
-    const tenantId = req.user?.tenantId || 'default';
-    return this.orderService.findByOrderNumber(orderNumber, user);
+  async findByOrderNumber(@Param('orderNumber') orderNumber: string, @CurrentUser() user: User) {
+    return this.orderService.findByOrderNumber(user.tenantId, orderNumber);
   }
 
   @Get(':id')
@@ -105,9 +103,8 @@ export class OrderController {
   @ApiOperation({ summary: 'Get order by ID' })
   @ApiResponse({ status: 200, description: 'Order retrieved successfully' })
   @ApiResponse({ status: 404, description: 'Order not found' })
-  async findOne(@Param('id') id: string, @Req() req: any) {
-    const tenantId = req.user?.tenantId || 'default';
-    return this.orderService.findOne(id, user);
+  async findOne(@CurrentUser() user: User, @Param('id') id: string) {
+    return this.orderService.findOne(user.tenantId, id);
   }
 
   @Patch(':id/status')
@@ -139,26 +136,23 @@ export class OrderController {
   @ApiOperation({ summary: 'Process payment' })
   @ApiResponse({ status: 200, description: 'Payment processed successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
-  async processPayment(@Body() dto: ProcessPaymentDto, @Req() req: any) {
-    const tenantId = req.user?.tenantId || 'default';
-    return this.paymentService.processPayment(dto, user);
+  async processPayment(@CurrentUser() user: User, @Body() dto: ProcessPaymentDto) {
+    return this.paymentService.processPayment(dto, user?.tenantId || '');
   }
 
   @Post('payment/verify')
   @ApiOperation({ summary: 'Verify payment' })
   @ApiResponse({ status: 200, description: 'Payment verified successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
-  async verifyPayment(@Body() dto: VerifyPaymentDto, @Req() req: any) {
-    const tenantId = req.user?.tenantId || 'default';
-    return this.paymentService.verifyPayment(dto, user);
+  async verifyPayment(@CurrentUser() user: User, @Body() dto: VerifyPaymentDto) {
+    return this.paymentService.verifyPayment(dto, user?.tenantId || '');
   }
 
   @Post('payment/refund')
   @ApiOperation({ summary: 'Refund payment' })
   @ApiResponse({ status: 200, description: 'Payment refunded successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
-  async refundPayment(@Body() dto: RefundDto, @Req() req: any) {
-    const tenantId = req.user?.tenantId || 'default';
-    return this.paymentService.refundPayment(dto, user);
+  async refundPayment(@CurrentUser() user: User, @Body() dto: RefundDto) {
+    return this.paymentService.refundPayment(dto, user?.tenantId || '');
   }
 }

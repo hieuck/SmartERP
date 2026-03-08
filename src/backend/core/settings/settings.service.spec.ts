@@ -8,7 +8,13 @@ import { CreateSettingDto, SettingCategory, SettingDataType } from './dto/create
 import { UpdateSettingDto } from './dto/update-setting.dto';
 import { createMockUser } from '@/common/test/test-helpers';
 
-describe('SettingsService', () => {
+const mockUser = {
+    id: 'user1',
+    tenantId: 'tenant1',
+    roles: ['admin'],
+  };
+
+  describe('SettingsService', () => {
   let service: SettingsService;
   let repository: Repository<Setting>;
 
@@ -28,7 +34,7 @@ describe('SettingsService', () => {
     dataType: SettingDataType.STRING,
     description: 'Application name',
     isPublic: true,
-    tenantId: 'tenant-1',
+    tenantId: 'tenant1',
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -75,11 +81,11 @@ describe('SettingsService', () => {
 
       expect(result).toEqual(mockSetting);
       expect(repository.findOne).toHaveBeenCalledWith({
-        where: { tenantId: 'tenant-1', key: 'app.name' },
+        where: { tenantId: 'tenant1', key: 'app.name' },
       });
       expect(repository.create).toHaveBeenCalledWith({
         ...createDto,
-        tenantId: 'tenant-1',
+        tenantId: 'tenant1',
       });
       expect(repository.save).toHaveBeenCalledWith(mockSetting);
     });
@@ -105,7 +111,7 @@ describe('SettingsService', () => {
 
       expect(result).toEqual([mockSetting]);
       expect(repository.find).toHaveBeenCalledWith({
-        where: { tenantId: 'tenant-1' },
+        where: { tenantId: 'tenant1' },
       });
     });
 
@@ -116,7 +122,7 @@ describe('SettingsService', () => {
 
       expect(result).toEqual([mockSetting]);
       expect(repository.find).toHaveBeenCalledWith({
-        where: { tenantId: 'tenant-1', category: SettingCategory.GENERAL },
+        where: { tenantId: 'tenant1', category: SettingCategory.GENERAL },
       });
     });
   });
@@ -129,7 +135,7 @@ describe('SettingsService', () => {
 
       expect(result).toEqual(mockSetting);
       expect(repository.findOne).toHaveBeenCalledWith({
-        where: { tenantId: 'tenant-1', key: 'app.name' },
+        where: { tenantId: 'tenant1', key: 'app.name' },
       });
     });
 
@@ -177,7 +183,7 @@ describe('SettingsService', () => {
 
       expect(result).toEqual([mockSetting]);
       expect(repository.find).toHaveBeenCalledWith({
-        where: { tenantId: 'tenant-1', isPublic: true },
+        where: { tenantId: 'tenant1', isPublic: true },
       });
     });
   });

@@ -11,10 +11,11 @@ import {
   BeforeUpdate,
   Index,
 } from 'typeorm';
-import { User } from '../../../core/user/entities/user.entity';
+import { User as UserEntity } from '../../../core/user/entities/user.entity';
 import { Project } from './project.entity';
 import { TaskDependency } from './task-dependency.entity';
 import { TimeEntry } from './time-entry.entity';
+import { User } from '@/common/security/permission.service';
 
 export enum TaskStatus {
   TODO = 'todo',
@@ -82,7 +83,7 @@ export class Task {
   @Column({ name: 'parent_task_id', nullable: true })
   parentTaskId?: string;
 
-  @ManyToOne(() => User, { nullable: true })
+  @ManyToOne('User', { nullable: true })
   @JoinColumn({ name: 'assignee_id' })
   assignee?: User;
 

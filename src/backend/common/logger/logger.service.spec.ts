@@ -31,7 +31,13 @@ jest.mock('winston', () => {
   };
 });
 
-describe('LoggerService', () => {
+const mockUser = {
+    id: 'user1',
+    tenantId: 'tenant1',
+    roles: ['admin'],
+  };
+
+  describe('LoggerService', () => {
   let service: LoggerService;
   let mockWinstonLogger: any;
 

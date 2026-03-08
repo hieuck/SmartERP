@@ -5,34 +5,35 @@ import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { ShoppingCartService } from './shopping-cart.service';
 import { ShoppingCart, CartStatus } from './entities/shopping-cart.entity';
 import { CartItem } from './entities/cart-item.entity';
-import { ProductCatalogService } from '../product-catalog/product-catalog.service';
-import { ProductStatus } from '../product-catalog/entities/product-catalog.entity';
+import { ProductCatalog, ProductStatus } from '../product-catalog/entities/product-catalog.entity';
 import { createMockUser } from '@/common/test/test-helpers';
 
 describe('ShoppingCartService', () => {
   let service: ShoppingCartService;
   let cartRepository: Repository<ShoppingCart>;
   let cartItemRepository: Repository<CartItem>;
-  let productService: ProductCatalogService;
+  let productRepository: Repository<ProductCatalog>;
 
   const mockCartRepository = {
     findOne: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),
     find: jest.fn(),
+    createQueryBuilder: jest.fn(),
   };
 
   const mockCartItemRepository = {
     findOne: jest.fn(),
     save: jest.fn(),
     remove: jest.fn(),
+    create: jest.fn(),
   };
 
-  const mockProductService = {
+  const mockProductRepository = {
     findOne: jest.fn(),
   };
 
-  const mockUser = createMockUser();
+  const mockUser = { ...createMockUser(), tenantId: 'tenant-123' };
 
   const mockProduct = {
     id: 'prod-123',
@@ -42,6 +43,9 @@ describe('ShoppingCartService', () => {
     stockQuantity: 50,
     status: ProductStatus.ACTIVE,
     featuredImage: 'image.jpg',
+    isPublished: true,
+    trackInventory: true,
+    tenantId: 'tenant-123',
   };
 
   const mockCart = {
@@ -79,8 +83,8 @@ describe('ShoppingCartService', () => {
           useValue: mockCartItemRepository,
         },
         {
-          provide: ProductCatalogService,
-          useValue: mockProductService,
+          provide: getRepositoryToken(ProductCatalog),
+          useValue: mockProductRepository,
         },
       ],
     }).compile();
@@ -92,7 +96,9 @@ describe('ShoppingCartService', () => {
     cartItemRepository = module.get<Repository<CartItem>>(
       getRepositoryToken(CartItem),
     );
-    productService = module.get<ProductCatalogService>(ProductCatalogService);
+    productRepository = module.get<Repository<ProductCatalog>>(
+      getRepositoryToken(ProductCatalog),
+    );
   });
 
   afterEach(() => {
@@ -104,12 +110,12 @@ describe('ShoppingCartService', () => {
       mockCartRepository.findOne.mockResolvedValue(mockCart);
 
       const result = await service.getOrCreateCart(
-        'session-123',
         mockUser,
+        'session-123',
       );
 
       expect(mockCartRepository.findOne).toHaveBeenCalledWith({
-        where: { sessionId: 'session-123', tenantId: 'tenant-123' },
+        where: { sessionId: 'session-123', tenantId: 'tenant-123', status: CartStatus.ACTIVE },
         relations: ['items'],
       });
       expect(result).toEqual(mockCart);
@@ -121,8 +127,8 @@ describe('ShoppingCartService', () => {
       mockCartRepository.save.mockResolvedValue(mockCart);
 
       const result = await service.getOrCreateCart(
-        'session-123',
         mockUser,
+        'session-123',
       );
 
       expect(mockCartRepository.create).toHaveBeenCalled();
@@ -143,22 +149,20 @@ describe('ShoppingCartService', () => {
         items: [mockCartItem],
       };
 
-      mockCartRepository.findOne.mockResolvedValue(mockCart);
-      mockProductService.findOne.mockResolvedValue(mockProduct);
-      mockCartItemRepository.findOne.mockResolvedValue(null);
+      mockCartRepository.findOne.mockResolvedValueOnce(mockCart).mockResolvedValueOnce(cartWithItems);
+      mockProductRepository.findOne.mockResolvedValue(mockProduct);
+      mockCartItemRepository.create.mockReturnValue(mockCartItem);
       mockCartItemRepository.save.mockResolvedValue(mockCartItem);
-      mockCartRepository.save.mockResolvedValue(cartWithItems);
 
       const result = await service.addItem(
+        mockUser,
         'session-123',
         dto,
-        mockUser,
       );
 
-      expect(mockProductService.findOne).toHaveBeenCalledWith(
-        'prod-123',
-        'tenant-123',
-      );
+      expect(mockProductRepository.findOne).toHaveBeenCalledWith({
+        where: { id: 'prod-123', tenantId: 'tenant-123' },
+      });
       expect(mockCartItemRepository.save).toHaveBeenCalled();
       expect(result.items).toHaveLength(1);
     });
@@ -170,10 +174,10 @@ describe('ShoppingCartService', () => {
       };
 
       mockCartRepository.findOne.mockResolvedValue(mockCart);
-      mockProductService.findOne.mockResolvedValue(mockProduct);
+      mockProductRepository.findOne.mockResolvedValue(mockProduct);
 
       await expect(
-        service.addItem('session-123', dto, mockUser),
+        service.addItem(mockUser, 'session-123', dto),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -184,15 +188,17 @@ describe('ShoppingCartService', () => {
       };
 
       const existingItem = { ...mockCartItem, quantity: 1 };
+      const cartWithExistingItem = {
+        ...mockCart,
+        items: [existingItem],
+      };
       const updatedItem = { ...mockCartItem, quantity: 3 };
 
-      mockCartRepository.findOne.mockResolvedValue(mockCart);
-      mockProductService.findOne.mockResolvedValue(mockProduct);
-      mockCartItemRepository.findOne.mockResolvedValue(existingItem);
+      mockCartRepository.findOne.mockResolvedValue(cartWithExistingItem);
+      mockProductRepository.findOne.mockResolvedValue(mockProduct);
       mockCartItemRepository.save.mockResolvedValue(updatedItem);
-      mockCartRepository.save.mockResolvedValue(mockCart);
 
-      await service.addItem('session-123', dto, mockUser);
+      await service.addItem(mockUser, 'session-123', dto);
 
       expect(mockCartItemRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({ quantity: 3 }),
@@ -209,16 +215,15 @@ describe('ShoppingCartService', () => {
 
       const updatedItem = { ...mockCartItem, quantity: 5 };
 
-      mockCartRepository.findOne.mockResolvedValue(cartWithItems);
-      mockCartItemRepository.findOne.mockResolvedValue(mockCartItem);
+      mockCartRepository.findOne.mockResolvedValueOnce(cartWithItems).mockResolvedValueOnce(cartWithItems);
+      mockProductRepository.findOne.mockResolvedValue(mockProduct);
       mockCartItemRepository.save.mockResolvedValue(updatedItem);
-      mockCartRepository.save.mockResolvedValue(cartWithItems);
 
       const result = await service.updateItemQuantity(
-        'session-123',
+        mockUser,
+        'cart-123',
         'item-123',
         5,
-        mockUser,
       );
 
       expect(mockCartItemRepository.save).toHaveBeenCalledWith(
@@ -228,15 +233,19 @@ describe('ShoppingCartService', () => {
     });
 
     it('should throw NotFoundException if item not found', async () => {
-      mockCartRepository.findOne.mockResolvedValue(mockCart);
-      mockCartItemRepository.findOne.mockResolvedValue(null);
+      const cartWithoutItem = {
+        ...mockCart,
+        items: [],
+      };
+
+      mockCartRepository.findOne.mockResolvedValue(cartWithoutItem);
 
       await expect(
         service.updateItemQuantity(
-          'session-123',
+          mockUser,
+          'cart-123',
           'item-999',
           5,
-          'tenant-123',
         ),
       ).rejects.toThrow(NotFoundException);
     });
@@ -249,27 +258,34 @@ describe('ShoppingCartService', () => {
         items: [mockCartItem],
       };
 
-      mockCartRepository.findOne.mockResolvedValue(cartWithItems);
-      mockCartItemRepository.findOne.mockResolvedValue(mockCartItem);
+      const cartWithoutItems = {
+        ...mockCart,
+        items: [],
+      };
+
+      mockCartRepository.findOne.mockResolvedValueOnce(cartWithItems).mockResolvedValueOnce(cartWithoutItems);
       mockCartItemRepository.remove.mockResolvedValue(mockCartItem);
-      mockCartRepository.save.mockResolvedValue(mockCart);
 
       const result = await service.removeItem(
-        'session-123',
-        'item-123',
         mockUser,
+        'cart-123',
+        'item-123',
       );
 
       expect(mockCartItemRepository.remove).toHaveBeenCalledWith(mockCartItem);
-      expect(result).toEqual(mockCart);
+      expect(result).toEqual(cartWithoutItems);
     });
 
     it('should throw NotFoundException if item not found', async () => {
-      mockCartRepository.findOne.mockResolvedValue(mockCart);
-      mockCartItemRepository.findOne.mockResolvedValue(null);
+      const cartWithoutItem = {
+        ...mockCart,
+        items: [],
+      };
+
+      mockCartRepository.findOne.mockResolvedValue(cartWithoutItem);
 
       await expect(
-        service.removeItem('session-123', 'item-999', mockUser),
+        service.removeItem(mockUser, 'cart-123', 'item-999'),
       ).rejects.toThrow(NotFoundException);
     });
   });
@@ -286,11 +302,10 @@ describe('ShoppingCartService', () => {
         items: [],
       };
 
-      mockCartRepository.findOne.mockResolvedValue(cartWithItems);
+      mockCartRepository.findOne.mockResolvedValueOnce(cartWithItems).mockResolvedValueOnce(emptyCart);
       mockCartItemRepository.remove.mockResolvedValue([mockCartItem]);
-      mockCartRepository.save.mockResolvedValue(emptyCart);
 
-      const result = await service.clearCart('session-123', mockUser);
+      const result = await service.clearCart(mockUser, 'cart-123');
 
       expect(mockCartItemRepository.remove).toHaveBeenCalled();
       expect(result.items).toHaveLength(0);
@@ -305,13 +320,13 @@ describe('ShoppingCartService', () => {
         discount: 10000,
       };
 
-      mockCartRepository.findOne.mockResolvedValue(mockCart);
+      mockCartRepository.findOne.mockResolvedValueOnce(mockCart).mockResolvedValueOnce(cartWithCoupon);
       mockCartRepository.save.mockResolvedValue(cartWithCoupon);
 
       const result = await service.applyCoupon(
-        'session-123',
-        'SUMMER2026',
         mockUser,
+        'cart-123',
+        'SUMMER2026',
       );
 
       expect(result.couponCode).toBe('SUMMER2026');
@@ -332,10 +347,10 @@ describe('ShoppingCartService', () => {
         discount: 0,
       };
 
-      mockCartRepository.findOne.mockResolvedValue(cartWithCoupon);
+      mockCartRepository.findOne.mockResolvedValueOnce(cartWithCoupon).mockResolvedValueOnce(cartWithoutCoupon);
       mockCartRepository.save.mockResolvedValue(cartWithoutCoupon);
 
-      const result = await service.removeCoupon('session-123', mockUser);
+      const result = await service.removeCoupon(mockUser, 'cart-123');
 
       expect(result.couponCode).toBeNull();
       expect(result.discount).toBe(0);
@@ -355,13 +370,13 @@ describe('ShoppingCartService', () => {
         shippingAddress: address,
       };
 
-      mockCartRepository.findOne.mockResolvedValue(mockCart);
+      mockCartRepository.findOne.mockResolvedValueOnce(mockCart).mockResolvedValueOnce(cartWithAddress);
       mockCartRepository.save.mockResolvedValue(cartWithAddress);
 
       const result = await service.updateShippingAddress(
-        'session-123',
-        address,
         mockUser,
+        'cart-123',
+        address,
       );
 
       expect(result.shippingAddress).toEqual(address);
@@ -381,13 +396,13 @@ describe('ShoppingCartService', () => {
         billingAddress: address,
       };
 
-      mockCartRepository.findOne.mockResolvedValue(mockCart);
+      mockCartRepository.findOne.mockResolvedValueOnce(mockCart).mockResolvedValueOnce(cartWithAddress);
       mockCartRepository.save.mockResolvedValue(cartWithAddress);
 
       const result = await service.updateBillingAddress(
-        'session-123',
-        address,
         mockUser,
+        'cart-123',
+        address,
       );
 
       expect(result.billingAddress).toEqual(address);
@@ -407,9 +422,9 @@ describe('ShoppingCartService', () => {
       mockCartRepository.save.mockResolvedValue(convertedCart);
 
       const result = await service.convertToOrder(
-        'session-123',
-        'order-123',
         mockUser,
+        'cart-123',
+        'order-123',
       );
 
       expect(result.status).toBe(CartStatus.CONVERTED);
@@ -428,7 +443,7 @@ describe('ShoppingCartService', () => {
       mockCartRepository.findOne.mockResolvedValue(mockCart);
       mockCartRepository.save.mockResolvedValue(abandonedCart);
 
-      const result = await service.markAsAbandoned('session-123', mockUser);
+      const result = await service.markAsAbandoned(mockUser, 'cart-123');
 
       expect(result.status).toBe(CartStatus.ABANDONED);
     });
@@ -440,15 +455,19 @@ describe('ShoppingCartService', () => {
         { ...mockCart, status: CartStatus.ABANDONED },
       ];
 
-      mockCartRepository.find.mockResolvedValue(abandonedCarts);
+      const mockQueryBuilder = {
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue(abandonedCarts),
+      };
+
+      mockCartRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
 
       const result = await service.findAbandonedCarts(mockUser);
 
       expect(result).toEqual(abandonedCarts);
-      expect(mockCartRepository.find).toHaveBeenCalledWith({
-        where: { status: CartStatus.ABANDONED, tenantId: 'tenant-123' },
-        relations: ['items'],
-      });
+      expect(mockCartRepository.createQueryBuilder).toHaveBeenCalled();
     });
   });
 });

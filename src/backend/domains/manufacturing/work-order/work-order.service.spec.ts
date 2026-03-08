@@ -4,10 +4,13 @@ import { Repository } from 'typeorm';
 import { WorkOrderService } from './work-order.service';
 import { WorkOrder, WorkOrderStatus } from './entities/work-order.entity';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { createMockUser } from '@/common/test/test-helpers';
 
 describe('WorkOrderService', () => {
   let service: WorkOrderService;
   let repository: Repository<WorkOrder>;
+  
+  const mockUser = createMockUser();
 
   const mockRepository = {
     create: jest.fn(),
@@ -60,7 +63,7 @@ describe('WorkOrderService', () => {
       mockRepository.create.mockReturnValue(mockWorkOrder);
       mockRepository.save.mockResolvedValue(mockWorkOrder);
 
-      const result = await service.create(tenantId, dto);
+      const result = await service.create(dto, tenantId, mockUser);
 
       expect(result.reference).toBe('WO-2026-0001');
       expect(result.status).toBe(WorkOrderStatus.DRAFT);
@@ -81,7 +84,7 @@ describe('WorkOrderService', () => {
 
       mockRepository.findOne.mockResolvedValue(mockWorkOrder);
 
-      const result = await service.findOne(tenantId, id);
+      const result = await service.findOne(id, tenantId);
 
       expect(result).toEqual(mockWorkOrder);
       expect(mockRepository.findOne).toHaveBeenCalledWith({
@@ -93,7 +96,7 @@ describe('WorkOrderService', () => {
     it('should throw NotFoundException if not found', async () => {
       mockRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findOne('tenant1', 'nonexistent')).rejects.toThrow(
+      await expect(service.findOne('nonexistent', 'tenant1')).rejects.toThrow(
         NotFoundException,
       );
     });
@@ -115,7 +118,7 @@ describe('WorkOrderService', () => {
         status: WorkOrderStatus.CONFIRMED,
       });
 
-      const result = await service.confirm(tenantId, id);
+      const result = await service.confirm(id, tenantId, mockUser);
 
       expect(result.status).toBe(WorkOrderStatus.CONFIRMED);
     });
@@ -129,13 +132,13 @@ describe('WorkOrderService', () => {
 
       mockRepository.findOne.mockResolvedValue(mockWorkOrder);
 
-      await expect(service.confirm('tenant1', 'wo1')).rejects.toThrow(
+      await expect(service.confirm('wo1', 'tenant1', mockUser)).rejects.toThrow(
         BadRequestException,
       );
     });
   });
 
-  describe('startProduction', () => {
+  describe('start', () => {
     it('should start production on confirmed work order', async () => {
       const tenantId = 'tenant1';
       const id = 'wo1';
@@ -153,18 +156,18 @@ describe('WorkOrderService', () => {
         dateStart: expect.any(Date),
       });
 
-      const result = await service.startProduction(tenantId, id);
+      const result = await service.start(id, tenantId, mockUser);
 
       expect(result.status).toBe(WorkOrderStatus.IN_PROGRESS);
       expect(result.dateStart).toBeDefined();
     });
   });
 
-  describe('finishProduction', () => {
+  describe('finish', () => {
     it('should finish production', async () => {
       const tenantId = 'tenant1';
       const id = 'wo1';
-      const dto = { qtyProduced: 100 };
+      const qtyProduced = 100;
       const mockWorkOrder = {
         id,
         tenantId,
@@ -182,7 +185,7 @@ describe('WorkOrderService', () => {
         dateFinished: expect.any(Date),
       });
 
-      const result = await service.finishProduction(tenantId, id, dto);
+      const result = await service.finish(id, qtyProduced, tenantId, mockUser);
 
       expect(result.status).toBe(WorkOrderStatus.DONE);
       expect(result.qtyProduced).toBe(100);
@@ -201,7 +204,7 @@ describe('WorkOrderService', () => {
 
       mockRepository.find.mockResolvedValue(mockWorkOrders);
 
-      const result = await service.findByStatus(tenantId, status);
+      const result = await service.findByStatus(status, tenantId);
 
       expect(result).toHaveLength(2);
       expect(mockRepository.find).toHaveBeenCalledWith({

@@ -14,6 +14,7 @@ import {
 } from './dto/create-shipment.dto';
 import { CacheService } from '@/common/cache/cache.service';
 import { CacheTTL, generateCacheKey } from '@/common/cache/cache.config';
+import { User } from '@/common/security/permission.service';
 
 @Injectable()
 export class ShippingService {
@@ -32,10 +33,10 @@ export class ShippingService {
   /**
    * Create shipment
    */
-  async createShipment(tenantId: string, dto: CreateShipmentDto): Promise<Shipment> {
+  async createShipment(user: User, dto: CreateShipmentDto): Promise<Shipment> {
     // Create shipment record
     const shipment = this.shipmentRepo.create({
-      tenantId,
+      tenantId: user.tenantId,
       orderId: dto.orderId,
       provider: dto.provider,
       status: 'pending',
@@ -218,7 +219,7 @@ export class ShippingService {
    * Calculate shipping fee
    */
   async calculateFee(
-    tenantId: string,
+    user: User,
     dto: CalculateShippingFeeDto,
   ): Promise<{
     provider: string;
@@ -226,6 +227,7 @@ export class ShippingService {
     serviceFee: number;
     insuranceFee: number;
   }> {
+    const tenantId = user.tenantId;
     try {
       let result: {
         total?: number;
@@ -340,12 +342,13 @@ export class ShippingService {
    * Track shipment
    */
   async trackShipment(
-    tenantId: string,
+    user: User,
     dto: TrackShipmentDto,
   ): Promise<{
     shipment: Shipment;
     tracking: Record<string, unknown>;
   }> {
+    const tenantId = user.tenantId;
     const shipment = await this.shipmentRepo.findOne({
       where: { trackingNumber: dto.trackingNumber, tenantId },
     });
@@ -373,7 +376,7 @@ export class ShippingService {
           await this.shipmentRepo.save(shipment);
 
           // Invalidate cache after update
-          await this.cacheService.del(generateCacheKey('shipment', tenantId, shipment.id));
+          await this.cacheService.del(generateCacheKey('shipment', user.tenantId, shipment.id));
 
           return {
             shipment,
@@ -395,7 +398,7 @@ export class ShippingService {
           await this.shipmentRepo.save(shipment);
 
           // Invalidate cache after update
-          await this.cacheService.del(generateCacheKey('shipment', tenantId, shipment.id));
+          await this.cacheService.del(generateCacheKey('shipment', user.tenantId, shipment.id));
 
           return {
             shipment,
@@ -417,7 +420,7 @@ export class ShippingService {
           await this.shipmentRepo.save(shipment);
 
           // Invalidate cache after update
-          await this.cacheService.del(generateCacheKey('shipment', tenantId, shipment.id));
+          await this.cacheService.del(generateCacheKey('shipment', user.tenantId, shipment.id));
 
           return {
             shipment,
@@ -439,7 +442,7 @@ export class ShippingService {
           await this.shipmentRepo.save(shipment);
 
           // Invalidate cache after update
-          await this.cacheService.del(generateCacheKey('shipment', tenantId, shipment.id));
+          await this.cacheService.del(generateCacheKey('shipment', user.tenantId, shipment.id));
 
           return {
             shipment,
@@ -458,9 +461,9 @@ export class ShippingService {
   /**
    * Cancel shipment
    */
-  async cancelShipment(tenantId: string, dto: CancelShipmentDto): Promise<Shipment> {
+  async cancelShipment(user: User, dto: CancelShipmentDto): Promise<Shipment> {
     const shipment = await this.shipmentRepo.findOne({
-      where: { id: dto.shipmentId, tenantId },
+      where: { id: dto.shipmentId, tenantId: user.tenantId },
     });
 
     if (!shipment) {
@@ -521,7 +524,7 @@ export class ShippingService {
       await this.shipmentRepo.save(shipment);
 
       // Invalidate cache after update
-      await this.cacheService.del(generateCacheKey('shipment', tenantId, shipment.id));
+      await this.cacheService.del(generateCacheKey('shipment', user.tenantId, shipment.id));
 
       this.logger.log(`Shipment cancelled: ${shipment.id}`);
 
@@ -535,13 +538,13 @@ export class ShippingService {
   /**
    * Get shipment by ID
    */
-  async getShipment(tenantId: string, shipmentId: string): Promise<Shipment> {
-    const cacheKey = generateCacheKey('shipment', tenantId, shipmentId);
+  async getShipment(user: User, shipmentId: string): Promise<Shipment> {
+    const cacheKey = generateCacheKey('shipment', user.tenantId, shipmentId);
     return this.cacheService.getOrSet(
       cacheKey,
       async () => {
         const shipment = await this.shipmentRepo.findOne({
-          where: { id: shipmentId, tenantId },
+          where: { id: shipmentId, tenantId: user.tenantId },
         });
 
         if (!shipment) {
@@ -558,7 +561,7 @@ export class ShippingService {
    * List shipments
    */
   async listShipments(
-    tenantId: string,
+    user: User,
     filters?: {
       orderId?: string;
       provider?: string;
@@ -567,6 +570,7 @@ export class ShippingService {
       offset?: number;
     },
   ): Promise<{ shipments: Shipment[]; total: number }> {
+    const tenantId = user.tenantId;
     const query = this.shipmentRepo
       .createQueryBuilder('shipment')
       .where('shipment.tenantId = :tenantId', { tenantId });

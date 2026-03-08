@@ -11,6 +11,12 @@ describe('RoutingService', () => {
   let routingRepository: Repository<Routing>;
   let operationRepository: Repository<Operation>;
 
+  const mockUser = {
+    id: 'user1',
+    tenantId: 'tenant1',
+    roles: ['admin'],
+  };
+
   const mockRoutingRepository = {
     create: jest.fn(),
     save: jest.fn(),
@@ -67,18 +73,21 @@ describe('RoutingService', () => {
       };
 
       mockRoutingRepository.create.mockReturnValue(mockRouting);
-      mockRoutingRepository.save.mockResolvedValue({
-        ...mockRouting,
-        operations: dto.operations.map((op, idx) => ({
+      mockRoutingRepository.save.mockResolvedValue(mockRouting);
+      
+      // Mock operation creation
+      mockOperationRepository.create.mockImplementation((op) => op);
+      mockOperationRepository.save.mockResolvedValue(
+        dto.operations.map((op, idx) => ({
           id: `op${idx}`,
           tenantId,
           routingId: 'routing1',
           ...op,
           totalCost: (op.durationExpected / 60) * op.costPerHour,
-        })),
-      });
+        }))
+      );
 
-      const result = await service.create(tenantId, dto);
+      const result = await service.create(dto, tenantId, mockUser);
 
       expect(result.name).toBe('Standard Routing');
       expect(result.operations).toHaveLength(2);
@@ -99,7 +108,7 @@ describe('RoutingService', () => {
 
       mockRoutingRepository.findOne.mockResolvedValue(mockRouting);
 
-      const result = await service.findOne(tenantId, id);
+      const result = await service.findOne(id, tenantId);
 
       expect(result).toEqual(mockRouting);
       expect(mockRoutingRepository.findOne).toHaveBeenCalledWith({
@@ -111,7 +120,7 @@ describe('RoutingService', () => {
     it('should throw NotFoundException if not found', async () => {
       mockRoutingRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findOne('tenant1', 'nonexistent')).rejects.toThrow(
+      await expect(service.findOne('nonexistent', 'tenant1')).rejects.toThrow(
         NotFoundException,
       );
     });
@@ -147,7 +156,7 @@ describe('RoutingService', () => {
       mockOperationRepository.create.mockReturnValue(mockOperation);
       mockOperationRepository.save.mockResolvedValue(mockOperation);
 
-      const result = await service.addOperation(tenantId, routingId, dto);
+      const result = await service.addOperation(routingId, dto, tenantId, mockUser);
 
       expect(result.name).toBe('Polish');
       expect(result.totalCost).toBe(26.25);

@@ -7,7 +7,7 @@ import { BatchStock } from './entities/batch-stock.entity';
 import { Product } from '../product/entities/product.entity';
 import { CreateSerialNumberDto } from './dto/create-serial-number.dto';
 import { CreateBatchDto } from './dto/create-batch.dto';
-import { User } from '../../hr/user/entities/user.entity';
+import { User } from '@/common/security/permission.service';
 
 @Injectable()
 export class SerialBatchService {
@@ -37,7 +37,7 @@ export class SerialBatchService {
 
     // Validate product exists
     const product = await this.productRepository.findOne({
-      where: { id: dto.productId, tenantId: user.tenantId },
+      where: { id: dto.productId, tenantId: user.tenantId } as any,
     });
 
     if (!product) {
@@ -69,7 +69,7 @@ export class SerialBatchService {
 
     // Validate product exists
     const product = await this.productRepository.findOne({
-      where: { id: dto.productId, tenantId: user.tenantId },
+      where: { id: dto.productId, tenantId: user.tenantId } as any,
     });
 
     if (!product) {

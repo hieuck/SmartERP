@@ -1,10 +1,11 @@
-﻿import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { ReportsService } from './reports.service';
 import { GetTrialBalanceDto } from './dto/get-trial-balance.dto';
 import { GetGeneralLedgerDto } from './dto/get-general-ledger.dto';
 import { GetCashFlowDto } from './dto/get-cash-flow.dto';
-import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
 import { TenantId } from '@/common/decorators/tenant-id.decorator';
 
 import { User } from '@/common/security/permission.service';
@@ -32,7 +33,7 @@ export class ReportsController {
     @Query() dto: GetGeneralLedgerDto,
   ) {
     return this.reportsService.getGeneralLedger(
-      tenantId,
+      user,
       dto.accountId,
       new Date(dto.startDate),
       new Date(dto.endDate),
@@ -46,7 +47,7 @@ export class ReportsController {
     @Query() dto: GetCashFlowDto,
   ) {
     return this.reportsService.getCashFlowStatement(
-      tenantId,
+      user,
       new Date(dto.startDate),
       new Date(dto.endDate),
     );

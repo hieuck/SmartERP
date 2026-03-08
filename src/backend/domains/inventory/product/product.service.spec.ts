@@ -4,6 +4,7 @@ import { ProductService } from './product.service';
 import { Product } from './entities/product.entity';
 import { NotFoundException, ConflictException } from '@nestjs/common';
 import { CacheService } from '@/common/cache/cache.service';
+import { PermissionService } from '@/common/security/permission.service';
 import { createMockUser } from '@/common/test/test-helpers';
 
 describe('ProductService', () => {
@@ -15,6 +16,7 @@ describe('ProductService', () => {
     findAndCount: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),
+    remove: jest.fn(),
     update: jest.fn(),
     softDelete: jest.fn(),
     count: jest.fn(),
@@ -27,6 +29,16 @@ describe('ProductService', () => {
     del: jest.fn(),
     getOrSet: jest.fn(),
     invalidateEntity: jest.fn(),
+  };
+
+  const mockPermissionService = {
+    checkPermission: jest.fn().mockResolvedValue(true),
+    hasPermission: jest.fn().mockResolvedValue(true),
+    buildSecureQuery: jest.fn((user, where) => ({ ...where, tenantId: user.tenantId })),
+    canDelete: jest.fn().mockReturnValue(true),
+    canUpdate: jest.fn().mockReturnValue(true),
+    canRead: jest.fn().mockReturnValue(true),
+    canWrite: jest.fn().mockReturnValue(true),
   };
 
   const mockUser = createMockUser();
@@ -42,6 +54,10 @@ describe('ProductService', () => {
         {
           provide: CacheService,
           useValue: mockCacheService,
+        },
+        {
+          provide: PermissionService,
+          useValue: mockPermissionService,
         },
       ],
     }).compile();
@@ -60,7 +76,7 @@ describe('ProductService', () => {
       mockProductRepository.create.mockReturnValue(productData);
       mockProductRepository.save.mockResolvedValue(productData);
 
-      const result = await service.create(productData as any, mockUser);
+      const result = await service.create(mockUser, productData as any);
 
       expect(result).toEqual(productData);
     });
@@ -69,7 +85,7 @@ describe('ProductService', () => {
       const productData = { sku: 'PROD-001' };
       mockProductRepository.findOne.mockResolvedValue({ id: '1' });
 
-      await expect(service.create(productData as any, mockUser)).rejects.toThrow(
+      await expect(service.create(mockUser, productData as any)).rejects.toThrow(
         ConflictException,
       );
     });
@@ -78,10 +94,10 @@ describe('ProductService', () => {
   describe('findAll', () => {
     it('should return paginated products', async () => {
       const mockProducts = [
-        { id: '1', name: 'Product 1' },
-        { id: '2', name: 'Product 2' },
+        { id: '1', name: 'Product 1', sku: 'PROD-001', description: 'Desc 1' },
+        { id: '2', name: 'Product 2', sku: 'PROD-002', description: 'Desc 2' },
       ];
-      mockProductRepository.findAndCount.mockResolvedValue([mockProducts, 2]);
+      mockProductRepository.find.mockResolvedValue(mockProducts);
 
       const result = await service.findAll(mockUser, 1, 20);
 
@@ -95,7 +111,7 @@ describe('ProductService', () => {
       const mockProduct = { id: '1', name: 'Product 1' };
       mockCacheService.getOrSet.mockResolvedValue(mockProduct);
 
-      const result = await service.findOne('1', mockUser);
+      const result = await service.findOne(mockUser, '1');
 
       expect(result).toEqual(mockProduct);
       expect(mockCacheService.getOrSet).toHaveBeenCalled();
@@ -107,7 +123,7 @@ describe('ProductService', () => {
       });
       mockProductRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findOne('999', mockUser)).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(mockUser, '999')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -116,7 +132,7 @@ describe('ProductService', () => {
       const mockProduct = { id: '1', sku: 'PROD-001' };
       mockProductRepository.findOne.mockResolvedValue(mockProduct);
 
-      const result = await service.findBySku('PROD-001', mockUser);
+      const result = await service.findBySku(mockUser, 'PROD-001');
 
       expect(result).toEqual(mockProduct);
     });
@@ -124,7 +140,7 @@ describe('ProductService', () => {
     it('should throw NotFoundException if SKU not found', async () => {
       mockProductRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findBySku('INVALID', mockUser)).rejects.toThrow(NotFoundException);
+      await expect(service.findBySku(mockUser, 'INVALID')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -133,7 +149,7 @@ describe('ProductService', () => {
       const mockProducts = [{ id: '1', categoryId: 'cat-1' }];
       mockProductRepository.find.mockResolvedValue(mockProducts);
 
-      const result = await service.findByCategory('cat-1', mockUser);
+      const result = await service.findByCategory(mockUser, 'cat-1');
 
       expect(result).toEqual(mockProducts);
     });
@@ -144,7 +160,7 @@ describe('ProductService', () => {
       const mockProducts = [{ id: '1', status: 'ACTIVE' }];
       mockProductRepository.find.mockResolvedValue(mockProducts);
 
-      const result = await service.findByStatus('ACTIVE' as any, mockUser);
+      const result = await service.findByStatus(mockUser, 'ACTIVE' as any);
 
       expect(result).toEqual(mockProducts);
     });
@@ -157,7 +173,7 @@ describe('ProductService', () => {
       mockCacheService.getOrSet.mockResolvedValue(mockProduct);
       mockProductRepository.save.mockResolvedValue({ ...mockProduct, ...updateDto });
 
-      const result = await service.update('1', updateDto, mockUser);
+      const result = await service.update(mockUser, '1', updateDto);
 
       expect(mockCacheService.del).toHaveBeenCalled();
     });
@@ -168,7 +184,7 @@ describe('ProductService', () => {
       mockCacheService.getOrSet.mockResolvedValue(mockProduct);
       mockProductRepository.findOne.mockResolvedValue({ id: '2', sku: 'PROD-002' });
 
-      await expect(service.update('1', updateDto, mockUser)).rejects.toThrow(ConflictException);
+      await expect(service.update(mockUser, '1', updateDto)).rejects.toThrow(ConflictException);
     });
   });
 
@@ -176,27 +192,24 @@ describe('ProductService', () => {
     it('should remove product', async () => {
       const mockProduct = { id: '1' };
       mockCacheService.getOrSet.mockResolvedValue(mockProduct);
-      mockProductRepository.softDelete.mockResolvedValue({ affected: 1 });
+      mockProductRepository.findOne.mockResolvedValue(mockProduct);
+      mockProductRepository.remove.mockResolvedValue(mockProduct);
 
-      await service.remove('1', mockUser);
+      await service.remove(mockUser, '1');
 
-      expect(mockProductRepository.softDelete).toHaveBeenCalled();
+      expect(mockProductRepository.remove).toHaveBeenCalled();
       expect(mockCacheService.del).toHaveBeenCalled();
     });
   });
 
   describe('search', () => {
     it('should search products', async () => {
-      const mockProducts = [{ id: '1', name: 'Test Product' }];
-      const mockQueryBuilder = {
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        orderBy: jest.fn().mockReturnThis(),
-        getMany: jest.fn().mockResolvedValue(mockProducts),
-      };
-      mockProductRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
+      const mockProducts = [
+        { id: '1', name: 'Test Product', sku: 'TEST-001', description: 'Test description' },
+      ];
+      mockProductRepository.find.mockResolvedValue(mockProducts);
 
-      const result = await service.search('test', mockUser);
+      const result = await service.search(mockUser, 'test');
 
       expect(result).toEqual(mockProducts);
     });
@@ -204,7 +217,11 @@ describe('ProductService', () => {
 
   describe('count', () => {
     it('should return product count', async () => {
-      mockProductRepository.count.mockResolvedValue(100);
+      const mockProducts = Array.from({ length: 100 }, (_, i) => ({
+        id: `${i + 1}`,
+        name: `Product ${i + 1}`,
+      }));
+      mockProductRepository.find.mockResolvedValue(mockProducts);
 
       const result = await service.count(mockUser);
 
@@ -214,9 +231,13 @@ describe('ProductService', () => {
 
   describe('countByStatus', () => {
     it('should return count by status', async () => {
-      mockProductRepository.count.mockResolvedValue(50);
+      const mockProducts = Array.from({ length: 50 }, (_, i) => ({
+        id: `${i + 1}`,
+        status: 'ACTIVE',
+      }));
+      mockProductRepository.find.mockResolvedValue(mockProducts);
 
-      const result = await service.countByStatus('ACTIVE' as any, mockUser);
+      const result = await service.countByStatus(mockUser, 'ACTIVE' as any);
 
       expect(result).toBe(50);
     });
@@ -228,7 +249,7 @@ describe('ProductService', () => {
       mockCacheService.getOrSet.mockResolvedValue(mockProduct);
       mockProductRepository.save.mockResolvedValue({ ...mockProduct, stockQuantity: 20 });
 
-      const result = await service.updateStock('1', 20, mockUser);
+      const result = await service.updateStock(mockUser, '1', 20);
 
       expect(mockProductRepository.save).toHaveBeenCalled();
     });
@@ -237,7 +258,7 @@ describe('ProductService', () => {
       const mockProduct = { id: '1' };
       mockCacheService.getOrSet.mockResolvedValue(mockProduct);
 
-      await expect(service.updateStock('1', -5, mockUser)).rejects.toThrow(
+      await expect(service.updateStock(mockUser, '1', -5)).rejects.toThrow(
         'Stock quantity cannot be negative',
       );
     });
@@ -251,7 +272,7 @@ describe('ProductService', () => {
         status: 'OUT_OF_STOCK',
       });
 
-      const result = await service.updateStock('1', 0, mockUser);
+      const result = await service.updateStock(mockUser, '1', 0);
 
       expect(mockProductRepository.save).toHaveBeenCalled();
     });
@@ -263,7 +284,7 @@ describe('ProductService', () => {
       mockCacheService.getOrSet.mockResolvedValue(mockProduct);
       mockProductRepository.save.mockResolvedValue({ ...mockProduct, stockQuantity: 15 });
 
-      const result = await service.adjustStock('1', 5, mockUser);
+      const result = await service.adjustStock(mockUser, '1', 5);
 
       expect(mockProductRepository.save).toHaveBeenCalled();
     });
@@ -272,20 +293,14 @@ describe('ProductService', () => {
       const mockProduct = { id: '1', stockQuantity: 5 };
       mockCacheService.getOrSet.mockResolvedValue(mockProduct);
 
-      await expect(service.adjustStock('1', -10, mockUser)).rejects.toThrow('Insufficient stock');
+      await expect(service.adjustStock(mockUser, '1', -10)).rejects.toThrow('Insufficient stock');
     });
   });
 
   describe('getLowStockProducts', () => {
     it('should return low stock products', async () => {
       const mockProducts = [{ id: '1', stockQuantity: 2, minStockLevel: 10 }];
-      const mockQueryBuilder = {
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        orderBy: jest.fn().mockReturnThis(),
-        getMany: jest.fn().mockResolvedValue(mockProducts),
-      };
-      mockProductRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
+      mockProductRepository.find.mockResolvedValue(mockProducts);
 
       const result = await service.getLowStockProducts(mockUser);
 
@@ -314,7 +329,7 @@ describe('ProductService', () => {
         status: 'ACTIVE',
       });
 
-      const result = await service.activate('1', mockUser);
+      const result = await service.activate(mockUser, '1');
 
       expect(result.isActive).toBe(true);
     });
@@ -330,7 +345,7 @@ describe('ProductService', () => {
         status: 'INACTIVE',
       });
 
-      const result = await service.deactivate('1', mockUser);
+      const result = await service.deactivate(mockUser, '1');
 
       expect(result.isActive).toBe(false);
       expect(result.status).toBe('INACTIVE');

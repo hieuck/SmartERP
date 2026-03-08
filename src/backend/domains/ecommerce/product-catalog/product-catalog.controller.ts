@@ -52,7 +52,7 @@ export class ProductCatalogController {
   @ApiOperation({ summary: 'Search products with filters' })
   @ApiResponse({ status: 200, description: 'Products found' })
   async search(@Query() dto: SearchProductDto, @Request() req) {
-    return this.productCatalogService.search(dto, req.user.tenantId);
+    return this.productCatalogService.search(req.user.tenantId, dto.search || '');
   }
 
   @Get(':id')
@@ -91,7 +91,7 @@ export class ProductCatalogController {
     @Body() dto: UpdateProductDto,
     @Request() req,
   ) {
-    return this.productCatalogService.update(id, dto, req.user.tenantId);
+    return this.productCatalogService.update(id, dto, req.user.tenantId, req.user);
   }
 
   @Delete(':id')
@@ -99,7 +99,7 @@ export class ProductCatalogController {
   @ApiOperation({ summary: 'Delete product' })
   @ApiResponse({ status: 200, description: 'Product deleted successfully' })
   async remove(@Param('id') id: string, @Request() req) {
-    return this.productCatalogService.remove(id, req.user.tenantId);
+    return this.productCatalogService.remove(id, req.user.tenantId, req.user);
   }
 
   @Patch(':id/publish')
@@ -107,7 +107,7 @@ export class ProductCatalogController {
   @ApiOperation({ summary: 'Publish product (make visible to customers)' })
   @ApiResponse({ status: 200, description: 'Product published' })
   async publish(@Param('id') id: string, @Request() req) {
-    return this.productCatalogService.publish(id, req.user.tenantId);
+    return this.productCatalogService.publish(id, req.user.tenantId, req.user);
   }
 
   @Patch(':id/unpublish')
@@ -115,7 +115,7 @@ export class ProductCatalogController {
   @ApiOperation({ summary: 'Unpublish product (hide from customers)' })
   @ApiResponse({ status: 200, description: 'Product unpublished' })
   async unpublish(@Param('id') id: string, @Request() req) {
-    return this.productCatalogService.unpublish(id, req.user.tenantId);
+    return this.productCatalogService.unpublish(id, req.user.tenantId, req.user);
   }
 
   @Patch(':id/stock')

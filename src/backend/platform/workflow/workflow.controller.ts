@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards } from '@nestjs/common';
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { WorkflowService } from './workflow.service';
 import { JwtAuthGuard } from '../../core/auth/guards/jwt-auth.guard';
 import { TenantId } from '../../common/decorators/tenant-id.decorator';
@@ -72,11 +73,10 @@ export class WorkflowController {
     @Body('initiatedBy') initiatedBy: string,
   ): Promise<WorkflowInstance> {
     return this.workflowService.startWorkflow(
-      tenantId,
+      user,
       workflowId,
       entityType,
       entityId,
-      initiatedBy,
     );
   }
 
@@ -87,7 +87,7 @@ export class WorkflowController {
     @Body('approvedBy') approvedBy: string,
     @Body('notes') notes?: string,
   ): Promise<WorkflowInstance> {
-    return this.workflowService.approveStep(user, id, approvedBy, notes);
+    return this.workflowService.approveStep(user, id, notes);
   }
 
   @Post('instances/:id/reject')
@@ -97,7 +97,7 @@ export class WorkflowController {
     @Body('rejectedBy') rejectedBy: string,
     @Body('notes') notes?: string,
   ): Promise<WorkflowInstance> {
-    return this.workflowService.rejectStep(user, id, rejectedBy, notes);
+    return this.workflowService.rejectStep(user, id, notes);
   }
 
   @Post('instances/:id/cancel')

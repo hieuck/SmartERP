@@ -8,6 +8,7 @@ import { MomoService } from './providers/momo/momo.service';
 import { StripeService } from './providers/stripe/stripe.service';
 import { PayPalService } from './providers/paypal/paypal.service';
 import { CreatePaymentDto, VerifyPaymentDto, RefundPaymentDto } from './dto/create-payment.dto';
+import { User } from '@/common/security/permission.service';
 
 @Injectable()
 export class PaymentGatewayService {
@@ -27,10 +28,10 @@ export class PaymentGatewayService {
   /**
    * Create payment transaction
    */
-  async createPayment(tenantId: string, dto: CreatePaymentDto): Promise<PaymentTransaction> {
+  async createPayment(user: User, dto: CreatePaymentDto): Promise<PaymentTransaction> {
     // Create transaction record
     const transaction = this.paymentTransactionRepo.create({
-      tenantId,
+      tenantId: user.tenantId,
       orderId: dto.orderId,
       gateway: dto.gateway,
       amount: dto.amount,
@@ -130,7 +131,7 @@ export class PaymentGatewayService {
    * Verify payment callback
    */
   async verifyPayment(
-    tenantId: string,
+    user: User,
     dto: VerifyPaymentDto,
   ): Promise<{
     success: boolean;
@@ -139,7 +140,7 @@ export class PaymentGatewayService {
   }> {
     // Find transaction
     const transaction = await this.paymentTransactionRepo.findOne({
-      where: { id: dto.transactionId, tenantId },
+      where: { id: dto.transactionId, tenantId: user.tenantId },
     });
 
     if (!transaction) {
@@ -265,10 +266,10 @@ export class PaymentGatewayService {
   /**
    * Refund payment
    */
-  async refundPayment(tenantId: string, dto: RefundPaymentDto): Promise<PaymentTransaction> {
+  async refundPayment(user: User, dto: RefundPaymentDto): Promise<PaymentTransaction> {
     // Find transaction
     const transaction = await this.paymentTransactionRepo.findOne({
-      where: { id: dto.transactionId, tenantId },
+      where: { id: dto.transactionId, tenantId: user.tenantId },
     });
 
     if (!transaction) {
@@ -324,9 +325,9 @@ export class PaymentGatewayService {
   /**
    * Get transaction by ID
    */
-  async getTransaction(tenantId: string, transactionId: string): Promise<PaymentTransaction> {
+  async getTransaction(user: User, transactionId: string): Promise<PaymentTransaction> {
     const transaction = await this.paymentTransactionRepo.findOne({
-      where: { id: transactionId, tenantId },
+      where: { id: transactionId, tenantId: user.tenantId },
     });
 
     if (!transaction) {

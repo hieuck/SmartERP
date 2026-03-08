@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between } from 'typeorm';
 import { Account, AccountType } from './entities/account.entity';
@@ -211,7 +211,7 @@ export class AccountingService {
     if (startDate && endDate) {
       where.entryDate = Between(startDate, endDate);
     }
-    return this.secureJournalRepo.find(user, { where, order: { entryDate: 'DESC' } });
+    return this.secureJournalRepo.find(user, { where, order: { createdAt: 'DESC' } });
   }
 
   async findJournalEntryById(user: User, id: string): Promise<JournalEntry> {
@@ -254,7 +254,7 @@ export class AccountingService {
     }
 
     if (entry.status !== 'draft') {
-      throw new Error('Only draft entries can be posted');
+      throw new BadRequestException('Only draft entries can be posted');
     }
 
     // Update status

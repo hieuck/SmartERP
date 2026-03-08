@@ -4,7 +4,7 @@ import { Layout, Form, Input, Button, Card, Typography, Row, Col, Checkbox, Spac
 import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { useMutation } from '@tanstack/react-query';
-import { authService, LoginRequest } from '../../services/authService';
+import { authService, LoginRequest } from '../../services/auth/authService';
 import { setCredentials } from '../../store/slices/authSlice';
 import { RootState } from '../../store';
 

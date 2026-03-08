@@ -8,6 +8,7 @@ import { User } from '../user/entities/user.entity';
 import { Tenant } from '../tenant/entities/tenant.entity';
 import { RegisterTenantDto } from './dto/register-tenant.dto';
 import { CacheService } from '@/common/cache/cache.service';
+import { PermissionService } from '@/common/security/permission.service';
 
 describe('AuthService', () => {
   let service: AuthService;

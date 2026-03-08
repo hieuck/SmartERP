@@ -1,5 +1,5 @@
 import { Injectable, ExecutionContext } from '@nestjs/common';
-import { ThrottlerGuard as NestThrottlerGuard } from '@nestjs/throttler';
+import { ThrottlerGuard as NestThrottlerGuard, ThrottlerStorage } from '@nestjs/throttler';
 import { Reflector } from '@nestjs/core';
 
 /**
@@ -32,16 +32,20 @@ import { Reflector } from '@nestjs/core';
 export class CustomThrottlerGuard extends NestThrottlerGuard {
   constructor(
     protected readonly reflector: Reflector,
+    protected readonly storageService: ThrottlerStorage,
   ) {
-    super({
-      throttlers: [
-        {
-          ttl: 60000, // 60 seconds
-          limit: 100, // 100 requests per minute
-        },
-      ],
+    super(
+      {
+        throttlers: [
+          {
+            ttl: 60000, // 60 seconds
+            limit: 100, // 100 requests per minute
+          },
+        ],
+      },
+      storageService,
       reflector,
-    });
+    );
   }
 
   /**

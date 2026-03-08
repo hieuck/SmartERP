@@ -6,6 +6,7 @@ import { Account, AccountType } from './entities/account.entity';
 import { JournalEntry } from './entities/journal-entry.entity';
 import { Invoice, InvoiceType } from './entities/invoice.entity';
 import { CacheService } from '@/common/cache/cache.service';
+import { PermissionService } from '@/common/security/permission.service';
 import { createMockUser } from '@/common/test/test-helpers';
 
 describe('AccountingService', () => {

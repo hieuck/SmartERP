@@ -13,7 +13,7 @@ import {
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { OrderService } from './order.service';
 import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
-import { TenantGuard } from '../../common/guards/tenant.guard';
+import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 
@@ -46,12 +46,12 @@ export class OrderController {
 
   @Get('recent/:limit')
   @ApiOperation({ summary: 'Get recent orders' })
-  getRecentOrders(@Param('limit') limit: string, @CurrentUser() user: User) {
+  getRecentOrders(@CurrentUser() user: User, @Param('limit') limit: string) {
     const numLimit = parseInt(limit, 10);
     if (isNaN(numLimit) || numLimit <= 0) {
       throw new BadRequestException('Invalid limit parameter');
     }
-    return this.orderService.getRecentOrders(numLimit, user);
+    return this.orderService.getRecentOrders(user, numLimit);
   }
 
   @Get('revenue/total')
@@ -64,11 +64,10 @@ export class OrderController {
   @ApiOperation({ summary: 'Get revenue by date range' })
   getRevenueByDateRange(
     @Query('startDate') startDate: string,
-    @Query('endDate') endDate: string,
-    @CurrentUser() user: User,
+    @CurrentUser() user: User, @Query('endDate') endDate: string,
   ) {
     return this.orderService.getRevenueByDateRange(
-      new Date(startDate), new Date(endDate), user,
+      user, new Date(startDate), new Date(endDate),
     );
   }
 
@@ -76,82 +75,78 @@ export class OrderController {
   @ApiOperation({ summary: 'Get orders by date range' })
   findByDateRange(
     @Query('startDate') startDate: string,
-    @Query('endDate') endDate: string,
-    @CurrentUser() user: User,
+    @CurrentUser() user: User, @Query('endDate') endDate: string,
   ) {
-    return this.orderService.findByDateRange(new Date(startDate), new Date(endDate), user);
+    return this.orderService.findByDateRange(user, new Date(startDate), new Date(endDate));
   }
 
   @Get('customer/:customerId')
   @ApiOperation({ summary: 'Get orders by customer' })
-  findByCustomer(@Param('customerId') customerId: string, @CurrentUser() user: User) {
-    return this.orderService.findByCustomer(customerId, user);
+  findByCustomer(@CurrentUser() user: User, @Param('customerId') customerId: string) {
+    return this.orderService.findByCustomer(user, customerId);
   }
 
   @Get('status/:status')
   @ApiOperation({ summary: 'Get orders by status' })
-  findByStatus(@Param('status') status: string, @CurrentUser() user: User) {
-    return this.orderService.findByStatus(status, user);
+  findByStatus(@CurrentUser() user: User, @Param('status') status: string) {
+    return this.orderService.findByStatus(user, status);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get order by ID' })
-  findOne(@Param('id') id: string, @CurrentUser() user: User) {
-    return this.orderService.findOne(id, user);
+  findOne(@CurrentUser() user: User, @Param('id') id: string) {
+    return this.orderService.findOne(user, id);
   }
 
   @Post()
   @ApiOperation({ summary: 'Create order' })
-  create(@Body() createOrderDto: CreateOrderDto, @CurrentUser() user: User) {
-    return this.orderService.create(createOrderDto, user);
+  create(@CurrentUser() user: User, @Body() createOrderDto: CreateOrderDto) {
+    return this.orderService.create(user, createOrderDto);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update order' })
   update(
     @Param('id') id: string,
-    @Body() updateOrderDto: UpdateOrderDto,
-    @CurrentUser() user: User,
+    @CurrentUser() user: User, @Body() updateOrderDto: UpdateOrderDto,
   ) {
-    return this.orderService.update(id, updateOrderDto, user);
+    return this.orderService.update(user, id, updateOrderDto);
   }
 
   @Patch(':id/status')
   @ApiOperation({ summary: 'Update order status' })
   updateStatus(
     @Param('id') id: string,
-    @Body('status') status: string,
-    @CurrentUser() user: User,
+    @CurrentUser() user: User, @Body('status') status: string,
   ) {
-    return this.orderService.updateStatus(id, status, user);
+    return this.orderService.updateStatus(user, id, status);
   }
 
   @Patch(':id/cancel')
   @ApiOperation({ summary: 'Cancel order' })
-  cancel(@Param('id') id: string, @CurrentUser() user: User) {
-    return this.orderService.cancel(id, user);
+  cancel(@CurrentUser() user: User, @Param('id') id: string) {
+    return this.orderService.cancel(user, id);
   }
 
   @Patch(':id/ship')
   @ApiOperation({ summary: 'Ship order' })
   ship(
     @Param('id') id: string,
-    @Body('trackingNumber') trackingNumber: string,
-    @CurrentUser() user: User,
+    @CurrentUser() user: User, @Body('trackingNumber') trackingNumber: string,
   ) {
-    return this.orderService.ship(id, trackingNumber, user);
+    return this.orderService.ship(user, id, trackingNumber);
   }
 
   @Patch(':id/deliver')
   @ApiOperation({ summary: 'Deliver order' })
-  deliver(@Param('id') id: string, @CurrentUser() user: User) {
-    return this.orderService.deliver(id, user);
+  deliver(@CurrentUser() user: User, @Param('id') id: string) {
+    return this.orderService.deliver(user, id);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete order' })
-  async remove(@Param('id') id: string, @CurrentUser() user: User) {
-    await this.orderService.remove(id, user);
+  async remove(@CurrentUser() user: User, @Param('id') id: string) {
+    await this.orderService.remove(user, id);
     return { message: 'Order deleted successfully' };
   }
 }

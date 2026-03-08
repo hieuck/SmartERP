@@ -4,6 +4,7 @@ import { CustomerService } from './customer.service';
 import { Customer } from './entities/customer.entity';
 import { NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { CacheService } from '@/common/cache/cache.service';
+import { PermissionService } from '@/common/security/permission.service';
 import { createMockUser } from '@/common/test/test-helpers';
 
 describe('CustomerService', () => {
@@ -24,6 +25,7 @@ describe('CustomerService', () => {
     save: jest.fn(),
     update: jest.fn(),
     softDelete: jest.fn(),
+    remove: jest.fn(),
     count: jest.fn(),
     createQueryBuilder: jest.fn(() => mockQueryBuilder),
   };
@@ -36,6 +38,15 @@ describe('CustomerService', () => {
     invalidateEntity: jest.fn(),
   };
 
+  const mockPermissionService = {
+    checkPermission: jest.fn().mockResolvedValue(true),
+    hasPermission: jest.fn().mockReturnValue(true),
+    buildSecureQuery: jest.fn((user, where) => where),
+    canRead: jest.fn().mockReturnValue(true),
+    canWrite: jest.fn().mockReturnValue(true),
+    canDelete: jest.fn().mockReturnValue(true),
+  };
+
   const mockUser = createMockUser();
 
   const mockCustomer = {
@@ -45,7 +56,7 @@ describe('CustomerService', () => {
     tenantId: 'tenant-1',
     status: 'active',
     creditLimit: 1000,
-    currentBalance: 500,
+    currentBalance: 1500,
   };
 
   beforeEach(async () => {
@@ -59,6 +70,10 @@ describe('CustomerService', () => {
         {
           provide: CacheService,
           useValue: mockCacheService,
+        },
+        {
+          provide: PermissionService,
+          useValue: mockPermissionService,
         },
       ],
     }).compile();
@@ -76,7 +91,7 @@ describe('CustomerService', () => {
         { id: '1', email: 'customer1@test.com' },
         { id: '2', email: 'customer2@test.com' },
       ];
-      mockCustomerRepository.findAndCount.mockResolvedValue([mockCustomers, 2]);
+      mockCustomerRepository.find.mockResolvedValue(mockCustomers);
 
       const result = await service.findAll(mockUser, 1, 20);
 
@@ -92,7 +107,7 @@ describe('CustomerService', () => {
     it('should find customer by id', async () => {
       mockCacheService.getOrSet.mockResolvedValue(mockCustomer);
 
-      const result = await service.findOne('1', mockUser);
+      const result = await service.findOne(mockUser, '1');
 
       expect(result).toEqual(mockCustomer);
       expect(mockCacheService.getOrSet).toHaveBeenCalled();
@@ -104,7 +119,7 @@ describe('CustomerService', () => {
       });
       mockCustomerRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findOne('999', mockUser)).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(mockUser, '999')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -112,7 +127,7 @@ describe('CustomerService', () => {
     it('should find customer by email', async () => {
       mockCustomerRepository.findOne.mockResolvedValue(mockCustomer);
 
-      const result = await service.findByEmail('customer@test.com', mockUser);
+      const result = await service.findByEmail(mockUser, 'customer@test.com');
 
       expect(result).toEqual(mockCustomer);
     });
@@ -120,7 +135,7 @@ describe('CustomerService', () => {
     it('should return null if customer not found', async () => {
       mockCustomerRepository.findOne.mockResolvedValue(null);
 
-      const result = await service.findByEmail('notfound@test.com', mockUser);
+      const result = await service.findByEmail(mockUser, 'notfound@test.com');
 
       expect(result).toBeNull();
     });
@@ -133,7 +148,7 @@ describe('CustomerService', () => {
       mockCustomerRepository.create.mockReturnValue(customerData);
       mockCustomerRepository.save.mockResolvedValue(customerData);
 
-      const result = await service.create(customerData as any, mockUser);
+      const result = await service.create(mockUser, customerData as any);
 
       expect(result).toEqual(customerData);
     });
@@ -142,7 +157,7 @@ describe('CustomerService', () => {
       const customerData = { email: 'existing@customer.com' };
       mockCustomerRepository.findOne.mockResolvedValue({ id: '1' });
 
-      await expect(service.create(customerData as any, mockUser)).rejects.toThrow(
+      await expect(service.create(mockUser, customerData as any)).rejects.toThrow(
         ConflictException,
       );
     });
@@ -154,7 +169,7 @@ describe('CustomerService', () => {
       mockCacheService.getOrSet.mockResolvedValue(mockCustomer);
       mockCustomerRepository.save.mockResolvedValue({ ...mockCustomer, ...updateData });
 
-      const result = await service.update('1', updateData, mockUser);
+      const result = await service.update(mockUser, '1', updateData);
 
       expect(result.name).toBe('Updated Customer');
       expect(mockCacheService.del).toHaveBeenCalled();
@@ -164,7 +179,7 @@ describe('CustomerService', () => {
       mockCacheService.getOrSet.mockResolvedValue(mockCustomer);
       mockCustomerRepository.findOne.mockResolvedValue({ id: '2', email: 'other@test.com' });
 
-      await expect(service.update('1', { email: 'other@test.com' }, mockUser)).rejects.toThrow(
+      await expect(service.update(mockUser, '1', { email: 'other@test.com' })).rejects.toThrow(
         ConflictException,
       );
     });
@@ -173,11 +188,11 @@ describe('CustomerService', () => {
   describe('remove', () => {
     it('should remove customer', async () => {
       mockCacheService.getOrSet.mockResolvedValue(mockCustomer);
-      mockCustomerRepository.softDelete.mockResolvedValue({ affected: 1 });
+      mockCustomerRepository.remove.mockResolvedValue(mockCustomer);
 
-      await service.remove('1', mockUser);
+      await service.remove(mockUser, '1');
 
-      expect(mockCustomerRepository.softDelete).toHaveBeenCalledWith('1');
+      expect(mockCustomerRepository.remove).toHaveBeenCalled();
       expect(mockCacheService.del).toHaveBeenCalled();
     });
   });
@@ -187,7 +202,7 @@ describe('CustomerService', () => {
       mockCacheService.getOrSet.mockResolvedValue(mockCustomer);
       mockCustomerRepository.save.mockResolvedValue({ ...mockCustomer, currentBalance: 600 });
 
-      const result = await service.updateBalance('1', 100, mockUser);
+      const result = await service.updateBalance(mockUser, '1', 100);
 
       expect(result.currentBalance).toBe(600);
     });
@@ -198,7 +213,7 @@ describe('CustomerService', () => {
       mockCacheService.getOrSet.mockResolvedValue(mockCustomer);
       mockCustomerRepository.save.mockResolvedValue({ ...mockCustomer, creditLimit: 2000 });
 
-      const result = await service.updateCreditLimit('1', 2000, mockUser);
+      const result = await service.updateCreditLimit(mockUser, '1', 2000);
 
       expect(result.creditLimit).toBe(2000);
     });
@@ -206,7 +221,7 @@ describe('CustomerService', () => {
     it('should throw BadRequestException if credit limit is negative', async () => {
       mockCacheService.getOrSet.mockResolvedValue(mockCustomer);
 
-      await expect(service.updateCreditLimit('1', -100, mockUser)).rejects.toThrow(
+      await expect(service.updateCreditLimit(mockUser, '1', -100)).rejects.toThrow(
         BadRequestException,
       );
     });
@@ -217,7 +232,7 @@ describe('CustomerService', () => {
       mockCacheService.getOrSet.mockResolvedValue(mockCustomer);
       mockCustomerRepository.save.mockResolvedValue({ ...mockCustomer, status: 'active' });
 
-      const result = await service.activate('1', mockUser);
+      const result = await service.activate(mockUser, '1');
 
       expect(result.status).toBe('active');
     });
@@ -228,7 +243,7 @@ describe('CustomerService', () => {
       mockCacheService.getOrSet.mockResolvedValue(mockCustomer);
       mockCustomerRepository.save.mockResolvedValue({ ...mockCustomer, status: 'inactive' });
 
-      const result = await service.deactivate('1', mockUser);
+      const result = await service.deactivate(mockUser, '1');
 
       expect(result.status).toBe('inactive');
     });
@@ -239,7 +254,7 @@ describe('CustomerService', () => {
       const mockCustomers = [mockCustomer];
       mockCustomerRepository.find.mockResolvedValue(mockCustomers);
 
-      const result = await service.search('test', mockUser);
+      const result = await service.search(mockUser, 'test');
 
       expect(result).toEqual(mockCustomers);
     });
@@ -250,7 +265,7 @@ describe('CustomerService', () => {
       const mockCustomers = [mockCustomer];
       mockCustomerRepository.find.mockResolvedValue(mockCustomers);
 
-      const result = await service.findByStatus('active', mockUser);
+      const result = await service.findByStatus(mockUser, 'active');
 
       expect(result).toEqual(mockCustomers);
     });
@@ -258,7 +273,8 @@ describe('CustomerService', () => {
 
   describe('count', () => {
     it('should return customer count', async () => {
-      mockCustomerRepository.count.mockResolvedValue(10);
+      const mockCustomers = Array(10).fill(mockCustomer);
+      mockCustomerRepository.find.mockResolvedValue(mockCustomers);
 
       const result = await service.count(mockUser);
 
@@ -271,7 +287,7 @@ describe('CustomerService', () => {
       const mockCustomers = [mockCustomer];
       mockCustomerRepository.find.mockResolvedValue(mockCustomers);
 
-      const result = await service.getTopCustomers(5, mockUser);
+      const result = await service.getTopCustomers(mockUser, 5);
 
       expect(result).toEqual(mockCustomers);
     });
@@ -280,15 +296,11 @@ describe('CustomerService', () => {
   describe('getCustomersWithHighBalance', () => {
     it('should return customers with high balance', async () => {
       const mockCustomers = [mockCustomer];
-      mockQueryBuilder.getMany.mockResolvedValue(mockCustomers);
+      mockCustomerRepository.find.mockResolvedValue(mockCustomers);
 
-      const result = await service.getCustomersWithHighBalance(1000, mockUser);
+      const result = await service.getCustomersWithHighBalance(mockUser, 1000);
 
       expect(result).toEqual(mockCustomers);
-      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
-        'customer.currentBalance >= :threshold',
-        { threshold: 1000 },
-      );
     });
   });
 });

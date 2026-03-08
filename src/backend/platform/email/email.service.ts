@@ -1,4 +1,5 @@
 import { Injectable, Logger, NotFoundException, Inject } from '@nestjs/common';
+import { User } from '@/common/security/permission.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
@@ -20,8 +21,8 @@ export class EmailService {
   ) {}
 
   // Template Management
-  async findAllTemplates(tenantId: string): Promise<EmailTemplate[]> {
-    const cacheKey = `email-template:all:${tenantId}`;
+  async findAllTemplates(user: User): Promise<EmailTemplate[]> {
+    const cacheKey = `email-template:all:${user.tenantId}`;
 
     // Try cache first
     const cached = await this.cacheManager.get<EmailTemplate[]>(cacheKey);
@@ -31,7 +32,7 @@ export class EmailService {
 
     // Cache miss - fetch from database
     const templates = await this.templateRepository.find({
-      where: { tenantId },
+      where: { tenantId: user.tenantId },
       order: { createdAt: 'DESC' },
     });
 
@@ -89,10 +90,10 @@ export class EmailService {
     return template;
   }
 
-  async createTemplate(tenantId: string, data: Partial<EmailTemplate>): Promise<EmailTemplate> {
+  async createTemplate(user: User, data: Partial<EmailTemplate>): Promise<EmailTemplate> {
     const template = this.templateRepository.create({
       ...data,
-      tenantId,
+      tenantId: user.tenantId,
     });
     return this.templateRepository.save(template);
   }
@@ -195,9 +196,9 @@ export class EmailService {
   }
 
   // Email Logs
-  async findAllLogs(tenantId: string): Promise<EmailLog[]> {
+  async findAllLogs(user: User): Promise<EmailLog[]> {
     return this.logRepository.find({
-      where: { tenantId },
+      where: { tenantId: user.tenantId },
       order: { createdAt: 'DESC' },
       take: 100,
     });

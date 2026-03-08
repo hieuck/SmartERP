@@ -59,7 +59,7 @@ describe('EmailController', () => {
       const result = await controller.findAllTemplates(mockTenantId);
 
       expect(result).toEqual(mockTemplates);
-      expect(service.findAllTemplates).toHaveBeenCalledWith(mockTenantId);
+      expect(service.findAllTemplates).toHaveBeenCalledWith(mockUser);
     });
   });
 
@@ -152,7 +152,7 @@ describe('EmailController', () => {
       const result = await controller.findAllLogs(mockTenantId);
 
       expect(result).toEqual(mockLogs);
-      expect(service.findAllLogs).toHaveBeenCalledWith(mockTenantId);
+      expect(service.findAllLogs).toHaveBeenCalledWith(mockUser);
     });
   });
 

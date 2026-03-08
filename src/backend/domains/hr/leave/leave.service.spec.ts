@@ -15,17 +15,14 @@ describe('LeaveService', () => {
   let leaveBalanceRepository: Repository<LeaveBalance>;
   let employeeRepository: Repository<Employee>;
 
-  const mockUser: User = {
-    id: 'user-1',
-    tenantId: 'tenant-1',
-    email: 'test@example.com',
-  } as User;
-
   const mockEmployee: Employee = {
     id: 'emp-1',
     tenantId: 'tenant-1',
+    name: 'John Doe',
     firstName: 'John',
     lastName: 'Doe',
+    createdAt: new Date(),
+    updatedAt: new Date(),
   } as Employee;
 
   const mockLeaveRepository = {
@@ -37,6 +34,7 @@ describe('LeaveService', () => {
 
   const mockLeaveBalanceRepository = {
     findOne: jest.fn(),
+    create: jest.fn(),
     save: jest.fn(),
     increment: jest.fn(),
     decrement: jest.fn(),
@@ -272,8 +270,7 @@ describe('LeaveService', () => {
     });
 
     it('should create new balance if not exists', async () => {
-      mockLeaveBalanceRepository.findOne.mockResolvedValue(null);
-      mockLeaveBalanceRepository.save.mockResolvedValue({
+      const newBalance = {
         id: 'balance-1',
         employeeId: mockEmployee.id,
         leaveType: LeaveType.ANNUAL,
@@ -281,7 +278,11 @@ describe('LeaveService', () => {
         allocated: 0,
         used: 0,
         remaining: 0,
-      });
+      };
+
+      mockLeaveBalanceRepository.findOne.mockResolvedValue(null);
+      mockLeaveBalanceRepository.create.mockReturnValue(newBalance);
+      mockLeaveBalanceRepository.save.mockResolvedValue(newBalance);
 
       const result = await service.getLeaveBalance(
         mockEmployee.id,

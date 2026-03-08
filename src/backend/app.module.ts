@@ -65,6 +65,9 @@ import { DashboardModule } from './platform/dashboard/dashboard.module';
 import { ReportModule } from './platform/report/report.module';
 import { SearchModule } from './platform/search/search.module';
 import { EmailModule } from './platform/email/email.module';
+import { IssueTrackingModule } from './platform/issue-tracking/issue-tracking.module';
+import { SupportModule } from './platform/support/support.module';
+import { SystemAdminModule } from './platform/system-admin/system-admin.module';
 
 // Integration Modules
 import { IntegrationModule } from './integrations/integration/integration.module';
@@ -176,6 +179,9 @@ const RoleModule = { module: class RoleModule {} };
     ReportModule,
     SearchModule,
     EmailModule,
+    IssueTrackingModule, // Issue Tracking (Phase 5, Week 53-54)
+    SupportModule, // Support & Helpdesk (Phase 5, Week 55-56)
+    SystemAdminModule, // System Administration (Phase 5, Week 57-58)
 
     // Integration Modules
     IntegrationModule,

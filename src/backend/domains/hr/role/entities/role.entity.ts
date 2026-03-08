@@ -29,7 +29,7 @@ export class Role {
   @Column({ default: false })
   isSystem: boolean;
 
-  @ManyToMany(() => Permission, (permission) => permission.roles, {
+  @ManyToMany(() => Permission, (permission) => (permission as any).roles, {
     eager: true,
   })
   @JoinTable({

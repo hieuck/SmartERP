@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Setting } from './entities/setting.entity';
 import { CreateSettingDto } from './dto/create-setting.dto';
 import { UpdateSettingDto } from './dto/update-setting.dto';
+import { User } from '@/common/security/permission.service';
 
 @Injectable()
 export class SettingsService {
@@ -12,7 +13,8 @@ export class SettingsService {
     private readonly settingRepository: Repository<Setting>,
   ) {}
 
-  async create(tenantId: string, createSettingDto: CreateSettingDto): Promise<Setting> {
+  async create(user: User, createSettingDto: CreateSettingDto): Promise<Setting> {
+    const tenantId = user.tenantId;
     const existing = await this.settingRepository.findOne({
       where: { tenantId, key: createSettingDto.key },
     });
@@ -29,8 +31,8 @@ export class SettingsService {
     return this.settingRepository.save(setting);
   }
 
-  async findAll(tenantId: string, category?: string): Promise<Setting[]> {
-    const where: any = { tenantId };
+  async findAll(user: User, category?: string): Promise<Setting[]> {
+    const where: any = { tenantId: user.tenantId };
     if (category) {
       where.category = category;
     }
@@ -38,9 +40,9 @@ export class SettingsService {
     return this.settingRepository.find({ where });
   }
 
-  async findOne(tenantId: string, key: string): Promise<Setting> {
+  async findOne(user: User, key: string): Promise<Setting> {
     const setting = await this.settingRepository.findOne({
-      where: { tenantId, key },
+      where: { tenantId: user.tenantId, key },
     });
 
     if (!setting) {
@@ -50,26 +52,27 @@ export class SettingsService {
     return setting;
   }
 
-  async update(tenantId: string, key: string, updateSettingDto: UpdateSettingDto): Promise<Setting> {
-    const setting = await this.findOne(tenantId, key);
+  async update(user: User, key: string, updateSettingDto: UpdateSettingDto): Promise<Setting> {
+    const setting = await this.findOne(user, key);
 
     Object.assign(setting, updateSettingDto);
 
     return this.settingRepository.save(setting);
   }
 
-  async remove(tenantId: string, key: string): Promise<void> {
-    const setting = await this.findOne(tenantId, key);
+  async remove(user: User, key: string): Promise<void> {
+    const setting = await this.findOne(user, key);
     await this.settingRepository.remove(setting);
   }
 
-  async getPublicSettings(tenantId: string): Promise<Setting[]> {
+  async getPublicSettings(user: User): Promise<Setting[]> {
     return this.settingRepository.find({
-      where: { tenantId, isPublic: true },
+      where: { tenantId: user.tenantId, isPublic: true },
     });
   }
 
-  async bulkUpsert(tenantId: string, settings: CreateSettingDto[]): Promise<Setting[]> {
+  async bulkUpsert(user: User, settings: CreateSettingDto[]): Promise<Setting[]> {
+    const tenantId = user.tenantId;
     const results: Setting[] = [];
 
     for (const settingDto of settings) {

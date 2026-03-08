@@ -4,6 +4,7 @@ import { NotFoundException } from '@nestjs/common';
 import { NotificationService } from './notification.service';
 import { Notification, NotificationType, NotificationStatus } from './entities/notification.entity';
 import { CacheService } from '@/common/cache/cache.service';
+import { PermissionService } from '@/common/security/permission.service';
 import { createMockUser } from '@/common/test/test-helpers';
 
 describe('NotificationService', () => {

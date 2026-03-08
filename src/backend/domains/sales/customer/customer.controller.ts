@@ -12,7 +12,7 @@ import {
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { CustomerService } from './customer.service';
 import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
-import { TenantGuard } from '../../common/guards/tenant.guard';
+import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 
@@ -33,20 +33,20 @@ export class CustomerController {
 
   @Get('search')
   @ApiOperation({ summary: 'Search customers' })
-  search(@Query('q') query: string, @CurrentUser() user: User) {
-    return this.customerService.search(query, user);
+  search(@CurrentUser() user: User, @Query('q') query: string) {
+    return this.customerService.search(user, query);
   }
 
   @Get('status/:status')
   @ApiOperation({ summary: 'Get customers by status' })
-  findByStatus(@Param('status') status: string, @CurrentUser() user: User) {
-    return this.customerService.findByStatus(status, user);
+  findByStatus(@CurrentUser() user: User, @Param('status') status: string) {
+    return this.customerService.findByStatus(user, status);
   }
 
   @Get('top/:limit')
   @ApiOperation({ summary: 'Get top customers by balance' })
-  getTopCustomers(@Param('limit') limit: number, @CurrentUser() user: User) {
-    return this.customerService.getTopCustomers(limit, user);
+  getTopCustomers(@CurrentUser() user: User, @Param('limit') limit: number) {
+    return this.customerService.getTopCustomers(user, limit);
   }
 
   @Get('count')
@@ -57,62 +57,59 @@ export class CustomerController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Get customer by ID' })
-  findOne(@Param('id') id: string, @CurrentUser() user: User) {
-    return this.customerService.findOne(id, user);
+  findOne(@CurrentUser() user: User, @Param('id') id: string) {
+    return this.customerService.findOne(user, id);
   }
 
   @Post()
   @ApiOperation({ summary: 'Create customer' })
-  create(@Body() createCustomerDto: CreateCustomerDto, @CurrentUser() user: User) {
-    return this.customerService.create(createCustomerDto, user);
+  create(@CurrentUser() user: User, @Body() createCustomerDto: CreateCustomerDto) {
+    return this.customerService.create(user, createCustomerDto);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update customer' })
   update(
     @Param('id') id: string,
-    @Body() updateCustomerDto: UpdateCustomerDto,
-    @CurrentUser() user: User,
+    @CurrentUser() user: User, @Body() updateCustomerDto: UpdateCustomerDto,
   ) {
-    return this.customerService.update(id, updateCustomerDto, user);
+    return this.customerService.update(user, id, updateCustomerDto);
   }
 
   @Patch(':id/balance')
   @ApiOperation({ summary: 'Update customer balance' })
   updateBalance(
     @Param('id') id: string,
-    @Body('amount') amount: number,
-    @CurrentUser() user: User,
+    @CurrentUser() user: User, @Body('amount') amount: number,
   ) {
-    return this.customerService.updateBalance(id, amount, user);
+    return this.customerService.updateBalance(user, id, amount);
   }
 
   @Patch(':id/credit-limit')
   @ApiOperation({ summary: 'Update customer credit limit' })
   updateCreditLimit(
     @Param('id') id: string,
-    @Body('creditLimit') creditLimit: number,
-    @CurrentUser() user: User,
+    @CurrentUser() user: User, @Body('creditLimit') creditLimit: number,
   ) {
-    return this.customerService.updateCreditLimit(id, creditLimit, user);
+    return this.customerService.updateCreditLimit(user, id, creditLimit);
   }
 
   @Patch(':id/activate')
   @ApiOperation({ summary: 'Activate customer' })
-  activate(@Param('id') id: string, @CurrentUser() user: User) {
-    return this.customerService.activate(id, user);
+  activate(@CurrentUser() user: User, @Param('id') id: string) {
+    return this.customerService.activate(user, id);
   }
 
   @Patch(':id/deactivate')
   @ApiOperation({ summary: 'Deactivate customer' })
-  deactivate(@Param('id') id: string, @CurrentUser() user: User) {
-    return this.customerService.deactivate(id, user);
+  deactivate(@CurrentUser() user: User, @Param('id') id: string) {
+    return this.customerService.deactivate(user, id);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete customer' })
-  async remove(@Param('id') id: string, @CurrentUser() user: User) {
-    await this.customerService.remove(id, user);
+  async remove(@CurrentUser() user: User, @Param('id') id: string) {
+    await this.customerService.remove(user, id);
     return { message: 'Customer deleted successfully' };
   }
 }

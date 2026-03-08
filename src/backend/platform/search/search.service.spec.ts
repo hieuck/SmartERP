@@ -5,6 +5,7 @@ import { Product } from '../product/entities/product.entity';
 import { Customer } from '../customer/entities/customer.entity';
 import { Order } from '../order/entities/order.entity';
 import { CacheService } from '@/common/cache/cache.service';
+import { PermissionService } from '@/common/security/permission.service';
 
 describe('SearchService', () => {
   let service: SearchService;

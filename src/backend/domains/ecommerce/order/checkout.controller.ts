@@ -17,7 +17,7 @@ export class CheckoutController {
   async initiateCheckout(@Body() dto: CheckoutDto, @Req() req: any) {
     const tenantId = req.user?.tenantId || 'default';
     const user = req.user;
-    return this.checkoutService.initiateCheckout(dto, user, user);
+    return this.checkoutService.initiateCheckout(dto, user);
   }
 
   @Post('create-order')
@@ -28,6 +28,6 @@ export class CheckoutController {
   async createOrder(@Body() dto: CheckoutDto, @Req() req: any) {
     const tenantId = req.user?.tenantId || 'default';
     const user = req.user;
-    return this.checkoutService.createOrderFromCart(dto, user, user);
+    return this.checkoutService.createOrderFromCart(dto, user);
   }
 }

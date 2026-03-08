@@ -68,7 +68,7 @@ describe('ProductCatalogService', () => {
       mockRepository.create.mockReturnValue(mockProduct);
       mockRepository.save.mockResolvedValue(mockProduct);
 
-      const result = await service.create(dto, mockUser, mockUser);
+      const result = await service.create(mockUser, dto, mockUser);
 
       expect(mockRepository.create).toHaveBeenCalledWith({
         ...dto,
@@ -84,7 +84,7 @@ describe('ProductCatalogService', () => {
     it('should return a product by ID', async () => {
       mockRepository.findOne.mockResolvedValue(mockProduct);
 
-      const result = await service.findOne('prod-123', mockUser);
+      const result = await service.findOne(mockUser, 'prod-123');
 
       expect(mockRepository.findOne).toHaveBeenCalledWith({
         where: { id: 'prod-123', tenantId: 'tenant-123' },
@@ -96,7 +96,7 @@ describe('ProductCatalogService', () => {
       mockRepository.findOne.mockResolvedValue(null);
 
       await expect(
-        service.findOne('prod-999', mockUser),
+        service.findOne(mockUser, 'prod-999'),
       ).rejects.toThrow(NotFoundException);
     });
   });
@@ -183,7 +183,7 @@ describe('ProductCatalogService', () => {
       mockRepository.findOne.mockResolvedValue(mockProduct);
       mockRepository.save.mockResolvedValue(updatedProduct);
 
-      const result = await service.update('prod-123', dto, mockUser);
+      const result = await service.update(mockUser, 'prod-123', dto);
 
       expect(mockRepository.findOne).toHaveBeenCalled();
       expect(mockRepository.save).toHaveBeenCalled();
@@ -204,7 +204,7 @@ describe('ProductCatalogService', () => {
       mockRepository.findOne.mockResolvedValue(mockProduct);
       mockRepository.remove.mockResolvedValue(mockProduct);
 
-      await service.remove('prod-123', mockUser);
+      await service.remove(mockUser, 'prod-123');
 
       expect(mockRepository.findOne).toHaveBeenCalled();
       expect(mockRepository.remove).toHaveBeenCalledWith(mockProduct);
@@ -214,7 +214,7 @@ describe('ProductCatalogService', () => {
       mockRepository.findOne.mockResolvedValue(null);
 
       await expect(
-        service.remove('prod-999', mockUser),
+        service.remove(mockUser, 'prod-999'),
       ).rejects.toThrow(NotFoundException);
     });
   });

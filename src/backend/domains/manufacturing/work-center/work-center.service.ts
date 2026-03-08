@@ -10,16 +10,16 @@ export class WorkCenterService {
     private readonly workCenterRepository: Repository<WorkCenter>,
   ) {}
 
-  async create(tenantId: string, dto: any): Promise<WorkCenter> {
+  async create(dto: any, tenantId: string, user: any): Promise<WorkCenter> {
     const workCenter = this.workCenterRepository.create({
       tenantId,
       ...dto,
     });
 
-    return this.workCenterRepository.save(workCenter);
+    return this.workCenterRepository.save(workCenter) as any;
   }
 
-  async findOne(tenantId: string, id: string): Promise<WorkCenter> {
+  async findOne(id: string, tenantId: string): Promise<WorkCenter> {
     const workCenter = await this.workCenterRepository.findOne({
       where: { id, tenantId },
     });
@@ -31,17 +31,24 @@ export class WorkCenterService {
     return workCenter;
   }
 
-  async findActive(tenantId: string): Promise<WorkCenter[]> {
+  async findAll(tenantId: string): Promise<WorkCenter[]> {
+    return this.workCenterRepository.find({
+      where: { tenantId },
+      order: { name: 'ASC' },
+    });
+  }
+
+    async findActive(tenantId: string): Promise<WorkCenter[]> {
     return this.workCenterRepository.find({
       where: { tenantId, isActive: true },
     });
   }
 
-  async update(tenantId: string, id: string, dto: any): Promise<WorkCenter> {
+  async update(id: string, dto: any, tenantId: string, user: any): Promise<WorkCenter> {
     const workCenter = await this.findOne(tenantId, id);
 
     Object.assign(workCenter, dto);
 
-    return this.workCenterRepository.save(workCenter);
+    return this.workCenterRepository.save(workCenter) as any;
   }
 }

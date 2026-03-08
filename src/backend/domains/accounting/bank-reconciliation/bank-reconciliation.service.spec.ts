@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { BankReconciliationService } from './bank-reconciliation.service';
 import { BankStatement, BankStatementStatus } from './entities/bank-statement.entity';
 import { BankTransaction } from './entities/bank-transaction.entity';
-import { JournalEntry } from '../journal-entry/entities/journal-entry.entity';
+import { JournalEntry } from '../account/entities/journal-entry.entity';
 import { PermissionService, User } from '@/common/security/permission.service';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { createMockUser } from '@/common/test/test-helpers';
@@ -89,7 +89,7 @@ describe('BankReconciliationService', () => {
       jest.spyOn(statementRepository, 'create').mockReturnValue(savedStatement as any);
       jest.spyOn(statementRepository, 'save').mockResolvedValue(savedStatement as any);
 
-      const result = await service.create(dto, mockUser);
+      const result = await service.create(mockUser, dto);
 
       expect(result.number).toBe('BS-2026-0001');
       expect(result.status).toBe(BankStatementStatus.DRAFT);

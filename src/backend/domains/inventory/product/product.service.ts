@@ -81,7 +81,7 @@ export class ProductService {
       cacheKey,
       async () => {
         const product = await this.secureProductRepo.findOne(user, {
-          where: { id },
+          where: { id } as any,
         });
 
         if (!product) {

@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Like, Between } from 'typeorm';
 import { BankStatement, BankStatementStatus } from './entities/bank-statement.entity';
 import { BankTransaction } from './entities/bank-transaction.entity';
-import { JournalEntry } from '../journal-entry/entities/journal-entry.entity';
+import { JournalEntry } from '../account/entities/journal-entry.entity';
 import { Account } from '../account/entities/account.entity';
 import { SecureRepository } from '@/common/security/secure-repository';
 import { PermissionService, User } from '@/common/security/permission.service';

@@ -26,7 +26,7 @@ export class PaymentService {
     });
   }
 
-  async findOne(id: string, user: User): Promise<Payment> {
+  async findOne(user: User, id: string): Promise<Payment> {
     const cacheKey = generateCacheKey('payment', user.tenantId, id);
 
     return this.cacheService.getOrSet(
@@ -46,21 +46,21 @@ export class PaymentService {
     );
   }
 
-  async findByOrder(orderId: string, user: User): Promise<Payment[]> {
+  async findByOrder(user: User, orderId: string): Promise<Payment[]> {
     return this.securePaymentRepo.find(user, {
       where: { orderId },
       order: { createdAt: 'DESC' },
     });
   }
 
-  async findByStatus(status: string, user: User): Promise<Payment[]> {
+  async findByStatus(user: User, status: string): Promise<Payment[]> {
     return this.securePaymentRepo.find(user, {
       where: { status },
       order: { createdAt: 'DESC' },
     });
   }
 
-  async create(data: Partial<Payment>, user: User): Promise<Payment> {
+  async create(user: User, data: Partial<Payment>): Promise<Payment> {
     const payment = {
       ...data,
       status: data.status || 'pending',
@@ -68,8 +68,8 @@ export class PaymentService {
     return this.securePaymentRepo.save(user, payment);
   }
 
-  async update(id: string, data: Partial<Payment>, user: User): Promise<Payment> {
-    const payment = await this.findOne(id, user);
+  async update(user: User, id: string, data: Partial<Payment>): Promise<Payment> {
+    const payment = await this.findOne(user, id);
     Object.assign(payment, data);
     const updated = await this.securePaymentRepo.save(user, payment);
 
@@ -80,8 +80,8 @@ export class PaymentService {
     return updated;
   }
 
-  async remove(id: string, user: User): Promise<void> {
-    const payment = await this.findOne(id, user);
+  async remove(user: User, id: string): Promise<void> {
+    const payment = await this.findOne(user, id);
     await this.securePaymentRepo.remove(user, payment);
 
     // Invalidate cache
@@ -89,8 +89,8 @@ export class PaymentService {
     await this.cacheService.del(cacheKey);
   }
 
-  async complete(id: string, transactionId: string, user: User): Promise<Payment> {
-    const payment = await this.findOne(id, user);
+  async complete(user: User, id: string, transactionId: string): Promise<Payment> {
+    const payment = await this.findOne(user, id);
 
     if (payment.status !== 'pending' && payment.status !== 'processing') {
       throw new BadRequestException('Only pending or processing payments can be completed');
@@ -109,8 +109,8 @@ export class PaymentService {
     return updated;
   }
 
-  async fail(id: string, reason: string, user: User): Promise<Payment> {
-    const payment = await this.findOne(id, user);
+  async fail(user: User, id: string, reason: string): Promise<Payment> {
+    const payment = await this.findOne(user, id);
 
     if (payment.status === 'completed') {
       throw new BadRequestException('Cannot fail a completed payment');
@@ -128,8 +128,8 @@ export class PaymentService {
     return updated;
   }
 
-  async refund(id: string, user: User): Promise<Payment> {
-    const payment = await this.findOne(id, user);
+  async refund(user: User, id: string): Promise<Payment> {
+    const payment = await this.findOne(user, id);
 
     if (payment.status !== 'completed') {
       throw new BadRequestException('Only completed payments can be refunded');
@@ -163,7 +163,7 @@ export class PaymentService {
     return payments.reduce((sum, p) => sum + Number(p.amount), 0);
   }
 
-  async getPaymentsByDateRange(startDate: Date, endDate: Date, user: User): Promise<Payment[]> {
+  async getPaymentsByDateRange(user: User, startDate: Date, endDate: Date): Promise<Payment[]> {
     return this.securePaymentRepo.find(user, {
       where: {
         paymentDate: Between(startDate, endDate),

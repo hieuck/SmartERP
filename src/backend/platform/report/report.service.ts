@@ -4,7 +4,8 @@ import { Repository, DataSource } from 'typeorm';
 import { Report, ReportType } from './entities/report.entity';
 import { ReportColumn, AggregationType } from './entities/report-column.entity';
 import { ReportExecution, ExecutionStatus } from './entities/report-execution.entity';
-import { User } from '../../core/user/entities/user.entity';
+import { User as UserEntity } from '../../core/user/entities/user.entity';
+import { User } from '@/common/security/permission.service';
 
 // Whitelist of allowed aggregation functions (security)
 const ALLOWED_AGGREGATIONS = ['SUM', 'AVG', 'COUNT', 'MIN', 'MAX'];

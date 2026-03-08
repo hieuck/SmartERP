@@ -1,5 +1,5 @@
 import { Entity, Column, Index } from 'typeorm';
-import { BaseEntity } from '../../../common/entities/base.entity';
+import { BaseEntity } from '../../../../common/entities/base.entity';
 
 export enum InvoiceType {
   SALES = 'sales',

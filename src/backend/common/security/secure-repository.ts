@@ -1,8 +1,8 @@
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Repository, FindOneOptions, FindManyOptions } from 'typeorm';
-import { PermissionService, User, Record as PermissionRecord } from './permission.service';
+import { PermissionService, User, BaseRecord as PermissionRecord } from './permission.service';
 
-export class SecureRepository<T extends PermissionRecord> {
+export class SecureRepository<T extends Partial<PermissionRecord> = any> {
   constructor(
     private readonly repository: Repository<T>,
     private readonly permissionService: PermissionService,
@@ -16,7 +16,7 @@ export class SecureRepository<T extends PermissionRecord> {
       return null;
     }
 
-    if (!this.permissionService.canRead(user, record, this.entityName)) {
+    if (!this.permissionService.canRead(user, record as any, this.entityName)) {
       throw new ForbiddenException('Access denied to this record');
     }
 
@@ -42,7 +42,7 @@ export class SecureRepository<T extends PermissionRecord> {
         where: { id: entity.id } as any,
       });
 
-      if (existing && !this.permissionService.canWrite(user, existing, this.entityName)) {
+      if (existing && !this.permissionService.canWrite(user, existing as any, this.entityName)) {
         throw new ForbiddenException('Access denied to update this record');
       }
     } else {
@@ -62,7 +62,7 @@ export class SecureRepository<T extends PermissionRecord> {
       throw new NotFoundException('Record not found');
     }
 
-    if (!this.permissionService.canDelete(user, existing, this.entityName)) {
+    if (!this.permissionService.canDelete(user, existing as any, this.entityName)) {
       throw new ForbiddenException('Access denied to delete this record');
     }
 

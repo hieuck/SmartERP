@@ -4,6 +4,7 @@ import { OrderService } from './order.service';
 import { Order } from './entities/order.entity';
 import { NotFoundException, ConflictException } from '@nestjs/common';
 import { CacheService } from '@/common/cache/cache.service';
+import { PermissionService } from '@/common/security/permission.service';
 import { createMockUser } from '@/common/test/test-helpers';
 
 describe('OrderService', () => {
@@ -17,6 +18,7 @@ describe('OrderService', () => {
     save: jest.fn(),
     update: jest.fn(),
     softDelete: jest.fn(),
+    remove: jest.fn(),
     count: jest.fn(),
     createQueryBuilder: jest.fn(),
   };
@@ -27,6 +29,15 @@ describe('OrderService', () => {
     del: jest.fn(),
     getOrSet: jest.fn(),
     invalidateEntity: jest.fn(),
+  };
+
+  const mockPermissionService = {
+    checkPermission: jest.fn().mockResolvedValue(true),
+    hasPermission: jest.fn().mockReturnValue(true),
+    buildSecureQuery: jest.fn((user, where) => where),
+    canRead: jest.fn().mockReturnValue(true),
+    canWrite: jest.fn().mockReturnValue(true),
+    canDelete: jest.fn().mockReturnValue(true),
   };
 
   const mockUser = createMockUser();
@@ -42,6 +53,10 @@ describe('OrderService', () => {
         {
           provide: CacheService,
           useValue: mockCacheService,
+        },
+        {
+          provide: PermissionService,
+          useValue: mockPermissionService,
         },
       ],
     }).compile();
@@ -59,7 +74,7 @@ describe('OrderService', () => {
         { id: '1', orderNumber: 'ORD-001' },
         { id: '2', orderNumber: 'ORD-002' },
       ];
-      mockOrderRepository.findAndCount.mockResolvedValue([mockOrders, 2]);
+      mockOrderRepository.find.mockResolvedValue(mockOrders);
 
       const result = await service.findAll(mockUser, 1, 20);
 
@@ -73,7 +88,7 @@ describe('OrderService', () => {
       const mockOrder = { id: '1', orderNumber: 'ORD-001' };
       mockCacheService.getOrSet.mockResolvedValue(mockOrder);
 
-      const result = await service.findOne('1', mockUser);
+      const result = await service.findOne(mockUser, '1');
 
       expect(result).toEqual(mockOrder);
       expect(mockCacheService.getOrSet).toHaveBeenCalled();
@@ -85,7 +100,7 @@ describe('OrderService', () => {
       });
       mockOrderRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findOne('999', mockUser)).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(mockUser, '999')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -94,7 +109,7 @@ describe('OrderService', () => {
       const mockOrder = { id: '1', orderNumber: 'ORD-001' };
       mockOrderRepository.findOne.mockResolvedValue(mockOrder);
 
-      const result = await service.findByOrderNumber('ORD-001', mockUser);
+      const result = await service.findByOrderNumber(mockUser, 'ORD-001');
 
       expect(result).toEqual(mockOrder);
     });
@@ -107,7 +122,7 @@ describe('OrderService', () => {
       mockOrderRepository.create.mockReturnValue(orderData);
       mockOrderRepository.save.mockResolvedValue(orderData);
 
-      const result = await service.create(orderData as any, mockUser);
+      const result = await service.create(mockUser, orderData as any);
 
       expect(result).toEqual(orderData);
     });
@@ -116,7 +131,7 @@ describe('OrderService', () => {
       const orderData = { orderNumber: 'ORD-001' };
       mockOrderRepository.findOne.mockResolvedValue({ id: '1' });
 
-      await expect(service.create(orderData as any, mockUser)).rejects.toThrow(
+      await expect(service.create(mockUser, orderData as any)).rejects.toThrow(
         ConflictException,
       );
     });
@@ -129,7 +144,7 @@ describe('OrderService', () => {
       mockCacheService.getOrSet.mockResolvedValue(mockOrder);
       mockOrderRepository.save.mockResolvedValue({ ...mockOrder, ...updateDto });
 
-      const result = await service.update('1', updateDto, mockUser);
+      const result = await service.update(mockUser, '1', updateDto);
 
       expect(mockCacheService.del).toHaveBeenCalled();
     });
@@ -140,7 +155,7 @@ describe('OrderService', () => {
       mockCacheService.getOrSet.mockResolvedValue(mockOrder);
       mockOrderRepository.findOne.mockResolvedValue({ id: '2', orderNumber: 'ORD-002' });
 
-      await expect(service.update('1', updateDto, mockUser)).rejects.toThrow(ConflictException);
+      await expect(service.update(mockUser, '1', updateDto)).rejects.toThrow(ConflictException);
     });
   });
 
@@ -148,11 +163,11 @@ describe('OrderService', () => {
     it('should remove order', async () => {
       const mockOrder = { id: '1', orderNumber: 'ORD-001' };
       mockCacheService.getOrSet.mockResolvedValue(mockOrder);
-      mockOrderRepository.softDelete.mockResolvedValue({ affected: 1 });
+      mockOrderRepository.remove.mockResolvedValue(mockOrder);
 
-      await service.remove('1', mockUser);
+      await service.remove(mockUser, '1');
 
-      expect(mockOrderRepository.softDelete).toHaveBeenCalledWith('1');
+      expect(mockOrderRepository.remove).toHaveBeenCalled();
       expect(mockCacheService.del).toHaveBeenCalled();
     });
   });
@@ -163,7 +178,7 @@ describe('OrderService', () => {
       mockCacheService.getOrSet.mockResolvedValue(mockOrder);
       mockOrderRepository.save.mockResolvedValue({ ...mockOrder, status: 'processing' });
 
-      const result = await service.updateStatus('1', 'processing', mockUser);
+      const result = await service.updateStatus(mockUser, '1', 'processing');
 
       expect(result.status).toBe('processing');
       expect(mockCacheService.del).toHaveBeenCalled();
@@ -175,7 +190,7 @@ describe('OrderService', () => {
       const mockOrders = [{ id: '1', customerId: 'cust-1' }];
       mockOrderRepository.find.mockResolvedValue(mockOrders);
 
-      const result = await service.findByCustomer('cust-1', mockUser);
+      const result = await service.findByCustomer(mockUser, 'cust-1');
 
       expect(result).toEqual(mockOrders);
     });
@@ -186,7 +201,7 @@ describe('OrderService', () => {
       const mockOrders = [{ id: '1', status: 'pending' }];
       mockOrderRepository.find.mockResolvedValue(mockOrders);
 
-      const result = await service.findByStatus('pending', mockUser);
+      const result = await service.findByStatus(mockUser, 'pending');
 
       expect(result).toEqual(mockOrders);
     });
@@ -199,7 +214,7 @@ describe('OrderService', () => {
       const endDate = new Date('2024-12-31');
       mockOrderRepository.find.mockResolvedValue(mockOrders);
 
-      const result = await service.findByDateRange(startDate, endDate, mockUser);
+      const result = await service.findByDateRange(mockUser, startDate, endDate);
 
       expect(result).toEqual(mockOrders);
     });
@@ -207,7 +222,8 @@ describe('OrderService', () => {
 
   describe('count', () => {
     it('should return order count', async () => {
-      mockOrderRepository.count.mockResolvedValue(50);
+      const mockOrders = Array(50).fill({ id: '1' });
+      mockOrderRepository.find.mockResolvedValue(mockOrders);
 
       const result = await service.count(mockUser);
 
@@ -217,13 +233,11 @@ describe('OrderService', () => {
 
   describe('getTotalRevenue', () => {
     it('should return total revenue', async () => {
-      const mockQueryBuilder = {
-        select: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        getRawOne: jest.fn().mockResolvedValue({ total: '10000' }),
-      };
-      mockOrderRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
+      const mockOrders = [
+        { id: '1', status: 'completed', totalAmount: 5000 },
+        { id: '2', status: 'completed', totalAmount: 5000 },
+      ];
+      mockOrderRepository.find.mockResolvedValue(mockOrders);
 
       const result = await service.getTotalRevenue(mockUser);
 
@@ -231,13 +245,7 @@ describe('OrderService', () => {
     });
 
     it('should return 0 if no orders', async () => {
-      const mockQueryBuilder = {
-        select: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        getRawOne: jest.fn().mockResolvedValue(null),
-      };
-      mockOrderRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
+      mockOrderRepository.find.mockResolvedValue([]);
 
       const result = await service.getTotalRevenue(mockUser);
 
@@ -247,18 +255,16 @@ describe('OrderService', () => {
 
   describe('getRevenueByDateRange', () => {
     it('should return revenue by date range', async () => {
-      const mockQueryBuilder = {
-        select: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        getRawOne: jest.fn().mockResolvedValue({ total: '5000' }),
-      };
-      mockOrderRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
+      const mockOrders = [
+        { id: '1', status: 'completed', totalAmount: 2500 },
+        { id: '2', status: 'completed', totalAmount: 2500 },
+      ];
+      mockOrderRepository.find.mockResolvedValue(mockOrders);
 
       const result = await service.getRevenueByDateRange(
+        mockUser,
         new Date('2024-01-01'),
         new Date('2024-12-31'),
-        'tenant-1',
       );
 
       expect(result).toBe(5000);
@@ -271,7 +277,7 @@ describe('OrderService', () => {
       mockCacheService.getOrSet.mockResolvedValue(mockOrder);
       mockOrderRepository.save.mockResolvedValue({ ...mockOrder, status: 'cancelled' });
 
-      const result = await service.cancel('1', mockUser);
+      const result = await service.cancel(mockUser, '1');
 
       expect(result.status).toBe('cancelled');
       expect(mockCacheService.del).toHaveBeenCalled();
@@ -281,7 +287,7 @@ describe('OrderService', () => {
       const mockOrder = { id: '1', status: 'delivered' };
       mockCacheService.getOrSet.mockResolvedValue(mockOrder);
 
-      await expect(service.cancel('1', mockUser)).rejects.toThrow(
+      await expect(service.cancel(mockUser, '1')).rejects.toThrow(
         'Cannot cancel a delivered or completed order',
       );
     });
@@ -290,7 +296,7 @@ describe('OrderService', () => {
       const mockOrder = { id: '1', status: 'completed' };
       mockCacheService.getOrSet.mockResolvedValue(mockOrder);
 
-      await expect(service.cancel('1', mockUser)).rejects.toThrow(
+      await expect(service.cancel(mockUser, '1')).rejects.toThrow(
         'Cannot cancel a delivered or completed order',
       );
     });
@@ -302,7 +308,7 @@ describe('OrderService', () => {
       mockCacheService.getOrSet.mockResolvedValue(mockOrder);
       mockOrderRepository.save.mockResolvedValue({ ...mockOrder, status: 'shipped' });
 
-      const result = await service.ship('1', 'TRACK-123', mockUser);
+      const result = await service.ship(mockUser, '1', 'TRACK-123');
 
       expect(result.status).toBe('shipped');
       expect(mockCacheService.del).toHaveBeenCalled();
@@ -312,7 +318,7 @@ describe('OrderService', () => {
       const mockOrder = { id: '1', status: 'delivered' };
       mockCacheService.getOrSet.mockResolvedValue(mockOrder);
 
-      await expect(service.ship('1', 'TRACK-123', mockUser)).rejects.toThrow(
+      await expect(service.ship(mockUser, '1', 'TRACK-123')).rejects.toThrow(
         'Only draft, pending or processing orders can be shipped',
       );
     });
@@ -324,7 +330,7 @@ describe('OrderService', () => {
       mockCacheService.getOrSet.mockResolvedValue(mockOrder);
       mockOrderRepository.save.mockResolvedValue({ ...mockOrder, status: 'delivered' });
 
-      const result = await service.deliver('1', mockUser);
+      const result = await service.deliver(mockUser, '1');
 
       expect(result.status).toBe('delivered');
       expect(mockCacheService.del).toHaveBeenCalled();
@@ -334,7 +340,7 @@ describe('OrderService', () => {
       const mockOrder = { id: '1', status: 'pending' };
       mockCacheService.getOrSet.mockResolvedValue(mockOrder);
 
-      await expect(service.deliver('1', mockUser)).rejects.toThrow(
+      await expect(service.deliver(mockUser, '1')).rejects.toThrow(
         'Only shipped orders can be delivered',
       );
     });
@@ -356,7 +362,7 @@ describe('OrderService', () => {
       const mockOrders = [{ id: '1' }, { id: '2' }];
       mockOrderRepository.find.mockResolvedValue(mockOrders);
 
-      const result = await service.getRecentOrders(10, mockUser);
+      const result = await service.getRecentOrders(mockUser, 10);
 
       expect(result).toEqual(mockOrders);
     });

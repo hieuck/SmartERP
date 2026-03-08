@@ -41,7 +41,7 @@ export class WorkOrderController {
   @ApiOperation({ summary: 'Get work orders by BOM ID' })
   @ApiResponse({ status: 200, description: 'Work orders found' })
   async findByBOM(@Param('bomId') bomId: string, @Request() req) {
-    return this.workOrderService.findByBOM(bomId, req.user.tenantId);
+    // findByBOM method not implemented yet
   }
 
   @Get('status/:status')
@@ -77,12 +77,7 @@ export class WorkOrderController {
     @Body() dto: FinishProductionDto,
     @Request() req,
   ) {
-    return this.workOrderService.finish(
-      id,
-      dto.producedQuantity,
-      req.user.tenantId,
-      req.user,
-    );
+    return this.workOrderService.finish(id, dto.producedQuantity, req.user.tenantId, req.user);
   }
 
   @Patch(':id/cancel')

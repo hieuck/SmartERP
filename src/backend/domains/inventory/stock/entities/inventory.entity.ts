@@ -1,5 +1,5 @@
 import { Entity, Column, Index, ManyToOne, JoinColumn } from 'typeorm';
-import { BaseEntity } from '../../../common/entities/base.entity';
+import { BaseEntity } from '@/common/entities/base.entity';
 import { Product } from '../../product/entities/product.entity';
 
 export enum InventoryTransactionType {

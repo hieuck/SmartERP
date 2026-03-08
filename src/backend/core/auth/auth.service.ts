@@ -9,18 +9,19 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
-import { User } from '../user/entities/user.entity';
+import { User as UserEntity } from '../user/entities/user.entity';
 import { Tenant, TenantStatus, SubscriptionPlan } from '../tenant/entities/tenant.entity';
 import { RegisterTenantDto } from './dto/register-tenant.dto';
 import { CacheService } from '@/common/cache/cache.service';
 import { CacheTTL, generateCacheKey } from '@/common/cache/cache.config';
+import { User } from '@/common/security/permission.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
+    @InjectRepository(UserEntity)
+    private readonly userRepository: Repository<UserEntity>,
     @InjectRepository(Tenant)
     private readonly tenantRepository: Repository<Tenant>,
     private readonly dataSource: DataSource,
@@ -35,7 +36,7 @@ export class AuthService {
    * @param password Plain text password
    * @returns User object if valid, null otherwise
    */
-  async validateUser(email: string, password: string): Promise<Omit<User, 'password'> | null> {
+  async validateUser(email: string, password: string): Promise<Omit<UserEntity, 'password'> | null> {
     // Find user by email (use cached findByEmail)
     const user = await this.findByEmail(email);
 
@@ -61,7 +62,7 @@ export class AuthService {
    * @param user User object from validateUser
    * @returns Access token and user info with tenantId
    */
-  async login(user: Omit<User, 'password'>) {
+  async login(user: Omit<UserEntity, 'password'>) {
     // Create JWT payload with tenantId
     const payload = {
       email: user.email,
@@ -227,7 +228,7 @@ export class AuthService {
    * @param email User email
    * @returns User object or null
    */
-  async findByEmail(email: string): Promise<User | null> {
+  async findByEmail(email: string): Promise<UserEntity | null> {
     const cacheKey = generateCacheKey('user-email', 'global', email);
     return this.cacheService.getOrSet(
       cacheKey,
@@ -283,7 +284,7 @@ export class AuthService {
       }
 
       // Check if email already exists
-      const existingUser = await queryRunner.manager.findOne(User, {
+      const existingUser = await queryRunner.manager.findOne(UserEntity, {
         where: { email: registerTenantDto.email },
       });
 
@@ -321,7 +322,7 @@ export class AuthService {
       const emailVerificationToken = uuidv4();
 
       // Create admin user
-      const user = queryRunner.manager.create(User, {
+      const user = queryRunner.manager.create(UserEntity, {
         email: registerTenantDto.email,
         password: hashedPassword,
         firstName: registerTenantDto.firstName,

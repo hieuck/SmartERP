@@ -15,7 +15,7 @@ import { RequestDataExportDto } from './dto/request-data-export.dto';
 import { RequestDataDeletionDto } from './dto/request-data-deletion.dto';
 import { ApproveDeletionDto } from './dto/approve-deletion.dto';
 import { ConsentType } from './entities/consent.entity';
-import { Roles } from '../../core/auth/decorators/roles.decorator';
+import { Roles } from '../decorators/roles.decorator';
 
 import { User } from '@/common/security/permission.service';
 @ApiTags('GDPR')

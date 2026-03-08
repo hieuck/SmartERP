@@ -19,6 +19,7 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { TenantId } from '../../common/decorators/tenant-id.decorator';
 
 import { User } from '@/common/security/permission.service';
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
 @Controller('settings')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class SettingsController {

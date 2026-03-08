@@ -4,6 +4,7 @@ import { DocumentService } from './document.service';
 import { Document, DocumentType } from './entities/document.entity';
 import { NotFoundException } from '@nestjs/common';
 import { CacheService } from '@/common/cache/cache.service';
+import { PermissionService } from '@/common/security/permission.service';
 import { createMockUser } from '@/common/test/test-helpers';
 
 describe('DocumentService', () => {

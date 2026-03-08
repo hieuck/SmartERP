@@ -7,7 +7,8 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { Report } from './report.entity';
-import { User } from '../../../core/user/entities/user.entity';
+import { User as UserEntity } from '../../../core/user/entities/user.entity';
+import { User } from '@/common/security/permission.service';
 
 export enum ExecutionStatus {
   PENDING = 'pending',
@@ -58,7 +59,7 @@ export class ReportExecution {
   @Column()
   tenantId: string;
 
-  @ManyToOne(() => User)
+  @ManyToOne('User')
   @JoinColumn({ name: 'executedBy' })
   executor: User;
 

@@ -69,10 +69,10 @@ describe('SettingsController', () => {
 
       mockSettingsService.create.mockResolvedValue(mockSetting);
 
-      const result = await controller.create('tenant-1', createDto);
+      const result = await controller.create(mockUser, createDto);
 
       expect(result).toEqual(mockSetting);
-      expect(service.create).toHaveBeenCalledWith('tenant-1', createDto);
+      expect(service.create).toHaveBeenCalledWith(mockUser, createDto);
     });
   });
 
@@ -80,19 +80,19 @@ describe('SettingsController', () => {
     it('should return all settings', async () => {
       mockSettingsService.findAll.mockResolvedValue([mockSetting]);
 
-      const result = await controller.findAll('tenant-1');
+      const result = await controller.findAll(mockUser);
 
       expect(result).toEqual([mockSetting]);
-      expect(service.findAll).toHaveBeenCalledWith('tenant-1', undefined);
+      expect(service.findAll).toHaveBeenCalledWith(mockUser, undefined);
     });
 
     it('should return settings filtered by category', async () => {
       mockSettingsService.findAll.mockResolvedValue([mockSetting]);
 
-      const result = await controller.findAll('tenant-1', SettingCategory.GENERAL);
+      const result = await controller.findAll(mockUser, SettingCategory.GENERAL);
 
       expect(result).toEqual([mockSetting]);
-      expect(service.findAll).toHaveBeenCalledWith('tenant-1', SettingCategory.GENERAL);
+      expect(service.findAll).toHaveBeenCalledWith(mockUser, SettingCategory.GENERAL);
     });
   });
 
@@ -100,10 +100,10 @@ describe('SettingsController', () => {
     it('should return public settings', async () => {
       mockSettingsService.getPublicSettings.mockResolvedValue([mockSetting]);
 
-      const result = await controller.getPublicSettings('tenant-1');
+      const result = await controller.getPublicSettings(mockUser);
 
       expect(result).toEqual([mockSetting]);
-      expect(service.getPublicSettings).toHaveBeenCalledWith('tenant-1');
+      expect(service.getPublicSettings).toHaveBeenCalledWith(mockUser);
     });
   });
 
@@ -111,10 +111,10 @@ describe('SettingsController', () => {
     it('should return a setting by key', async () => {
       mockSettingsService.findOne.mockResolvedValue(mockSetting);
 
-      const result = await controller.findOne('tenant-1', 'app.name');
+      const result = await controller.findOne(mockUser, 'app.name');
 
       expect(result).toEqual(mockSetting);
-      expect(service.findOne).toHaveBeenCalledWith('tenant-1', 'app.name');
+      expect(service.findOne).toHaveBeenCalledWith(mockUser, 'app.name');
     });
   });
 
@@ -127,10 +127,10 @@ describe('SettingsController', () => {
       const updatedSetting = { ...mockSetting, value: 'SmartERP Updated' };
       mockSettingsService.update.mockResolvedValue(updatedSetting);
 
-      const result = await controller.update('tenant-1', 'app.name', updateDto);
+      const result = await controller.update(mockUser, 'app.name', updateDto);
 
       expect(result).toEqual(updatedSetting);
-      expect(service.update).toHaveBeenCalledWith('tenant-1', 'app.name', updateDto);
+      expect(service.update).toHaveBeenCalledWith(mockUser, 'app.name', updateDto);
     });
   });
 
@@ -138,9 +138,9 @@ describe('SettingsController', () => {
     it('should remove a setting', async () => {
       mockSettingsService.remove.mockResolvedValue(undefined);
 
-      await controller.remove('tenant-1', 'app.name');
+      await controller.remove(mockUser, 'app.name');
 
-      expect(service.remove).toHaveBeenCalledWith('tenant-1', 'app.name');
+      expect(service.remove).toHaveBeenCalledWith(mockUser, 'app.name');
     });
   });
 });

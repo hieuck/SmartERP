@@ -13,17 +13,14 @@ describe('AttendanceService', () => {
   let attendanceRepository: Repository<Attendance>;
   let employeeRepository: Repository<Employee>;
 
-  const mockUser: User = {
-    id: 'user-1',
-    tenantId: 'tenant-1',
-    email: 'test@example.com',
-  } as User;
-
   const mockEmployee: Employee = {
     id: 'emp-1',
     tenantId: 'tenant-1',
+    name: 'John Doe',
     firstName: 'John',
     lastName: 'Doe',
+    createdAt: new Date(),
+    updatedAt: new Date(),
   } as Employee;
 
   const mockAttendanceRepository = {

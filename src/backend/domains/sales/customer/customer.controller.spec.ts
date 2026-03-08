@@ -70,10 +70,10 @@ describe('CustomerController', () => {
       };
       service.findAll.mockResolvedValue(response);
 
-      const result = await controller.findAll(mockTenantId);
+      const result = await controller.findAll(mockUser);
 
       expect(result).toEqual(response);
-      expect(service.findAll).toHaveBeenCalledWith(mockTenantId);
+      expect(service.findAll).toHaveBeenCalledWith(mockUser);
     });
   });
 
@@ -83,10 +83,10 @@ describe('CustomerController', () => {
       const customers = [mockCustomer];
       service.search.mockResolvedValue(customers);
 
-      const result = await controller.search(query, mockTenantId);
+      const result = await controller.search(mockUser, query);
 
       expect(result).toEqual(customers);
-      expect(service.search).toHaveBeenCalledWith(query, mockTenantId);
+      expect(service.search).toHaveBeenCalledWith(mockUser, query);
     });
   });
 
@@ -96,10 +96,10 @@ describe('CustomerController', () => {
       const customers = [mockCustomer];
       service.findByStatus.mockResolvedValue(customers);
 
-      const result = await controller.findByStatus(status, mockTenantId);
+      const result = await controller.findByStatus(mockUser, status);
 
       expect(result).toEqual(customers);
-      expect(service.findByStatus).toHaveBeenCalledWith(status, mockTenantId);
+      expect(service.findByStatus).toHaveBeenCalledWith(mockUser, status);
     });
   });
 
@@ -109,10 +109,10 @@ describe('CustomerController', () => {
       const customers = [mockCustomer];
       service.getTopCustomers.mockResolvedValue(customers);
 
-      const result = await controller.getTopCustomers(limit, mockTenantId);
+      const result = await controller.getTopCustomers(mockUser, limit);
 
       expect(result).toEqual(customers);
-      expect(service.getTopCustomers).toHaveBeenCalledWith(limit, mockTenantId);
+      expect(service.getTopCustomers).toHaveBeenCalledWith(mockUser, limit);
     });
   });
 
@@ -121,10 +121,10 @@ describe('CustomerController', () => {
       const count = 42;
       service.count.mockResolvedValue(count);
 
-      const result = await controller.count(mockTenantId);
+      const result = await controller.count(mockUser);
 
       expect(result).toEqual(count);
-      expect(service.count).toHaveBeenCalledWith(mockTenantId);
+      expect(service.count).toHaveBeenCalledWith(mockUser);
     });
   });
 
@@ -132,10 +132,10 @@ describe('CustomerController', () => {
     it('should return customer by id', async () => {
       service.findOne.mockResolvedValue(mockCustomer);
 
-      const result = await controller.findOne(mockCustomer.id, mockTenantId);
+      const result = await controller.findOne(mockUser, mockCustomer.id);
 
       expect(result).toEqual(mockCustomer);
-      expect(service.findOne).toHaveBeenCalledWith(mockCustomer.id, mockTenantId);
+      expect(service.findOne).toHaveBeenCalledWith(mockUser, mockCustomer.id);
     });
   });
 
@@ -149,10 +149,10 @@ describe('CustomerController', () => {
       };
       service.create.mockResolvedValue(mockCustomer);
 
-      const result = await controller.create(createDto, mockTenantId);
+      const result = await controller.create(mockUser, createDto);
 
       expect(result).toEqual(mockCustomer);
-      expect(service.create).toHaveBeenCalledWith(createDto, mockTenantId);
+      expect(service.create).toHaveBeenCalledWith(mockUser, createDto);
     });
   });
 
@@ -164,10 +164,10 @@ describe('CustomerController', () => {
       const updatedCustomer = { ...mockCustomer, ...updateDto };
       service.update.mockResolvedValue(updatedCustomer);
 
-      const result = await controller.update(mockCustomer.id, updateDto, mockTenantId);
+      const result = await controller.update(mockCustomer.id, mockUser, updateDto);
 
       expect(result).toEqual(updatedCustomer);
-      expect(service.update).toHaveBeenCalledWith(mockCustomer.id, updateDto, mockTenantId);
+      expect(service.update).toHaveBeenCalledWith(mockUser, mockCustomer.id, updateDto);
     });
   });
 
@@ -177,10 +177,10 @@ describe('CustomerController', () => {
       const updatedCustomer = { ...mockCustomer, currentBalance: mockCustomer.currentBalance + amount };
       service.updateBalance.mockResolvedValue(updatedCustomer);
 
-      const result = await controller.updateBalance(mockCustomer.id, amount, mockTenantId);
+      const result = await controller.updateBalance(mockCustomer.id, mockUser, amount);
 
       expect(result).toEqual(updatedCustomer);
-      expect(service.updateBalance).toHaveBeenCalledWith(mockCustomer.id, amount, mockTenantId);
+      expect(service.updateBalance).toHaveBeenCalledWith(mockUser, mockCustomer.id, amount);
     });
   });
 
@@ -190,10 +190,10 @@ describe('CustomerController', () => {
       const updatedCustomer = { ...mockCustomer, creditLimit };
       service.updateCreditLimit.mockResolvedValue(updatedCustomer);
 
-      const result = await controller.updateCreditLimit(mockCustomer.id, creditLimit, mockTenantId);
+      const result = await controller.updateCreditLimit(mockCustomer.id, mockUser, creditLimit);
 
       expect(result).toEqual(updatedCustomer);
-      expect(service.updateCreditLimit).toHaveBeenCalledWith(mockCustomer.id, creditLimit, mockTenantId);
+      expect(service.updateCreditLimit).toHaveBeenCalledWith(mockUser, mockCustomer.id, creditLimit);
     });
   });
 
@@ -202,10 +202,10 @@ describe('CustomerController', () => {
       const activatedCustomer = { ...mockCustomer, status: 'active' };
       service.activate.mockResolvedValue(activatedCustomer);
 
-      const result = await controller.activate(mockCustomer.id, mockTenantId);
+      const result = await controller.activate(mockUser, mockCustomer.id);
 
       expect(result).toEqual(activatedCustomer);
-      expect(service.activate).toHaveBeenCalledWith(mockCustomer.id, mockTenantId);
+      expect(service.activate).toHaveBeenCalledWith(mockUser, mockCustomer.id);
     });
   });
 
@@ -214,10 +214,10 @@ describe('CustomerController', () => {
       const deactivatedCustomer = { ...mockCustomer, status: 'inactive' };
       service.deactivate.mockResolvedValue(deactivatedCustomer);
 
-      const result = await controller.deactivate(mockCustomer.id, mockTenantId);
+      const result = await controller.deactivate(mockUser, mockCustomer.id);
 
       expect(result).toEqual(deactivatedCustomer);
-      expect(service.deactivate).toHaveBeenCalledWith(mockCustomer.id, mockTenantId);
+      expect(service.deactivate).toHaveBeenCalledWith(mockUser, mockCustomer.id);
     });
   });
 
@@ -225,10 +225,10 @@ describe('CustomerController', () => {
     it('should delete customer', async () => {
       service.remove.mockResolvedValue(undefined);
 
-      const result = await controller.remove(mockCustomer.id, mockTenantId);
+      const result = await controller.remove(mockUser, mockCustomer.id);
 
       expect(result).toEqual({ message: 'Customer deleted successfully' });
-      expect(service.remove).toHaveBeenCalledWith(mockCustomer.id, mockTenantId);
+      expect(service.remove).toHaveBeenCalledWith(mockUser, mockCustomer.id);
     });
   });
 });

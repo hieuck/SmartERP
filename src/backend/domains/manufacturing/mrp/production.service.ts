@@ -9,15 +9,15 @@ import { QualityCheck, QualityCheckResult } from './entities/quality-check.entit
 import { CacheService } from '@/common/cache/cache.service';
 import { CacheTTL, generateCacheKey } from '@/common/cache/cache.config';
 import { SecureRepository } from '@/common/security/secure-repository';
-import { PermissionService, User } from '@/common/security/permission.service';
+import { PermissionService, User, BaseRecord as PermissionRecord } from '@/common/security/permission.service';
 
 @Injectable()
 export class ProductionService {
-  private secureMaterialRepo: SecureRepository<Material>;
-  private secureMoldRepo: SecureRepository<Mold>;
-  private secureBomRepo: SecureRepository<Bom>;
-  private secureWorkOrderRepo: SecureRepository<WorkOrder>;
-  private secureQualityCheckRepo: SecureRepository<QualityCheck>;
+  private secureMaterialRepo: SecureRepository<Material & PermissionRecord>;
+  private secureMoldRepo: SecureRepository<Mold & PermissionRecord>;
+  private secureBomRepo: SecureRepository<Bom & PermissionRecord>;
+  private secureWorkOrderRepo: SecureRepository<WorkOrder & PermissionRecord>;
+  private secureQualityCheckRepo: SecureRepository<QualityCheck & PermissionRecord>;
 
   constructor(
     @InjectRepository(Material)
@@ -34,19 +34,19 @@ export class ProductionService {
     private readonly permissionService: PermissionService,
   ) {
     this.secureMaterialRepo = new SecureRepository(
-      materialRepository,
+      materialRepository as any,
       permissionService,
       'Material',
     );
-    this.secureMoldRepo = new SecureRepository(moldRepository, permissionService, 'Mold');
-    this.secureBomRepo = new SecureRepository(bomRepository, permissionService, 'Bom');
+    this.secureMoldRepo = new SecureRepository(moldRepository as any, permissionService, 'Mold');
+    this.secureBomRepo = new SecureRepository(bomRepository as any, permissionService, 'Bom');
     this.secureWorkOrderRepo = new SecureRepository(
-      workOrderRepository,
+      workOrderRepository as any,
       permissionService,
       'WorkOrder',
     );
     this.secureQualityCheckRepo = new SecureRepository(
-      qualityCheckRepository,
+      qualityCheckRepository as any,
       permissionService,
       'QualityCheck',
     );

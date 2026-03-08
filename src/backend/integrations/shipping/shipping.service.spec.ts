@@ -8,6 +8,7 @@ import { GHTKService } from './providers/ghtk/ghtk.service';
 import { ViettelPostService } from './providers/viettelpost/viettelpost.service';
 import { VNPostService } from './providers/vnpost/vnpost.service';
 import { CacheService } from '@/common/cache/cache.service';
+import { PermissionService } from '@/common/security/permission.service';
 import { CreateShipmentDto } from './dto/create-shipment.dto';
 
 describe('ShippingService', () => {

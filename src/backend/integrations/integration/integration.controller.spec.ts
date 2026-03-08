@@ -43,61 +43,56 @@ describe('IntegrationController', () => {
 
   describe('listIntegrations', () => {
     it('should return all integrations', async () => {
-      const tenantId = 'tenant-1';
       const mockIntegrations = [
         { name: 'stripe', enabled: true },
         { name: 'paypal', enabled: false },
       ];
       service.listIntegrations.mockResolvedValue(mockIntegrations as any);
 
-      const result = await controller.listIntegrations(tenantId);
+      const result = await controller.listIntegrations(mockUser);
 
       expect(result).toEqual(mockIntegrations);
-      expect(service.listIntegrations).toHaveBeenCalledWith(tenantId);
+      expect(service.listIntegrations).toHaveBeenCalledWith(mockUser);
     });
   });
 
   describe('getIntegration', () => {
     it('should return specific integration', async () => {
-      const tenantId = 'tenant-1';
       const name = 'stripe';
       const mockIntegration = { name, enabled: true, apiKey: 'sk_test_xxx' };
       service.getIntegration.mockResolvedValue(mockIntegration as any);
 
-      const result = await controller.getIntegration(tenantId, name);
+      const result = await controller.getIntegration(mockUser, name);
 
       expect(result).toEqual(mockIntegration);
-      expect(service.getIntegration).toHaveBeenCalledWith(tenantId, name);
+      expect(service.getIntegration).toHaveBeenCalledWith(mockUser, name);
     });
   });
 
   describe('configure', () => {
     it('should configure integration', async () => {
-      const tenantId = 'tenant-1';
       const integration = { name: 'stripe', enabled: true, apiKey: 'sk_test_xxx' };
       service.configure.mockResolvedValue(undefined);
 
-      await controller.configure(tenantId, integration as any);
+      await controller.configure(mockUser, integration as any);
 
-      expect(service.configure).toHaveBeenCalledWith(tenantId, integration);
+      expect(service.configure).toHaveBeenCalledWith(mockUser, integration);
     });
   });
 
   describe('removeIntegration', () => {
     it('should remove integration', async () => {
-      const tenantId = 'tenant-1';
       const name = 'stripe';
       service.removeIntegration.mockResolvedValue(undefined);
 
-      await controller.removeIntegration(tenantId, name);
+      await controller.removeIntegration(mockUser, name);
 
-      expect(service.removeIntegration).toHaveBeenCalledWith(tenantId, name);
+      expect(service.removeIntegration).toHaveBeenCalledWith(mockUser, name);
     });
   });
 
   describe('processPayment', () => {
     it('should process payment through gateway', async () => {
-      const tenantId = 'tenant-1';
       const gateway = 'stripe';
       const amount = 10000;
       const orderId = 'order-1';
@@ -110,16 +105,15 @@ describe('IntegrationController', () => {
       };
       service.processPayment.mockResolvedValue(mockResult);
 
-      const result = await controller.processPayment(tenantId, gateway, amount, orderId);
+      const result = await controller.processPayment(mockUser, gateway, amount, orderId);
 
       expect(result).toEqual(mockResult);
-      expect(service.processPayment).toHaveBeenCalledWith(tenantId, gateway, amount, orderId);
+      expect(service.processPayment).toHaveBeenCalledWith(mockUser, gateway, amount, orderId);
     });
   });
 
   describe('createShipment', () => {
     it('should create shipment with provider', async () => {
-      const tenantId = 'tenant-1';
       const provider = 'ghn';
       const shipmentData = { from: 'HN', to: 'HCM', weight: 1000 };
       const mockResult = {
@@ -130,10 +124,10 @@ describe('IntegrationController', () => {
       };
       service.createShipment.mockResolvedValue(mockResult);
 
-      const result = await controller.createShipment(tenantId, provider, shipmentData);
+      const result = await controller.createShipment(mockUser, provider, shipmentData);
 
       expect(result).toEqual(mockResult);
-      expect(service.createShipment).toHaveBeenCalledWith(tenantId, provider, shipmentData);
+      expect(service.createShipment).toHaveBeenCalledWith(mockUser, provider, shipmentData);
     });
   });
 });

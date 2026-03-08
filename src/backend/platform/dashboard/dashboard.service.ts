@@ -1,11 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Order } from '../order/entities/order.entity';
-import { Product } from '../product/entities/product.entity';
-import { Customer } from '../customer/entities/customer.entity';
-import { Inventory } from '../inventory/entities/inventory.entity';
-import { Payment } from '../payment/entities/payment.entity';
+import { Order } from '../../domains/sales/order/entities/order.entity';
+import { Product } from '../../domains/inventory/product/entities/product.entity';
+import { Customer } from '../../domains/sales/customer/entities/customer.entity';
+import { Inventory } from '../../domains/inventory/stock/entities/inventory.entity';
+import { Payment } from '../../domains/accounting/payment/entities/payment.entity';
 import { CacheService } from '@/common/cache/cache.service';
 import { CacheTTL, generateCacheKey } from '@/common/cache/cache.config';
 import { User } from '@/common/security/permission.service';
@@ -231,7 +231,7 @@ export class DashboardService {
           .getMany();
 
         return products.map((product) => ({
-          id: product.id,
+          id: (product as any).id,
           name: product.name,
           revenue: 0,
           quantity: 0,
@@ -333,7 +333,7 @@ export class DashboardService {
           .getMany();
 
         return inventory.map((item) => ({
-          id: item.product?.id || item.id,
+          id: (item.product as any)?.id || (item as any).id,
           name: item.product?.name || 'Unknown',
           sku: item.product?.sku || 'N/A',
           currentStock: item.quantity,
@@ -377,7 +377,7 @@ export class DashboardService {
   }
 
   private async getInventoryStats(user: User) {
-    const totalProducts = await this.productRepository.count({ where: { tenantId: user.tenantId } });
+    const totalProducts = await this.productRepository.count({ where: { tenantId: user.tenantId } as any });
     const lowStock = await this.countLowStock(user);
     const outOfStock = await this.countOutOfStock(user);
     const totalValue = await this.calculateInventoryValue(user);
@@ -452,7 +452,7 @@ export class DashboardService {
   }
 
   private async countOutOfStock(user: User): Promise<number> {
-    return this.inventoryRepository.count({ where: { tenantId: user.tenantId, quantity: 0 } });
+    return this.inventoryRepository.count({ where: { tenantId: user.tenantId, quantity: 0 } as any });
   }
 
   private async countNewCustomers(user: User, startDate: Date, endDate: Date): Promise<number> {

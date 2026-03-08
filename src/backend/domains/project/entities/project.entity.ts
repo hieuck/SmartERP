@@ -11,8 +11,9 @@ import {
   BeforeUpdate,
   Index,
 } from 'typeorm';
-import { User } from '../../../core/user/entities/user.entity';
+import { User as UserEntity } from '../../../core/user/entities/user.entity';
 import { Task } from './task.entity';
+import { User } from '@/common/security/permission.service';
 
 export enum ProjectStatus {
   DRAFT = 'draft',
@@ -91,7 +92,7 @@ export class Project {
   @Column({ type: 'int', default: 0 })
   progress: number; // 0-100
 
-  @ManyToOne(() => User, { nullable: true })
+  @ManyToOne('User', { nullable: true })
   @JoinColumn({ name: 'project_manager_id' })
   projectManager?: User;
 

@@ -22,6 +22,7 @@ describe('UserService', () => {
     phone: '0901234567',
     avatar: null,
     role: 'user',
+    roles: ['user'],
     status: 'active',
     emailVerified: false,
     emailVerificationToken: null,

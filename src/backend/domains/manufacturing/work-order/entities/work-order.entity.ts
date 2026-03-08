@@ -12,7 +12,8 @@ import {
 } from 'typeorm';
 import { Product } from '../../../inventory/product/entities/product.entity';
 import { BOM } from '../../bom/entities/bom.entity';
-import { User } from '../../../../core/user/entities/user.entity';
+import { User as UserEntity } from '../../../../core/user/entities/user.entity';
+import { User } from '@/common/security/permission.service';
 
 export enum WorkOrderStatus {
   DRAFT = 'draft',
@@ -78,7 +79,7 @@ export class WorkOrder {
   @Column({ name: 'responsible_id', nullable: true })
   responsibleId: string;
 
-  @ManyToOne(() => User)
+  @ManyToOne('User')
   @JoinColumn({ name: 'responsible_id' })
   responsible: User;
 

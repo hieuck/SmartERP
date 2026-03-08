@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Delete, Body, Param, UseGuards } from '@nestjs/common';
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { IntegrationService, IntegrationConfig } from './integration.service';
 import { JwtAuthGuard } from '../../core/auth/guards/jwt-auth.guard';
 import { TenantId } from '../../common/decorators/tenant-id.decorator';

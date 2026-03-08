@@ -32,11 +32,9 @@ export class ShoppingCartController {
   @ApiResponse({ status: 200, description: 'Cart retrieved' })
   async getCart(@Request() req) {
     const sessionId = req.sessionID || req.user?.id || 'guest';
-    const userId = req.user?.id;
     return this.shoppingCartService.getOrCreateCart(
+      req.user,
       sessionId,
-      req.user.tenantId,
-      userId,
     );
   }
 
@@ -45,12 +43,10 @@ export class ShoppingCartController {
   @ApiResponse({ status: 201, description: 'Item added to cart' })
   async addItem(@Body() dto: AddToCartDto, @Request() req) {
     const sessionId = req.sessionID || req.user?.id || 'guest';
-    const userId = req.user?.id;
     return this.shoppingCartService.addItem(
+      req.user,
       sessionId,
       dto,
-      req.user.tenantId,
-      userId,
     );
   }
 
@@ -63,11 +59,12 @@ export class ShoppingCartController {
     @Request() req,
   ) {
     const sessionId = req.sessionID || req.user?.id || 'guest';
+    const cart = await this.shoppingCartService.getOrCreateCart(req.user, sessionId);
     return this.shoppingCartService.updateItemQuantity(
-      sessionId,
+      req.user,
+      cart.id,
       itemId,
       dto.quantity,
-      req.user.tenantId,
     );
   }
 
@@ -76,10 +73,11 @@ export class ShoppingCartController {
   @ApiResponse({ status: 200, description: 'Item removed from cart' })
   async removeItem(@Param('itemId') itemId: string, @Request() req) {
     const sessionId = req.sessionID || req.user?.id || 'guest';
+    const cart = await this.shoppingCartService.getOrCreateCart(req.user, sessionId);
     return this.shoppingCartService.removeItem(
-      sessionId,
+      req.user,
+      cart.id,
       itemId,
-      req.user.tenantId,
     );
   }
 
@@ -88,7 +86,8 @@ export class ShoppingCartController {
   @ApiResponse({ status: 200, description: 'Cart cleared' })
   async clearCart(@Request() req) {
     const sessionId = req.sessionID || req.user?.id || 'guest';
-    return this.shoppingCartService.clearCart(sessionId, req.user.tenantId);
+    const cart = await this.shoppingCartService.getOrCreateCart(req.user, sessionId);
+    return this.shoppingCartService.clearCart(req.user, cart.id);
   }
 
   @Post('coupon')
@@ -96,10 +95,11 @@ export class ShoppingCartController {
   @ApiResponse({ status: 200, description: 'Coupon applied' })
   async applyCoupon(@Body() dto: ApplyCouponDto, @Request() req) {
     const sessionId = req.sessionID || req.user?.id || 'guest';
+    const cart = await this.shoppingCartService.getOrCreateCart(req.user, sessionId);
     return this.shoppingCartService.applyCoupon(
-      sessionId,
+      req.user,
+      cart.id,
       dto.couponCode,
-      req.user.tenantId,
     );
   }
 
@@ -108,10 +108,8 @@ export class ShoppingCartController {
   @ApiResponse({ status: 200, description: 'Coupon removed' })
   async removeCoupon(@Request() req) {
     const sessionId = req.sessionID || req.user?.id || 'guest';
-    return this.shoppingCartService.removeCoupon(
-      sessionId,
-      req.user.tenantId,
-    );
+    const cart = await this.shoppingCartService.getOrCreateCart(req.user, sessionId);
+    return this.shoppingCartService.removeCoupon(req.user, cart.id);
   }
 
   @Patch('shipping-address')
@@ -119,10 +117,11 @@ export class ShoppingCartController {
   @ApiResponse({ status: 200, description: 'Shipping address updated' })
   async updateShippingAddress(@Body() dto: UpdateAddressDto, @Request() req) {
     const sessionId = req.sessionID || req.user?.id || 'guest';
+    const cart = await this.shoppingCartService.getOrCreateCart(req.user, sessionId);
     return this.shoppingCartService.updateShippingAddress(
-      sessionId,
+      req.user,
+      cart.id,
       dto.address,
-      req.user.tenantId,
     );
   }
 
@@ -131,10 +130,11 @@ export class ShoppingCartController {
   @ApiResponse({ status: 200, description: 'Billing address updated' })
   async updateBillingAddress(@Body() dto: UpdateAddressDto, @Request() req) {
     const sessionId = req.sessionID || req.user?.id || 'guest';
+    const cart = await this.shoppingCartService.getOrCreateCart(req.user, sessionId);
     return this.shoppingCartService.updateBillingAddress(
-      sessionId,
+      req.user,
+      cart.id,
       dto.address,
-      req.user.tenantId,
     );
   }
 }

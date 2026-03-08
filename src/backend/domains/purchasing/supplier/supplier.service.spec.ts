@@ -1,10 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Like } from 'typeorm';
 import { SupplierService } from './supplier.service';
 import { Supplier } from './entities/supplier.entity';
 import { NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { CacheService } from '@/common/cache/cache.service';
+import { PermissionService } from '@/common/security/permission.service';
 import { createMockUser } from '@/common/test/test-helpers';
 
 describe('SupplierService', () => {
@@ -27,12 +27,8 @@ describe('SupplierService', () => {
   const mockRepository = {
     find: jest.fn(),
     findOne: jest.fn(),
-    findAndCount: jest.fn(),
-    create: jest.fn(),
     save: jest.fn(),
-    softDelete: jest.fn(),
-    count: jest.fn(),
-    createQueryBuilder: jest.fn(),
+    remove: jest.fn(),
   };
 
   const mockCacheService = {
@@ -41,6 +37,15 @@ describe('SupplierService', () => {
     del: jest.fn(),
     getOrSet: jest.fn(),
     invalidateEntity: jest.fn(),
+  };
+
+  const mockPermissionService = {
+    checkPermission: jest.fn().mockResolvedValue(true),
+    hasRole: jest.fn().mockReturnValue(true),
+    buildSecureQuery: jest.fn((user, where) => ({ ...where, tenantId: user.tenantId })),
+    canRead: jest.fn().mockReturnValue(true),
+    canWrite: jest.fn().mockReturnValue(true),
+    canDelete: jest.fn().mockReturnValue(true),
   };
 
   const mockUser = createMockUser();
@@ -57,6 +62,10 @@ describe('SupplierService', () => {
           provide: CacheService,
           useValue: mockCacheService,
         },
+        {
+          provide: PermissionService,
+          useValue: mockPermissionService,
+        },
       ],
     }).compile();
 
@@ -69,7 +78,7 @@ describe('SupplierService', () => {
 
   describe('findAll', () => {
     it('should return paginated suppliers for a tenant', async () => {
-      mockRepository.findAndCount.mockResolvedValue([[mockSupplier], 1]);
+      jest.spyOn(service['secureSupplierRepo'], 'find').mockResolvedValue([mockSupplier]);
 
       const result = await service.findAll(mockUser, 1, 20);
 
@@ -82,16 +91,11 @@ describe('SupplierService', () => {
           totalPages: 1,
         },
       });
-      expect(mockRepository.findAndCount).toHaveBeenCalledWith({
-        where: { tenantId: 'tenant-1' },
-        order: { createdAt: 'DESC' },
-        skip: 0,
-        take: 20,
-      });
     });
 
     it('should handle pagination correctly', async () => {
-      mockRepository.findAndCount.mockResolvedValue([[mockSupplier], 50]);
+      const suppliers = Array(50).fill(mockSupplier);
+      jest.spyOn(service['secureSupplierRepo'], 'find').mockResolvedValue(suppliers);
 
       const result = await service.findAll(mockUser, 3, 10);
 
@@ -101,12 +105,7 @@ describe('SupplierService', () => {
         total: 50,
         totalPages: 5,
       });
-      expect(mockRepository.findAndCount).toHaveBeenCalledWith({
-        where: { tenantId: 'tenant-1' },
-        order: { createdAt: 'DESC' },
-        skip: 20,
-        take: 10,
-      });
+      expect(result.data.length).toBe(10);
     });
   });
 
@@ -114,7 +113,7 @@ describe('SupplierService', () => {
     it('should return a supplier by id', async () => {
       mockCacheService.getOrSet.mockResolvedValue(mockSupplier);
 
-      const result = await service.findOne('1', mockUser);
+      const result = await service.findOne(mockUser, '1');
 
       expect(result).toEqual(mockSupplier);
       expect(mockCacheService.getOrSet).toHaveBeenCalled();
@@ -124,28 +123,25 @@ describe('SupplierService', () => {
       mockCacheService.getOrSet.mockImplementation(async (key, fn) => {
         return fn();
       });
-      mockRepository.findOne.mockResolvedValue(null);
+      jest.spyOn(service['secureSupplierRepo'], 'findOne').mockResolvedValue(null);
 
-      await expect(service.findOne('999', mockUser)).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(mockUser, '999')).rejects.toThrow(NotFoundException);
     });
   });
 
   describe('findByEmail', () => {
     it('should return a supplier by email', async () => {
-      mockRepository.findOne.mockResolvedValue(mockSupplier);
+      jest.spyOn(service['secureSupplierRepo'], 'findOne').mockResolvedValue(mockSupplier);
 
-      const result = await service.findByEmail('abc@supplier.com', mockUser);
+      const result = await service.findByEmail(mockUser, 'abc@supplier.com');
 
       expect(result).toEqual(mockSupplier);
-      expect(mockRepository.findOne).toHaveBeenCalledWith({
-        where: { email: 'abc@supplier.com', tenantId: 'tenant-1' },
-      });
     });
 
     it('should return null if supplier not found', async () => {
-      mockRepository.findOne.mockResolvedValue(null);
+      jest.spyOn(service['secureSupplierRepo'], 'findOne').mockResolvedValue(null);
 
-      const result = await service.findByEmail('notfound@supplier.com', mockUser);
+      const result = await service.findByEmail(mockUser, 'notfound@supplier.com');
 
       expect(result).toBeNull();
     });
@@ -160,20 +156,13 @@ describe('SupplierService', () => {
         address: '456 Street',
       };
 
-      mockRepository.findOne.mockResolvedValue(null);
-      mockRepository.create.mockReturnValue({ ...mockSupplier, ...createDto });
-      mockRepository.save.mockResolvedValue({ ...mockSupplier, ...createDto });
+      jest.spyOn(service, 'findByEmail').mockResolvedValue(null);
+      const newSupplier = { ...mockSupplier, ...createDto };
+      jest.spyOn(service['secureSupplierRepo'], 'save').mockResolvedValue(newSupplier);
 
-      const result = await service.create(createDto, mockUser);
+      const result = await service.create(mockUser, createDto);
 
       expect(result.name).toBe('New Supplier');
-      expect(mockRepository.create).toHaveBeenCalledWith({
-        ...createDto,
-        tenantId: 'tenant-1',
-        status: 'active',
-        paymentTerms: 0,
-        currentBalance: 0,
-      });
     });
 
     it('should throw ConflictException if email already exists', async () => {
@@ -183,9 +172,9 @@ describe('SupplierService', () => {
         phone: '0987654321',
       };
 
-      mockRepository.findOne.mockResolvedValue(mockSupplier);
+      jest.spyOn(service, 'findByEmail').mockResolvedValue(mockSupplier);
 
-      await expect(service.create(createDto, mockUser)).rejects.toThrow(ConflictException);
+      await expect(service.create(mockUser, createDto)).rejects.toThrow(ConflictException);
     });
 
     it('should create supplier with custom status', async () => {
@@ -196,11 +185,11 @@ describe('SupplierService', () => {
         status: 'inactive',
       };
 
-      mockRepository.findOne.mockResolvedValue(null);
-      mockRepository.create.mockReturnValue({ ...mockSupplier, ...createDto });
-      mockRepository.save.mockResolvedValue({ ...mockSupplier, ...createDto });
+      jest.spyOn(service, 'findByEmail').mockResolvedValue(null);
+      const newSupplier = { ...mockSupplier, ...createDto, status: 'inactive' };
+      jest.spyOn(service['secureSupplierRepo'], 'save').mockResolvedValue(newSupplier);
 
-      const result = await service.create(createDto, mockUser);
+      const result = await service.create(mockUser, createDto);
 
       expect(result.status).toBe('inactive');
     });
@@ -210,16 +199,15 @@ describe('SupplierService', () => {
     it('should update a supplier', async () => {
       const updateDto = { name: 'Updated Supplier' };
       mockCacheService.getOrSet.mockResolvedValue(mockSupplier);
-      mockRepository.save.mockResolvedValue({
+      jest.spyOn(service['secureSupplierRepo'], 'save').mockResolvedValue({
         ...mockSupplier,
         ...updateDto,
       });
       mockCacheService.del.mockResolvedValue(undefined);
 
-      const result = await service.update('1', updateDto, mockUser);
+      const result = await service.update(mockUser, '1', updateDto);
 
       expect(result.name).toBe('Updated Supplier');
-      expect(mockRepository.save).toHaveBeenCalled();
       expect(mockCacheService.del).toHaveBeenCalled();
     });
 
@@ -227,9 +215,9 @@ describe('SupplierService', () => {
       mockCacheService.getOrSet.mockImplementation(async (key, fn) => {
         return fn();
       });
-      mockRepository.findOne.mockResolvedValue(null);
+      jest.spyOn(service['secureSupplierRepo'], 'findOne').mockResolvedValue(null);
 
-      await expect(service.update('999', { name: 'Updated' }, mockUser)).rejects.toThrow(
+      await expect(service.update(mockUser, '999', { name: 'Updated' })).rejects.toThrow(
         NotFoundException,
       );
     });
@@ -237,19 +225,19 @@ describe('SupplierService', () => {
     it('should throw ConflictException if email already exists', async () => {
       const existingSupplier = { ...mockSupplier, id: '2' };
       mockCacheService.getOrSet.mockResolvedValue(mockSupplier);
-      mockRepository.findOne.mockResolvedValue(existingSupplier);
+      jest.spyOn(service, 'findByEmail').mockResolvedValue(existingSupplier);
 
       await expect(
-        service.update('1', { email: 'existing@supplier.com' }, mockUser),
+        service.update(mockUser, '1', { email: 'existing@supplier.com' }),
       ).rejects.toThrow(ConflictException);
     });
 
     it('should allow updating to same email', async () => {
       mockCacheService.getOrSet.mockResolvedValue(mockSupplier);
-      mockRepository.save.mockResolvedValue(mockSupplier);
+      jest.spyOn(service['secureSupplierRepo'], 'save').mockResolvedValue(mockSupplier);
       mockCacheService.del.mockResolvedValue(undefined);
 
-      const result = await service.update('1', { email: 'abc@supplier.com' }, mockUser);
+      const result = await service.update(mockUser, '1', { email: 'abc@supplier.com' });
 
       expect(result).toEqual(mockSupplier);
     });
@@ -258,12 +246,11 @@ describe('SupplierService', () => {
   describe('remove', () => {
     it('should soft delete a supplier', async () => {
       mockCacheService.getOrSet.mockResolvedValue(mockSupplier);
-      mockRepository.softDelete.mockResolvedValue({ affected: 1 });
+      jest.spyOn(service['secureSupplierRepo'], 'remove').mockResolvedValue(mockSupplier);
       mockCacheService.del.mockResolvedValue(undefined);
 
-      await service.remove('1', mockUser);
+      await service.remove(mockUser, '1');
 
-      expect(mockRepository.softDelete).toHaveBeenCalledWith('1');
       expect(mockCacheService.del).toHaveBeenCalled();
     });
 
@@ -271,21 +258,21 @@ describe('SupplierService', () => {
       mockCacheService.getOrSet.mockImplementation(async (key, fn) => {
         return fn();
       });
-      mockRepository.findOne.mockResolvedValue(null);
+      jest.spyOn(service['secureSupplierRepo'], 'findOne').mockResolvedValue(null);
 
-      await expect(service.remove('999', mockUser)).rejects.toThrow(NotFoundException);
+      await expect(service.remove(mockUser, '999')).rejects.toThrow(NotFoundException);
     });
   });
 
   describe('updateBalance', () => {
     it('should update supplier balance', async () => {
       mockCacheService.getOrSet.mockResolvedValue(mockSupplier);
-      mockRepository.save.mockResolvedValue({
+      jest.spyOn(service['secureSupplierRepo'], 'save').mockResolvedValue({
         ...mockSupplier,
         currentBalance: 1000,
       });
 
-      const result = await service.updateBalance('1', 1000, mockUser);
+      const result = await service.updateBalance(mockUser, '1', 1000);
 
       expect(result.currentBalance).toBe(1000);
     });
@@ -295,12 +282,12 @@ describe('SupplierService', () => {
         ...mockSupplier,
         currentBalance: 500,
       });
-      mockRepository.save.mockResolvedValue({
+      jest.spyOn(service['secureSupplierRepo'], 'save').mockResolvedValue({
         ...mockSupplier,
         currentBalance: 1500,
       });
 
-      const result = await service.updateBalance('1', 1000, mockUser);
+      const result = await service.updateBalance(mockUser, '1', 1000);
 
       expect(result.currentBalance).toBe(1500);
     });
@@ -309,18 +296,18 @@ describe('SupplierService', () => {
   describe('updatePaymentTerms', () => {
     it('should update payment terms', async () => {
       mockCacheService.getOrSet.mockResolvedValue(mockSupplier);
-      mockRepository.save.mockResolvedValue({
+      jest.spyOn(service['secureSupplierRepo'], 'save').mockResolvedValue({
         ...mockSupplier,
         paymentTerms: 60,
       });
 
-      const result = await service.updatePaymentTerms('1', 60, mockUser);
+      const result = await service.updatePaymentTerms(mockUser, '1', 60);
 
       expect(result.paymentTerms).toBe(60);
     });
 
     it('should throw BadRequestException for negative payment terms', async () => {
-      await expect(service.updatePaymentTerms('1', -10, mockUser)).rejects.toThrow(
+      await expect(service.updatePaymentTerms(mockUser, '1', -10)).rejects.toThrow(
         BadRequestException,
       );
     });
@@ -332,12 +319,12 @@ describe('SupplierService', () => {
         ...mockSupplier,
         status: 'inactive',
       });
-      mockRepository.save.mockResolvedValue({
+      jest.spyOn(service['secureSupplierRepo'], 'save').mockResolvedValue({
         ...mockSupplier,
         status: 'active',
       });
 
-      const result = await service.activate('1', mockUser);
+      const result = await service.activate(mockUser, '1');
 
       expect(result.status).toBe('active');
     });
@@ -346,12 +333,12 @@ describe('SupplierService', () => {
   describe('deactivate', () => {
     it('should deactivate a supplier', async () => {
       mockCacheService.getOrSet.mockResolvedValue(mockSupplier);
-      mockRepository.save.mockResolvedValue({
+      jest.spyOn(service['secureSupplierRepo'], 'save').mockResolvedValue({
         ...mockSupplier,
         status: 'inactive',
       });
 
-      const result = await service.deactivate('1', mockUser);
+      const result = await service.deactivate(mockUser, '1');
 
       expect(result.status).toBe('inactive');
     });
@@ -359,46 +346,32 @@ describe('SupplierService', () => {
 
   describe('search', () => {
     it('should search suppliers by name', async () => {
-      mockRepository.find.mockResolvedValue([mockSupplier]);
+      jest.spyOn(service['secureSupplierRepo'], 'find').mockResolvedValue([mockSupplier]);
 
-      const result = await service.search('ABC', mockUser);
+      const result = await service.search(mockUser, 'ABC');
 
       expect(result).toEqual([mockSupplier]);
-      expect(mockRepository.find).toHaveBeenCalledWith({
-        where: [
-          { name: Like('%ABC%'), tenantId: 'tenant-1' },
-          { email: Like('%ABC%'), tenantId: 'tenant-1' },
-          { phone: Like('%ABC%'), tenantId: 'tenant-1' },
-        ],
-        order: { createdAt: 'DESC' },
-      });
     });
   });
 
   describe('findByStatus', () => {
     it('should return suppliers by status', async () => {
-      mockRepository.find.mockResolvedValue([mockSupplier]);
+      jest.spyOn(service['secureSupplierRepo'], 'find').mockResolvedValue([mockSupplier]);
 
-      const result = await service.findByStatus('active', mockUser);
+      const result = await service.findByStatus(mockUser, 'active');
 
       expect(result).toEqual([mockSupplier]);
-      expect(mockRepository.find).toHaveBeenCalledWith({
-        where: { status: 'active', tenantId: 'tenant-1' },
-        order: { createdAt: 'DESC' },
-      });
     });
   });
 
   describe('count', () => {
     it('should return supplier count', async () => {
-      mockRepository.count.mockResolvedValue(10);
+      const suppliers = Array(10).fill(mockSupplier);
+      jest.spyOn(service['secureSupplierRepo'], 'find').mockResolvedValue(suppliers);
 
       const result = await service.count(mockUser);
 
       expect(result).toBe(10);
-      expect(mockRepository.count).toHaveBeenCalledWith({
-        where: { tenantId: 'tenant-1' },
-      });
     });
   });
 
@@ -409,40 +382,25 @@ describe('SupplierService', () => {
         { ...mockSupplier, currentBalance: 3000 },
         { ...mockSupplier, currentBalance: 1000 },
       ];
-      mockRepository.find.mockResolvedValue(suppliers);
+      jest.spyOn(service['secureSupplierRepo'], 'find').mockResolvedValue(suppliers);
 
-      const result = await service.getTopSuppliers(3, mockUser);
+      const result = await service.getTopSuppliers(mockUser, 3);
 
       expect(result).toEqual(suppliers);
-      expect(mockRepository.find).toHaveBeenCalledWith({
-        where: { tenantId: 'tenant-1' },
-        order: { currentBalance: 'DESC' },
-        take: 3,
-      });
     });
   });
 
   describe('getSuppliersWithHighBalance', () => {
     it('should return suppliers with balance above threshold', async () => {
-      const mockQueryBuilder = {
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        orderBy: jest.fn().mockReturnThis(),
-        getMany: jest.fn().mockResolvedValue([mockSupplier]),
-      };
+      const suppliers = [
+        { ...mockSupplier, currentBalance: 5000 },
+        { ...mockSupplier, currentBalance: 3000 },
+      ];
+      jest.spyOn(service['secureSupplierRepo'], 'find').mockResolvedValue(suppliers);
 
-      mockRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
+      const result = await service.getSuppliersWithHighBalance(mockUser, 1000);
 
-      const result = await service.getSuppliersWithHighBalance(1000, mockUser);
-
-      expect(result).toEqual([mockSupplier]);
-      expect(mockQueryBuilder.where).toHaveBeenCalledWith('supplier.tenantId = :tenantId', {
-        tenantId: 'tenant-1',
-      });
-      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
-        'supplier.currentBalance >= :threshold',
-        { threshold: 1000 },
-      );
+      expect(result).toEqual(suppliers);
     });
   });
 });

@@ -49,7 +49,6 @@ describe('AuditController', () => {
 
   describe('findAll', () => {
     it('should return audit logs with filters', async () => {
-      const tenantId = 'tenant-1';
       const mockLogs = [
         { id: '1', action: 'CREATE', entityType: 'User' },
         { id: '2', action: 'UPDATE', entityType: 'Product' },
@@ -57,7 +56,7 @@ describe('AuditController', () => {
       mockAuditService.findAll.mockResolvedValue(mockLogs);
 
       const result = await controller.findAll(
-        tenantId,
+        mockUser,
         '2024-01-01',
         '2024-12-31',
         'user-1',
@@ -66,7 +65,7 @@ describe('AuditController', () => {
 
       expect(result).toEqual(mockLogs);
       expect(service.findAll).toHaveBeenCalledWith(
-        tenantId,
+        mockUser,
         new Date('2024-01-01'),
         new Date('2024-12-31'),
         'user-1',
@@ -75,15 +74,14 @@ describe('AuditController', () => {
     });
 
     it('should return audit logs without date filters', async () => {
-      const tenantId = 'tenant-1';
       const mockLogs = [{ id: '1', action: 'CREATE' }];
       mockAuditService.findAll.mockResolvedValue(mockLogs);
 
-      const result = await controller.findAll(tenantId);
+      const result = await controller.findAll(mockUser);
 
       expect(result).toEqual(mockLogs);
       expect(service.findAll).toHaveBeenCalledWith(
-        tenantId,
+        mockUser,
         undefined,
         undefined,
         undefined,
@@ -94,7 +92,6 @@ describe('AuditController', () => {
 
   describe('findByEntity', () => {
     it('should return audit logs for specific entity', async () => {
-      const tenantId = 'tenant-1';
       const entityType = 'Product';
       const entityId = 'product-1';
       const mockLogs = [
@@ -103,16 +100,15 @@ describe('AuditController', () => {
       ];
       mockAuditService.findByEntity.mockResolvedValue(mockLogs);
 
-      const result = await controller.findByEntity(tenantId, entityType, entityId);
+      const result = await controller.findByEntity(mockUser, entityType, entityId);
 
       expect(result).toEqual(mockLogs);
-      expect(service.findByEntity).toHaveBeenCalledWith(tenantId, entityType, entityId);
+      expect(service.findByEntity).toHaveBeenCalledWith(mockUser, entityType, entityId);
     });
   });
 
   describe('findByUser', () => {
     it('should return audit logs for specific user', async () => {
-      const tenantId = 'tenant-1';
       const userId = 'user-1';
       const mockLogs = [
         { id: '1', action: 'CREATE', userId },
@@ -120,16 +116,15 @@ describe('AuditController', () => {
       ];
       mockAuditService.findByUser.mockResolvedValue(mockLogs);
 
-      const result = await controller.findByUser(tenantId, userId);
+      const result = await controller.findByUser(mockUser, userId);
 
       expect(result).toEqual(mockLogs);
-      expect(service.findByUser).toHaveBeenCalledWith(tenantId, userId);
+      expect(service.findByUser).toHaveBeenCalledWith(mockUser, userId);
     });
   });
 
   describe('getActivitySummary', () => {
     it('should return activity summary for date range', async () => {
-      const tenantId = 'tenant-1';
       const startDate = '2024-01-01';
       const endDate = '2024-12-31';
       const mockSummary = {
@@ -139,11 +134,11 @@ describe('AuditController', () => {
       };
       mockAuditService.getActivitySummary.mockResolvedValue(mockSummary);
 
-      const result = await controller.getActivitySummary(tenantId, startDate, endDate);
+      const result = await controller.getActivitySummary(mockUser, startDate, endDate);
 
       expect(result).toEqual(mockSummary);
       expect(service.getActivitySummary).toHaveBeenCalledWith(
-        tenantId,
+        mockUser,
         new Date(startDate),
         new Date(endDate),
       );

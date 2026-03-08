@@ -1,4 +1,5 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { SearchService, SearchResult } from './search.service';
 import { JwtAuthGuard } from '../../core/auth/guards/jwt-auth.guard';
 import { TenantId } from '../../common/decorators/tenant-id.decorator';
@@ -20,6 +21,6 @@ export class SearchController {
     @Query('type') type: string,
     @Query('q') query: string,
   ): Promise<SearchResult[]> {
-    return this.searchService.searchByType(user, type, query);
+    return this.searchService.searchByType(user.tenantId, type, query);
   }
 }

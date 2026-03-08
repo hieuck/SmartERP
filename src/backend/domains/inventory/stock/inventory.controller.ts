@@ -17,7 +17,7 @@ import { CreateInventoryDto } from './dto/create-inventory.dto';
 import { UpdateInventoryDto } from './dto/update-inventory.dto';
 import { AdjustInventoryDto } from './dto/adjust-inventory.dto';
 import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
-import { TenantGuard } from '../../common/guards/tenant.guard';
+import { TenantGuard } from '@/common/guards/tenant.guard';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { User } from '@/common/security/permission.service';
 @ApiTags('inventory')
@@ -30,11 +30,10 @@ export class InventoryController {
   @Post()
   @ApiOperation({ summary: 'Create inventory' })
   create(
-    @Body() createInventoryDto: CreateInventoryDto,
-    @CurrentUser() user: User,
+    @CurrentUser() user: User, @Body() createInventoryDto: CreateInventoryDto,
     @Request() req: Express.Request & { user?: { id: string } },
   ) {
-    return this.inventoryService.create(createInventoryDto, user, req.user?.id);
+    return this.inventoryService.create(user, createInventoryDto);
   }
 
   @Get()
@@ -47,10 +46,10 @@ export class InventoryController {
     @Query('warehouseId') warehouseId?: string,
   ) {
     if (productId) {
-      return this.inventoryService.findByProduct(productId, user);
+      return this.inventoryService.findByProduct(user, productId);
     }
     if (warehouseId) {
-      return this.inventoryService.findByWarehouse(warehouseId, user);
+      return this.inventoryService.findByWarehouse(user, warehouseId);
     }
     return this.inventoryService.findAll(user);
   }
@@ -83,38 +82,35 @@ export class InventoryController {
   @ApiOperation({ summary: 'Get inventory by product and warehouse' })
   findByProductAndWarehouse(
     @Param('productId') productId: string,
-    @Param('warehouseId') warehouseId: string,
-    @CurrentUser() user: User,
+    @CurrentUser() user: User, @Param('warehouseId') warehouseId: string,
   ) {
-    return this.inventoryService.findByProductAndWarehouse(productId, warehouseId, user);
+    return this.inventoryService.findByProductAndWarehouse(user, productId, warehouseId);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get inventory by ID' })
-  findOne(@Param('id') id: string, @CurrentUser() user: User) {
-    return this.inventoryService.findOne(id, user);
+  findOne(@CurrentUser() user: User, @Param('id') id: string) {
+    return this.inventoryService.findOne(user, id);
   }
 
   @Put(':id')
   @ApiOperation({ summary: 'Update inventory' })
   update(
     @Param('id') id: string,
-    @Body() updateInventoryDto: UpdateInventoryDto,
-    @CurrentUser() user: User,
+    @CurrentUser() user: User, @Body() updateInventoryDto: UpdateInventoryDto,
     @Request() req: Express.Request & { user?: { id: string } },
   ) {
-    return this.inventoryService.update(id, updateInventoryDto, user, req.user?.id);
+    return this.inventoryService.update(user, id, updateInventoryDto);
   }
 
   @Patch(':id/adjust')
   @ApiOperation({ summary: 'Adjust inventory quantity' })
   adjust(
     @Param('id') id: string,
-    @Body() adjustInventoryDto: AdjustInventoryDto,
-    @CurrentUser() user: User,
+    @CurrentUser() user: User, @Body() adjustInventoryDto: AdjustInventoryDto,
     @Request() req: Express.Request & { user?: { id: string } },
   ) {
-    return this.inventoryService.adjustQuantity(id, adjustInventoryDto, user, req.user?.id);
+    return this.inventoryService.adjustQuantity(user, id, adjustInventoryDto);
   }
 
   @Patch(':id/reserve')
@@ -124,7 +120,7 @@ export class InventoryController {
     @Body() body: { quantity: number },
     @CurrentUser() user: User,
   ) {
-    return this.inventoryService.reserve(id, body.quantity, user);
+    return this.inventoryService.reserve(user, id, body.quantity);
   }
 
   @Patch(':id/release')
@@ -134,7 +130,7 @@ export class InventoryController {
     @Body() body: { quantity: number },
     @CurrentUser() user: User,
   ) {
-    return this.inventoryService.release(id, body.quantity, user);
+    return this.inventoryService.release(user, id, body.quantity);
   }
 
   @Patch(':id/fulfill')
@@ -144,7 +140,7 @@ export class InventoryController {
     @Body() body: { quantity: number },
     @CurrentUser() user: User,
   ) {
-    return this.inventoryService.fulfillReservation(id, body.quantity, user);
+    return this.inventoryService.fulfillReservation(user, id, body.quantity);
   }
 
   @Patch(':id/count')
@@ -155,13 +151,13 @@ export class InventoryController {
     @CurrentUser() user: User,
     @Request() req: Express.Request & { user?: { id: string } },
   ) {
-    return this.inventoryService.updateStockCount(id, body.countedQuantity, user, req.user?.id);
+    return this.inventoryService.updateStockCount(user, id, body.countedQuantity);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete inventory' })
-  async remove(@Param('id') id: string, @CurrentUser() user: User) {
-    await this.inventoryService.remove(id, user);
+  async remove(@CurrentUser() user: User, @Param('id') id: string) {
+    await this.inventoryService.remove(user, id);
     return { message: 'Inventory deleted successfully' };
   }
 }

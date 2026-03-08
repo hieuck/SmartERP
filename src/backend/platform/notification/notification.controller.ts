@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Delete, Body, Param, UseGuards, Request } from '@nestjs/common';
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { NotificationService } from './notification.service';
 import { JwtAuthGuard } from '../../core/auth/guards/jwt-auth.guard';
 import { TenantId } from '../../common/decorators/tenant-id.decorator';
@@ -15,7 +16,7 @@ export class NotificationController {
     @CurrentUser() user: User,
     @Request() req: Express.Request & { user: { id: string } },
   ): Promise<Notification[]> {
-    return this.notificationService.findAll(user, req.user.id);
+    return this.notificationService.findAll(user);
   }
 
   @Get('unread')
@@ -23,7 +24,7 @@ export class NotificationController {
     @CurrentUser() user: User,
     @Request() req: Express.Request & { user: { id: string } },
   ): Promise<Notification[]> {
-    return this.notificationService.findUnread(user, req.user.id);
+    return this.notificationService.findUnread(user);
   }
 
   @Get('unread/count')
@@ -31,7 +32,7 @@ export class NotificationController {
     @CurrentUser() user: User,
     @Request() req: Express.Request & { user: { id: string } },
   ): Promise<{ count: number }> {
-    const count = await this.notificationService.getUnreadCount(user, req.user.id);
+    const count = await this.notificationService.getUnreadCount(user);
     return { count };
   }
 
@@ -50,7 +51,7 @@ export class NotificationController {
     @Body('link') link?: string,
     @Body('metadata') metadata?: Record<string, unknown>,
   ): Promise<Notification> {
-    return this.notificationService.create(user, userId, title, message, type, link, metadata);
+    return this.notificationService.create(user, title, message, type, link, metadata);
   }
 
   @Post(':id/read')
@@ -63,7 +64,7 @@ export class NotificationController {
     @CurrentUser() user: User,
     @Request() req: Express.Request & { user: { id: string } },
   ): Promise<void> {
-    return this.notificationService.markAllAsRead(user, req.user.id);
+    return this.notificationService.markAllAsRead(user);
   }
 
   @Post(':id/archive')

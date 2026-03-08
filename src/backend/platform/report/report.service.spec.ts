@@ -114,7 +114,7 @@ describe('ReportService', () => {
       jest.spyOn(reportRepository, 'create').mockReturnValue(mockReport);
       jest.spyOn(reportRepository, 'save').mockResolvedValue(mockReport);
 
-      const result = await service.create(createData, mockUser, mockUser);
+      const result = await service.create(mockUser, createData, mockUser);
 
       expect(result).toEqual(mockReport);
       expect(reportRepository.create).toHaveBeenCalledWith({
@@ -130,7 +130,7 @@ describe('ReportService', () => {
     it('should return a report by ID', async () => {
       jest.spyOn(reportRepository, 'findOne').mockResolvedValue(mockReport);
 
-      const result = await service.findOne('report-123', mockUser);
+      const result = await service.findOne(mockUser, 'report-123');
 
       expect(result).toEqual(mockReport);
       expect(reportRepository.findOne).toHaveBeenCalledWith({
@@ -142,7 +142,7 @@ describe('ReportService', () => {
     it('should throw NotFoundException if report not found', async () => {
       jest.spyOn(reportRepository, 'findOne').mockResolvedValue(null);
 
-      await expect(service.findOne('invalid-id', mockUser)).rejects.toThrow(
+      await expect(service.findOne(mockUser, 'invalid-id')).rejects.toThrow(
         NotFoundException,
       );
     });
@@ -200,7 +200,7 @@ describe('ReportService', () => {
       jest.spyOn(reportRepository, 'findOne').mockResolvedValue(mockReport);
       jest.spyOn(reportRepository, 'remove').mockResolvedValue(mockReport);
 
-      await service.remove('report-123', mockUser, mockUser);
+      await service.remove(mockUser, 'report-123', mockUser);
 
       expect(reportRepository.remove).toHaveBeenCalledWith(mockReport);
     });

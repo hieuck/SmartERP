@@ -61,10 +61,10 @@ describe('SupplierController', () => {
       ];
       mockSupplierService.findAll.mockResolvedValue(mockSuppliers);
 
-      const result = await controller.findAll(mockTenantId);
+      const result = await controller.findAll(mockUser);
 
       expect(result).toEqual(mockSuppliers);
-      expect(service.findAll).toHaveBeenCalledWith(mockTenantId);
+      expect(service.findAll).toHaveBeenCalledWith(mockUser);
     });
   });
 
@@ -74,10 +74,10 @@ describe('SupplierController', () => {
       const mockResults = [{ id: '1', name: 'Supplier A' }];
       mockSupplierService.search.mockResolvedValue(mockResults);
 
-      const result = await controller.search(query, mockTenantId);
+      const result = await controller.search(mockUser, query);
 
       expect(result).toEqual(mockResults);
-      expect(service.search).toHaveBeenCalledWith(query, mockTenantId);
+      expect(service.search).toHaveBeenCalledWith(mockUser, query);
     });
   });
 
@@ -87,10 +87,10 @@ describe('SupplierController', () => {
       const mockSuppliers = [{ id: '1', name: 'Supplier A', status }];
       mockSupplierService.findByStatus.mockResolvedValue(mockSuppliers);
 
-      const result = await controller.findByStatus(status, mockTenantId);
+      const result = await controller.findByStatus(mockUser, status);
 
       expect(result).toEqual(mockSuppliers);
-      expect(service.findByStatus).toHaveBeenCalledWith(status, mockTenantId);
+      expect(service.findByStatus).toHaveBeenCalledWith(mockUser, status);
     });
   });
 
@@ -103,10 +103,10 @@ describe('SupplierController', () => {
       ];
       mockSupplierService.getTopSuppliers.mockResolvedValue(mockSuppliers);
 
-      const result = await controller.getTopSuppliers(limit, mockTenantId);
+      const result = await controller.getTopSuppliers(mockUser, limit);
 
       expect(result).toEqual(mockSuppliers);
-      expect(service.getTopSuppliers).toHaveBeenCalledWith(limit, mockTenantId);
+      expect(service.getTopSuppliers).toHaveBeenCalledWith(mockUser, limit);
     });
   });
 
@@ -115,10 +115,10 @@ describe('SupplierController', () => {
       const mockCount = 50;
       mockSupplierService.count.mockResolvedValue(mockCount);
 
-      const result = await controller.count(mockTenantId);
+      const result = await controller.count(mockUser);
 
       expect(result).toEqual(mockCount);
-      expect(service.count).toHaveBeenCalledWith(mockTenantId);
+      expect(service.count).toHaveBeenCalledWith(mockUser);
     });
   });
 
@@ -127,10 +127,10 @@ describe('SupplierController', () => {
       const mockSupplier = { id: mockSupplierId, name: 'Supplier A' };
       mockSupplierService.findOne.mockResolvedValue(mockSupplier);
 
-      const result = await controller.findOne(mockSupplierId, mockTenantId);
+      const result = await controller.findOne(mockUser, mockSupplierId);
 
       expect(result).toEqual(mockSupplier);
-      expect(service.findOne).toHaveBeenCalledWith(mockSupplierId, mockTenantId);
+      expect(service.findOne).toHaveBeenCalledWith(mockUser, mockSupplierId);
     });
   });
 
@@ -145,10 +145,10 @@ describe('SupplierController', () => {
       const mockCreated = { id: mockSupplierId, ...createDto };
       mockSupplierService.create.mockResolvedValue(mockCreated);
 
-      const result = await controller.create(createDto, mockTenantId);
+      const result = await controller.create(mockUser, createDto);
 
       expect(result).toEqual(mockCreated);
-      expect(service.create).toHaveBeenCalledWith(createDto, mockTenantId);
+      expect(service.create).toHaveBeenCalledWith(mockUser, createDto);
     });
   });
 
@@ -160,10 +160,10 @@ describe('SupplierController', () => {
       const mockUpdated = { id: mockSupplierId, ...updateDto };
       mockSupplierService.update.mockResolvedValue(mockUpdated);
 
-      const result = await controller.update(mockSupplierId, updateDto, mockTenantId);
+      const result = await controller.update(mockSupplierId, mockUser, updateDto);
 
       expect(result).toEqual(mockUpdated);
-      expect(service.update).toHaveBeenCalledWith(mockSupplierId, updateDto, mockTenantId);
+      expect(service.update).toHaveBeenCalledWith(mockUser, mockSupplierId, updateDto);
     });
   });
 
@@ -173,10 +173,10 @@ describe('SupplierController', () => {
       const mockUpdated = { id: mockSupplierId, balance: amount };
       mockSupplierService.updateBalance.mockResolvedValue(mockUpdated);
 
-      const result = await controller.updateBalance(mockSupplierId, amount, mockTenantId);
+      const result = await controller.updateBalance(mockSupplierId, mockUser, amount);
 
       expect(result).toEqual(mockUpdated);
-      expect(service.updateBalance).toHaveBeenCalledWith(mockSupplierId, amount, mockTenantId);
+      expect(service.updateBalance).toHaveBeenCalledWith(mockUser, mockSupplierId, amount);
     });
   });
 
@@ -186,10 +186,10 @@ describe('SupplierController', () => {
       const mockUpdated = { id: mockSupplierId, paymentTerms };
       mockSupplierService.updatePaymentTerms.mockResolvedValue(mockUpdated);
 
-      const result = await controller.updatePaymentTerms(mockSupplierId, paymentTerms, mockTenantId);
+      const result = await controller.updatePaymentTerms(mockSupplierId, mockUser, paymentTerms);
 
       expect(result).toEqual(mockUpdated);
-      expect(service.updatePaymentTerms).toHaveBeenCalledWith(mockSupplierId, paymentTerms, mockTenantId);
+      expect(service.updatePaymentTerms).toHaveBeenCalledWith(mockUser, mockSupplierId, paymentTerms);
     });
   });
 
@@ -198,10 +198,10 @@ describe('SupplierController', () => {
       const mockActivated = { id: mockSupplierId, status: 'active' };
       mockSupplierService.activate.mockResolvedValue(mockActivated);
 
-      const result = await controller.activate(mockSupplierId, mockTenantId);
+      const result = await controller.activate(mockUser, mockSupplierId);
 
       expect(result).toEqual(mockActivated);
-      expect(service.activate).toHaveBeenCalledWith(mockSupplierId, mockTenantId);
+      expect(service.activate).toHaveBeenCalledWith(mockUser, mockSupplierId);
     });
   });
 
@@ -210,10 +210,10 @@ describe('SupplierController', () => {
       const mockDeactivated = { id: mockSupplierId, status: 'inactive' };
       mockSupplierService.deactivate.mockResolvedValue(mockDeactivated);
 
-      const result = await controller.deactivate(mockSupplierId, mockTenantId);
+      const result = await controller.deactivate(mockUser, mockSupplierId);
 
       expect(result).toEqual(mockDeactivated);
-      expect(service.deactivate).toHaveBeenCalledWith(mockSupplierId, mockTenantId);
+      expect(service.deactivate).toHaveBeenCalledWith(mockUser, mockSupplierId);
     });
   });
 
@@ -221,10 +221,12 @@ describe('SupplierController', () => {
     it('should delete supplier', async () => {
       mockSupplierService.remove.mockResolvedValue(undefined);
 
-      const result = await controller.remove(mockSupplierId, mockTenantId);
+      const result = await controller.remove(mockUser, mockSupplierId);
 
       expect(result).toEqual({ message: 'Supplier deleted successfully' });
-      expect(service.remove).toHaveBeenCalledWith(mockSupplierId, mockTenantId);
+      expect(service.remove).toHaveBeenCalledWith(mockUser, mockSupplierId);
     });
   });
 });
+
+

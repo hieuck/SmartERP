@@ -15,7 +15,7 @@ import { CategoryService } from './category.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
-import { TenantGuard } from '../../common/guards/tenant.guard';
+import { TenantGuard } from '@/common/guards/tenant.guard';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { User } from '@/common/security/permission.service';
 @ApiTags('categories')
@@ -28,11 +28,10 @@ export class CategoryController {
   @Post()
   @ApiOperation({ summary: 'Create category' })
   create(
-    @Body() createCategoryDto: CreateCategoryDto,
-    @CurrentUser() user: User,
+    @CurrentUser() user: User, @Body() createCategoryDto: CreateCategoryDto,
     @Request() req: Express.Request & { user?: { id: string } },
   ) {
-    return this.categoryService.create(createCategoryDto, user, req.user?.id);
+    return this.categoryService.create(user, createCategoryDto);
   }
 
   @Get()
@@ -61,43 +60,42 @@ export class CategoryController {
 
   @Get('code/:code')
   @ApiOperation({ summary: 'Get category by code' })
-  findByCode(@Param('code') code: string, @CurrentUser() user: User) {
-    return this.categoryService.findByCode(code, user);
+  findByCode(@CurrentUser() user: User, @Param('code') code: string) {
+    return this.categoryService.findByCode(user, code);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get category by ID' })
-  findOne(@Param('id') id: string, @CurrentUser() user: User) {
-    return this.categoryService.findOne(id, user);
+  findOne(@CurrentUser() user: User, @Param('id') id: string) {
+    return this.categoryService.findOne(user, id);
   }
 
   @Get(':id/children')
   @ApiOperation({ summary: 'Get category children' })
-  getChildren(@Param('id') id: string, @CurrentUser() user: User) {
-    return this.categoryService.findChildren(id, user);
+  getChildren(@CurrentUser() user: User, @Param('id') id: string) {
+    return this.categoryService.findChildren(user, id);
   }
 
   @Put(':id')
   @ApiOperation({ summary: 'Update category' })
   update(
     @Param('id') id: string,
-    @Body() updateCategoryDto: UpdateCategoryDto,
-    @CurrentUser() user: User,
+    @CurrentUser() user: User, @Body() updateCategoryDto: UpdateCategoryDto,
     @Request() req: Express.Request & { user?: { id: string } },
   ) {
-    return this.categoryService.update(id, updateCategoryDto, user, req.user?.id);
+    return this.categoryService.update(user, id, updateCategoryDto);
   }
 
   @Patch(':id/activate')
   @ApiOperation({ summary: 'Activate category' })
-  activate(@Param('id') id: string, @CurrentUser() user: User) {
-    return this.categoryService.activate(id, user);
+  activate(@CurrentUser() user: User, @Param('id') id: string) {
+    return this.categoryService.activate(user, id);
   }
 
   @Patch(':id/deactivate')
   @ApiOperation({ summary: 'Deactivate category' })
-  deactivate(@Param('id') id: string, @CurrentUser() user: User) {
-    return this.categoryService.deactivate(id, user);
+  deactivate(@CurrentUser() user: User, @Param('id') id: string) {
+    return this.categoryService.deactivate(user, id);
   }
 
   @Patch(':id/reorder')
@@ -107,13 +105,13 @@ export class CategoryController {
     @Body() body: { sortOrder: number },
     @CurrentUser() user: User,
   ) {
-    return this.categoryService.reorder(id, body.sortOrder, user);
+    return this.categoryService.reorder(user, id, body.sortOrder);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete category' })
-  async remove(@Param('id') id: string, @CurrentUser() user: User) {
-    await this.categoryService.remove(id, user);
+  async remove(@CurrentUser() user: User, @Param('id') id: string) {
+    await this.categoryService.remove(user, id);
     return { message: 'Category deleted successfully' };
   }
 }

@@ -14,19 +14,8 @@ describe('ApprovalService', () => {
   let workflowRepository: Repository<Workflow>;
   let permissionService: PermissionService;
 
-  const mockUser: User = {
-    id: 'user-1',
-    email: 'test@example.com',
-    tenantId: 'tenant-1',
-    roles: ['user'],
-  };
-
-  const mockManager: User = {
-    id: 'manager-1',
-    email: 'manager@example.com',
-    tenantId: 'tenant-1',
-    roles: ['manager'],
-  };
+  const mockUser = createMockUser();
+  const mockManager = createMockUser({ id: 'manager-1', roles: ['manager'] });
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -228,7 +217,7 @@ describe('ApprovalService', () => {
         status: ApprovalStatus.CANCELLED,
       } as any);
 
-      const result = await service.cancel('request-1', mockUser);
+      const result = await service.cancel(mockUser, 'request-1');
 
       expect(result.status).toBe(ApprovalStatus.CANCELLED);
     });
@@ -243,7 +232,7 @@ describe('ApprovalService', () => {
 
       jest.spyOn(approvalRepository, 'findOne').mockResolvedValue(request as any);
 
-      await expect(service.cancel('request-1', mockUser)).rejects.toThrow(
+      await expect(service.cancel(mockUser, 'request-1')).rejects.toThrow(
         ForbiddenException,
       );
     });

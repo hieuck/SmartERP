@@ -77,7 +77,14 @@ describe('CheckoutService', () => {
       const dto = {
         cartId: 'cart-1',
         customerEmail: 'test@example.com',
-        shippingAddress: { city: 'HCMC' },
+        shippingAddress: {
+          fullName: 'John Doe',
+          phone: '0123456789',
+          addressLine1: '123 Main St',
+          city: 'HCMC',
+          postalCode: '70000',
+          country: 'Vietnam',
+        },
       };
 
       mockCartRepository.findOne.mockResolvedValue(mockCart);
@@ -94,7 +101,14 @@ describe('CheckoutService', () => {
       const dto = {
         cartId: 'invalid-cart',
         customerEmail: 'test@example.com',
-        shippingAddress: { city: 'HCMC' },
+        shippingAddress: {
+          fullName: 'John Doe',
+          phone: '0123456789',
+          addressLine1: '123 Main St',
+          city: 'HCMC',
+          postalCode: '70000',
+          country: 'Vietnam',
+        },
       };
 
       mockCartRepository.findOne.mockResolvedValue(null);
@@ -113,7 +127,14 @@ describe('CheckoutService', () => {
       const dto = {
         cartId: 'cart-1',
         customerEmail: 'test@example.com',
-        shippingAddress: { city: 'HCMC' },
+        shippingAddress: {
+          fullName: 'John Doe',
+          phone: '0123456789',
+          addressLine1: '123 Main St',
+          city: 'HCMC',
+          postalCode: '70000',
+          country: 'Vietnam',
+        },
       };
 
       mockCartRepository.findOne.mockResolvedValue(mockCart);
@@ -146,8 +167,22 @@ describe('CheckoutService', () => {
       const dto = {
         cartId: 'cart-1',
         customerEmail: 'test@example.com',
-        shippingAddress: { city: 'HCMC' },
-        billingAddress: { city: 'HCMC' },
+        shippingAddress: {
+          fullName: 'John Doe',
+          phone: '0123456789',
+          addressLine1: '123 Main St',
+          city: 'HCMC',
+          postalCode: '70000',
+          country: 'Vietnam',
+        },
+        billingAddress: {
+          fullName: 'John Doe',
+          phone: '0123456789',
+          addressLine1: '123 Main St',
+          city: 'HCMC',
+          postalCode: '70000',
+          country: 'Vietnam',
+        },
       };
 
       const mockOrder = {

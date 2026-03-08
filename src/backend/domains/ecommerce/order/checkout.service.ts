@@ -4,8 +4,9 @@ import { Repository } from 'typeorm';
 import { Order, OrderStatus, PaymentStatus, ShippingStatus } from './entities/order.entity';
 import { OrderItem } from './entities/order-item.entity';
 import { ShoppingCart } from '../shopping-cart/entities/shopping-cart.entity';
-import { User } from '../../../core/user/entities/user.entity';
+import { User as UserEntity } from '../../../core/user/entities/user.entity';
 import { CheckoutDto } from './dto/checkout.dto';
+import { User } from '@/common/security/permission.service';
 
 /**
  * CheckoutService handles checkout flow and order creation from cart

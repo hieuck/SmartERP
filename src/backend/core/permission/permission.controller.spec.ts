@@ -67,10 +67,10 @@ describe('PermissionController', () => {
 
       mockPermissionService.create.mockResolvedValue(mockPermission);
 
-      const result = await controller.create(createDto, mockTenantId);
+      const result = await controller.create(mockUser, createDto);
 
       expect(result).toEqual(mockPermission);
-      expect(service.create).toHaveBeenCalledWith(createDto, mockTenantId);
+      expect(service.create).toHaveBeenCalledWith(mockUser, createDto);
     });
   });
 
@@ -79,16 +79,16 @@ describe('PermissionController', () => {
       const permissions = [mockPermission];
       mockPermissionService.findAll.mockResolvedValue(permissions);
 
-      const result = await controller.findAll(mockTenantId);
+      const result = await controller.findAll(mockUser);
 
       expect(result).toEqual(permissions);
-      expect(service.findAll).toHaveBeenCalledWith(mockTenantId);
+      expect(service.findAll).toHaveBeenCalledWith(mockUser);
     });
 
     it('should return empty array if no permissions', async () => {
       mockPermissionService.findAll.mockResolvedValue([]);
 
-      const result = await controller.findAll(mockTenantId);
+      const result = await controller.findAll(mockUser);
 
       expect(result).toEqual([]);
     });
@@ -98,10 +98,10 @@ describe('PermissionController', () => {
     it('should return a permission by ID', async () => {
       mockPermissionService.findOne.mockResolvedValue(mockPermission);
 
-      const result = await controller.findOne(mockPermission.id, mockTenantId);
+      const result = await controller.findOne(mockUser, mockPermission.id);
 
       expect(result).toEqual(mockPermission);
-      expect(service.findOne).toHaveBeenCalledWith(mockPermission.id, mockTenantId);
+      expect(service.findOne).toHaveBeenCalledWith(mockUser, mockPermission.id);
     });
   });
 
@@ -112,7 +112,7 @@ describe('PermissionController', () => {
       const result = await controller.findByResource(mockPermission.resource, mockTenantId);
 
       expect(result).toEqual(mockPermission);
-      expect(service.findByResource).toHaveBeenCalledWith(mockPermission.resource, mockTenantId);
+      expect(service.findByResource).toHaveBeenCalledWith(mockUser, mockPermission.resource);
     });
   });
 
@@ -120,16 +120,16 @@ describe('PermissionController', () => {
     it('should return permission count', async () => {
       mockPermissionService.count.mockResolvedValue(5);
 
-      const result = await controller.count(mockTenantId);
+      const result = await controller.count(mockUser);
 
       expect(result).toBe(5);
-      expect(service.count).toHaveBeenCalledWith(mockTenantId);
+      expect(service.count).toHaveBeenCalledWith(mockUser);
     });
 
     it('should return 0 if no permissions', async () => {
       mockPermissionService.count.mockResolvedValue(0);
 
-      const result = await controller.count(mockTenantId);
+      const result = await controller.count(mockUser);
 
       expect(result).toBe(0);
     });
@@ -163,10 +163,10 @@ describe('PermissionController', () => {
     it('should delete a permission', async () => {
       mockPermissionService.remove.mockResolvedValue(undefined);
 
-      const result = await controller.remove(mockPermission.id, mockTenantId);
+      const result = await controller.remove(mockUser, mockPermission.id);
 
       expect(result).toEqual({ message: 'Permission deleted successfully' });
-      expect(service.remove).toHaveBeenCalledWith(mockPermission.id, mockTenantId);
+      expect(service.remove).toHaveBeenCalledWith(mockUser, mockPermission.id);
     });
   });
 });

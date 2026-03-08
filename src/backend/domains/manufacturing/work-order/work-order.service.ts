@@ -10,7 +10,7 @@ export class WorkOrderService {
     private readonly workOrderRepository: Repository<WorkOrder>,
   ) {}
 
-  async create(tenantId: string, dto: any): Promise<WorkOrder> {
+  async create(dto: any, tenantId: string, user: any): Promise<WorkOrder> {
     const reference = await this.generateReference(tenantId);
 
     const workOrder = this.workOrderRepository.create({
@@ -29,7 +29,7 @@ export class WorkOrderService {
     return this.workOrderRepository.save(workOrder);
   }
 
-  async findOne(tenantId: string, id: string): Promise<WorkOrder> {
+  async findOne(id: string, tenantId: string): Promise<WorkOrder> {
     const workOrder = await this.workOrderRepository.findOne({
       where: { id, tenantId },
       relations: ['product', 'bom', 'responsible'],
@@ -42,14 +42,14 @@ export class WorkOrderService {
     return workOrder;
   }
 
-  async findByStatus(tenantId: string, status: WorkOrderStatus): Promise<WorkOrder[]> {
+  async findByStatus(status: WorkOrderStatus, tenantId: string): Promise<WorkOrder[]> {
     return this.workOrderRepository.find({
       where: { tenantId, status },
       relations: ['product', 'bom', 'responsible'],
     });
   }
 
-  async confirm(tenantId: string, id: string): Promise<WorkOrder> {
+  async confirm(id: string, tenantId: string, user: any): Promise<WorkOrder> {
     const workOrder = await this.findOne(tenantId, id);
 
     if (workOrder.status !== WorkOrderStatus.DRAFT) {
@@ -61,7 +61,7 @@ export class WorkOrderService {
     return this.workOrderRepository.save(workOrder);
   }
 
-  async startProduction(tenantId: string, id: string): Promise<WorkOrder> {
+  async start(id: string, tenantId: string, user: any): Promise<WorkOrder> {
     const workOrder = await this.findOne(tenantId, id);
 
     if (workOrder.status !== WorkOrderStatus.CONFIRMED) {
@@ -74,7 +74,7 @@ export class WorkOrderService {
     return this.workOrderRepository.save(workOrder);
   }
 
-  async finishProduction(tenantId: string, id: string, dto: any): Promise<WorkOrder> {
+  async finish(id: string, producedQuantity: number, tenantId: string, user: any): Promise<WorkOrder> {
     const workOrder = await this.findOne(tenantId, id);
 
     if (workOrder.status !== WorkOrderStatus.IN_PROGRESS) {
@@ -82,13 +82,13 @@ export class WorkOrderService {
     }
 
     workOrder.status = WorkOrderStatus.DONE;
-    workOrder.qtyProduced = dto.qtyProduced;
+    workOrder.qtyProduced = producedQuantity;
     workOrder.dateFinished = new Date();
 
     return this.workOrderRepository.save(workOrder);
   }
 
-  async cancel(tenantId: string, id: string): Promise<WorkOrder> {
+  async cancel(id: string, tenantId: string, user: any): Promise<WorkOrder> {
     const workOrder = await this.findOne(tenantId, id);
 
     if (workOrder.status === WorkOrderStatus.DONE) {

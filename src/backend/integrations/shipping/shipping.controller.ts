@@ -1,7 +1,8 @@
 import { Controller, Get, Post, Body, Query, Param, Req } from '@nestjs/common';
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { User } from '@/common/security/permission.service';
 import { Request } from 'express';
 import { ShippingService } from './shipping.service';
-import { User } from '@/common/security/permission.service';
 import {
   CreateShipmentDto,
   CalculateShippingFeeDto,
@@ -18,11 +19,10 @@ export class ShippingController {
    * POST /shipping
    */
   @Post()
-  async createShipment(
+  async createShipment(@CurrentUser() user: User, 
     @Req() req: Request & { tenantId?: string },
     @Body() dto: CreateShipmentDto,
   ) {
-    const tenantId = req.tenantId || 'default-tenant';
     return this.shippingService.createShipment(user, dto);
   }
 
@@ -31,11 +31,10 @@ export class ShippingController {
    * POST /shipping/calculate-fee
    */
   @Post('calculate-fee')
-  async calculateFee(
+  async calculateFee(@CurrentUser() user: User, 
     @Req() req: Request & { tenantId?: string },
     @Body() dto: CalculateShippingFeeDto,
   ) {
-    const tenantId = req.tenantId || 'default-tenant';
     return this.shippingService.calculateFee(user, dto);
   }
 
@@ -44,8 +43,7 @@ export class ShippingController {
    * POST /shipping/track
    */
   @Post('track')
-  async trackShipment(@Req() req: Request & { tenantId?: string }, @Body() dto: TrackShipmentDto) {
-    const tenantId = req.tenantId || 'default-tenant';
+  async trackShipment(@CurrentUser() user: User, @Req() req: Request & { tenantId?: string }, @Body() dto: TrackShipmentDto) {
     return this.shippingService.trackShipment(user, dto);
   }
 
@@ -54,11 +52,10 @@ export class ShippingController {
    * POST /shipping/cancel
    */
   @Post('cancel')
-  async cancelShipment(
+  async cancelShipment(@CurrentUser() user: User, 
     @Req() req: Request & { tenantId?: string },
     @Body() dto: CancelShipmentDto,
   ) {
-    const tenantId = req.tenantId || 'default-tenant';
     return this.shippingService.cancelShipment(user, dto);
   }
 
@@ -67,8 +64,7 @@ export class ShippingController {
    * GET /shipping/:id
    */
   @Get(':id')
-  async getShipment(@Req() req: Request & { tenantId?: string }, @Param('id') id: string) {
-    const tenantId = req.tenantId || 'default-tenant';
+  async getShipment(@CurrentUser() user: User, @Req() req: Request & { tenantId?: string }, @Param('id') id: string) {
     return this.shippingService.getShipment(user, id);
   }
 
@@ -77,7 +73,7 @@ export class ShippingController {
    * GET /shipping
    */
   @Get()
-  async listShipments(
+  async listShipments(@CurrentUser() user: User, 
     @Req() req: Request & { tenantId?: string },
     @Query('orderId') orderId?: string,
     @Query('provider') provider?: string,
@@ -85,7 +81,6 @@ export class ShippingController {
     @Query('limit') limit?: number,
     @Query('offset') offset?: number,
   ) {
-    const tenantId = req.tenantId || 'default-tenant';
     return this.shippingService.listShipments(user, {
       orderId,
       provider,

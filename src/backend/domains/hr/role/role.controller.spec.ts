@@ -76,10 +76,10 @@ describe('RoleController', () => {
 
       mockRoleService.create.mockResolvedValue(mockRole);
 
-      const result = await controller.create(createDto, mockTenantId, mockRequest);
+      const result = await controller.create(mockUser, createDto, mockRequest);
 
       expect(result).toEqual(mockRole);
-      expect(service.create).toHaveBeenCalledWith(createDto, mockTenantId, mockUserId);
+      expect(service.create).toHaveBeenCalledWith(createDto, mockUser);
     });
 
     it('should create role without user ID if not in request', async () => {
@@ -91,9 +91,9 @@ describe('RoleController', () => {
 
       mockRoleService.create.mockResolvedValue(mockRole);
 
-      await controller.create(createDto, mockTenantId, mockRequest);
+      await controller.create(mockUser, createDto, mockRequest);
 
-      expect(service.create).toHaveBeenCalledWith(createDto, mockTenantId, undefined);
+      expect(service.create).toHaveBeenCalledWith(createDto, mockUser);
     });
   });
 
@@ -102,16 +102,16 @@ describe('RoleController', () => {
       const roles = [mockRole];
       mockRoleService.findAll.mockResolvedValue(roles);
 
-      const result = await controller.findAll(mockTenantId);
+      const result = await controller.findAll(mockUser);
 
       expect(result).toEqual(roles);
-      expect(service.findAll).toHaveBeenCalledWith(mockTenantId);
+      expect(service.findAll).toHaveBeenCalledWith(mockUser);
     });
 
     it('should return empty array if no roles', async () => {
       mockRoleService.findAll.mockResolvedValue([]);
 
-      const result = await controller.findAll(mockTenantId);
+      const result = await controller.findAll(mockUser);
 
       expect(result).toEqual([]);
     });
@@ -121,10 +121,10 @@ describe('RoleController', () => {
     it('should return a role by ID', async () => {
       mockRoleService.findOne.mockResolvedValue(mockRole);
 
-      const result = await controller.findOne(mockRole.id, mockTenantId);
+      const result = await controller.findOne(mockUser, mockRole.id);
 
       expect(result).toEqual(mockRole);
-      expect(service.findOne).toHaveBeenCalledWith(mockRole.id, mockTenantId);
+      expect(service.findOne).toHaveBeenCalledWith(mockRole.id, mockUser);
     });
   });
 
@@ -132,10 +132,10 @@ describe('RoleController', () => {
     it('should return a role by name', async () => {
       mockRoleService.findByName.mockResolvedValue(mockRole);
 
-      const result = await controller.findByName(mockRole.name, mockTenantId);
+      const result = await controller.findByName(mockUser, mockRole.name);
 
       expect(result).toEqual(mockRole);
-      expect(service.findByName).toHaveBeenCalledWith(mockRole.name, mockTenantId);
+      expect(service.findByName).toHaveBeenCalledWith(mockRole.name, mockUser);
     });
   });
 
@@ -143,16 +143,16 @@ describe('RoleController', () => {
     it('should return role count', async () => {
       mockRoleService.count.mockResolvedValue(5);
 
-      const result = await controller.count(mockTenantId);
+      const result = await controller.count(mockUser);
 
       expect(result).toBe(5);
-      expect(service.count).toHaveBeenCalledWith(mockTenantId);
+      expect(service.count).toHaveBeenCalledWith(mockUser);
     });
 
     it('should return 0 if no roles', async () => {
       mockRoleService.count.mockResolvedValue(0);
 
-      const result = await controller.count(mockTenantId);
+      const result = await controller.count(mockUser);
 
       expect(result).toBe(0);
     });
@@ -174,8 +174,8 @@ describe('RoleController', () => {
 
       const result = await controller.update(
         mockRole.id,
+        mockUser,
         updateDto,
-        mockTenantId,
         mockRequest,
       );
 
@@ -183,8 +183,7 @@ describe('RoleController', () => {
       expect(service.update).toHaveBeenCalledWith(
         mockRole.id,
         updateDto,
-        mockTenantId,
-        mockUserId,
+        mockUser,
       );
     });
 
@@ -197,13 +196,12 @@ describe('RoleController', () => {
 
       mockRoleService.update.mockResolvedValue(mockRole);
 
-      await controller.update(mockRole.id, updateDto, mockTenantId, mockRequest);
+      await controller.update(mockRole.id, mockUser, updateDto, mockRequest);
 
       expect(service.update).toHaveBeenCalledWith(
         mockRole.id,
         updateDto,
-        mockTenantId,
-        undefined,
+        mockUser,
       );
     });
   });
@@ -218,14 +216,14 @@ describe('RoleController', () => {
       const result = await controller.addPermissions(
         mockRole.id,
         body,
-        mockTenantId,
+        mockUser,
       );
 
       expect(result).toEqual(roleWithPerms);
       expect(service.addPermissions).toHaveBeenCalledWith(
         mockRole.id,
         body.permissionIds,
-        mockTenantId,
+        mockUser,
       );
     });
 
@@ -234,12 +232,12 @@ describe('RoleController', () => {
 
       mockRoleService.addPermissions.mockResolvedValue(mockRole);
 
-      await controller.addPermissions(mockRole.id, body, mockTenantId);
+      await controller.addPermissions(mockRole.id, body, mockUser);
 
       expect(service.addPermissions).toHaveBeenCalledWith(
         mockRole.id,
         [],
-        mockTenantId,
+        mockUser,
       );
     });
   });
@@ -253,14 +251,14 @@ describe('RoleController', () => {
       const result = await controller.removePermissions(
         mockRole.id,
         body,
-        mockTenantId,
+        mockUser,
       );
 
       expect(result).toEqual(mockRole);
       expect(service.removePermissions).toHaveBeenCalledWith(
         mockRole.id,
         body.permissionIds,
-        mockTenantId,
+        mockUser,
       );
     });
 
@@ -269,12 +267,12 @@ describe('RoleController', () => {
 
       mockRoleService.removePermissions.mockResolvedValue(mockRole);
 
-      await controller.removePermissions(mockRole.id, body, mockTenantId);
+      await controller.removePermissions(mockRole.id, body, mockUser);
 
       expect(service.removePermissions).toHaveBeenCalledWith(
         mockRole.id,
         [],
-        mockTenantId,
+        mockUser,
       );
     });
   });
@@ -283,10 +281,10 @@ describe('RoleController', () => {
     it('should delete a role', async () => {
       mockRoleService.remove.mockResolvedValue(undefined);
 
-      const result = await controller.remove(mockRole.id, mockTenantId);
+      const result = await controller.remove(mockUser, mockRole.id);
 
       expect(result).toEqual({ message: 'Role deleted successfully' });
-      expect(service.remove).toHaveBeenCalledWith(mockRole.id, mockTenantId);
+      expect(service.remove).toHaveBeenCalledWith(mockRole.id, mockUser);
     });
   });
 });

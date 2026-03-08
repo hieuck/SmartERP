@@ -114,7 +114,7 @@ export class ApprovalService {
     return request;
   }
 
-  async cancel(requestId: string, user: User): Promise<ApprovalRequest> {
+  async cancel(user: User, requestId: string): Promise<ApprovalRequest> {
     const request = await this.findOne(requestId, user.tenantId);
 
     if (request.status !== ApprovalStatus.PENDING) {
@@ -182,8 +182,9 @@ export class ApprovalService {
 
   private canApprove(workflow: Workflow, user: User): boolean {
     // Check if user has any of the allowed roles for approval
-    const approvalState = workflow.states.find(
-      (s) => s.name === 'pending_approval' || s.name === 'approved',
+    const states = (workflow as any).states || (workflow as any).transitions || [];
+    const approvalState = states.find(
+      (s: any) => s.name === 'pending_approval' || s.name === 'approved',
     );
 
     if (!approvalState) {

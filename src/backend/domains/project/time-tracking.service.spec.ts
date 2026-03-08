@@ -114,7 +114,7 @@ describe('TimeTrackingService', () => {
       };
       mockTimeEntryRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
 
-      const result = await service.create(dto, mockUser, mockUser);
+      const result = await service.create(mockUser, dto, mockUser);
 
       expect(mockTaskRepository.findOne).toHaveBeenCalled();
       expect(mockTimeEntryRepository.save).toHaveBeenCalled();
@@ -127,7 +127,7 @@ describe('TimeTrackingService', () => {
       const dto = { taskId: 'invalid-task', date: '2026-03-07', hours: 8 };
       mockTaskRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.create(dto, mockUser, mockUser)).rejects.toThrow(NotFoundException);
+      await expect(service.create(mockUser, dto, mockUser)).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -135,7 +135,7 @@ describe('TimeTrackingService', () => {
     it('should return a time entry by ID', async () => {
       mockTimeEntryRepository.findOne.mockResolvedValue(mockTimeEntry);
 
-      const result = await service.findOne('entry-1', mockUser);
+      const result = await service.findOne(mockUser, 'entry-1');
 
       expect(result).toEqual(mockTimeEntry);
     });
@@ -143,7 +143,7 @@ describe('TimeTrackingService', () => {
     it('should throw NotFoundException if entry not found', async () => {
       mockTimeEntryRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findOne('invalid-id', mockUser)).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(mockUser, 'invalid-id')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -197,7 +197,7 @@ describe('TimeTrackingService', () => {
       };
       mockTimeEntryRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
 
-      await service.remove('entry-1', mockUser, mockUser);
+      await service.remove(mockUser, 'entry-1', mockUser);
 
       expect(mockTimeEntryRepository.remove).toHaveBeenCalled();
       expect(mockTaskRepository.update).toHaveBeenCalled();
@@ -207,7 +207,7 @@ describe('TimeTrackingService', () => {
       const otherUserEntry = { ...mockTimeEntry, userId: 'other-user' };
       mockTimeEntryRepository.findOne.mockResolvedValue(otherUserEntry);
 
-      await expect(service.remove('entry-1', mockUser, mockUser)).rejects.toThrow(
+      await expect(service.remove(mockUser, 'entry-1', mockUser)).rejects.toThrow(
         BadRequestException,
       );
     });

@@ -9,7 +9,8 @@ import {
   BeforeInsert,
   BeforeUpdate,
 } from 'typeorm';
-import { User } from '../../../../core/user/entities/user.entity';
+import { User as UserEntity } from '../../../../core/user/entities/user.entity';
+import { User } from '@/common/security/permission.service';
 
 export enum ProductStatus {
   DRAFT = 'draft',
@@ -120,7 +121,7 @@ export class ProductCatalog {
   @Column()
   tenantId: string;
 
-  @ManyToOne(() => User)
+  @ManyToOne(() => UserEntity)
   @JoinColumn({ name: 'createdBy' })
   creator: User;
 

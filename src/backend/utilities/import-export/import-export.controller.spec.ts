@@ -40,7 +40,6 @@ describe('ImportExportController', () => {
 
   describe('exportToCSV', () => {
     it('should export data to CSV', async () => {
-      const tenantId = 'tenant-1';
       const entityType = 'products';
       const data = [
         { id: '1', name: 'Product 1', price: 100 },
@@ -55,9 +54,9 @@ describe('ImportExportController', () => {
         send: jest.fn(),
       } as unknown as Response;
 
-      await controller.exportToCSV(tenantId, entityType, data, mockResponse);
+      await controller.exportToCSV(mockUser, entityType, data, mockResponse);
 
-      expect(service.exportToCSV).toHaveBeenCalledWith(tenantId, entityType, data);
+      expect(service.exportToCSV).toHaveBeenCalledWith(mockUser, entityType, data);
       expect(mockResponse.setHeader).toHaveBeenCalledWith('Content-Type', 'text/csv');
       expect(mockResponse.setHeader).toHaveBeenCalledWith(
         'Content-Disposition',
@@ -69,7 +68,6 @@ describe('ImportExportController', () => {
 
   describe('importFromCSV', () => {
     it('should import data from CSV', async () => {
-      const tenantId = 'tenant-1';
       const entityType = 'products';
       const csvContent = 'id,name,price\n1,Product 1,100\n2,Product 2,200';
       const expectedData = [
@@ -79,10 +77,10 @@ describe('ImportExportController', () => {
 
       service.importFromCSV.mockResolvedValue(expectedData);
 
-      const result = await controller.importFromCSV(tenantId, entityType, csvContent);
+      const result = await controller.importFromCSV(mockUser, entityType, csvContent);
 
       expect(result).toEqual(expectedData);
-      expect(service.importFromCSV).toHaveBeenCalledWith(tenantId, entityType, csvContent);
+      expect(service.importFromCSV).toHaveBeenCalledWith(mockUser, entityType, csvContent);
     });
   });
 });

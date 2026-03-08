@@ -91,7 +91,7 @@ describe('PermissionService', () => {
   });
 
   describe('buildSecureQuery', () => {
-    it('should add tenantId filter', () => {
+    it('should add tenantId and createdBy filter for non-admin', () => {
       const user = { id: 'user1', tenantId: 'tenant1', roles: ['user'] };
       const baseWhere = { status: 'active' };
 
@@ -100,6 +100,7 @@ describe('PermissionService', () => {
       expect(result).toEqual({
         status: 'active',
         tenantId: 'tenant1',
+        createdBy: 'user1', // Non-admin users can only see their own records
       });
     });
 

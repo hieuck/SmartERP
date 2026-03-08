@@ -70,7 +70,7 @@ describe('ProjectService', () => {
       mockRepository.create.mockReturnValue({ ...dto, tenantId: 'tenant-1' });
       mockRepository.save.mockResolvedValue(mockProject);
 
-      const result = await service.create(dto, mockUser, mockUser);
+      const result = await service.create(mockUser, dto, mockUser);
 
       expect(mockRepository.create).toHaveBeenCalledWith({
         ...dto,
@@ -87,7 +87,7 @@ describe('ProjectService', () => {
     it('should return a project by ID', async () => {
       mockRepository.findOne.mockResolvedValue(mockProject);
 
-      const result = await service.findOne('project-1', mockUser);
+      const result = await service.findOne(mockUser, 'project-1');
 
       expect(mockRepository.findOne).toHaveBeenCalledWith({
         where: { id: 'project-1', tenantId: 'tenant-1' },
@@ -99,7 +99,7 @@ describe('ProjectService', () => {
     it('should throw NotFoundException if project not found', async () => {
       mockRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findOne('invalid-id', mockUser)).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(mockUser, 'invalid-id')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -234,7 +234,7 @@ describe('ProjectService', () => {
         status: ProjectStatus.CANCELLED,
       });
 
-      await service.remove('project-1', mockUser, mockUser);
+      await service.remove(mockUser, 'project-1', mockUser);
 
       expect(mockRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({ status: ProjectStatus.CANCELLED }),

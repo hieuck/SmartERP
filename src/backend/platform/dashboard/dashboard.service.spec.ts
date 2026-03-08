@@ -9,6 +9,7 @@ import { Payment } from '../payment/entities/payment.entity';
 import { Category } from '../category/entities/category.entity';
 import { Inventory } from '../inventory/entities/inventory.entity';
 import { CacheService } from '@/common/cache/cache.service';
+import { PermissionService } from '@/common/security/permission.service';
 import { ChartPeriod } from './dto/mobile-chart.dto';
 import { createMockUser } from '@/common/test/test-helpers';
 

@@ -3,7 +3,10 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AccountingService } from './accounting.service';
 import { Account, AccountType } from './entities/account.entity';
+import { JournalEntry } from './entities/journal-entry.entity';
+import { Invoice } from './entities/invoice.entity';
 import { CacheService } from '@/common/cache/cache.service';
+import { PermissionService } from '@/common/security/permission.service';
 import { createMockUser } from '@/common/test/test-helpers';
 
 describe('AccountingService - Chart of Accounts', () => {
@@ -19,9 +22,30 @@ describe('AccountingService - Chart of Accounts', () => {
     softDelete: jest.fn(),
   };
 
+  const mockJournalEntryRepository = {
+    find: jest.fn(),
+    findOne: jest.fn(),
+    create: jest.fn(),
+    save: jest.fn(),
+    count: jest.fn(),
+  };
+
+  const mockInvoiceRepository = {
+    find: jest.fn(),
+    findOne: jest.fn(),
+    create: jest.fn(),
+    save: jest.fn(),
+  };
+
   const mockCacheService = {
     getOrSet: jest.fn(),
     del: jest.fn(),
+  };
+
+  const mockPermissionService = {
+    checkPermission: jest.fn(),
+    filterByPermission: jest.fn(),
+    buildSecureQuery: jest.fn((user, where) => ({ ...where, tenantId: user.tenantId })),
   };
 
   const mockUser = createMockUser();
@@ -35,8 +59,20 @@ describe('AccountingService - Chart of Accounts', () => {
           useValue: mockAccountRepository,
         },
         {
+          provide: getRepositoryToken(JournalEntry),
+          useValue: mockJournalEntryRepository,
+        },
+        {
+          provide: getRepositoryToken(Invoice),
+          useValue: mockInvoiceRepository,
+        },
+        {
           provide: CacheService,
           useValue: mockCacheService,
+        },
+        {
+          provide: PermissionService,
+          useValue: mockPermissionService,
         },
       ],
     }).compile();
@@ -60,7 +96,7 @@ describe('AccountingService - Chart of Accounts', () => {
         return Promise.resolve(account as Account);
       });
 
-      await service.createDefaultCOA(tenantId);
+      await service.createDefaultCOA(mockUser);
 
       // Should create at least 20 accounts (5 main groups + children)
       expect(savedAccounts.length).toBeGreaterThanOrEqual(20);
@@ -88,16 +124,17 @@ describe('AccountingService - Chart of Accounts', () => {
     });
 
     it('should create hierarchical structure with parent relationships', async () => {
-      const tenantId = 'tenant-123';
       const savedAccounts: Account[] = [];
+      let idCounter = 1;
 
       mockAccountRepository.create.mockImplementation((data) => data as Account);
-      mockAccountRepository.save.mockImplementation((account) => {
-        savedAccounts.push(account as Account);
-        return Promise.resolve(account as Account);
+      mockAccountRepository.save.mockImplementation((account: any) => {
+        const savedAccount = { ...account, id: `acc-${idCounter++}` };
+        savedAccounts.push(savedAccount as Account);
+        return Promise.resolve(savedAccount as Account);
       });
 
-      await service.createDefaultCOA(tenantId);
+      await service.createDefaultCOA(mockUser);
 
       // Check child accounts have parent references
       const currentAssets = savedAccounts.find((a) => a.code === '1100');
@@ -121,7 +158,7 @@ describe('AccountingService - Chart of Accounts', () => {
         return Promise.resolve(account as Account);
       });
 
-      await service.createDefaultCOA(tenantId);
+      await service.createDefaultCOA(mockUser);
 
       savedAccounts.forEach((account) => {
         expect(account.isActive).toBe(true);
@@ -161,7 +198,7 @@ describe('AccountingService - Chart of Accounts', () => {
 
       mockAccountRepository.find.mockResolvedValue(flatAccounts as Account[]);
 
-      const result = await service.getAccountHierarchy(tenantId);
+      const result = await service.getAccountHierarchy(mockUser) as any;
 
       // Should return root nodes only
       expect(result).toHaveLength(1);
@@ -190,7 +227,7 @@ describe('AccountingService - Chart of Accounts', () => {
 
       mockAccountRepository.find.mockResolvedValue(flatAccounts as Account[]);
 
-      const result = await service.getAccountHierarchy(tenantId);
+      const result = await service.getAccountHierarchy(mockUser) as any;
 
       expect(result).toHaveLength(1);
       expect(result[0].children).toEqual([]);
@@ -199,26 +236,24 @@ describe('AccountingService - Chart of Accounts', () => {
 
   describe('validateAccountCode', () => {
     it('should validate unique account code within tenant', async () => {
-      const tenantId = 'tenant-123';
       const code = '1000';
 
       mockAccountRepository.findOne.mockResolvedValue(null);
 
-      const result = await service.validateAccountCode(code, tenantId);
+      const result = await service.validateAccountCode(mockUser, code);
 
       expect(result).toBe(true);
       expect(mockAccountRepository.findOne).toHaveBeenCalledWith({
-        where: { tenantId, code },
+        where: { tenantId: mockUser.tenantId, code },
       });
     });
 
     it('should return false if code already exists', async () => {
-      const tenantId = 'tenant-123';
       const code = '1000';
 
       mockAccountRepository.findOne.mockResolvedValue({ id: '1', code } as Account);
 
-      const result = await service.validateAccountCode(code, tenantId);
+      const result = await service.validateAccountCode(mockUser, code);
 
       expect(result).toBe(false);
     });
@@ -226,7 +261,6 @@ describe('AccountingService - Chart of Accounts', () => {
 
   describe('getAccountsByType', () => {
     it('should return accounts filtered by type', async () => {
-      const tenantId = 'tenant-123';
       const type = AccountType.ASSET;
       const accounts = [
         { id: '1', code: '1000', type: AccountType.ASSET },
@@ -235,11 +269,11 @@ describe('AccountingService - Chart of Accounts', () => {
 
       mockAccountRepository.find.mockResolvedValue(accounts as Account[]);
 
-      const result = await service.getAccountsByType(tenantId, type);
+      const result = await service.getAccountsByType(mockUser, type);
 
       expect(result).toEqual(accounts);
       expect(mockAccountRepository.find).toHaveBeenCalledWith({
-        where: { tenantId, type, isActive: true },
+        where: { tenantId: mockUser.tenantId, type, isActive: true },
         order: { code: 'ASC' },
       });
     });
@@ -247,7 +281,6 @@ describe('AccountingService - Chart of Accounts', () => {
 
   describe('getLeafAccounts', () => {
     it('should return only leaf accounts (not groups)', async () => {
-      const tenantId = 'tenant-123';
       const accounts = [
         { id: '1', code: '1110', isGroup: false },
         { id: '2', code: '1120', isGroup: false },
@@ -255,11 +288,11 @@ describe('AccountingService - Chart of Accounts', () => {
 
       mockAccountRepository.find.mockResolvedValue(accounts as Account[]);
 
-      const result = await service.getLeafAccounts(tenantId);
+      const result = await service.getLeafAccounts(mockUser);
 
       expect(result).toEqual(accounts);
       expect(mockAccountRepository.find).toHaveBeenCalledWith({
-        where: { tenantId, isGroup: false, isActive: true },
+        where: { tenantId: mockUser.tenantId, isGroup: false, isActive: true },
         order: { code: 'ASC' },
       });
     });

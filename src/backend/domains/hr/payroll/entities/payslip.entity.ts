@@ -10,8 +10,9 @@ import {
   BeforeInsert,
   BeforeUpdate,
 } from 'typeorm';
-import { User } from '../../../../core/user/entities/user.entity';
+import { User as UserEntity } from '../../../../core/user/entities/user.entity';
 import { SalaryStructure } from './salary-structure.entity';
+import { User } from '@/common/security/permission.service';
 
 export enum PayslipStatus {
   DRAFT = 'draft',
@@ -33,9 +34,9 @@ export class Payslip {
   @Column({ name: 'employee_id' })
   employeeId: string;
 
-  @ManyToOne(() => User)
+  @ManyToOne(() => UserEntity)
   @JoinColumn({ name: 'employee_id' })
-  employee: User;
+  employee: UserEntity;
 
   @Column({ name: 'salary_structure_id' })
   salaryStructureId: string;

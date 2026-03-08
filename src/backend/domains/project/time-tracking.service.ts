@@ -4,8 +4,9 @@ import { Repository, Between } from 'typeorm';
 import { TimeEntry } from './entities/time-entry.entity';
 import { Task } from './entities/task.entity';
 import { Project } from './entities/project.entity';
-import { User } from '../../core/user/entities/user.entity';
+import { User as UserEntity } from '../../core/user/entities/user.entity';
 import { CreateTimeEntryDto } from './dto/create-time-entry.dto';
+import { User } from '@/common/security/permission.service';
 
 /**
  * TimeTrackingService handles time entry logging and calculations

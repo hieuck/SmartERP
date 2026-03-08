@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
+import { User } from '@/common/security/permission.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Product } from '../product/entities/product.entity';
-import { Customer } from '../customer/entities/customer.entity';
-import { Order } from '../order/entities/order.entity';
+import { Product } from '../../domains/inventory/product/entities/product.entity';
+import { Customer } from '../../domains/sales/customer/entities/customer.entity';
+import { Order } from '../../domains/sales/order/entities/order.entity';
 import { CacheService } from '@/common/cache/cache.service';
 import { CacheTTL, generateCacheKey } from '@/common/cache/cache.config';
 
@@ -27,8 +28,8 @@ export class SearchService {
     private cacheService: CacheService,
   ) {}
 
-  async search(tenantId: string, query: string): Promise<SearchResult[]> {
-    const cacheKey = generateCacheKey('search', tenantId, `query:${query}`);
+  async search(user: User, query: string): Promise<SearchResult[]> {
+    const cacheKey = generateCacheKey('search', user.tenantId, `query:${query}`);
 
     return this.cacheService.getOrSet(
       cacheKey,
@@ -38,7 +39,7 @@ export class SearchService {
         // Search products
         const products = await this.productRepository
           .createQueryBuilder('product')
-          .where('product.tenantId = :tenantId', { tenantId })
+          .where('product.tenantId = :tenantId', { tenantId: user.tenantId })
           .andWhere(
             '(product.name ILIKE :query OR product.sku ILIKE :query OR product.description ILIKE :query)',
             {
@@ -51,7 +52,7 @@ export class SearchService {
         products.forEach((product) => {
           results.push({
             type: 'product',
-            id: product.id,
+            id: (product as any).id,
             title: product.name,
             description: `SKU: ${product.sku} - Price: ${product.price}`,
             metadata: { sku: product.sku, price: product.price },
@@ -61,7 +62,7 @@ export class SearchService {
         // Search customers
         const customers = await this.customerRepository
           .createQueryBuilder('customer')
-          .where('customer.tenantId = :tenantId', { tenantId })
+          .where('customer.tenantId = :tenantId', { tenantId: user.tenantId })
           .andWhere(
             '(customer.name ILIKE :query OR customer.email ILIKE :query OR customer.phone ILIKE :query)',
             {
@@ -84,7 +85,7 @@ export class SearchService {
         // Search orders
         const orders = await this.orderRepository
           .createQueryBuilder('order')
-          .where('order.tenantId = :tenantId', { tenantId })
+          .where('order.tenantId = :tenantId', { tenantId: user.tenantId })
           .andWhere('order.orderNumber ILIKE :query', {
             query: `%${query}%`,
           })
@@ -117,7 +118,7 @@ export class SearchService {
     return this.cacheService.getOrSet(
       cacheKey,
       async () => {
-        const allResults = await this.search(tenantId, query);
+        const allResults = await this.search({ tenantId } as User, query);
         return allResults.filter((result) => result.type === type);
       },
       CacheTTL.SHORT, // Type-specific search also cached for short time

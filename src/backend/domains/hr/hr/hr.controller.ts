@@ -1,7 +1,8 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { HrService } from './hr.service';
 import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
-import { TenantId } from '../../common/decorators/tenant-id.decorator';
+// import { TenantId } from '../../common/decorators/tenant-id.decorator'; // Not implemented yet
 import { Employee } from './entities/employee.entity';
 import { Attendance } from './entities/attendance.entity';
 import { Leave } from './entities/leave.entity';

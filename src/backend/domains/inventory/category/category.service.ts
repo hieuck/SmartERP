@@ -47,7 +47,7 @@ export class CategoryService {
 
     if (createCategoryDto.parentId) {
       const parent = await this.secureCategoryRepo.findOne(user, {
-        where: { id: createCategoryDto.parentId },
+        where: { id: createCategoryDto.parentId } as any,
       });
 
       if (!parent) {
@@ -55,7 +55,7 @@ export class CategoryService {
       }
 
       level = parent.level + 1;
-      path = parent.path ? `${parent.path}/${parent.id}` : parent.id;
+      path = parent.path ? `${parent.path}/${(parent as any).id}` : (parent as any).id;
     }
 
     const category = {
@@ -82,7 +82,7 @@ export class CategoryService {
       cacheKey,
       async () => {
         const category = await this.secureCategoryRepo.findOne(user, {
-          where: { id },
+          where: { id } as any,
         });
 
         if (!category) {
@@ -133,7 +133,7 @@ export class CategoryService {
 
     for (const category of categories) {
       if (category.parentId === parentId) {
-        const children = this.buildTree(categories, category.id);
+        const children = this.buildTree(categories, (category as any).id);
         if (children.length > 0) {
           (category as Category & { children?: Category[] }).children = children;
         }
@@ -171,7 +171,7 @@ export class CategoryService {
 
       if (updateCategoryDto.parentId) {
         const parent = await this.secureCategoryRepo.findOne(user, {
-          where: { id: updateCategoryDto.parentId },
+          where: { id: updateCategoryDto.parentId } as any,
         });
 
         if (!parent) {
@@ -184,7 +184,7 @@ export class CategoryService {
         }
 
         category.level = parent.level + 1;
-        category.path = parent.path ? `${parent.path}/${parent.id}` : parent.id;
+        category.path = parent.path ? `${parent.path}/${(parent as any).id}` : (parent as any).id;
       } else {
         category.level = 0;
         category.path = '';
@@ -215,7 +215,7 @@ export class CategoryService {
       }
 
       const parent = await this.secureCategoryRepo.findOne(user, {
-        where: { id: currentId },
+        where: { id: currentId } as any,
       });
 
       if (!parent) {

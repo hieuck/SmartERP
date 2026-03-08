@@ -16,7 +16,7 @@ import { RoleService } from './role.service';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
-import { TenantGuard } from '../../common/guards/tenant.guard';
+import { TenantGuard } from '@/common/guards/tenant.guard';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { User } from '@/common/security/permission.service';
 @ApiTags('roles')
@@ -29,11 +29,10 @@ export class RoleController {
   @Post()
   @ApiOperation({ summary: 'Create role' })
   create(
-    @Body() createRoleDto: CreateRoleDto,
-    @CurrentUser() user: User,
+    @CurrentUser() user: User, @Body() createRoleDto: CreateRoleDto,
     @Request() req: ExpressRequest & { user?: { id: string } },
   ) {
-    return this.roleService.create(createRoleDto, user, req.user?.id);
+    return this.roleService.create(createRoleDto, user);
   }
 
   @Get()
@@ -50,13 +49,13 @@ export class RoleController {
 
   @Get('name/:name')
   @ApiOperation({ summary: 'Get role by name' })
-  findByName(@Param('name') name: string, @CurrentUser() user: User) {
+  findByName(@CurrentUser() user: User, @Param('name') name: string) {
     return this.roleService.findByName(name, user);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get role by ID' })
-  findOne(@Param('id') id: string, @CurrentUser() user: User) {
+  findOne(@CurrentUser() user: User, @Param('id') id: string) {
     return this.roleService.findOne(id, user);
   }
 
@@ -64,11 +63,10 @@ export class RoleController {
   @ApiOperation({ summary: 'Update role' })
   update(
     @Param('id') id: string,
-    @Body() updateRoleDto: UpdateRoleDto,
-    @CurrentUser() user: User,
+    @CurrentUser() user: User, @Body() updateRoleDto: UpdateRoleDto,
     @Request() req: ExpressRequest & { user?: { id: string } },
   ) {
-    return this.roleService.update(id, updateRoleDto, user, req.user?.id);
+    return this.roleService.update(id, updateRoleDto, user);
   }
 
   @Patch(':id/permissions/add')
@@ -93,7 +91,7 @@ export class RoleController {
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete role' })
-  async remove(@Param('id') id: string, @CurrentUser() user: User) {
+  async remove(@CurrentUser() user: User, @Param('id') id: string) {
     await this.roleService.remove(id, user);
     return { message: 'Role deleted successfully' };
   }

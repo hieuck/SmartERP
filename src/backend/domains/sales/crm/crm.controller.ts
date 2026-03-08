@@ -1,7 +1,8 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards } from '@nestjs/common';
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { CrmService } from './crm.service';
 import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
-import { TenantId } from '../../common/decorators/tenant-id.decorator';
+import { TenantId } from '@/common/decorators/tenant-id.decorator';
 import { Lead } from './entities/lead.entity';
 import { Opportunity } from './entities/opportunity.entity';
 import { CreateLeadDto } from './dto/create-lead.dto';

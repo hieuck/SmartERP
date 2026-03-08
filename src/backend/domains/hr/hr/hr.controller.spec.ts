@@ -61,10 +61,10 @@ describe('HrController', () => {
       const mockEmployees = [{ id: '1', name: 'John' }];
       mockHrService.findAllEmployees.mockResolvedValue(mockEmployees);
 
-      const result = await controller.findAllEmployees(tenantId);
+      const result = await controller.findAllEmployees(mockUser);
 
       expect(result).toEqual(mockEmployees);
-      expect(service.findAllEmployees).toHaveBeenCalledWith(tenantId);
+      expect(service.findAllEmployees).toHaveBeenCalledWith(mockUser);
     });
 
     it('should find employee by id', async () => {
@@ -73,10 +73,10 @@ describe('HrController', () => {
       const mockEmployee = { id: employeeId, name: 'John' };
       mockHrService.findEmployeeById.mockResolvedValue(mockEmployee);
 
-      const result = await controller.findEmployeeById(tenantId, employeeId);
+      const result = await controller.findEmployeeById(mockUser, employeeId);
 
       expect(result).toEqual(mockEmployee);
-      expect(service.findEmployeeById).toHaveBeenCalledWith(tenantId, employeeId);
+      expect(service.findEmployeeById).toHaveBeenCalledWith(mockUser, employeeId);
     });
 
     it('should create employee', async () => {
@@ -85,10 +85,10 @@ describe('HrController', () => {
       const mockEmployee = { id: 'emp-1', ...createDto };
       mockHrService.createEmployee.mockResolvedValue(mockEmployee);
 
-      const result = await controller.createEmployee(tenantId, createDto as any);
+      const result = await controller.createEmployee(mockUser, createDto as any);
 
       expect(result).toEqual(mockEmployee);
-      expect(service.createEmployee).toHaveBeenCalledWith(tenantId, createDto);
+      expect(service.createEmployee).toHaveBeenCalledWith(mockUser, createDto);
     });
 
     it('should update employee', async () => {
@@ -98,10 +98,10 @@ describe('HrController', () => {
       const mockEmployee = { id: employeeId, name: 'John', ...updateDto };
       mockHrService.updateEmployee.mockResolvedValue(mockEmployee);
 
-      const result = await controller.updateEmployee(tenantId, employeeId, updateDto as any);
+      const result = await controller.updateEmployee(mockUser, employeeId, updateDto as any);
 
       expect(result).toEqual(mockEmployee);
-      expect(service.updateEmployee).toHaveBeenCalledWith(tenantId, employeeId, updateDto);
+      expect(service.updateEmployee).toHaveBeenCalledWith(mockUser, employeeId, updateDto);
     });
 
     it('should delete employee', async () => {
@@ -109,9 +109,9 @@ describe('HrController', () => {
       const employeeId = 'emp-1';
       mockHrService.deleteEmployee.mockResolvedValue(undefined);
 
-      await controller.deleteEmployee(tenantId, employeeId);
+      await controller.deleteEmployee(mockUser, employeeId);
 
-      expect(service.deleteEmployee).toHaveBeenCalledWith(tenantId, employeeId);
+      expect(service.deleteEmployee).toHaveBeenCalledWith(mockUser, employeeId);
     });
   });
 
@@ -121,11 +121,10 @@ describe('HrController', () => {
       const mockAttendance = [{ id: '1', date: '2024-01-01' }];
       mockHrService.findAllAttendance.mockResolvedValue(mockAttendance);
 
-      const result = await controller.findAllAttendance(tenantId, '2024-01-01', '2024-01-31');
+      const result = await controller.findAllAttendance(mockUser, '2024-01-01', '2024-01-31');
 
       expect(result).toEqual(mockAttendance);
-      expect(service.findAllAttendance).toHaveBeenCalledWith(
-        tenantId,
+      expect(service.findAllAttendance).toHaveBeenCalledWith(mockUser,
         undefined,
         new Date('2024-01-01'),
         new Date('2024-01-31'),
@@ -138,10 +137,10 @@ describe('HrController', () => {
       const mockAttendance = [{ id: '1', employeeId }];
       mockHrService.findAllAttendance.mockResolvedValue(mockAttendance);
 
-      const result = await controller.findAttendanceByEmployee(tenantId, employeeId);
+      const result = await controller.findAttendanceByEmployee(mockUser, employeeId);
 
       expect(result).toEqual(mockAttendance);
-      expect(service.findAllAttendance).toHaveBeenCalledWith(tenantId, employeeId);
+      expect(service.findAllAttendance).toHaveBeenCalledWith(mockUser, employeeId);
     });
 
     it('should create attendance', async () => {
@@ -150,10 +149,10 @@ describe('HrController', () => {
       const mockAttendance = { id: 'att-1', ...createDto };
       mockHrService.createAttendance.mockResolvedValue(mockAttendance);
 
-      const result = await controller.createAttendance(tenantId, createDto as any);
+      const result = await controller.createAttendance(mockUser, createDto as any);
 
       expect(result).toEqual(mockAttendance);
-      expect(service.createAttendance).toHaveBeenCalledWith(tenantId, createDto);
+      expect(service.createAttendance).toHaveBeenCalledWith(mockUser, createDto);
     });
 
     it('should update attendance', async () => {
@@ -163,10 +162,10 @@ describe('HrController', () => {
       const mockAttendance = { id: attendanceId, ...updateDto };
       mockHrService.updateAttendance.mockResolvedValue(mockAttendance);
 
-      const result = await controller.updateAttendance(tenantId, attendanceId, updateDto as any);
+      const result = await controller.updateAttendance(mockUser, attendanceId, updateDto as any);
 
       expect(result).toEqual(mockAttendance);
-      expect(service.updateAttendance).toHaveBeenCalledWith(tenantId, attendanceId, updateDto);
+      expect(service.updateAttendance).toHaveBeenCalledWith(mockUser, attendanceId, updateDto);
     });
   });
 
@@ -176,10 +175,10 @@ describe('HrController', () => {
       const mockLeaves = [{ id: '1', type: 'annual' }];
       mockHrService.findAllLeaves.mockResolvedValue(mockLeaves);
 
-      const result = await controller.findAllLeaves(tenantId);
+      const result = await controller.findAllLeaves(mockUser);
 
       expect(result).toEqual(mockLeaves);
-      expect(service.findAllLeaves).toHaveBeenCalledWith(tenantId);
+      expect(service.findAllLeaves).toHaveBeenCalledWith(mockUser);
     });
 
     it('should find leaves by employee', async () => {
@@ -188,10 +187,10 @@ describe('HrController', () => {
       const mockLeaves = [{ id: '1', employeeId }];
       mockHrService.findAllLeaves.mockResolvedValue(mockLeaves);
 
-      const result = await controller.findLeavesByEmployee(tenantId, employeeId);
+      const result = await controller.findLeavesByEmployee(mockUser, employeeId);
 
       expect(result).toEqual(mockLeaves);
-      expect(service.findAllLeaves).toHaveBeenCalledWith(tenantId, employeeId);
+      expect(service.findAllLeaves).toHaveBeenCalledWith(mockUser, employeeId);
     });
 
     it('should create leave', async () => {
@@ -200,10 +199,10 @@ describe('HrController', () => {
       const mockLeave = { id: 'leave-1', ...createDto };
       mockHrService.createLeave.mockResolvedValue(mockLeave);
 
-      const result = await controller.createLeave(tenantId, createDto as any);
+      const result = await controller.createLeave(mockUser, createDto as any);
 
       expect(result).toEqual(mockLeave);
-      expect(service.createLeave).toHaveBeenCalledWith(tenantId, createDto);
+      expect(service.createLeave).toHaveBeenCalledWith(mockUser, createDto);
     });
 
     it('should approve leave', async () => {
@@ -213,10 +212,10 @@ describe('HrController', () => {
       const mockLeave = { id: leaveId, status: 'approved', approvedBy };
       mockHrService.approveLeave.mockResolvedValue(mockLeave);
 
-      const result = await controller.approveLeave(tenantId, leaveId, approvedBy);
+      const result = await controller.approveLeave(mockUser, leaveId, approvedBy);
 
       expect(result).toEqual(mockLeave);
-      expect(service.approveLeave).toHaveBeenCalledWith(tenantId, leaveId, approvedBy);
+      expect(service.approveLeave).toHaveBeenCalledWith(mockUser, leaveId, approvedBy);
     });
 
     it('should reject leave', async () => {
@@ -225,10 +224,11 @@ describe('HrController', () => {
       const mockLeave = { id: leaveId, status: 'rejected' };
       mockHrService.rejectLeave.mockResolvedValue(mockLeave);
 
-      const result = await controller.rejectLeave(tenantId, leaveId);
+      const result = await controller.rejectLeave(mockUser, leaveId);
 
       expect(result).toEqual(mockLeave);
-      expect(service.rejectLeave).toHaveBeenCalledWith(tenantId, leaveId);
+      expect(service.rejectLeave).toHaveBeenCalledWith(mockUser, leaveId);
     });
   });
 });
+

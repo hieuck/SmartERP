@@ -10,7 +10,7 @@ import {
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { ApprovalService } from './approval.service';
 import { SubmitApprovalDto, RejectApprovalDto } from './dto/approval.dto';
-import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../../core/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@/common/guards/roles.guard';
 import { Roles } from '@/common/decorators/roles.decorator';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
@@ -27,8 +27,7 @@ export class ApprovalController {
   @Roles('user', 'manager', 'admin')
   @ApiOperation({ summary: 'Submit entity for approval' })
   submitForApproval(
-    @Body() dto: SubmitApprovalDto,
-    @CurrentUser() user: User,
+    @CurrentUser() user: User, @Body() dto: SubmitApprovalDto,
   ) {
     return this.approvalService.submitForApproval(
       dto.entityType,
@@ -54,7 +53,7 @@ export class ApprovalController {
   @Patch(':id/approve')
   @Roles('manager', 'admin')
   @ApiOperation({ summary: 'Approve a request' })
-  approve(@Param('id') id: string, @CurrentUser() user: User) {
+  approve(@CurrentUser() user: User, @Param('id') id: string) {
     return this.approvalService.approve(id, user);
   }
 
@@ -63,8 +62,7 @@ export class ApprovalController {
   @ApiOperation({ summary: 'Reject a request' })
   reject(
     @Param('id') id: string,
-    @Body() dto: RejectApprovalDto,
-    @CurrentUser() user: User,
+    @CurrentUser() user: User, @Body() dto: RejectApprovalDto,
   ) {
     return this.approvalService.reject(id, user, dto.reason);
   }
@@ -72,7 +70,7 @@ export class ApprovalController {
   @Patch(':id/cancel')
   @Roles('user', 'manager', 'admin')
   @ApiOperation({ summary: 'Cancel own approval request' })
-  cancel(@Param('id') id: string, @CurrentUser() user: User) {
-    return this.approvalService.cancel(id, user);
+  cancel(@CurrentUser() user: User, @Param('id') id: string) {
+    return this.approvalService.cancel(user, id);
   }
 }

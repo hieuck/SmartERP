@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards } from '@nestjs/common';
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { ScheduledJobsService, ScheduledJob } from './scheduled-jobs.service';
 import { JwtAuthGuard } from '../../core/auth/guards/jwt-auth.guard';
 import { TenantId } from '../../common/decorators/tenant-id.decorator';
@@ -11,7 +12,7 @@ export class ScheduledJobsController {
 
   @Get()
   async listJobs(@CurrentUser() user: User): Promise<ScheduledJob[]> {
-    return this.scheduledJobsService.listJobs(user);
+    return this.scheduledJobsService.listJobs(user.tenantId);
   }
 
   @Get(':id')

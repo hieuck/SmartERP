@@ -4,9 +4,16 @@ import { Repository, Between } from 'typeorm';
 import { AuditService } from './audit.service';
 import { AuditLog, AuditAction } from './entities/audit-log.entity';
 import { CacheService } from '@/common/cache/cache.service';
+import { PermissionService } from '@/common/security/permission.service';
 import { createMockUser } from '@/common/test/test-helpers';
 
-describe('AuditService', () => {
+const mockUser = {
+    id: 'user-1',
+    tenantId: 'tenant-1',
+    roles: ['admin'],
+  };
+
+  describe('AuditService', () => {
   let service: AuditService;
   let repository: Repository<AuditLog>;
   let cacheService: CacheService;
@@ -39,6 +46,14 @@ describe('AuditService', () => {
             getOrSet: jest.fn(),
           },
         },
+        {
+          provide: PermissionService,
+          useValue: {
+            canRead: jest.fn().mockReturnValue(true),
+            canWrite: jest.fn().mockReturnValue(true),
+            buildSecureQuery: jest.fn((user, where) => where),
+          },
+        },
       ],
     }).compile();
 
@@ -54,7 +69,6 @@ describe('AuditService', () => {
 
       const result = await service.log(
         mockUser,
-        'user-1',
         AuditAction.CREATE,
         'Product',
         'product-1',
@@ -79,7 +93,6 @@ describe('AuditService', () => {
 
       const result = await service.log(
         mockUser,
-        'user-1',
         AuditAction.UPDATE,
         'Product',
         'product-1',

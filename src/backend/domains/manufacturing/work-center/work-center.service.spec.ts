@@ -38,6 +38,7 @@ describe('WorkCenterService', () => {
   describe('create', () => {
     it('should create a work center', async () => {
       const tenantId = 'tenant1';
+      const user = { id: 'user1', tenantId };
       const dto = {
         code: 'WC001',
         name: 'Assembly Line 1',
@@ -56,7 +57,7 @@ describe('WorkCenterService', () => {
       mockRepository.create.mockReturnValue(mockWorkCenter);
       mockRepository.save.mockResolvedValue(mockWorkCenter);
 
-      const result = await service.create(tenantId, dto);
+      const result = await service.create(dto, tenantId, user);
 
       expect(result.code).toBe('WC001');
       expect(result.costPerHour).toBe(50);
@@ -77,7 +78,7 @@ describe('WorkCenterService', () => {
 
       mockRepository.findOne.mockResolvedValue(mockWorkCenter);
 
-      const result = await service.findOne(tenantId, id);
+      const result = await service.findOne(id, tenantId);
 
       expect(result).toEqual(mockWorkCenter);
       expect(mockRepository.findOne).toHaveBeenCalledWith({
@@ -88,7 +89,7 @@ describe('WorkCenterService', () => {
     it('should throw NotFoundException if not found', async () => {
       mockRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findOne('tenant1', 'nonexistent')).rejects.toThrow(
+      await expect(service.findOne('nonexistent', 'tenant1')).rejects.toThrow(
         NotFoundException,
       );
     });
@@ -117,6 +118,7 @@ describe('WorkCenterService', () => {
     it('should update a work center', async () => {
       const tenantId = 'tenant1';
       const id = 'wc1';
+      const user = { id: 'user1', tenantId };
       const dto = {
         costPerHour: 60,
         isActive: false,
@@ -135,7 +137,7 @@ describe('WorkCenterService', () => {
         ...dto,
       });
 
-      const result = await service.update(tenantId, id, dto);
+      const result = await service.update(id, dto, tenantId, user);
 
       expect(result.costPerHour).toBe(60);
       expect(result.isActive).toBe(false);

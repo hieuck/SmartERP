@@ -35,22 +35,21 @@ export const getCacheConfig = async (
       socket: {
         host: redisHost,
         port: redisPort,
+        reconnectStrategy: (retries: number) => {
+          if (retries > 3) {
+            // Stop retrying after 3 attempts
+            console.error('Redis connection failed after 3 attempts');
+            return false;
+          }
+          // Exponential backoff: 100ms, 200ms, 400ms
+          return Math.min(retries * 100, 3000);
+        },
       },
       password: redisPassword,
       database: redisDb,
       // Connection options
-      lazyConnect: true, // Connect on first use
-      enableOfflineQueue: true, // Queue commands when offline
-      // Retry strategy
-      retryStrategy: (times: number) => {
-        if (times > 3) {
-          // Stop retrying after 3 attempts
-          console.error('Redis connection failed after 3 attempts');
-          return null;
-        }
-        // Exponential backoff: 100ms, 200ms, 400ms
-        return Math.min(times * 100, 3000);
-      },
+      // lazyConnect: true, // Connect on first use - deprecated in redis v4
+      disableOfflineQueue: false, // Queue commands when offline
     }),
     ttl: cacheTtl * 1000, // Convert to milliseconds
     max: cacheMax,

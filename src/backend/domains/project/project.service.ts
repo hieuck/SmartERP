@@ -2,9 +2,10 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Project, ProjectStatus } from './entities/project.entity';
-import { User } from '../../core/user/entities/user.entity';
+import { User as UserEntity } from '../../core/user/entities/user.entity';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
+import { User } from '@/common/security/permission.service';
 
 /**
  * ProjectService handles project CRUD and status management

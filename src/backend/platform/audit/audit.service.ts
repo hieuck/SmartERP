@@ -35,7 +35,7 @@ export class AuditService {
     userAgent?: string,
     description?: string,
   ): Promise<AuditLog> {
-    return this.secureAuditRepo.create(user, {
+    const log = this.auditRepository.create({
       userId: user.id,
       action,
       entityType,
@@ -46,6 +46,7 @@ export class AuditService {
       userAgent,
       description,
     });
+    return this.auditRepository.save(log);
   }
 
   async findAll(
