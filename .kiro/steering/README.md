@@ -37,6 +37,13 @@ Steering files provide guidance and best practices for SmartERP development.
    - Code comment standards
    - Usage: Auto-included (always active)
 
+5. **team-collaboration.md** - Team Collaboration Guidelines
+   - When to use each agent (Tech Lead, Senior Dev, QA, Junior Dev)
+   - Task delegation strategy
+   - Autonomous workflow explanation
+   - Best practices for team coordination
+   - Usage: Auto-included (always active)
+
 ---
 
 ## 🎯 How to Use
@@ -47,6 +54,7 @@ These files are automatically loaded in every conversation:
 
 - `odoo-erpnext-architecture.md`
 - `vietnamese-communication.md`
+- `team-collaboration.md`
 
 ### Manual Inclusion
 
@@ -106,10 +114,11 @@ Agent: [Loads changelog-guide.md and provides guidance]
 | ---------------------------- | ------ | --------- | ------------ |
 | odoo-erpnext-architecture.md | Auto   | ✅ Active | 2026-03-07   |
 | vietnamese-communication.md  | Auto   | ✅ Active | 2026-03-07   |
+| team-collaboration.md        | Auto   | ✅ Active | 2026-03-09   |
 | changelog-guide.md           | Manual | ✅ Active | 2026-03-09   |
 | roadmap-guide.md             | Manual | ✅ Active | 2026-03-09   |
 
 ---
 
 **Last Updated**: 2026-03-09  
-**Total Guides**: 4 (2 auto, 2 manual)
+**Total Guides**: 5 (3 auto, 2 manual)
