@@ -1,17 +1,42 @@
+import { PermissionService, User } from '@/common/security/permission.service';
+import { SecureRepository } from '@/common/security/secure-repository';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
-import { SubscriptionService } from './subscription.service';
-import { Tenant, SubscriptionPlan, BillingCycle, TenantStatus } from './entities/tenant.entity';
 import { UpgradeSubscriptionDto } from './dto/upgrade-subscription.dto';
+import { BillingCycle, SubscriptionPlan, Tenant, TenantStatus } from './entities/tenant.entity';
+import { SubscriptionService } from './subscription.service';
 
 describe('SubscriptionService', () => {
   let service: SubscriptionService;
+  let secureTenantRepo: SecureRepository<Tenant>;
+
+  const mockUser: User = {
+    id: 'user-123',
+    tenantId: 'tenant-123',
+    roles: ['admin'],
+  };
 
   const mockTenantRepository = {
+    find: jest.fn().mockResolvedValue([]),
+    remove: jest.fn().mockResolvedValue(undefined),
+    count: jest.fn().mockResolvedValue(0),
     findOne: jest.fn(),
     save: jest.fn(),
     createQueryBuilder: jest.fn(),
+    metadata: {
+      tableName: 'tenants',
+      name: 'Tenant',
+      columns: [],
+      relations: [],
+    },
+  };
+
+  const mockPermissionService = {
+    canRead: jest.fn().mockResolvedValue(true),
+    canWrite: jest.fn().mockResolvedValue(true),
+    canDelete: jest.fn().mockResolvedValue(true),
+    buildSecureQuery: jest.fn((user, qb) => qb),
   };
 
   beforeEach(async () => {
@@ -22,10 +47,15 @@ describe('SubscriptionService', () => {
           provide: getRepositoryToken(Tenant),
           useValue: mockTenantRepository,
         },
+        {
+          provide: PermissionService,
+          useValue: mockPermissionService,
+        },
       ],
     }).compile();
 
     service = module.get<SubscriptionService>(SubscriptionService);
+    secureTenantRepo = (service as any).secureTenantRepo;
 
     jest.clearAllMocks();
   });
@@ -58,7 +88,7 @@ describe('SubscriptionService', () => {
   describe('getSubscription', () => {
     it('should return subscription details for a tenant', async () => {
       const mockTenant: Partial<Tenant> = {
-        id: 'tenant-uuid',
+        id: 'tenant-123',
         name: 'Test Company',
         code: 'test-company',
         subscriptionPlan: SubscriptionPlan.PROFESSIONAL,
@@ -72,20 +102,20 @@ describe('SubscriptionService', () => {
         features: ['basic', 'reports', 'api'],
       };
 
-      mockTenantRepository.findOne.mockResolvedValue(mockTenant);
+      jest.spyOn(secureTenantRepo, 'findOne').mockResolvedValue(mockTenant as Tenant);
 
-      const result = await service.getSubscription('tenant-uuid');
+      const result = await service.getSubscription(mockUser);
 
-      expect(result.tenant.id).toBe('tenant-uuid');
+      expect(result.tenant.id).toBe('tenant-123');
       expect(result.subscription.plan).toBe(SubscriptionPlan.PROFESSIONAL);
       expect(result.subscription.amount).toBe(990000);
       expect(result.usage.storage.percentage).toBeGreaterThan(0);
     });
 
     it('should throw NotFoundException if tenant not found', async () => {
-      mockTenantRepository.findOne.mockResolvedValue(null);
+      jest.spyOn(secureTenantRepo, 'findOne').mockResolvedValue(null);
 
-      await expect(service.getSubscription('invalid-id')).rejects.toThrow(NotFoundException);
+      await expect(service.getSubscription(mockUser)).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -97,53 +127,53 @@ describe('SubscriptionService', () => {
 
     it('should successfully upgrade subscription', async () => {
       const mockTenant: Partial<Tenant> = {
-        id: 'tenant-uuid',
+        id: 'tenant-123',
         subscriptionPlan: SubscriptionPlan.BASIC,
         billingCycle: BillingCycle.MONTHLY,
         status: TenantStatus.ACTIVE,
       };
 
-      mockTenantRepository.findOne.mockResolvedValue(mockTenant);
-      mockTenantRepository.save.mockResolvedValue({
+      jest.spyOn(secureTenantRepo, 'findOne').mockResolvedValue(mockTenant as Tenant);
+      jest.spyOn(secureTenantRepo, 'save').mockResolvedValue({
         ...mockTenant,
         subscriptionPlan: upgradeDto.plan,
         billingCycle: upgradeDto.billingCycle,
-      });
+      } as Tenant);
 
-      const result = await service.upgradeSubscription('tenant-uuid', upgradeDto);
+      const result = await service.upgradeSubscription(mockUser, upgradeDto);
 
       expect(result.success).toBe(true);
       expect(result.subscription.plan).toBe(SubscriptionPlan.PROFESSIONAL);
       expect(result.subscription.billingCycle).toBe(BillingCycle.YEARLY);
       expect(result.subscription.amount).toBe(9900000);
-      expect(mockTenantRepository.save).toHaveBeenCalled();
+      expect(secureTenantRepo.save).toHaveBeenCalled();
     });
 
     it('should throw NotFoundException if tenant not found', async () => {
-      mockTenantRepository.findOne.mockResolvedValue(null);
+      jest.spyOn(secureTenantRepo, 'findOne').mockResolvedValue(null);
 
-      await expect(service.upgradeSubscription('invalid-id', upgradeDto)).rejects.toThrow(
+      await expect(service.upgradeSubscription(mockUser, upgradeDto)).rejects.toThrow(
         NotFoundException,
       );
     });
 
     it('should throw BadRequestException if already on same plan', async () => {
       const mockTenant: Partial<Tenant> = {
-        id: 'tenant-uuid',
+        id: 'tenant-123',
         subscriptionPlan: SubscriptionPlan.PROFESSIONAL,
         billingCycle: BillingCycle.YEARLY,
       };
 
-      mockTenantRepository.findOne.mockResolvedValue(mockTenant);
+      jest.spyOn(secureTenantRepo, 'findOne').mockResolvedValue(mockTenant as Tenant);
 
-      await expect(service.upgradeSubscription('tenant-uuid', upgradeDto)).rejects.toThrow(
+      await expect(service.upgradeSubscription(mockUser, upgradeDto)).rejects.toThrow(
         BadRequestException,
       );
     });
 
     it('should update subscription dates correctly for monthly billing', async () => {
       const mockTenant: Partial<Tenant> = {
-        id: 'tenant-uuid',
+        id: 'tenant-123',
         subscriptionPlan: SubscriptionPlan.FREE,
         billingCycle: BillingCycle.MONTHLY,
       };
@@ -153,12 +183,14 @@ describe('SubscriptionService', () => {
         billingCycle: BillingCycle.MONTHLY,
       };
 
-      mockTenantRepository.findOne.mockResolvedValue(mockTenant);
-      mockTenantRepository.save.mockImplementation((tenant) => Promise.resolve(tenant));
+      jest.spyOn(secureTenantRepo, 'findOne').mockResolvedValue(mockTenant as Tenant);
+      jest
+        .spyOn(secureTenantRepo, 'save')
+        .mockImplementation((user, tenant) => Promise.resolve(tenant as Tenant));
 
-      await service.upgradeSubscription('tenant-uuid', monthlyDto);
+      await service.upgradeSubscription(mockUser, monthlyDto);
 
-      const savedTenant = mockTenantRepository.save.mock.calls[0][0];
+      const savedTenant = (secureTenantRepo.save as jest.Mock).mock.calls[0][1];
       const startDate = new Date(savedTenant.subscriptionStartDate);
       const endDate = new Date(savedTenant.subscriptionEndDate);
 
@@ -172,17 +204,19 @@ describe('SubscriptionService', () => {
 
     it('should update subscription dates correctly for yearly billing', async () => {
       const mockTenant: Partial<Tenant> = {
-        id: 'tenant-uuid',
+        id: 'tenant-123',
         subscriptionPlan: SubscriptionPlan.FREE,
         billingCycle: BillingCycle.MONTHLY,
       };
 
-      mockTenantRepository.findOne.mockResolvedValue(mockTenant);
-      mockTenantRepository.save.mockImplementation((tenant) => Promise.resolve(tenant));
+      jest.spyOn(secureTenantRepo, 'findOne').mockResolvedValue(mockTenant as Tenant);
+      jest
+        .spyOn(secureTenantRepo, 'save')
+        .mockImplementation((user, tenant) => Promise.resolve(tenant as Tenant));
 
-      await service.upgradeSubscription('tenant-uuid', upgradeDto);
+      await service.upgradeSubscription(mockUser, upgradeDto);
 
-      const savedTenant = mockTenantRepository.save.mock.calls[0][0];
+      const savedTenant = (secureTenantRepo.save as jest.Mock).mock.calls[0][1];
       const startDate = new Date(savedTenant.subscriptionStartDate);
       const endDate = new Date(savedTenant.subscriptionEndDate);
 
@@ -195,46 +229,46 @@ describe('SubscriptionService', () => {
   describe('cancelSubscription', () => {
     it('should successfully cancel subscription and downgrade to free', async () => {
       const mockTenant: Partial<Tenant> = {
-        id: 'tenant-uuid',
+        id: 'tenant-123',
         subscriptionPlan: SubscriptionPlan.PROFESSIONAL,
         billingCycle: BillingCycle.MONTHLY,
       };
 
-      mockTenantRepository.findOne.mockResolvedValue(mockTenant);
-      mockTenantRepository.save.mockResolvedValue({
+      jest.spyOn(secureTenantRepo, 'findOne').mockResolvedValue(mockTenant as Tenant);
+      jest.spyOn(secureTenantRepo, 'save').mockResolvedValue({
         ...mockTenant,
         subscriptionPlan: SubscriptionPlan.FREE,
-      });
+      } as Tenant);
 
-      const result = await service.cancelSubscription('tenant-uuid');
+      const result = await service.cancelSubscription(mockUser);
 
       expect(result.success).toBe(true);
       expect(result.subscription.plan).toBe(SubscriptionPlan.FREE);
-      expect(mockTenantRepository.save).toHaveBeenCalled();
+      expect(secureTenantRepo.save).toHaveBeenCalled();
     });
 
     it('should throw NotFoundException if tenant not found', async () => {
-      mockTenantRepository.findOne.mockResolvedValue(null);
+      jest.spyOn(secureTenantRepo, 'findOne').mockResolvedValue(null);
 
-      await expect(service.cancelSubscription('invalid-id')).rejects.toThrow(NotFoundException);
+      await expect(service.cancelSubscription(mockUser)).rejects.toThrow(NotFoundException);
     });
 
     it('should throw BadRequestException if already on free plan', async () => {
       const mockTenant: Partial<Tenant> = {
-        id: 'tenant-uuid',
+        id: 'tenant-123',
         subscriptionPlan: SubscriptionPlan.FREE,
       };
 
-      mockTenantRepository.findOne.mockResolvedValue(mockTenant);
+      jest.spyOn(secureTenantRepo, 'findOne').mockResolvedValue(mockTenant as Tenant);
 
-      await expect(service.cancelSubscription('tenant-uuid')).rejects.toThrow(BadRequestException);
+      await expect(service.cancelSubscription(mockUser)).rejects.toThrow(BadRequestException);
     });
   });
 
   describe('checkExpiredSubscriptions', () => {
     it('should suspend expired tenants', async () => {
       const expiredTenant: Partial<Tenant> = {
-        id: 'tenant-uuid',
+        id: 'tenant-123',
         code: 'expired-tenant',
         subscriptionEndDate: new Date('2026-01-01'),
         status: TenantStatus.ACTIVE,
@@ -277,9 +311,9 @@ describe('SubscriptionService', () => {
 
   describe('getSubscriptionHistory', () => {
     it('should return placeholder for subscription history', async () => {
-      const result = await service.getSubscriptionHistory('tenant-uuid');
+      const result = await service.getSubscriptionHistory(mockUser);
 
-      expect(result.tenantId).toBe('tenant-uuid');
+      expect(result.tenantId).toBe('tenant-123');
       expect(result.history).toEqual([]);
       expect(result.message).toContain('to be implemented');
     });

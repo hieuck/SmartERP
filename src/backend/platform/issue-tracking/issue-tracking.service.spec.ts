@@ -25,7 +25,7 @@ describe('IssueTrackingService', () => {
     emailVerified: true,
     isActive: true,
     createdAt: new Date(),
-    updatedAt: new Date(),
+    updatedAt: new Date()
   } as User;
 
   const mockIssue: Issue = {
@@ -47,37 +47,45 @@ describe('IssueTrackingService', () => {
     updatedAt: new Date(),
     resolvedAt: null,
     closedAt: null,
-    generateReference: jest.fn(),
+    generateReference: jest.fn()
   };
 
   const mockIssueRepository = {
+    remove: jest.fn().mockResolvedValue(undefined),
+    count: jest.fn().mockResolvedValue(0),
     create: jest.fn(),
     save: jest.fn(),
     findOne: jest.fn(),
     find: jest.fn(),
-    createQueryBuilder: jest.fn(() => {
+    => {
       const queryBuilder = {
         where: jest.fn().mockReturnThis(),
         andWhere: jest.fn().mockReturnThis(),
         orderBy: jest.fn().mockReturnThis(),
         skip: jest.fn().mockReturnThis(),
         take: jest.fn().mockReturnThis(),
-        getManyAndCount: jest.fn().mockResolvedValue([[], 0]),
-      };
+        getManyAndCount: jest.fn().mockResolvedValue([[], 0])
+  };
       return queryBuilder;
-    }),
+    })
   };
 
   const mockCommentRepository = {
+    findOne: jest.fn().mockResolvedValue(null),
+    remove: jest.fn().mockResolvedValue(undefined),
+    count: jest.fn().mockResolvedValue(0),
     create: jest.fn(),
     save: jest.fn(),
-    find: jest.fn(),
+    find: jest.fn()
   };
 
   const mockAttachmentRepository = {
+    findOne: jest.fn().mockResolvedValue(null),
+    remove: jest.fn().mockResolvedValue(undefined),
+    count: jest.fn().mockResolvedValue(0),
     create: jest.fn(),
     save: jest.fn(),
-    find: jest.fn(),
+    find: jest.fn()
   };
 
   beforeEach(async () => {
@@ -86,18 +94,18 @@ describe('IssueTrackingService', () => {
         IssueTrackingService,
         {
           provide: getRepositoryToken(Issue),
-          useValue: mockIssueRepository,
-        },
+          useValue: mockIssueRepository
+  },
         {
           provide: getRepositoryToken(IssueComment),
-          useValue: mockCommentRepository,
-        },
+          useValue: mockCommentRepository
+  },
         {
           provide: getRepositoryToken(IssueAttachment),
-          useValue: mockAttachmentRepository,
-        },
-      ],
-    }).compile();
+          useValue: mockAttachmentRepository
+  },
+      ]
+  }).compile();
 
     service = module.get<IssueTrackingService>(IssueTrackingService);
     issueRepository = module.get<Repository<Issue>>(getRepositoryToken(Issue));
@@ -115,8 +123,8 @@ describe('IssueTrackingService', () => {
         title: 'Test Issue',
         description: 'Test Description',
         priority: IssuePriority.HIGH,
-        type: IssueType.BUG,
-      };
+        type: IssueType.BUG
+  };
 
       mockIssueRepository.create.mockReturnValue(mockIssue);
       mockIssueRepository.save.mockResolvedValue(mockIssue);
@@ -127,8 +135,8 @@ describe('IssueTrackingService', () => {
       expect(mockIssueRepository.create).toHaveBeenCalledWith({
         ...createDto,
         tenantId: mockUser.tenantId,
-        reporterId: mockUser.id,
-      });
+        reporterId: mockUser.id
+  });
       expect(mockIssueRepository.save).toHaveBeenCalledWith(mockIssue);
     });
   });
@@ -144,8 +152,8 @@ describe('IssueTrackingService', () => {
         orderBy: jest.fn().mockReturnThis(),
         skip: jest.fn().mockReturnThis(),
         take: jest.fn().mockReturnThis(),
-        getManyAndCount: jest.fn().mockResolvedValue([issues, 1]),
-      });
+        getManyAndCount: jest.fn().mockResolvedValue([issues, 1])
+  });
 
       const result = await service.findAll(mockUser, { page: 1, limit: 10 });
 
@@ -153,8 +161,8 @@ describe('IssueTrackingService', () => {
         data: issues,
         total: 1,
         page: 1,
-        limit: 10,
-      });
+        limit: 10
+  });
     });
   });
 
@@ -167,8 +175,8 @@ describe('IssueTrackingService', () => {
       expect(result).toEqual(mockIssue);
       expect(mockIssueRepository.findOne).toHaveBeenCalledWith({
         where: { id: '1', tenantId: mockUser.tenantId },
-        relations: ['reporter', 'assignee', 'comments', 'attachments'],
-      });
+        relations: ['reporter', 'assignee', 'comments', 'attachments']
+  });
     });
 
     it('should throw NotFoundException if issue not found', async () => {
@@ -196,8 +204,8 @@ describe('IssueTrackingService', () => {
       mockIssueRepository.findOne.mockResolvedValue(mockIssue);
       mockIssueRepository.save.mockResolvedValue({
         ...mockIssue,
-        status: IssueStatus.IN_PROGRESS,
-      });
+        status: IssueStatus.IN_PROGRESS
+  });
 
       const result = await service.updateStatus(mockUser, '1', IssueStatus.IN_PROGRESS);
 
@@ -209,8 +217,8 @@ describe('IssueTrackingService', () => {
       const resolvedIssue = {
         ...mockIssue,
         status: IssueStatus.RESOLVED,
-        resolvedAt: new Date(),
-      };
+        resolvedAt: new Date()
+  };
       mockIssueRepository.save.mockResolvedValue(resolvedIssue);
 
       const result = await service.updateStatus(mockUser, '1', IssueStatus.RESOLVED);
@@ -224,8 +232,8 @@ describe('IssueTrackingService', () => {
       const closedIssue = {
         ...mockIssue,
         status: IssueStatus.CLOSED,
-        closedAt: new Date(),
-      };
+        closedAt: new Date()
+  };
       mockIssueRepository.save.mockResolvedValue(closedIssue);
 
       const result = await service.updateStatus(mockUser, '1', IssueStatus.CLOSED);
@@ -240,8 +248,8 @@ describe('IssueTrackingService', () => {
       mockIssueRepository.findOne.mockResolvedValue(mockIssue);
       mockIssueRepository.save.mockResolvedValue({
         ...mockIssue,
-        assigneeId: 'user2',
-      });
+        assigneeId: 'user2'
+  });
 
       const result = await service.assign(mockUser, '1', 'user2');
 
@@ -259,8 +267,8 @@ describe('IssueTrackingService', () => {
         authorId: mockUser.id,
         content: 'Test comment',
         isInternal: false,
-        createdAt: new Date(),
-      };
+        createdAt: new Date()
+  };
 
       mockIssueRepository.findOne.mockResolvedValue(mockIssue);
       mockCommentRepository.create.mockReturnValue(mockComment);
@@ -274,8 +282,8 @@ describe('IssueTrackingService', () => {
         issueId: '1',
         authorId: mockUser.id,
         content: commentDto.content,
-        isInternal: commentDto.isInternal,
-      });
+        isInternal: commentDto.isInternal
+  });
     });
   });
 
@@ -285,8 +293,8 @@ describe('IssueTrackingService', () => {
         {
           id: '1',
           content: 'Comment 1',
-          isInternal: false,
-        },
+          isInternal: false
+  },
       ];
 
       mockIssueRepository.findOne.mockResolvedValue(mockIssue);

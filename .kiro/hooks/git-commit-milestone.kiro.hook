@@ -1,0 +1,12 @@
+{
+  "name": "Git Commit on Milestone",
+  "version": "2.0.0",
+  "description": "Automatically commit to git when completing a significant milestone (e.g., service refactoring, module completion, major feature)",
+  "when": {
+    "type": "agentStop"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Review the work completed in this session. If this represents a significant milestone (e.g., module completion, major refactoring, test suite passing, feature implementation), create a git commit with:\n\n1. Stage modified files: git add -u\n2. Stage new files in: .kiro/ src/ CHANGELOG.md ROADMAP.md\n3. Create conventional commit message:\n   - Type: feat/fix/refactor/test/docs\n   - Scope: module or feature name\n   - Description: what was accomplished\n   - Body: list key changes and reference CHANGELOG.md\n\nOnly commit if there are actual changes and this is a meaningful milestone. Use 'git status' to check first."
+  }
+}

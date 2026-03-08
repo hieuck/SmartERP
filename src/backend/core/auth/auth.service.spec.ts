@@ -1,14 +1,14 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { JwtService } from '@nestjs/jwt';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { DataSource } from 'typeorm';
-import { ConflictException, BadRequestException } from '@nestjs/common';
-import { AuthService } from './auth.service';
-import { User } from '../user/entities/user.entity';
-import { Tenant } from '../tenant/entities/tenant.entity';
-import { RegisterTenantDto } from './dto/register-tenant.dto';
 import { CacheService } from '@/common/cache/cache.service';
 import { PermissionService } from '@/common/security/permission.service';
+import { BadRequestException, ConflictException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
+import { Tenant } from '../tenant/entities/tenant.entity';
+import { User } from '../user/entities/user.entity';
+import { AuthService } from './auth.service';
+import { RegisterTenantDto } from './dto/register-tenant.dto';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -55,6 +55,13 @@ describe('AuthService', () => {
     invalidateEntity: jest.fn(),
   };
 
+  const mockPermissionService = {
+    canRead: jest.fn().mockResolvedValue(true),
+    canWrite: jest.fn().mockResolvedValue(true),
+    canDelete: jest.fn().mockResolvedValue(true),
+    buildSecureQuery: jest.fn((user, query) => query),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -78,6 +85,10 @@ describe('AuthService', () => {
         {
           provide: CacheService,
           useValue: mockCacheService,
+        },
+        {
+          provide: PermissionService,
+          useValue: mockPermissionService,
         },
       ],
     }).compile();

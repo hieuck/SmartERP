@@ -14,7 +14,7 @@ describe('ProjectService', () => {
   const mockUser: User = {
     id: 'user-1',
     tenantId: 'tenant-1',
-    email: 'test@example.com',
+    email: 'test@example.com'
   } as User;
 
   const mockProject: Project = {
@@ -28,7 +28,7 @@ describe('ProjectService', () => {
     actualHours: 100,
     actualCost: 5000,
     createdBy: 'user-1',
-    updatedBy: 'user-1',
+    updatedBy: 'user-1'
   } as Project;
 
   const mockRepository = {
@@ -36,8 +36,7 @@ describe('ProjectService', () => {
     save: jest.fn(),
     findOne: jest.fn(),
     find: jest.fn(),
-    update: jest.fn(),
-    createQueryBuilder: jest.fn(),
+    update: jest.fn()
   };
 
   beforeEach(async () => {
@@ -46,10 +45,10 @@ describe('ProjectService', () => {
         ProjectService,
         {
           provide: getRepositoryToken(Project),
-          useValue: mockRepository,
-        },
-      ],
-    }).compile();
+          useValue: mockRepository
+  },
+      ]
+  }).compile();
 
     service = module.get<ProjectService>(ProjectService);
     repository = module.get<Repository<Project>>(getRepositoryToken(Project));
@@ -64,8 +63,8 @@ describe('ProjectService', () => {
       const dto = {
         name: 'New Project',
         status: ProjectStatus.DRAFT,
-        priority: ProjectPriority.MEDIUM,
-      };
+        priority: ProjectPriority.MEDIUM
+  };
 
       mockRepository.create.mockReturnValue({ ...dto, tenantId: 'tenant-1' });
       mockRepository.save.mockResolvedValue(mockProject);
@@ -76,8 +75,8 @@ describe('ProjectService', () => {
         ...dto,
         tenantId: 'tenant-1',
         createdBy: 'user-1',
-        updatedBy: 'user-1',
-      });
+        updatedBy: 'user-1'
+  });
       expect(mockRepository.save).toHaveBeenCalled();
       expect(result).toEqual(mockProject);
     });
@@ -91,8 +90,8 @@ describe('ProjectService', () => {
 
       expect(mockRepository.findOne).toHaveBeenCalledWith({
         where: { id: 'project-1', tenantId: 'tenant-1' },
-        relations: ['projectManager', 'tasks'],
-      });
+        relations: ['projectManager', 'tasks']
+  });
       expect(result).toEqual(mockProject);
     });
 
@@ -111,8 +110,8 @@ describe('ProjectService', () => {
 
       expect(mockRepository.findOne).toHaveBeenCalledWith({
         where: { code: 'PRJ-2026-0001', tenantId: 'tenant-1' },
-        relations: ['projectManager', 'tasks'],
-      });
+        relations: ['projectManager', 'tasks']
+  });
       expect(result).toEqual(mockProject);
     });
 
@@ -125,26 +124,19 @@ describe('ProjectService', () => {
 
   describe('findAll', () => {
     it('should return all projects with filters', async () => {
-      const mockQueryBuilder = {
-        leftJoinAndSelect: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        orderBy: jest.fn().mockReturnThis(),
-        getMany: jest.fn().mockResolvedValue([mockProject]),
-      };
-
+      
       mockRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
 
       const result = await service.findAll(mockUser, {
-        status: ProjectStatus.ACTIVE,
-      });
+        status: ProjectStatus.ACTIVE
+  });
 
       expect(mockQueryBuilder.where).toHaveBeenCalledWith('project.tenantId = :tenantId', {
-        tenantId: 'tenant-1',
-      });
+        tenantId: 'tenant-1'
+  });
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('project.status = :status', {
-        status: ProjectStatus.ACTIVE,
-      });
+        status: ProjectStatus.ACTIVE
+  });
       expect(result).toEqual([mockProject]);
     });
   });
@@ -169,8 +161,8 @@ describe('ProjectService', () => {
       mockRepository.save.mockResolvedValue({
         ...project,
         status: ProjectStatus.ACTIVE,
-        actualStartDate: expect.any(Date),
-      });
+        actualStartDate: expect.any(Date)
+  });
 
       const result = await service.updateStatus('project-1', ProjectStatus.ACTIVE, mockUser, mockUser);
 
@@ -184,8 +176,8 @@ describe('ProjectService', () => {
         ...mockProject,
         status: ProjectStatus.COMPLETED,
         progress: 100,
-        actualEndDate: expect.any(Date),
-      });
+        actualEndDate: expect.any(Date)
+  });
 
       const result = await service.updateStatus('project-1', ProjectStatus.COMPLETED, mockUser, mockUser);
 
@@ -216,8 +208,8 @@ describe('ProjectService', () => {
         ...mockProject,
         progress: 100,
         status: ProjectStatus.COMPLETED,
-        actualEndDate: expect.any(Date),
-      });
+        actualEndDate: expect.any(Date)
+  });
 
       const result = await service.updateProgress('project-1', 100, mockUser, mockUser);
 
@@ -231,8 +223,8 @@ describe('ProjectService', () => {
       mockRepository.findOne.mockResolvedValue(mockProject);
       mockRepository.save.mockResolvedValue({
         ...mockProject,
-        status: ProjectStatus.CANCELLED,
-      });
+        status: ProjectStatus.CANCELLED
+  });
 
       await service.remove(mockUser, 'project-1', mockUser);
 
@@ -248,12 +240,6 @@ describe('ProjectService', () => {
         { ...mockProject, status: ProjectStatus.ACTIVE, budget: 10000, actualCost: 5000, progress: 50 },
         { ...mockProject, id: 'project-2', status: ProjectStatus.COMPLETED, budget: 20000, actualCost: 18000, progress: 100 },
       ];
-
-      const mockQueryBuilder = {
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        getMany: jest.fn().mockResolvedValue(projects),
-      };
 
       mockRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
 

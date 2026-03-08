@@ -1,21 +1,27 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { PermissionService, User } from '@/common/security/permission.service';
+import { SecureRepository } from '@/common/security/secure-repository';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { User as UserEntity } from './entities/user.entity';
-import { UpdateProfileDto } from './dto/update-profile.dto';
+import { Repository } from 'typeorm';
 import { ChangePasswordDto } from './dto/change-password.dto';
-import { User } from '@/common/security/permission.service';
+import { UpdateProfileDto } from './dto/update-profile.dto';
+import { User as UserEntity } from './entities/user.entity';
 
 @Injectable()
 export class UserService {
+  private readonly secureUserRepo: SecureRepository<UserEntity>;
+
   constructor(
     @InjectRepository(UserEntity)
-    private readonly userRepository: Repository<UserEntity>,
-  ) {}
+    userRepository: Repository<UserEntity>,
+    private readonly permissionService: PermissionService,
+  ) {
+    this.secureUserRepo = new SecureRepository(userRepository, permissionService, 'User');
+  }
 
-  async getProfile(userId: string): Promise<Omit<User, 'password'>> {
-    const user = await this.userRepository.findOne({
+  async getProfile(currentUser: User, userId: string): Promise<Omit<UserEntity, 'password'>> {
+    const user = await this.secureUserRepo.findOne(currentUser, {
       where: { id: userId, status: 'active' },
     });
 
@@ -28,8 +34,12 @@ export class UserService {
     return profile;
   }
 
-  async updateProfile(userId: string, updateProfileDto: UpdateProfileDto): Promise<Omit<User, 'password'>> {
-    const user = await this.userRepository.findOne({
+  async updateProfile(
+    currentUser: User,
+    userId: string,
+    updateProfileDto: UpdateProfileDto,
+  ): Promise<Omit<UserEntity, 'password'>> {
+    const user = await this.secureUserRepo.findOne(currentUser, {
       where: { id: userId, status: 'active' },
     });
 
@@ -51,19 +61,23 @@ export class UserService {
       user.avatar = updateProfileDto.avatar;
     }
 
-    const updatedUser = await this.userRepository.save(user);
+    const updatedUser = await this.secureUserRepo.save(currentUser, user);
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, ...profile } = updatedUser;
     return profile;
   }
 
-  async changePassword(userId: string, changePasswordDto: ChangePasswordDto): Promise<{ success: boolean; message: string }> {
+  async changePassword(
+    currentUser: User,
+    userId: string,
+    changePasswordDto: ChangePasswordDto,
+  ): Promise<{ success: boolean; message: string }> {
     if (changePasswordDto.newPassword !== changePasswordDto.confirmPassword) {
       throw new BadRequestException('New password and confirmation do not match');
     }
 
-    const user = await this.userRepository.findOne({
+    const user = await this.secureUserRepo.findOne(currentUser, {
       where: { id: userId, status: 'active' },
     });
 
@@ -71,7 +85,10 @@ export class UserService {
       throw new NotFoundException('User not found');
     }
 
-    const isCurrentPasswordValid = await bcrypt.compare(changePasswordDto.currentPassword, user.password);
+    const isCurrentPasswordValid = await bcrypt.compare(
+      changePasswordDto.currentPassword,
+      user.password,
+    );
 
     if (!isCurrentPasswordValid) {
       throw new BadRequestException('Current password is incorrect');
@@ -81,7 +98,7 @@ export class UserService {
     const hashedPassword = await bcrypt.hash(changePasswordDto.newPassword, SALT_ROUNDS);
 
     user.password = hashedPassword;
-    await this.userRepository.save(user);
+    await this.secureUserRepo.save(currentUser, user);
 
     return {
       success: true,

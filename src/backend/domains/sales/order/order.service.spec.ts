@@ -19,8 +19,7 @@ describe('OrderService', () => {
     update: jest.fn(),
     softDelete: jest.fn(),
     remove: jest.fn(),
-    count: jest.fn(),
-    createQueryBuilder: jest.fn(),
+    count: jest.fn()
   };
 
   const mockCacheService = {
@@ -28,7 +27,7 @@ describe('OrderService', () => {
     set: jest.fn(),
     del: jest.fn(),
     getOrSet: jest.fn(),
-    invalidateEntity: jest.fn(),
+    invalidateEntity: jest.fn()
   };
 
   const mockPermissionService = {
@@ -37,7 +36,7 @@ describe('OrderService', () => {
     buildSecureQuery: jest.fn((user, where) => where),
     canRead: jest.fn().mockReturnValue(true),
     canWrite: jest.fn().mockReturnValue(true),
-    canDelete: jest.fn().mockReturnValue(true),
+    canDelete: jest.fn().mockReturnValue(true)
   };
 
   const mockUser = createMockUser();
@@ -48,18 +47,18 @@ describe('OrderService', () => {
         OrderService,
         {
           provide: getRepositoryToken(Order),
-          useValue: mockOrderRepository,
-        },
+          useValue: mockOrderRepository
+  },
         {
           provide: CacheService,
-          useValue: mockCacheService,
-        },
+          useValue: mockCacheService
+  },
         {
           provide: PermissionService,
-          useValue: mockPermissionService,
-        },
-      ],
-    }).compile();
+          useValue: mockPermissionService
+  },
+      ]
+  }).compile();
 
     service = module.get<OrderService>(OrderService);
   });

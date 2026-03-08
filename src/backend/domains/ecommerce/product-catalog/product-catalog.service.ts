@@ -1,33 +1,38 @@
+import { PermissionService, User } from '@/common/security/permission.service';
+import { SecureRepository } from '@/common/security/secure-repository';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ProductCatalog, ProductStatus } from './entities/product-catalog.entity';
-import { User as UserEntity } from '../../../core/user/entities/user.entity';
-import { User } from '@/common/security/permission.service';
 
 @Injectable()
 export class ProductCatalogService {
+  private readonly secureProductRepo: SecureRepository<ProductCatalog>;
+
   constructor(
     @InjectRepository(ProductCatalog)
     private readonly productRepository: Repository<ProductCatalog>,
-  ) {}
-
-  async create(
-    data: Partial<ProductCatalog>,
-    tenantId: string,
-    user: User,
-  ): Promise<ProductCatalog> {
-    const product = this.productRepository.create({
-      ...data,
-      tenantId,
-      createdBy: user.id,
-    });
-    return this.productRepository.save(product);
+    private readonly permissionService: PermissionService,
+  ) {
+    this.secureProductRepo = new SecureRepository(
+      this.productRepository,
+      this.permissionService,
+      'ProductCatalog',
+    );
   }
 
-  async findOne(id: string, tenantId: string): Promise<ProductCatalog> {
-    const product = await this.productRepository.findOne({
-      where: { id, tenantId },
+  async create(data: Partial<ProductCatalog>, user: User): Promise<ProductCatalog> {
+    const product = {
+      ...data,
+      tenantId: user.tenantId,
+      createdBy: user.id,
+    } as ProductCatalog;
+    return this.secureProductRepo.save(user, product);
+  }
+
+  async findOne(id: string, user: User): Promise<ProductCatalog> {
+    const product = await this.secureProductRepo.findOne(user, {
+      where: { id },
     });
     if (!product) {
       throw new NotFoundException(`Product with ID ${id} not found`);
@@ -35,9 +40,9 @@ export class ProductCatalogService {
     return product;
   }
 
-  async findBySku(sku: string, tenantId: string): Promise<ProductCatalog> {
-    const product = await this.productRepository.findOne({
-      where: { sku, tenantId },
+  async findBySku(sku: string, user: User): Promise<ProductCatalog> {
+    const product = await this.secureProductRepo.findOne(user, {
+      where: { sku },
     });
     if (!product) {
       throw new NotFoundException(`Product with SKU ${sku} not found`);
@@ -45,9 +50,9 @@ export class ProductCatalogService {
     return product;
   }
 
-  async findBySlug(slug: string, tenantId: string): Promise<ProductCatalog> {
-    const product = await this.productRepository.findOne({
-      where: { slug, tenantId },
+  async findBySlug(slug: string, user: User): Promise<ProductCatalog> {
+    const product = await this.secureProductRepo.findOne(user, {
+      where: { slug },
     });
     if (!product) {
       throw new NotFoundException(`Product with slug ${slug} not found`);
@@ -56,7 +61,7 @@ export class ProductCatalogService {
   }
 
   async findAll(
-    tenantId: string,
+    user: User,
     filters?: {
       status?: ProductStatus;
       categoryId?: string;
@@ -68,54 +73,55 @@ export class ProductCatalogService {
       isPublished?: boolean;
     },
   ): Promise<ProductCatalog[]> {
-    const query = this.productRepository
-      .createQueryBuilder('product')
-      .where('product.tenantId = :tenantId', { tenantId });
+    const qb = this.productRepository.createQueryBuilder('product');
+
+    // Apply tenant isolation
+    qb.andWhere('product.tenantId = :tenantId', { tenantId: user.tenantId });
 
     if (filters?.status) {
-      query.andWhere('product.status = :status', { status: filters.status });
+      qb.andWhere('product.status = :status', { status: filters.status });
     }
     if (filters?.categoryId) {
-      query.andWhere('product.categoryId = :categoryId', {
+      qb.andWhere('product.categoryId = :categoryId', {
         categoryId: filters.categoryId,
       });
     }
     if (filters?.tags && filters.tags.length > 0) {
-      query.andWhere('product.tags && :tags', { tags: filters.tags });
+      qb.andWhere('product.tags && :tags', { tags: filters.tags });
     }
     if (filters?.search) {
-      query.andWhere(
+      qb.andWhere(
         '(product.name ILIKE :search OR product.description ILIKE :search OR product.sku ILIKE :search)',
         { search: `%${filters.search}%` },
       );
     }
     if (filters?.minPrice !== undefined) {
-      query.andWhere('product.price >= :minPrice', { minPrice: filters.minPrice });
+      qb.andWhere('product.price >= :minPrice', { minPrice: filters.minPrice });
     }
     if (filters?.maxPrice !== undefined) {
-      query.andWhere('product.price <= :maxPrice', { maxPrice: filters.maxPrice });
+      qb.andWhere('product.price <= :maxPrice', { maxPrice: filters.maxPrice });
     }
     if (filters?.inStock !== undefined) {
       if (filters.inStock) {
-        query.andWhere('product.stockQuantity > 0');
+        qb.andWhere('product.stockQuantity > 0');
       } else {
-        query.andWhere('product.stockQuantity = 0');
+        qb.andWhere('product.stockQuantity = 0');
       }
     }
     if (filters?.isPublished !== undefined) {
-      query.andWhere('product.isPublished = :isPublished', {
+      qb.andWhere('product.isPublished = :isPublished', {
         isPublished: filters.isPublished,
       });
     }
 
-    query.orderBy('product.displayOrder', 'ASC').addOrderBy('product.name', 'ASC');
-    return query.getMany();
+    qb.orderBy('product.displayOrder', 'ASC').addOrderBy('product.name', 'ASC');
+
+    return qb.getMany();
   }
 
-  async findPublished(tenantId: string): Promise<ProductCatalog[]> {
-    return this.productRepository.find({
+  async findPublished(user: User): Promise<ProductCatalog[]> {
+    return this.secureProductRepo.find(user, {
       where: {
-        tenantId,
         isPublished: true,
         status: ProductStatus.ACTIVE,
       },
@@ -128,7 +134,7 @@ export class ProductCatalogService {
 
   async search(
     query: string,
-    tenantId: string,
+    user: User,
     filters?: {
       categoryId?: string;
       tags?: string[];
@@ -136,7 +142,7 @@ export class ProductCatalogService {
       maxPrice?: number;
     },
   ): Promise<ProductCatalog[]> {
-    return this.findAll(tenantId, {
+    return this.findAll(user, {
       search: query,
       isPublished: true,
       status: ProductStatus.ACTIVE,
@@ -144,58 +150,45 @@ export class ProductCatalogService {
     });
   }
 
-  async update(
-    id: string,
-    data: Partial<ProductCatalog>,
-    tenantId: string,
-    user: User,
-  ): Promise<ProductCatalog> {
-    const product = await this.findOne(id, tenantId);
+  async update(id: string, data: Partial<ProductCatalog>, user: User): Promise<ProductCatalog> {
+    const product = await this.findOne(id, user);
     Object.assign(product, data);
-    return this.productRepository.save(product);
+    return this.secureProductRepo.save(user, product);
   }
 
-  async remove(id: string, tenantId: string, user: User): Promise<void> {
-    const product = await this.findOne(id, tenantId);
-    await this.productRepository.remove(product);
+  async remove(id: string, user: User): Promise<void> {
+    const product = await this.findOne(id, user);
+    await this.secureProductRepo.remove(user, product);
   }
 
-  async updateStock(
-    id: string,
-    quantity: number,
-    tenantId: string,
-  ): Promise<ProductCatalog> {
-    const product = await this.findOne(id, tenantId);
+  async updateStock(id: string, quantity: number, user: User): Promise<ProductCatalog> {
+    const product = await this.findOne(id, user);
     product.stockQuantity = quantity;
     if (product.trackInventory && quantity === 0) {
       product.status = ProductStatus.OUT_OF_STOCK;
     } else if (product.status === ProductStatus.OUT_OF_STOCK && quantity > 0) {
       product.status = ProductStatus.ACTIVE;
     }
-    return this.productRepository.save(product);
+    return this.secureProductRepo.save(user, product);
   }
 
-  async publish(id: string, tenantId: string, user: User): Promise<ProductCatalog> {
-    const product = await this.findOne(id, tenantId);
+  async publish(id: string, user: User): Promise<ProductCatalog> {
+    const product = await this.findOne(id, user);
     product.isPublished = true;
     product.publishedAt = new Date();
-    return this.productRepository.save(product);
+    return this.secureProductRepo.save(user, product);
   }
 
-  async unpublish(id: string, tenantId: string, user: User): Promise<ProductCatalog> {
-    const product = await this.findOne(id, tenantId);
+  async unpublish(id: string, user: User): Promise<ProductCatalog> {
+    const product = await this.findOne(id, user);
     product.isPublished = false;
-    return this.productRepository.save(product);
+    return this.secureProductRepo.save(user, product);
   }
 
-  async findByCategory(
-    categoryId: string,
-    tenantId: string,
-  ): Promise<ProductCatalog[]> {
-    return this.productRepository.find({
+  async findByCategory(categoryId: string, user: User): Promise<ProductCatalog[]> {
+    return this.secureProductRepo.find(user, {
       where: {
         categoryId,
-        tenantId,
         isPublished: true,
         status: ProductStatus.ACTIVE,
       },
@@ -206,33 +199,34 @@ export class ProductCatalogService {
     });
   }
 
-  async findByTags(tags: string[], tenantId: string): Promise<ProductCatalog[]> {
-    const query = this.productRepository
-      .createQueryBuilder('product')
-      .where('product.tenantId = :tenantId', { tenantId })
+  async findByTags(tags: string[], user: User): Promise<ProductCatalog[]> {
+    const qb = this.productRepository.createQueryBuilder('product');
+
+    qb.andWhere('product.tenantId = :tenantId', { tenantId: user.tenantId })
       .andWhere('product.isPublished = :isPublished', { isPublished: true })
       .andWhere('product.status = :status', { status: ProductStatus.ACTIVE })
       .andWhere('product.tags && :tags', { tags })
       .orderBy('product.displayOrder', 'ASC')
       .addOrderBy('product.name', 'ASC');
-    return query.getMany();
+
+    return qb.getMany();
   }
 
-  async findLowStock(tenantId: string): Promise<ProductCatalog[]> {
-    const query = this.productRepository
-      .createQueryBuilder('product')
-      .where('product.tenantId = :tenantId', { tenantId })
+  async findLowStock(user: User): Promise<ProductCatalog[]> {
+    const qb = this.productRepository.createQueryBuilder('product');
+
+    qb.andWhere('product.tenantId = :tenantId', { tenantId: user.tenantId })
       .andWhere('product.trackInventory = :trackInventory', { trackInventory: true })
       .andWhere('product.stockQuantity > 0')
       .andWhere('product.stockQuantity <= product.minStockLevel')
       .orderBy('product.stockQuantity', 'ASC');
-    return query.getMany();
+
+    return qb.getMany();
   }
 
-  async findOutOfStock(tenantId: string): Promise<ProductCatalog[]> {
-    return this.productRepository.find({
+  async findOutOfStock(user: User): Promise<ProductCatalog[]> {
+    return this.secureProductRepo.find(user, {
       where: {
-        tenantId,
         trackInventory: true,
         stockQuantity: 0,
       },

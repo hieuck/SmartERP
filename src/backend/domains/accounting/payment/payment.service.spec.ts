@@ -22,7 +22,7 @@ describe('PaymentService', () => {
     paymentDate: null,
     notes: '',
     createdAt: new Date(),
-    updatedAt: new Date(),
+    updatedAt: new Date()
   };
 
   const mockRepository = {
@@ -32,8 +32,7 @@ describe('PaymentService', () => {
     save: jest.fn(),
     remove: jest.fn(),
     softDelete: jest.fn(),
-    count: jest.fn(),
-    createQueryBuilder: jest.fn(),
+    count: jest.fn()
   };
 
   const mockCacheService = {
@@ -41,7 +40,7 @@ describe('PaymentService', () => {
     set: jest.fn(),
     del: jest.fn(),
     getOrSet: jest.fn(),
-    invalidateEntity: jest.fn(),
+    invalidateEntity: jest.fn()
   };
 
   const mockPermissionService = {
@@ -49,7 +48,7 @@ describe('PaymentService', () => {
     hasPermission: jest.fn().mockResolvedValue(true),
     buildSecureQuery: jest.fn((user, where) => ({ ...where, tenantId: user.tenantId })),
     canDelete: jest.fn().mockReturnValue(true),
-    canUpdate: jest.fn().mockReturnValue(true),
+    canUpdate: jest.fn().mockReturnValue(true)
   };
 
   const mockUser = createMockUser();
@@ -60,18 +59,18 @@ describe('PaymentService', () => {
         PaymentService,
         {
           provide: getRepositoryToken(Payment),
-          useValue: mockRepository,
-        },
+          useValue: mockRepository
+  },
         {
           provide: CacheService,
-          useValue: mockCacheService,
-        },
+          useValue: mockCacheService
+  },
         {
           provide: PermissionService,
-          useValue: mockPermissionService,
-        },
-      ],
-    }).compile();
+          useValue: mockPermissionService
+  },
+      ]
+  }).compile();
 
     service = module.get<PaymentService>(PaymentService);
   });
@@ -136,8 +135,8 @@ describe('PaymentService', () => {
       const createData = {
         orderId: 'order-1',
         amount: 1000,
-        paymentMethod: 'cash',
-      };
+        paymentMethod: 'cash'
+  };
 
       mockRepository.save.mockResolvedValue({ ...mockPayment, ...createData });
 
@@ -152,8 +151,8 @@ describe('PaymentService', () => {
         orderId: 'order-1',
         amount: 1000,
         paymentMethod: 'cash',
-        status: 'completed',
-      };
+        status: 'completed'
+  };
 
       mockRepository.save.mockResolvedValue({ ...mockPayment, ...createData });
 
@@ -214,8 +213,8 @@ describe('PaymentService', () => {
       mockRepository.save.mockResolvedValue({
         ...mockPayment,
         status: 'completed',
-        transactionId: 'txn-123',
-      });
+        transactionId: 'txn-123'
+  });
       mockCacheService.del.mockResolvedValue(undefined);
 
       const result = await service.complete(mockUser, '1', 'txn-123');
@@ -229,12 +228,12 @@ describe('PaymentService', () => {
     it('should complete a processing payment', async () => {
       mockCacheService.getOrSet.mockResolvedValue({
         ...mockPayment,
-        status: 'processing',
-      });
+        status: 'processing'
+  });
       mockRepository.save.mockResolvedValue({
         ...mockPayment,
-        status: 'completed',
-      });
+        status: 'completed'
+  });
       mockCacheService.del.mockResolvedValue(undefined);
 
       const result = await service.complete(mockUser, '1', 'txn-123');
@@ -246,8 +245,8 @@ describe('PaymentService', () => {
     it('should throw BadRequestException if payment is not pending or processing', async () => {
       mockCacheService.getOrSet.mockResolvedValue({
         ...mockPayment,
-        status: 'completed',
-      });
+        status: 'completed'
+  });
 
       await expect(service.complete(mockUser, '1', 'txn-123')).rejects.toThrow(
         BadRequestException,
@@ -259,14 +258,14 @@ describe('PaymentService', () => {
     it('should fail a payment', async () => {
       const pendingPayment = {
         ...mockPayment,
-        status: 'pending',
-      };
+        status: 'pending'
+  };
       mockCacheService.getOrSet.mockResolvedValue(pendingPayment);
       mockRepository.save.mockResolvedValue({
         ...pendingPayment,
         status: 'failed',
-        notes: '\nFailed: Insufficient funds',
-      });
+        notes: '\nFailed: Insufficient funds'
+  });
       mockCacheService.del.mockResolvedValue(undefined);
 
       const result = await service.fail(mockUser, '1', 'Insufficient funds');
@@ -279,8 +278,8 @@ describe('PaymentService', () => {
     it('should throw BadRequestException if payment is completed', async () => {
       const completedPayment = {
         ...mockPayment,
-        status: 'completed',
-      };
+        status: 'completed'
+  };
       mockCacheService.getOrSet.mockResolvedValue(completedPayment);
 
       await expect(service.fail(mockUser, '1', 'Test reason')).rejects.toThrow(
@@ -293,13 +292,13 @@ describe('PaymentService', () => {
     it('should refund a completed payment', async () => {
       const completedPayment = {
         ...mockPayment,
-        status: 'completed',
-      };
+        status: 'completed'
+  };
       mockCacheService.getOrSet.mockResolvedValue(completedPayment);
       mockRepository.save.mockResolvedValue({
         ...completedPayment,
-        status: 'refunded',
-      });
+        status: 'refunded'
+  });
       mockCacheService.del.mockResolvedValue(undefined);
 
       const result = await service.refund(mockUser, '1');
@@ -311,8 +310,8 @@ describe('PaymentService', () => {
     it('should throw BadRequestException if payment is not completed', async () => {
       const pendingPayment = {
         ...mockPayment,
-        status: 'pending',
-      };
+        status: 'pending'
+  };
       mockCacheService.getOrSet.mockResolvedValue(pendingPayment);
 
       await expect(service.refund(mockUser, '1')).rejects.toThrow(BadRequestException);
@@ -390,8 +389,8 @@ describe('PaymentService', () => {
         refunded: 1,
         totalAmount: 4000,
         completedAmount: 3000,
-        successRate: 40,
-      });
+        successRate: 40
+  });
     });
 
     it('should handle empty payment list', async () => {
@@ -407,8 +406,8 @@ describe('PaymentService', () => {
         refunded: 0,
         totalAmount: 0,
         completedAmount: 0,
-        successRate: 0,
-      });
+        successRate: 0
+  });
     });
   });
 });

@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    // Workspace-specific MCP servers go here
+    // User-level servers (playwright, figma) are configured in ~/.kiro/settings/mcp.json
+    // and apply to all projects automatically
+  }
+}

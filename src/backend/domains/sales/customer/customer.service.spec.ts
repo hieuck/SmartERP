@@ -10,13 +10,6 @@ import { createMockUser } from '@/common/test/test-helpers';
 describe('CustomerService', () => {
   let service: CustomerService;
 
-  const mockQueryBuilder = {
-    where: jest.fn().mockReturnThis(),
-    andWhere: jest.fn().mockReturnThis(),
-    orderBy: jest.fn().mockReturnThis(),
-    getMany: jest.fn(),
-  };
-
   const mockCustomerRepository = {
     find: jest.fn(),
     findOne: jest.fn(),
@@ -27,7 +20,7 @@ describe('CustomerService', () => {
     softDelete: jest.fn(),
     remove: jest.fn(),
     count: jest.fn(),
-    createQueryBuilder: jest.fn(() => mockQueryBuilder),
+    => mockQueryBuilder)
   };
 
   const mockCacheService = {
@@ -35,7 +28,7 @@ describe('CustomerService', () => {
     set: jest.fn(),
     del: jest.fn(),
     getOrSet: jest.fn(),
-    invalidateEntity: jest.fn(),
+    invalidateEntity: jest.fn()
   };
 
   const mockPermissionService = {
@@ -44,7 +37,7 @@ describe('CustomerService', () => {
     buildSecureQuery: jest.fn((user, where) => where),
     canRead: jest.fn().mockReturnValue(true),
     canWrite: jest.fn().mockReturnValue(true),
-    canDelete: jest.fn().mockReturnValue(true),
+    canDelete: jest.fn().mockReturnValue(true)
   };
 
   const mockUser = createMockUser();
@@ -56,7 +49,7 @@ describe('CustomerService', () => {
     tenantId: 'tenant-1',
     status: 'active',
     creditLimit: 1000,
-    currentBalance: 1500,
+    currentBalance: 1500
   };
 
   beforeEach(async () => {
@@ -65,18 +58,18 @@ describe('CustomerService', () => {
         CustomerService,
         {
           provide: getRepositoryToken(Customer),
-          useValue: mockCustomerRepository,
-        },
+          useValue: mockCustomerRepository
+  },
         {
           provide: CacheService,
-          useValue: mockCacheService,
-        },
+          useValue: mockCacheService
+  },
         {
           provide: PermissionService,
-          useValue: mockPermissionService,
-        },
-      ],
-    }).compile();
+          useValue: mockPermissionService
+  },
+      ]
+  }).compile();
 
     service = module.get<CustomerService>(CustomerService);
   });

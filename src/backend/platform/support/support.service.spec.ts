@@ -21,8 +21,8 @@ const createMockUser = (): User => ({
   status: 'active',
   emailVerified: true,
   createdAt: new Date(),
-  updatedAt: new Date(),
-});
+  updatedAt: new Date()
+  });
 
 describe('SupportService', () => {
   let service: SupportService;
@@ -44,7 +44,7 @@ describe('SupportService', () => {
     type: IssueType.TASK,
     reporterId: mockUser.id,
     customerId: mockUser.id,
-    channel: TicketChannel.PORTAL,
+    channel: TicketChannel.PORTAL
   };
 
   const mockSLA: Partial<SLA> = {
@@ -54,7 +54,7 @@ describe('SupportService', () => {
     priority: IssuePriority.MEDIUM,
     responseTimeHours: 4,
     resolutionTimeHours: 24,
-    isActive: true,
+    isActive: true
   };
 
   const mockAssignmentRule: Partial<AssignmentRule> = {
@@ -64,7 +64,7 @@ describe('SupportService', () => {
     strategy: AssignmentStrategy.ROUND_ROBIN,
     assigneeIds: ['user-1', 'user-2'],
     isActive: true,
-    priority_order: 0,
+    priority_order: 0
   };
 
   const mockArticle: Partial<KnowledgeBaseArticle> = {
@@ -76,7 +76,7 @@ describe('SupportService', () => {
     authorId: mockUser.id,
     viewCount: 0,
     helpfulCount: 0,
-    notHelpfulCount: 0,
+    notHelpfulCount: 0
   };
 
   const mockCannedResponse: Partial<CannedResponse> = {
@@ -86,7 +86,7 @@ describe('SupportService', () => {
     content: 'Thank you for contacting us',
     createdById: mockUser.id,
     usageCount: 0,
-    isActive: true,
+    isActive: true
   };
 
   beforeEach(async () => {
@@ -102,16 +102,16 @@ describe('SupportService', () => {
             findOne: jest.fn(),
             remove: jest.fn(),
             count: jest.fn(),
-            createQueryBuilder: jest.fn(() => ({
+            => ({
               where: jest.fn().mockReturnThis(),
               andWhere: jest.fn().mockReturnThis(),
               orderBy: jest.fn().mockReturnThis(),
               skip: jest.fn().mockReturnThis(),
               take: jest.fn().mockReturnThis(),
-              getManyAndCount: jest.fn(),
-            })),
-          },
-        },
+              getManyAndCount: jest.fn()
+  }))
+  }
+  },
         {
           provide: getRepositoryToken(SLA),
           useValue: {
@@ -119,9 +119,9 @@ describe('SupportService', () => {
             save: jest.fn(),
             find: jest.fn(),
             findOne: jest.fn(),
-            remove: jest.fn(),
-          },
-        },
+            remove: jest.fn()
+  }
+  },
         {
           provide: getRepositoryToken(AssignmentRule),
           useValue: {
@@ -129,9 +129,9 @@ describe('SupportService', () => {
             save: jest.fn(),
             find: jest.fn(),
             findOne: jest.fn(),
-            remove: jest.fn(),
-          },
-        },
+            remove: jest.fn()
+  }
+  },
         {
           provide: getRepositoryToken(KnowledgeBaseArticle),
           useValue: {
@@ -140,16 +140,16 @@ describe('SupportService', () => {
             find: jest.fn(),
             findOne: jest.fn(),
             remove: jest.fn(),
-            createQueryBuilder: jest.fn(() => ({
+            => ({
               where: jest.fn().mockReturnThis(),
               andWhere: jest.fn().mockReturnThis(),
               orderBy: jest.fn().mockReturnThis(),
               skip: jest.fn().mockReturnThis(),
               take: jest.fn().mockReturnThis(),
-              getManyAndCount: jest.fn(),
-            })),
-          },
-        },
+              getManyAndCount: jest.fn()
+  }))
+  }
+  },
         {
           provide: getRepositoryToken(CannedResponse),
           useValue: {
@@ -158,16 +158,16 @@ describe('SupportService', () => {
             find: jest.fn(),
             findOne: jest.fn(),
             remove: jest.fn(),
-            createQueryBuilder: jest.fn(() => ({
+            => ({
               where: jest.fn().mockReturnThis(),
               andWhere: jest.fn().mockReturnThis(),
               orderBy: jest.fn().mockReturnThis(),
-              getMany: jest.fn(),
-            })),
-          },
-        },
-      ],
-    }).compile();
+              getMany: jest.fn()
+  }))
+  }
+  },
+      ]
+  }).compile();
 
     service = module.get<SupportService>(SupportService);
     ticketRepository = module.get<Repository<Ticket>>(getRepositoryToken(Ticket));
@@ -190,8 +190,8 @@ describe('SupportService', () => {
           priority: IssuePriority.MEDIUM,
           type: IssueType.TASK,
           customerId: mockUser.id,
-          channel: TicketChannel.PORTAL,
-        };
+          channel: TicketChannel.PORTAL
+  };
 
         jest.spyOn(ticketRepository, 'create').mockReturnValue(mockTicket as Ticket);
         jest.spyOn(assignmentRuleRepository, 'find').mockResolvedValue([]);
@@ -204,8 +204,8 @@ describe('SupportService', () => {
           ...createDto,
           tenantId: mockUser.tenantId,
           reporterId: mockUser.id,
-          customerId: createDto.customerId,
-        });
+          customerId: createDto.customerId
+  });
       });
 
       it('should apply SLA when slaId is provided', async () => {
@@ -216,8 +216,8 @@ describe('SupportService', () => {
           type: IssueType.TASK,
           customerId: mockUser.id,
           channel: TicketChannel.PORTAL,
-          slaId: 'sla-1',
-        };
+          slaId: 'sla-1'
+  };
 
         jest.spyOn(ticketRepository, 'create').mockReturnValue(mockTicket as Ticket);
         jest.spyOn(slaRepository, 'findOne').mockResolvedValue(mockSLA as SLA);
@@ -232,15 +232,7 @@ describe('SupportService', () => {
 
     describe('findAllTickets', () => {
       it('should return paginated tickets', async () => {
-        const mockQueryBuilder = {
-          where: jest.fn().mockReturnThis(),
-          andWhere: jest.fn().mockReturnThis(),
-          orderBy: jest.fn().mockReturnThis(),
-          skip: jest.fn().mockReturnThis(),
-          take: jest.fn().mockReturnThis(),
-          getManyAndCount: jest.fn().mockResolvedValue([[mockTicket], 1]),
-        };
-
+        
         jest.spyOn(ticketRepository, 'createQueryBuilder').mockReturnValue(mockQueryBuilder as any);
 
         const result = await service.findAllTickets(mockUser, { page: 1, limit: 10 });
@@ -249,8 +241,8 @@ describe('SupportService', () => {
           data: [mockTicket],
           total: 1,
           page: 1,
-          limit: 10,
-        });
+          limit: 10
+  });
       });
     });
 
@@ -317,8 +309,8 @@ describe('SupportService', () => {
         jest.spyOn(ticketRepository, 'save').mockResolvedValue({
           ...mockTicket,
           isEscalated: true,
-          escalatedToId: 'manager-1',
-        } as Ticket);
+          escalatedToId: 'manager-1'
+  } as Ticket);
 
         const result = await service.escalateTicket(mockUser, 'ticket-1', 'manager-1');
 
@@ -335,8 +327,8 @@ describe('SupportService', () => {
           name: 'Standard SLA',
           priority: IssuePriority.MEDIUM,
           responseTimeHours: 4,
-          resolutionTimeHours: 24,
-        };
+          resolutionTimeHours: 24
+  };
 
         jest.spyOn(slaRepository, 'create').mockReturnValue(mockSLA as SLA);
         jest.spyOn(slaRepository, 'save').mockResolvedValue(mockSLA as SLA);
@@ -388,8 +380,8 @@ describe('SupportService', () => {
         const createDto = {
           name: 'Round Robin Rule',
           strategy: AssignmentStrategy.ROUND_ROBIN,
-          assigneeIds: ['user-1', 'user-2'],
-        };
+          assigneeIds: ['user-1', 'user-2']
+  };
 
         jest.spyOn(assignmentRuleRepository, 'create').mockReturnValue(mockAssignmentRule as AssignmentRule);
         jest.spyOn(assignmentRuleRepository, 'save').mockResolvedValue(mockAssignmentRule as AssignmentRule);
@@ -417,8 +409,8 @@ describe('SupportService', () => {
         const createDto = {
           title: 'How to use the system',
           content: 'Step by step guide',
-          status: ArticleStatus.DRAFT,
-        };
+          status: ArticleStatus.DRAFT
+  };
 
         jest.spyOn(articleRepository, 'create').mockReturnValue(mockArticle as KnowledgeBaseArticle);
         jest.spyOn(articleRepository, 'save').mockResolvedValue(mockArticle as KnowledgeBaseArticle);
@@ -434,8 +426,8 @@ describe('SupportService', () => {
         jest.spyOn(articleRepository, 'findOne').mockResolvedValue(mockArticle as KnowledgeBaseArticle);
         jest.spyOn(articleRepository, 'save').mockResolvedValue({
           ...mockArticle,
-          viewCount: 1,
-        } as KnowledgeBaseArticle);
+          viewCount: 1
+  } as KnowledgeBaseArticle);
 
         const result = await service.findOneArticle(mockUser, 'article-1');
 
@@ -449,8 +441,8 @@ describe('SupportService', () => {
         jest.spyOn(articleRepository, 'findOne').mockResolvedValue(mockArticle as KnowledgeBaseArticle);
         jest.spyOn(articleRepository, 'save').mockResolvedValue({
           ...mockArticle,
-          helpfulCount: 1,
-        } as KnowledgeBaseArticle);
+          helpfulCount: 1
+  } as KnowledgeBaseArticle);
 
         const result = await service.markArticleHelpful(mockUser, 'article-1', true);
 
@@ -461,8 +453,8 @@ describe('SupportService', () => {
         jest.spyOn(articleRepository, 'findOne').mockResolvedValue(mockArticle as KnowledgeBaseArticle);
         jest.spyOn(articleRepository, 'save').mockResolvedValue({
           ...mockArticle,
-          notHelpfulCount: 1,
-        } as KnowledgeBaseArticle);
+          notHelpfulCount: 1
+  } as KnowledgeBaseArticle);
 
         const result = await service.markArticleHelpful(mockUser, 'article-1', false);
 
@@ -476,8 +468,8 @@ describe('SupportService', () => {
       it('should create a canned response successfully', async () => {
         const createDto = {
           title: 'Welcome Message',
-          content: 'Thank you for contacting us',
-        };
+          content: 'Thank you for contacting us'
+  };
 
         jest.spyOn(cannedResponseRepository, 'create').mockReturnValue(mockCannedResponse as CannedResponse);
         jest.spyOn(cannedResponseRepository, 'save').mockResolvedValue(mockCannedResponse as CannedResponse);
@@ -490,13 +482,7 @@ describe('SupportService', () => {
 
     describe('findAllCannedResponses', () => {
       it('should return all active canned responses', async () => {
-        const mockQueryBuilder = {
-          where: jest.fn().mockReturnThis(),
-          andWhere: jest.fn().mockReturnThis(),
-          orderBy: jest.fn().mockReturnThis(),
-          getMany: jest.fn().mockResolvedValue([mockCannedResponse]),
-        };
-
+        
         jest.spyOn(cannedResponseRepository, 'createQueryBuilder').mockReturnValue(mockQueryBuilder as any);
 
         const result = await service.findAllCannedResponses(mockUser, {});
@@ -547,8 +533,8 @@ describe('SupportService', () => {
         jest.spyOn(cannedResponseRepository, 'findOne').mockResolvedValue(mockCannedResponse as CannedResponse);
         jest.spyOn(cannedResponseRepository, 'save').mockResolvedValue({
           ...mockCannedResponse,
-          usageCount: 1,
-        } as CannedResponse);
+          usageCount: 1
+  } as CannedResponse);
 
         const result = await service.useCannedResponse(mockUser, 'response-1');
 

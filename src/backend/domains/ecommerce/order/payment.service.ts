@@ -1,9 +1,12 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Order, PaymentStatus } from './entities/order.entity';
+import { PermissionService } from '../../../common/security/permission.service';
+import { SecureRepository } from '../../../common/security/secure-repository';
+import { User } from '../../../core/user/entities/user.entity';
 import { ProcessPaymentDto, VerifyPaymentDto } from './dto/payment.dto';
 import { RefundDto } from './dto/refund.dto';
+import { Order, PaymentStatus } from './entities/order.entity';
 
 /**
  * PaymentService handles payment gateway integration
@@ -11,18 +14,26 @@ import { RefundDto } from './dto/refund.dto';
  */
 @Injectable()
 export class PaymentService {
+  private readonly secureOrderRepo: SecureRepository<Order>;
+
   constructor(
     @InjectRepository(Order)
     private readonly orderRepository: Repository<Order>,
-  ) {}
+    private readonly permissionService: PermissionService,
+  ) {
+    this.secureOrderRepo = new SecureRepository(orderRepository, permissionService, 'Order');
+  }
 
-  async processPayment(dto: ProcessPaymentDto, tenantId: string): Promise<{
+  async processPayment(
+    dto: ProcessPaymentDto,
+    user: User,
+  ): Promise<{
     success: boolean;
     transactionId: string;
     message: string;
   }> {
-    const order = await this.orderRepository.findOne({
-      where: { id: dto.orderId, tenantId },
+    const order = await this.secureOrderRepo.findOne(user, {
+      where: { id: dto.orderId },
     });
 
     if (!order) {
@@ -66,22 +77,25 @@ export class PaymentService {
       order.paymentMethod = dto.paymentMethod;
       order.paymentTransactionId = result.transactionId;
       order.paidAt = new Date();
-      await this.orderRepository.save(order);
+      await this.secureOrderRepo.save(user, order);
     } else {
       order.paymentStatus = PaymentStatus.FAILED;
-      await this.orderRepository.save(order);
+      await this.secureOrderRepo.save(user, order);
     }
 
     return result;
   }
 
-  async verifyPayment(dto: VerifyPaymentDto, tenantId: string): Promise<{
+  async verifyPayment(
+    dto: VerifyPaymentDto,
+    user: User,
+  ): Promise<{
     verified: boolean;
     status: PaymentStatus;
     message: string;
   }> {
-    const order = await this.orderRepository.findOne({
-      where: { id: dto.orderId, tenantId },
+    const order = await this.secureOrderRepo.findOne(user, {
+      where: { id: dto.orderId },
     });
 
     if (!order) {
@@ -115,7 +129,7 @@ export class PaymentService {
       order.paymentStatus = PaymentStatus.PAID;
       order.paymentTransactionId = dto.transactionId;
       order.paidAt = new Date();
-      await this.orderRepository.save(order);
+      await this.secureOrderRepo.save(user, order);
       status = PaymentStatus.PAID;
     }
 
@@ -126,13 +140,16 @@ export class PaymentService {
     };
   }
 
-  async refundPayment(dto: RefundDto, tenantId: string): Promise<{
+  async refundPayment(
+    dto: RefundDto,
+    user: User,
+  ): Promise<{
     success: boolean;
     refundId: string;
     message: string;
   }> {
-    const order = await this.orderRepository.findOne({
-      where: { id: dto.orderId, tenantId },
+    const order = await this.secureOrderRepo.findOne(user, {
+      where: { id: dto.orderId },
     });
 
     if (!order) {
@@ -169,7 +186,7 @@ export class PaymentService {
 
     if (result.success) {
       order.paymentStatus = PaymentStatus.REFUNDED;
-      await this.orderRepository.save(order);
+      await this.secureOrderRepo.save(user, order);
     }
 
     return result;

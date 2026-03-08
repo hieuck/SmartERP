@@ -1,24 +1,26 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { CacheTTL, generateCacheKey } from '@/common/cache/cache.config';
+import { CacheService } from '@/common/cache/cache.service';
+import { PermissionService, User } from '@/common/security/permission.service';
+import { SecureRepository } from '@/common/security/secure-repository';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import {
+  CalculateShippingFeeDto,
+  CancelShipmentDto,
+  CreateShipmentDto,
+  TrackShipmentDto,
+} from './dto/create-shipment.dto';
 import { Shipment } from './entities/shipment.entity';
 import { GHNService } from './providers/ghn/ghn.service';
 import { GHTKService } from './providers/ghtk/ghtk.service';
 import { ViettelPostService } from './providers/viettelpost/viettelpost.service';
 import { VNPostService } from './providers/vnpost/vnpost.service';
-import {
-  CreateShipmentDto,
-  CalculateShippingFeeDto,
-  TrackShipmentDto,
-  CancelShipmentDto,
-} from './dto/create-shipment.dto';
-import { CacheService } from '@/common/cache/cache.service';
-import { CacheTTL, generateCacheKey } from '@/common/cache/cache.config';
-import { User } from '@/common/security/permission.service';
 
 @Injectable()
 export class ShippingService {
   private readonly logger = new Logger(ShippingService.name);
+  private secureShipmentRepo: SecureRepository<Shipment>;
 
   constructor(
     @InjectRepository(Shipment)
@@ -28,15 +30,18 @@ export class ShippingService {
     private viettelPostService: ViettelPostService,
     private vnPostService: VNPostService,
     private readonly cacheService: CacheService,
-  ) {}
+    private readonly permissionService: PermissionService,
+  ) {
+    // Initialize SecureRepository for multi-tenant security
+    this.secureShipmentRepo = new SecureRepository(shipmentRepo, permissionService, 'Shipment');
+  }
 
   /**
    * Create shipment
    */
   async createShipment(user: User, dto: CreateShipmentDto): Promise<Shipment> {
-    // Create shipment record
-    const shipment = this.shipmentRepo.create({
-      tenantId: user.tenantId,
+    // Create shipment record with SecureRepository (auto tenant isolation)
+    const shipment: any = {
       orderId: dto.orderId,
       provider: dto.provider,
       status: 'pending',
@@ -45,7 +50,7 @@ export class ShippingService {
       packageInfo: dto.packageInfo,
       codAmount: dto.codAmount || 0,
       note: dto.note,
-    });
+    };
 
     try {
       // Create shipment with provider
@@ -201,14 +206,14 @@ export class ShippingService {
       }
 
       shipment.providerResponse = result;
-      await this.shipmentRepo.save(shipment);
+      const savedShipment = await this.secureShipmentRepo.save(user, shipment);
 
-      this.logger.log(`Shipment created: ${shipment.id} via ${dto.provider}`);
+      this.logger.log(`Shipment created: ${savedShipment.id} via ${dto.provider}`);
 
-      return shipment;
+      return savedShipment;
     } catch (error) {
       shipment.status = 'failed';
-      await this.shipmentRepo.save(shipment);
+      await this.secureShipmentRepo.save(user, shipment);
 
       this.logger.error(`Shipment creation failed: ${error.message}`);
       throw error;
@@ -348,9 +353,8 @@ export class ShippingService {
     shipment: Shipment;
     tracking: Record<string, unknown>;
   }> {
-    const tenantId = user.tenantId;
-    const shipment = await this.shipmentRepo.findOne({
-      where: { trackingNumber: dto.trackingNumber, tenantId },
+    const shipment = await this.secureShipmentRepo.findOne(user, {
+      where: { trackingNumber: dto.trackingNumber },
     });
 
     if (!shipment) {
@@ -373,7 +377,7 @@ export class ShippingService {
           if (result.status === 'delivered') {
             shipment.deliveredAt = new Date();
           }
-          await this.shipmentRepo.save(shipment);
+          await this.secureShipmentRepo.save(user, shipment);
 
           // Invalidate cache after update
           await this.cacheService.del(generateCacheKey('shipment', user.tenantId, shipment.id));
@@ -395,7 +399,7 @@ export class ShippingService {
           if (result.status === 'delivered') {
             shipment.deliveredAt = new Date();
           }
-          await this.shipmentRepo.save(shipment);
+          await this.secureShipmentRepo.save(user, shipment);
 
           // Invalidate cache after update
           await this.cacheService.del(generateCacheKey('shipment', user.tenantId, shipment.id));
@@ -417,7 +421,7 @@ export class ShippingService {
           if (result.status === 'delivered') {
             shipment.deliveredAt = new Date();
           }
-          await this.shipmentRepo.save(shipment);
+          await this.secureShipmentRepo.save(user, shipment);
 
           // Invalidate cache after update
           await this.cacheService.del(generateCacheKey('shipment', user.tenantId, shipment.id));
@@ -439,7 +443,7 @@ export class ShippingService {
           if (result.status === 'delivered') {
             shipment.deliveredAt = new Date();
           }
-          await this.shipmentRepo.save(shipment);
+          await this.secureShipmentRepo.save(user, shipment);
 
           // Invalidate cache after update
           await this.cacheService.del(generateCacheKey('shipment', user.tenantId, shipment.id));
@@ -462,8 +466,8 @@ export class ShippingService {
    * Cancel shipment
    */
   async cancelShipment(user: User, dto: CancelShipmentDto): Promise<Shipment> {
-    const shipment = await this.shipmentRepo.findOne({
-      where: { id: dto.shipmentId, tenantId: user.tenantId },
+    const shipment = await this.secureShipmentRepo.findOne(user, {
+      where: { id: dto.shipmentId },
     });
 
     if (!shipment) {
@@ -521,7 +525,7 @@ export class ShippingService {
       }
 
       shipment.status = 'cancelled';
-      await this.shipmentRepo.save(shipment);
+      await this.secureShipmentRepo.save(user, shipment);
 
       // Invalidate cache after update
       await this.cacheService.del(generateCacheKey('shipment', user.tenantId, shipment.id));
@@ -543,8 +547,8 @@ export class ShippingService {
     return this.cacheService.getOrSet(
       cacheKey,
       async () => {
-        const shipment = await this.shipmentRepo.findOne({
-          where: { id: shipmentId, tenantId: user.tenantId },
+        const shipment = await this.secureShipmentRepo.findOne(user, {
+          where: { id: shipmentId },
         });
 
         if (!shipment) {
@@ -570,31 +574,31 @@ export class ShippingService {
       offset?: number;
     },
   ): Promise<{ shipments: Shipment[]; total: number }> {
-    const tenantId = user.tenantId;
-    const query = this.shipmentRepo
-      .createQueryBuilder('shipment')
-      .where('shipment.tenantId = :tenantId', { tenantId });
+    // Build where conditions
+    const where: any = { tenantId: user.tenantId };
 
     if (filters?.orderId) {
-      query.andWhere('shipment.orderId = :orderId', { orderId: filters.orderId });
+      where.orderId = filters.orderId;
     }
 
     if (filters?.provider) {
-      query.andWhere('shipment.provider = :provider', { provider: filters.provider });
+      where.provider = filters.provider;
     }
 
     if (filters?.status) {
-      query.andWhere('shipment.status = :status', { status: filters.status });
+      where.status = filters.status;
     }
 
-    const total = await query.getCount();
+    // Use SecureRepository find with pagination
+    const shipments = await this.secureShipmentRepo.find(user, {
+      where,
+      order: { createdAt: 'DESC' },
+      take: filters?.limit || 50,
+      skip: filters?.offset || 0,
+    });
 
-    query
-      .orderBy('shipment.createdAt', 'DESC')
-      .limit(filters?.limit || 50)
-      .offset(filters?.offset || 0);
-
-    const shipments = await query.getMany();
+    // Get total count using raw repository (SecureRepository doesn't have count method)
+    const total = await this.shipmentRepo.count({ where });
 
     return { shipments, total };
   }

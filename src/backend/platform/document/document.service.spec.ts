@@ -10,23 +10,15 @@ import { createMockUser } from '@/common/test/test-helpers';
 describe('DocumentService', () => {
   let service: DocumentService;
 
-  const mockQueryBuilder = {
-    select: jest.fn().mockReturnThis(),
-    where: jest.fn().mockReturnThis(),
-    andWhere: jest.fn().mockReturnThis(),
-    orderBy: jest.fn().mockReturnThis(),
-    getMany: jest.fn(),
-  };
-
   const mockDocumentRepository = {
+    remove: jest.fn().mockResolvedValue(undefined),
     find: jest.fn(),
     findOne: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),
     update: jest.fn(),
     softDelete: jest.fn(),
-    createQueryBuilder: jest.fn(() => mockQueryBuilder),
-  };
+    };
 
   const mockCacheService = {
     get: jest.fn(),
@@ -63,7 +55,7 @@ describe('DocumentService', () => {
   describe('findAll', () => {
     it('should find root documents', async () => {
       const mockDocs = [{ id: '1', name: 'Doc 1', parentId: null }];
-      mockQueryBuilder.getMany.mockResolvedValue(mockDocs);
+      mockRepository.find.mockResolvedValue(mockDocs);
 
       const result = await service.findAll(mockUser);
 
@@ -90,7 +82,7 @@ describe('DocumentService', () => {
 
     it('should find documents by parent', async () => {
       const mockDocs = [{ id: '2', name: 'Doc 2', parentId: 'parent-1' }];
-      mockQueryBuilder.getMany.mockResolvedValue(mockDocs);
+      mockRepository.find.mockResolvedValue(mockDocs);
 
       const result = await service.findAll(mockUser, 'parent-1');
 
@@ -171,12 +163,12 @@ describe('DocumentService', () => {
       const updatedDoc = { id: '1', name: 'New Name', tenantId: 'tenant-1' };
 
       mockCacheService.getOrSet.mockResolvedValueOnce(mockDoc).mockResolvedValueOnce(updatedDoc);
-      mockDocumentRepository.update.mockResolvedValue({ affected: 1 });
+      mockRepository.save.mockResolvedValue({ ...mockEntity, ...updates });
       mockCacheService.del.mockResolvedValue(undefined);
 
       const result = await service.update(mockUser, '1', { name: 'New Name' });
 
-      expect(mockDocumentRepository.update).toHaveBeenCalledWith(
+      expect(mockRepository.save).toHaveBeenCalledWith(
         { tenantId: 'tenant-1', id: '1' },
         { name: 'New Name' },
       );
@@ -201,7 +193,7 @@ describe('DocumentService', () => {
       const mockDoc = { id: '1', name: 'Doc to Delete', tenantId: 'tenant-1' };
 
       mockCacheService.getOrSet.mockResolvedValue(mockDoc);
-      mockDocumentRepository.softDelete.mockResolvedValue({ affected: 1 });
+      mockRepository.remove.mockResolvedValue(undefined);
       mockCacheService.del.mockResolvedValue(undefined);
 
       await service.delete(mockUser, '1');
@@ -283,7 +275,7 @@ describe('DocumentService', () => {
   describe('search', () => {
     it('should search documents', async () => {
       const mockDocs = [{ id: '1', name: 'Test Document' }];
-      mockQueryBuilder.getMany.mockResolvedValue(mockDocs);
+      mockRepository.find.mockResolvedValue(mockDocs);
 
       const result = await service.search(mockUser, 'test');
 

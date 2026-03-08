@@ -1,23 +1,26 @@
+import { CacheTTL, generateCacheKey } from '@/common/cache/cache.config';
+import { CacheService } from '@/common/cache/cache.service';
+import { PermissionService, User } from '@/common/security/permission.service';
+import { SecureRepository } from '@/common/security/secure-repository';
 import {
-  Injectable,
-  UnauthorizedException,
   BadRequestException,
   ConflictException,
+  Injectable,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+import { DataSource, Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
+import { SubscriptionPlan, Tenant, TenantStatus } from '../tenant/entities/tenant.entity';
 import { User as UserEntity } from '../user/entities/user.entity';
-import { Tenant, TenantStatus, SubscriptionPlan } from '../tenant/entities/tenant.entity';
 import { RegisterTenantDto } from './dto/register-tenant.dto';
-import { CacheService } from '@/common/cache/cache.service';
-import { CacheTTL, generateCacheKey } from '@/common/cache/cache.config';
-import { User } from '@/common/security/permission.service';
 
 @Injectable()
 export class AuthService {
+  private readonly secureUserRepo: SecureRepository<UserEntity>;
+
   constructor(
     private readonly jwtService: JwtService,
     @InjectRepository(UserEntity)
@@ -26,19 +29,32 @@ export class AuthService {
     private readonly tenantRepository: Repository<Tenant>,
     private readonly dataSource: DataSource,
     private readonly cacheService: CacheService,
-  ) {}
+    private readonly permissionService: PermissionService,
+  ) {
+    this.secureUserRepo = new SecureRepository(
+      this.userRepository,
+      this.permissionService,
+      'UserEntity',
+    );
+  }
 
   /**
    * Validate user credentials
    * Note: We don't cache validateUser because it involves password comparison
    * which should always be done fresh for security reasons
+   * Note: Uses raw repo because this is called during login (no tenant context yet)
    * @param email User email
    * @param password Plain text password
    * @returns User object if valid, null otherwise
    */
-  async validateUser(email: string, password: string): Promise<Omit<UserEntity, 'password'> | null> {
-    // Find user by email (use cached findByEmail)
-    const user = await this.findByEmail(email);
+  async validateUser(
+    email: string,
+    password: string,
+  ): Promise<Omit<UserEntity, 'password'> | null> {
+    // Find user by email - use raw repo (no tenant context during login)
+    const user = await this.userRepository.findOne({
+      where: { email, status: 'active' },
+    });
 
     if (!user) {
       return null;
@@ -114,15 +130,19 @@ export class AuthService {
   /**
    * Register new user with tenant
    * @param data Registration data
+   * @param currentUser User creating the new user (admin)
    * @returns Access token and refresh token
    */
-  async register(data: {
-    email: string;
-    password: string;
-    firstName?: string;
-    lastName?: string;
-    tenantId: string;
-  }): Promise<{
+  async register(
+    data: {
+      email: string;
+      password: string;
+      firstName?: string;
+      lastName?: string;
+      tenantId: string;
+    },
+    currentUser: User,
+  ): Promise<{
     accessToken: string;
     refreshToken: string;
     user: {
@@ -134,8 +154,8 @@ export class AuthService {
       role: string;
     };
   }> {
-    // Check if user already exists
-    const existingUser = await this.userRepository.findOne({
+    // Check if user already exists in tenant
+    const existingUser = await this.secureUserRepo.findOne(currentUser, {
       where: { email: data.email },
     });
 
@@ -146,8 +166,8 @@ export class AuthService {
     // Hash password
     const hashedPassword = await this.hashPassword(data.password);
 
-    // Create user
-    const user = this.userRepository.create({
+    // Create user with SecureRepository
+    const user = {
       email: data.email,
       password: hashedPassword,
       firstName: data.firstName,
@@ -155,10 +175,10 @@ export class AuthService {
       tenantId: data.tenantId,
       role: 'user',
       status: 'active',
-    });
+    } as UserEntity;
 
     // Save user to database
-    const savedUser = await this.userRepository.save(user);
+    const savedUser = await this.secureUserRepo.save(currentUser, user);
 
     // Invalidate email cache
     const cacheKey = generateCacheKey('user-email', 'global', data.email);
@@ -189,6 +209,7 @@ export class AuthService {
 
   /**
    * Refresh access token using refresh token
+   * Note: Uses raw repo because we only have token, not full user context yet
    * @param refreshToken Refresh token
    * @returns New access token
    */
@@ -197,7 +218,7 @@ export class AuthService {
       // Verify refresh token
       const payload = this.jwtService.verify(refreshToken);
 
-      // Get user from database
+      // Get user from database - use raw repo (no tenant context from token alone)
       const user = await this.userRepository.findOne({
         where: { id: payload.sub, status: 'active' },
       });
@@ -225,6 +246,7 @@ export class AuthService {
 
   /**
    * Find user by email (for login)
+   * Note: Uses raw repo because this is called during login (no tenant context yet)
    * @param email User email
    * @returns User object or null
    */
@@ -391,6 +413,7 @@ export class AuthService {
 
   /**
    * Verify user email
+   * Note: Uses raw repo because we only have token, not user context yet
    * @param token Email verification token
    * @returns Success message
    */
@@ -403,6 +426,7 @@ export class AuthService {
       emailVerified: boolean;
     };
   }> {
+    // Find user by token - use raw repo (no user context from token alone)
     const user = await this.userRepository.findOne({
       where: { emailVerificationToken: token },
     });
@@ -418,7 +442,7 @@ export class AuthService {
       };
     }
 
-    // Update user
+    // Update user - use raw repo
     user.emailVerified = true;
     user.emailVerificationToken = null;
     await this.userRepository.save(user);
@@ -434,70 +458,73 @@ export class AuthService {
     };
   }
 
+  async forgotPassword(email: string): Promise<{
+    success: boolean;
+    message: string;
+    resetToken?: string;
+  }> {
+    // Find user by email - use raw repo (no user context during password reset)
+    const user = await this.userRepository.findOne({
+      where: { email, status: 'active' },
+    });
 
-    async forgotPassword(email: string): Promise<{
-      success: boolean;
-      message: string;
-      resetToken?: string;
-    }> {
-      const user = await this.userRepository.findOne({
-        where: { email, status: 'active' },
-      });
-
-      if (!user) {
-        return {
-          success: true,
-          message: 'If the email exists, a password reset link has been sent',
-        };
-      }
-
-      const resetToken = uuidv4();
-      const resetExpires = new Date();
-      resetExpires.setHours(resetExpires.getHours() + 1);
-
-      user.resetPasswordToken = resetToken;
-      user.resetPasswordExpires = resetExpires;
-      await this.userRepository.save(user);
-
-      const cacheKey = generateCacheKey('user-email', 'global', email);
-      await this.cacheService.del(cacheKey);
-
+    if (!user) {
       return {
         success: true,
         message: 'If the email exists, a password reset link has been sent',
-        resetToken,
       };
     }
 
-    async resetPassword(token: string, newPassword: string): Promise<{
-      success: boolean;
-      message: string;
-    }> {
-      const user = await this.userRepository.findOne({
-        where: { resetPasswordToken: token },
-      });
+    const resetToken = uuidv4();
+    const resetExpires = new Date();
+    resetExpires.setHours(resetExpires.getHours() + 1);
 
-      if (!user) {
-        throw new BadRequestException('Invalid or expired reset token');
-      }
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = resetExpires;
+    await this.userRepository.save(user);
 
-      if (!user.resetPasswordExpires || user.resetPasswordExpires < new Date()) {
-        throw new BadRequestException('Reset token has expired');
-      }
+    const cacheKey = generateCacheKey('user-email', 'global', email);
+    await this.cacheService.del(cacheKey);
 
-      const hashedPassword = await this.hashPassword(newPassword);
-      user.password = hashedPassword;
-      user.resetPasswordToken = null;
-      user.resetPasswordExpires = null;
-      await this.userRepository.save(user);
+    return {
+      success: true,
+      message: 'If the email exists, a password reset link has been sent',
+      resetToken,
+    };
+  }
 
-      const cacheKey = generateCacheKey('user-email', 'global', user.email);
-      await this.cacheService.del(cacheKey);
+  async resetPassword(
+    token: string,
+    newPassword: string,
+  ): Promise<{
+    success: boolean;
+    message: string;
+  }> {
+    // Find user by token - use raw repo (no user context from token alone)
+    const user = await this.userRepository.findOne({
+      where: { resetPasswordToken: token },
+    });
 
-      return {
-        success: true,
-        message: 'Password reset successfully',
-      };
+    if (!user) {
+      throw new BadRequestException('Invalid or expired reset token');
     }
 
+    if (!user.resetPasswordExpires || user.resetPasswordExpires < new Date()) {
+      throw new BadRequestException('Reset token has expired');
+    }
+
+    const hashedPassword = await this.hashPassword(newPassword);
+    user.password = hashedPassword;
+    user.resetPasswordToken = null;
+    user.resetPasswordExpires = null;
+    await this.userRepository.save(user);
+
+    const cacheKey = generateCacheKey('user-email', 'global', user.email);
+    await this.cacheService.del(cacheKey);
+
+    return {
+      success: true,
+      message: 'Password reset successfully',
+    };
+  }
 }

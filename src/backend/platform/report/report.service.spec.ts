@@ -18,7 +18,7 @@ describe('ReportService', () => {
 
   const mockUser: User = {
     id: 'user-123',
-    tenantId: 'tenant-123',
+    tenantId: 'tenant-123'
   } as User;
 
   const mockReport: Report = {
@@ -34,7 +34,7 @@ describe('ReportService', () => {
     isPublic: false,
     columns: [],
     createdAt: new Date(),
-    updatedAt: new Date(),
+    updatedAt: new Date()
   } as Report;
 
   const mockColumn: ReportColumn = {
@@ -47,7 +47,7 @@ describe('ReportService', () => {
     sequence: 1,
     isVisible: true,
     isSortable: true,
-    tenantId: 'tenant-123',
+    tenantId: 'tenant-123'
   } as ReportColumn;
 
   beforeEach(async () => {
@@ -61,36 +61,36 @@ describe('ReportService', () => {
             save: jest.fn(),
             findOne: jest.fn(),
             find: jest.fn(),
-            remove: jest.fn(),
-          },
-        },
+            remove: jest.fn()
+  }
+  },
         {
           provide: getRepositoryToken(ReportColumn),
           useValue: {
             create: jest.fn(),
             save: jest.fn(),
             findOne: jest.fn(),
-            remove: jest.fn(),
-          },
-        },
+            remove: jest.fn()
+  }
+  },
         {
           provide: getRepositoryToken(ReportExecution),
           useValue: {
             create: jest.fn(),
             save: jest.fn(),
             findOne: jest.fn(),
-            find: jest.fn(),
-          },
-        },
+            find: jest.fn()
+  }
+  },
         {
           provide: DataSource,
           useValue: {
             getMetadata: jest.fn(),
-            getRepository: jest.fn(),
-          },
-        },
-      ],
-    }).compile();
+            getRepository: jest.fn()
+  }
+  },
+      ]
+  }).compile();
 
     service = module.get<ReportService>(ReportService);
     reportRepository = module.get<Repository<Report>>(getRepositoryToken(Report));
@@ -108,8 +108,8 @@ describe('ReportService', () => {
       const createData = {
         name: 'Sales Report',
         sourceEntity: 'Order',
-        type: ReportType.TABLE,
-      };
+        type: ReportType.TABLE
+  };
 
       jest.spyOn(reportRepository, 'create').mockReturnValue(mockReport);
       jest.spyOn(reportRepository, 'save').mockResolvedValue(mockReport);
@@ -120,8 +120,8 @@ describe('ReportService', () => {
       expect(reportRepository.create).toHaveBeenCalledWith({
         ...createData,
         tenantId: 'tenant-123',
-        createdBy: 'user-123',
-      });
+        createdBy: 'user-123'
+  });
       expect(reportRepository.save).toHaveBeenCalledWith(mockReport);
     });
   });
@@ -135,8 +135,8 @@ describe('ReportService', () => {
       expect(result).toEqual(mockReport);
       expect(reportRepository.findOne).toHaveBeenCalledWith({
         where: { id: 'report-123', tenantId: 'tenant-123' },
-        relations: ['columns', 'creator'],
-      });
+        relations: ['columns', 'creator']
+  });
     });
 
     it('should throw NotFoundException if report not found', async () => {
@@ -159,8 +159,8 @@ describe('ReportService', () => {
       expect(reportRepository.find).toHaveBeenCalledWith({
         where: { tenantId: 'tenant-123' },
         relations: ['columns', 'creator'],
-        order: { createdAt: 'DESC' },
-      });
+        order: { createdAt: 'DESC' }
+  });
     });
   });
 
@@ -175,8 +175,8 @@ describe('ReportService', () => {
       expect(reportRepository.find).toHaveBeenCalledWith({
         where: { tenantId: 'tenant-123', isPublic: true, isActive: true },
         relations: ['columns'],
-        order: { name: 'ASC' },
-      });
+        order: { name: 'ASC' }
+  });
     });
   });
 
@@ -211,8 +211,8 @@ describe('ReportService', () => {
       const columnData = {
         fieldName: 'totalAmount',
         label: 'Total Amount',
-        type: ColumnType.CURRENCY,
-      };
+        type: ColumnType.CURRENCY
+  };
 
       jest.spyOn(reportRepository, 'findOne').mockResolvedValue(mockReport);
       jest.spyOn(columnRepository, 'create').mockReturnValue(mockColumn);
@@ -224,8 +224,8 @@ describe('ReportService', () => {
       expect(columnRepository.create).toHaveBeenCalledWith({
         ...columnData,
         reportId: 'report-123',
-        tenantId: 'tenant-123',
-      });
+        tenantId: 'tenant-123'
+  });
     });
   });
 
@@ -260,32 +260,26 @@ describe('ReportService', () => {
         rowCount: 1,
         executionTime: 100,
         tenantId: 'tenant-123',
-        executedBy: 'user-123',
-      } as ReportExecution;
+        executedBy: 'user-123'
+  } as ReportExecution;
 
-      const mockQueryBuilder = {
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        addGroupBy: jest.fn().mockReturnThis(),
-        orderBy: jest.fn().mockReturnThis(),
-        select: jest.fn().mockReturnThis(),
-        getRawMany: jest.fn().mockResolvedValue([{ totalAmount: 1000 }]),
-      };
+      ])
+  };
 
       const mockEntityMetadata = {
-        columns: [{ propertyName: 'totalAmount' }, { propertyName: 'tenantId' }],
-      };
+        columns: [{ propertyName: 'totalAmount' }, { propertyName: 'tenantId' }]
+  };
 
       jest.spyOn(reportRepository, 'findOne').mockResolvedValue({
         ...mockReport,
-        columns: [mockColumn],
-      });
+        columns: [mockColumn]
+  });
       jest.spyOn(executionRepository, 'create').mockReturnValue(mockExecution);
       jest.spyOn(executionRepository, 'save').mockResolvedValue(mockExecution);
       jest.spyOn(dataSource, 'getMetadata').mockReturnValue(mockEntityMetadata as any);
       jest.spyOn(dataSource, 'getRepository').mockReturnValue({
-        createQueryBuilder: jest.fn().mockReturnValue(mockQueryBuilder),
-      } as any);
+        .mockReturnValue(mockQueryBuilder)
+  } as any);
 
       const result = await service.execute('report-123', {}, mockUser, mockUser);
 
@@ -300,8 +294,8 @@ describe('ReportService', () => {
         reportId: 'report-123',
         status: ExecutionStatus.RUNNING,
         tenantId: 'tenant-123',
-        executedBy: 'user-123',
-      } as ReportExecution;
+        executedBy: 'user-123'
+  } as ReportExecution;
 
       jest.spyOn(reportRepository, 'findOne').mockResolvedValue(mockReport);
       jest.spyOn(executionRepository, 'create').mockReturnValue(mockExecution);
@@ -334,8 +328,8 @@ describe('ReportService', () => {
         where: { reportId: 'report-123', tenantId: 'tenant-123' },
         relations: ['executor'],
         order: { executedAt: 'DESC' },
-        take: 10,
-      });
+        take: 10
+  });
     });
   });
 
@@ -344,8 +338,8 @@ describe('ReportService', () => {
       const mockExecution = {
         id: 'execution-123',
         reportId: 'report-123',
-        tenantId: 'tenant-123',
-      } as ReportExecution;
+        tenantId: 'tenant-123'
+  } as ReportExecution;
 
       jest.spyOn(executionRepository, 'findOne').mockResolvedValue(mockExecution);
 

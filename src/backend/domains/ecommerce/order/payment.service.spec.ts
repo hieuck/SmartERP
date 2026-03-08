@@ -1,17 +1,32 @@
+import { BadRequestException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { BadRequestException } from '@nestjs/common';
-import { PaymentService } from './payment.service';
+import { PermissionService } from '../../../common/security/permission.service';
 import { Order, PaymentStatus } from './entities/order.entity';
+import { PaymentService } from './payment.service';
 
 describe('PaymentService', () => {
   let service: PaymentService;
   let orderRepository: Repository<Order>;
 
+  const mockUser = {
+    id: 'user-123',
+    email: 'test@example.com',
+    tenantId: 'tenant1',
+    roles: ['user'],
+  } as any;
+
   const mockOrderRepository = {
     findOne: jest.fn(),
     save: jest.fn(),
+  };
+
+  const mockPermissionService = {
+    canRead: jest.fn().mockResolvedValue(true),
+    canWrite: jest.fn().mockResolvedValue(true),
+    canDelete: jest.fn().mockResolvedValue(true),
+    buildSecureQuery: jest.fn((qb, user) => qb),
   };
 
   beforeEach(async () => {
@@ -21,6 +36,10 @@ describe('PaymentService', () => {
         {
           provide: getRepositoryToken(Order),
           useValue: mockOrderRepository,
+        },
+        {
+          provide: PermissionService,
+          useValue: mockPermissionService,
         },
       ],
     }).compile();
@@ -53,7 +72,7 @@ describe('PaymentService', () => {
         paymentStatus: PaymentStatus.PAID,
       });
 
-      const result = await service.processPayment(dto, 'tenant1');
+      const result = await service.processPayment(dto, mockUser);
 
       expect(result.success).toBe(true);
       expect(result.transactionId).toContain('COD');
@@ -68,9 +87,7 @@ describe('PaymentService', () => {
 
       mockOrderRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.processPayment(dto, 'tenant1')).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.processPayment(dto, mockUser)).rejects.toThrow(BadRequestException);
     });
 
     it('should throw BadRequestException if already paid', async () => {
@@ -88,9 +105,7 @@ describe('PaymentService', () => {
 
       mockOrderRepository.findOne.mockResolvedValue(mockOrder);
 
-      await expect(service.processPayment(dto, 'tenant1')).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.processPayment(dto, mockUser)).rejects.toThrow(BadRequestException);
     });
 
     it('should throw BadRequestException if amount mismatch', async () => {
@@ -108,9 +123,7 @@ describe('PaymentService', () => {
 
       mockOrderRepository.findOne.mockResolvedValue(mockOrder);
 
-      await expect(service.processPayment(dto, 'tenant1')).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.processPayment(dto, mockUser)).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -133,7 +146,7 @@ describe('PaymentService', () => {
         paymentStatus: PaymentStatus.PAID,
       });
 
-      const result = await service.verifyPayment(dto, 'tenant1');
+      const result = await service.verifyPayment(dto, mockUser);
 
       expect(result.verified).toBe(true);
       expect(result.status).toBe(PaymentStatus.PAID);
@@ -160,7 +173,7 @@ describe('PaymentService', () => {
         paymentStatus: PaymentStatus.REFUNDED,
       });
 
-      const result = await service.refundPayment(dto, 'tenant1');
+      const result = await service.refundPayment(dto, mockUser);
 
       expect(result.success).toBe(true);
       expect(result.refundId).toContain('REFUND');
@@ -179,9 +192,7 @@ describe('PaymentService', () => {
 
       mockOrderRepository.findOne.mockResolvedValue(mockOrder);
 
-      await expect(service.refundPayment(dto, 'tenant1')).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.refundPayment(dto, mockUser)).rejects.toThrow(BadRequestException);
     });
   });
 });

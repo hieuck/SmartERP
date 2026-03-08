@@ -1,18 +1,22 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { PermissionService, User } from '@/common/security/permission.service';
+import { SecureRepository } from '@/common/security/secure-repository';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Order, OrderStatus, PaymentStatus, ShippingStatus } from './entities/order.entity';
-import { OrderItem } from './entities/order-item.entity';
 import { ShoppingCart } from '../shopping-cart/entities/shopping-cart.entity';
-import { User as UserEntity } from '../../../core/user/entities/user.entity';
 import { CheckoutDto } from './dto/checkout.dto';
-import { User } from '@/common/security/permission.service';
+import { OrderItem } from './entities/order-item.entity';
+import { Order, OrderStatus, PaymentStatus, ShippingStatus } from './entities/order.entity';
 
 /**
  * CheckoutService handles checkout flow and order creation from cart
  */
 @Injectable()
 export class CheckoutService {
+  private readonly secureOrderRepo: SecureRepository<Order>;
+  private readonly secureOrderItemRepo: SecureRepository<OrderItem>;
+  private readonly secureCartRepo: SecureRepository<ShoppingCart>;
+
   constructor(
     @InjectRepository(Order)
     private readonly orderRepository: Repository<Order>,
@@ -20,19 +24,35 @@ export class CheckoutService {
     private readonly orderItemRepository: Repository<OrderItem>,
     @InjectRepository(ShoppingCart)
     private readonly cartRepository: Repository<ShoppingCart>,
-  ) {}
+    private readonly permissionService: PermissionService,
+  ) {
+    this.secureOrderRepo = new SecureRepository(
+      this.orderRepository,
+      this.permissionService,
+      'Order',
+    );
+    this.secureOrderItemRepo = new SecureRepository(
+      this.orderItemRepository,
+      this.permissionService,
+      'OrderItem',
+    );
+    this.secureCartRepo = new SecureRepository(
+      this.cartRepository,
+      this.permissionService,
+      'ShoppingCart',
+    );
+  }
 
   /**
    * Initiate checkout process
    */
   async initiateCheckout(
     dto: CheckoutDto,
-    tenantId: string,
-    user?: User,
+    user: User,
   ): Promise<{ cart: ShoppingCart; tax: number; shipping: number; total: number }> {
     // Get cart
-    const cart = await this.cartRepository.findOne({
-      where: { id: dto.cartId, tenantId },
+    const cart = await this.secureCartRepo.findOne(user, {
+      where: { id: dto.cartId },
       relations: ['items', 'items.product'],
     });
 
@@ -58,17 +78,13 @@ export class CheckoutService {
   /**
    * Create order from cart
    */
-  async createOrderFromCart(
-    dto: CheckoutDto,
-    tenantId: string,
-    user?: User,
-  ): Promise<Order> {
+  async createOrderFromCart(dto: CheckoutDto, user: User): Promise<Order> {
     // Initiate checkout to get calculations
-    const { cart, tax, shipping, total } = await this.initiateCheckout(dto, tenantId, user);
+    const { cart, tax, shipping, total } = await this.initiateCheckout(dto, user);
 
     // Create order
-    const order = this.orderRepository.create({
-      customerId: user?.id,
+    const newOrder = {
+      customerId: user.id,
       cartId: cart.id,
       status: OrderStatus.PENDING,
       paymentStatus: PaymentStatus.PENDING,
@@ -86,34 +102,34 @@ export class CheckoutService {
       discount: cart.discount || 0,
       total,
       customerNotes: dto.customerNotes,
-      tenantId,
-    });
+      tenantId: user.tenantId,
+      createdBy: user.id,
+    };
 
     // Create order items from cart items
-    const orderItems = cart.items.map((cartItem) =>
-      this.orderItemRepository.create({
-        productId: cartItem.productId,
-        productName: cartItem.productName,
-        productSku: cartItem.productSku,
-        productImage: cartItem.productImage,
-        price: cartItem.price,
-        quantity: cartItem.quantity,
-        selectedVariant: cartItem.selectedVariant,
-        notes: cartItem.notes,
-        tenantId,
-      }),
-    );
+    const orderItems = cart.items.map((cartItem) => ({
+      productId: cartItem.productId,
+      productName: cartItem.productName,
+      productSku: cartItem.productSku,
+      productImage: cartItem.productImage,
+      price: cartItem.price,
+      quantity: cartItem.quantity,
+      selectedVariant: cartItem.selectedVariant,
+      notes: cartItem.notes,
+      tenantId: user.tenantId,
+      createdBy: user.id,
+    }));
 
-    order.items = orderItems;
+    const order = { ...newOrder, items: orderItems };
 
     // Save order (cascade will save items)
-    const savedOrder = await this.orderRepository.save(order);
+    const savedOrder = await this.secureOrderRepo.save(user, order as any);
 
     // Mark cart as converted
     cart.status = 'converted' as any;
     cart.orderId = savedOrder.id;
     cart.convertedAt = new Date();
-    await this.cartRepository.save(cart);
+    await this.secureCartRepo.save(user, cart);
 
     return savedOrder;
   }

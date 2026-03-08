@@ -1,36 +1,43 @@
+import { CacheService } from '@/common/cache/cache.service';
+import { PermissionService, User } from '@/common/security/permission.service';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ShippingService } from './shipping.service';
+import { CreateShipmentDto } from './dto/create-shipment.dto';
 import { Shipment } from './entities/shipment.entity';
 import { GHNService } from './providers/ghn/ghn.service';
 import { GHTKService } from './providers/ghtk/ghtk.service';
 import { ViettelPostService } from './providers/viettelpost/viettelpost.service';
 import { VNPostService } from './providers/vnpost/vnpost.service';
-import { CacheService } from '@/common/cache/cache.service';
-import { PermissionService } from '@/common/security/permission.service';
-import { CreateShipmentDto } from './dto/create-shipment.dto';
+import { ShippingService } from './shipping.service';
 
 describe('ShippingService', () => {
   let service: ShippingService;
   let shipmentRepo: Repository<Shipment>;
+  let permissionService: PermissionService;
 
-  const mockQueryBuilder = {
-    where: jest.fn().mockReturnThis(),
-    andWhere: jest.fn().mockReturnThis(),
-    orderBy: jest.fn().mockReturnThis(),
-    limit: jest.fn().mockReturnThis(),
-    offset: jest.fn().mockReturnThis(),
-    getCount: jest.fn(),
-    getMany: jest.fn(),
-  };
+  // Mock user for testing
+  const mockUser: User = {
+    id: 'user123',
+    tenantId: 'tenant1',
+    email: 'test@example.com',
+    roles: ['admin'],
+  } as User;
 
   const mockShipmentRepo = {
     create: jest.fn(),
     save: jest.fn(),
     findOne: jest.fn(),
     find: jest.fn(),
-    createQueryBuilder: jest.fn(() => mockQueryBuilder),
+    count: jest.fn().mockResolvedValue(0),
+    metadata: { tableName: 'shipments' },
+  };
+
+  const mockPermissionService = {
+    canRead: jest.fn().mockResolvedValue(true),
+    canWrite: jest.fn().mockResolvedValue(true),
+    canDelete: jest.fn().mockResolvedValue(true),
+    buildSecureQuery: jest.fn((user, where) => ({ ...where, tenantId: user.tenantId })),
   };
 
   const mockGHNService = {
@@ -77,6 +84,10 @@ describe('ShippingService', () => {
           useValue: mockShipmentRepo,
         },
         {
+          provide: PermissionService,
+          useValue: mockPermissionService,
+        },
+        {
           provide: GHNService,
           useValue: mockGHNService,
         },
@@ -101,6 +112,7 @@ describe('ShippingService', () => {
 
     service = module.get<ShippingService>(ShippingService);
     shipmentRepo = module.get<Repository<Shipment>>(getRepositoryToken(Shipment));
+    permissionService = module.get<PermissionService>(PermissionService);
   });
 
   afterEach(() => {
@@ -113,7 +125,6 @@ describe('ShippingService', () => {
 
   describe('createShipment', () => {
     it('should create GHN shipment successfully', async () => {
-      const tenantId = 'tenant1';
       const dto: CreateShipmentDto = {
         orderId: 'order123',
         provider: 'ghn',
@@ -147,7 +158,7 @@ describe('ShippingService', () => {
 
       const mockShipment = {
         id: 'shipment123',
-        tenantId,
+        tenantId: mockUser.tenantId,
         ...dto,
         status: 'pending',
       };
@@ -159,20 +170,17 @@ describe('ShippingService', () => {
         expectedDeliveryTime: new Date(),
       };
 
-      mockShipmentRepo.create.mockReturnValue(mockShipment);
       mockShipmentRepo.save.mockResolvedValue(mockShipment);
       mockGHNService.createOrder.mockResolvedValue(mockGHNResult);
 
-      const result = await service.createShipment(tenantId, dto);
+      const result = await service.createShipment(mockUser, dto);
 
       expect(result).toBeDefined();
-      expect(mockShipmentRepo.create).toHaveBeenCalled();
       expect(mockGHNService.createOrder).toHaveBeenCalled();
       expect(mockShipmentRepo.save).toHaveBeenCalled();
     });
 
     it('should handle shipment creation error', async () => {
-      const tenantId = 'tenant1';
       const dto: CreateShipmentDto = {
         orderId: 'order123',
         provider: 'ghn',
@@ -200,15 +208,15 @@ describe('ShippingService', () => {
 
       const mockShipment = {
         id: 'shipment123',
-        tenantId,
+        tenantId: mockUser.tenantId,
         ...dto,
         status: 'pending',
       };
 
-      mockShipmentRepo.create.mockReturnValue(mockShipment);
+      mockShipmentRepo.save.mockResolvedValue(mockShipment);
       mockGHNService.createOrder.mockResolvedValue({ error: 'Invalid address' });
 
-      await expect(service.createShipment(tenantId, dto)).rejects.toThrow();
+      await expect(service.createShipment(mockUser, dto)).rejects.toThrow();
     });
   });
 
@@ -229,7 +237,7 @@ describe('ShippingService', () => {
         insuranceFee: 5000,
       });
 
-      const result = await service.calculateFee('tenant1', dto as any);
+      const result = await service.calculateFee(mockUser, dto as any);
 
       expect(result.provider).toBe('ghn');
       expect(result.total).toBe(25000);
@@ -244,7 +252,9 @@ describe('ShippingService', () => {
         weight: 1000,
       };
 
-      await expect(service.calculateFee('tenant1', dto as any)).rejects.toThrow('Unsupported provider');
+      await expect(service.calculateFee(mockUser, dto as any)).rejects.toThrow(
+        'Unsupported provider',
+      );
     });
   });
 
@@ -252,13 +262,13 @@ describe('ShippingService', () => {
     it('should get shipment from cache', async () => {
       const mockShipment = {
         id: 'shipment123',
-        tenantId: 'tenant1',
+        tenantId: mockUser.tenantId,
         trackingNumber: 'TRACK123',
       };
 
       mockCacheService.getOrSet.mockResolvedValue(mockShipment);
 
-      const result = await service.getShipment('tenant1', 'shipment123');
+      const result = await service.getShipment(mockUser, 'shipment123');
 
       expect(result).toEqual(mockShipment);
       expect(mockCacheService.getOrSet).toHaveBeenCalled();
@@ -270,7 +280,7 @@ describe('ShippingService', () => {
       });
       mockShipmentRepo.findOne.mockResolvedValue(null);
 
-      await expect(service.getShipment('tenant1', 'invalid')).rejects.toThrow('Shipment not found');
+      await expect(service.getShipment(mockUser, 'invalid')).rejects.toThrow('Shipment not found');
     });
   });
 
@@ -281,14 +291,14 @@ describe('ShippingService', () => {
         { id: '2', orderId: 'order1' },
       ];
 
-      mockQueryBuilder.getCount.mockResolvedValue(2);
-      mockQueryBuilder.getMany.mockResolvedValue(mockShipments);
+      mockShipmentRepo.find.mockResolvedValue(mockShipments);
+      mockShipmentRepo.count.mockResolvedValue(2);
 
-      const result = await service.listShipments('tenant1', { orderId: 'order1' });
+      const result = await service.listShipments(mockUser, { orderId: 'order1' });
 
       expect(result.shipments).toEqual(mockShipments);
       expect(result.total).toBe(2);
-      expect(mockShipmentRepo.createQueryBuilder).toHaveBeenCalled();
+      expect(mockShipmentRepo.find).toHaveBeenCalled();
     });
   });
 
@@ -301,7 +311,7 @@ describe('ShippingService', () => {
 
       const mockShipment = {
         id: 'shipment123',
-        tenantId: 'tenant1',
+        tenantId: mockUser.tenantId,
         trackingNumber: 'TRACK123',
         providerOrderCode: 'GHN_ORDER123',
         provider: 'ghn',
@@ -320,7 +330,7 @@ describe('ShippingService', () => {
       mockShipmentRepo.save.mockResolvedValue(mockShipment);
       mockCacheService.del.mockResolvedValue(undefined);
 
-      const result = await service.trackShipment('tenant1', dto as any);
+      const result = await service.trackShipment(mockUser, dto as any);
 
       expect(result.shipment).toBeDefined();
       expect(result.tracking).toEqual(mockTrackingResult);
@@ -337,7 +347,9 @@ describe('ShippingService', () => {
 
       mockShipmentRepo.findOne.mockResolvedValue(null);
 
-      await expect(service.trackShipment('tenant1', dto as any)).rejects.toThrow('Shipment not found');
+      await expect(service.trackShipment(mockUser, dto as any)).rejects.toThrow(
+        'Shipment not found',
+      );
     });
 
     it('should throw error for unsupported provider', async () => {
@@ -353,7 +365,9 @@ describe('ShippingService', () => {
 
       mockShipmentRepo.findOne.mockResolvedValue(mockShipment);
 
-      await expect(service.trackShipment('tenant1', dto as any)).rejects.toThrow('Unsupported provider');
+      await expect(service.trackShipment(mockUser, dto as any)).rejects.toThrow(
+        'Unsupported provider',
+      );
     });
   });
 
@@ -365,7 +379,7 @@ describe('ShippingService', () => {
 
       const mockShipment = {
         id: 'shipment123',
-        tenantId: 'tenant1',
+        tenantId: mockUser.tenantId,
         provider: 'ghn',
         providerOrderCode: 'GHN_ORDER123',
         trackingNumber: 'TRACK123',
@@ -377,7 +391,7 @@ describe('ShippingService', () => {
       mockShipmentRepo.save.mockResolvedValue({ ...mockShipment, status: 'cancelled' });
       mockCacheService.del.mockResolvedValue(undefined);
 
-      const result = await service.cancelShipment('tenant1', dto as any);
+      const result = await service.cancelShipment(mockUser, dto as any);
 
       expect(result.status).toBe('cancelled');
       expect(mockGHNService.cancelOrder).toHaveBeenCalledWith(['GHN_ORDER123']);
@@ -392,7 +406,9 @@ describe('ShippingService', () => {
 
       mockShipmentRepo.findOne.mockResolvedValue(null);
 
-      await expect(service.cancelShipment('tenant1', dto as any)).rejects.toThrow('Shipment not found');
+      await expect(service.cancelShipment(mockUser, dto as any)).rejects.toThrow(
+        'Shipment not found',
+      );
     });
 
     it('should throw error if shipment already delivered', async () => {
@@ -407,7 +423,9 @@ describe('ShippingService', () => {
 
       mockShipmentRepo.findOne.mockResolvedValue(mockShipment);
 
-      await expect(service.cancelShipment('tenant1', dto as any)).rejects.toThrow('Cannot cancel this shipment');
+      await expect(service.cancelShipment(mockUser, dto as any)).rejects.toThrow(
+        'Cannot cancel this shipment',
+      );
     });
 
     it('should throw error if shipment already cancelled', async () => {
@@ -422,7 +440,9 @@ describe('ShippingService', () => {
 
       mockShipmentRepo.findOne.mockResolvedValue(mockShipment);
 
-      await expect(service.cancelShipment('tenant1', dto as any)).rejects.toThrow('Cannot cancel this shipment');
+      await expect(service.cancelShipment(mockUser, dto as any)).rejects.toThrow(
+        'Cannot cancel this shipment',
+      );
     });
   });
 });

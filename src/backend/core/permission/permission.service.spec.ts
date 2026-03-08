@@ -12,7 +12,7 @@ import { UpdatePermissionDto } from './dto/update-permission.dto';
 const mockUser = {
     id: 'user1',
     tenantId: 'tenant1',
-    roles: ['admin'],
+    roles: ['admin']
   };
 
   describe('PermissionService', () => {
@@ -26,14 +26,13 @@ const mockUser = {
     save: jest.fn(),
     create: jest.fn(),
     softDelete: jest.fn(),
-    count: jest.fn(),
-    createQueryBuilder: jest.fn(),
+    count: jest.fn()
   };
 
   const mockCacheManager = {
     get: jest.fn(),
     set: jest.fn(),
-    del: jest.fn(),
+    del: jest.fn()
   };
 
   const mockPermission: Permission = {
@@ -45,7 +44,7 @@ const mockUser = {
     roles: [],
     createdAt: new Date(),
     updatedAt: new Date(),
-    deletedAt: null,
+    deletedAt: null
   };
 
   beforeEach(async () => {
@@ -54,14 +53,14 @@ const mockUser = {
         PermissionService,
         {
           provide: getRepositoryToken(Permission),
-          useValue: mockRepository,
-        },
+          useValue: mockRepository
+  },
         {
           provide: CACHE_MANAGER,
-          useValue: mockCacheManager,
-        },
-      ],
-    }).compile();
+          useValue: mockCacheManager
+  },
+      ]
+  }).compile();
 
     service = module.get<PermissionService>(PermissionService);
     repository = module.get<Repository<Permission>>(getRepositoryToken(Permission));
@@ -76,8 +75,8 @@ const mockUser = {
     const createDto: CreatePermissionDto = {
       resource: 'products',
       actions: [PermissionAction.CREATE, PermissionAction.READ],
-      description: 'Manage products',
-    };
+      description: 'Manage products'
+  };
 
     it('should create a new permission', async () => {
       mockRepository.findOne.mockResolvedValue(null);
@@ -88,12 +87,12 @@ const mockUser = {
 
       expect(result).toEqual(mockPermission);
       expect(mockRepository.findOne).toHaveBeenCalledWith({
-        where: { resource: 'products', tenantId: 'tenant1' },
-      });
+        where: { resource: 'products', tenantId: 'tenant1' }
+  });
       expect(mockRepository.create).toHaveBeenCalledWith({
         ...createDto,
-        tenantId: 'tenant1',
-      });
+        tenantId: 'tenant1'
+  });
       expect(mockRepository.save).toHaveBeenCalled();
     });
 
@@ -123,21 +122,15 @@ const mockUser = {
       const permissions = [mockPermission];
       mockCacheManager.get.mockResolvedValue(null);
 
-      const mockQueryBuilder = {
-        select: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        orderBy: jest.fn().mockReturnThis(),
-        getMany: jest.fn().mockResolvedValue(permissions),
-      };
-      mockRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
+            mockRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
 
       const result = await service.findAll(mockUser);
 
       expect(result).toEqual(permissions);
       expect(mockRepository.createQueryBuilder).toHaveBeenCalledWith('permission');
       expect(mockQueryBuilder.where).toHaveBeenCalledWith('permission.tenantId = :tenantId', {
-        tenantId: 'tenant1',
-      });
+        tenantId: 'tenant1'
+  });
       expect(mockCacheManager.set).toHaveBeenCalledWith('permission:all:tenant1', permissions, 300000);
     });
   });
@@ -161,8 +154,8 @@ const mockUser = {
 
       expect(result).toEqual(mockPermission);
       expect(mockRepository.findOne).toHaveBeenCalledWith({
-        where: { id: '1', tenantId: 'tenant1' },
-      });
+        where: { id: '1', tenantId: 'tenant1' }
+  });
       expect(mockCacheManager.set).toHaveBeenCalledWith('permission:tenant1:1', mockPermission, 300000);
     });
 
@@ -186,8 +179,8 @@ const mockUser = {
 
       expect(result).toEqual(permissions);
       expect(mockRepository.find).toHaveBeenCalledWith({
-        where: { id: In(['1', '2']), tenantId: 'tenant1' },
-      });
+        where: { id: In(['1', '2']), tenantId: 'tenant1' }
+  });
     });
   });
 
@@ -210,8 +203,8 @@ const mockUser = {
 
       expect(result).toEqual(mockPermission);
       expect(mockRepository.findOne).toHaveBeenCalledWith({
-        where: { resource: 'products', tenantId: 'tenant1' },
-      });
+        where: { resource: 'products', tenantId: 'tenant1' }
+  });
       expect(mockCacheManager.set).toHaveBeenCalledWith(
         'permission:tenant1:resource:products',
         mockPermission,
@@ -234,8 +227,8 @@ const mockUser = {
 
   describe('update', () => {
     const updateDto: UpdatePermissionDto = {
-      description: 'Updated description',
-    };
+      description: 'Updated description'
+  };
 
     it('should update permission', async () => {
       mockCacheManager.get.mockResolvedValue(mockPermission);
@@ -256,8 +249,8 @@ const mockUser = {
       mockRepository.findOne.mockResolvedValue(existingPermission);
 
       const updateDtoWithResource: UpdatePermissionDto = {
-        resource: 'orders',
-      };
+        resource: 'orders'
+  };
 
       await expect(service.update(mockUser, '1', updateDtoWithResource)).rejects.toThrow(
         ConflictException,
@@ -273,8 +266,8 @@ const mockUser = {
       mockRepository.save.mockResolvedValue(mockPermission);
 
       const updateDtoSameResource: UpdatePermissionDto = {
-        resource: 'products',
-      };
+        resource: 'products'
+  };
 
       const result = await service.update(mockUser, '1', updateDtoSameResource);
 
@@ -312,8 +305,8 @@ const mockUser = {
 
       expect(result).toBe(5);
       expect(mockRepository.count).toHaveBeenCalledWith({
-        where: { tenantId: 'tenant1' },
-      });
+        where: { tenantId: 'tenant1' }
+  });
     });
   });
 });

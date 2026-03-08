@@ -12,17 +12,21 @@ describe('BOMService', () => {
   let bomLineRepository: Repository<BOMLine>;
 
   const mockBomRepository = {
+    remove: jest.fn().mockResolvedValue(undefined),
     create: jest.fn(),
     save: jest.fn(),
     findOne: jest.fn(),
     find: jest.fn(),
-    count: jest.fn(),
-    createQueryBuilder: jest.fn(),
+    count: jest.fn()
   };
 
   const mockBomLineRepository = {
+    find: jest.fn().mockResolvedValue([]),
+    findOne: jest.fn().mockResolvedValue(null),
+    remove: jest.fn().mockResolvedValue(undefined),
+    count: jest.fn().mockResolvedValue(0),
     create: jest.fn(),
-    save: jest.fn(),
+    save: jest.fn()
   };
 
   beforeEach(async () => {
@@ -31,14 +35,14 @@ describe('BOMService', () => {
         BOMService,
         {
           provide: getRepositoryToken(BOM),
-          useValue: mockBomRepository,
-        },
+          useValue: mockBomRepository
+  },
         {
           provide: getRepositoryToken(BOMLine),
-          useValue: mockBomLineRepository,
-        },
-      ],
-    }).compile();
+          useValue: mockBomLineRepository
+  },
+      ]
+  }).compile();
 
     service = module.get<BOMService>(BOMService);
     bomRepository = module.get<Repository<BOM>>(getRepositoryToken(BOM));
@@ -59,8 +63,8 @@ describe('BOMService', () => {
         lines: [
           { productId: 'component1', quantity: 2, unitCost: 10 },
           { productId: 'component2', quantity: 1, unitCost: 20 },
-        ],
-      };
+        ]
+  };
 
       const mockBom = {
         id: 'bom1',
@@ -69,23 +73,23 @@ describe('BOMService', () => {
         ...dto,
         lines: [],
         totalCost: 0,
-        unitCost: 0,
-      };
+        unitCost: 0
+  };
 
       const savedLines = dto.lines.map((line, idx) => ({
         id: `line${idx}`,
         tenantId,
         bomId: 'bom1',
         ...line,
-        totalCost: line.quantity * line.unitCost,
-      }));
+        totalCost: line.quantity * line.unitCost
+  }));
 
       const savedBomWithLines = {
         ...mockBom,
         lines: savedLines,
         totalCost: 40, // 2*10 + 1*20
-        unitCost: 40,
-      };
+        unitCost: 40
+  };
 
       mockBomRepository.count.mockResolvedValue(0);
       mockBomRepository.create.mockReturnValue(mockBom);
@@ -115,8 +119,8 @@ describe('BOMService', () => {
         tenantId,
         reference: 'BOM-2026-0001',
         productId: 'product1',
-        lines: [],
-      };
+        lines: []
+  };
 
       mockBomRepository.findOne.mockResolvedValue(mockBom);
 
@@ -125,8 +129,8 @@ describe('BOMService', () => {
       expect(result).toEqual(mockBom);
       expect(mockBomRepository.findOne).toHaveBeenCalledWith({
         where: { id: bomId, tenantId },
-        relations: ['product', 'lines', 'lines.product'],
-      });
+        relations: ['product', 'lines', 'lines.product']
+  });
     });
 
     it('should throw NotFoundException if BOM not found', async () => {
@@ -151,8 +155,8 @@ describe('BOMService', () => {
           tenantId,
           productId,
           reference: 'BOM-2026-0001',
-          isActive: true,
-        },
+          isActive: true
+  },
       ];
 
       mockBomRepository.find.mockResolvedValue(mockBoms);
@@ -162,8 +166,8 @@ describe('BOMService', () => {
       expect(result).toEqual(mockBoms);
       expect(mockBomRepository.find).toHaveBeenCalledWith({
         where: { tenantId, productId, isActive: true },
-        relations: ['product', 'lines', 'lines.product'],
-      });
+        relations: ['product', 'lines', 'lines.product']
+  });
     });
   });
 
@@ -180,8 +184,8 @@ describe('BOMService', () => {
           { quantity: 1, unitCost: 20, totalCost: 20 },
         ],
         totalCost: 0,
-        unitCost: 0,
-      };
+        unitCost: 0
+  };
 
       mockBomRepository.findOne.mockResolvedValue(mockBom);
       mockBomRepository.save.mockResolvedValue({
@@ -204,21 +208,21 @@ describe('BOMService', () => {
       const bomId = 'bom1';
       const dto = {
         productQty: 5,
-        isActive: false,
-      };
+        isActive: false
+  };
 
       const mockBom = {
         id: bomId,
         tenantId,
         productQty: 1,
-        isActive: true,
-      };
+        isActive: true
+  };
 
       mockBomRepository.findOne.mockResolvedValue(mockBom);
       mockBomRepository.save.mockResolvedValue({
         ...mockBom,
-        ...dto,
-      });
+        ...dto
+  });
 
       const result = await service.update(tenantId, bomId, dto);
 
@@ -234,22 +238,22 @@ describe('BOMService', () => {
       const dto = {
         productId: 'component1',
         quantity: 3,
-        unitCost: 15,
-      };
+        unitCost: 15
+  };
 
       const mockBom = {
         id: bomId,
         tenantId,
-        lines: [],
-      };
+        lines: []
+  };
 
       const mockLine = {
         id: 'line1',
         tenantId,
         bomId,
         ...dto,
-        totalCost: 45,
-      };
+        totalCost: 45
+  };
 
       mockBomRepository.findOne.mockResolvedValue(mockBom);
       mockBomLineRepository.create.mockReturnValue(mockLine);

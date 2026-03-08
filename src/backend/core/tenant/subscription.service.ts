@@ -1,8 +1,10 @@
-import { Injectable, BadRequestException, Logger, NotFoundException } from '@nestjs/common';
+import { PermissionService, User } from '@/common/security/permission.service';
+import { SecureRepository } from '@/common/security/secure-repository';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Tenant, SubscriptionPlan, BillingCycle, TenantStatus } from './entities/tenant.entity';
 import { UpgradeSubscriptionDto } from './dto/upgrade-subscription.dto';
+import { BillingCycle, SubscriptionPlan, Tenant, TenantStatus } from './entities/tenant.entity';
 
 // Pricing configuration (in VND)
 const PRICING = {
@@ -49,11 +51,15 @@ const PRICING = {
 @Injectable()
 export class SubscriptionService {
   private readonly logger = new Logger(SubscriptionService.name);
+  private readonly secureTenantRepo: SecureRepository<Tenant>;
 
   constructor(
     @InjectRepository(Tenant)
     private readonly tenantRepository: Repository<Tenant>,
-  ) {}
+    private readonly permissionService: PermissionService,
+  ) {
+    this.secureTenantRepo = new SecureRepository(tenantRepository, permissionService, 'Tenant');
+  }
 
   /**
    * Get pricing information for all plans
@@ -82,8 +88,8 @@ export class SubscriptionService {
   /**
    * Get current subscription details for a tenant
    */
-  async getSubscription(tenantId: string) {
-    const tenant = await this.tenantRepository.findOne({ where: { id: tenantId } });
+  async getSubscription(user: User) {
+    const tenant = await this.secureTenantRepo.findOne(user, { where: { id: user.tenantId } });
 
     if (!tenant) {
       throw new NotFoundException('Tenant not found');
@@ -129,8 +135,8 @@ export class SubscriptionService {
   /**
    * Upgrade or change subscription plan
    */
-  async upgradeSubscription(tenantId: string, upgradeDto: UpgradeSubscriptionDto, userId?: string) {
-    const tenant = await this.tenantRepository.findOne({ where: { id: tenantId } });
+  async upgradeSubscription(user: User, upgradeDto: UpgradeSubscriptionDto) {
+    const tenant = await this.secureTenantRepo.findOne(user, { where: { id: user.tenantId } });
 
     if (!tenant) {
       throw new NotFoundException('Tenant not found');
@@ -167,9 +173,9 @@ export class SubscriptionService {
     tenant.maxStorage = newPlanConfig.maxStorage;
     tenant.features = newPlanConfig.features;
     tenant.status = TenantStatus.ACTIVE;
-    tenant.updatedBy = userId || 'system';
+    tenant.updatedBy = user.id;
 
-    await this.tenantRepository.save(tenant);
+    await this.secureTenantRepo.save(user, tenant);
 
     // TODO: Process payment with payment gateway
     // if (upgradeDto.paymentMethodId && newAmount > 0) {
@@ -193,8 +199,8 @@ export class SubscriptionService {
   /**
    * Cancel subscription (downgrade to free)
    */
-  async cancelSubscription(tenantId: string, userId?: string) {
-    const tenant = await this.tenantRepository.findOne({ where: { id: tenantId } });
+  async cancelSubscription(user: User) {
+    const tenant = await this.secureTenantRepo.findOne(user, { where: { id: user.tenantId } });
 
     if (!tenant) {
       throw new NotFoundException('Tenant not found');
@@ -214,9 +220,9 @@ export class SubscriptionService {
     tenant.maxUsers = freePlanConfig.maxUsers;
     tenant.maxStorage = freePlanConfig.maxStorage;
     tenant.features = freePlanConfig.features;
-    tenant.updatedBy = userId || 'system';
+    tenant.updatedBy = user.id;
 
-    await this.tenantRepository.save(tenant);
+    await this.secureTenantRepo.save(user, tenant);
 
     return {
       success: true,
@@ -289,12 +295,12 @@ export class SubscriptionService {
   /**
    * Get subscription history (placeholder for future implementation)
    */
-  async getSubscriptionHistory(tenantId: string) {
+  async getSubscriptionHistory(user: User) {
     // TODO: Implement subscription history tracking
     // This would require a separate subscription_history table
 
     return {
-      tenantId,
+      tenantId: user.tenantId,
       history: [],
       message: 'Subscription history tracking to be implemented',
     };

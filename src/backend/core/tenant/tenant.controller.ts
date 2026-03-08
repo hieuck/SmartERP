@@ -1,30 +1,31 @@
+import { User } from '@/common/security/permission.service';
 import {
+  Body,
   Controller,
+  Delete,
   Get,
+  Param,
+  Patch,
   Post,
   Put,
-  Delete,
-  Body,
-  Param,
-  UseGuards,
-  Patch,
   Query,
   Request,
+  UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Request as ExpressRequest } from 'express';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { TenantService } from './tenant.service';
-import { SubscriptionService } from './subscription.service';
-import { OnboardingService } from './onboarding.service';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { Public } from '../../common/decorators/public.decorator';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CompleteOnboardingDto } from './dto/complete-onboarding.dto';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
 import { UpgradeSubscriptionDto } from './dto/upgrade-subscription.dto';
-import { CompleteOnboardingDto } from './dto/complete-onboarding.dto';
 import { TenantStatus } from './entities/tenant.entity';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { Public } from '../../common/decorators/public.decorator';
+import { OnboardingService } from './onboarding.service';
+import { SubscriptionService } from './subscription.service';
+import { TenantService } from './tenant.service';
 
-import { User } from '@/common/security/permission.service';
 @ApiTags('tenants')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
@@ -62,8 +63,8 @@ export class TenantController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Get tenant by ID' })
-  findOne(@Param('id') id: string) {
-    return this.tenantService.findOne(id);
+  findOne(@CurrentUser() user: User) {
+    return this.tenantService.findOne(user);
   }
 
   @Get('code/:code')
@@ -74,14 +75,14 @@ export class TenantController {
 
   @Get(':id/users')
   @ApiOperation({ summary: 'Get users by tenant' })
-  getUsersByTenant(@Param('id') id: string) {
-    return this.tenantService.getUsersByTenant(id);
+  getUsersByTenant(@CurrentUser() user: User) {
+    return this.tenantService.getUsersByTenant(user.tenantId);
   }
 
   @Get(':id/usage')
   @ApiOperation({ summary: 'Get tenant usage report' })
-  getUsageReport(@Param('id') id: string) {
-    return this.tenantService.getUsageReport(id);
+  getUsageReport(@CurrentUser() user: User) {
+    return this.tenantService.getUsageReport(user);
   }
 
   // Onboarding Endpoints
@@ -161,42 +162,38 @@ export class TenantController {
 
   @Put(':id')
   @ApiOperation({ summary: 'Update tenant' })
-  update(
-    @Param('id') id: string,
-    @Body() updateTenantDto: UpdateTenantDto,
-    @Request() req: ExpressRequest & { user?: { id: string } },
-  ) {
-    return this.tenantService.update(id, updateTenantDto, req.user?.id);
+  update(@CurrentUser() user: User, @Body() updateTenantDto: UpdateTenantDto) {
+    return this.tenantService.update(user, updateTenantDto);
   }
 
   @Patch(':id/suspend')
   @ApiOperation({ summary: 'Suspend tenant' })
-  suspend(@Param('id') id: string, @Request() req: ExpressRequest & { user?: { id: string } }) {
-    return this.tenantService.suspend(id, req.user?.id);
+  suspend(@CurrentUser() user: User) {
+    return this.tenantService.suspend(user);
   }
 
   @Patch(':id/activate')
   @ApiOperation({ summary: 'Activate tenant' })
-  activate(@Param('id') id: string, @Request() req: ExpressRequest & { user?: { id: string } }) {
-    return this.tenantService.activate(id, req.user?.id);
+  activate(@CurrentUser() user: User) {
+    return this.tenantService.activate(user);
   }
 
   @Patch(':id/cancel')
   @ApiOperation({ summary: 'Cancel tenant' })
-  cancel(@Param('id') id: string, @Request() req: ExpressRequest & { user?: { id: string } }) {
-    return this.tenantService.cancel(id, req.user?.id);
+  cancel(@CurrentUser() user: User) {
+    return this.tenantService.cancel(user);
   }
 
   @Patch(':id/storage')
   @ApiOperation({ summary: 'Update tenant storage usage' })
-  updateStorage(@Param('id') id: string, @Body() body: { storageUsed: number }) {
-    return this.tenantService.updateStorage(id, body.storageUsed);
+  updateStorage(@CurrentUser() user: User, @Body() body: { storageUsed: number }) {
+    return this.tenantService.updateStorage(user, body.storageUsed);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete tenant' })
-  async remove(@Param('id') id: string) {
-    await this.tenantService.remove(id);
+  async remove(@CurrentUser() user: User) {
+    await this.tenantService.remove(user);
     return { message: 'Tenant deleted successfully' };
   }
 }

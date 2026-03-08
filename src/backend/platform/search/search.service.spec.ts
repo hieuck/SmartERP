@@ -14,18 +14,11 @@ describe('SearchService', () => {
     del: jest.Mock;
   };
 
-  const mockQueryBuilder = {
-    where: jest.fn().mockReturnThis(),
-    andWhere: jest.fn().mockReturnThis(),
-    take: jest.fn().mockReturnThis(),
-    getMany: jest.fn(),
-  };
-
   beforeEach(async () => {
     const mockCacheService = {
       getOrSet: jest.fn((key: string, fn: () => unknown) => fn()),
-      del: jest.fn(),
-    };
+      del: jest.fn()
+  };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -33,27 +26,27 @@ describe('SearchService', () => {
         {
           provide: getRepositoryToken(Product),
           useValue: {
-            createQueryBuilder: jest.fn(() => mockQueryBuilder),
-          },
-        },
+            => mockQueryBuilder)
+  }
+  },
         {
           provide: getRepositoryToken(Customer),
           useValue: {
-            createQueryBuilder: jest.fn(() => mockQueryBuilder),
-          },
-        },
+            => mockQueryBuilder)
+  }
+  },
         {
           provide: getRepositoryToken(Order),
           useValue: {
-            createQueryBuilder: jest.fn(() => mockQueryBuilder),
-          },
-        },
+            => mockQueryBuilder)
+  }
+  },
         {
           provide: CacheService,
-          useValue: mockCacheService,
-        },
-      ],
-    }).compile();
+          useValue: mockCacheService
+  },
+      ]
+  }).compile();
 
     service = module.get<SearchService>(SearchService);
     cacheService = module.get(CacheService);
@@ -75,8 +68,8 @@ describe('SearchService', () => {
           name: 'Test Product',
           sku: 'SKU001',
           price: 100,
-          description: 'Test description',
-        },
+          description: 'Test description'
+  },
       ];
 
       const mockCustomers = [
@@ -84,8 +77,8 @@ describe('SearchService', () => {
           id: '2',
           name: 'Test Customer',
           email: 'test@example.com',
-          phone: '1234567890',
-        },
+          phone: '1234567890'
+  },
       ];
 
       const mockOrders = [
@@ -93,8 +86,8 @@ describe('SearchService', () => {
           id: '3',
           orderNumber: 'ORD001',
           totalAmount: 200,
-          status: 'pending',
-        },
+          status: 'pending'
+  },
       ];
 
       mockQueryBuilder.getMany
@@ -117,8 +110,8 @@ describe('SearchService', () => {
           type: 'product',
           id: '1',
           title: 'Cached Product',
-          description: 'From cache',
-        },
+          description: 'From cache'
+  },
       ];
 
       cacheService.getOrSet.mockResolvedValue(cachedResults);
@@ -141,14 +134,14 @@ describe('SearchService', () => {
           type: 'product',
           id: '1',
           title: 'Product 1',
-          description: 'Description 1',
-        },
+          description: 'Description 1'
+  },
         {
           type: 'customer',
           id: '2',
           title: 'Customer 1',
-          description: 'Description 2',
-        },
+          description: 'Description 2'
+  },
       ];
 
       cacheService.getOrSet.mockImplementation((key, fn) => fn());
@@ -167,8 +160,8 @@ describe('SearchService', () => {
           type: 'product',
           id: '1',
           title: 'Cached Product',
-          description: 'From cache',
-        },
+          description: 'From cache'
+  },
       ];
 
       cacheService.getOrSet.mockResolvedValue(cachedResults);

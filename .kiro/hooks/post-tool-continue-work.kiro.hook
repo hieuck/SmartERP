@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "name": "Post Tool - Continue Work",
+  "description": "Sau khi execute tools, tự động tiếp tục công việc hoặc verify kết quả. Đảm bảo workflow không bị gián đoạn.",
+  "version": "1",
+  "when": {
+    "type": "postToolUse",
+    "toolTypes": [
+      "*"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "⚡ POST TOOL EXECUTION - CONTINUE WORKFLOW\n\n**Tool vừa được execute. Tiếp tục công việc!**\n\n---\n\n## 📋 VERIFY & CONTINUE\n\n**1. Verify Tool Result:**\n- Tool nào vừa chạy?\n- Kết quả có thành công không?\n- Có errors/warnings không?\n\n**2. Update Context:**\n- Cập nhật progress nếu cần\n- Log decision nếu quan trọng\n- Track blockers nếu có\n\n**3. Continue Work:**\n- Task hiện tại đã xong chưa?\n  - ✅ XONG → Move to next subtask\n  - ⏳ CHƯA → Continue current task\n- Có blockers không?\n  - ❌ CÓ → Resolve ngay\n  - ✅ KHÔNG → Continue\n\n---\n\n## 🎯 EXECUTION MODES\n\n**Mode 1: Task In Progress**\n→ Continue với subtask tiếp theo\n\n**Mode 2: Task Complete**\n→ Summary results, move to next task\n\n**Mode 3: Blocker Detected**\n→ Resolve blocker first, then continue\n\n---\n\n## 🚀 RULES\n\n1. **No Stopping** - Luôn tiếp tục workflow\n2. **Quick Verify** - Verify nhanh, không dài dòng\n3. **Auto Continue** - Tự động chuyển sang bước tiếp\n4. **Document** - Update progress nếu milestone\n\n---\n\n**TIẾP TỤC CÔNG VIỆC NGAY!**"
+  }
+}

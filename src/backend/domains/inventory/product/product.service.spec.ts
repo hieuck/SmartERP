@@ -19,8 +19,7 @@ describe('ProductService', () => {
     remove: jest.fn(),
     update: jest.fn(),
     softDelete: jest.fn(),
-    count: jest.fn(),
-    createQueryBuilder: jest.fn(),
+    count: jest.fn()
   };
 
   const mockCacheService = {
@@ -28,7 +27,7 @@ describe('ProductService', () => {
     set: jest.fn(),
     del: jest.fn(),
     getOrSet: jest.fn(),
-    invalidateEntity: jest.fn(),
+    invalidateEntity: jest.fn()
   };
 
   const mockPermissionService = {
@@ -38,7 +37,7 @@ describe('ProductService', () => {
     canDelete: jest.fn().mockReturnValue(true),
     canUpdate: jest.fn().mockReturnValue(true),
     canRead: jest.fn().mockReturnValue(true),
-    canWrite: jest.fn().mockReturnValue(true),
+    canWrite: jest.fn().mockReturnValue(true)
   };
 
   const mockUser = createMockUser();
@@ -49,18 +48,18 @@ describe('ProductService', () => {
         ProductService,
         {
           provide: getRepositoryToken(Product),
-          useValue: mockProductRepository,
-        },
+          useValue: mockProductRepository
+  },
         {
           provide: CacheService,
-          useValue: mockCacheService,
-        },
+          useValue: mockCacheService
+  },
         {
           provide: PermissionService,
-          useValue: mockPermissionService,
-        },
-      ],
-    }).compile();
+          useValue: mockPermissionService
+  },
+      ]
+  }).compile();
 
     service = module.get<ProductService>(ProductService);
   });
@@ -219,8 +218,8 @@ describe('ProductService', () => {
     it('should return product count', async () => {
       const mockProducts = Array.from({ length: 100 }, (_, i) => ({
         id: `${i + 1}`,
-        name: `Product ${i + 1}`,
-      }));
+        name: `Product ${i + 1}`
+  }));
       mockProductRepository.find.mockResolvedValue(mockProducts);
 
       const result = await service.count(mockUser);
@@ -233,8 +232,8 @@ describe('ProductService', () => {
     it('should return count by status', async () => {
       const mockProducts = Array.from({ length: 50 }, (_, i) => ({
         id: `${i + 1}`,
-        status: 'ACTIVE',
-      }));
+        status: 'ACTIVE'
+  }));
       mockProductRepository.find.mockResolvedValue(mockProducts);
 
       const result = await service.countByStatus(mockUser, 'ACTIVE' as any);
@@ -269,8 +268,8 @@ describe('ProductService', () => {
       mockProductRepository.save.mockResolvedValue({
         ...mockProduct,
         stockQuantity: 0,
-        status: 'OUT_OF_STOCK',
-      });
+        status: 'OUT_OF_STOCK'
+  });
 
       const result = await service.updateStock(mockUser, '1', 0);
 
@@ -326,8 +325,8 @@ describe('ProductService', () => {
       mockProductRepository.save.mockResolvedValue({
         ...mockProduct,
         isActive: true,
-        status: 'ACTIVE',
-      });
+        status: 'ACTIVE'
+  });
 
       const result = await service.activate(mockUser, '1');
 
@@ -342,8 +341,8 @@ describe('ProductService', () => {
       mockProductRepository.save.mockResolvedValue({
         ...mockProduct,
         isActive: false,
-        status: 'INACTIVE',
-      });
+        status: 'INACTIVE'
+  });
 
       const result = await service.deactivate(mockUser, '1');
 

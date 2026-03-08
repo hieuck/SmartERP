@@ -1,30 +1,44 @@
+import { CacheTTL, generateCacheKey } from '@/common/cache/cache.config';
+import { CacheService } from '@/common/cache/cache.service';
+import { PermissionService, User } from '@/common/security/permission.service';
+import { SecureRepository } from '@/common/security/secure-repository';
 import {
+  BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
-  ConflictException,
-  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Tenant, TenantStatus } from './entities/tenant.entity';
+import { v4 as uuidv4 } from 'uuid';
 import { User as UserEntity } from '../user/entities/user.entity';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
-import { v4 as uuidv4 } from 'uuid';
-import { CacheService } from '@/common/cache/cache.service';
-import { CacheTTL, generateCacheKey } from '@/common/cache/cache.config';
-import { User } from '@/common/security/permission.service';
+import { Tenant, TenantStatus } from './entities/tenant.entity';
 
 @Injectable()
 export class TenantService {
+  private readonly secureTenantRepo: SecureRepository<Tenant>;
+
   constructor(
     @InjectRepository(Tenant)
     private readonly tenantRepository: Repository<Tenant>,
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
     private readonly cacheService: CacheService,
-  ) {}
+    private readonly permissionService: PermissionService,
+  ) {
+    this.secureTenantRepo = new SecureRepository(
+      this.tenantRepository,
+      this.permissionService,
+      'Tenant',
+    );
+  }
 
+  /**
+   * Create tenant (system operation)
+   * Uses raw repository - this is tenant creation, not tenant-scoped operation
+   */
   async create(createTenantDto: CreateTenantDto, userId?: string): Promise<Tenant> {
     // Generate unique code if not provided
     const code = createTenantDto.code || this.generateTenantCode();
@@ -45,6 +59,10 @@ export class TenantService {
     return await this.tenantRepository.save(tenant);
   }
 
+  /**
+   * Find all tenants (system operation)
+   * Uses raw repository - admin operation to query all tenants across system
+   */
   async findAll(): Promise<Tenant[]> {
     return await this.tenantRepository
       .createQueryBuilder('tenant')
@@ -65,13 +83,17 @@ export class TenantService {
       .getMany();
   }
 
+  /**
+   * Find tenant by user context (tenant-scoped operation)
+   * Uses SecureRepository for automatic tenant isolation
+   */
   async findOne(user: User): Promise<Tenant> {
     const id = user.tenantId;
     const cacheKey = generateCacheKey('tenant', 'global', id);
     return this.cacheService.getOrSet(
       cacheKey,
       async () => {
-        const tenant = await this.tenantRepository.findOne({ where: { id } });
+        const tenant = await this.secureTenantRepo.findOne(user, { where: { id } });
         if (!tenant) {
           throw new NotFoundException(`Tenant with ID ${id} not found`);
         }
@@ -81,6 +103,10 @@ export class TenantService {
     );
   }
 
+  /**
+   * Find tenant by code (system operation)
+   * Uses raw repository - used for tenant lookup during login/registration
+   */
   async findByCode(code: string): Promise<Tenant> {
     const cacheKey = generateCacheKey('tenant-code', 'global', code);
     return this.cacheService.getOrSet(
@@ -96,10 +122,14 @@ export class TenantService {
     );
   }
 
+  /**
+   * Update tenant (tenant-scoped operation)
+   * Uses SecureRepository for automatic tenant isolation
+   */
   async update(user: User, updateTenantDto: UpdateTenantDto): Promise<Tenant> {
     const tenant = await this.findOne(user);
 
-    // If code is being updated, check for conflicts
+    // If code is being updated, check for conflicts (use raw repo for global check)
     if (updateTenantDto.code && updateTenantDto.code !== tenant.code) {
       const existing = await this.tenantRepository.findOne({
         where: { code: updateTenantDto.code },
@@ -112,7 +142,7 @@ export class TenantService {
     Object.assign(tenant, updateTenantDto);
     tenant.updatedBy = user.id;
 
-    const updated = await this.tenantRepository.save(tenant);
+    const updated = await this.secureTenantRepo.save(user, tenant);
 
     // Invalidate caches
     const cacheKey = generateCacheKey('tenant', 'global', user.tenantId);
@@ -126,8 +156,12 @@ export class TenantService {
     return updated;
   }
 
+  /**
+   * Remove tenant (tenant-scoped operation)
+   * Uses SecureRepository for automatic tenant isolation
+   */
   async remove(user: User): Promise<void> {
-    await this.findOne(user);
+    const tenant = await this.findOne(user);
 
     // Check if tenant has users
     const userCount = await this.userRepository.count({
@@ -140,14 +174,18 @@ export class TenantService {
       );
     }
 
-    await this.tenantRepository.softDelete(user.tenantId);
+    await this.secureTenantRepo.remove(user, tenant);
   }
 
+  /**
+   * Suspend tenant (tenant-scoped operation)
+   * Uses SecureRepository for automatic tenant isolation
+   */
   async suspend(user: User): Promise<Tenant> {
     const tenant = await this.findOne(user);
     tenant.status = TenantStatus.SUSPENDED;
     tenant.updatedBy = user.id;
-    const updated = await this.tenantRepository.save(tenant);
+    const updated = await this.secureTenantRepo.save(user, tenant);
 
     // Invalidate caches
     const cacheKey = generateCacheKey('tenant', 'global', user.tenantId);
@@ -161,11 +199,15 @@ export class TenantService {
     return updated;
   }
 
+  /**
+   * Activate tenant (tenant-scoped operation)
+   * Uses SecureRepository for automatic tenant isolation
+   */
   async activate(user: User): Promise<Tenant> {
     const tenant = await this.findOne(user);
     tenant.status = TenantStatus.ACTIVE;
     tenant.updatedBy = user.id;
-    const updated = await this.tenantRepository.save(tenant);
+    const updated = await this.secureTenantRepo.save(user, tenant);
 
     // Invalidate caches
     const cacheKey = generateCacheKey('tenant', 'global', user.tenantId);
@@ -179,11 +221,15 @@ export class TenantService {
     return updated;
   }
 
+  /**
+   * Cancel tenant (tenant-scoped operation)
+   * Uses SecureRepository for automatic tenant isolation
+   */
   async cancel(user: User): Promise<Tenant> {
     const tenant = await this.findOne(user);
     tenant.status = TenantStatus.CANCELLED;
     tenant.updatedBy = user.id;
-    const updated = await this.tenantRepository.save(tenant);
+    const updated = await this.secureTenantRepo.save(user, tenant);
 
     // Invalidate caches
     const cacheKey = generateCacheKey('tenant', 'global', user.tenantId);
@@ -197,6 +243,10 @@ export class TenantService {
     return updated;
   }
 
+  /**
+   * Get users by tenant (system operation)
+   * Uses raw repository - admin operation to query users of any tenant
+   */
   async getUsersByTenant(tenantId: string): Promise<User[]> {
     // Note: This method keeps tenantId parameter as it's used by admin to query any tenant
     const tenant = await this.tenantRepository.findOne({ where: { id: tenantId } });
@@ -279,10 +329,18 @@ export class TenantService {
     };
   }
 
+  /**
+   * Count tenants (system operation)
+   * Uses raw repository - admin operation to count all tenants
+   */
   async count(): Promise<number> {
     return await this.tenantRepository.count();
   }
 
+  /**
+   * Find tenants by status (system operation)
+   * Uses raw repository - admin operation to query tenants by status
+   */
   async findByStatus(status: TenantStatus): Promise<Tenant[]> {
     return await this.tenantRepository
       .createQueryBuilder('tenant')
@@ -302,6 +360,10 @@ export class TenantService {
       .getMany();
   }
 
+  /**
+   * Update storage (tenant-scoped operation)
+   * Uses SecureRepository for automatic tenant isolation
+   */
   async updateStorage(user: User, storageUsed: number): Promise<Tenant> {
     const tenant = await this.findOne(user);
 
@@ -310,7 +372,7 @@ export class TenantService {
     }
 
     tenant.currentStorage = storageUsed;
-    const updated = await this.tenantRepository.save(tenant);
+    const updated = await this.secureTenantRepo.save(user, tenant);
 
     // Invalidate caches
     const cacheKey = generateCacheKey('tenant', 'global', user.tenantId);

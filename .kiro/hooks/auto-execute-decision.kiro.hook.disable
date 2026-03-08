@@ -1,0 +1,13 @@
+{
+  "enabled": false,
+  "name": "Auto Execute Team Decision",
+  "description": "Tự động thực hiện công việc đã được team thống nhất trong meeting. Execute decision ngay lập tức mà không cần user input.",
+  "version": "1",
+  "when": {
+    "type": "agentStop"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "⚡ AUTO EXECUTE TEAM DECISION\n\n**Team vừa meeting và quyết định approach. GIỜ LÀ LÚC THỰC HIỆN!**\n\n---\n\n## 📋 EXECUTION CHECKLIST\n\n**1. Xác định decision từ meeting:**\n- Task gì đã được approve?\n- Approach nào đã được chọn?\n- Priority order ra sao?\n\n**2. Verify prerequisites:**\n- Có cần research trước không? → Nếu có, research NGAY\n- Có cần setup gì không? → Setup NGAY\n- Có blockers không? → Resolve NGAY\n\n**3. ⚡ EXECUTE IMMEDIATELY:**\n```\nDecision → Prepare → Execute → Complete\n    ↓\nKhông dừng lại\nKhông hỏi user\nLàm cho đến xong\n```\n\n---\n\n## 🎯 EXECUTION MODES\n\n### Mode 1: Simple Task (< 1h)\n→ Execute trực tiếp, complete trong session này\n\n### Mode 2: Complex Task (> 1h)\n→ Break into subtasks, execute first subtask ngay\n\n### Mode 3: Research Required\n→ Research → POC → Validate → Scale\n\n---\n\n## 🚀 AUTONOMOUS EXECUTION RULES\n\n1. **No Waiting** - Bắt đầu ngay lập tức\n2. **No Asking** - Không hỏi user confirmation\n3. **Document As You Go** - Update progress realtime\n4. **Test Continuously** - Verify mỗi step\n5. **Adjust If Needed** - Flexible nhưng focused\n\n---\n\n## 📊 PROGRESS TRACKING\n\n**During Execution:**\n- Update progress file mỗi 30 phút\n- Log decisions trong code comments\n- Track blockers immediately\n\n**After Completion:**\n- Summary results\n- Update metrics\n- Trigger next team meeting\n\n---\n\n**BẮT ĐẦU THỰC HIỆN DECISION NGAY BÂY GIỜ!**\n\nKhông delay, không chờ đợi. Team đã quyết định → Execute!"
+  }
+}

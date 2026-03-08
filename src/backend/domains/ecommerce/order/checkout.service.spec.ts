@@ -1,11 +1,12 @@
+import { PermissionService } from '@/common/security/permission.service';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { CheckoutService } from './checkout.service';
-import { Order } from './entities/order.entity';
-import { OrderItem } from './entities/order-item.entity';
 import { ShoppingCart } from '../shopping-cart/entities/shopping-cart.entity';
+import { CheckoutService } from './checkout.service';
+import { OrderItem } from './entities/order-item.entity';
+import { Order } from './entities/order.entity';
 
 describe('CheckoutService', () => {
   let service: CheckoutService;
@@ -28,6 +29,20 @@ describe('CheckoutService', () => {
     save: jest.fn(),
   };
 
+  const mockPermissionService = {
+    canRead: jest.fn().mockResolvedValue(true),
+    canWrite: jest.fn().mockResolvedValue(true),
+    canDelete: jest.fn().mockResolvedValue(true),
+    buildSecureQuery: jest.fn((user, query) => query),
+  };
+
+  const mockUser = {
+    id: 'user-123',
+    email: 'test@example.com',
+    tenantId: 'tenant1',
+    roles: ['user'],
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -43,6 +58,10 @@ describe('CheckoutService', () => {
         {
           provide: getRepositoryToken(ShoppingCart),
           useValue: mockCartRepository,
+        },
+        {
+          provide: PermissionService,
+          useValue: mockPermissionService,
         },
       ],
     }).compile();
@@ -89,7 +108,7 @@ describe('CheckoutService', () => {
 
       mockCartRepository.findOne.mockResolvedValue(mockCart);
 
-      const result = await service.initiateCheckout(dto, 'tenant1');
+      const result = await service.initiateCheckout(dto, mockUser);
 
       expect(result.cart).toEqual(mockCart);
       expect(result.tax).toBeGreaterThan(0);
@@ -113,9 +132,7 @@ describe('CheckoutService', () => {
 
       mockCartRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.initiateCheckout(dto, 'tenant1')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.initiateCheckout(dto, mockUser)).rejects.toThrow(NotFoundException);
     });
 
     it('should throw BadRequestException if cart is empty', async () => {
@@ -139,9 +156,7 @@ describe('CheckoutService', () => {
 
       mockCartRepository.findOne.mockResolvedValue(mockCart);
 
-      await expect(service.initiateCheckout(dto, 'tenant1')).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.initiateCheckout(dto, mockUser)).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -197,7 +212,7 @@ describe('CheckoutService', () => {
       mockOrderRepository.save.mockResolvedValue(mockOrder);
       mockCartRepository.save.mockResolvedValue(mockCart);
 
-      const result = await service.createOrderFromCart(dto, 'tenant1');
+      const result = await service.createOrderFromCart(dto, mockUser);
 
       expect(result).toEqual(mockOrder);
       expect(mockOrderRepository.save).toHaveBeenCalled();
@@ -233,9 +248,7 @@ describe('CheckoutService', () => {
         expiresAt: new Date(Date.now() + 1000000),
       };
 
-      await expect(service.validateCart(mockCart as any)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.validateCart(mockCart as any)).rejects.toThrow(BadRequestException);
     });
 
     it('should throw BadRequestException if insufficient stock', async () => {
@@ -250,9 +263,7 @@ describe('CheckoutService', () => {
         expiresAt: new Date(Date.now() + 1000000),
       };
 
-      await expect(service.validateCart(mockCart as any)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.validateCart(mockCart as any)).rejects.toThrow(BadRequestException);
     });
   });
 

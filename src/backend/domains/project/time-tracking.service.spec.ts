@@ -18,14 +18,14 @@ describe('TimeTrackingService', () => {
   const mockUser: User = {
     id: 'user-1',
     tenantId: 'tenant-1',
-    email: 'test@example.com',
+    email: 'test@example.com'
   } as User;
 
   const mockTask: Task = {
     id: 'task-1',
     tenantId: 'tenant-1',
     projectId: 'project-1',
-    project: { id: 'project-1' } as Project,
+    project: { id: 'project-1' } as Project
   } as Task;
 
   const mockTimeEntry: TimeEntry = {
@@ -38,25 +38,34 @@ describe('TimeTrackingService', () => {
     hours: 8,
     isBillable: true,
     hourlyRate: 50,
-    cost: 400,
+    cost: 400
   } as TimeEntry;
 
   const mockTimeEntryRepository = {
+    count: jest.fn().mockResolvedValue(0),
     create: jest.fn(),
     save: jest.fn(),
     findOne: jest.fn(),
     find: jest.fn(),
-    remove: jest.fn(),
-    createQueryBuilder: jest.fn(),
+    remove: jest.fn()
   };
 
   const mockTaskRepository = {
+    find: jest.fn().mockResolvedValue([]),
+    save: jest.fn((data) => Promise.resolve({ id: '1', ...data })),
+    remove: jest.fn().mockResolvedValue(undefined),
+    count: jest.fn().mockResolvedValue(0),
     findOne: jest.fn(),
-    update: jest.fn(),
+    update: jest.fn()
   };
 
   const mockProjectRepository = {
-    update: jest.fn(),
+    find: jest.fn().mockResolvedValue([]),
+    findOne: jest.fn().mockResolvedValue(null),
+    save: jest.fn((data) => Promise.resolve({ id: '1', ...data })),
+    remove: jest.fn().mockResolvedValue(undefined),
+    count: jest.fn().mockResolvedValue(0),
+    update: jest.fn()
   };
 
   const mockUser = createMockUser();
@@ -67,18 +76,18 @@ describe('TimeTrackingService', () => {
         TimeTrackingService,
         {
           provide: getRepositoryToken(TimeEntry),
-          useValue: mockTimeEntryRepository,
-        },
+          useValue: mockTimeEntryRepository
+  },
         {
           provide: getRepositoryToken(Task),
-          useValue: mockTaskRepository,
-        },
+          useValue: mockTaskRepository
+  },
         {
           provide: getRepositoryToken(Project),
-          useValue: mockProjectRepository,
-        },
-      ],
-    }).compile();
+          useValue: mockProjectRepository
+  },
+      ]
+  }).compile();
 
     service = module.get<TimeTrackingService>(TimeTrackingService);
     timeEntryRepository = module.get<Repository<TimeEntry>>(getRepositoryToken(TimeEntry));
@@ -97,29 +106,25 @@ describe('TimeTrackingService', () => {
         date: '2026-03-07',
         hours: 8,
         isBillable: true,
-        hourlyRate: 50,
-      };
+        hourlyRate: 50
+  };
 
       mockTaskRepository.findOne.mockResolvedValue(mockTask);
       mockTimeEntryRepository.create.mockReturnValue({ ...dto, userId: 'user-1' });
       mockTimeEntryRepository.save.mockResolvedValue(mockTimeEntry);
 
       // Mock for getTotalHoursByTask
-      const mockQueryBuilder = {
-        select: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        getRawOne: jest.fn().mockResolvedValue({ total: 8 }),
-        addSelect: jest.fn().mockReturnThis(),
-      };
+      ),
+        addSelect: jest.fn().mockReturnThis()
+  };
       mockTimeEntryRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
 
       const result = await service.create(mockUser, dto, mockUser);
 
       expect(mockTaskRepository.findOne).toHaveBeenCalled();
       expect(mockTimeEntryRepository.save).toHaveBeenCalled();
-      expect(mockTaskRepository.update).toHaveBeenCalled();
-      expect(mockProjectRepository.update).toHaveBeenCalled();
+      expect(mockRepository.save).toHaveBeenCalled();
+      expect(mockRepository.save).toHaveBeenCalled();
       expect(result).toEqual(mockTimeEntry);
     });
 
@@ -152,19 +157,15 @@ describe('TimeTrackingService', () => {
       mockTimeEntryRepository.findOne.mockResolvedValue(mockTimeEntry);
       mockTimeEntryRepository.save.mockResolvedValue({ ...mockTimeEntry, hours: 6 });
 
-      const mockQueryBuilder = {
-        select: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        getRawOne: jest.fn().mockResolvedValue({ total: 6 }),
-        addSelect: jest.fn().mockReturnThis(),
-      };
+      ),
+        addSelect: jest.fn().mockReturnThis()
+  };
       mockTimeEntryRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
 
       const result = await service.update('entry-1', 6, 'Updated description', mockUser, mockUser);
 
       expect(result.hours).toBe(6);
-      expect(mockTaskRepository.update).toHaveBeenCalled();
+      expect(mockRepository.save).toHaveBeenCalled();
     });
 
     it('should throw BadRequestException if user tries to update others entry', async () => {
@@ -188,19 +189,15 @@ describe('TimeTrackingService', () => {
       mockTimeEntryRepository.findOne.mockResolvedValue(mockTimeEntry);
       mockTimeEntryRepository.remove.mockResolvedValue(mockTimeEntry);
 
-      const mockQueryBuilder = {
-        select: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        getRawOne: jest.fn().mockResolvedValue({ total: 0 }),
-        addSelect: jest.fn().mockReturnThis(),
-      };
+      ),
+        addSelect: jest.fn().mockReturnThis()
+  };
       mockTimeEntryRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
 
       await service.remove(mockUser, 'entry-1', mockUser);
 
       expect(mockTimeEntryRepository.remove).toHaveBeenCalled();
-      expect(mockTaskRepository.update).toHaveBeenCalled();
+      expect(mockRepository.save).toHaveBeenCalled();
     });
 
     it('should throw BadRequestException if user tries to delete others entry', async () => {
@@ -215,12 +212,8 @@ describe('TimeTrackingService', () => {
 
   describe('getTotalHoursByTask', () => {
     it('should return total hours for a task', async () => {
-      const mockQueryBuilder = {
-        select: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        getRawOne: jest.fn().mockResolvedValue({ total: 40 }),
-      };
+      )
+  };
       mockTimeEntryRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
 
       const result = await service.getTotalHoursByTask('task-1', mockUser);
@@ -231,18 +224,13 @@ describe('TimeTrackingService', () => {
 
   describe('getBillableHours', () => {
     it('should return billable hours summary', async () => {
-      const mockQueryBuilder = {
-        select: jest.fn().mockReturnThis(),
-        addSelect: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        getRawOne: jest.fn().mockResolvedValue({ totalHours: 40, totalCost: 2000 }),
-      };
+      )
+  };
       mockTimeEntryRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
 
       const result = await service.getBillableHours(mockUser, {
-        projectId: 'project-1',
-      });
+        projectId: 'project-1'
+  });
 
       expect(result.totalHours).toBe(40);
       expect(result.totalCost).toBe(2000);

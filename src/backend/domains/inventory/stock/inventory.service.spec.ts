@@ -11,6 +11,7 @@ describe('InventoryService', () => {
   let service: InventoryService;
 
   const mockInventoryRepository = {
+    remove: jest.fn().mockResolvedValue(undefined),
     find: jest.fn(),
     findOne: jest.fn(),
     findAndCount: jest.fn(),
@@ -19,8 +20,7 @@ describe('InventoryService', () => {
     update: jest.fn(),
     delete: jest.fn(),
     softDelete: jest.fn(),
-    count: jest.fn(),
-    createQueryBuilder: jest.fn(),
+    count: jest.fn()
   };
 
   const mockCacheService = {
@@ -28,7 +28,7 @@ describe('InventoryService', () => {
     set: jest.fn(),
     del: jest.fn(),
     getOrSet: jest.fn(),
-    invalidateEntity: jest.fn(),
+    invalidateEntity: jest.fn()
   };
 
   const mockUser = createMockUser();
@@ -39,23 +39,23 @@ describe('InventoryService', () => {
         InventoryService,
         {
           provide: getRepositoryToken(Inventory),
-          useValue: mockInventoryRepository,
-        },
+          useValue: mockInventoryRepository
+  },
         {
           provide: CacheService,
-          useValue: mockCacheService,
-        },
+          useValue: mockCacheService
+  },
         {
           provide: PermissionService,
           useValue: {
             canRead: jest.fn().mockReturnValue(true),
             canWrite: jest.fn().mockReturnValue(true),
             canDelete: jest.fn().mockReturnValue(true),
-            buildSecureQuery: jest.fn((user, baseWhere) => ({ ...baseWhere, tenantId: user.tenantId })),
-          },
-        },
-      ],
-    }).compile();
+            buildSecureQuery: jest.fn((user, baseWhere) => ({ ...baseWhere, tenantId: user.tenantId }))
+  }
+  },
+      ]
+  }).compile();
 
     service = module.get<InventoryService>(InventoryService);
   });
@@ -70,8 +70,8 @@ describe('InventoryService', () => {
         productId: 'prod-1',
         warehouseId: 'wh-1',
         quantity: 100,
-        unitCost: 10,
-      };
+        unitCost: 10
+  };
       mockInventoryRepository.findOne.mockResolvedValue(null);
       mockInventoryRepository.create.mockReturnValue(inventoryData);
       mockInventoryRepository.save.mockResolvedValue(inventoryData);
@@ -181,8 +181,8 @@ describe('InventoryService', () => {
         id: '1',
         quantity: 100,
         unitCost: 10,
-        reservedQuantity: 0,
-      };
+        reservedQuantity: 0
+  };
       const updateDto = { quantity: 150, unitCost: 12 };
       mockCacheService.getOrSet.mockResolvedValue(mockInventory);
       mockInventoryRepository.save.mockResolvedValue({ ...mockInventory, ...updateDto });
@@ -201,8 +201,8 @@ describe('InventoryService', () => {
         quantity: 100,
         availableQuantity: 100,
         reservedQuantity: 0,
-        unitCost: 10,
-      };
+        unitCost: 10
+  };
       mockCacheService.getOrSet.mockResolvedValue(mockInventory);
       mockInventoryRepository.save.mockResolvedValue({ ...mockInventory, quantity: 150 });
 
@@ -231,14 +231,14 @@ describe('InventoryService', () => {
         id: '1',
         quantity: 100,
         availableQuantity: 100,
-        reservedQuantity: 0,
-      };
+        reservedQuantity: 0
+  };
       mockCacheService.getOrSet.mockResolvedValue(mockInventory);
       mockInventoryRepository.save.mockResolvedValue({
         ...mockInventory,
         reservedQuantity: 20,
-        availableQuantity: 80,
-      });
+        availableQuantity: 80
+  });
 
       const result = await service.reserve(mockUser, '1', 20);
 
@@ -270,14 +270,14 @@ describe('InventoryService', () => {
         id: '1',
         quantity: 100,
         availableQuantity: 80,
-        reservedQuantity: 20,
-      };
+        reservedQuantity: 20
+  };
       mockCacheService.getOrSet.mockResolvedValue(mockInventory);
       mockInventoryRepository.save.mockResolvedValue({
         ...mockInventory,
         reservedQuantity: 10,
-        availableQuantity: 90,
-      });
+        availableQuantity: 90
+  });
 
       const result = await service.release(mockUser, '1', 10);
 
@@ -309,14 +309,14 @@ describe('InventoryService', () => {
         id: '1',
         quantity: 100,
         reservedQuantity: 20,
-        unitCost: 10,
-      };
+        unitCost: 10
+  };
       mockCacheService.getOrSet.mockResolvedValue(mockInventory);
       mockInventoryRepository.save.mockResolvedValue({
         ...mockInventory,
         quantity: 80,
-        reservedQuantity: 0,
-      });
+        reservedQuantity: 0
+  });
 
       const result = await service.fulfillReservation(mockUser, '1', 20);
 
@@ -396,14 +396,14 @@ describe('InventoryService', () => {
         id: '1',
         quantity: 100,
         reservedQuantity: 0,
-        unitCost: 10,
-      };
+        unitCost: 10
+  };
       mockCacheService.getOrSet.mockResolvedValue(mockInventory);
       mockInventoryRepository.save.mockResolvedValue({
         ...mockInventory,
         quantity: 95,
-        notes: 'Stock count adjustment: -5',
-      });
+        notes: 'Stock count adjustment: -5'
+  });
 
       const result = await service.updateStockCount(mockUser, '1', 95);
 

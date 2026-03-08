@@ -1,35 +1,25 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Put,
-  Delete,
-  Body,
-  Param,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { SupportService } from './support.service';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { RolesGuard } from '../../common/guards/roles.guard';
 import { JwtAuthGuard } from '../../core/auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../../core/auth/guards/roles.guard';
-import { Roles } from '../../core/auth/decorators/roles.decorator';
-import { CurrentUser } from '../../core/auth/decorators/current-user.decorator';
 import { User } from '../../core/user/entities/user.entity';
-import { CreateTicketDto } from './dto/create-ticket.dto';
-import { UpdateTicketDto } from './dto/update-ticket.dto';
-import { CreateSLADto } from './dto/create-sla.dto';
-import { UpdateSLADto } from './dto/update-sla.dto';
-import { CreateAssignmentRuleDto } from './dto/create-assignment-rule.dto';
-import { UpdateAssignmentRuleDto } from './dto/update-assignment-rule.dto';
-import { CreateKnowledgeBaseArticleDto } from './dto/create-knowledge-base-article.dto';
-import { UpdateKnowledgeBaseArticleDto } from './dto/update-knowledge-base-article.dto';
-import { CreateCannedResponseDto } from './dto/create-canned-response.dto';
-import { UpdateCannedResponseDto } from './dto/update-canned-response.dto';
-import { RateTicketDto } from './dto/rate-ticket.dto';
 import { IssueStatus } from '../issue-tracking/entities/issue.entity';
-import { TicketChannel } from './entities/ticket.entity';
+import { CreateAssignmentRuleDto } from './dto/create-assignment-rule.dto';
+import { CreateCannedResponseDto } from './dto/create-canned-response.dto';
+import { CreateKnowledgeBaseArticleDto } from './dto/create-knowledge-base-article.dto';
+import { CreateSLADto } from './dto/create-sla.dto';
+import { CreateTicketDto } from './dto/create-ticket.dto';
+import { RateTicketDto } from './dto/rate-ticket.dto';
+import { UpdateAssignmentRuleDto } from './dto/update-assignment-rule.dto';
+import { UpdateCannedResponseDto } from './dto/update-canned-response.dto';
+import { UpdateKnowledgeBaseArticleDto } from './dto/update-knowledge-base-article.dto';
+import { UpdateSLADto } from './dto/update-sla.dto';
+import { UpdateTicketDto } from './dto/update-ticket.dto';
 import { ArticleStatus } from './entities/knowledge-base-article.entity';
+import { TicketChannel } from './entities/ticket.entity';
+import { SupportService } from './support.service';
 
 @ApiTags('Support & Helpdesk')
 @ApiBearerAuth()
@@ -147,7 +137,10 @@ export class SupportController {
   @Post('assignment-rules')
   @Roles('support_manager', 'manager', 'admin')
   @ApiOperation({ summary: 'Create a new assignment rule' })
-  async createAssignmentRule(@CurrentUser() user: User, @Body() createDto: CreateAssignmentRuleDto) {
+  async createAssignmentRule(
+    @CurrentUser() user: User,
+    @Body() createDto: CreateAssignmentRuleDto,
+  ) {
     return await this.supportService.createAssignmentRule(user, createDto);
   }
 
@@ -248,7 +241,10 @@ export class SupportController {
   @Post('canned-responses')
   @Roles('support_agent', 'support_manager', 'manager', 'admin')
   @ApiOperation({ summary: 'Create a new canned response' })
-  async createCannedResponse(@CurrentUser() user: User, @Body() createDto: CreateCannedResponseDto) {
+  async createCannedResponse(
+    @CurrentUser() user: User,
+    @Body() createDto: CreateCannedResponseDto,
+  ) {
     return await this.supportService.createCannedResponse(user, createDto);
   }
 

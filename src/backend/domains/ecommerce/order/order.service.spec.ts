@@ -11,15 +11,21 @@ describe('OrderService', () => {
   let orderRepository: Repository<Order>;
 
   const mockOrderRepository = {
+    remove: jest.fn().mockResolvedValue(undefined),
+    count: jest.fn().mockResolvedValue(0),
     create: jest.fn(),
     save: jest.fn(),
     findOne: jest.fn(),
-    find: jest.fn(),
-    createQueryBuilder: jest.fn(),
+    find: jest.fn()
   };
 
   const mockOrderItemRepository = {
-    create: jest.fn(),
+    find: jest.fn().mockResolvedValue([]),
+    findOne: jest.fn().mockResolvedValue(null),
+    save: jest.fn((data) => Promise.resolve({ id: '1', ...data })),
+    remove: jest.fn().mockResolvedValue(undefined),
+    count: jest.fn().mockResolvedValue(0),
+    create: jest.fn()
   };
 
   beforeEach(async () => {
@@ -28,14 +34,14 @@ describe('OrderService', () => {
         OrderService,
         {
           provide: getRepositoryToken(Order),
-          useValue: mockOrderRepository,
-        },
+          useValue: mockOrderRepository
+  },
         {
           provide: getRepositoryToken(OrderItem),
-          useValue: mockOrderItemRepository,
-        },
-      ],
-    }).compile();
+          useValue: mockOrderItemRepository
+  },
+      ]
+  }).compile();
 
     service = module.get<OrderService>(OrderService);
     orderRepository = module.get(getRepositoryToken(Order));
@@ -55,11 +61,11 @@ describe('OrderService', () => {
             productName: 'Product 1',
             productSku: 'SKU-001',
             price: 50,
-            quantity: 2,
-          },
+            quantity: 2
+  },
         ],
-        shippingAddress: { city: 'HCMC' },
-      };
+        shippingAddress: { city: 'HCMC' }
+  };
 
       const mockOrder = { id: 'order-1', ...dto };
 
@@ -126,13 +132,13 @@ describe('OrderService', () => {
       const mockOrder = {
         id: 'order-1',
         status: OrderStatus.PENDING,
-        paymentStatus: PaymentStatus.PENDING,
-      };
+        paymentStatus: PaymentStatus.PENDING
+  };
 
       const dto = {
         status: OrderStatus.CONFIRMED,
-        paymentStatus: PaymentStatus.PAID,
-      };
+        paymentStatus: PaymentStatus.PAID
+  };
 
       mockOrderRepository.findOne.mockResolvedValue(mockOrder);
       mockOrderRepository.save.mockResolvedValue({ ...mockOrder, ...dto });
@@ -149,16 +155,16 @@ describe('OrderService', () => {
       const mockOrder = {
         id: 'order-1',
         status: OrderStatus.PENDING,
-        canBeCancelled: true,
-      };
+        canBeCancelled: true
+  };
 
       const dto = { reason: 'Customer request' };
 
       mockOrderRepository.findOne.mockResolvedValue(mockOrder);
       mockOrderRepository.save.mockResolvedValue({
         ...mockOrder,
-        status: OrderStatus.CANCELLED,
-      });
+        status: OrderStatus.CANCELLED
+  });
 
       const result = await service.cancel('order-1', dto, 'tenant1', { id: 'user-1' } as any);
 
@@ -169,8 +175,8 @@ describe('OrderService', () => {
       const mockOrder = {
         id: 'order-1',
         status: OrderStatus.DELIVERED,
-        canBeCancelled: false,
-      };
+        canBeCancelled: false
+  };
 
       mockOrderRepository.findOne.mockResolvedValue(mockOrder);
 
@@ -184,19 +190,19 @@ describe('OrderService', () => {
     it('should refund order successfully', async () => {
       const mockOrder = {
         id: 'order-1',
-        paymentStatus: PaymentStatus.PAID,
-      };
+        paymentStatus: PaymentStatus.PAID
+  };
 
       mockOrderRepository.findOne.mockResolvedValue(mockOrder);
       mockOrderRepository.save.mockResolvedValue({
         ...mockOrder,
         status: OrderStatus.REFUNDED,
-        paymentStatus: PaymentStatus.REFUNDED,
-      });
+        paymentStatus: PaymentStatus.REFUNDED
+  });
 
       const result = await service.refund('order-1', 'Defective product', 'tenant1', {
-        id: 'user-1',
-      } as any);
+        id: 'user-1'
+  } as any);
 
       expect(result.status).toBe(OrderStatus.REFUNDED);
       expect(result.paymentStatus).toBe(PaymentStatus.REFUNDED);
@@ -205,8 +211,8 @@ describe('OrderService', () => {
     it('should throw BadRequestException if order not paid', async () => {
       const mockOrder = {
         id: 'order-1',
-        paymentStatus: PaymentStatus.PENDING,
-      };
+        paymentStatus: PaymentStatus.PENDING
+  };
 
       mockOrderRepository.findOne.mockResolvedValue(mockOrder);
 
@@ -223,12 +229,6 @@ describe('OrderService', () => {
         { status: OrderStatus.DELIVERED, total: 200 },
         { status: OrderStatus.DELIVERED, total: 150 },
       ];
-
-      const mockQueryBuilder = {
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        getMany: jest.fn().mockResolvedValue(mockOrders),
-      };
 
       mockOrderRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
 

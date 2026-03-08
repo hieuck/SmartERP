@@ -1,16 +1,23 @@
+import { PermissionService, User as UserContext } from '@/common/security/permission.service';
+import { SecureRepository } from '@/common/security/secure-repository';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { UserService } from './user.service';
-import { User } from './entities/user.entity';
-import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
-import { createMockUser } from '@/common/test/test-helpers';
+import { UpdateProfileDto } from './dto/update-profile.dto';
+import { User } from './entities/user.entity';
+import { UserService } from './user.service';
 
 describe('UserService', () => {
   let service: UserService;
+  let secureUserRepo: SecureRepository<User>;
+
+  const mockUserContext: UserContext = {
+    id: 'user-123',
+    tenantId: 'tenant-123',
+    roles: ['user'],
+  };
 
   const mockUser: User = {
     id: 'user-123',
@@ -36,6 +43,19 @@ describe('UserService', () => {
   const mockRepository = {
     findOne: jest.fn(),
     save: jest.fn(),
+    metadata: {
+      tableName: 'users',
+      name: 'User',
+      columns: [],
+      relations: [],
+    },
+  };
+
+  const mockPermissionService = {
+    canRead: jest.fn().mockResolvedValue(true),
+    canWrite: jest.fn().mockResolvedValue(true),
+    canDelete: jest.fn().mockResolvedValue(true),
+    buildSecureQuery: jest.fn((user, qb) => qb),
   };
 
   beforeEach(async () => {
@@ -46,14 +66,19 @@ describe('UserService', () => {
           provide: getRepositoryToken(User),
           useValue: mockRepository,
         },
+        {
+          provide: PermissionService,
+          useValue: mockPermissionService,
+        },
       ],
     }).compile();
 
     service = module.get<UserService>(UserService);
+    secureUserRepo = (service as any).secureUserRepo;
 
     // Reset mocks before each test
     jest.clearAllMocks();
-    
+
     // Reset mockUser to original state
     Object.assign(mockUser, {
       id: 'user-123',
@@ -82,25 +107,29 @@ describe('UserService', () => {
 
   describe('getProfile', () => {
     it('should return user profile without password', async () => {
-      mockRepository.findOne.mockResolvedValue(mockUser);
+      jest.spyOn(secureUserRepo, 'findOne').mockResolvedValue(mockUser);
 
-      const result = await service.getProfile('user-123');
+      const result = await service.getProfile(mockUserContext, 'user-123');
 
       expect(result).toBeDefined();
       expect(result).not.toHaveProperty('password');
       expect(result.email).toBe('test@example.com');
       expect(result.firstName).toBe('John');
       expect(result.lastName).toBe('Doe');
-      expect(mockRepository.findOne).toHaveBeenCalledWith({
+      expect(secureUserRepo.findOne).toHaveBeenCalledWith(mockUserContext, {
         where: { id: 'user-123', status: 'active' },
       });
     });
 
     it('should throw NotFoundException if user not found', async () => {
-      mockRepository.findOne.mockResolvedValue(null);
+      jest.spyOn(secureUserRepo, 'findOne').mockResolvedValue(null);
 
-      await expect(service.getProfile('non-existent')).rejects.toThrow(NotFoundException);
-      await expect(service.getProfile('non-existent')).rejects.toThrow('User not found');
+      await expect(service.getProfile(mockUserContext, 'non-existent')).rejects.toThrow(
+        NotFoundException,
+      );
+      await expect(service.getProfile(mockUserContext, 'non-existent')).rejects.toThrow(
+        'User not found',
+      );
     });
   });
 
@@ -120,10 +149,10 @@ describe('UserService', () => {
         avatar: 'https://example.com/avatar.jpg',
       };
 
-      mockRepository.findOne.mockResolvedValue(mockUser);
-      mockRepository.save.mockResolvedValue(updatedUser);
+      jest.spyOn(secureUserRepo, 'findOne').mockResolvedValue(mockUser);
+      jest.spyOn(secureUserRepo, 'save').mockResolvedValue(updatedUser);
 
-      const result = await service.updateProfile('user-123', updateDto);
+      const result = await service.updateProfile(mockUserContext, 'user-123', updateDto);
 
       expect(result).toBeDefined();
       expect(result).not.toHaveProperty('password');
@@ -131,7 +160,7 @@ describe('UserService', () => {
       expect(result.lastName).toBe('Smith');
       expect(result.phone).toBe('0987654321');
       expect(result.avatar).toBe('https://example.com/avatar.jpg');
-      expect(mockRepository.save).toHaveBeenCalled();
+      expect(secureUserRepo.save).toHaveBeenCalled();
     });
 
     it('should update only provided fields', async () => {
@@ -144,15 +173,16 @@ describe('UserService', () => {
         phone: '0999999999',
       };
 
-      mockRepository.findOne.mockResolvedValue(mockUser);
-      mockRepository.save.mockResolvedValue(updatedUser);
+      jest.spyOn(secureUserRepo, 'findOne').mockResolvedValue(mockUser);
+      jest.spyOn(secureUserRepo, 'save').mockResolvedValue(updatedUser);
 
-      const result = await service.updateProfile('user-123', updateDto);
+      const result = await service.updateProfile(mockUserContext, 'user-123', updateDto);
 
       expect(result.phone).toBe('0999999999');
       expect(result.firstName).toBe('John');
       expect(result.lastName).toBe('Doe');
-      expect(mockRepository.save).toHaveBeenCalledWith(
+      expect(secureUserRepo.save).toHaveBeenCalledWith(
+        mockUserContext,
         expect.objectContaining({
           phone: '0999999999',
           firstName: 'John',
@@ -162,13 +192,15 @@ describe('UserService', () => {
     });
 
     it('should throw NotFoundException if user not found', async () => {
-      mockRepository.findOne.mockResolvedValue(null);
+      jest.spyOn(secureUserRepo, 'findOne').mockResolvedValue(null);
 
       const updateDto: UpdateProfileDto = {
         fullName: 'Jane Smith',
       };
 
-      await expect(service.updateProfile('non-existent', updateDto)).rejects.toThrow(NotFoundException);
+      await expect(
+        service.updateProfile(mockUserContext, 'non-existent', updateDto),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -180,17 +212,19 @@ describe('UserService', () => {
         confirmPassword: 'newPassword456',
       };
 
-      mockRepository.findOne.mockResolvedValue(mockUser);
-      mockRepository.save.mockResolvedValue(mockUser);
+      jest.spyOn(secureUserRepo, 'findOne').mockResolvedValue(mockUser);
+      jest.spyOn(secureUserRepo, 'save').mockResolvedValue(mockUser);
 
       jest.spyOn(bcrypt, 'compare').mockImplementation(() => Promise.resolve(true));
-      jest.spyOn(bcrypt, 'hash').mockImplementation(() => Promise.resolve('$2b$12$newhashedpassword'));
+      jest
+        .spyOn(bcrypt, 'hash')
+        .mockImplementation(() => Promise.resolve('$2b$12$newhashedpassword'));
 
-      const result = await service.changePassword('user-123', changePasswordDto);
+      const result = await service.changePassword(mockUserContext, 'user-123', changePasswordDto);
 
       expect(result.success).toBe(true);
       expect(result.message).toBe('Password changed successfully');
-      expect(mockRepository.save).toHaveBeenCalled();
+      expect(secureUserRepo.save).toHaveBeenCalled();
     });
 
     it('should throw BadRequestException if passwords do not match', async () => {
@@ -200,10 +234,12 @@ describe('UserService', () => {
         confirmPassword: 'differentPassword',
       };
 
-      await expect(service.changePassword('user-123', changePasswordDto)).rejects.toThrow(BadRequestException);
-      await expect(service.changePassword('user-123', changePasswordDto)).rejects.toThrow(
-        'New password and confirmation do not match',
-      );
+      await expect(
+        service.changePassword(mockUserContext, 'user-123', changePasswordDto),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.changePassword(mockUserContext, 'user-123', changePasswordDto),
+      ).rejects.toThrow('New password and confirmation do not match');
     });
 
     it('should throw NotFoundException if user not found', async () => {
@@ -213,9 +249,11 @@ describe('UserService', () => {
         confirmPassword: 'newPassword456',
       };
 
-      mockRepository.findOne.mockResolvedValue(null);
+      jest.spyOn(secureUserRepo, 'findOne').mockResolvedValue(null);
 
-      await expect(service.changePassword('non-existent', changePasswordDto)).rejects.toThrow(NotFoundException);
+      await expect(
+        service.changePassword(mockUserContext, 'non-existent', changePasswordDto),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('should throw BadRequestException if current password is incorrect', async () => {
@@ -225,13 +263,15 @@ describe('UserService', () => {
         confirmPassword: 'newPassword456',
       };
 
-      mockRepository.findOne.mockResolvedValue(mockUser);
+      jest.spyOn(secureUserRepo, 'findOne').mockResolvedValue(mockUser);
       jest.spyOn(bcrypt, 'compare').mockImplementation(() => Promise.resolve(false));
 
-      await expect(service.changePassword('user-123', changePasswordDto)).rejects.toThrow(BadRequestException);
-      await expect(service.changePassword('user-123', changePasswordDto)).rejects.toThrow(
-        'Current password is incorrect',
-      );
+      await expect(
+        service.changePassword(mockUserContext, 'user-123', changePasswordDto),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.changePassword(mockUserContext, 'user-123', changePasswordDto),
+      ).rejects.toThrow('Current password is incorrect');
     });
   });
 });

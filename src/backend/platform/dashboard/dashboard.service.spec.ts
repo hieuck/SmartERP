@@ -19,51 +19,52 @@ describe('DashboardService', () => {
   let productRepository: Repository<Product>;
   let customerRepository: Repository<Customer>;
 
-  const mockQueryBuilder = {
-    select: jest.fn().mockReturnThis(),
-    addSelect: jest.fn().mockReturnThis(),
-    leftJoin: jest.fn().mockReturnThis(),
-    where: jest.fn().mockReturnThis(),
-    andWhere: jest.fn().mockReturnThis(),
-    groupBy: jest.fn().mockReturnThis(),
-    addGroupBy: jest.fn().mockReturnThis(),
-    orderBy: jest.fn().mockReturnThis(),
-    limit: jest.fn().mockReturnThis(),
-    take: jest.fn().mockReturnThis(),
-    getRawOne: jest.fn(),
-    getRawMany: jest.fn(),
-    getMany: jest.fn(),
-    getCount: jest.fn(),
-  };
-
   const mockOrderRepository = {
-    createQueryBuilder: jest.fn(() => mockQueryBuilder),
+    remove: jest.fn().mockResolvedValue(undefined),
+    save: jest.fn((data) => Promise.resolve({ id: \'1\', ...data })),
+    findOne: jest.fn().mockResolvedValue(null),
+    find: jest.fn().mockResolvedValue([]),
     count: jest.fn(),
   };
 
   const mockProductRepository = {
-    createQueryBuilder: jest.fn(() => mockQueryBuilder),
+    remove: jest.fn().mockResolvedValue(undefined),
+    save: jest.fn((data) => Promise.resolve({ id: \'1\', ...data })),
+    findOne: jest.fn().mockResolvedValue(null),
+    find: jest.fn().mockResolvedValue([]),
     count: jest.fn(),
   };
 
   const mockCustomerRepository = {
-    createQueryBuilder: jest.fn(() => mockQueryBuilder),
+    remove: jest.fn().mockResolvedValue(undefined),
+    save: jest.fn((data) => Promise.resolve({ id: \'1\', ...data })),
+    findOne: jest.fn().mockResolvedValue(null),
+    find: jest.fn().mockResolvedValue([]),
     count: jest.fn(),
   };
 
   const mockInventoryRepository = {
-    createQueryBuilder: jest.fn(() => mockQueryBuilder),
+    remove: jest.fn().mockResolvedValue(undefined),
+    save: jest.fn((data) => Promise.resolve({ id: \'1\', ...data })),
+    findOne: jest.fn().mockResolvedValue(null),
+    find: jest.fn().mockResolvedValue([]),
     count: jest.fn(),
   };
 
   const mockPaymentRepository = {
-    createQueryBuilder: jest.fn(() => mockQueryBuilder),
+    remove: jest.fn().mockResolvedValue(undefined),
+    save: jest.fn((data) => Promise.resolve({ id: \'1\', ...data })),
+    findOne: jest.fn().mockResolvedValue(null),
+    find: jest.fn().mockResolvedValue([]),
     count: jest.fn(),
   };
 
   const mockCategoryRepository = {
-    createQueryBuilder: jest.fn(() => mockQueryBuilder),
-  };
+    remove: jest.fn().mockResolvedValue(undefined),
+    save: jest.fn((data) => Promise.resolve({ id: \'1\', ...data })),
+    findOne: jest.fn().mockResolvedValue(null),
+    find: jest.fn().mockResolvedValue([]),
+    };
 
   const mockCacheService = {
     getOrSet: jest.fn((key, callback) => callback()),
@@ -169,7 +170,7 @@ describe('DashboardService', () => {
   describe('getTopProducts', () => {
     it('should return top 10 selling products', async () => {
       const tenantId = 'tenant-123';
-      mockQueryBuilder.getMany.mockResolvedValue([
+      mockRepository.find.mockResolvedValue([
         { id: '1', name: 'Product A' },
       ]);
 
@@ -212,7 +213,7 @@ describe('DashboardService', () => {
   describe('getRecentOrders', () => {
     it('should return 5 recent orders', async () => {
       const tenantId = 'tenant-123';
-      mockQueryBuilder.getMany.mockResolvedValue([
+      mockRepository.find.mockResolvedValue([
         { 
           id: '1', 
           orderNumber: 'ORD-001', 
@@ -234,7 +235,7 @@ describe('DashboardService', () => {
   describe('getLowStockProducts', () => {
     it('should return low stock products', async () => {
       const tenantId = 'tenant-123';
-      mockQueryBuilder.getMany.mockResolvedValue([
+      mockRepository.find.mockResolvedValue([
         { 
           id: '1', 
           quantity: 5, 

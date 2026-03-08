@@ -13,7 +13,7 @@ import { createMockUser } from '@/common/test/test-helpers';
 const mockUser = {
     id: 'user1',
     tenantId: 'tenant1',
-    roles: ['admin'],
+    roles: ['admin']
   };
 
   describe('HrService', () => {
@@ -33,7 +33,7 @@ const mockUser = {
     department: 'Engineering',
     position: 'Software Engineer',
     status: EmploymentStatus.ACTIVE,
-    hireDate: new Date('2024-01-01'),
+    hireDate: new Date('2024-01-01')
   };
 
   const mockAttendance: Partial<Attendance> = {
@@ -43,7 +43,7 @@ const mockUser = {
     date: new Date('2024-03-01'),
     status: AttendanceStatus.PRESENT,
     checkIn: '09:00:00',
-    checkOut: '18:00:00',
+    checkOut: '18:00:00'
   };
 
   const mockLeave: Partial<Leave> = {
@@ -55,15 +55,7 @@ const mockUser = {
     endDate: new Date('2024-03-17'),
     days: 3,
     status: LeaveStatus.PENDING,
-    reason: 'Vacation',
-  };
-
-  const mockQueryBuilder = {
-    select: jest.fn().mockReturnThis(),
-    where: jest.fn().mockReturnThis(),
-    andWhere: jest.fn().mockReturnThis(),
-    orderBy: jest.fn().mockReturnThis(),
-    getMany: jest.fn(),
+    reason: 'Vacation'
   };
 
   beforeEach(async () => {
@@ -79,9 +71,9 @@ const mockUser = {
             create: jest.fn(),
             save: jest.fn(),
             softDelete: jest.fn(),
-            createQueryBuilder: jest.fn(() => mockQueryBuilder),
-          },
-        },
+            => mockQueryBuilder)
+  }
+  },
         {
           provide: getRepositoryToken(Attendance),
           useValue: {
@@ -90,9 +82,9 @@ const mockUser = {
             create: jest.fn(),
             save: jest.fn(),
             delete: jest.fn(),
-            createQueryBuilder: jest.fn(() => mockQueryBuilder),
-          },
-        },
+            => mockQueryBuilder)
+  }
+  },
         {
           provide: getRepositoryToken(Leave),
           useValue: {
@@ -101,27 +93,27 @@ const mockUser = {
             create: jest.fn(),
             save: jest.fn(),
             delete: jest.fn(),
-            createQueryBuilder: jest.fn(() => mockQueryBuilder),
-          },
-        },
+            => mockQueryBuilder)
+  }
+  },
         {
           provide: CacheService,
           useValue: {
             getOrSet: jest.fn(),
-            del: jest.fn(),
-          },
-        },
+            del: jest.fn()
+  }
+  },
         {
           provide: PermissionService,
           useValue: {
             canRead: jest.fn().mockReturnValue(true),
             canWrite: jest.fn().mockReturnValue(true),
             canDelete: jest.fn().mockReturnValue(true),
-            buildSecureQuery: jest.fn((user, baseWhere) => ({ ...baseWhere, tenantId: user.tenantId })),
-          },
-        },
-      ],
-    }).compile();
+            buildSecureQuery: jest.fn((user, baseWhere) => ({ ...baseWhere, tenantId: user.tenantId }))
+  }
+  },
+      ]
+  }).compile();
 
     service = module.get<HrService>(HrService);
     employeeRepository = module.get<Repository<Employee>>(getRepositoryToken(Employee));
@@ -206,8 +198,8 @@ const mockUser = {
       const result = await service.createEmployee(mockUser, {
         firstName: 'John',
         lastName: 'Doe',
-        email: 'john.doe@example.com',
-      });
+        email: 'john.doe@example.com'
+  });
 
       expect(result).toEqual(mockEmployee);
     });
@@ -343,8 +335,8 @@ const mockUser = {
       const result = await service.createAttendance(mockUser, {
         employeeId: 'employee-1',
         date: new Date('2024-03-01'),
-        status: AttendanceStatus.PRESENT,
-      });
+        status: AttendanceStatus.PRESENT
+  });
 
       expect(result).toEqual(mockAttendance);
     });
@@ -399,8 +391,8 @@ const mockUser = {
         absent: 1,
         late: 1,
         halfDay: 1,
-        attendanceRate: 40,
-      });
+        attendanceRate: 40
+  });
     });
 
     it('should return 0 attendance rate when no records', async () => {
@@ -473,8 +465,8 @@ const mockUser = {
         type: LeaveType.ANNUAL,
         startDate: new Date('2024-03-15'),
         endDate: new Date('2024-03-17'),
-        days: 3,
-      });
+        days: 3
+  });
 
       expect(result).toEqual(mockLeave);
       
@@ -488,8 +480,8 @@ const mockUser = {
         employeeId: 'employee-1',
         type: LeaveType.ANNUAL,
         startDate: new Date('2024-03-15'),
-        endDate: new Date('2024-03-17'),
-      });
+        endDate: new Date('2024-03-17')
+  });
 
       expect(result.days).toBe(3);
     });
@@ -526,8 +518,8 @@ const mockUser = {
       jest.spyOn(service['secureLeaveRepo'], 'save').mockResolvedValue({
         ...mockLeave,
         status: LeaveStatus.APPROVED,
-        approvedBy: 'manager-1',
-      } as Leave);
+        approvedBy: 'manager-1'
+  } as Leave);
       jest.spyOn(cacheService, 'del').mockResolvedValue(undefined);
 
       const result = await service.approveLeave(mockUser, 'leave-1', 'manager-1');
@@ -551,8 +543,8 @@ const mockUser = {
       jest.spyOn(cacheService, 'getOrSet').mockResolvedValue(pendingLeave as Leave);
       jest.spyOn(service['secureLeaveRepo'], 'save').mockResolvedValue({
         ...pendingLeave,
-        status: LeaveStatus.REJECTED,
-      } as Leave);
+        status: LeaveStatus.REJECTED
+  } as Leave);
       jest.spyOn(cacheService, 'del').mockResolvedValue(undefined);
 
       const result = await service.rejectLeave(mockUser, 'leave-1');
@@ -583,8 +575,8 @@ const mockUser = {
         year: 2024,
         totalDaysTaken: 5,
         annualLeaveAllowance: 12,
-        remainingDays: 7,
-      });
+        remainingDays: 7
+  });
     });
 
     it('should only count approved leaves in year range', async () => {

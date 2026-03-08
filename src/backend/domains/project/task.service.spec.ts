@@ -18,13 +18,13 @@ describe('TaskService', () => {
   const mockUser: User = {
     id: 'user-1',
     tenantId: 'tenant-1',
-    email: 'test@example.com',
+    email: 'test@example.com'
   } as User;
 
   const mockProject: Project = {
     id: 'project-1',
     tenantId: 'tenant-1',
-    code: 'PRJ-2026-0001',
+    code: 'PRJ-2026-0001'
   } as Project;
 
   const mockTask: Task = {
@@ -36,28 +36,34 @@ describe('TaskService', () => {
     priority: TaskPriority.HIGH,
     projectId: 'project-1',
     progress: 0,
-    actualHours: 0,
+    actualHours: 0
   } as Task;
 
   const mockTaskRepository = {
+    remove: jest.fn().mockResolvedValue(undefined),
+    count: jest.fn().mockResolvedValue(0),
     create: jest.fn(),
     save: jest.fn(),
     findOne: jest.fn(),
     find: jest.fn(),
-    update: jest.fn(),
-    createQueryBuilder: jest.fn(),
+    update: jest.fn()
   };
 
   const mockDependencyRepository = {
+    count: jest.fn().mockResolvedValue(0),
     create: jest.fn(),
     save: jest.fn(),
     findOne: jest.fn(),
     find: jest.fn(),
-    remove: jest.fn(),
+    remove: jest.fn()
   };
 
   const mockProjectRepository = {
-    findOne: jest.fn(),
+    find: jest.fn().mockResolvedValue([]),
+    save: jest.fn((data) => Promise.resolve({ id: '1', ...data })),
+    remove: jest.fn().mockResolvedValue(undefined),
+    count: jest.fn().mockResolvedValue(0),
+    findOne: jest.fn()
   };
 
   const mockUser = createMockUser();
@@ -68,18 +74,18 @@ describe('TaskService', () => {
         TaskService,
         {
           provide: getRepositoryToken(Task),
-          useValue: mockTaskRepository,
-        },
+          useValue: mockTaskRepository
+  },
         {
           provide: getRepositoryToken(TaskDependency),
-          useValue: mockDependencyRepository,
-        },
+          useValue: mockDependencyRepository
+  },
         {
           provide: getRepositoryToken(Project),
-          useValue: mockProjectRepository,
-        },
-      ],
-    }).compile();
+          useValue: mockProjectRepository
+  },
+      ]
+  }).compile();
 
     service = module.get<TaskService>(TaskService);
     taskRepository = module.get<Repository<Task>>(getRepositoryToken(Task));
@@ -96,8 +102,8 @@ describe('TaskService', () => {
       const dto = {
         title: 'New Task',
         projectId: 'project-1',
-        status: TaskStatus.TODO,
-      };
+        status: TaskStatus.TODO
+  };
 
       mockProjectRepository.findOne.mockResolvedValue(mockProject);
       mockTaskRepository.create.mockReturnValue({ ...dto, tenantId: 'tenant-1' });
@@ -141,8 +147,8 @@ describe('TaskService', () => {
         ...mockTask,
         status: TaskStatus.COMPLETED,
         completedDate: expect.any(Date),
-        progress: 100,
-      });
+        progress: 100
+  });
 
       const result = await service.updateStatus('task-1', TaskStatus.COMPLETED, mockUser, mockUser);
 
@@ -156,8 +162,8 @@ describe('TaskService', () => {
       const dto = {
         taskId: 'task-1',
         dependsOnTaskId: 'task-2',
-        type: DependencyType.FINISH_TO_START,
-      };
+        type: DependencyType.FINISH_TO_START
+  };
 
       const task1 = { ...mockTask, id: 'task-1' };
       const task2 = { ...mockTask, id: 'task-2' };
@@ -179,8 +185,8 @@ describe('TaskService', () => {
     it('should throw BadRequestException for self-dependency', async () => {
       const dto = {
         taskId: 'task-1',
-        dependsOnTaskId: 'task-1',
-      };
+        dependsOnTaskId: 'task-1'
+  };
 
       mockTaskRepository.findOne.mockResolvedValue(mockTask);
 
@@ -192,8 +198,8 @@ describe('TaskService', () => {
     it('should throw BadRequestException if dependency already exists', async () => {
       const dto = {
         taskId: 'task-1',
-        dependsOnTaskId: 'task-2',
-      };
+        dependsOnTaskId: 'task-2'
+  };
 
       mockTaskRepository.findOne.mockResolvedValue(mockTask);
       mockDependencyRepository.find.mockResolvedValue([]);
@@ -237,10 +243,10 @@ describe('TaskService', () => {
             {
               dependsOnTaskId: 'task-2',
               type: DependencyType.FINISH_TO_START,
-              lagDays: 0,
-            },
-          ],
-        },
+              lagDays: 0
+  },
+          ]
+  },
       ];
 
       mockTaskRepository.find.mockResolvedValue(tasks);

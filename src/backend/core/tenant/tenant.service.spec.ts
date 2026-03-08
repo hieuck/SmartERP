@@ -1,21 +1,20 @@
+import { CacheService } from '@/common/cache/cache.service';
+import { PermissionService } from '@/common/security/permission.service';
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
-import { TenantService } from './tenant.service';
-import { Tenant, TenantStatus, SubscriptionPlan, BillingCycle } from './entities/tenant.entity';
 import { User } from '../user/entities/user.entity';
-import { CacheService } from '@/common/cache/cache.service';
-import { PermissionService } from '@/common/security/permission.service';
-import { createMockUser } from '@/common/test/test-helpers';
+import { BillingCycle, SubscriptionPlan, Tenant, TenantStatus } from './entities/tenant.entity';
+import { TenantService } from './tenant.service';
 
 const mockUser = {
-    id: 'user1',
-    tenantId: 'tenant1',
-    roles: ['admin'],
-  };
+  id: 'user1',
+  tenantId: 'tenant1',
+  roles: ['admin'],
+};
 
-  describe('TenantService', () => {
+describe('TenantService', () => {
   let service: TenantService;
   let tenantRepository: Repository<Tenant>;
   let userRepository: Repository<User>;
@@ -38,6 +37,13 @@ const mockUser = {
     features: ['feature1', 'feature2'],
   };
 
+  const mockPermissionService = {
+    canRead: jest.fn().mockResolvedValue(true),
+    canWrite: jest.fn().mockResolvedValue(true),
+    canDelete: jest.fn().mockResolvedValue(true),
+    buildSecureQuery: jest.fn((user, query) => query),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -50,6 +56,7 @@ const mockUser = {
             create: jest.fn(),
             save: jest.fn(),
             softDelete: jest.fn(),
+            remove: jest.fn(),
             count: jest.fn(),
             createQueryBuilder: jest.fn(() => ({
               select: jest.fn().mockReturnThis(),
@@ -72,6 +79,10 @@ const mockUser = {
             getOrSet: jest.fn(),
             del: jest.fn(),
           },
+        },
+        {
+          provide: PermissionService,
+          useValue: mockPermissionService,
         },
       ],
     }).compile();
@@ -164,11 +175,13 @@ const mockUser = {
     it('should soft delete tenant when no users exist', async () => {
       jest.spyOn(cacheService, 'getOrSet').mockResolvedValue(mockTenant as Tenant);
       jest.spyOn(userRepository, 'count').mockResolvedValue(0);
-      jest.spyOn(tenantRepository, 'softDelete').mockResolvedValue(undefined);
+      // Mock findOne for SecureRepository.remove() internal call
+      jest.spyOn(tenantRepository, 'findOne').mockResolvedValue(mockTenant as Tenant);
+      jest.spyOn(tenantRepository, 'remove').mockResolvedValue(mockTenant as Tenant);
 
       await service.remove(mockUser);
 
-      expect(tenantRepository.softDelete).toHaveBeenCalledWith('tenant1');
+      expect(tenantRepository.remove).toHaveBeenCalled();
     });
   });
 

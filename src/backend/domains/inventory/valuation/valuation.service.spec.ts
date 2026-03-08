@@ -12,8 +12,7 @@ describe('ValuationService', () => {
   const mockRepository = {
     find: jest.fn(),
     save: jest.fn(),
-    create: jest.fn(),
-    createQueryBuilder: jest.fn(),
+    create: jest.fn()
   };
 
   beforeEach(async () => {
@@ -22,10 +21,10 @@ describe('ValuationService', () => {
         ValuationService,
         {
           provide: getRepositoryToken(StockValuation),
-          useValue: mockRepository,
-        },
-      ],
-    }).compile();
+          useValue: mockRepository
+  },
+      ]
+  }).compile();
 
     service = module.get<ValuationService>(ValuationService);
     repository = module.get<Repository<StockValuation>>(
@@ -45,8 +44,8 @@ describe('ValuationService', () => {
           quantity: 100,
           unitCost: 10,
           totalCost: 1000,
-          date: new Date('2026-01-01'),
-        },
+          date: new Date('2026-01-01')
+  },
       ];
 
       mockRepository.find.mockResolvedValue(valuations);
@@ -71,8 +70,8 @@ describe('ValuationService', () => {
           quantity: 30,
           unitCost: 10,
           totalCost: 300,
-          date: new Date('2026-01-01'),
-        },
+          date: new Date('2026-01-01')
+  },
         {
           id: '2',
           productId: 'prod1',
@@ -80,8 +79,8 @@ describe('ValuationService', () => {
           quantity: 50,
           unitCost: 12,
           totalCost: 600,
-          date: new Date('2026-01-02'),
-        },
+          date: new Date('2026-01-02')
+  },
       ];
 
       mockRepository.find.mockResolvedValue(valuations);
@@ -105,8 +104,8 @@ describe('ValuationService', () => {
           quantity: 30,
           unitCost: 10,
           totalCost: 300,
-          date: new Date('2026-01-01'),
-        },
+          date: new Date('2026-01-01')
+  },
       ];
 
       mockRepository.find.mockResolvedValue(valuations);
@@ -128,8 +127,8 @@ describe('ValuationService', () => {
           quantity: 20,
           unitCost: 15,
           totalCost: 300,
-          date: new Date('2026-01-03'),
-        },
+          date: new Date('2026-01-03')
+  },
         {
           id: '2',
           productId: 'prod1',
@@ -137,8 +136,8 @@ describe('ValuationService', () => {
           quantity: 20,
           unitCost: 10,
           totalCost: 200,
-          date: new Date('2026-01-01'),
-        },
+          date: new Date('2026-01-01')
+  },
       ];
 
       mockRepository.find.mockResolvedValue(valuations);
@@ -152,10 +151,10 @@ describe('ValuationService', () => {
         where: {
           productId: 'prod1',
           warehouseId: 'wh1',
-          quantity: MoreThan(0),
-        },
-        order: { date: 'ASC', createdAt: 'ASC' },
-      });
+          quantity: MoreThan(0)
+  },
+        order: { date: 'ASC', createdAt: 'ASC' }
+  });
     });
   });
 
@@ -168,15 +167,15 @@ describe('ValuationService', () => {
         unitCost: 10,
         referenceType: 'purchase',
         referenceId: 'po-001',
-        tenantId: 'tenant1',
-      };
+        tenantId: 'tenant1'
+  };
 
       const created = {
         id: '1',
         ...dto,
         totalCost: 1000,
-        date: expect.any(Date),
-      };
+        date: expect.any(Date)
+  };
 
       mockRepository.create.mockReturnValue(created);
       mockRepository.save.mockResolvedValue(created);
@@ -197,20 +196,16 @@ describe('ValuationService', () => {
           productId: 'prod1',
           quantity: 100,
           unitCost: 10,
-          totalCost: 1000,
-        }),
+          totalCost: 1000
+  }),
       );
     });
   });
 
   describe('getAverageCost', () => {
     it('should calculate average cost correctly', async () => {
-      const mockQueryBuilder = {
-        select: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        getRawOne: jest.fn().mockResolvedValue({ avgCost: 11.5 }),
-      };
+      )
+  };
 
       mockRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
 
@@ -224,13 +219,7 @@ describe('ValuationService', () => {
     });
 
     it('should return 0 when no valuations exist', async () => {
-      const mockQueryBuilder = {
-        select: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        getRawOne: jest.fn().mockResolvedValue(null),
-      };
-
+      
       mockRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
 
       const result = await service.getAverageCost('prod1', 'wh1');
@@ -250,8 +239,8 @@ describe('ValuationService', () => {
           unitCost: 10,
           totalCost: 500,
           date: new Date('2026-01-01'),
-          referenceType: 'purchase',
-        },
+          referenceType: 'purchase'
+  },
         {
           id: '2',
           productId: 'prod1',
@@ -260,8 +249,8 @@ describe('ValuationService', () => {
           unitCost: 12,
           totalCost: 360,
           date: new Date('2026-01-02'),
-          referenceType: 'purchase',
-        },
+          referenceType: 'purchase'
+  },
       ];
 
       mockRepository.find.mockResolvedValue(valuations);

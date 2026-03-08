@@ -18,7 +18,7 @@ describe('SystemAdminService', () => {
     id: 'user-123',
     tenantId: 'tenant-123',
     email: 'admin@test.com',
-    roles: ['admin'],
+    roles: ['admin']
   } as User;
 
   const mockSetting: SystemSetting = {
@@ -33,7 +33,7 @@ describe('SystemAdminService', () => {
     isEditable: true,
     createdAt: new Date(),
     updatedAt: new Date(),
-    updatedBy: 'user-123',
+    updatedBy: 'user-123'
   };
 
   const mockJob: BackgroundJob = {
@@ -55,7 +55,7 @@ describe('SystemAdminService', () => {
     durationMs: null,
     createdBy: 'user-123',
     createdAt: new Date(),
-    updatedAt: new Date(),
+    updatedAt: new Date()
   };
 
   const mockErrorLog: ErrorLog = {
@@ -75,7 +75,7 @@ describe('SystemAdminService', () => {
     resolvedBy: null,
     resolvedAt: null,
     resolution: null,
-    createdAt: new Date(),
+    createdAt: new Date()
   };
 
   beforeEach(async () => {
@@ -89,32 +89,29 @@ describe('SystemAdminService', () => {
             save: jest.fn(),
             findOne: jest.fn(),
             find: jest.fn(),
-            delete: jest.fn(),
-            createQueryBuilder: jest.fn(),
-          },
-        },
+            delete: jest.fn()
+  }
+  },
         {
           provide: getRepositoryToken(BackgroundJob),
           useValue: {
             create: jest.fn(),
             save: jest.fn(),
             findOne: jest.fn(),
-            find: jest.fn(),
-            createQueryBuilder: jest.fn(),
-          },
-        },
+            find: jest.fn()
+  }
+  },
         {
           provide: getRepositoryToken(ErrorLog),
           useValue: {
             create: jest.fn(),
             save: jest.fn(),
             findOne: jest.fn(),
-            find: jest.fn(),
-            createQueryBuilder: jest.fn(),
-          },
-        },
-      ],
-    }).compile();
+            find: jest.fn()
+  }
+  },
+      ]
+  }).compile();
 
     service = module.get<SystemAdminService>(SystemAdminService);
     settingRepository = module.get<Repository<SystemSetting>>(getRepositoryToken(SystemSetting));
@@ -133,8 +130,8 @@ describe('SystemAdminService', () => {
           key: 'smtp_host',
           value: 'smtp.gmail.com',
           type: SettingType.STRING,
-          category: SettingCategory.EMAIL,
-        };
+          category: SettingCategory.EMAIL
+  };
 
         jest.spyOn(settingRepository, 'findOne').mockResolvedValue(null);
         jest.spyOn(settingRepository, 'create').mockReturnValue(mockSetting as any);
@@ -144,8 +141,8 @@ describe('SystemAdminService', () => {
 
         expect(result).toEqual(mockSetting);
         expect(settingRepository.findOne).toHaveBeenCalledWith({
-          where: { tenantId: mockUser.tenantId, key: createDto.key },
-        });
+          where: { tenantId: mockUser.tenantId, key: createDto.key }
+  });
       });
 
       it('should throw ConflictException if key already exists', async () => {
@@ -153,8 +150,8 @@ describe('SystemAdminService', () => {
           key: 'smtp_host',
           value: 'smtp.gmail.com',
           type: SettingType.STRING,
-          category: SettingCategory.EMAIL,
-        };
+          category: SettingCategory.EMAIL
+  };
 
         jest.spyOn(settingRepository, 'findOne').mockResolvedValue(mockSetting);
 
@@ -209,8 +206,8 @@ describe('SystemAdminService', () => {
       it('should create a new background job', async () => {
         const createDto = {
           jobType: 'email_batch_send',
-          priority: JobPriority.NORMAL,
-        };
+          priority: JobPriority.NORMAL
+  };
 
         jest.spyOn(jobRepository, 'create').mockReturnValue(mockJob as any);
         jest.spyOn(jobRepository, 'save').mockResolvedValue(mockJob);
@@ -248,8 +245,8 @@ describe('SystemAdminService', () => {
         const createDto = {
           errorType: 'DatabaseError',
           message: 'Connection timeout',
-          severity: ErrorSeverity.HIGH,
-        };
+          severity: ErrorSeverity.HIGH
+  };
 
         jest.spyOn(errorLogRepository, 'create').mockReturnValue(mockErrorLog as any);
         jest.spyOn(errorLogRepository, 'save').mockResolvedValue(mockErrorLog);
@@ -268,8 +265,8 @@ describe('SystemAdminService', () => {
           orderBy: jest.fn().mockReturnThis(),
           skip: jest.fn().mockReturnThis(),
           take: jest.fn().mockReturnThis(),
-          getMany: jest.fn().mockResolvedValue([mockErrorLog]),
-        };
+          getMany: jest.fn().mockResolvedValue([mockErrorLog])
+  };
 
         jest.spyOn(errorLogRepository, 'createQueryBuilder').mockReturnValue(queryBuilder);
 
@@ -285,8 +282,8 @@ describe('SystemAdminService', () => {
           orderBy: jest.fn().mockReturnThis(),
           skip: jest.fn().mockReturnThis(),
           take: jest.fn().mockReturnThis(),
-          getMany: jest.fn().mockResolvedValue([mockErrorLog]),
-        };
+          getMany: jest.fn().mockResolvedValue([mockErrorLog])
+  };
 
         jest.spyOn(errorLogRepository, 'createQueryBuilder').mockReturnValue(queryBuilder);
 
@@ -303,8 +300,8 @@ describe('SystemAdminService', () => {
           orderBy: jest.fn().mockReturnThis(),
           skip: jest.fn().mockReturnThis(),
           take: jest.fn().mockReturnThis(),
-          getMany: jest.fn().mockResolvedValue([mockErrorLog]),
-        };
+          getMany: jest.fn().mockResolvedValue([mockErrorLog])
+  };
 
         jest.spyOn(errorLogRepository, 'createQueryBuilder').mockReturnValue(queryBuilder);
 
@@ -323,8 +320,8 @@ describe('SystemAdminService', () => {
 
         const result = await service.resolveErrorLog(mockUser, 'error-123', {
           resolved: true,
-          resolution: 'Fixed',
-        });
+          resolution: 'Fixed'
+  });
 
         expect(result.resolved).toBe(true);
       });
@@ -354,8 +351,8 @@ describe('SystemAdminService', () => {
 
         expect(result).toEqual([mockSetting]);
         expect(settingRepository.find).toHaveBeenCalledWith({
-          where: { tenantId: mockUser.tenantId, category: SettingCategory.EMAIL },
-        });
+          where: { tenantId: mockUser.tenantId, category: SettingCategory.EMAIL }
+  });
       });
     });
 
@@ -419,8 +416,8 @@ describe('SystemAdminService', () => {
         const createDto = {
           jobType: 'email_batch_send',
           priority: JobPriority.NORMAL,
-          scheduledAt: scheduledDate.toISOString(),
-        };
+          scheduledAt: scheduledDate.toISOString()
+  };
 
         const jobWithSchedule = { ...mockJob, scheduledAt: scheduledDate };
 
@@ -441,8 +438,8 @@ describe('SystemAdminService', () => {
           orderBy: jest.fn().mockReturnThis(),
           skip: jest.fn().mockReturnThis(),
           take: jest.fn().mockReturnThis(),
-          getMany: jest.fn().mockResolvedValue([mockErrorLog]),
-        };
+          getMany: jest.fn().mockResolvedValue([mockErrorLog])
+  };
 
         jest.spyOn(errorLogRepository, 'createQueryBuilder').mockReturnValue(queryBuilder);
 
@@ -459,8 +456,8 @@ describe('SystemAdminService', () => {
           orderBy: jest.fn().mockReturnThis(),
           skip: jest.fn().mockReturnThis(),
           take: jest.fn().mockReturnThis(),
-          getMany: jest.fn().mockResolvedValue([mockErrorLog]),
-        };
+          getMany: jest.fn().mockResolvedValue([mockErrorLog])
+  };
 
         jest.spyOn(errorLogRepository, 'createQueryBuilder').mockReturnValue(queryBuilder);
 
@@ -479,16 +476,16 @@ describe('SystemAdminService', () => {
           resolved: true,
           resolution: 'Fixed by restarting service',
           resolvedBy: mockUser.id,
-          resolvedAt: new Date(),
-        };
+          resolvedAt: new Date()
+  };
 
         jest.spyOn(errorLogRepository, 'findOne').mockResolvedValue(mockErrorLog);
         jest.spyOn(errorLogRepository, 'save').mockResolvedValue(resolvedLog);
 
         const result = await service.resolveErrorLog(mockUser, 'error-123', {
           resolved: true,
-          resolution: 'Fixed by restarting service',
-        });
+          resolution: 'Fixed by restarting service'
+  });
 
         expect(result.resolved).toBe(true);
         expect(result.resolution).toBe('Fixed by restarting service');
@@ -501,8 +498,8 @@ describe('SystemAdminService', () => {
         jest.spyOn(errorLogRepository, 'save').mockResolvedValue(unresolvedLog);
 
         const result = await service.resolveErrorLog(mockUser, 'error-123', {
-          resolved: false,
-        });
+          resolved: false
+  });
 
         expect(result.resolved).toBe(false);
       });

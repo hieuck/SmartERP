@@ -1,30 +1,42 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { User } from '@/common/security/permission.service';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Order, OrderStatus, PaymentStatus, ShippingStatus } from './entities/order.entity';
-import { OrderItem } from './entities/order-item.entity';
-import { User as UserEntity } from '../../../core/user/entities/user.entity';
+import { PermissionService } from '../../../common/security/permission.service';
+import { SecureRepository } from '../../../common/security/secure-repository';
+import { CancelOrderDto } from './dto/cancel-order.dto';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
-import { CancelOrderDto } from './dto/cancel-order.dto';
-import { User } from '@/common/security/permission.service';
+import { OrderItem } from './entities/order-item.entity';
+import { Order, OrderStatus, PaymentStatus, ShippingStatus } from './entities/order.entity';
 
 /**
  * OrderService handles order CRUD and status management
  */
 @Injectable()
 export class OrderService {
+  private readonly secureOrderRepo: SecureRepository<Order>;
+  private readonly secureOrderItemRepo: SecureRepository<OrderItem>;
+
   constructor(
     @InjectRepository(Order)
     private readonly orderRepository: Repository<Order>,
     @InjectRepository(OrderItem)
     private readonly orderItemRepository: Repository<OrderItem>,
-  ) {}
+    private readonly permissionService: PermissionService,
+  ) {
+    this.secureOrderRepo = new SecureRepository(orderRepository, permissionService, 'Order');
+    this.secureOrderItemRepo = new SecureRepository(
+      orderItemRepository,
+      permissionService,
+      'OrderItem',
+    );
+  }
 
   /**
    * Create order manually (without cart)
    */
-  async create(dto: CreateOrderDto, tenantId: string, user?: User): Promise<Order> {
+  async create(dto: CreateOrderDto, user: User): Promise<Order> {
     const order = this.orderRepository.create({
       customerId: user?.id,
       status: OrderStatus.PENDING,
@@ -38,7 +50,8 @@ export class OrderService {
       paymentMethod: dto.paymentMethod,
       couponCode: dto.couponCode,
       customerNotes: dto.customerNotes,
-      tenantId,
+      tenantId: user.tenantId,
+      createdBy: user.id,
     });
 
     const orderItems = dto.items.map((item) =>
@@ -51,17 +64,18 @@ export class OrderService {
         quantity: item.quantity,
         selectedVariant: item.selectedVariant,
         notes: item.notes,
-        tenantId,
+        tenantId: user.tenantId,
+        createdBy: user.id,
       }),
     );
 
     order.items = orderItems;
-    return this.orderRepository.save(order);
+    return this.secureOrderRepo.save(user, order as any);
   }
 
-  async findOne(id: string, tenantId: string): Promise<Order> {
-    const order = await this.orderRepository.findOne({
-      where: { id, tenantId },
+  async findOne(id: string, user: User): Promise<Order> {
+    const order = await this.secureOrderRepo.findOne(user, {
+      where: { id },
       relations: ['items', 'customer'],
     });
 
@@ -72,9 +86,9 @@ export class OrderService {
     return order;
   }
 
-  async findByOrderNumber(orderNumber: string, tenantId: string): Promise<Order> {
-    const order = await this.orderRepository.findOne({
-      where: { orderNumber, tenantId },
+  async findByOrderNumber(orderNumber: string, user: User): Promise<Order> {
+    const order = await this.secureOrderRepo.findOne(user, {
+      where: { orderNumber },
       relations: ['items', 'customer'],
     });
 
@@ -85,9 +99,9 @@ export class OrderService {
     return order;
   }
 
-  async findByCustomer(customerId: string, tenantId: string): Promise<Order[]> {
-    return this.orderRepository.find({
-      where: { customerId, tenantId },
+  async findByCustomer(customerId: string, user: User): Promise<Order[]> {
+    return this.secureOrderRepo.find(user, {
+      where: { customerId },
       relations: ['items'],
       order: { createdAt: 'DESC' },
     });
@@ -229,18 +243,11 @@ export class OrderService {
     return this.orderRepository.save(order);
   }
 
-  async cancel(
-    id: string,
-    dto: CancelOrderDto,
-    tenantId: string,
-    user: User,
-  ): Promise<Order> {
+  async cancel(id: string, dto: CancelOrderDto, tenantId: string, user: User): Promise<Order> {
     const order = await this.findOne(id, tenantId);
 
     if (!order.canBeCancelled) {
-      throw new BadRequestException(
-        `Order cannot be cancelled. Current status: ${order.status}`,
-      );
+      throw new BadRequestException(`Order cannot be cancelled. Current status: ${order.status}`);
     }
 
     order.status = OrderStatus.CANCELLED;

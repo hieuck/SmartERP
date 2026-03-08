@@ -36,6 +36,47 @@ module.exports = {
       functions: 80,
       lines: 80,
     },
+    // Critical: Security & Permission (MUST be 100%)
+    './src/backend/common/security/**/*.ts': {
+      statements: 100,
+      branches: 100,
+      functions: 100,
+      lines: 100,
+    },
+    // High Priority: Services & Controllers (85%)
+    './src/backend/domains/*/services/**/*.ts': {
+      statements: 85,
+      branches: 85,
+      functions: 85,
+      lines: 85,
+    },
+    './src/backend/domains/*/controllers/**/*.ts': {
+      statements: 85,
+      branches: 85,
+      functions: 85,
+      lines: 85,
+    },
+    // Medium Priority: Entities (80%)
+    './src/backend/domains/*/entities/**/*.ts': {
+      statements: 80,
+      branches: 75,
+      functions: 80,
+      lines: 80,
+    },
+    // Utilities (90% - should be pure functions)
+    './src/backend/common/utils/**/*.ts': {
+      statements: 90,
+      branches: 90,
+      functions: 90,
+      lines: 90,
+    },
+    // Shared code (85% - used across modules)
+    './src/shared/**/*.ts': {
+      statements: 85,
+      branches: 85,
+      functions: 85,
+      lines: 85,
+    },
   },
   coverageReporters: ['json', 'lcov', 'text', 'html', 'json-summary'],
   coverageDirectory: '<rootDir>/coverage',

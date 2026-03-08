@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "name": "Autonomous Team Workflow",
+  "description": "Complete autonomous workflow: Summary → Meeting → Decision → Execute. Team tự động làm việc từ đầu đến cuối.",
+  "version": "1",
+  "when": {
+    "type": "agentStop"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "🔄 AUTONOMOUS TEAM WORKFLOW\n\n**STEP 1: 📋 SESSION SUMMARY**\n\nTổng kết session vừa rồi:\n- Tasks completed (2-3 items)\n- Files modified/created\n- Progress metrics (tests, errors, blockers)\n- Time spent\n\n---\n\n**STEP 2: 🏢 TEAM MEETING**\n\nTech Lead analyze:\n- Review backlog & current status\n- Identify next priority task\n- Propose approach\n\nComplex task? → Invoke Senior Dev for challenge\nTest strategy? → Invoke QA Engineer for review\n\nTech Lead makes final decision.\n\n---\n\n**STEP 3: ⚡ EXECUTE DECISION**\n\n**CRITICAL:** Sau khi decide → BẮT ĐẦU THỰC HIỆN NGAY!\n\n**Execution Rules:**\n1. **No Waiting** - Start immediately\n2. **No Asking** - Don't ask user\n3. **Document** - Update progress as you go\n4. **Test** - Verify each step\n5. **Complete** - Finish the task\n\n**Execution Modes:**\n- Simple task (< 1h): Execute và complete ngay\n- Complex task (> 1h): Break into subtasks, execute first subtask\n- Research required: Research → POC → Validate\n\n**Prerequisites:**\n- Need research? → Research FIRST (Odoo/ERPNext)\n- Need setup? → Setup FIRST\n- Blockers? → Resolve FIRST\n\nThen EXECUTE until complete!\n\n---\n\n**FORMAT OUTPUT:**\n\n```\n# 📋 SESSION SUMMARY\n[2-3 dòng tổng kết]\n\n# 🏢 TEAM MEETING\n## Analysis: [Current situation]\n## Proposal: [Approach]\n## Decision: [Final decision]\n\n# ⚡ EXECUTING NOW\n[Bắt đầu thực hiện task ngay]\n```\n\n---\n\n**BẮT ĐẦU WORKFLOW!**"
+  }
+}

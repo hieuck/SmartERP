@@ -25,18 +25,22 @@ describe('RoleService', () => {
     create: jest.fn(),
     softDelete: jest.fn(),
     remove: jest.fn(),
-    count: jest.fn(),
-    createQueryBuilder: jest.fn(),
+    count: jest.fn()
   };
 
   const mockPermissionRepository = {
-    findByIds: jest.fn(),
+    find: jest.fn().mockResolvedValue([]),
+    findOne: jest.fn().mockResolvedValue(null),
+    save: jest.fn((data) => Promise.resolve({ id: '1', ...data })),
+    remove: jest.fn().mockResolvedValue(undefined),
+    count: jest.fn().mockResolvedValue(0),
+    findByIds: jest.fn()
   };
 
   const mockCacheManager = {
     get: jest.fn(),
     set: jest.fn(),
-    del: jest.fn(),
+    del: jest.fn()
   };
 
   const mockPermissionService = {
@@ -46,7 +50,7 @@ describe('RoleService', () => {
     canCreate: jest.fn().mockReturnValue(true),
     canUpdate: jest.fn().mockReturnValue(true),
     canDelete: jest.fn().mockReturnValue(true),
-    buildSecureQuery: jest.fn((user, where) => where),
+    buildSecureQuery: jest.fn((user, where) => where)
   };
 
   const mockUser = createMockUser({ id: 'user1', tenantId: 'tenant1' });
@@ -58,7 +62,7 @@ describe('RoleService', () => {
     description: 'Manage products',
     createdAt: new Date(),
     updatedAt: new Date(),
-    deletedAt: null,
+    deletedAt: null
   };
 
   const mockRole: Role = {
@@ -72,7 +76,7 @@ describe('RoleService', () => {
     updatedAt: new Date(),
     deletedAt: null,
     createdBy: 'user1',
-    updatedBy: 'user1',
+    updatedBy: 'user1'
   };
 
   beforeEach(async () => {
@@ -81,22 +85,22 @@ describe('RoleService', () => {
         RoleService,
         {
           provide: getRepositoryToken(Role),
-          useValue: mockRoleRepository,
-        },
+          useValue: mockRoleRepository
+  },
         {
           provide: getRepositoryToken(Permission),
-          useValue: mockPermissionRepository,
-        },
+          useValue: mockPermissionRepository
+  },
         {
           provide: CACHE_MANAGER,
-          useValue: mockCacheManager,
-        },
+          useValue: mockCacheManager
+  },
         {
           provide: PermissionService,
-          useValue: mockPermissionService,
-        },
-      ],
-    }).compile();
+          useValue: mockPermissionService
+  },
+      ]
+  }).compile();
 
     service = module.get<RoleService>(RoleService);
     roleRepository = module.get<Repository<Role>>(getRepositoryToken(Role));
@@ -112,8 +116,8 @@ describe('RoleService', () => {
     const createDto: CreateRoleDto = {
       name: 'Manager',
       description: 'Manager role',
-      permissionIds: ['perm1'],
-    };
+      permissionIds: ['perm1']
+  };
 
     it('should create a new role with permissions', async () => {
       mockRoleRepository.findOne.mockResolvedValue(null);
@@ -130,8 +134,8 @@ describe('RoleService', () => {
     it('should create role without permissions', async () => {
       const dtoWithoutPerms: CreateRoleDto = {
         name: 'Manager',
-        description: 'Manager role',
-      };
+        description: 'Manager role'
+  };
       mockRoleRepository.findOne.mockResolvedValue(null);
       mockRoleRepository.create.mockReturnValue(mockRole);
       mockRoleRepository.save.mockResolvedValue(mockRole);
@@ -266,8 +270,8 @@ describe('RoleService', () => {
 
   describe('update', () => {
     const updateDto: UpdateRoleDto = {
-      description: 'Updated description',
-    };
+      description: 'Updated description'
+  };
 
     it('should update role', async () => {
       mockCacheManager.get.mockResolvedValue(mockRole);
@@ -300,8 +304,8 @@ describe('RoleService', () => {
       mockRoleRepository.findOne.mockResolvedValue(existingRole);
 
       const updateDtoWithName: UpdateRoleDto = {
-        name: 'Admin',
-      };
+        name: 'Admin'
+  };
 
       await expect(service.update('1', updateDtoWithName, mockUser)).rejects.toThrow(
         ConflictException,
@@ -318,8 +322,8 @@ describe('RoleService', () => {
       mockRoleRepository.save.mockResolvedValue(mockRole);
 
       const updateDtoWithPerms: UpdateRoleDto = {
-        permissionIds: ['perm2'],
-      };
+        permissionIds: ['perm2']
+  };
 
       await service.update('1', updateDtoWithPerms, mockUser);
 
@@ -332,8 +336,8 @@ describe('RoleService', () => {
       mockPermissionRepository.findByIds.mockResolvedValue([]);
 
       const updateDtoWithPerms: UpdateRoleDto = {
-        permissionIds: ['invalid'],
-      };
+        permissionIds: ['invalid']
+  };
 
       await expect(service.update('1', updateDtoWithPerms, mockUser)).rejects.toThrow(
         BadRequestException,
@@ -346,8 +350,8 @@ describe('RoleService', () => {
       mockPermissionRepository.findByIds.mockResolvedValue([wrongTenantPerm]);
 
       const updateDtoWithPerms: UpdateRoleDto = {
-        permissionIds: ['perm1'],
-      };
+        permissionIds: ['perm1']
+  };
 
       await expect(service.update('1', updateDtoWithPerms, mockUser)).rejects.toThrow(
         BadRequestException,
@@ -405,8 +409,8 @@ describe('RoleService', () => {
       mockPermissionRepository.findByIds.mockResolvedValue([newPermission]);
       mockRoleRepository.save.mockResolvedValue({
         ...roleWithPerms,
-        permissions: [mockPermission, newPermission],
-      });
+        permissions: [mockPermission, newPermission]
+  });
 
       const result = await service.addPermissions('1', ['perm2'], mockUser);
 
@@ -462,8 +466,8 @@ describe('RoleService', () => {
       mockCacheManager.get.mockResolvedValue(roleWithPerms);
       mockRoleRepository.save.mockResolvedValue({
         ...roleWithPerms,
-        permissions: [perm2],
-      });
+        permissions: [perm2]
+  });
 
       const result = await service.removePermissions('1', ['perm1'], mockUser);
 

@@ -1,18 +1,21 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { PermissionService, User } from '@/common/security/permission.service';
+import { SecureRepository } from '@/common/security/secure-repository';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { CreatePaymentDto, RefundPaymentDto, VerifyPaymentDto } from './dto/create-payment.dto';
 import { PaymentTransaction } from './entities/payment-transaction.entity';
 import { PaymentWebhook } from './entities/payment-webhook.entity';
-import { VNPayService } from './providers/vnpay/vnpay.service';
 import { MomoService } from './providers/momo/momo.service';
-import { StripeService } from './providers/stripe/stripe.service';
 import { PayPalService } from './providers/paypal/paypal.service';
-import { CreatePaymentDto, VerifyPaymentDto, RefundPaymentDto } from './dto/create-payment.dto';
-import { User } from '@/common/security/permission.service';
+import { StripeService } from './providers/stripe/stripe.service';
+import { VNPayService } from './providers/vnpay/vnpay.service';
 
 @Injectable()
 export class PaymentGatewayService {
   private readonly logger = new Logger(PaymentGatewayService.name);
+  private secureTransactionRepo: SecureRepository<PaymentTransaction>;
+  private secureWebhookRepo: SecureRepository<PaymentWebhook>;
 
   constructor(
     @InjectRepository(PaymentTransaction)
@@ -23,15 +26,27 @@ export class PaymentGatewayService {
     private momoService: MomoService,
     private stripeService: StripeService,
     private paypalService: PayPalService,
-  ) {}
+    private readonly permissionService: PermissionService,
+  ) {
+    // Initialize SecureRepository for multi-tenant security
+    this.secureTransactionRepo = new SecureRepository(
+      paymentTransactionRepo,
+      permissionService,
+      'PaymentTransaction',
+    );
+    this.secureWebhookRepo = new SecureRepository(
+      paymentWebhookRepo,
+      permissionService,
+      'PaymentWebhook',
+    );
+  }
 
   /**
    * Create payment transaction
    */
   async createPayment(user: User, dto: CreatePaymentDto): Promise<PaymentTransaction> {
-    // Create transaction record
-    const transaction = this.paymentTransactionRepo.create({
-      tenantId: user.tenantId,
+    // Create transaction record with SecureRepository (auto tenant isolation)
+    const transaction = {
       orderId: dto.orderId,
       gateway: dto.gateway,
       amount: dto.amount,
@@ -39,9 +54,9 @@ export class PaymentGatewayService {
       status: 'pending',
       paymentMethod: dto.paymentMethod,
       customerInfo: dto.customerInfo,
-    });
+    };
 
-    await this.paymentTransactionRepo.save(transaction);
+    const savedTransaction = await this.secureTransactionRepo.save(user, transaction);
 
     // Generate payment URL based on gateway
     let paymentUrl: string;
@@ -51,7 +66,7 @@ export class PaymentGatewayService {
       switch (dto.gateway) {
         case 'vnpay':
           paymentUrl = this.vnpayService.createPaymentUrl({
-            orderId: transaction.id,
+            orderId: savedTransaction.id,
             amount: dto.amount,
             orderInfo: dto.orderInfo || `Payment for order ${dto.orderId}`,
             ipAddr: dto.ipAddress || '127.0.0.1',
@@ -60,7 +75,7 @@ export class PaymentGatewayService {
 
         case 'momo': {
           const momoResult = await this.momoService.createPayment({
-            orderId: transaction.id,
+            orderId: savedTransaction.id,
             amount: dto.amount,
             orderInfo: dto.orderInfo || `Payment for order ${dto.orderId}`,
           });
@@ -74,7 +89,7 @@ export class PaymentGatewayService {
 
         case 'stripe': {
           const stripeResult = await this.stripeService.createPaymentIntent({
-            orderId: transaction.id,
+            orderId: savedTransaction.id,
             amount: dto.amount,
             currency: dto.currency || 'USD',
             description: dto.orderInfo || `Payment for order ${dto.orderId}`,
@@ -89,7 +104,7 @@ export class PaymentGatewayService {
 
         case 'paypal': {
           const paypalResult = await this.paypalService.createOrder({
-            orderId: transaction.id,
+            orderId: savedTransaction.id,
             amount: dto.amount,
             currency: dto.currency || 'USD',
             description: dto.orderInfo || `Payment for order ${dto.orderId}`,
@@ -107,20 +122,20 @@ export class PaymentGatewayService {
           throw new BadRequestException(`Unsupported gateway: ${dto.gateway}`);
       }
 
-      // Update transaction with payment URL
-      transaction.paymentUrl = paymentUrl;
-      transaction.status = 'processing';
-      transaction.gatewayResponse = additionalData;
-      await this.paymentTransactionRepo.save(transaction);
+      // Update transaction with payment URL using SecureRepository
+      savedTransaction.paymentUrl = paymentUrl;
+      savedTransaction.status = 'processing';
+      savedTransaction.gatewayResponse = additionalData;
+      const updatedTransaction = await this.secureTransactionRepo.save(user, savedTransaction);
 
-      this.logger.log(`Payment created: ${transaction.id} via ${dto.gateway}`);
+      this.logger.log(`Payment created: ${updatedTransaction.id} via ${dto.gateway}`);
 
-      return transaction;
+      return updatedTransaction;
     } catch (error) {
-      // Update transaction with error
-      transaction.status = 'failed';
-      transaction.errorMessage = error.message;
-      await this.paymentTransactionRepo.save(transaction);
+      // Update transaction with error using SecureRepository
+      savedTransaction.status = 'failed';
+      savedTransaction.errorMessage = error.message;
+      await this.secureTransactionRepo.save(user, savedTransaction);
 
       this.logger.error(`Payment creation failed: ${error.message}`);
       throw error;
@@ -138,9 +153,9 @@ export class PaymentGatewayService {
     message: string;
     transaction?: PaymentTransaction;
   }> {
-    // Find transaction
-    const transaction = await this.paymentTransactionRepo.findOne({
-      where: { id: dto.transactionId, tenantId: user.tenantId },
+    // Find transaction with SecureRepository (auto tenant isolation + permission check)
+    const transaction = await this.secureTransactionRepo.findOne(user, {
+      where: { id: dto.transactionId },
     });
 
     if (!transaction) {
@@ -178,7 +193,7 @@ export class PaymentGatewayService {
     }
 
     transaction.gatewayResponse = dto.params;
-    await this.paymentTransactionRepo.save(transaction);
+    await this.secureTransactionRepo.save(user, transaction);
 
     this.logger.log(`Payment verified: ${transaction.id} - ${transaction.status}`);
 
@@ -191,25 +206,25 @@ export class PaymentGatewayService {
 
   /**
    * Handle webhook
+   * Note: Webhooks come from external systems, so we need a system user for tenant context
    */
   async handleWebhook(
-    tenantId: string,
+    user: User,
     gateway: string,
     payload: Record<string, unknown>,
     signature?: string,
   ): Promise<void> {
-    // Save webhook
+    // Save webhook with SecureRepository
     const eventType = String(payload.type || payload.event_type || 'unknown');
-    const webhook = this.paymentWebhookRepo.create({
-      tenantId,
+    const webhook = {
       gateway,
       eventType,
       payload,
       signature,
       processed: false,
-    });
+    };
 
-    await this.paymentWebhookRepo.save(webhook);
+    const savedWebhook = await this.secureWebhookRepo.save(user, webhook);
 
     try {
       // Process webhook based on gateway
@@ -240,23 +255,23 @@ export class PaymentGatewayService {
 
       // Update transaction if found
       if (result.transactionId) {
-        const transaction = await this.paymentTransactionRepo.findOne({
+        const transaction = await this.secureTransactionRepo.findOne(user, {
           where: { transactionId: result.transactionId },
         });
 
         if (transaction) {
           transaction.status = result.success ? 'success' : 'failed';
           transaction.errorMessage = result.message;
-          await this.paymentTransactionRepo.save(transaction);
+          await this.secureTransactionRepo.save(user, transaction);
         }
       }
 
       // Mark webhook as processed
-      webhook.processed = true;
-      webhook.processedAt = new Date();
-      await this.paymentWebhookRepo.save(webhook);
+      savedWebhook.processed = true;
+      savedWebhook.processedAt = new Date();
+      await this.secureWebhookRepo.save(user, savedWebhook);
 
-      this.logger.log(`Webhook processed: ${webhook.id}`);
+      this.logger.log(`Webhook processed: ${savedWebhook.id}`);
     } catch (error) {
       this.logger.error(`Webhook processing failed: ${error.message}`);
       throw error;
@@ -267,9 +282,9 @@ export class PaymentGatewayService {
    * Refund payment
    */
   async refundPayment(user: User, dto: RefundPaymentDto): Promise<PaymentTransaction> {
-    // Find transaction
-    const transaction = await this.paymentTransactionRepo.findOne({
-      where: { id: dto.transactionId, tenantId: user.tenantId },
+    // Find transaction with SecureRepository (auto tenant isolation + permission check)
+    const transaction = await this.secureTransactionRepo.findOne(user, {
+      where: { id: dto.transactionId },
     });
 
     if (!transaction) {
@@ -311,7 +326,7 @@ export class PaymentGatewayService {
 
       // Update transaction status
       transaction.status = 'refunded';
-      await this.paymentTransactionRepo.save(transaction);
+      await this.secureTransactionRepo.save(user, transaction);
 
       this.logger.log(`Payment refunded: ${transaction.id}`);
 
@@ -326,8 +341,8 @@ export class PaymentGatewayService {
    * Get transaction by ID
    */
   async getTransaction(user: User, transactionId: string): Promise<PaymentTransaction> {
-    const transaction = await this.paymentTransactionRepo.findOne({
-      where: { id: transactionId, tenantId: user.tenantId },
+    const transaction = await this.secureTransactionRepo.findOne(user, {
+      where: { id: transactionId },
     });
 
     if (!transaction) {
@@ -341,7 +356,7 @@ export class PaymentGatewayService {
    * List transactions
    */
   async listTransactions(
-    tenantId: string,
+    user: User,
     filters?: {
       orderId?: string;
       gateway?: string;
@@ -350,30 +365,31 @@ export class PaymentGatewayService {
       offset?: number;
     },
   ): Promise<{ transactions: PaymentTransaction[]; total: number }> {
-    const query = this.paymentTransactionRepo
-      .createQueryBuilder('transaction')
-      .where('transaction.tenantId = :tenantId', { tenantId });
+    // Build where conditions
+    const where: any = { tenantId: user.tenantId };
 
     if (filters?.orderId) {
-      query.andWhere('transaction.orderId = :orderId', { orderId: filters.orderId });
+      where.orderId = filters.orderId;
     }
 
     if (filters?.gateway) {
-      query.andWhere('transaction.gateway = :gateway', { gateway: filters.gateway });
+      where.gateway = filters.gateway;
     }
 
     if (filters?.status) {
-      query.andWhere('transaction.status = :status', { status: filters.status });
+      where.status = filters.status;
     }
 
-    const total = await query.getCount();
+    // Use SecureRepository find with pagination
+    const transactions = await this.secureTransactionRepo.find(user, {
+      where,
+      order: { createdAt: 'DESC' },
+      take: filters?.limit || 50,
+      skip: filters?.offset || 0,
+    });
 
-    query
-      .orderBy('transaction.createdAt', 'DESC')
-      .limit(filters?.limit || 50)
-      .offset(filters?.offset || 0);
-
-    const transactions = await query.getMany();
+    // Get total count using raw repository (SecureRepository doesn't have count method)
+    const total = await this.paymentTransactionRepo.count({ where });
 
     return { transactions, total };
   }
