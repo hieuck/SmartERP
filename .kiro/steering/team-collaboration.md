@@ -6,12 +6,15 @@ inclusion: auto
 
 ## 🎯 Overview
 
-SmartERP development team có 4 thành viên chính:
+SmartERP development team có 7 thành viên chính (tỷ lệ vàng):
 
 - **Tech Lead** - Quyết định kiến trúc, review code, phê duyệt approach
-- **Senior Dev** - Phân tích kỹ thuật, đề xuất giải pháp, challenge decisions
-- **QA Engineer** - Đảm bảo chất lượng, review tests, identify gaps
+- **Senior Dev #1** - Phân tích kỹ thuật, đề xuất giải pháp, challenge decisions
+- **Senior Dev #2** - Parallel architecture review, refactoring specialist
+- **Mid-Level Dev** - Feature implementation, service refactoring, moderate tasks
 - **Junior Dev** - Thực thi nhanh các task đã định nghĩa rõ ràng
+- **QA Engineer** - Đảm bảo chất lượng, review tests, identify gaps
+- **DevOps Engineer** - Infrastructure, deployment, monitoring, CI/CD
 
 ## 🤝 When to Use Each Agent
 
@@ -30,19 +33,20 @@ SmartERP development team có 4 thành viên chính:
 "Tech Lead, review this refactoring approach and approve if correct"
 ```
 
-### Use Senior Dev When:
+### Use Senior Dev #1 or #2 When:
 
 - ✅ Need technical analysis of complex problems
 - ✅ Need alternative solution proposals
 - ✅ Need architecture review and challenges
 - ✅ Planning refactoring strategies
 - ✅ Identifying technical debt
+- ✅ **Parallel work** - assign different modules to each
 
 **Example:**
 
 ```
-"Senior Dev, analyze the compilation errors and propose fix strategy"
-"Senior Dev, what are the risks of this refactoring approach?"
+"Senior Dev #1, analyze E-Commerce refactoring strategy"
+"Senior Dev #2, analyze Platform services refactoring in parallel"
 ```
 
 ### Use QA Engineer When:
@@ -341,3 +345,35 @@ Turn 10: "Hoàn thành 10/10 errors, all tests compile"
 **Last Updated:** 2026-03-09  
 **Team Size:** 4 members (Tech Lead, Senior Dev, QA Engineer, Junior Dev)  
 **Status:** ✅ Active
+
+### Use Mid-Level Dev When:
+
+- ✅ Implement features following established patterns
+- ✅ Refactor services to SecureRepository
+- ✅ Create CRUD operations with security
+- ✅ Write comprehensive tests
+- ✅ Moderate complexity tasks (2-4 hours)
+
+**Example:**
+
+```
+"Mid-Level Dev, implement Product CRUD with SecureRepository"
+"Mid-Level Dev, refactor Order service to use proper security"
+```
+
+### Use DevOps Engineer When:
+
+- ✅ Deployment issues or automation
+- ✅ Infrastructure setup or optimization
+- ✅ CI/CD pipeline configuration
+- ✅ Monitoring and alerting setup
+- ✅ Performance tuning and scaling
+- ✅ Database operations and backups
+
+**Example:**
+
+```
+"DevOps, deploy latest changes to staging"
+"DevOps, investigate high memory usage in production"
+"DevOps, set up monitoring for new service"
+```
