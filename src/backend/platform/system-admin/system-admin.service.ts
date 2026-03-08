@@ -1,14 +1,14 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { SystemSetting } from './entities/system-setting.entity';
+import { User } from '../../core/user/entities/user.entity';
+import { CreateBackgroundJobDto } from './dto/create-background-job.dto';
+import { CreateSystemSettingDto } from './dto/create-system-setting.dto';
+import { UpdateErrorLogDto } from './dto/update-error-log.dto';
+import { UpdateSystemSettingDto } from './dto/update-system-setting.dto';
 import { BackgroundJob, JobStatus } from './entities/background-job.entity';
 import { ErrorLog } from './entities/error-log.entity';
-import { CreateSystemSettingDto } from './dto/create-system-setting.dto';
-import { UpdateSystemSettingDto } from './dto/update-system-setting.dto';
-import { CreateBackgroundJobDto } from './dto/create-background-job.dto';
-import { UpdateErrorLogDto } from './dto/update-error-log.dto';
-import { User } from '../../core/user/entities/user.entity';
+import { SystemSetting } from './entities/system-setting.entity';
 
 @Injectable()
 export class SystemAdminService {

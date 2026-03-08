@@ -51,7 +51,7 @@ export class PaymentGatewayController {
     @Req() req: Request & { tenantId?: string },
     @Body() body: Record<string, unknown>,
   ) {
-    await this.paymentGatewayService.handleWebhook(user.tenantId, 'vnpay', body);
+    await this.paymentGatewayService.handleWebhook(user, 'vnpay', body);
     return { RspCode: '00', Message: 'success' };
   }
 
@@ -77,7 +77,7 @@ export class PaymentGatewayController {
     @Req() req: Request & { tenantId?: string },
     @Body() body: Record<string, unknown>,
   ) {
-    await this.paymentGatewayService.handleWebhook(user.tenantId, 'momo', body);
+    await this.paymentGatewayService.handleWebhook(user, 'momo', body);
     return { resultCode: 0, message: 'success' };
   }
 
@@ -91,7 +91,7 @@ export class PaymentGatewayController {
     @Body() body: Record<string, unknown>,
     @Headers('stripe-signature') signature: string,
   ) {
-    await this.paymentGatewayService.handleWebhook(user.tenantId, 'stripe', body, signature);
+    await this.paymentGatewayService.handleWebhook(user, 'stripe', body, signature);
     return { received: true };
   }
 
@@ -126,7 +126,7 @@ export class PaymentGatewayController {
     @Query('limit') limit?: number,
     @Query('offset') offset?: number,
   ) {
-    return this.paymentGatewayService.listTransactions(user.tenantId, {
+    return this.paymentGatewayService.listTransactions(user, {
       orderId,
       gateway,
       status,

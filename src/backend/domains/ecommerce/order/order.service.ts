@@ -162,7 +162,7 @@ export class OrderService {
     tenantId: string,
     user: User,
   ): Promise<Order> {
-    const order = await this.findOne(id, tenantId);
+    const order = await this.findOne(id, user);
 
     if (dto.status !== undefined) {
       order.status = dto.status;
@@ -204,7 +204,7 @@ export class OrderService {
     transactionId: string,
     tenantId: string,
   ): Promise<Order> {
-    const order = await this.findOne(id, tenantId);
+    const order = await this.findOne(id, user);
 
     order.paymentStatus = paymentStatus;
     order.paymentTransactionId = transactionId;
@@ -225,7 +225,7 @@ export class OrderService {
     trackingNumber: string,
     tenantId: string,
   ): Promise<Order> {
-    const order = await this.findOne(id, tenantId);
+    const order = await this.findOne(id, user);
 
     order.shippingStatus = shippingStatus;
     order.trackingNumber = trackingNumber;
@@ -244,7 +244,7 @@ export class OrderService {
   }
 
   async cancel(id: string, dto: CancelOrderDto, tenantId: string, user: User): Promise<Order> {
-    const order = await this.findOne(id, tenantId);
+    const order = await this.findOne(id, user);
 
     if (!order.canBeCancelled) {
       throw new BadRequestException(`Order cannot be cancelled. Current status: ${order.status}`);
@@ -259,7 +259,7 @@ export class OrderService {
   }
 
   async refund(id: string, reason: string, tenantId: string, user: User): Promise<Order> {
-    const order = await this.findOne(id, tenantId);
+    const order = await this.findOne(id, user);
 
     if (order.paymentStatus !== PaymentStatus.PAID) {
       throw new BadRequestException('Order must be paid before refunding');

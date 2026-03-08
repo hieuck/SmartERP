@@ -54,7 +54,7 @@ export class ShoppingCartService {
         expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         createdBy: user.id,
       };
-      cart = await this.secureCartRepo.save(user, newCart as ShoppingCart);
+      cart = await this.secureCartRepo.save(user, newCart);
     }
     return cart;
   }
@@ -123,7 +123,7 @@ export class ShoppingCartService {
         tenantId: user.tenantId,
         createdBy: user.id,
       };
-      await this.secureCartItemRepo.save(user, newCartItem as CartItem);
+      await this.secureCartItemRepo.save(user, newCartItem);
     }
 
     return this.findOne(user, cart.id);
