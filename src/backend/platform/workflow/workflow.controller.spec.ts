@@ -88,10 +88,10 @@ describe('WorkflowController', () => {
     it('should return all workflows for tenant', async () => {
       mockWorkflowService.findAllWorkflows.mockResolvedValue([mockWorkflow]);
 
-      const result = await controller.findAllWorkflows(mockTenantId);
+      const result = await controller.findAllWorkflows(mockUser);
 
       expect(result).toEqual([mockWorkflow]);
-      expect(service.findAllWorkflows).toHaveBeenCalledWith(mockTenantId);
+      expect(service.findAllWorkflows).toHaveBeenCalledWith(mockUser);
     });
   });
 
@@ -99,10 +99,10 @@ describe('WorkflowController', () => {
     it('should return workflow by id', async () => {
       mockWorkflowService.findWorkflowById.mockResolvedValue(mockWorkflow);
 
-      const result = await controller.findWorkflowById(mockTenantId, mockWorkflow.id);
+      const result = await controller.findWorkflowById(mockUser, mockWorkflow.id);
 
       expect(result).toEqual(mockWorkflow);
-      expect(service.findWorkflowById).toHaveBeenCalledWith(mockTenantId, mockWorkflow.id);
+      expect(service.findWorkflowById).toHaveBeenCalledWith(mockUser, mockWorkflow.id);
     });
   });
 
@@ -115,10 +115,10 @@ describe('WorkflowController', () => {
       };
       mockWorkflowService.createWorkflow.mockResolvedValue(mockWorkflow);
 
-      const result = await controller.createWorkflow(mockTenantId, createData);
+      const result = await controller.createWorkflow(mockUser, createData);
 
       expect(result).toEqual(mockWorkflow);
-      expect(service.createWorkflow).toHaveBeenCalledWith(mockTenantId, createData);
+      expect(service.createWorkflow).toHaveBeenCalledWith(mockUser, createData);
     });
   });
 
@@ -127,10 +127,10 @@ describe('WorkflowController', () => {
       const updateData = { name: 'Updated Workflow' };
       mockWorkflowService.updateWorkflow.mockResolvedValue(mockWorkflow);
 
-      const result = await controller.updateWorkflow(mockTenantId, mockWorkflow.id, updateData);
+      const result = await controller.updateWorkflow(mockUser, mockWorkflow.id, updateData);
 
       expect(result).toEqual(mockWorkflow);
-      expect(service.updateWorkflow).toHaveBeenCalledWith(mockTenantId, mockWorkflow.id, updateData);
+      expect(service.updateWorkflow).toHaveBeenCalledWith(mockUser, mockWorkflow.id, updateData);
     });
   });
 
@@ -138,9 +138,9 @@ describe('WorkflowController', () => {
     it('should delete a workflow', async () => {
       mockWorkflowService.deleteWorkflow.mockResolvedValue(undefined);
 
-      await controller.deleteWorkflow(mockTenantId, mockWorkflow.id);
+      await controller.deleteWorkflow(mockUser, mockWorkflow.id);
 
-      expect(service.deleteWorkflow).toHaveBeenCalledWith(mockTenantId, mockWorkflow.id);
+      expect(service.deleteWorkflow).toHaveBeenCalledWith(mockUser, mockWorkflow.id);
     });
   });
 
@@ -148,10 +148,10 @@ describe('WorkflowController', () => {
     it('should activate a workflow', async () => {
       mockWorkflowService.activateWorkflow.mockResolvedValue(mockWorkflow);
 
-      const result = await controller.activateWorkflow(mockTenantId, mockWorkflow.id);
+      const result = await controller.activateWorkflow(mockUser, mockWorkflow.id);
 
       expect(result).toEqual(mockWorkflow);
-      expect(service.activateWorkflow).toHaveBeenCalledWith(mockTenantId, mockWorkflow.id);
+      expect(service.activateWorkflow).toHaveBeenCalledWith(mockUser, mockWorkflow.id);
     });
   });
 
@@ -159,10 +159,10 @@ describe('WorkflowController', () => {
     it('should return all workflow instances for tenant', async () => {
       mockWorkflowService.findAllInstances.mockResolvedValue([mockInstance]);
 
-      const result = await controller.findAllInstances(mockTenantId);
+      const result = await controller.findAllInstances(mockUser);
 
       expect(result).toEqual([mockInstance]);
-      expect(service.findAllInstances).toHaveBeenCalledWith(mockTenantId);
+      expect(service.findAllInstances).toHaveBeenCalledWith(mockUser);
     });
   });
 
@@ -170,10 +170,10 @@ describe('WorkflowController', () => {
     it('should return workflow instance by id', async () => {
       mockWorkflowService.findInstanceById.mockResolvedValue(mockInstance);
 
-      const result = await controller.findInstanceById(mockTenantId, mockInstance.id);
+      const result = await controller.findInstanceById(mockUser, mockInstance.id);
 
       expect(result).toEqual(mockInstance);
-      expect(service.findInstanceById).toHaveBeenCalledWith(mockTenantId, mockInstance.id);
+      expect(service.findInstanceById).toHaveBeenCalledWith(mockUser, mockInstance.id);
     });
   });
 
@@ -182,7 +182,7 @@ describe('WorkflowController', () => {
       mockWorkflowService.startWorkflow.mockResolvedValue(mockInstance);
 
       const result = await controller.startWorkflow(
-        mockTenantId,
+        mockUser,
         mockWorkflow.id,
         'purchase',
         'purchase-123',
@@ -191,11 +191,10 @@ describe('WorkflowController', () => {
 
       expect(result).toEqual(mockInstance);
       expect(service.startWorkflow).toHaveBeenCalledWith(
-        mockTenantId,
+        mockUser,
         mockWorkflow.id,
         'purchase',
         'purchase-123',
-        mockUserId,
       );
     });
   });
@@ -204,10 +203,10 @@ describe('WorkflowController', () => {
     it('should approve a workflow step', async () => {
       mockWorkflowService.approveStep.mockResolvedValue(mockInstance);
 
-      const result = await controller.approveStep(mockTenantId, mockInstance.id, mockUserId, 'Approved');
+      const result = await controller.approveStep(mockUser, mockInstance.id, mockUserId, 'Approved');
 
       expect(result).toEqual(mockInstance);
-      expect(service.approveStep).toHaveBeenCalledWith(mockTenantId, mockInstance.id, mockUserId, 'Approved');
+      expect(service.approveStep).toHaveBeenCalledWith(mockUser, mockInstance.id, 'Approved');
     });
   });
 
@@ -215,10 +214,10 @@ describe('WorkflowController', () => {
     it('should reject a workflow step', async () => {
       mockWorkflowService.rejectStep.mockResolvedValue(mockInstance);
 
-      const result = await controller.rejectStep(mockTenantId, mockInstance.id, mockUserId, 'Rejected');
+      const result = await controller.rejectStep(mockUser, mockInstance.id, mockUserId, 'Rejected');
 
       expect(result).toEqual(mockInstance);
-      expect(service.rejectStep).toHaveBeenCalledWith(mockTenantId, mockInstance.id, mockUserId, 'Rejected');
+      expect(service.rejectStep).toHaveBeenCalledWith(mockUser, mockInstance.id, 'Rejected');
     });
   });
 
@@ -226,10 +225,10 @@ describe('WorkflowController', () => {
     it('should cancel a workflow instance', async () => {
       mockWorkflowService.cancelInstance.mockResolvedValue(mockInstance);
 
-      const result = await controller.cancelInstance(mockTenantId, mockInstance.id);
+      const result = await controller.cancelInstance(mockUser, mockInstance.id);
 
       expect(result).toEqual(mockInstance);
-      expect(service.cancelInstance).toHaveBeenCalledWith(mockTenantId, mockInstance.id);
+      expect(service.cancelInstance).toHaveBeenCalledWith(mockUser, mockInstance.id);
     });
   });
 });

@@ -48,10 +48,10 @@ describe('SearchController', () => {
       ];
       mockSearchService.search.mockResolvedValue(mockResults);
 
-      const result = await controller.search(mockTenantId, query);
+      const result = await controller.search(mockUser, query);
 
       expect(result).toEqual(mockResults);
-      expect(service.search).toHaveBeenCalledWith(mockTenantId, query);
+      expect(service.search).toHaveBeenCalledWith(mockUser, query);
     });
   });
 
@@ -65,10 +65,10 @@ describe('SearchController', () => {
       ];
       mockSearchService.searchByType.mockResolvedValue(mockResults);
 
-      const result = await controller.searchByType(mockTenantId, type, query);
+      const result = await controller.searchByType(mockUser, type, query);
 
       expect(result).toEqual(mockResults);
-      expect(service.searchByType).toHaveBeenCalledWith(mockTenantId, type, query);
+      expect(service.searchByType).toHaveBeenCalledWith(mockUser.tenantId, type, query);
     });
   });
 });

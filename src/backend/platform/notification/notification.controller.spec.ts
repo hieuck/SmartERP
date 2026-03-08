@@ -58,10 +58,10 @@ describe('NotificationController', () => {
       ];
       mockNotificationService.findAll.mockResolvedValue(mockNotifications);
 
-      const result = await controller.findAll(mockTenantId, mockReq);
+      const result = await controller.findAll(mockUser, mockReq);
 
       expect(result).toEqual(mockNotifications);
-      expect(service.findAll).toHaveBeenCalledWith(mockTenantId, mockUserId);
+      expect(service.findAll).toHaveBeenCalledWith(mockUser);
     });
   });
 
@@ -70,10 +70,10 @@ describe('NotificationController', () => {
       const mockUnread = [{ id: '1', title: 'Unread', isRead: false }];
       mockNotificationService.findUnread.mockResolvedValue(mockUnread);
 
-      const result = await controller.findUnread(mockTenantId, mockReq);
+      const result = await controller.findUnread(mockUser, mockReq);
 
       expect(result).toEqual(mockUnread);
-      expect(service.findUnread).toHaveBeenCalledWith(mockTenantId, mockUserId);
+      expect(service.findUnread).toHaveBeenCalledWith(mockUser);
     });
   });
 
@@ -82,10 +82,10 @@ describe('NotificationController', () => {
       const count = 5;
       mockNotificationService.getUnreadCount.mockResolvedValue(count);
 
-      const result = await controller.getUnreadCount(mockTenantId, mockReq);
+      const result = await controller.getUnreadCount(mockUser, mockReq);
 
       expect(result).toEqual({ count });
-      expect(service.getUnreadCount).toHaveBeenCalledWith(mockTenantId, mockUserId);
+      expect(service.getUnreadCount).toHaveBeenCalledWith(mockUser);
     });
   });
 
@@ -94,10 +94,10 @@ describe('NotificationController', () => {
       const mockNotification = { id: mockNotificationId, title: 'Test' };
       mockNotificationService.findById.mockResolvedValue(mockNotification);
 
-      const result = await controller.findById(mockTenantId, mockNotificationId);
+      const result = await controller.findById(mockUser, mockNotificationId);
 
       expect(result).toEqual(mockNotification);
-      expect(service.findById).toHaveBeenCalledWith(mockTenantId, mockNotificationId);
+      expect(service.findById).toHaveBeenCalledWith(mockUser, mockNotificationId);
     });
   });
 
@@ -109,10 +109,10 @@ describe('NotificationController', () => {
       const mockCreated = { id: mockNotificationId, title, message, type };
       mockNotificationService.create.mockResolvedValue(mockCreated);
 
-      const result = await controller.create(mockTenantId, mockUserId, title, message, type);
+      const result = await controller.create(mockUser, mockUserId, title, message, type);
 
       expect(result).toEqual(mockCreated);
-      expect(service.create).toHaveBeenCalledWith(mockTenantId, mockUserId, title, message, type, undefined, undefined);
+      expect(service.create).toHaveBeenCalledWith(mockUser, title, message, type, undefined, undefined);
     });
   });
 
@@ -121,10 +121,10 @@ describe('NotificationController', () => {
       const mockRead = { id: mockNotificationId, isRead: true };
       mockNotificationService.markAsRead.mockResolvedValue(mockRead);
 
-      const result = await controller.markAsRead(mockTenantId, mockNotificationId);
+      const result = await controller.markAsRead(mockUser, mockNotificationId);
 
       expect(result).toEqual(mockRead);
-      expect(service.markAsRead).toHaveBeenCalledWith(mockTenantId, mockNotificationId);
+      expect(service.markAsRead).toHaveBeenCalledWith(mockUser, mockNotificationId);
     });
   });
 
@@ -132,10 +132,10 @@ describe('NotificationController', () => {
     it('should mark all notifications as read', async () => {
       mockNotificationService.markAllAsRead.mockResolvedValue(undefined);
 
-      const result = await controller.markAllAsRead(mockTenantId, mockReq);
+      const result = await controller.markAllAsRead(mockUser, mockReq);
 
       expect(result).toBeUndefined();
-      expect(service.markAllAsRead).toHaveBeenCalledWith(mockTenantId, mockUserId);
+      expect(service.markAllAsRead).toHaveBeenCalledWith(mockUser);
     });
   });
 
@@ -144,10 +144,10 @@ describe('NotificationController', () => {
       const mockArchived = { id: mockNotificationId, isArchived: true };
       mockNotificationService.archive.mockResolvedValue(mockArchived);
 
-      const result = await controller.archive(mockTenantId, mockNotificationId);
+      const result = await controller.archive(mockUser, mockNotificationId);
 
       expect(result).toEqual(mockArchived);
-      expect(service.archive).toHaveBeenCalledWith(mockTenantId, mockNotificationId);
+      expect(service.archive).toHaveBeenCalledWith(mockUser, mockNotificationId);
     });
   });
 
@@ -155,10 +155,10 @@ describe('NotificationController', () => {
     it('should delete notification', async () => {
       mockNotificationService.delete.mockResolvedValue(undefined);
 
-      const result = await controller.delete(mockTenantId, mockNotificationId);
+      const result = await controller.delete(mockUser, mockNotificationId);
 
       expect(result).toBeUndefined();
-      expect(service.delete).toHaveBeenCalledWith(mockTenantId, mockNotificationId);
+      expect(service.delete).toHaveBeenCalledWith(mockUser, mockNotificationId);
     });
   });
 });
