@@ -1,15 +1,15 @@
+import { CacheService } from '@/common/cache/cache.service';
+import { PermissionService } from '@/common/security/permission.service';
+import { createMockUser } from '@/common/test/test-helpers';
+import { BadRequestException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AccountingService } from './accounting.service';
-import { JournalEntry, JournalEntryStatus } from './entities/journal-entry.entity';
-import { JournalLine } from './entities/journal-line.entity';
 import { Account, AccountType } from './entities/account.entity';
 import { Invoice } from './entities/invoice.entity';
-import { CacheService } from '@/common/cache/cache.service';
-import { PermissionService } from '@/common/security/permission.service';
-import { BadRequestException } from '@nestjs/common';
-import { createMockUser } from '@/common/test/test-helpers';
+import { JournalEntry, JournalEntryStatus } from './entities/journal-entry.entity';
+import { JournalLine } from './entities/journal-line.entity';
 
 describe('AccountingService - Journal Entries', () => {
   let service: AccountingService;
@@ -47,10 +47,10 @@ describe('AccountingService - Journal Entries', () => {
   };
 
   const mockPermissionService = {
-    canCreate: jest.fn().mockReturnValue(true),
     canRead: jest.fn().mockReturnValue(true),
-    canUpdate: jest.fn().mockReturnValue(true),
+    canWrite: jest.fn().mockReturnValue(true),
     canDelete: jest.fn().mockReturnValue(true),
+    buildSecureQuery: jest.fn((user, where) => ({ ...where, tenantId: user.tenantId })),
   };
 
   const mockUser = { ...createMockUser(), tenantId: 'tenant-123', id: 'user-123' };
@@ -173,14 +173,10 @@ describe('AccountingService - Journal Entries', () => {
 
       mockAccountRepository.findOne.mockImplementation((options: any) => {
         const id = options.where.id;
-        return Promise.resolve(
-          draftEntry.lines.find((l) => l.accountId === id)?.account as any,
-        );
+        return Promise.resolve(draftEntry.lines.find((l) => l.accountId === id)?.account as any);
       });
 
-      mockAccountRepository.save.mockImplementation((account: any) =>
-        Promise.resolve(account),
-      );
+      mockAccountRepository.save.mockImplementation((account: any) => Promise.resolve(account));
 
       const result = await service.postJournalEntry(mockUser, entryId);
 

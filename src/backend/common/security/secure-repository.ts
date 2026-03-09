@@ -1,6 +1,6 @@
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
-import { Repository, FindOneOptions, FindManyOptions } from 'typeorm';
-import { PermissionService, User, BaseRecord as PermissionRecord } from './permission.service';
+import { FindManyOptions, FindOneOptions, Repository } from 'typeorm';
+import { BaseRecord as PermissionRecord, PermissionService, User } from './permission.service';
 
 export class SecureRepository<T extends Partial<PermissionRecord> = any> {
   constructor(
@@ -46,6 +46,10 @@ export class SecureRepository<T extends Partial<PermissionRecord> = any> {
         throw new ForbiddenException('Access denied to update this record');
       }
     } else {
+      // Check write permission for new entities
+      if (!this.permissionService.canWrite(user, entity as any, this.entityName)) {
+        throw new ForbiddenException('Access denied to create this record');
+      }
       (entity as any).tenantId = user.tenantId;
       (entity as any).createdBy = user.id;
     }
@@ -69,4 +73,3 @@ export class SecureRepository<T extends Partial<PermissionRecord> = any> {
     return this.repository.remove(entity);
   }
 }
-

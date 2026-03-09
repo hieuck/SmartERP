@@ -1,0 +1,13 @@
+﻿    it('should delete material and invalidate cache', async () => {
+      const mockMaterial = { id: '1', name: 'Material 1', type: MaterialType.RAW };
+      mockCacheService.getOrSet.mockResolvedValue(mockMaterial);
+      mockMaterialRepository.findOne.mockResolvedValue(mockMaterial); // SecureRepository needs this
+      mockMaterialRepository.remove.mockResolvedValue(mockMaterial);
+      mockCacheService.del.mockResolvedValue(undefined);
+
+      await service.deleteMaterial('1', mockUser);
+
+      expect(mockMaterialRepository.findOne).toHaveBeenCalledWith({ where: { id: '1' } });
+      expect(mockMaterialRepository.remove).toHaveBeenCalledWith(mockMaterial);
+      expect(mockCacheService.del).toHaveBeenCalled();
+    });

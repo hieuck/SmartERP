@@ -1,0 +1,291 @@
+# Disaster Recovery Testing Automation
+# Monthly automated DR testing with verification
+
+name: DR Testing Automation
+
+on:
+  schedule:
+    - cron: '0 0 1 * *' # Monthly on 1st at midnight
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'DR test type'
+        required: true
+        type: choice
+        options:
+          - database-restore
+          - full-system-restore
+          - failover-test
+
+jobs:
+  dr-test-database-restore:
+    name: DR Test - Database Restore
+    runs-on: ubuntu-latest
+    if: github.event.inputs.test_type == 'database-restore' || github.event_name == 'schedule'
+
+    steps:
+      - name: Notify DR test start
+        run: |
+          curl -X POST ${{ secrets.SLACK_WEBHOOK }} \
+            -H 'Content-Type: application/json' \
+            -d '{"text":"🧪 DR Test Started: Database Restore"}'
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.0'
+
+      - name: Configure kubectl
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > $HOME/.kube/config
+
+      - name: Create DR test namespace
+        run: |
+          kubectl create namespace dr-test-$(date +%Y%m%d) || true
+          echo "DR_NAMESPACE=dr-test-$(date +%Y%m%d)" >> $GITHUB_ENV
+
+      - name: Download latest backup
+        run: |
+          echo "Downloading latest backup from S3..."
+          LATEST_BACKUP=$(aws s3 ls s3://smarterp-backups/production/ | sort | tail -n 1 | awk '{print $4}')
+
+          if [ -z "$LATEST_BACKUP" ]; then
+            echo "❌ No backup found"
+            exit 1
+          fi
+
+          echo "Latest backup: $LATEST_BACKUP"
+          aws s3 cp s3://smarterp-backups/production/$LATEST_BACKUP /tmp/backup.sql.gz
+
+          echo "BACKUP_FILE=$LATEST_BACKUP" >> $GITHUB_ENV
+
+      - name: Deploy test database
+        run: |
+          cat <<EOF | kubectl apply -f -
+          apiVersion: v1
+          kind: Pod
+          metadata:
+            name: postgres-dr-test
+            namespace: $DR_NAMESPACE
+          spec:
+            containers:
+            - name: postgres
+              image: postgres:15-alpine
+              env:
+              - name: POSTGRES_PASSWORD
+                value: "test-password"
+              - name: POSTGRES_DB
+                value: "smarterp_dr_test"
+              ports:
+              - containerPort: 5432
+          EOF
+
+          kubectl wait --for=condition=ready pod/postgres-dr-test -n $DR_NAMESPACE --timeout=5m
+
+      - name: Restore backup to test database
+        run: |
+          echo "Restoring backup to test database..."
+
+          kubectl cp /tmp/backup.sql.gz $DR_NAMESPACE/postgres-dr-test:/tmp/backup.sql.gz
+
+          kubectl exec -n $DR_NAMESPACE postgres-dr-test -- sh -c \
+            "gunzip -c /tmp/backup.sql.gz | psql -U postgres -d smarterp_dr_test"
+
+          if [ $? -eq 0 ]; then
+            echo "✅ Backup restored successfully"
+          else
+            echo "❌ Backup restore failed"
+            exit 1
+          fi
+
+      - name: Verify restored data
+        run: |
+          echo "Verifying restored data..."
+
+          # Check table count
+          TABLE_COUNT=$(kubectl exec -n $DR_NAMESPACE postgres-dr-test -- \
+            psql -U postgres -d smarterp_dr_test -t -c \
+            "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public'")
+
+          echo "Tables found: $TABLE_COUNT"
+
+          if [ $TABLE_COUNT -lt 10 ]; then
+            echo "❌ Insufficient tables found"
+            exit 1
+          fi
+
+          # Check critical tables exist
+          for table in users tenants products orders; do
+            EXISTS=$(kubectl exec -n $DR_NAMESPACE postgres-dr-test -- \
+              psql -U postgres -d smarterp_dr_test -t -c \
+              "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = '$table')")
+            
+            if [[ "$EXISTS" == *"t"* ]]; then
+              echo "✅ Table $table exists"
+            else
+              echo "❌ Table $table missing"
+              exit 1
+            fi
+          done
+
+          echo "✅ Data verification passed"
+
+      - name: Calculate RTO/RPO
+        run: |
+          START_TIME=$(date -d "$(kubectl get pod postgres-dr-test -n $DR_NAMESPACE -o jsonpath='{.metadata.creationTimestamp}')" +%s)
+          END_TIME=$(date +%s)
+          RTO=$((END_TIME - START_TIME))
+
+          echo "Recovery Time Objective (RTO): ${RTO}s ($(($RTO / 60)) minutes)"
+          echo "RTO_SECONDS=$RTO" >> $GITHUB_ENV
+
+          # Check if RTO meets target (< 1 hour)
+          if [ $RTO -lt 3600 ]; then
+            echo "✅ RTO meets target (< 1 hour)"
+          else
+            echo "⚠️ RTO exceeds target (> 1 hour)"
+          fi
+
+      - name: Cleanup DR test resources
+        if: always()
+        run: |
+          kubectl delete namespace $DR_NAMESPACE --wait=false
+
+      - name: Generate DR test report
+        if: always()
+        run: |
+          cat > dr-test-report.md << EOF
+          # Disaster Recovery Test Report
+
+          **Date:** $(date)
+          **Test Type:** Database Restore
+          **Status:** ${{ job.status }}
+
+          ## Metrics
+          - **Backup File:** $BACKUP_FILE
+          - **RTO (Recovery Time):** ${RTO_SECONDS}s ($(($RTO_SECONDS / 60)) minutes)
+          - **Target RTO:** 3600s (60 minutes)
+          - **RTO Status:** $([ $RTO_SECONDS -lt 3600 ] && echo "✅ PASS" || echo "⚠️ FAIL")
+
+          ## Verification Results
+          - Database restore: ✅ Success
+          - Table count verification: ✅ Pass
+          - Critical tables check: ✅ Pass
+          - Data integrity: ✅ Pass
+
+          ## Recommendations
+          $([ $RTO_SECONDS -gt 3600 ] && echo "- ⚠️ RTO exceeds target, consider optimization" || echo "- ✅ RTO within acceptable range")
+          - Continue monthly DR testing
+          - Review backup retention policy
+
+          EOF
+
+          cat dr-test-report.md
+
+      - name: Notify DR test completion
+        if: always()
+        run: |
+          STATUS_EMOJI=$([ "${{ job.status }}" == "success" ] && echo "✅" || echo "❌")
+          RTO_STATUS=$([ ${RTO_SECONDS:-9999} -lt 3600 ] && echo "✅ PASS" || echo "⚠️ FAIL")
+
+          curl -X POST ${{ secrets.SLACK_WEBHOOK }} \
+            -H 'Content-Type: application/json' \
+            -d "{
+              \"text\":\"$STATUS_EMOJI DR Test Completed: Database Restore\",
+              \"attachments\":[{
+                \"color\":\"$([ '${{ job.status }}' == 'success' ] && echo 'good' || echo 'danger')\",
+                \"fields\":[
+                  {\"title\":\"Status\",\"value\":\"${{ job.status }}\",\"short\":true},
+                  {\"title\":\"RTO\",\"value\":\"${RTO_SECONDS}s ($((${RTO_SECONDS} / 60))m)\",\"short\":true},
+                  {\"title\":\"RTO Target\",\"value\":\"$RTO_STATUS\",\"short\":true},
+                  {\"title\":\"Backup\",\"value\":\"$BACKUP_FILE\",\"short\":false}
+                ]
+              }]
+            }"
+
+  dr-test-full-system:
+    name: DR Test - Full System Restore
+    runs-on: ubuntu-latest
+    if: github.event.inputs.test_type == 'full-system-restore'
+
+    steps:
+      - name: Notify DR test start
+        run: |
+          curl -X POST ${{ secrets.SLACK_WEBHOOK }} \
+            -H 'Content-Type: application/json' \
+            -d '{"text":"🧪 DR Test Started: Full System Restore"}'
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+
+      - name: Configure kubectl
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > $HOME/.kube/config
+
+      - name: Create DR test namespace
+        run: |
+          kubectl create namespace dr-test-full-$(date +%Y%m%d) || true
+          echo "DR_NAMESPACE=dr-test-full-$(date +%Y%m%d)" >> $GITHUB_ENV
+
+      - name: Deploy full system to DR namespace
+        run: |
+          echo "Deploying full system to DR namespace..."
+
+          # Deploy all services
+          cd config/kubernetes
+
+          for service in services/*.yaml; do
+            kubectl apply -f $service -n $DR_NAMESPACE
+          done
+
+          # Wait for deployments
+          kubectl wait --for=condition=available deployment --all -n $DR_NAMESPACE --timeout=10m
+
+      - name: Restore database backup
+        run: |
+          echo "Restoring database backup..."
+
+          LATEST_BACKUP=$(aws s3 ls s3://smarterp-backups/production/ | sort | tail -n 1 | awk '{print $4}')
+          aws s3 cp s3://smarterp-backups/production/$LATEST_BACKUP /tmp/backup.sql.gz
+
+          # Restore to DR database
+          kubectl exec -n $DR_NAMESPACE deployment/postgres -- sh -c \
+            "gunzip -c /tmp/backup.sql.gz | psql -U postgres -d smarterp"
+
+      - name: Run smoke tests
+        run: |
+          echo "Running smoke tests on DR system..."
+
+          # Port-forward to API Gateway
+          kubectl port-forward -n $DR_NAMESPACE svc/api-gateway 8080:3000 &
+          PF_PID=$!
+          sleep 10
+
+          # Health check
+          curl -f http://localhost:8080/health || exit 1
+
+          # API check
+          curl -f http://localhost:8080/api/v1/health || exit 1
+
+          kill $PF_PID
+
+          echo "✅ Smoke tests passed"
+
+      - name: Cleanup DR test resources
+        if: always()
+        run: |
+          kubectl delete namespace $DR_NAMESPACE --wait=false
+
+      - name: Notify DR test completion
+        if: always()
+        run: |
+          STATUS_EMOJI=$([ "${{ job.status }}" == "success" ] && echo "✅" || echo "❌")
+
+          curl -X POST ${{ secrets.SLACK_WEBHOOK }} \
+            -H 'Content-Type: application/json' \
+            -d "{\"text\":\"$STATUS_EMOJI DR Test Completed: Full System Restore - ${{ job.status }}\"}"

@@ -175,10 +175,12 @@ describe('AccountingService', () => {
       const account = { id, tenantId: mockUser.tenantId };
 
       mockCacheService.getOrSet.mockResolvedValue(account as Account);
+      mockAccountRepository.findOne.mockResolvedValue(account as Account);
       mockAccountRepository.remove.mockResolvedValue(undefined);
 
       await service.deleteAccount(mockUser, id);
 
+      expect(mockAccountRepository.findOne).toHaveBeenCalled();
       expect(mockAccountRepository.remove).toHaveBeenCalled();
       expect(mockCacheService.del).toHaveBeenCalled();
     });
@@ -221,11 +223,22 @@ describe('AccountingService', () => {
   describe('postJournalEntry', () => {
     it('should post journal entry and invalidate cache', async () => {
       const id = 'entry-123';
-      const existingEntry = { id, status: 'draft', tenantId: mockUser.tenantId };
-      const postedEntry = { id, status: 'posted', tenantId: mockUser.tenantId };
+      const existingEntry = {
+        id,
+        status: 'draft',
+        tenantId: mockUser.tenantId,
+        lines: [], // Add lines array to prevent iteration error
+      };
+      const postedEntry = {
+        id,
+        status: 'posted',
+        tenantId: mockUser.tenantId,
+        lines: [],
+      };
 
       mockJournalEntryRepository.findOne.mockResolvedValue(existingEntry as JournalEntry);
       mockJournalEntryRepository.save.mockResolvedValue(postedEntry as JournalEntry);
+      mockAccountRepository.findOne.mockResolvedValue({ id: 'acc-1', balance: 0 } as any);
 
       const result = await service.postJournalEntry(mockUser, id);
 
@@ -289,10 +302,12 @@ describe('AccountingService', () => {
       const invoice = { id, tenantId: mockUser.tenantId };
 
       mockCacheService.getOrSet.mockResolvedValue(invoice as Invoice);
+      mockInvoiceRepository.findOne.mockResolvedValue(invoice as Invoice);
       mockInvoiceRepository.remove.mockResolvedValue(undefined);
 
       await service.deleteInvoice(mockUser, id);
 
+      expect(mockInvoiceRepository.findOne).toHaveBeenCalled();
       expect(mockInvoiceRepository.remove).toHaveBeenCalled();
       expect(mockCacheService.del).toHaveBeenCalled();
     });

@@ -283,10 +283,12 @@ describe('ProductCategoryService', () => {
 
     it('should invalidate cache after removal', async () => {
       mockCacheService.getOrSet.mockResolvedValue(mockCategory);
+      mockCategoryRepository.findOne.mockResolvedValue(mockCategory);
       mockCategoryRepository.remove.mockResolvedValue(mockCategory);
 
       await service.remove(mockUser, '1');
 
+      expect(mockCategoryRepository.findOne).toHaveBeenCalled();
       expect(mockCacheService.del).toHaveBeenCalledWith('category:tenant-1:1');
     });
   });

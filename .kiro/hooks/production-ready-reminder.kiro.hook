@@ -1,0 +1,13 @@
+{
+  "name": "Production Ready Reminder",
+  "version": "1.0.0",
+  "description": "Nhắc nhở làm việc để có sản phẩm production-ready, tuân thủ steering rules",
+  "when": {
+    "type": "postToolUse",
+    "toolTypes": "write,shell"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "✅ Verify: Tuân thủ steering rules? (SecureRepository, tenant isolation, permission check, audit trail, tests). Continue work towards production-ready product."
+  }
+}

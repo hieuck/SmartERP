@@ -1,18 +1,18 @@
+import { CacheTTL } from '@/common/cache/cache.config';
+import { CacheService } from '@/common/cache/cache.service';
+import { PermissionService, User } from '@/common/security/permission.service';
+import { SecureRepository } from '@/common/security/secure-repository';
 import {
+  BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
-  ConflictException,
-  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Product, ProductStatus } from './entities/product.entity';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { CacheService } from '@/common/cache/cache.service';
-import { CacheTTL } from '@/common/cache/cache.config';
-import { SecureRepository } from '@/common/security/secure-repository';
-import { PermissionService, User } from '@/common/security/permission.service';
+import { Product, ProductStatus } from './entities/product.entity';
 
 @Injectable()
 export class ProductService {
@@ -24,11 +24,7 @@ export class ProductService {
     private readonly cacheService: CacheService,
     private readonly permissionService: PermissionService,
   ) {
-    this.secureProductRepo = new SecureRepository(
-      productRepository,
-      permissionService,
-      'Product',
-    );
+    this.secureProductRepo = new SecureRepository(productRepository, permissionService, 'Product');
   }
 
   async create(user: User, createProductDto: CreateProductDto): Promise<Product> {
@@ -81,7 +77,7 @@ export class ProductService {
       cacheKey,
       async () => {
         const product = await this.secureProductRepo.findOne(user, {
-          where: { id } as any,
+          where: { id, tenantId: user.tenantId } as any,
         });
 
         if (!product) {

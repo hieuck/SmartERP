@@ -1,13 +1,13 @@
+import { CacheService } from '@/common/cache/cache.service';
+import { PermissionService } from '@/common/security/permission.service';
+import { createMockUser } from '@/common/test/test-helpers';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AccountingService } from './accounting.service';
 import { Account, AccountType } from './entities/account.entity';
-import { JournalEntry } from './entities/journal-entry.entity';
 import { Invoice } from './entities/invoice.entity';
-import { CacheService } from '@/common/cache/cache.service';
-import { PermissionService } from '@/common/security/permission.service';
-import { createMockUser } from '@/common/test/test-helpers';
+import { JournalEntry } from './entities/journal-entry.entity';
 
 describe('AccountingService - Chart of Accounts', () => {
   let service: AccountingService;
@@ -46,6 +46,9 @@ describe('AccountingService - Chart of Accounts', () => {
     checkPermission: jest.fn(),
     filterByPermission: jest.fn(),
     buildSecureQuery: jest.fn((user, where) => ({ ...where, tenantId: user.tenantId })),
+    canRead: jest.fn().mockReturnValue(true),
+    canWrite: jest.fn().mockReturnValue(true),
+    canDelete: jest.fn().mockReturnValue(true),
   };
 
   const mockUser = createMockUser();
@@ -198,7 +201,7 @@ describe('AccountingService - Chart of Accounts', () => {
 
       mockAccountRepository.find.mockResolvedValue(flatAccounts as Account[]);
 
-      const result = await service.getAccountHierarchy(mockUser) as any;
+      const result = (await service.getAccountHierarchy(mockUser)) as any;
 
       // Should return root nodes only
       expect(result).toHaveLength(1);
@@ -227,7 +230,7 @@ describe('AccountingService - Chart of Accounts', () => {
 
       mockAccountRepository.find.mockResolvedValue(flatAccounts as Account[]);
 
-      const result = await service.getAccountHierarchy(mockUser) as any;
+      const result = (await service.getAccountHierarchy(mockUser)) as any;
 
       expect(result).toHaveLength(1);
       expect(result[0].children).toEqual([]);

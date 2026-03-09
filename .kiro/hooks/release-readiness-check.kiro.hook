@@ -1,0 +1,12 @@
+{
+  "name": "Release Readiness Check",
+  "version": "1.0.0",
+  "description": "Kiểm tra sản phẩm sẵn sàng cho user đăng ký và trải nghiệm lần đầu",
+  "when": {
+    "type": "agentStop"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "🚀 RELEASE READINESS:\n1. Tests pass? (npm test)\n2. Security: SecureRepository + tenant isolation?\n3. Features work: User registration + first-time experience?\n4. Production ready: No blockers?\n\nIf YES → Commit. If NO → Continue fixing."
+  }
+}
