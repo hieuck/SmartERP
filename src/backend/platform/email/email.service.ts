@@ -1,15 +1,18 @@
-import { Injectable, Logger, NotFoundException, Inject } from '@nestjs/common';
-import { User } from '@/common/security/permission.service';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { PermissionService, User } from '@/common/security/permission.service';
+import { SecureRepository } from '@/common/security/secure-repository';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
 import { Cache } from 'cache-manager';
-import { EmailTemplate, TemplateType } from './entities/email-template.entity';
+import { Repository } from 'typeorm';
 import { EmailLog, EmailStatus } from './entities/email-log.entity';
+import { EmailTemplate, TemplateType } from './entities/email-template.entity';
 
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
+  private readonly secureTemplateRepo: SecureRepository<EmailTemplate>;
+  private readonly secureLogRepo: SecureRepository<EmailLog>;
 
   constructor(
     @InjectRepository(EmailTemplate)
@@ -18,7 +21,15 @@ export class EmailService {
     private logRepository: Repository<EmailLog>,
     @Inject(CACHE_MANAGER)
     private readonly cacheManager: Cache,
-  ) {}
+    private readonly permissionService: PermissionService,
+  ) {
+    this.secureTemplateRepo = new SecureRepository(
+      templateRepository,
+      permissionService,
+      'EmailTemplate',
+    );
+    this.secureLogRepo = new SecureRepository(logRepository, permissionService, 'EmailLog');
+  }
 
   // Template Management
   async findAllTemplates(user: User): Promise<EmailTemplate[]> {
@@ -30,9 +41,8 @@ export class EmailService {
       return cached;
     }
 
-    // Cache miss - fetch from database
-    const templates = await this.templateRepository.find({
-      where: { tenantId: user.tenantId },
+    // Cache miss - fetch from database with SecureRepository
+    const templates = await this.secureTemplateRepo.find(user, {
       order: { createdAt: 'DESC' },
     });
 
@@ -42,8 +52,8 @@ export class EmailService {
     return templates;
   }
 
-  async findTemplateById(tenantId: string, id: string): Promise<EmailTemplate> {
-    const cacheKey = `email-template:${tenantId}:${id}`;
+  async findTemplateById(user: User, id: string): Promise<EmailTemplate> {
+    const cacheKey = `email-template:${user.tenantId}:${id}`;
 
     // Try cache first
     const cached = await this.cacheManager.get<EmailTemplate>(cacheKey);
@@ -51,9 +61,9 @@ export class EmailService {
       return cached;
     }
 
-    // Cache miss - fetch from database
-    const template = await this.templateRepository.findOne({
-      where: { tenantId, id },
+    // Cache miss - fetch from database with SecureRepository
+    const template = await this.secureTemplateRepo.findOne(user, {
+      where: { id },
     });
 
     if (!template) {
@@ -66,8 +76,8 @@ export class EmailService {
     return template;
   }
 
-  async findTemplateByType(tenantId: string, type: TemplateType): Promise<EmailTemplate> {
-    const cacheKey = `email-template:${tenantId}:type:${type}`;
+  async findTemplateByType(user: User, type: TemplateType): Promise<EmailTemplate> {
+    const cacheKey = `email-template:${user.tenantId}:type:${type}`;
 
     // Try cache first
     const cached = await this.cacheManager.get<EmailTemplate>(cacheKey);
@@ -75,9 +85,9 @@ export class EmailService {
       return cached;
     }
 
-    // Cache miss - fetch from database
-    const template = await this.templateRepository.findOne({
-      where: { tenantId, type, isActive: true },
+    // Cache miss - fetch from database with SecureRepository
+    const template = await this.secureTemplateRepo.findOne(user, {
+      where: { type, isActive: true },
     });
 
     if (!template) {
@@ -95,39 +105,45 @@ export class EmailService {
       ...data,
       tenantId: user.tenantId,
     });
-    return this.templateRepository.save(template);
+    return this.secureTemplateRepo.save(user, template);
   }
 
   async updateTemplate(
-    tenantId: string,
+    user: User,
     id: string,
     data: Partial<EmailTemplate>,
   ): Promise<EmailTemplate> {
-    await this.findTemplateById(tenantId, id);
-    await this.templateRepository.update({ tenantId, id }, data);
+    const template = await this.findTemplateById(user, id);
+
+    Object.assign(template, data);
+
+    await this.secureTemplateRepo.save(user, template);
 
     // Invalidate caches
-    await this.cacheManager.del(`email-template:${tenantId}:${id}`);
-    await this.cacheManager.del(`email-template:all:${tenantId}`);
+    await this.cacheManager.del(`email-template:${user.tenantId}:${id}`);
+    await this.cacheManager.del(`email-template:all:${user.tenantId}`);
 
-    return this.findTemplateById(tenantId, id);
+    return this.findTemplateById(user, id);
   }
 
-  async deleteTemplate(tenantId: string, id: string): Promise<void> {
-    const template = await this.findTemplateById(tenantId, id);
-    await this.templateRepository.softDelete({ tenantId, id });
+  async deleteTemplate(user: User, id: string): Promise<void> {
+    const template = await this.findTemplateById(user, id);
+
+    // Soft delete using raw repository (SecureRepository doesn't support softDelete yet)
+    // Permission already checked in findTemplateById
+    await this.templateRepository.softDelete({ tenantId: user.tenantId, id });
 
     // Invalidate caches
-    await this.cacheManager.del(`email-template:${tenantId}:${id}`);
-    await this.cacheManager.del(`email-template:all:${tenantId}`);
+    await this.cacheManager.del(`email-template:${user.tenantId}:${id}`);
+    await this.cacheManager.del(`email-template:all:${user.tenantId}`);
     if (template.type) {
-      await this.cacheManager.del(`email-template:${tenantId}:type:${template.type}`);
+      await this.cacheManager.del(`email-template:${user.tenantId}:type:${template.type}`);
     }
   }
 
   // Email Sending
   async sendEmail(
-    tenantId: string,
+    user: User,
     to: string,
     subject: string,
     body: string,
@@ -135,7 +151,7 @@ export class EmailService {
     bcc?: string,
   ): Promise<EmailLog> {
     const log = this.logRepository.create({
-      tenantId,
+      tenantId: user.tenantId,
       to,
       cc,
       bcc,
@@ -144,40 +160,34 @@ export class EmailService {
       status: EmailStatus.PENDING,
     });
 
-    const savedLog = await this.logRepository.save(log);
+    const savedLog = await this.secureLogRepo.save(user, log);
 
     // Simulate email sending (replace with actual SMTP integration)
     try {
       // TODO: Integrate with SMTP service (nodemailer, SendGrid, etc.)
       this.logger.log(`Sending email to ${to}: ${subject}`);
 
-      await this.logRepository.update(
-        { id: savedLog.id, tenantId },
-        {
-          status: EmailStatus.SENT,
-          sentAt: new Date(),
-        },
-      );
+      savedLog.status = EmailStatus.SENT;
+      savedLog.sentAt = new Date();
+
+      await this.secureLogRepo.save(user, savedLog);
     } catch (error) {
-      await this.logRepository.update(
-        { id: savedLog.id, tenantId },
-        {
-          status: EmailStatus.FAILED,
-          error: error.message,
-        },
-      );
+      savedLog.status = EmailStatus.FAILED;
+      savedLog.error = error.message;
+
+      await this.secureLogRepo.save(user, savedLog);
     }
 
-    return this.logRepository.findOne({ where: { id: savedLog.id, tenantId } });
+    return this.secureLogRepo.findOne(user, { where: { id: savedLog.id } });
   }
 
   async sendTemplateEmail(
-    tenantId: string,
+    user: User,
     to: string,
     templateId: string,
     variables: Record<string, string>,
   ): Promise<EmailLog> {
-    const template = await this.findTemplateById(tenantId, templateId);
+    const template = await this.findTemplateById(user, templateId);
 
     let subject = template.subject;
     let body = template.body;
@@ -189,24 +199,25 @@ export class EmailService {
       body = body.replace(new RegExp(placeholder, 'g'), variables[key]);
     });
 
-    const log = await this.sendEmail(tenantId, to, subject, body);
-    await this.logRepository.update({ id: log.id, tenantId }, { templateId });
+    const log = await this.sendEmail(user, to, subject, body);
+    log.templateId = templateId;
 
-    return this.logRepository.findOne({ where: { id: log.id, tenantId } });
+    await this.secureLogRepo.save(user, log);
+
+    return this.secureLogRepo.findOne(user, { where: { id: log.id } });
   }
 
   // Email Logs
   async findAllLogs(user: User): Promise<EmailLog[]> {
-    return this.logRepository.find({
-      where: { tenantId: user.tenantId },
+    return this.secureLogRepo.find(user, {
       order: { createdAt: 'DESC' },
       take: 100,
     });
   }
 
-  async findLogById(tenantId: string, id: string): Promise<EmailLog> {
-    const log = await this.logRepository.findOne({
-      where: { tenantId, id },
+  async findLogById(user: User, id: string): Promise<EmailLog> {
+    const log = await this.secureLogRepo.findOne(user, {
+      where: { id },
     });
     if (!log) {
       throw new NotFoundException(`Email log with ID ${id} not found`);

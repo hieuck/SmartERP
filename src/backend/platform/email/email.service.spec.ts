@@ -1,14 +1,20 @@
+import { PermissionService, User } from '@/common/security/permission.service';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { EmailService } from './email.service';
-import { EmailTemplate, TemplateType } from './entities/email-template.entity';
 import { EmailLog, EmailStatus } from './entities/email-log.entity';
-import { NotFoundException } from '@nestjs/common';
-import { createMockUser } from '@/common/test/test-helpers';
+import { EmailTemplate, TemplateType } from './entities/email-template.entity';
 
 describe('EmailService', () => {
   let service: EmailService;
+
+  const mockUser: User = {
+    id: 'user-1',
+    tenantId: 'tenant-1',
+    roles: ['admin'],
+  };
 
   const mockTemplateRepository = {
     find: jest.fn(),
@@ -17,6 +23,12 @@ describe('EmailService', () => {
     save: jest.fn(),
     update: jest.fn(),
     softDelete: jest.fn(),
+    metadata: {
+      tableName: 'email_templates',
+      name: 'EmailTemplate',
+      columns: [],
+      relations: [],
+    },
   };
 
   const mockLogRepository = {
@@ -25,14 +37,25 @@ describe('EmailService', () => {
     create: jest.fn(),
     save: jest.fn(),
     update: jest.fn(),
+    metadata: {
+      tableName: 'email_logs',
+      name: 'EmailLog',
+      columns: [],
+      relations: [],
+    },
   };
-
-  const mockUser = createMockUser();
 
   const mockCacheManager = {
     get: jest.fn(),
     set: jest.fn(),
     del: jest.fn(),
+  };
+
+  const mockPermissionService = {
+    canRead: jest.fn().mockReturnValue(true),
+    canWrite: jest.fn().mockReturnValue(true),
+    canDelete: jest.fn().mockReturnValue(true),
+    buildSecureQuery: jest.fn((user, query) => query),
   };
 
   beforeEach(async () => {
@@ -51,10 +74,27 @@ describe('EmailService', () => {
           provide: CACHE_MANAGER,
           useValue: mockCacheManager,
         },
+        {
+          provide: PermissionService,
+          useValue: mockPermissionService,
+        },
       ],
     }).compile();
 
     service = module.get<EmailService>(EmailService);
+
+    // Mock SecureRepository methods
+    jest.spyOn(service['secureTemplateRepo'], 'find').mockImplementation(async () => []);
+    jest.spyOn(service['secureTemplateRepo'], 'findOne').mockImplementation(async () => null);
+    jest
+      .spyOn(service['secureTemplateRepo'], 'save')
+      .mockImplementation(async (_user, data: any) => data);
+
+    jest.spyOn(service['secureLogRepo'], 'find').mockImplementation(async () => []);
+    jest.spyOn(service['secureLogRepo'], 'findOne').mockImplementation(async () => null);
+    jest
+      .spyOn(service['secureLogRepo'], 'save')
+      .mockImplementation(async (_user, data: any) => data);
   });
 
   afterEach(() => {
@@ -66,7 +106,7 @@ describe('EmailService', () => {
       it('should find all templates from database (cache miss)', async () => {
         const mockTemplates = [{ id: '1', name: 'Welcome Email' }];
         mockCacheManager.get.mockResolvedValue(null); // Cache miss
-        mockTemplateRepository.find.mockResolvedValue(mockTemplates);
+        jest.spyOn(service['secureTemplateRepo'], 'find').mockResolvedValue(mockTemplates as any);
         mockCacheManager.set.mockResolvedValue(undefined);
 
         const result = await service.findAllTemplates(mockUser);
@@ -88,7 +128,7 @@ describe('EmailService', () => {
 
         expect(result).toEqual(mockTemplates);
         expect(mockCacheManager.get).toHaveBeenCalledWith('email-template:all:tenant-1');
-        expect(mockTemplateRepository.find).not.toHaveBeenCalled();
+        expect(service['secureTemplateRepo'].find).not.toHaveBeenCalled();
         expect(mockCacheManager.set).not.toHaveBeenCalled();
       });
     });
@@ -127,9 +167,7 @@ describe('EmailService', () => {
         mockCacheManager.get.mockResolvedValue(null); // Cache miss
         mockTemplateRepository.findOne.mockResolvedValue(null);
 
-        await expect(service.findTemplateById(mockUser, '999')).rejects.toThrow(
-          NotFoundException,
-        );
+        await expect(service.findTemplateById(mockUser, '999')).rejects.toThrow(NotFoundException);
       });
     });
 
@@ -147,9 +185,7 @@ describe('EmailService', () => {
         const result = await service.findTemplateByType(mockUser, TemplateType.WELCOME);
 
         expect(result).toEqual(mockTemplate);
-        expect(mockCacheManager.get).toHaveBeenCalledWith(
-          'email-template:tenant-1:type:welcome',
-        );
+        expect(mockCacheManager.get).toHaveBeenCalledWith('email-template:tenant-1:type:welcome');
         expect(mockCacheManager.set).toHaveBeenCalledWith(
           'email-template:tenant-1:type:welcome',
           mockTemplate,
@@ -168,9 +204,7 @@ describe('EmailService', () => {
         const result = await service.findTemplateByType(mockUser, TemplateType.WELCOME);
 
         expect(result).toEqual(mockTemplate);
-        expect(mockCacheManager.get).toHaveBeenCalledWith(
-          'email-template:tenant-1:type:welcome',
-        );
+        expect(mockCacheManager.get).toHaveBeenCalledWith('email-template:tenant-1:type:welcome');
         expect(mockTemplateRepository.findOne).not.toHaveBeenCalled();
         expect(mockCacheManager.set).not.toHaveBeenCalled();
       });
@@ -193,9 +227,13 @@ describe('EmailService', () => {
           body: 'Test Body',
           type: TemplateType.WELCOME,
         };
-        const mockTemplate = { id: '1', ...templateData, tenantId: 'tenant-1' };
+        const mockTemplate = {
+          id: '1',
+          ...templateData,
+          tenantId: 'tenant-1',
+        };
         mockTemplateRepository.create.mockReturnValue(mockTemplate);
-        mockTemplateRepository.save.mockResolvedValue(mockTemplate);
+        jest.spyOn(service['secureTemplateRepo'], 'save').mockResolvedValue(mockTemplate as any);
 
         const result = await service.createTemplate(mockUser, templateData);
 
@@ -204,7 +242,7 @@ describe('EmailService', () => {
           ...templateData,
           tenantId: 'tenant-1',
         });
-        expect(mockTemplateRepository.save).toHaveBeenCalledWith(mockTemplate);
+        expect(service['secureTemplateRepo'].save).toHaveBeenCalled();
       });
     });
 
@@ -260,9 +298,7 @@ describe('EmailService', () => {
         });
         expect(mockCacheManager.del).toHaveBeenCalledWith('email-template:tenant-1:1');
         expect(mockCacheManager.del).toHaveBeenCalledWith('email-template:all:tenant-1');
-        expect(mockCacheManager.del).toHaveBeenCalledWith(
-          'email-template:tenant-1:type:welcome',
-        );
+        expect(mockCacheManager.del).toHaveBeenCalledWith('email-template:tenant-1:type:welcome');
       });
 
       it('should delete template without type cache invalidation', async () => {
@@ -332,14 +368,14 @@ describe('EmailService', () => {
       };
       mockLogRepository.create.mockReturnValue(mockLog);
       mockLogRepository.save.mockResolvedValue(mockLog);
-      
+
       // Mock update to throw error on first call (simulating SMTP failure)
       const error = new Error('SMTP connection failed');
       mockLogRepository.update.mockRejectedValueOnce(error);
-      
+
       // Second update call should succeed (updating status to FAILED)
       mockLogRepository.update.mockResolvedValueOnce({ affected: 1 });
-      
+
       mockLogRepository.findOne.mockResolvedValue({
         ...mockLog,
         status: EmailStatus.FAILED,
