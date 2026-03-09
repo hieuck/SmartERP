@@ -9,6 +9,6 @@
   },
   "then": {
     "type": "askAgent",
-    "prompt": "⚡ POST TOOL - QUICK VERIFY & CONTINUE\n\n**Tool executed. Verify và tiếp tục!**\n\n---\n\n## 1️⃣ QUICK VERIFY (5 seconds)\n\n- Tool result: Success/Error?\n- Any blockers?\n- Tests passing?\n\n---\n\n## 2️⃣ CONTINUE IMMEDIATELY\n\n**Current task done?**\n- ✅ YES → Move to next subtask\n- ⏳ NO → Continue current task\n\n**Any blockers?**\n- ❌ YES → Fix now\n- ✅ NO → Continue\n\n---\n\n## 🚫 RULES\n\n- ❌ NO long analysis\n- ❌ NO reports\n- ❌ NO meetings\n- ✅ Quick verify (1 sentence)\n- ✅ Continue immediately\n\n---\n\n**CONTINUE NOW!**"
+    "prompt": "✅ Verify → Continue. NO text output."
   }
 }
