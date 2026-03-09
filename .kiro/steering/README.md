@@ -65,6 +65,18 @@ Agent: [Loads changelog-guide.md and provides guidance]
 
 ## 🔧 Hooks Integration
 
+### legacy-code-checkpoint.kiro.hook
+
+- **Trigger**: preToolUse (write tools only)
+- **Action**: Verify legacy code trước khi refactor
+- **Checks**:
+  1. File có trong exception list không?
+  2. Nếu CÓ → Research Odoo/ERPNext + Refactor theo pattern
+  3. Nếu KHÔNG → Verify tuân thủ hoặc block
+  4. Chỉ check file đang sửa, bỏ qua files khác
+- **Exception List**: `.kiro/architecture-exceptions.json`
+- **Status**: ✅ Active
+
 ### production-ready-reminder.kiro.hook
 
 - **Trigger**: postToolUse (write, shell tools only)

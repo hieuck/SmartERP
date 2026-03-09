@@ -1,0 +1,65 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2026-03-09",
+  "exemptFiles": [
+    {
+      "path": "src/backend/domains/project/project.service.ts",
+      "reason": "Legacy code - Missing SecureRepository, PermissionService, CacheService",
+      "violations": [
+        "Direct repository queries",
+        "No PermissionService injection",
+        "No SecureRepository instantiation",
+        "No caching strategy"
+      ],
+      "assignedTo": "refactor-team",
+      "deadline": "2026-06-30",
+      "priority": "high"
+    },
+    {
+      "path": "src/backend/domains/hr/hr/hr.service.ts",
+      "reason": "Legacy code - Missing SecureRepository pattern",
+      "violations": [
+        "Direct repository queries",
+        "No PermissionService injection",
+        "No SecureRepository instantiation"
+      ],
+      "assignedTo": "refactor-team",
+      "deadline": "2026-06-30",
+      "priority": "medium"
+    }
+  ],
+  "refactoringGuidelines": {
+    "beforeRefactor": [
+      "1. Read entire file to understand current implementation",
+      "2. Research Odoo architecture for this module (30 min)",
+      "3. Research ERPNext architecture for this module (30 min)",
+      "4. Compare approaches and decide best practices",
+      "5. Document reasoning in code comments"
+    ],
+    "duringRefactor": [
+      "1. Add PermissionService to constructor",
+      "2. Add CacheService to constructor",
+      "3. Create SecureRepository instance",
+      "4. Replace all direct repository calls with SecureRepository",
+      "5. Add permission checks (canRead, canWrite, canDelete)",
+      "6. Add caching for read operations",
+      "7. Update audit trail (createdBy, updatedBy)"
+    ],
+    "afterRefactor": [
+      "1. Update tests to mock SecureRepository (not raw TypeORM)",
+      "2. Run tests: npm test -- <file>.spec.ts",
+      "3. Verify no regressions",
+      "4. Remove file from exemptFiles list",
+      "5. Update this file's lastUpdated timestamp",
+      "6. Commit with message: 'refactor: migrate <module> to SecureRepository pattern'"
+    ]
+  },
+  "complianceMetrics": {
+    "totalServices": 50,
+    "compliantServices": 38,
+    "exemptServices": 12,
+    "complianceRate": "76%",
+    "target": "100%",
+    "deadline": "2026-06-30"
+  }
+}

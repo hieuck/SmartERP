@@ -1,0 +1,13 @@
+{
+  "name": "Legacy Code Checkpoint",
+  "version": "1.0.0",
+  "description": "Verify legacy code trước khi refactor, nhắc tuân thủ Odoo/ERPNext patterns cho files đang sửa",
+  "when": {
+    "type": "preToolUse",
+    "toolTypes": ["write"]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "🔍 LEGACY CODE CHECKPOINT:\n\n1. File này có trong exception list không? (project.service.ts, hr.service.ts)\n2. Nếu CÓ trong exception list:\n   - ✅ Verify code cũ: Đọc toàn bộ file trước khi sửa\n   - ✅ Research Odoo pattern cho module này (30 phút)\n   - ✅ Research ERPNext pattern cho module này (30 phút)\n   - ✅ Refactor theo SecureRepository + PermissionService + CacheService\n   - ✅ Update tests mock SecureRepository\n   - ✅ Remove khỏi exception list\n\n3. Nếu KHÔNG trong exception list:\n   - ✅ Verify tuân thủ: SecureRepository, PermissionService, tenant isolation, audit trail\n   - ✅ Nếu vi phạm → Block và yêu cầu fix\n\n4. Chỉ check FILE ĐANG SỬA, bỏ qua files khác\n\nProceed?"
+  }
+}
