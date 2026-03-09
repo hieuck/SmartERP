@@ -3,19 +3,6 @@
   "lastUpdated": "2026-03-09",
   "exemptFiles": [
     {
-      "path": "src/backend/domains/project/project.service.ts",
-      "reason": "Legacy code - Missing SecureRepository, PermissionService, CacheService",
-      "violations": [
-        "Direct repository queries",
-        "No PermissionService injection",
-        "No SecureRepository instantiation",
-        "No caching strategy"
-      ],
-      "assignedTo": "refactor-team",
-      "deadline": "2026-06-30",
-      "priority": "high"
-    },
-    {
       "path": "src/backend/domains/hr/hr/hr.service.ts",
       "reason": "Legacy code - Missing SecureRepository pattern",
       "violations": [
@@ -133,9 +120,9 @@
   },
   "complianceMetrics": {
     "totalServices": 50,
-    "compliantServices": 42,
-    "exemptServices": 8,
-    "complianceRate": "84%",
+    "compliantServices": 43,
+    "exemptServices": 7,
+    "complianceRate": "86%",
     "target": "100%",
     "deadline": "2026-06-30",
     "lastAudit": "2026-03-09"

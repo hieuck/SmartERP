@@ -1,32 +1,31 @@
-import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { CacheModule } from '@nestjs/cache-manager';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
-import { redisStore } from 'cache-manager-redis-yet';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
 // Middleware
-import { TenantMiddleware } from './common/middleware/tenant.middleware';
 import { LoggingMiddleware } from './common/middleware/logging.middleware';
 import { MetricsMiddleware } from './common/middleware/metrics.middleware';
+import { TenantMiddleware } from './common/middleware/tenant.middleware';
 
 // Guards
 import { CustomThrottlerGuard } from './common/guards/throttler.guard';
 
 // Common Modules
+import { CacheModule as CustomCacheModule } from './common/cache/cache.module';
 import { CommonModule } from './common/common.module';
+import { GdprModule } from './common/gdpr/gdpr.module';
 import { LoggerModule } from './common/logger/logger.module';
 import { MetricsModule } from './common/metrics/metrics.module';
-import { CacheModule as CustomCacheModule } from './common/cache/cache.module';
 import { SecurityModule } from './common/security/security.module';
-import { GdprModule } from './common/gdpr/gdpr.module';
 
 // Core Modules
 import { AuthModule } from './core/auth/auth.module';
-import { UserModule } from './core/user/user.module';
 import { PermissionModule } from './core/permission/permission.module';
-import { TenantModule } from './core/tenant/tenant.module';
 import { SettingsModule } from './core/settings/settings.module';
+import { TenantModule } from './core/tenant/tenant.module';
+import { UserModule } from './core/user/user.module';
 
 // Domain Modules - Accounting
 import { AccountingDomainModule } from './domains/accounting/accounting.module';
@@ -42,32 +41,31 @@ import { PayrollModule } from './domains/hr/payroll/payroll.module';
 
 // Domain Modules - Manufacturing
 import { BOMModule } from './domains/manufacturing/bom/bom.module';
-import { WorkCenterModule } from './domains/manufacturing/work-center/work-center.module';
-import { WorkOrderModule } from './domains/manufacturing/work-order/work-order.module';
 import { MaterialModule } from './domains/manufacturing/material/material.module';
 import { MoldModule } from './domains/manufacturing/mold/mold.module';
 import { QualityCheckModule } from './domains/manufacturing/quality-check/quality-check.module';
+import { WorkCenterModule } from './domains/manufacturing/work-center/work-center.module';
 
 // Domain Modules - eCommerce
+import { OrderModule as EcommerceOrderModule } from './domains/ecommerce/order/order.module';
 import { ProductCatalogModule } from './domains/ecommerce/product-catalog/product-catalog.module';
 import { ShoppingCartModule } from './domains/ecommerce/shopping-cart/shopping-cart.module';
-import { OrderModule as EcommerceOrderModule } from './domains/ecommerce/order/order.module';
 
 // Domain Modules - Project Management
 import { ProjectModule } from './domains/project/project.module';
 
 // Platform Modules
-import { WorkflowModule } from './platform/workflow/workflow.module';
-import { DocumentModule } from './platform/document/document.module';
-import { NotificationModule } from './platform/notification/notification.module';
 import { AuditModule } from './platform/audit/audit.module';
 import { DashboardModule } from './platform/dashboard/dashboard.module';
-import { ReportModule } from './platform/report/report.module';
-import { SearchModule } from './platform/search/search.module';
+import { DocumentModule } from './platform/document/document.module';
 import { EmailModule } from './platform/email/email.module';
 import { IssueTrackingModule } from './platform/issue-tracking/issue-tracking.module';
+import { NotificationModule } from './platform/notification/notification.module';
+import { ReportModule } from './platform/report/report.module';
+import { SearchModule } from './platform/search/search.module';
 import { SupportModule } from './platform/support/support.module';
 import { SystemAdminModule } from './platform/system-admin/system-admin.module';
+import { WorkflowModule } from './platform/workflow/workflow.module';
 
 // Integration Modules
 import { IntegrationModule } from './integrations/integration/integration.module';
@@ -78,6 +76,7 @@ import { ShippingModule } from './integrations/shipping/shipping.module';
 import { HealthModule } from './utilities/health/health.module';
 import { ImportExportModule } from './utilities/import-export/import-export.module';
 import { ScheduledJobsModule } from './utilities/scheduled-jobs/scheduled-jobs.module';
+import { SeedModule } from './utilities/seed/seed.module';
 
 // Legacy Modules - REMOVED (migrated to domains/manufacturing/)
 
@@ -192,6 +191,7 @@ const RoleModule = { module: class RoleModule {} };
     HealthModule,
     ImportExportModule,
     ScheduledJobsModule,
+    SeedModule,
 
     // Legacy Modules - REMOVED (migrated to domains/manufacturing/ on 2026-03-07)
 

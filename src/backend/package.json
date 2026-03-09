@@ -22,6 +22,8 @@
     "migration:run": "typeorm migration:run -d src/config/typeorm-migration.config.ts",
     "migration:revert": "typeorm migration:revert -d src/config/typeorm-migration.config.ts",
     "seed:test-users": "ts-node scripts/seed-test-users.ts",
+    "db:init": "ts-node -r tsconfig-paths/register scripts/init-db-schema.ts",
+    "db:drop-create": "ts-node -r tsconfig-paths/register scripts/drop-create-db.ts",
     "config:validate": "ts-node ../../scripts/validate-config.ts",
     "config:check-env": "ts-node ../../scripts/check-env.ts"
   },

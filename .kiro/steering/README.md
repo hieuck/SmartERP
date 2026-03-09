@@ -82,6 +82,15 @@ Steering files provide guidance and best practices for development.
    - Code comment standards
    - **Type**: Auto-included (always active)
 
+10. **autonomous-development-workflow.md** ⭐ NEW - Autonomous Development
+
+- Self-building patterns
+- Self-healing mechanisms
+- Self-improving workflows
+- Decision framework
+- **Type**: Auto-included (always active)
+- **Use for**: Autonomous AI development
+
 ---
 
 ## 🎯 How to Use
@@ -90,9 +99,10 @@ Steering files provide guidance and best practices for development.
 
 These files are automatically loaded in every conversation:
 
-- `multi-tenant-architecture-patterns.md` ⭐ NEW - General architecture (70% general)
+- `multi-tenant-architecture-patterns.md` ⭐ - General architecture (70% general)
 - `architecture-enforcement.md` - Compliance automation
 - `vietnamese-communication.md` - Communication guidelines
+- `autonomous-development-workflow.md` ⭐ NEW - Autonomous development patterns
 
 ### Manual Inclusion (Load When Needed)
 
@@ -118,62 +128,88 @@ Agent: [Loads erp-implementation-guide.md with Odoo/ERPNext patterns]
 
 ## 🔧 Hooks Integration
 
-### architecture-checkpoint.kiro.hook ⭐ RENAMED
+### 🤖 Autonomous Development Hooks (NEW v3.0.0)
 
-**Previous name**: `legacy-code-checkpoint.kiro.hook`
+#### autonomous-development.kiro.hook ⭐ NEW
 
-- **Trigger**: preToolUse (write tools only)
-- **Action**: Autonomous verification - Tự động check và fix vi phạm
-- **Mode**: Autonomous (không hỏi user, tự quyết định)
-- **Checks**:
-  1. File có trong exception list không?
-  2. Nếu CÓ (Legacy) → TỰ ĐỘNG: Refactor nếu cần hoặc minimal change
-  3. Nếu KHÔNG (New) → TỰ ĐỘNG: Fix vi phạm ngay lập tức
-  4. Chỉ check file đang sửa, bỏ qua files khác
-- **Research Time**: Adaptive (10-60 phút based on complexity)
-  - Simple: 10-15 phút research
-  - Moderate: 20-30 phút research
-  - Complex: 30-60 phút research
-  - **Domain-agnostic**: Research best practices for any domain
+- **Trigger**: promptSubmit (every user request)
+- **Action**: Autonomous development - AI tự xây dựng SmartERP
+- **Mode**: Fully Autonomous (minimal human intervention)
+- **Capabilities**:
+  - Tự implement features từ requirements
+  - Tự break down tasks
+  - Tự detect và fix bugs
+  - Tự refactor violations
+  - Tự write tests
+  - Tự verify và commit
 - **Decision Rules**:
-  - ❌ KHÔNG BAO GIỜ proceed với code vi phạm
-  - ✅ LUÔN LUÔN fix trước khi proceed
-  - 🤖 TỰ ĐỘNG quyết định, không cần approval
-- **Exception List**: `.kiro/architecture-exceptions.json`
-- **Version**: 2.0.0 (was 1.2.0)
+  - Standard tasks → Execute autonomously
+  - Critical decisions → Ask human
+  - All checks pass → Auto-commit
+- **Version**: 1.0.0
 - **Status**: ✅ Active
 
-### production-ready-reminder.kiro.hook
-
-- **Trigger**: postToolUse (write, shell tools only)
-- **Action**: Autonomous verification - Tự động verify architecture compliance sau mỗi tool use
-- **Mode**: Autonomous (không hỏi user, tự verify và fix)
-- **File Type Filter**: Chỉ check .service.ts, .controller.ts, .entity.ts, .spec.ts
-  - ⏭️ SKIP: .json, .md, .yml, .yaml, .txt, config files
-- **Checks**: SecureRepository, tenant isolation, permission check, audit trail, tests
-- **Decision Rules**:
-  - Vi phạm → TỰ ĐỘNG fix ngay
-  - Tuân thủ → Continue work
-- **Version**: 2.0.0 (was 1.2.0)
-- **Status**: ✅ Active
-
-### release-readiness-check.kiro.hook
+#### auto-refactor-violations.kiro.hook ⭐ NEW
 
 - **Trigger**: agentStop (after task completion)
-- **Action**: Autonomous final check - Tự động verify release readiness
-- **Mode**: Autonomous (không hỏi user, tự quyết định commit hay continue)
-- **Checks**: Tests pass, security, features work, no blockers
-- **Decision Rules**:
-  - All YES → TỰ ĐỘNG commit
-  - Any NO → Continue fixing
+- **Action**: Autonomous refactoring - Tự động scan và fix violations
+- **Mode**: Fully Autonomous
+- **Capabilities**:
+  - Scan modified files for violations
+  - Check exception list
+  - Refactor new code immediately
+  - Add TODO for legacy code
+  - Run tests and verify
+  - Auto-commit if pass
+- **Version**: 1.0.0
+- **Status**: ✅ Active
+
+#### continuous-improvement.kiro.hook ⭐ NEW
+
+- **Trigger**: userTriggered (manual/weekly)
+- **Action**: Codebase health check - Scan và improve toàn bộ codebase
+- **Mode**: Autonomous for critical/high, suggest for medium/low
+- **Capabilities**:
+  - Scan entire codebase
+  - Identify issues by priority
+  - Auto-fix critical/high issues
+  - Report medium/low issues
+  - Track metrics
+  - Generate improvement report
+- **Version**: 1.0.0
+- **Status**: ✅ Active
+
+### 📋 Legacy Hooks (Still Active)
+
+#### architecture-checkpoint.kiro.hook
+
+- **Trigger**: preToolUse (write tools only)
+- **Action**: Pre-write verification
+- **Mode**: Autonomous
+- **Version**: 2.0.0
+- **Status**: ✅ Active
+
+#### production-ready-reminder.kiro.hook
+
+- **Trigger**: postToolUse (write, shell tools only)
+- **Action**: Post-write verification
+- **Mode**: Autonomous
+- **Version**: 2.0.0
+- **Status**: ✅ Active
+
+#### release-readiness-check.kiro.hook
+
+- **Trigger**: agentStop (after task completion)
+- **Action**: Final release check
+- **Mode**: Autonomous
 - **Version**: 1.1.0
 - **Status**: ✅ Active
 
-### pre-commit-quality-gate.kiro.hook
+#### pre-commit-quality-gate.kiro.hook
 
 - **Trigger**: userTriggered (manual)
-- **Action**: Run comprehensive quality checks
-- **Checks**: lint, type-check, tests, security audit
+- **Action**: Quality checks
+- **Version**: 1.0.0
 - **Status**: ✅ Active
 
 ---
@@ -183,9 +219,11 @@ Agent: [Loads erp-implementation-guide.md with Odoo/ERPNext patterns]
 | File                                  | Type   | Status        | Last Updated |
 | ------------------------------------- | ------ | ------------- | ------------ |
 | multi-tenant-architecture-patterns.md | Auto   | ✅ Active     | 2026-03-09   |
+| autonomous-development-workflow.md    | Auto   | ✅ Active     | 2026-03-09   |
 | erp-implementation-guide.md           | Manual | ✅ Active     | 2026-03-09   |
 | architecture-enforcement.md           | Auto   | ✅ Active     | 2026-03-09   |
 | vietnamese-communication.md           | Auto   | ✅ Active     | 2026-03-07   |
+| avoid-temporary-solutions.md          | Auto   | ✅ Active     | 2026-03-09   |
 | ~~odoo-erpnext-architecture.md~~      | Auto   | 🚫 Deprecated | 2026-03-09   |
 | changelog-guide.md                    | Manual | ✅ Active     | 2026-03-09   |
 | roadmap-guide.md                      | Manual | ✅ Active     | 2026-03-09   |
@@ -253,6 +291,6 @@ discloseContext({ name: 'secure-repository-pattern' });
 ---
 
 **Last Updated**: 2026-03-09  
-**Version**: 2.1.0 (was 2.0.0)  
-**Total Guides**: 9 (4 auto, 5 manual)  
-**Status**: ✅ Phase 1 Complete
+**Version**: 3.0.0 (was 2.1.0)  
+**Total Guides**: 10 (5 auto, 5 manual)  
+**Status**: ✅ Autonomous Development Ready
