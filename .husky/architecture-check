@@ -1,0 +1,72 @@
+#!/bin/bash
+# Architecture Compliance Check
+# Blocks commits that violate Odoo/ERPNext patterns
+
+echo "🔍 Checking architecture compliance..."
+
+# Get staged service files
+STAGED_SERVICES=$(git diff --cached --name-only --diff-filter=ACM | grep -E 'src/backend/domains/.*\.service\.ts$' || true)
+
+if [ -z "$STAGED_SERVICES" ]; then
+  echo "✅ No service files changed"
+  exit 0
+fi
+
+# Exception list (legacy code)
+EXCEPTIONS=(
+  "src/backend/domains/project/project.service.ts"
+  "src/backend/domains/hr/hr/hr.service.ts"
+)
+
+VIOLATIONS=0
+
+for file in $STAGED_SERVICES; do
+  # Check if file is in exception list
+  EXEMPT=0
+  for exception in "${EXCEPTIONS[@]}"; do
+    if [ "$file" = "$exception" ]; then
+      EXEMPT=1
+      echo "⚠️  EXEMPT: $file (legacy code)"
+      break
+    fi
+  done
+  
+  if [ $EXEMPT -eq 1 ]; then
+    continue
+  fi
+  
+  echo "Checking: $file"
+  
+  # Check 1: Direct repository queries
+  if git diff --cached "$file" | grep -E '\+.*this\.\w*Repository\.(findOne|find|save|update|delete|remove)\(' > /dev/null; then
+    echo "❌ VIOLATION: Direct repository query in $file"
+    echo "   Use SecureRepository instead"
+    VIOLATIONS=$((VIOLATIONS + 1))
+  fi
+  
+  # Check 2: Missing PermissionService
+  if ! grep -q "PermissionService" "$file"; then
+    echo "❌ VIOLATION: Missing PermissionService in $file"
+    echo "   Inject PermissionService in constructor"
+    VIOLATIONS=$((VIOLATIONS + 1))
+  fi
+  
+  # Check 3: Missing SecureRepository instantiation
+  if ! grep -q "SecureRepository" "$file"; then
+    echo "❌ VIOLATION: Missing SecureRepository in $file"
+    echo "   Create SecureRepository instance in constructor"
+    VIOLATIONS=$((VIOLATIONS + 1))
+  fi
+done
+
+if [ $VIOLATIONS -gt 0 ]; then
+  echo ""
+  echo "❌ BLOCKED: $VIOLATIONS architecture violation(s) found"
+  echo ""
+  echo "📖 See .kiro/steering/architecture-enforcement.md for details"
+  echo "🔧 Fix violations or add to exception list if legacy code"
+  exit 1
+fi
+
+echo "✅ Architecture compliance check passed"
+exit 0

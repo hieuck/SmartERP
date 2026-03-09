@@ -65,28 +65,54 @@ Agent: [Loads changelog-guide.md and provides guidance]
 
 ## 🔧 Hooks Integration
 
-### post-tool-continue-work.kiro.hook (v2.0 - Token Optimized)
+### production-ready-reminder.kiro.hook
 
 - **Trigger**: postToolUse (write, shell tools only)
-- **Action**: Quick verify (1 sentence) → Continue immediately
+- **Action**: Verify steering rules compliance after each tool use
+- **Checks**: SecureRepository, tenant isolation, permission check, audit trail, tests
 - **Status**: ✅ Active
 
-### git-commit-milestone.kiro.hook
+### release-readiness-check.kiro.hook
 
 - **Trigger**: agentStop (after task completion)
-- **Action**: Suggest git commit if milestone completed
-- **Uses**: Both changelog-guide.md and roadmap-guide.md
-- **Format**: Conventional Commits with detailed body
+- **Action**: Final production readiness check
+- **Checks**: Tests pass, security, features work, no blockers
 - **Status**: ✅ Active
 
 ### pre-commit-quality-gate.kiro.hook
 
 - **Trigger**: userTriggered (manual)
-- **Action**: Run lint, type-check, tests, security audit
+- **Action**: Run comprehensive quality checks
+- **Checks**: lint, type-check, tests, security audit
+- **Status**: ✅ Active
+
+### .husky/pre-commit (Git Hook)
+
+- **Trigger**: Before every git commit
+- **Action**: Automated enforcement of architecture rules
+- **Checks**:
+  1. Architecture compliance (SecureRepository, PermissionService)
+  2. Lint staged files
+  3. Type check
+  4. Debug code detection
+  5. Code smells warning
+- **Enforcement**: `.husky/architecture-check` script
+- **Status**: ✅ Active
+
+### .husky/architecture-check (Enforcement Script)
+
+- **Purpose**: Block commits that violate Odoo/ERPNext patterns
+- **Checks**:
+  1. Direct repository queries (must use SecureRepository)
+  2. Missing PermissionService injection
+  3. Missing SecureRepository instantiation
+- **Exception List**: Legacy code in `architecture-exceptions.json`
 - **Status**: ✅ Active
 
 ### Disabled Hooks (Team Disbanded)
 
+- **post-tool-continue-work.kiro.hook** - ❌ Disabled (replaced by production-ready-reminder)
+- **git-commit-milestone.kiro.hook** - ❌ Disabled (team disbanded, no delegation)
 - **autonomous-workflow.kiro.hook** - ❌ Disabled (team disbanded, no delegation)
 
 ---
@@ -122,10 +148,29 @@ Agent: [Loads changelog-guide.md and provides guidance]
 | ---------------------------- | ------ | --------- | ------------ |
 | odoo-erpnext-architecture.md | Auto   | ✅ Active | 2026-03-07   |
 | vietnamese-communication.md  | Auto   | ✅ Active | 2026-03-07   |
+| architecture-enforcement.md  | Auto   | ✅ Active | 2026-03-09   |
 | changelog-guide.md           | Manual | ✅ Active | 2026-03-09   |
 | roadmap-guide.md             | Manual | ✅ Active | 2026-03-09   |
 
 ---
 
 **Last Updated**: 2026-03-09  
-**Total Guides**: 4 (2 auto, 2 manual)
+**Total Guides**: 5 (3 auto, 2 manual)
+
+## 🔗 Integration Status
+
+### Steering ↔ Hooks Mapping
+
+| Steering File                | Enforced By                         | Status     |
+| ---------------------------- | ----------------------------------- | ---------- |
+| odoo-erpnext-architecture.md | .husky/architecture-check           | ✅ Active  |
+| architecture-enforcement.md  | .husky/pre-commit                   | ✅ Active  |
+| vietnamese-communication.md  | production-ready-reminder.kiro.hook | ✅ Active  |
+| changelog-guide.md           | (Manual reference)                  | ⏳ Pending |
+| roadmap-guide.md             | (Manual reference)                  | ⏳ Pending |
+
+### Compliance Metrics
+
+- **Architecture Compliance**: 76% (38/50 services use SecureRepository)
+- **Test Coverage**: 80% (88/110 test suites pass)
+- **Target**: 100% by 2026-06-30

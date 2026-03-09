@@ -4,6 +4,14 @@
 # Pre-commit hook - Fast checks only (< 30s)
 echo "🔍 Running pre-commit checks..."
 
+# 0. Architecture compliance check (CRITICAL)
+echo "🏗️  Checking architecture compliance..."
+.husky/architecture-check || {
+  echo "❌ Architecture violations found"
+  echo "📖 See .kiro/steering/architecture-enforcement.md"
+  exit 1
+}
+
 # 1. Lint staged files
 echo "📝 Linting code..."
 npm run lint-staged || {
