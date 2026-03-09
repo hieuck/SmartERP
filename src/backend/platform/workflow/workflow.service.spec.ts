@@ -11,8 +11,8 @@ import { WorkflowService } from './workflow.service';
 const mockUser = {
   id: 'user1',
   tenantId: 'tenant1',
-  roles: ['admin']
-  };
+  roles: ['admin'],
+};
 
 describe('WorkflowService', () => {
   let service: WorkflowService;
@@ -30,7 +30,7 @@ describe('WorkflowService', () => {
     steps: [
       { name: 'Manager Approval', approvers: ['manager-1'] },
       { name: 'Director Approval', approvers: ['director-1'] },
-    ]
+    ],
   };
 
   const mockInstance: Partial<WorkflowInstance> = {
@@ -42,7 +42,15 @@ describe('WorkflowService', () => {
     status: WorkflowInstanceStatus.IN_PROGRESS,
     currentStep: 0,
     initiatedBy: 'user-1',
-    stepHistory: []
+    stepHistory: [],
+  };
+
+  const mockQueryBuilder = {
+    where: jest.fn().mockReturnThis(),
+    andWhere: jest.fn().mockReturnThis(),
+    orderBy: jest.fn().mockReturnThis(),
+    getMany: jest.fn().mockResolvedValue([]),
+    getOne: jest.fn().mockResolvedValue(null),
   };
 
   beforeEach(async () => {
@@ -59,9 +67,9 @@ describe('WorkflowService', () => {
             update: jest.fn(),
             remove: jest.fn(),
             softDelete: jest.fn(),
-            => mockQueryBuilder)
-  }
-  },
+            createQueryBuilder: jest.fn(() => mockQueryBuilder),
+          },
+        },
         {
           provide: getRepositoryToken(WorkflowInstance),
           useValue: {
@@ -71,27 +79,27 @@ describe('WorkflowService', () => {
             save: jest.fn(),
             update: jest.fn(),
             remove: jest.fn(),
-            => mockQueryBuilder)
-  }
-  },
+            createQueryBuilder: jest.fn(() => mockQueryBuilder),
+          },
+        },
         {
           provide: CacheService,
           useValue: {
             getOrSet: jest.fn(),
-            del: jest.fn()
-  }
-  },
+            del: jest.fn(),
+          },
+        },
         {
           provide: PermissionService,
           useValue: {
             canRead: jest.fn().mockReturnValue(true),
             canWrite: jest.fn().mockReturnValue(true),
             canDelete: jest.fn().mockReturnValue(true),
-            buildSecureQuery: jest.fn((user, where) => where)
-  }
-  },
-      ]
-  }).compile();
+            buildSecureQuery: jest.fn((user, where) => where),
+          },
+        },
+      ],
+    }).compile();
 
     service = module.get<WorkflowService>(WorkflowService);
     workflowRepository = module.get<Repository<Workflow>>(getRepositoryToken(Workflow));
@@ -142,8 +150,8 @@ describe('WorkflowService', () => {
 
       const result = await service.createWorkflow(mockUser, {
         name: 'New Workflow',
-        entityType: 'order'
-  });
+        entityType: 'order',
+      });
 
       expect(result).toEqual(mockWorkflow);
       expect(workflowRepository.save).toHaveBeenCalled();
@@ -157,8 +165,8 @@ describe('WorkflowService', () => {
       jest.spyOn(cacheService, 'del').mockResolvedValue(undefined);
 
       await service.updateWorkflow(mockUser, 'workflow-1', {
-        name: 'Updated Workflow'
-  });
+        name: 'Updated Workflow',
+      });
 
       expect(workflowRepository.save).toHaveBeenCalled();
       expect(cacheService.del).toHaveBeenCalled();
@@ -265,8 +273,8 @@ describe('WorkflowService', () => {
       const approvedInstance = {
         ...lastStepInstance,
         status: WorkflowInstanceStatus.APPROVED,
-        currentStep: 2
-  };
+        currentStep: 2,
+      };
       jest
         .spyOn(cacheService, 'getOrSet')
         .mockResolvedValueOnce(lastStepInstance as WorkflowInstance)
@@ -287,8 +295,8 @@ describe('WorkflowService', () => {
     it('should reject workflow instance', async () => {
       const rejectedInstance = {
         ...mockInstance,
-        status: WorkflowInstanceStatus.REJECTED
-  };
+        status: WorkflowInstanceStatus.REJECTED,
+      };
       jest.spyOn(cacheService, 'getOrSet').mockResolvedValue(mockInstance as WorkflowInstance);
       jest
         .spyOn(instanceRepository, 'save')
@@ -307,8 +315,8 @@ describe('WorkflowService', () => {
     it('should cancel workflow instance', async () => {
       const cancelledInstance = {
         ...mockInstance,
-        status: WorkflowInstanceStatus.CANCELLED
-  };
+        status: WorkflowInstanceStatus.CANCELLED,
+      };
       jest.spyOn(cacheService, 'getOrSet').mockResolvedValue(mockInstance as WorkflowInstance);
       jest
         .spyOn(instanceRepository, 'save')

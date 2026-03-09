@@ -1,16 +1,17 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { CacheService } from '@/common/cache/cache.service';
+import { PermissionService } from '@/common/security/permission.service';
+import { createMockUser } from '@/common/test/test-helpers';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { Test, TestingModule } from '@nestjs/testing';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { getRepositoryToken } from '@nestjs/typeorm';
 import * as request from 'supertest';
+import { DataSource } from 'typeorm';
+import { SubscriptionPlan, Tenant } from '../tenant/entities/tenant.entity';
+import { User } from '../user/entities/user.entity';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { JwtService } from '@nestjs/jwt';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { User } from '../user/entities/user.entity';
-import { Tenant, SubscriptionPlan } from '../tenant/entities/tenant.entity';
-import { DataSource } from 'typeorm';
-import { CacheService } from '@/common/cache/cache.service';
-import { createMockUser } from '@/common/test/test-helpers';
 
 describe('AuthController (Integration)', () => {
   let app: INestApplication;
@@ -55,6 +56,12 @@ describe('AuthController (Integration)', () => {
     verify: jest.fn(),
   };
 
+  const mockPermissionService = {
+    canRead: jest.fn().mockResolvedValue(true),
+    canWrite: jest.fn().mockResolvedValue(true),
+    canDelete: jest.fn().mockResolvedValue(true),
+  };
+
   const mockUser = createMockUser();
 
   beforeAll(async () => {
@@ -90,11 +97,15 @@ describe('AuthController (Integration)', () => {
           provide: CacheService,
           useValue: mockCacheService,
         },
+        {
+          provide: PermissionService,
+          useValue: mockPermissionService,
+        },
       ],
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    
+
     // Apply same pipes as production
     app.useGlobalPipes(
       new ValidationPipe({
@@ -190,10 +201,7 @@ describe('AuthController (Integration)', () => {
       };
 
       // Act & Assert
-      await request(app.getHttpServer())
-        .post('/auth/register-tenant')
-        .send(invalidDto)
-        .expect(400);
+      await request(app.getHttpServer()).post('/auth/register-tenant').send(invalidDto).expect(400);
     });
   });
 
@@ -227,9 +235,9 @@ describe('AuthController (Integration)', () => {
     it('should return 400 for invalid token', async () => {
       // Arrange
       const invalidToken = 'invalid-token';
-      jest.spyOn(authService, 'verifyEmail').mockRejectedValue(
-        new Error('Invalid or expired verification token'),
-      );
+      jest
+        .spyOn(authService, 'verifyEmail')
+        .mockRejectedValue(new Error('Invalid or expired verification token'));
 
       // Act & Assert
       await request(app.getHttpServer())

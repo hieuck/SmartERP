@@ -1,10 +1,10 @@
+import { createMockUser } from '@/common/test/test-helpers';
 import { Test, TestingModule } from '@nestjs/testing';
+import { TenantStatus } from './entities/tenant.entity';
+import { OnboardingService } from './onboarding.service';
+import { SubscriptionService } from './subscription.service';
 import { TenantController } from './tenant.controller';
 import { TenantService } from './tenant.service';
-import { SubscriptionService } from './subscription.service';
-import { OnboardingService } from './onboarding.service';
-import { TenantStatus } from './entities/tenant.entity';
-import { createMockUser } from '@/common/test/test-helpers';
 
 describe('TenantController (Unit)', () => {
   let controller: TenantController;
@@ -47,7 +47,7 @@ describe('TenantController (Unit)', () => {
   const mockUser = createMockUser();
 
   const mockRequest = {
-    user: { id: 'user-123' },
+    user: mockUser,
   };
 
   beforeEach(async () => {
@@ -92,7 +92,7 @@ describe('TenantController (Unit)', () => {
       const result = await controller.create(createDto as any, mockRequest as any);
 
       expect(result).toEqual(mockTenant);
-      expect(tenantService.create).toHaveBeenCalledWith(createDto, 'user-123');
+      expect(tenantService.create).toHaveBeenCalledWith(createDto, mockUser.id);
     });
   });
 
@@ -134,15 +134,14 @@ describe('TenantController (Unit)', () => {
   });
 
   describe('findOne', () => {
-    it('should return tenant by id', async () => {
-      const tenantId = 'tenant-1';
-      const mockTenant = { id: tenantId, name: 'Test' };
+    it('should return tenant by user', async () => {
+      const mockTenant = { id: 'tenant-1', name: 'Test' };
       mockTenantService.findOne.mockResolvedValue(mockTenant);
 
-      const result = await controller.findOne(tenantId);
+      const result = await controller.findOne(mockUser);
 
       expect(result).toEqual(mockTenant);
-      expect(tenantService.findOne).toHaveBeenCalledWith(tenantId);
+      expect(tenantService.findOne).toHaveBeenCalledWith(mockUser);
     });
   });
 
@@ -161,82 +160,84 @@ describe('TenantController (Unit)', () => {
 
   describe('getUsersByTenant', () => {
     it('should return users by tenant', async () => {
-      const tenantId = 'tenant-1';
-      const mockUsers = [{ id: 'user-1', tenantId }];
+      const mockUsers = [{ id: 'user-1', tenantId: mockUser.tenantId }];
       mockTenantService.getUsersByTenant.mockResolvedValue(mockUsers);
 
-      const result = await controller.getUsersByTenant(tenantId);
+      const result = await controller.getUsersByTenant(mockUser);
 
       expect(result).toEqual(mockUsers);
-      expect(tenantService.getUsersByTenant).toHaveBeenCalledWith(tenantId);
+      expect(tenantService.getUsersByTenant).toHaveBeenCalledWith(mockUser.tenantId);
     });
   });
 
   describe('getUsageReport', () => {
     it('should return usage report', async () => {
-      const tenantId = 'tenant-1';
       const mockReport = { users: 5, storage: 1000 };
       mockTenantService.getUsageReport.mockResolvedValue(mockReport);
 
-      const result = await controller.getUsageReport(tenantId);
+      const result = await controller.getUsageReport(mockUser);
 
       expect(result).toEqual(mockReport);
-      expect(tenantService.getUsageReport).toHaveBeenCalledWith(tenantId);
+      expect(tenantService.getUsageReport).toHaveBeenCalledWith(mockUser.tenantId);
     });
   });
 
   describe('Onboarding', () => {
     describe('getOnboardingStatus', () => {
       it('should return onboarding status', async () => {
-        const tenantId = 'tenant-1';
         const mockStatus = { completed: false, step: 1 };
         mockOnboardingService.getOnboardingStatus.mockResolvedValue(mockStatus);
 
-        const result = await controller.getOnboardingStatus(tenantId);
+        const result = await controller.getOnboardingStatus(mockUser);
 
         expect(result).toEqual(mockStatus);
-        expect(onboardingService.getOnboardingStatus).toHaveBeenCalledWith(tenantId);
+        expect(onboardingService.getOnboardingStatus).toHaveBeenCalledWith(mockUser.tenantId);
       });
     });
 
     describe('completeOnboarding', () => {
       it('should complete onboarding', async () => {
-        const tenantId = 'tenant-1';
         const dto = { step: 3 };
         const mockResult = { completed: true };
         mockOnboardingService.completeOnboarding.mockResolvedValue(mockResult);
 
-        const result = await controller.completeOnboarding(tenantId, dto as any, mockRequest as any);
+        const result = await controller.completeOnboarding(mockUser, dto as any);
 
         expect(result).toEqual(mockResult);
-        expect(onboardingService.completeOnboarding).toHaveBeenCalledWith(tenantId, dto, 'user-123');
+        expect(onboardingService.completeOnboarding).toHaveBeenCalledWith(
+          mockUser.tenantId,
+          dto,
+          mockUser,
+        );
       });
     });
 
     describe('skipOnboarding', () => {
       it('should skip onboarding', async () => {
-        const tenantId = 'tenant-1';
         const mockResult = { skipped: true };
         mockOnboardingService.skipOnboarding.mockResolvedValue(mockResult);
 
-        const result = await controller.skipOnboarding(tenantId, mockRequest as any);
+        const result = await controller.skipOnboarding(mockUser);
 
         expect(result).toEqual(mockResult);
-        expect(onboardingService.skipOnboarding).toHaveBeenCalledWith(tenantId, 'user-123');
+        expect(onboardingService.skipOnboarding).toHaveBeenCalledWith(mockUser.tenantId, mockUser);
       });
     });
 
     describe('inviteTeamMember', () => {
       it('should invite team member', async () => {
-        const tenantId = 'tenant-1';
         const email = 'member@example.com';
         const mockResult = { invited: true };
         mockOnboardingService.inviteTeamMember.mockResolvedValue(mockResult);
 
-        const result = await controller.inviteTeamMember(tenantId, { email }, mockRequest as any);
+        const result = await controller.inviteTeamMember(mockUser, { email });
 
         expect(result).toEqual(mockResult);
-        expect(onboardingService.inviteTeamMember).toHaveBeenCalledWith(tenantId, email, 'user-123');
+        expect(onboardingService.inviteTeamMember).toHaveBeenCalledWith(
+          mockUser.tenantId,
+          email,
+          mockUser,
+        );
       });
     });
   });
@@ -256,134 +257,131 @@ describe('TenantController (Unit)', () => {
 
     describe('getSubscription', () => {
       it('should return subscription details', async () => {
-        const tenantId = 'tenant-1';
         const mockSubscription = { plan: 'basic', status: 'active' };
         mockSubscriptionService.getSubscription.mockResolvedValue(mockSubscription);
 
-        const result = await controller.getSubscription(tenantId);
+        const result = await controller.getSubscription(mockUser);
 
         expect(result).toEqual(mockSubscription);
-        expect(subscriptionService.getSubscription).toHaveBeenCalledWith(tenantId);
+        expect(subscriptionService.getSubscription).toHaveBeenCalledWith(mockUser.tenantId);
       });
     });
 
     describe('upgradeSubscription', () => {
       it('should upgrade subscription', async () => {
-        const tenantId = 'tenant-1';
         const upgradeDto = { plan: 'premium' };
         const mockResult = { upgraded: true };
         mockSubscriptionService.upgradeSubscription.mockResolvedValue(mockResult);
 
-        const result = await controller.upgradeSubscription(tenantId, upgradeDto as any, mockRequest as any);
+        const result = await controller.upgradeSubscription(mockUser, upgradeDto as any);
 
         expect(result).toEqual(mockResult);
-        expect(subscriptionService.upgradeSubscription).toHaveBeenCalledWith(tenantId, upgradeDto, 'user-123');
+        expect(subscriptionService.upgradeSubscription).toHaveBeenCalledWith(
+          mockUser.tenantId,
+          upgradeDto,
+          mockUser,
+        );
       });
     });
 
     describe('cancelSubscription', () => {
       it('should cancel subscription', async () => {
-        const tenantId = 'tenant-1';
         const mockResult = { cancelled: true };
         mockSubscriptionService.cancelSubscription.mockResolvedValue(mockResult);
 
-        const result = await controller.cancelSubscription(tenantId, mockRequest as any);
+        const result = await controller.cancelSubscription(mockUser);
 
         expect(result).toEqual(mockResult);
-        expect(subscriptionService.cancelSubscription).toHaveBeenCalledWith(tenantId, 'user-123');
+        expect(subscriptionService.cancelSubscription).toHaveBeenCalledWith(
+          mockUser.tenantId,
+          mockUser,
+        );
       });
     });
 
     describe('getSubscriptionHistory', () => {
       it('should return subscription history', async () => {
-        const tenantId = 'tenant-1';
         const mockHistory = [{ date: '2026-01-01', plan: 'basic' }];
         mockSubscriptionService.getSubscriptionHistory.mockResolvedValue(mockHistory);
 
-        const result = await controller.getSubscriptionHistory(tenantId);
+        const result = await controller.getSubscriptionHistory(mockUser);
 
         expect(result).toEqual(mockHistory);
-        expect(subscriptionService.getSubscriptionHistory).toHaveBeenCalledWith(tenantId);
+        expect(subscriptionService.getSubscriptionHistory).toHaveBeenCalledWith(mockUser.tenantId);
       });
     });
   });
 
   describe('update', () => {
     it('should update tenant', async () => {
-      const tenantId = 'tenant-1';
       const updateDto = { name: 'Updated Name' };
-      const mockTenant = { id: tenantId, ...updateDto };
+      const mockTenant = { id: 'tenant-1', ...updateDto };
       mockTenantService.update.mockResolvedValue(mockTenant);
 
-      const result = await controller.update(tenantId, updateDto as any, mockRequest as any);
+      const result = await controller.update(mockUser, updateDto as any);
 
       expect(result).toEqual(mockTenant);
-      expect(tenantService.update).toHaveBeenCalledWith(tenantId, updateDto, 'user-123');
+      expect(tenantService.update).toHaveBeenCalledWith(mockUser.tenantId, updateDto, mockUser);
     });
   });
 
   describe('suspend', () => {
     it('should suspend tenant', async () => {
-      const tenantId = 'tenant-1';
-      const mockTenant = { id: tenantId, status: TenantStatus.SUSPENDED };
+      const mockTenant = { id: 'tenant-1', status: TenantStatus.SUSPENDED };
       mockTenantService.suspend.mockResolvedValue(mockTenant);
 
-      const result = await controller.suspend(tenantId, mockRequest as any);
+      const result = await controller.suspend(mockUser);
 
       expect(result).toEqual(mockTenant);
-      expect(tenantService.suspend).toHaveBeenCalledWith(tenantId, 'user-123');
+      expect(tenantService.suspend).toHaveBeenCalledWith(mockUser.tenantId, mockUser);
     });
   });
 
   describe('activate', () => {
     it('should activate tenant', async () => {
-      const tenantId = 'tenant-1';
-      const mockTenant = { id: tenantId, status: TenantStatus.ACTIVE };
+      const mockTenant = { id: 'tenant-1', status: TenantStatus.ACTIVE };
       mockTenantService.activate.mockResolvedValue(mockTenant);
 
-      const result = await controller.activate(tenantId, mockRequest as any);
+      const result = await controller.activate(mockUser);
 
       expect(result).toEqual(mockTenant);
-      expect(tenantService.activate).toHaveBeenCalledWith(tenantId, 'user-123');
+      expect(tenantService.activate).toHaveBeenCalledWith(mockUser.tenantId, mockUser);
     });
   });
 
   describe('cancel', () => {
     it('should cancel tenant', async () => {
-      const tenantId = 'tenant-1';
-      const mockTenant = { id: tenantId, status: TenantStatus.CANCELLED };
+      const mockTenant = { id: 'tenant-1', status: TenantStatus.CANCELLED };
       mockTenantService.cancel.mockResolvedValue(mockTenant);
 
-      const result = await controller.cancel(tenantId, mockRequest as any);
+      const result = await controller.cancel(mockUser);
 
       expect(result).toEqual(mockTenant);
-      expect(tenantService.cancel).toHaveBeenCalledWith(tenantId, 'user-123');
+      expect(tenantService.cancel).toHaveBeenCalledWith(mockUser.tenantId, mockUser);
     });
   });
 
   describe('updateStorage', () => {
     it('should update storage usage', async () => {
-      const tenantId = 'tenant-1';
       const storageUsed = 5000;
-      const mockTenant = { id: tenantId, storageUsed };
+      const mockTenant = { id: 'tenant-1', storageUsed };
       mockTenantService.updateStorage.mockResolvedValue(mockTenant);
 
-      const result = await controller.updateStorage(tenantId, { storageUsed });
+      const result = await controller.updateStorage(mockUser, { storageUsed });
 
       expect(result).toEqual(mockTenant);
-      expect(tenantService.updateStorage).toHaveBeenCalledWith(tenantId, storageUsed);
+      expect(tenantService.updateStorage).toHaveBeenCalledWith(mockUser.tenantId, storageUsed);
     });
   });
 
   describe('remove', () => {
     it('should delete tenant', async () => {
-      const tenantId = 'tenant-1';
       mockTenantService.remove.mockResolvedValue(undefined);
 
-      const result = await controller.remove(tenantId);
+      const result = await controller.remove(mockUser);
 
       expect(result).toEqual({ message: 'Tenant deleted successfully' });
-      expect(tenantService.remove).toHaveBeenCalledWith(tenantId);
+      expect(tenantService.remove).toHaveBeenCalledWith(mockUser.tenantId);
     });
   });
 });

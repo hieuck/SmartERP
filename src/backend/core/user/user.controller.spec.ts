@@ -1,10 +1,10 @@
+import { createMockUser } from '@/common/test/test-helpers';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
-import { UpdateProfileDto } from './dto/update-profile.dto';
-import { ChangePasswordDto } from './dto/change-password.dto';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
-import { createMockUser } from '@/common/test/test-helpers';
 
 describe('UserController', () => {
   let controller: UserController;
@@ -68,31 +68,23 @@ describe('UserController', () => {
       const result = await controller.getProfile(mockRequest);
 
       expect(result).toEqual(mockUserProfile);
-      expect(service.getProfile).toHaveBeenCalledWith('user-123');
+      expect(service.getProfile).toHaveBeenCalledWith(mockRequest.user, 'user-123');
       expect(service.getProfile).toHaveBeenCalledTimes(1);
     });
 
     it('should throw NotFoundException when user not found', async () => {
-      mockUserService.getProfile.mockRejectedValue(
-        new NotFoundException('User not found'),
-      );
+      mockUserService.getProfile.mockRejectedValue(new NotFoundException('User not found'));
 
-      await expect(controller.getProfile(mockRequest)).rejects.toThrow(
-        NotFoundException,
-      );
-      await expect(controller.getProfile(mockRequest)).rejects.toThrow(
-        'User not found',
-      );
-      expect(service.getProfile).toHaveBeenCalledWith('user-123');
+      await expect(controller.getProfile(mockRequest)).rejects.toThrow(NotFoundException);
+      await expect(controller.getProfile(mockRequest)).rejects.toThrow('User not found');
+      expect(service.getProfile).toHaveBeenCalledWith(mockRequest.user, 'user-123');
     });
 
     it('should handle service errors gracefully', async () => {
-      mockUserService.getProfile.mockRejectedValue(
-        new Error('Database connection failed'),
-      );
+      mockUserService.getProfile.mockRejectedValue(new Error('Database connection failed'));
 
       await expect(controller.getProfile(mockRequest)).rejects.toThrow(Error);
-      expect(service.getProfile).toHaveBeenCalledWith('user-123');
+      expect(service.getProfile).toHaveBeenCalledWith(mockRequest.user, 'user-123');
     });
   });
 
@@ -117,7 +109,7 @@ describe('UserController', () => {
       const result = await controller.updateProfile(mockRequest, updateDto);
 
       expect(result).toEqual(updatedProfile);
-      expect(service.updateProfile).toHaveBeenCalledWith('user-123', updateDto);
+      expect(service.updateProfile).toHaveBeenCalledWith(mockRequest.user, 'user-123', updateDto);
       expect(service.updateProfile).toHaveBeenCalledTimes(1);
     });
 
@@ -139,7 +131,7 @@ describe('UserController', () => {
       expect(result.phone).toBe('0999999999');
       expect(result.firstName).toBe('John');
       expect(result.lastName).toBe('Doe');
-      expect(service.updateProfile).toHaveBeenCalledWith('user-123', updateDto);
+      expect(service.updateProfile).toHaveBeenCalledWith(mockRequest.user, 'user-123', updateDto);
     });
 
     it('should update only avatar', async () => {
@@ -158,7 +150,7 @@ describe('UserController', () => {
 
       expect(result).toEqual(updatedProfile);
       expect(result.avatar).toBe('https://example.com/new-avatar.jpg');
-      expect(service.updateProfile).toHaveBeenCalledWith('user-123', updateDto);
+      expect(service.updateProfile).toHaveBeenCalledWith(mockRequest.user, 'user-123', updateDto);
     });
 
     it('should throw NotFoundException when user not found', async () => {
@@ -166,14 +158,12 @@ describe('UserController', () => {
         fullName: 'Jane Smith',
       };
 
-      mockUserService.updateProfile.mockRejectedValue(
-        new NotFoundException('User not found'),
-      );
+      mockUserService.updateProfile.mockRejectedValue(new NotFoundException('User not found'));
 
-      await expect(
-        controller.updateProfile(mockRequest, updateDto),
-      ).rejects.toThrow(NotFoundException);
-      expect(service.updateProfile).toHaveBeenCalledWith('user-123', updateDto);
+      await expect(controller.updateProfile(mockRequest, updateDto)).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(service.updateProfile).toHaveBeenCalledWith(mockRequest.user, 'user-123', updateDto);
     });
 
     it('should handle empty update dto', async () => {
@@ -184,7 +174,7 @@ describe('UserController', () => {
       const result = await controller.updateProfile(mockRequest, updateDto);
 
       expect(result).toEqual(mockUserProfile);
-      expect(service.updateProfile).toHaveBeenCalledWith('user-123', updateDto);
+      expect(service.updateProfile).toHaveBeenCalledWith(mockRequest.user, 'user-123', updateDto);
     });
 
     it('should handle service errors gracefully', async () => {
@@ -192,14 +182,10 @@ describe('UserController', () => {
         fullName: 'Jane Smith',
       };
 
-      mockUserService.updateProfile.mockRejectedValue(
-        new Error('Database connection failed'),
-      );
+      mockUserService.updateProfile.mockRejectedValue(new Error('Database connection failed'));
 
-      await expect(
-        controller.updateProfile(mockRequest, updateDto),
-      ).rejects.toThrow(Error);
-      expect(service.updateProfile).toHaveBeenCalledWith('user-123', updateDto);
+      await expect(controller.updateProfile(mockRequest, updateDto)).rejects.toThrow(Error);
+      expect(service.updateProfile).toHaveBeenCalledWith(mockRequest.user, 'user-123', updateDto);
     });
   });
 
@@ -218,15 +204,13 @@ describe('UserController', () => {
 
       mockUserService.changePassword.mockResolvedValue(successResponse);
 
-      const result = await controller.changePassword(
-        mockRequest,
-        changePasswordDto,
-      );
+      const result = await controller.changePassword(mockRequest, changePasswordDto);
 
       expect(result).toEqual(successResponse);
       expect(result.success).toBe(true);
       expect(result.message).toBe('Password changed successfully');
       expect(service.changePassword).toHaveBeenCalledWith(
+        mockRequest.user,
         'user-123',
         changePasswordDto,
       );
@@ -244,13 +228,14 @@ describe('UserController', () => {
         new BadRequestException('New password and confirmation do not match'),
       );
 
-      await expect(
-        controller.changePassword(mockRequest, changePasswordDto),
-      ).rejects.toThrow(BadRequestException);
-      await expect(
-        controller.changePassword(mockRequest, changePasswordDto),
-      ).rejects.toThrow('New password and confirmation do not match');
+      await expect(controller.changePassword(mockRequest, changePasswordDto)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(controller.changePassword(mockRequest, changePasswordDto)).rejects.toThrow(
+        'New password and confirmation do not match',
+      );
       expect(service.changePassword).toHaveBeenCalledWith(
+        mockRequest.user,
         'user-123',
         changePasswordDto,
       );
@@ -267,13 +252,14 @@ describe('UserController', () => {
         new BadRequestException('Current password is incorrect'),
       );
 
-      await expect(
-        controller.changePassword(mockRequest, changePasswordDto),
-      ).rejects.toThrow(BadRequestException);
-      await expect(
-        controller.changePassword(mockRequest, changePasswordDto),
-      ).rejects.toThrow('Current password is incorrect');
+      await expect(controller.changePassword(mockRequest, changePasswordDto)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(controller.changePassword(mockRequest, changePasswordDto)).rejects.toThrow(
+        'Current password is incorrect',
+      );
       expect(service.changePassword).toHaveBeenCalledWith(
+        mockRequest.user,
         'user-123',
         changePasswordDto,
       );
@@ -286,14 +272,13 @@ describe('UserController', () => {
         confirmPassword: 'NewPass123!',
       };
 
-      mockUserService.changePassword.mockRejectedValue(
-        new NotFoundException('User not found'),
-      );
+      mockUserService.changePassword.mockRejectedValue(new NotFoundException('User not found'));
 
-      await expect(
-        controller.changePassword(mockRequest, changePasswordDto),
-      ).rejects.toThrow(NotFoundException);
+      await expect(controller.changePassword(mockRequest, changePasswordDto)).rejects.toThrow(
+        NotFoundException,
+      );
       expect(service.changePassword).toHaveBeenCalledWith(
+        mockRequest.user,
         'user-123',
         changePasswordDto,
       );
@@ -306,14 +291,13 @@ describe('UserController', () => {
         confirmPassword: 'NewPass123!',
       };
 
-      mockUserService.changePassword.mockRejectedValue(
-        new Error('Database connection failed'),
-      );
+      mockUserService.changePassword.mockRejectedValue(new Error('Database connection failed'));
 
-      await expect(
-        controller.changePassword(mockRequest, changePasswordDto),
-      ).rejects.toThrow(Error);
+      await expect(controller.changePassword(mockRequest, changePasswordDto)).rejects.toThrow(
+        Error,
+      );
       expect(service.changePassword).toHaveBeenCalledWith(
+        mockRequest.user,
         'user-123',
         changePasswordDto,
       );
@@ -333,13 +317,11 @@ describe('UserController', () => {
 
       mockUserService.changePassword.mockResolvedValue(successResponse);
 
-      const result = await controller.changePassword(
-        mockRequest,
-        changePasswordDto,
-      );
+      const result = await controller.changePassword(mockRequest, changePasswordDto);
 
       expect(result.success).toBe(true);
       expect(service.changePassword).toHaveBeenCalledWith(
+        mockRequest.user,
         'user-123',
         changePasswordDto,
       );
@@ -352,7 +334,7 @@ describe('UserController', () => {
 
       await controller.getProfile(mockRequest);
 
-      expect(service.getProfile).toHaveBeenCalledWith('user-123');
+      expect(service.getProfile).toHaveBeenCalledWith(mockRequest.user, 'user-123');
     });
 
     it('should handle requests with different user IDs', async () => {
@@ -372,7 +354,7 @@ describe('UserController', () => {
 
       await controller.getProfile(differentUserRequest);
 
-      expect(service.getProfile).toHaveBeenCalledWith('user-456');
+      expect(service.getProfile).toHaveBeenCalledWith(differentUserRequest.user, 'user-456');
     });
   });
 
@@ -393,6 +375,8 @@ describe('UserController', () => {
       expect(result1.phone).toBe('0901111111');
       expect(result2.phone).toBe('0902222222');
       expect(service.updateProfile).toHaveBeenCalledTimes(2);
+      expect(service.updateProfile).toHaveBeenCalledWith(mockRequest.user, 'user-123', updateDto1);
+      expect(service.updateProfile).toHaveBeenCalledWith(mockRequest.user, 'user-123', updateDto2);
     });
 
     it('should handle special characters in full name', async () => {
@@ -411,7 +395,7 @@ describe('UserController', () => {
       const result = await controller.updateProfile(mockRequest, updateDto);
 
       expect(result.firstName).toBe("O'Brien-Smith");
-      expect(service.updateProfile).toHaveBeenCalledWith('user-123', updateDto);
+      expect(service.updateProfile).toHaveBeenCalledWith(mockRequest.user, 'user-123', updateDto);
     });
 
     it('should handle very long avatar URLs', async () => {
@@ -430,7 +414,7 @@ describe('UserController', () => {
       const result = await controller.updateProfile(mockRequest, updateDto);
 
       expect(result.avatar).toBe(longUrl);
-      expect(service.updateProfile).toHaveBeenCalledWith('user-123', updateDto);
+      expect(service.updateProfile).toHaveBeenCalledWith(mockRequest.user, 'user-123', updateDto);
     });
   });
 });

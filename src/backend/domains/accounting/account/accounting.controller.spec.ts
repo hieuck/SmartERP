@@ -1,12 +1,12 @@
+import { createMockUser } from '@/common/test/test-helpers';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AccountingController } from './accounting.controller';
 import { AccountingService } from './accounting.service';
+import { CreateAccountDto } from './dto/create-account.dto';
+import { CreateJournalEntryDto } from './dto/create-journal-entry.dto';
+import { UpdateAccountDto } from './dto/update-account.dto';
 import { AccountType } from './entities/account.entity';
 import { InvoiceType } from './entities/invoice.entity';
-import { CreateAccountDto } from './dto/create-account.dto';
-import { UpdateAccountDto } from './dto/update-account.dto';
-import { CreateJournalEntryDto } from './dto/create-journal-entry.dto';
-import { createMockUser } from '@/common/test/test-helpers';
 
 describe('AccountingController', () => {
   let controller: AccountingController;
@@ -32,8 +32,6 @@ describe('AccountingController', () => {
   };
 
   const mockUser = createMockUser();
-
-  const mockTenantId = 'tenant-123';
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -67,22 +65,20 @@ describe('AccountingController', () => {
         ];
         mockAccountingService.findAllAccounts.mockResolvedValue(mockAccounts);
 
-        const result = await controller.findAllAccounts(mockTenantId);
+        const result = await controller.findAllAccounts(mockUser);
 
         expect(result).toEqual(mockAccounts);
-        expect(service.findAllAccounts).toHaveBeenCalledWith(mockTenantId, undefined);
+        expect(service.findAllAccounts).toHaveBeenCalledWith(mockUser, undefined);
       });
 
       it('should return accounts filtered by type', async () => {
-        const mockAccounts = [
-          { id: '1', code: '1000', name: 'Cash', type: AccountType.ASSET },
-        ];
+        const mockAccounts = [{ id: '1', code: '1000', name: 'Cash', type: AccountType.ASSET }];
         mockAccountingService.findAllAccounts.mockResolvedValue(mockAccounts);
 
-        const result = await controller.findAllAccounts(mockTenantId, AccountType.ASSET);
+        const result = await controller.findAllAccounts(mockUser, AccountType.ASSET);
 
         expect(result).toEqual(mockAccounts);
-        expect(service.findAllAccounts).toHaveBeenCalledWith(mockTenantId, AccountType.ASSET);
+        expect(service.findAllAccounts).toHaveBeenCalledWith(mockUser, AccountType.ASSET);
       });
     });
 
@@ -91,7 +87,7 @@ describe('AccountingController', () => {
         const mockAccount = { id: '1', code: '1000', name: 'Cash', type: AccountType.ASSET };
         mockAccountingService.findAccountById.mockResolvedValue(mockAccount);
 
-        const result = await controller.findAccountById('1', mockTenantId);
+        const result = await controller.findAccountById(mockUser, '1');
 
         expect(result).toEqual(mockAccount);
         expect(service.findAccountById).toHaveBeenCalledWith(mockUser, '1');
@@ -109,7 +105,7 @@ describe('AccountingController', () => {
         const mockAccount = { id: '1', ...dto };
         mockAccountingService.createAccount.mockResolvedValue(mockAccount);
 
-        const result = await controller.createAccount(dto, mockTenantId);
+        const result = await controller.createAccount(mockUser, dto);
 
         expect(result).toEqual(mockAccount);
         expect(service.createAccount).toHaveBeenCalledWith(mockUser, dto);
@@ -125,7 +121,7 @@ describe('AccountingController', () => {
         const mockAccount = { id: '1', code: '1000', ...dto };
         mockAccountingService.updateAccount.mockResolvedValue(mockAccount);
 
-        const result = await controller.updateAccount('1', dto, mockTenantId);
+        const result = await controller.updateAccount(mockUser, '1', dto);
 
         expect(result).toEqual(mockAccount);
         expect(service.updateAccount).toHaveBeenCalledWith(mockUser, '1', dto);
@@ -136,7 +132,7 @@ describe('AccountingController', () => {
       it('should delete account', async () => {
         mockAccountingService.deleteAccount.mockResolvedValue(undefined);
 
-        const result = await controller.deleteAccount('1', mockTenantId);
+        const result = await controller.deleteAccount(mockUser, '1');
 
         expect(result).toBeUndefined();
         expect(service.deleteAccount).toHaveBeenCalledWith(mockUser, '1');
@@ -153,10 +149,10 @@ describe('AccountingController', () => {
         ];
         mockAccountingService.findAllJournalEntries.mockResolvedValue(mockEntries);
 
-        const result = await controller.findAllJournalEntries(mockTenantId);
+        const result = await controller.findAllJournalEntries(mockUser);
 
         expect(result).toEqual(mockEntries);
-        expect(service.findAllJournalEntries).toHaveBeenCalledWith(mockTenantId, undefined, undefined);
+        expect(service.findAllJournalEntries).toHaveBeenCalledWith(mockUser, undefined, undefined);
       });
 
       it('should return journal entries filtered by date range', async () => {
@@ -165,11 +161,11 @@ describe('AccountingController', () => {
         const mockEntries = [{ id: '1', date: new Date('2024-01-15'), description: 'Entry 1' }];
         mockAccountingService.findAllJournalEntries.mockResolvedValue(mockEntries);
 
-        const result = await controller.findAllJournalEntries(mockTenantId, startDate, endDate);
+        const result = await controller.findAllJournalEntries(mockUser, startDate, endDate);
 
         expect(result).toEqual(mockEntries);
         expect(service.findAllJournalEntries).toHaveBeenCalledWith(
-          mockTenantId,
+          mockUser,
           new Date(startDate),
           new Date(endDate),
         );
@@ -181,7 +177,7 @@ describe('AccountingController', () => {
         const mockEntry = { id: '1', date: new Date(), description: 'Entry 1' };
         mockAccountingService.findJournalEntryById.mockResolvedValue(mockEntry);
 
-        const result = await controller.findJournalEntryById('1', mockTenantId);
+        const result = await controller.findJournalEntryById(mockUser, '1');
 
         expect(result).toEqual(mockEntry);
         expect(service.findJournalEntryById).toHaveBeenCalledWith(mockUser, '1');
@@ -191,8 +187,8 @@ describe('AccountingController', () => {
     describe('createJournalEntry', () => {
       it('should create journal entry', async () => {
         const dto: CreateJournalEntryDto = {
-          entryDate: new Date(),
-          description: 'Test entry',
+          date: new Date(),
+          memo: 'Test entry',
           lines: [
             { accountId: '1', debit: 1000, credit: 0 },
             { accountId: '2', debit: 0, credit: 1000 },
@@ -201,7 +197,7 @@ describe('AccountingController', () => {
         const mockEntry = { id: '1', ...dto };
         mockAccountingService.createJournalEntry.mockResolvedValue(mockEntry);
 
-        const result = await controller.createJournalEntry(dto, mockTenantId);
+        const result = await controller.createJournalEntry(mockUser, dto);
 
         expect(result).toEqual(mockEntry);
         expect(service.createJournalEntry).toHaveBeenCalledWith(mockUser, dto);
@@ -213,7 +209,7 @@ describe('AccountingController', () => {
         const mockEntry = { id: '1', posted: true };
         mockAccountingService.postJournalEntry.mockResolvedValue(mockEntry);
 
-        const result = await controller.postJournalEntry('1', mockTenantId);
+        const result = await controller.postJournalEntry(mockUser, '1');
 
         expect(result).toEqual(mockEntry);
         expect(service.postJournalEntry).toHaveBeenCalledWith(mockUser, '1');
@@ -230,20 +226,20 @@ describe('AccountingController', () => {
         ];
         mockAccountingService.findAllInvoices.mockResolvedValue(mockInvoices);
 
-        const result = await controller.findAllInvoices(mockTenantId);
+        const result = await controller.findAllInvoices(mockUser);
 
         expect(result).toEqual(mockInvoices);
-        expect(service.findAllInvoices).toHaveBeenCalledWith(mockTenantId, undefined);
+        expect(service.findAllInvoices).toHaveBeenCalledWith(mockUser, undefined);
       });
 
       it('should return invoices filtered by type', async () => {
         const mockInvoices = [{ id: '1', number: 'INV-001', type: InvoiceType.SALES }];
         mockAccountingService.findAllInvoices.mockResolvedValue(mockInvoices);
 
-        const result = await controller.findAllInvoices(mockTenantId, InvoiceType.SALES);
+        const result = await controller.findAllInvoices(mockUser, InvoiceType.SALES);
 
         expect(result).toEqual(mockInvoices);
-        expect(service.findAllInvoices).toHaveBeenCalledWith(mockTenantId, InvoiceType.SALES);
+        expect(service.findAllInvoices).toHaveBeenCalledWith(mockUser, InvoiceType.SALES);
       });
     });
 
@@ -252,7 +248,7 @@ describe('AccountingController', () => {
         const mockInvoice = { id: '1', number: 'INV-001', type: InvoiceType.SALES };
         mockAccountingService.findInvoiceById.mockResolvedValue(mockInvoice);
 
-        const result = await controller.findInvoiceById('1', mockTenantId);
+        const result = await controller.findInvoiceById(mockUser, '1');
 
         expect(result).toEqual(mockInvoice);
         expect(service.findInvoiceById).toHaveBeenCalledWith(mockUser, '1');
@@ -270,7 +266,7 @@ describe('AccountingController', () => {
         const mockInvoice = { id: '1', ...data };
         mockAccountingService.createInvoice.mockResolvedValue(mockInvoice);
 
-        const result = await controller.createInvoice(data, mockTenantId);
+        const result = await controller.createInvoice(mockUser, data);
 
         expect(result).toEqual(mockInvoice);
         expect(service.createInvoice).toHaveBeenCalledWith(mockUser, data);
@@ -283,7 +279,7 @@ describe('AccountingController', () => {
         const mockInvoice = { id: '1', number: 'INV-001', ...data };
         mockAccountingService.updateInvoice.mockResolvedValue(mockInvoice);
 
-        const result = await controller.updateInvoice('1', data, mockTenantId);
+        const result = await controller.updateInvoice('1', data, mockUser);
 
         expect(result).toEqual(mockInvoice);
         expect(service.updateInvoice).toHaveBeenCalledWith(mockUser, '1', data);
@@ -294,7 +290,7 @@ describe('AccountingController', () => {
       it('should delete invoice', async () => {
         mockAccountingService.deleteInvoice.mockResolvedValue(undefined);
 
-        const result = await controller.deleteInvoice('1', mockTenantId);
+        const result = await controller.deleteInvoice(mockUser, '1');
 
         expect(result).toBeUndefined();
         expect(service.deleteInvoice).toHaveBeenCalledWith(mockUser, '1');
@@ -321,22 +317,19 @@ describe('AccountingController', () => {
         };
         mockAccountingService.getBalanceSheet.mockResolvedValue(mockBalanceSheet);
 
-        const result = await controller.getBalanceSheet(mockTenantId, asOfDate);
+        const result = await controller.getBalanceSheet(mockUser, asOfDate);
 
         expect(result).toEqual(mockBalanceSheet);
-        expect(service.getBalanceSheet).toHaveBeenCalledWith(mockTenantId, new Date(asOfDate));
+        expect(service.getBalanceSheet).toHaveBeenCalledWith(mockUser, new Date(asOfDate));
       });
 
       it('should use current date if asOfDate not provided', async () => {
         const mockBalanceSheet = { assets: {}, liabilities: {}, equity: 0 };
         mockAccountingService.getBalanceSheet.mockResolvedValue(mockBalanceSheet);
 
-        await controller.getBalanceSheet(mockTenantId, undefined);
+        await controller.getBalanceSheet(mockUser, undefined);
 
-        expect(service.getBalanceSheet).toHaveBeenCalledWith(
-          mockTenantId,
-          expect.any(Date),
-        );
+        expect(service.getBalanceSheet).toHaveBeenCalledWith(mockUser, expect.any(Date));
       });
     });
 
@@ -351,11 +344,11 @@ describe('AccountingController', () => {
         };
         mockAccountingService.getProfitAndLoss.mockResolvedValue(mockProfitLoss);
 
-        const result = await controller.getProfitAndLoss(mockTenantId, startDate, endDate);
+        const result = await controller.getProfitAndLoss(mockUser, startDate, endDate);
 
         expect(result).toEqual(mockProfitLoss);
         expect(service.getProfitAndLoss).toHaveBeenCalledWith(
-          mockTenantId,
+          mockUser,
           new Date(startDate),
           new Date(endDate),
         );
