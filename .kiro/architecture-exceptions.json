@@ -15,17 +15,6 @@
       "priority": "medium"
     },
     {
-      "path": "src/backend/platform/workflow/approval.service.ts",
-      "reason": "Platform service - Direct repository queries for approval workflow",
-      "violations": [
-        "Direct repository queries (approvalRepository, workflowRepository)",
-        "Direct repository save operations"
-      ],
-      "assignedTo": "refactor-team",
-      "deadline": "2026-06-30",
-      "priority": "medium"
-    },
-    {
       "path": "src/backend/platform/system-admin/system-admin.service.ts",
       "reason": "Platform service - Direct repository queries for system settings and jobs",
       "violations": [
@@ -85,9 +74,9 @@
   },
   "complianceMetrics": {
     "totalServices": 50,
-    "compliantServices": 47,
-    "exemptServices": 3,
-    "complianceRate": "94%",
+    "compliantServices": 48,
+    "exemptServices": 2,
+    "complianceRate": "96%",
     "target": "100%",
     "deadline": "2026-06-30",
     "lastAudit": "2026-03-09"

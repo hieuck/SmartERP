@@ -1,21 +1,56 @@
+import { PermissionService, User } from '@/common/security/permission.service';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { ApprovalService } from './approval.service';
 import { ApprovalRequest, ApprovalStatus } from './entities/approval-request.entity';
 import { Workflow } from './entities/workflow.entity';
-import { PermissionService, User } from '@/common/security/permission.service';
-import { NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
-import { createMockUser } from '@/common/test/test-helpers';
 
 describe('ApprovalService', () => {
   let service: ApprovalService;
-  let approvalRepository: Repository<ApprovalRequest>;
-  let workflowRepository: Repository<Workflow>;
-  let permissionService: PermissionService;
 
-  const mockUser = createMockUser();
-  const mockManager = createMockUser({ id: 'manager-1', roles: ['manager'] });
+  const mockUser: User = {
+    id: 'user-1',
+    tenantId: 'tenant-1',
+    roles: ['user'],
+  };
+
+  const mockManager: User = {
+    id: 'manager-1',
+    tenantId: 'tenant-1',
+    roles: ['manager'],
+  };
+
+  const mockApprovalRepository = {
+    create: jest.fn(),
+    save: jest.fn(),
+    find: jest.fn(),
+    findOne: jest.fn(),
+    metadata: {
+      tableName: 'approval_requests',
+      name: 'ApprovalRequest',
+      columns: [],
+      relations: [],
+    },
+  };
+
+  const mockWorkflowRepository = {
+    find: jest.fn(),
+    findOne: jest.fn(),
+    metadata: {
+      tableName: 'workflows',
+      name: 'Workflow',
+      columns: [],
+      relations: [],
+    },
+  };
+
+  const mockPermissionService = {
+    canRead: jest.fn().mockReturnValue(true),
+    canWrite: jest.fn().mockReturnValue(true),
+    canDelete: jest.fn().mockReturnValue(true),
+    buildSecureQuery: jest.fn((user, query) => query),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -23,25 +58,32 @@ describe('ApprovalService', () => {
         ApprovalService,
         {
           provide: getRepositoryToken(ApprovalRequest),
-          useClass: Repository,
+          useValue: mockApprovalRepository,
         },
         {
           provide: getRepositoryToken(Workflow),
-          useClass: Repository,
+          useValue: mockWorkflowRepository,
         },
         {
           provide: PermissionService,
-          useValue: {
-            checkPermission: jest.fn().mockResolvedValue(true),
-          },
+          useValue: mockPermissionService,
         },
       ],
     }).compile();
 
     service = module.get<ApprovalService>(ApprovalService);
-    approvalRepository = module.get(getRepositoryToken(ApprovalRequest));
-    workflowRepository = module.get(getRepositoryToken(Workflow));
-    permissionService = module.get(PermissionService);
+
+    // Mock SecureRepository methods
+    jest.spyOn(service['secureApprovalRepo'], 'find').mockImplementation(async () => []);
+    jest.spyOn(service['secureApprovalRepo'], 'findOne').mockImplementation(async () => null);
+    jest
+      .spyOn(service['secureApprovalRepo'], 'save')
+      .mockImplementation(async (_user, data: any) => data);
+
+    jest.spyOn(service['secureWorkflowRepo'], 'find').mockImplementation(async () => []);
+    jest.spyOn(service['secureWorkflowRepo'], 'findOne').mockImplementation(async () => null);
+
+    jest.clearAllMocks();
   });
 
   it('should be defined', () => {
@@ -53,6 +95,7 @@ describe('ApprovalService', () => {
       const workflow = {
         id: 'workflow-1',
         entityType: 'SalesOrder',
+        tenantId: 'tenant-1',
         states: [
           { name: 'draft', allowedRoles: ['user'] },
           { name: 'pending_approval', allowedRoles: ['manager'] },
@@ -71,28 +114,24 @@ describe('ApprovalService', () => {
         tenantId: mockUser.tenantId,
       };
 
-      jest.spyOn(workflowRepository, 'findOne').mockResolvedValue(workflow as any);
-      jest.spyOn(approvalRepository, 'create').mockReturnValue(savedRequest as any);
-      jest.spyOn(approvalRepository, 'save').mockResolvedValue(savedRequest as any);
+      jest.spyOn(service['secureWorkflowRepo'], 'findOne').mockResolvedValue(workflow as any);
+      mockApprovalRepository.create.mockReturnValue(savedRequest);
+      jest.spyOn(service['secureApprovalRepo'], 'save').mockResolvedValue(savedRequest as any);
       jest.spyOn(service as any, 'notifyApprovers').mockResolvedValue(undefined);
 
-      const result = await service.submitForApproval(
-        'SalesOrder',
-        'order-1',
-        mockUser,
-      );
+      const result = await service.submitForApproval('SalesOrder', 'order-1', mockUser);
 
       expect(result.status).toBe(ApprovalStatus.PENDING);
       expect(result.currentState).toBe('pending_approval');
-      expect(approvalRepository.save).toHaveBeenCalled();
+      expect(service['secureApprovalRepo'].save).toHaveBeenCalled();
     });
 
     it('should throw NotFoundException if workflow not found', async () => {
-      jest.spyOn(workflowRepository, 'findOne').mockResolvedValue(null);
+      jest.spyOn(service['secureWorkflowRepo'], 'findOne').mockResolvedValue(null);
 
-      await expect(
-        service.submitForApproval('SalesOrder', 'order-1', mockUser),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.submitForApproval('SalesOrder', 'order-1', mockUser)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -110,16 +149,17 @@ describe('ApprovalService', () => {
       const workflow = {
         id: 'workflow-1',
         entityType: 'SalesOrder',
+        tenantId: 'tenant-1',
         states: [
           { name: 'pending_approval', allowedRoles: ['manager'] },
           { name: 'approved', allowedRoles: ['manager'] },
         ],
       };
 
-      jest.spyOn(approvalRepository, 'findOne').mockResolvedValue(request as any);
-      jest.spyOn(workflowRepository, 'findOne').mockResolvedValue(workflow as any);
+      jest.spyOn(service['secureApprovalRepo'], 'findOne').mockResolvedValue(request as any);
+      jest.spyOn(service['secureWorkflowRepo'], 'findOne').mockResolvedValue(workflow as any);
       jest.spyOn(service as any, 'canApprove').mockReturnValue(true);
-      jest.spyOn(approvalRepository, 'save').mockResolvedValue({
+      jest.spyOn(service['secureApprovalRepo'], 'save').mockResolvedValue({
         ...request,
         status: ApprovalStatus.APPROVED,
         approvedBy: mockManager.id,
@@ -131,28 +171,29 @@ describe('ApprovalService', () => {
 
       expect(result.status).toBe(ApprovalStatus.APPROVED);
       expect(result.approvedBy).toBe(mockManager.id);
-      expect(approvalRepository.save).toHaveBeenCalled();
+      expect(service['secureApprovalRepo'].save).toHaveBeenCalled();
     });
 
     it('should throw ForbiddenException if user cannot approve', async () => {
       const request = {
         id: 'request-1',
+        entityType: 'SalesOrder',
         status: ApprovalStatus.PENDING,
         tenantId: mockUser.tenantId,
       };
 
       const workflow = {
         id: 'workflow-1',
+        entityType: 'SalesOrder',
+        tenantId: 'tenant-1',
         states: [{ name: 'pending_approval', allowedRoles: ['manager'] }],
       };
 
-      jest.spyOn(approvalRepository, 'findOne').mockResolvedValue(request as any);
-      jest.spyOn(workflowRepository, 'findOne').mockResolvedValue(workflow as any);
+      jest.spyOn(service['secureApprovalRepo'], 'findOne').mockResolvedValue(request as any);
+      jest.spyOn(service['secureWorkflowRepo'], 'findOne').mockResolvedValue(workflow as any);
       jest.spyOn(service as any, 'canApprove').mockReturnValue(false);
 
-      await expect(service.approve('request-1', mockUser)).rejects.toThrow(
-        ForbiddenException,
-      );
+      await expect(service.approve('request-1', mockUser)).rejects.toThrow(ForbiddenException);
     });
 
     it('should throw BadRequestException if request not pending', async () => {
@@ -162,11 +203,9 @@ describe('ApprovalService', () => {
         tenantId: mockUser.tenantId,
       };
 
-      jest.spyOn(approvalRepository, 'findOne').mockResolvedValue(request as any);
+      jest.spyOn(service['secureApprovalRepo'], 'findOne').mockResolvedValue(request as any);
 
-      await expect(service.approve('request-1', mockManager)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.approve('request-1', mockManager)).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -174,19 +213,22 @@ describe('ApprovalService', () => {
     it('should reject pending request with reason', async () => {
       const request = {
         id: 'request-1',
+        entityType: 'SalesOrder',
         status: ApprovalStatus.PENDING,
         tenantId: mockUser.tenantId,
       };
 
       const workflow = {
         id: 'workflow-1',
+        entityType: 'SalesOrder',
+        tenantId: 'tenant-1',
         states: [{ name: 'pending_approval', allowedRoles: ['manager'] }],
       };
 
-      jest.spyOn(approvalRepository, 'findOne').mockResolvedValue(request as any);
-      jest.spyOn(workflowRepository, 'findOne').mockResolvedValue(workflow as any);
+      jest.spyOn(service['secureApprovalRepo'], 'findOne').mockResolvedValue(request as any);
+      jest.spyOn(service['secureWorkflowRepo'], 'findOne').mockResolvedValue(workflow as any);
       jest.spyOn(service as any, 'canApprove').mockReturnValue(true);
-      jest.spyOn(approvalRepository, 'save').mockResolvedValue({
+      jest.spyOn(service['secureApprovalRepo'], 'save').mockResolvedValue({
         ...request,
         status: ApprovalStatus.REJECTED,
         approvedBy: mockManager.id,
@@ -211,8 +253,8 @@ describe('ApprovalService', () => {
         tenantId: mockUser.tenantId,
       };
 
-      jest.spyOn(approvalRepository, 'findOne').mockResolvedValue(request as any);
-      jest.spyOn(approvalRepository, 'save').mockResolvedValue({
+      jest.spyOn(service['secureApprovalRepo'], 'findOne').mockResolvedValue(request as any);
+      jest.spyOn(service['secureApprovalRepo'], 'save').mockResolvedValue({
         ...request,
         status: ApprovalStatus.CANCELLED,
       } as any);
@@ -230,11 +272,9 @@ describe('ApprovalService', () => {
         tenantId: mockUser.tenantId,
       };
 
-      jest.spyOn(approvalRepository, 'findOne').mockResolvedValue(request as any);
+      jest.spyOn(service['secureApprovalRepo'], 'findOne').mockResolvedValue(request as any);
 
-      await expect(service.cancel(mockUser, 'request-1')).rejects.toThrow(
-        ForbiddenException,
-      );
+      await expect(service.cancel(mockUser, 'request-1')).rejects.toThrow(ForbiddenException);
     });
   });
 
@@ -245,21 +285,23 @@ describe('ApprovalService', () => {
           id: 'request-1',
           requestedBy: mockUser.id,
           status: ApprovalStatus.PENDING,
+          tenantId: 'tenant-1',
         },
         {
           id: 'request-2',
           requestedBy: mockUser.id,
           status: ApprovalStatus.APPROVED,
+          tenantId: 'tenant-1',
         },
       ];
 
-      jest.spyOn(approvalRepository, 'find').mockResolvedValue(requests as any);
+      jest.spyOn(service['secureApprovalRepo'], 'find').mockResolvedValue(requests as any);
 
       const result = await service.getMyRequests(mockUser);
 
       expect(result).toHaveLength(2);
-      expect(approvalRepository.find).toHaveBeenCalledWith({
-        where: { requestedBy: mockUser.id, tenantId: mockUser.tenantId },
+      expect(service['secureApprovalRepo'].find).toHaveBeenCalledWith(mockUser, {
+        where: { requestedBy: mockUser.id },
         order: { createdAt: 'DESC' },
       });
     });
@@ -272,18 +314,20 @@ describe('ApprovalService', () => {
           id: 'request-1',
           status: ApprovalStatus.PENDING,
           workflowId: 'workflow-1',
+          tenantId: 'tenant-1',
         },
       ];
 
       const workflows = [
         {
           id: 'workflow-1',
+          tenantId: 'tenant-1',
           states: [{ name: 'pending_approval', allowedRoles: ['manager'] }],
         },
       ];
 
-      jest.spyOn(approvalRepository, 'find').mockResolvedValue(requests as any);
-      jest.spyOn(workflowRepository, 'find').mockResolvedValue(workflows as any);
+      jest.spyOn(service['secureApprovalRepo'], 'find').mockResolvedValue(requests as any);
+      jest.spyOn(service['secureWorkflowRepo'], 'find').mockResolvedValue(workflows as any);
 
       const result = await service.getPendingApprovals(mockManager);
 

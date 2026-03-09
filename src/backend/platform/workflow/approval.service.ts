@@ -1,23 +1,39 @@
+import { PermissionService, User } from '@/common/security/permission.service';
+import { SecureRepository } from '@/common/security/secure-repository';
 import {
-  Injectable,
-  NotFoundException,
   BadRequestException,
   ForbiddenException,
+  Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ApprovalRequest, ApprovalStatus } from './entities/approval-request.entity';
 import { Workflow } from './entities/workflow.entity';
-import { User } from '@/common/security/permission.service';
 
 @Injectable()
 export class ApprovalService {
+  private readonly secureApprovalRepo: SecureRepository<ApprovalRequest>;
+  private readonly secureWorkflowRepo: SecureRepository<Workflow>;
+
   constructor(
     @InjectRepository(ApprovalRequest)
     private readonly approvalRepository: Repository<ApprovalRequest>,
     @InjectRepository(Workflow)
     private readonly workflowRepository: Repository<Workflow>,
-  ) {}
+    private readonly permissionService: PermissionService,
+  ) {
+    this.secureApprovalRepo = new SecureRepository(
+      approvalRepository,
+      permissionService,
+      'ApprovalRequest',
+    );
+    this.secureWorkflowRepo = new SecureRepository(
+      workflowRepository,
+      permissionService,
+      'Workflow',
+    );
+  }
 
   async submitForApproval(
     entityType: string,
@@ -25,7 +41,7 @@ export class ApprovalService {
     user: User,
   ): Promise<ApprovalRequest> {
     // Get workflow for entity type
-    const workflow = await this.getWorkflow(entityType, user.tenantId);
+    const workflow = await this.getWorkflow(entityType, user);
 
     if (!workflow) {
       throw new NotFoundException(`Workflow not found for ${entityType}`);
@@ -43,7 +59,7 @@ export class ApprovalService {
       tenantId: user.tenantId,
     });
 
-    const savedRequest = await this.approvalRepository.save(request);
+    const savedRequest = await this.secureApprovalRepo.save(user, request);
 
     // Notify approvers
     await this.notifyApprovers(workflow, savedRequest);
@@ -52,13 +68,13 @@ export class ApprovalService {
   }
 
   async approve(requestId: string, user: User): Promise<ApprovalRequest> {
-    const request = await this.findOne(requestId, user.tenantId);
+    const request = await this.findOne(requestId, user);
 
     if (request.status !== ApprovalStatus.PENDING) {
       throw new BadRequestException('Only pending requests can be approved');
     }
 
-    const workflow = await this.getWorkflow(request.entityType, user.tenantId);
+    const workflow = await this.getWorkflow(request.entityType, user);
 
     if (!this.canApprove(workflow, user)) {
       throw new ForbiddenException('You do not have permission to approve this request');
@@ -69,7 +85,7 @@ export class ApprovalService {
     request.approvedBy = user.id;
     request.approvedAt = new Date();
 
-    await this.approvalRepository.save(request);
+    await this.secureApprovalRepo.save(user, request);
 
     // Update entity state
     await this.updateEntityState(request.entityType, request.entityId, 'approved');
@@ -80,18 +96,14 @@ export class ApprovalService {
     return request;
   }
 
-  async reject(
-    requestId: string,
-    user: User,
-    reason: string,
-  ): Promise<ApprovalRequest> {
-    const request = await this.findOne(requestId, user.tenantId);
+  async reject(requestId: string, user: User, reason: string): Promise<ApprovalRequest> {
+    const request = await this.findOne(requestId, user);
 
     if (request.status !== ApprovalStatus.PENDING) {
       throw new BadRequestException('Only pending requests can be rejected');
     }
 
-    const workflow = await this.getWorkflow(request.entityType, user.tenantId);
+    const workflow = await this.getWorkflow(request.entityType, user);
 
     if (!this.canApprove(workflow, user)) {
       throw new ForbiddenException('You do not have permission to reject this request');
@@ -103,7 +115,7 @@ export class ApprovalService {
     request.approvedAt = new Date();
     request.rejectionReason = reason;
 
-    await this.approvalRepository.save(request);
+    await this.secureApprovalRepo.save(user, request);
 
     // Update entity state
     await this.updateEntityState(request.entityType, request.entityId, 'rejected');
@@ -115,7 +127,7 @@ export class ApprovalService {
   }
 
   async cancel(user: User, requestId: string): Promise<ApprovalRequest> {
-    const request = await this.findOne(requestId, user.tenantId);
+    const request = await this.findOne(requestId, user);
 
     if (request.status !== ApprovalStatus.PENDING) {
       throw new BadRequestException('Only pending requests can be cancelled');
@@ -126,45 +138,42 @@ export class ApprovalService {
     }
 
     request.status = ApprovalStatus.CANCELLED;
-    return this.approvalRepository.save(request);
+    return this.secureApprovalRepo.save(user, request);
   }
 
   async getMyRequests(user: User): Promise<ApprovalRequest[]> {
-    return this.approvalRepository.find({
+    return this.secureApprovalRepo.find(user, {
       where: {
         requestedBy: user.id,
-        tenantId: user.tenantId,
       },
       order: { createdAt: 'DESC' },
     });
   }
 
   async getPendingApprovals(user: User): Promise<ApprovalRequest[]> {
-    // Get all pending requests
-    const requests = await this.approvalRepository.find({
+    // Get all pending requests for this tenant
+    const requests = await this.secureApprovalRepo.find(user, {
       where: {
         status: ApprovalStatus.PENDING,
-        tenantId: user.tenantId,
       },
       order: { createdAt: 'DESC' },
     });
 
-    // Filter by user's approval permissions
-    const workflows = await this.workflowRepository.find({
-      where: { tenantId: user.tenantId },
-    });
+    // Get workflows for filtering
+    const workflows = await this.secureWorkflowRepo.find(user, {});
 
     const workflowMap = new Map(workflows.map((w) => [w.id, w]));
 
+    // Filter by user's approval permissions
     return requests.filter((request) => {
       const workflow = workflowMap.get(request.workflowId);
       return workflow && this.canApprove(workflow, user);
     });
   }
 
-  private async findOne(id: string, tenantId: string): Promise<ApprovalRequest> {
-    const request = await this.approvalRepository.findOne({
-      where: { id, tenantId },
+  private async findOne(id: string, user: User): Promise<ApprovalRequest> {
+    const request = await this.secureApprovalRepo.findOne(user, {
+      where: { id },
     });
 
     if (!request) {
@@ -174,9 +183,9 @@ export class ApprovalService {
     return request;
   }
 
-  private async getWorkflow(entityType: string, tenantId: string): Promise<Workflow> {
-    return this.workflowRepository.findOne({
-      where: { entityType, tenantId },
+  private async getWorkflow(entityType: string, user: User): Promise<Workflow> {
+    return this.secureWorkflowRepo.findOne(user, {
+      where: { entityType },
     });
   }
 
@@ -205,10 +214,7 @@ export class ApprovalService {
     // In real implementation, this would use a registry of entity services
   }
 
-  private async notifyApprovers(
-    workflow: Workflow,
-    request: ApprovalRequest,
-  ): Promise<void> {
+  private async notifyApprovers(workflow: Workflow, request: ApprovalRequest): Promise<void> {
     // Send notifications to users who can approve
     // Implementation would use NotificationService
   }
