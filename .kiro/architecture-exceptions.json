@@ -3,18 +3,6 @@
   "lastUpdated": "2026-03-09",
   "exemptFiles": [
     {
-      "path": "src/backend/domains/hr/hr/hr.service.ts",
-      "reason": "Legacy code - Missing SecureRepository pattern",
-      "violations": [
-        "Direct repository queries",
-        "No PermissionService injection",
-        "No SecureRepository instantiation"
-      ],
-      "assignedTo": "refactor-team",
-      "deadline": "2026-06-30",
-      "priority": "medium"
-    },
-    {
       "path": "src/backend/platform/system-admin/system-admin.service.ts",
       "reason": "Platform service - Direct repository queries for system settings and jobs",
       "violations": [
@@ -74,9 +62,9 @@
   },
   "complianceMetrics": {
     "totalServices": 50,
-    "compliantServices": 48,
-    "exemptServices": 2,
-    "complianceRate": "96%",
+    "compliantServices": 49,
+    "exemptServices": 1,
+    "complianceRate": "98%",
     "target": "100%",
     "deadline": "2026-06-30",
     "lastAudit": "2026-03-09"
