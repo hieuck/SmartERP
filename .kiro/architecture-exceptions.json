@@ -15,17 +15,6 @@
       "priority": "medium"
     },
     {
-      "path": "src/backend/platform/email/email.service.ts",
-      "reason": "Platform service - Direct repository queries for email templates and logs",
-      "violations": [
-        "Direct repository queries (templateRepository, logRepository)",
-        "Direct repository update/save operations"
-      ],
-      "assignedTo": "refactor-team",
-      "deadline": "2026-06-30",
-      "priority": "medium"
-    },
-    {
       "path": "src/backend/platform/workflow/approval.service.ts",
       "reason": "Platform service - Direct repository queries for approval workflow",
       "violations": [
@@ -96,9 +85,9 @@
   },
   "complianceMetrics": {
     "totalServices": 50,
-    "compliantServices": 46,
-    "exemptServices": 4,
-    "complianceRate": "92%",
+    "compliantServices": 47,
+    "exemptServices": 3,
+    "complianceRate": "94%",
     "target": "100%",
     "deadline": "2026-06-30",
     "lastAudit": "2026-03-09"

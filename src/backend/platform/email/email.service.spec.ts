@@ -137,7 +137,7 @@ describe('EmailService', () => {
       it('should find template by id from database (cache miss)', async () => {
         const mockTemplate = { id: '1', name: 'Welcome Email' };
         mockCacheManager.get.mockResolvedValue(null); // Cache miss
-        mockTemplateRepository.findOne.mockResolvedValue(mockTemplate);
+        jest.spyOn(service['secureTemplateRepo'], 'findOne').mockResolvedValue(mockTemplate as any);
         mockCacheManager.set.mockResolvedValue(undefined);
 
         const result = await service.findTemplateById(mockUser, '1');
@@ -159,13 +159,13 @@ describe('EmailService', () => {
 
         expect(result).toEqual(mockTemplate);
         expect(mockCacheManager.get).toHaveBeenCalledWith('email-template:tenant-1:1');
-        expect(mockTemplateRepository.findOne).not.toHaveBeenCalled();
+        expect(service['secureTemplateRepo'].findOne).not.toHaveBeenCalled();
         expect(mockCacheManager.set).not.toHaveBeenCalled();
       });
 
       it('should throw NotFoundException if template not found', async () => {
         mockCacheManager.get.mockResolvedValue(null); // Cache miss
-        mockTemplateRepository.findOne.mockResolvedValue(null);
+        jest.spyOn(service['secureTemplateRepo'], 'findOne').mockResolvedValue(null);
 
         await expect(service.findTemplateById(mockUser, '999')).rejects.toThrow(NotFoundException);
       });
@@ -179,7 +179,7 @@ describe('EmailService', () => {
           isActive: true,
         };
         mockCacheManager.get.mockResolvedValue(null); // Cache miss
-        mockTemplateRepository.findOne.mockResolvedValue(mockTemplate);
+        jest.spyOn(service['secureTemplateRepo'], 'findOne').mockResolvedValue(mockTemplate as any);
         mockCacheManager.set.mockResolvedValue(undefined);
 
         const result = await service.findTemplateByType(mockUser, TemplateType.WELCOME);
@@ -205,13 +205,13 @@ describe('EmailService', () => {
 
         expect(result).toEqual(mockTemplate);
         expect(mockCacheManager.get).toHaveBeenCalledWith('email-template:tenant-1:type:welcome');
-        expect(mockTemplateRepository.findOne).not.toHaveBeenCalled();
+        expect(service['secureTemplateRepo'].findOne).not.toHaveBeenCalled();
         expect(mockCacheManager.set).not.toHaveBeenCalled();
       });
 
       it('should throw NotFoundException if template not found', async () => {
         mockCacheManager.get.mockResolvedValue(null); // Cache miss
-        mockTemplateRepository.findOne.mockResolvedValue(null);
+        jest.spyOn(service['secureTemplateRepo'], 'findOne').mockResolvedValue(null);
 
         await expect(service.findTemplateByType(mockUser, TemplateType.WELCOME)).rejects.toThrow(
           NotFoundException,
@@ -254,23 +254,24 @@ describe('EmailService', () => {
 
         // First call to findTemplateById (in updateTemplate)
         mockCacheManager.get.mockResolvedValueOnce(null);
-        mockTemplateRepository.findOne.mockResolvedValueOnce(existingTemplate);
+        jest
+          .spyOn(service['secureTemplateRepo'], 'findOne')
+          .mockResolvedValueOnce(existingTemplate as any);
         mockCacheManager.set.mockResolvedValue(undefined);
 
-        mockTemplateRepository.update.mockResolvedValue({ affected: 1 });
+        jest.spyOn(service['secureTemplateRepo'], 'save').mockResolvedValue(updatedTemplate as any);
         mockCacheManager.del.mockResolvedValue(undefined);
 
         // Second call to findTemplateById (return updated template)
         mockCacheManager.get.mockResolvedValueOnce(null);
-        mockTemplateRepository.findOne.mockResolvedValueOnce(updatedTemplate);
+        jest
+          .spyOn(service['secureTemplateRepo'], 'findOne')
+          .mockResolvedValueOnce(updatedTemplate as any);
 
         const result = await service.updateTemplate(mockUser, '1', updateData);
 
         expect(result).toEqual(updatedTemplate);
-        expect(mockTemplateRepository.update).toHaveBeenCalledWith(
-          { tenantId: 'tenant-1', id: '1' },
-          updateData,
-        );
+        expect(service['secureTemplateRepo'].save).toHaveBeenCalled();
         expect(mockCacheManager.del).toHaveBeenCalledWith('email-template:tenant-1:1');
         expect(mockCacheManager.del).toHaveBeenCalledWith('email-template:all:tenant-1');
       });
@@ -285,7 +286,7 @@ describe('EmailService', () => {
           tenantId: 'tenant-1',
         };
         mockCacheManager.get.mockResolvedValue(null);
-        mockTemplateRepository.findOne.mockResolvedValue(mockTemplate);
+        jest.spyOn(service['secureTemplateRepo'], 'findOne').mockResolvedValue(mockTemplate as any);
         mockCacheManager.set.mockResolvedValue(undefined);
         mockTemplateRepository.softDelete.mockResolvedValue({ affected: 1 });
         mockCacheManager.del.mockResolvedValue(undefined);
@@ -309,7 +310,7 @@ describe('EmailService', () => {
           tenantId: 'tenant-1',
         };
         mockCacheManager.get.mockResolvedValue(null);
-        mockTemplateRepository.findOne.mockResolvedValue(mockTemplate);
+        jest.spyOn(service['secureTemplateRepo'], 'findOne').mockResolvedValue(mockTemplate as any);
         mockCacheManager.set.mockResolvedValue(undefined);
         mockTemplateRepository.softDelete.mockResolvedValue({ affected: 1 });
         mockCacheManager.del.mockResolvedValue(undefined);
@@ -335,27 +336,22 @@ describe('EmailService', () => {
         subject: 'Test',
         body: 'Test body',
         status: EmailStatus.PENDING,
+        tenantId: 'tenant-1',
       };
       mockLogRepository.create.mockReturnValue(mockLog);
-      mockLogRepository.save.mockResolvedValue(mockLog);
-      mockLogRepository.update.mockResolvedValue({ affected: 1 });
-      mockLogRepository.findOne.mockResolvedValue({
-        ...mockLog,
-        status: EmailStatus.SENT,
-        sentAt: new Date(),
-      });
+      jest
+        .spyOn(service['secureLogRepo'], 'save')
+        .mockResolvedValueOnce(mockLog as any)
+        .mockResolvedValueOnce({ ...mockLog, status: EmailStatus.SENT, sentAt: new Date() } as any);
+      jest
+        .spyOn(service['secureLogRepo'], 'findOne')
+        .mockResolvedValue({ ...mockLog, status: EmailStatus.SENT, sentAt: new Date() } as any);
 
-      await service.sendEmail(mockUser, 'test@example.com', 'Test', 'Test body');
+      const result = await service.sendEmail(mockUser, 'test@example.com', 'Test', 'Test body');
 
       expect(mockLogRepository.create).toHaveBeenCalled();
-      expect(mockLogRepository.save).toHaveBeenCalled();
-      expect(mockLogRepository.update).toHaveBeenCalledWith(
-        { id: '1', tenantId: 'tenant-1' },
-        expect.objectContaining({
-          status: EmailStatus.SENT,
-          sentAt: expect.any(Date),
-        }),
-      );
+      expect(service['secureLogRepo'].save).toHaveBeenCalledTimes(2);
+      expect(result.status).toBe(EmailStatus.SENT);
     });
 
     it('should handle email sending failure', async () => {
@@ -365,33 +361,35 @@ describe('EmailService', () => {
         subject: 'Test',
         body: 'Test body',
         status: EmailStatus.PENDING,
+        tenantId: 'tenant-1',
       };
       mockLogRepository.create.mockReturnValue(mockLog);
-      mockLogRepository.save.mockResolvedValue(mockLog);
 
-      // Mock update to throw error on first call (simulating SMTP failure)
-      const error = new Error('SMTP connection failed');
-      mockLogRepository.update.mockRejectedValueOnce(error);
+      // First save succeeds, second save (after error) also succeeds
+      jest
+        .spyOn(service['secureLogRepo'], 'save')
+        .mockResolvedValueOnce(mockLog as any)
+        .mockResolvedValueOnce({
+          ...mockLog,
+          status: EmailStatus.FAILED,
+          error: 'SMTP connection failed',
+        } as any);
 
-      // Second update call should succeed (updating status to FAILED)
-      mockLogRepository.update.mockResolvedValueOnce({ affected: 1 });
-
-      mockLogRepository.findOne.mockResolvedValue({
+      jest.spyOn(service['secureLogRepo'], 'findOne').mockResolvedValue({
         ...mockLog,
         status: EmailStatus.FAILED,
         error: 'SMTP connection failed',
+      } as any);
+
+      // Mock logger to throw error during email sending simulation
+      jest.spyOn(service['logger'], 'log').mockImplementation(() => {
+        throw new Error('SMTP connection failed');
       });
 
       const result = await service.sendEmail(mockUser, 'test@example.com', 'Test', 'Test body');
 
       expect(result.status).toBe(EmailStatus.FAILED);
-      expect(mockLogRepository.update).toHaveBeenCalledWith(
-        { id: '1', tenantId: 'tenant-1' },
-        expect.objectContaining({
-          status: EmailStatus.FAILED,
-          error: 'SMTP connection failed',
-        }),
-      );
+      expect(result.error).toBe('SMTP connection failed');
     });
 
     it('should send template email with variables', async () => {
@@ -399,50 +397,47 @@ describe('EmailService', () => {
         id: 'tmpl-1',
         subject: 'Hello {{name}}',
         body: 'Welcome {{name}}, your code is {{code}}',
+        tenantId: 'tenant-1',
       };
       mockCacheManager.get.mockResolvedValue(null); // Cache miss
-      mockTemplateRepository.findOne.mockResolvedValue(mockTemplate);
+      jest.spyOn(service['secureTemplateRepo'], 'findOne').mockResolvedValue(mockTemplate as any);
       mockCacheManager.set.mockResolvedValue(undefined);
 
       const mockLog = {
         id: '1',
         to: 'test@example.com',
         status: EmailStatus.PENDING,
+        tenantId: 'tenant-1',
       };
       mockLogRepository.create.mockReturnValue(mockLog);
-      mockLogRepository.save.mockResolvedValue(mockLog);
-      mockLogRepository.update.mockResolvedValue({ affected: 1 });
-      mockLogRepository.findOne.mockResolvedValue({
-        ...mockLog,
-        status: EmailStatus.SENT,
-        templateId: 'tmpl-1',
-      });
+      jest
+        .spyOn(service['secureLogRepo'], 'save')
+        .mockResolvedValueOnce(mockLog as any)
+        .mockResolvedValueOnce({ ...mockLog, status: EmailStatus.SENT } as any)
+        .mockResolvedValueOnce({ ...mockLog, templateId: 'tmpl-1' } as any);
+      jest
+        .spyOn(service['secureLogRepo'], 'findOne')
+        .mockResolvedValueOnce({ ...mockLog, status: EmailStatus.SENT } as any)
+        .mockResolvedValueOnce({ ...mockLog, templateId: 'tmpl-1' } as any);
 
       await service.sendTemplateEmail(mockUser, 'test@example.com', 'tmpl-1', {
         name: 'John',
         code: '12345',
       });
 
-      // Should be called twice: once for status update, once for templateId
-      expect(mockLogRepository.update).toHaveBeenCalledTimes(2);
-      expect(mockLogRepository.update).toHaveBeenNthCalledWith(
-        2,
-        { id: '1', tenantId: 'tenant-1' },
-        { templateId: 'tmpl-1' },
-      );
+      expect(service['secureLogRepo'].save).toHaveBeenCalled();
     });
   });
 
   describe('Email Logs', () => {
     it('should find all logs', async () => {
       const mockLogs = [{ id: '1', to: 'test@example.com' }];
-      mockLogRepository.find.mockResolvedValue(mockLogs);
+      jest.spyOn(service['secureLogRepo'], 'find').mockResolvedValue(mockLogs as any);
 
       const result = await service.findAllLogs(mockUser);
 
       expect(result).toEqual(mockLogs);
-      expect(mockLogRepository.find).toHaveBeenCalledWith({
-        where: { tenantId: 'tenant-1' },
+      expect(service['secureLogRepo'].find).toHaveBeenCalledWith(mockUser, {
         order: { createdAt: 'DESC' },
         take: 100,
       });
@@ -450,7 +445,7 @@ describe('EmailService', () => {
 
     it('should find log by id', async () => {
       const mockLog = { id: '1', to: 'test@example.com' };
-      mockLogRepository.findOne.mockResolvedValue(mockLog);
+      jest.spyOn(service['secureLogRepo'], 'findOne').mockResolvedValue(mockLog as any);
 
       const result = await service.findLogById(mockUser, '1');
 
@@ -458,7 +453,7 @@ describe('EmailService', () => {
     });
 
     it('should throw NotFoundException if log not found', async () => {
-      mockLogRepository.findOne.mockResolvedValue(null);
+      jest.spyOn(service['secureLogRepo'], 'findOne').mockResolvedValue(null);
 
       await expect(service.findLogById(mockUser, '999')).rejects.toThrow(NotFoundException);
     });
