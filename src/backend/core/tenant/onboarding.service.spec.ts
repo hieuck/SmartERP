@@ -1,13 +1,20 @@
+import { User as AuthUser, PermissionService } from '@/common/security/permission.service';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
-import { OnboardingService } from './onboarding.service';
-import { Tenant } from './entities/tenant.entity';
 import { User } from '../user/entities/user.entity';
-import { CompleteOnboardingDto, BusinessType, CompanySize } from './dto/complete-onboarding.dto';
+import { BusinessType, CompanySize, CompleteOnboardingDto } from './dto/complete-onboarding.dto';
+import { Tenant } from './entities/tenant.entity';
+import { OnboardingService } from './onboarding.service';
 
 describe('OnboardingService', () => {
   let service: OnboardingService;
+
+  const mockUser: AuthUser = {
+    id: 'user-1',
+    tenantId: 'tenant-uuid',
+    roles: ['admin'],
+  };
 
   const mockTenantRepository = {
     findOne: jest.fn(),
@@ -17,6 +24,13 @@ describe('OnboardingService', () => {
   const mockUserRepository = {
     findOne: jest.fn(),
     count: jest.fn(),
+  };
+
+  const mockPermissionService = {
+    canRead: jest.fn().mockReturnValue(true),
+    canWrite: jest.fn().mockReturnValue(true),
+    canDelete: jest.fn().mockReturnValue(true),
+    buildSecureQuery: jest.fn((user, query) => query),
   };
 
   beforeEach(async () => {
@@ -31,10 +45,24 @@ describe('OnboardingService', () => {
           provide: getRepositoryToken(User),
           useValue: mockUserRepository,
         },
+        {
+          provide: PermissionService,
+          useValue: mockPermissionService,
+        },
       ],
     }).compile();
 
     service = module.get<OnboardingService>(OnboardingService);
+
+    // Mock SecureRepository methods
+    jest.spyOn(service['secureTenantRepo'], 'findOne').mockResolvedValue({
+      id: 'tenant-uuid',
+      name: 'Test Company',
+      features: [],
+    } as Tenant);
+    jest
+      .spyOn(service['secureTenantRepo'], 'save')
+      .mockImplementation(async (_user, data: any) => data as Tenant);
 
     jest.clearAllMocks();
   });
@@ -51,17 +79,17 @@ describe('OnboardingService', () => {
         features: ['business_type:trading', 'company_size:1-10'],
       };
 
-      const mockUser: Partial<User> = {
+      const mockUserEntity: Partial<User> = {
         id: 'user-uuid',
         emailVerified: true,
         role: 'admin',
       };
 
-      mockTenantRepository.findOne.mockResolvedValue(mockTenant);
+      jest.spyOn(service['secureTenantRepo'], 'findOne').mockResolvedValue(mockTenant as Tenant);
       mockUserRepository.count.mockResolvedValue(2); // Admin + 1 team member
-      mockUserRepository.findOne.mockResolvedValue(mockUser);
+      mockUserRepository.findOne.mockResolvedValue(mockUserEntity);
 
-      const result = await service.getOnboardingStatus('tenant-uuid');
+      const result = await service.getOnboardingStatus(mockUser);
 
       expect(result.tenantId).toBe('tenant-uuid');
       expect(result.steps.accountCreated).toBe(true);
@@ -72,9 +100,9 @@ describe('OnboardingService', () => {
     });
 
     it('should throw NotFoundException if tenant not found', async () => {
-      mockTenantRepository.findOne.mockResolvedValue(null);
+      jest.spyOn(service['secureTenantRepo'], 'findOne').mockResolvedValue(null);
 
-      await expect(service.getOnboardingStatus('invalid-id')).rejects.toThrow(NotFoundException);
+      await expect(service.getOnboardingStatus(mockUser)).rejects.toThrow(NotFoundException);
     });
 
     it('should calculate progress correctly', async () => {
@@ -84,11 +112,11 @@ describe('OnboardingService', () => {
         features: [],
       };
 
-      mockTenantRepository.findOne.mockResolvedValue(mockTenant);
+      jest.spyOn(service['secureTenantRepo'], 'findOne').mockResolvedValue(mockTenant as Tenant);
       mockUserRepository.count.mockResolvedValue(1); // Only admin
       mockUserRepository.findOne.mockResolvedValue({ emailVerified: false });
 
-      const result = await service.getOnboardingStatus('tenant-uuid');
+      const result = await service.getOnboardingStatus(mockUser);
 
       // Only accountCreated is true
       expect(result.progress).toBe(20); // 1/5 steps = 20%
@@ -110,27 +138,27 @@ describe('OnboardingService', () => {
         features: [],
       };
 
-      mockTenantRepository.findOne.mockResolvedValue(mockTenant);
-      mockTenantRepository.save.mockResolvedValue({
+      jest.spyOn(service['secureTenantRepo'], 'findOne').mockResolvedValue(mockTenant as Tenant);
+      jest.spyOn(service['secureTenantRepo'], 'save').mockResolvedValue({
         ...mockTenant,
         features: ['business_type:trading', 'company_size:1-10'],
-      });
+      } as Tenant);
       mockUserRepository.findOne.mockResolvedValue(null); // No existing users
       mockUserRepository.count.mockResolvedValue(1);
 
-      const result = await service.completeOnboarding('tenant-uuid', completeDto);
+      const result = await service.completeOnboarding(mockUser, completeDto);
 
       expect(result.success).toBe(true);
       expect(result.tenant.businessType).toBe(BusinessType.TRADING);
       expect(result.tenant.companySize).toBe(CompanySize.SMALL);
       expect(result.invitations.sent).toBe(2);
-      expect(mockTenantRepository.save).toHaveBeenCalled();
+      expect(service['secureTenantRepo'].save).toHaveBeenCalled();
     });
 
     it('should throw NotFoundException if tenant not found', async () => {
-      mockTenantRepository.findOne.mockResolvedValue(null);
+      jest.spyOn(service['secureTenantRepo'], 'findOne').mockResolvedValue(null);
 
-      await expect(service.completeOnboarding('invalid-id', completeDto)).rejects.toThrow(
+      await expect(service.completeOnboarding(mockUser, completeDto)).rejects.toThrow(
         NotFoundException,
       );
     });
@@ -147,12 +175,12 @@ describe('OnboardingService', () => {
         features: [],
       };
 
-      mockTenantRepository.findOne.mockResolvedValue(mockTenant);
-      mockTenantRepository.save.mockResolvedValue(mockTenant);
+      jest.spyOn(service['secureTenantRepo'], 'findOne').mockResolvedValue(mockTenant as Tenant);
+      jest.spyOn(service['secureTenantRepo'], 'save').mockResolvedValue(mockTenant as Tenant);
       mockUserRepository.count.mockResolvedValue(1);
       mockUserRepository.findOne.mockResolvedValue({ emailVerified: true });
 
-      const result = await service.completeOnboarding('tenant-uuid', dtoWithoutTeam);
+      const result = await service.completeOnboarding(mockUser, dtoWithoutTeam);
 
       expect(result.success).toBe(true);
       expect(result.invitations.sent).toBe(0);
@@ -163,17 +191,17 @@ describe('OnboardingService', () => {
     it('should create invitation for new team member', async () => {
       mockUserRepository.findOne.mockResolvedValue(null); // No existing user
 
-      const result = await service.inviteTeamMember('tenant-uuid', 'newuser@test.com', 'admin-id');
+      const result = await service.inviteTeamMember(mockUser, 'newuser@test.com');
 
       expect(result.email).toBe('newuser@test.com');
       expect(result.status).toBe('pending');
-      expect(result.invitedBy).toBe('admin-id');
+      expect(result.invitedBy).toBe('user-1');
     });
 
     it('should throw BadRequestException if user already exists', async () => {
       mockUserRepository.findOne.mockResolvedValue({ id: 'existing-user' });
 
-      await expect(service.inviteTeamMember('tenant-uuid', 'existing@test.com')).rejects.toThrow(
+      await expect(service.inviteTeamMember(mockUser, 'existing@test.com')).rejects.toThrow(
         BadRequestException,
       );
     });
@@ -187,23 +215,23 @@ describe('OnboardingService', () => {
         features: [],
       };
 
-      mockTenantRepository.findOne.mockResolvedValue(mockTenant);
-      mockTenantRepository.save.mockResolvedValue({
+      jest.spyOn(service['secureTenantRepo'], 'findOne').mockResolvedValue(mockTenant as Tenant);
+      jest.spyOn(service['secureTenantRepo'], 'save').mockResolvedValue({
         ...mockTenant,
         features: ['onboarding_skipped'],
-      });
+      } as Tenant);
 
-      const result = await service.skipOnboarding('tenant-uuid');
+      const result = await service.skipOnboarding(mockUser);
 
       expect(result.success).toBe(true);
       expect(result.message).toContain('skipped');
-      expect(mockTenantRepository.save).toHaveBeenCalled();
+      expect(service['secureTenantRepo'].save).toHaveBeenCalled();
     });
 
     it('should throw NotFoundException if tenant not found', async () => {
-      mockTenantRepository.findOne.mockResolvedValue(null);
+      jest.spyOn(service['secureTenantRepo'], 'findOne').mockResolvedValue(null);
 
-      await expect(service.skipOnboarding('invalid-id')).rejects.toThrow(NotFoundException);
+      await expect(service.skipOnboarding(mockUser)).rejects.toThrow(NotFoundException);
     });
   });
 });

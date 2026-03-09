@@ -15,14 +15,6 @@
       "priority": "medium"
     },
     {
-      "path": "src/backend/core/tenant/onboarding.service.ts",
-      "reason": "Core service - Direct repository queries for tenant operations",
-      "violations": ["Direct repository queries (tenantRepository, userRepository)"],
-      "assignedTo": "refactor-team",
-      "deadline": "2026-06-30",
-      "priority": "high"
-    },
-    {
       "path": "src/backend/core/tenant/subscription.service.ts",
       "reason": "Core service - Direct repository save for tenant status",
       "violations": ["Direct repository save (tenantRepository)"],
@@ -112,9 +104,9 @@
   },
   "complianceMetrics": {
     "totalServices": 50,
-    "compliantServices": 44,
-    "exemptServices": 6,
-    "complianceRate": "88%",
+    "compliantServices": 45,
+    "exemptServices": 5,
+    "complianceRate": "90%",
     "target": "100%",
     "deadline": "2026-06-30",
     "lastAudit": "2026-03-09"

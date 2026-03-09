@@ -1,41 +1,50 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import { PermissionService, User } from '@/common/security/permission.service';
+import { SecureRepository } from '@/common/security/secure-repository';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Tenant } from './entities/tenant.entity';
 import { User as UserEntity } from '../user/entities/user.entity';
 import { CompleteOnboardingDto } from './dto/complete-onboarding.dto';
-import { User } from '@/common/security/permission.service';
+import { Tenant } from './entities/tenant.entity';
 
 @Injectable()
 export class OnboardingService {
   private readonly logger = new Logger(OnboardingService.name);
+  private readonly secureTenantRepo: SecureRepository<Tenant>;
 
   constructor(
     @InjectRepository(Tenant)
     private readonly tenantRepository: Repository<Tenant>,
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
-  ) {}
+    private readonly permissionService: PermissionService,
+  ) {
+    this.secureTenantRepo = new SecureRepository(
+      this.tenantRepository,
+      this.permissionService,
+      'Tenant',
+    );
+  }
 
   /**
-   * Get onboarding status for a tenant
+   * Get onboarding status for current tenant
    */
-  async getOnboardingStatus(tenantId: string) {
-    const tenant = await this.tenantRepository.findOne({ where: { id: tenantId } });
+  async getOnboardingStatus(user: User) {
+    const tenant = await this.secureTenantRepo.findOne(user, { where: { id: user.tenantId } });
 
     if (!tenant) {
       throw new NotFoundException('Tenant not found');
     }
 
     // Check what steps are completed
-    const userCount = await this.userRepository.count({ where: { tenantId } });
+    const userCount = await this.userRepository.count({ where: { tenantId: user.tenantId } });
 
     const status = {
       tenantId: tenant.id,
       tenantName: tenant.name,
       steps: {
         accountCreated: true, // Always true if tenant exists
-        emailVerified: await this.isEmailVerified(tenantId),
+        emailVerified: await this.isEmailVerified(user.tenantId),
         businessInfoCompleted: this.isBusinessInfoCompleted(tenant),
         teamInvited: userCount > 1, // More than just admin
         dataImported: false, // TODO: Track this separately
@@ -53,10 +62,10 @@ export class OnboardingService {
   }
 
   /**
-   * Complete onboarding process
+   * Complete onboarding process for current tenant
    */
-  async completeOnboarding(tenantId: string, dto: CompleteOnboardingDto, userId?: string) {
-    const tenant = await this.tenantRepository.findOne({ where: { id: tenantId } });
+  async completeOnboarding(user: User, dto: CompleteOnboardingDto) {
+    const tenant = await this.secureTenantRepo.findOne(user, { where: { id: user.tenantId } });
 
     if (!tenant) {
       throw new NotFoundException('Tenant not found');
@@ -64,7 +73,7 @@ export class OnboardingService {
 
     // Update tenant with business info
     tenant.companyName = tenant.companyName || tenant.name;
-    tenant.updatedBy = userId || 'system';
+    tenant.updatedBy = user.id;
 
     // Store business type and size in features or custom fields
     // For now, we'll add them to features array
@@ -73,14 +82,14 @@ export class OnboardingService {
     features.push(`company_size:${dto.companySize}`);
     tenant.features = features;
 
-    await this.tenantRepository.save(tenant);
+    await this.secureTenantRepo.save(user, tenant);
 
     // Invite team members if provided
     const invitations = [];
     if (dto.teamMembers && dto.teamMembers.length > 0) {
       for (const email of dto.teamMembers) {
         try {
-          const invitation = await this.inviteTeamMember(tenantId, email, userId);
+          const invitation = await this.inviteTeamMember(user, email);
           invitations.push(invitation);
         } catch (error) {
           this.logger.error(`Failed to invite ${email}:`, error.message);
@@ -89,7 +98,7 @@ export class OnboardingService {
     }
 
     // Get updated status
-    const status = await this.getOnboardingStatus(tenantId);
+    const status = await this.getOnboardingStatus(user);
 
     return {
       success: true,
@@ -109,12 +118,12 @@ export class OnboardingService {
   }
 
   /**
-   * Invite team member
+   * Invite team member to current tenant
    */
-  async inviteTeamMember(tenantId: string, email: string, invitedBy?: string) {
+  async inviteTeamMember(user: User, email: string) {
     // Check if user already exists
     const existingUser = await this.userRepository.findOne({
-      where: { email, tenantId },
+      where: { email, tenantId: user.tenantId },
     });
 
     if (existingUser) {
@@ -125,8 +134,8 @@ export class OnboardingService {
     // For now, just return invitation info
     return {
       email,
-      tenantId,
-      invitedBy: invitedBy || 'system',
+      tenantId: user.tenantId,
+      invitedBy: user.id,
       status: 'pending',
       message: 'Invitation email will be sent (email service not yet integrated)',
     };
@@ -135,8 +144,8 @@ export class OnboardingService {
   /**
    * Skip onboarding (mark as completed without filling details)
    */
-  async skipOnboarding(tenantId: string, userId?: string) {
-    const tenant = await this.tenantRepository.findOne({ where: { id: tenantId } });
+  async skipOnboarding(user: User) {
+    const tenant = await this.secureTenantRepo.findOne(user, { where: { id: user.tenantId } });
 
     if (!tenant) {
       throw new NotFoundException('Tenant not found');
@@ -146,9 +155,9 @@ export class OnboardingService {
     const features = tenant.features || [];
     features.push('onboarding_skipped');
     tenant.features = features;
-    tenant.updatedBy = userId || 'system';
+    tenant.updatedBy = user.id;
 
-    await this.tenantRepository.save(tenant);
+    await this.secureTenantRepo.save(user, tenant);
 
     return {
       success: true,
