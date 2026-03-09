@@ -4,7 +4,10 @@
   "description": "Nhắc nhở làm việc để có sản phẩm production-ready, tuân thủ steering rules",
   "when": {
     "type": "postToolUse",
-    "toolTypes": "write,shell"
+    "toolTypes": [
+      "write",
+      "shell"
+    ]
   },
   "then": {
     "type": "askAgent",

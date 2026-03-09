@@ -1,22 +1,21 @@
+import { CacheService } from '@/common/cache/cache.service';
+import { PermissionService } from '@/common/security/permission.service';
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
-import { HrService } from './hr.service';
-import { Employee, EmploymentStatus } from './entities/employee.entity';
 import { Attendance, AttendanceStatus } from './entities/attendance.entity';
+import { Employee, EmploymentStatus } from './entities/employee.entity';
 import { Leave, LeaveStatus, LeaveType } from './entities/leave.entity';
-import { CacheService } from '@/common/cache/cache.service';
-import { PermissionService } from '@/common/security/permission.service';
-import { createMockUser } from '@/common/test/test-helpers';
+import { HrService } from './hr.service';
 
 const mockUser = {
-    id: 'user1',
-    tenantId: 'tenant1',
-    roles: ['admin']
-  };
+  id: 'user1',
+  tenantId: 'tenant1',
+  roles: ['admin'],
+};
 
-  describe('HrService', () => {
+describe('HrService', () => {
   let service: HrService;
   let employeeRepository: Repository<Employee>;
   let attendanceRepository: Repository<Attendance>;
@@ -33,7 +32,7 @@ const mockUser = {
     department: 'Engineering',
     position: 'Software Engineer',
     status: EmploymentStatus.ACTIVE,
-    hireDate: new Date('2024-01-01')
+    hireDate: new Date('2024-01-01'),
   };
 
   const mockAttendance: Partial<Attendance> = {
@@ -43,7 +42,7 @@ const mockUser = {
     date: new Date('2024-03-01'),
     status: AttendanceStatus.PRESENT,
     checkIn: '09:00:00',
-    checkOut: '18:00:00'
+    checkOut: '18:00:00',
   };
 
   const mockLeave: Partial<Leave> = {
@@ -55,7 +54,7 @@ const mockUser = {
     endDate: new Date('2024-03-17'),
     days: 3,
     status: LeaveStatus.PENDING,
-    reason: 'Vacation'
+    reason: 'Vacation',
   };
 
   beforeEach(async () => {
@@ -71,9 +70,9 @@ const mockUser = {
             create: jest.fn(),
             save: jest.fn(),
             softDelete: jest.fn(),
-            => mockQueryBuilder)
-  }
-  },
+            createQueryBuilder: jest.fn(),
+          },
+        },
         {
           provide: getRepositoryToken(Attendance),
           useValue: {
@@ -82,9 +81,9 @@ const mockUser = {
             create: jest.fn(),
             save: jest.fn(),
             delete: jest.fn(),
-            => mockQueryBuilder)
-  }
-  },
+            createQueryBuilder: jest.fn(),
+          },
+        },
         {
           provide: getRepositoryToken(Leave),
           useValue: {
@@ -93,27 +92,30 @@ const mockUser = {
             create: jest.fn(),
             save: jest.fn(),
             delete: jest.fn(),
-            => mockQueryBuilder)
-  }
-  },
+            createQueryBuilder: jest.fn(),
+          },
+        },
         {
           provide: CacheService,
           useValue: {
             getOrSet: jest.fn(),
-            del: jest.fn()
-  }
-  },
+            del: jest.fn(),
+          },
+        },
         {
           provide: PermissionService,
           useValue: {
             canRead: jest.fn().mockReturnValue(true),
             canWrite: jest.fn().mockReturnValue(true),
             canDelete: jest.fn().mockReturnValue(true),
-            buildSecureQuery: jest.fn((user, baseWhere) => ({ ...baseWhere, tenantId: user.tenantId }))
-  }
-  },
-      ]
-  }).compile();
+            buildSecureQuery: jest.fn((user, baseWhere) => ({
+              ...baseWhere,
+              tenantId: user.tenantId,
+            })),
+          },
+        },
+      ],
+    }).compile();
 
     service = module.get<HrService>(HrService);
     employeeRepository = module.get<Repository<Employee>>(getRepositoryToken(Employee));
@@ -122,19 +124,37 @@ const mockUser = {
     cacheService = module.get<CacheService>(CacheService);
 
     // Setup SecureRepository spies
-    jest.spyOn(service['secureEmployeeRepo'], 'find').mockImplementation(async () => [mockEmployee] as Employee[]);
-    jest.spyOn(service['secureEmployeeRepo'], 'findOne').mockImplementation(async () => mockEmployee as Employee);
-    jest.spyOn(service['secureEmployeeRepo'], 'save').mockImplementation(async (_user, data) => ({ ...mockEmployee, ...data } as Employee));
+    jest
+      .spyOn(service['secureEmployeeRepo'], 'find')
+      .mockImplementation(async () => [mockEmployee] as Employee[]);
+    jest
+      .spyOn(service['secureEmployeeRepo'], 'findOne')
+      .mockImplementation(async () => mockEmployee as Employee);
+    jest
+      .spyOn(service['secureEmployeeRepo'], 'save')
+      .mockImplementation(async (_user, data) => ({ ...mockEmployee, ...data }) as Employee);
     jest.spyOn(service['secureEmployeeRepo'], 'remove').mockImplementation(async () => undefined);
 
-    jest.spyOn(service['secureAttendanceRepo'], 'find').mockImplementation(async () => [mockAttendance] as Attendance[]);
-    jest.spyOn(service['secureAttendanceRepo'], 'findOne').mockImplementation(async () => mockAttendance as Attendance);
-    jest.spyOn(service['secureAttendanceRepo'], 'save').mockImplementation(async (_user, data) => ({ ...mockAttendance, ...data } as Attendance));
+    jest
+      .spyOn(service['secureAttendanceRepo'], 'find')
+      .mockImplementation(async () => [mockAttendance] as Attendance[]);
+    jest
+      .spyOn(service['secureAttendanceRepo'], 'findOne')
+      .mockImplementation(async () => mockAttendance as Attendance);
+    jest
+      .spyOn(service['secureAttendanceRepo'], 'save')
+      .mockImplementation(async (_user, data) => ({ ...mockAttendance, ...data }) as Attendance);
     jest.spyOn(service['secureAttendanceRepo'], 'remove').mockImplementation(async () => undefined);
 
-    jest.spyOn(service['secureLeaveRepo'], 'find').mockImplementation(async () => [mockLeave] as Leave[]);
-    jest.spyOn(service['secureLeaveRepo'], 'findOne').mockImplementation(async () => mockLeave as Leave);
-    jest.spyOn(service['secureLeaveRepo'], 'save').mockImplementation(async (_user, data) => ({ ...mockLeave, ...data } as Leave));
+    jest
+      .spyOn(service['secureLeaveRepo'], 'find')
+      .mockImplementation(async () => [mockLeave] as Leave[]);
+    jest
+      .spyOn(service['secureLeaveRepo'], 'findOne')
+      .mockImplementation(async () => mockLeave as Leave);
+    jest
+      .spyOn(service['secureLeaveRepo'], 'save')
+      .mockImplementation(async (_user, data) => ({ ...mockLeave, ...data }) as Leave);
     jest.spyOn(service['secureLeaveRepo'], 'remove').mockImplementation(async () => undefined);
   });
 
@@ -146,7 +166,9 @@ const mockUser = {
 
   describe('findAllEmployees', () => {
     it('should return all employees for tenant', async () => {
-      jest.spyOn(service['secureEmployeeRepo'], 'find').mockResolvedValue([mockEmployee] as Employee[]);
+      jest
+        .spyOn(service['secureEmployeeRepo'], 'find')
+        .mockResolvedValue([mockEmployee] as Employee[]);
 
       const result = await service.findAllEmployees(mockUser);
 
@@ -168,13 +190,17 @@ const mockUser = {
       jest.spyOn(cacheService, 'getOrSet').mockImplementation(async (_key, fn) => fn());
       jest.spyOn(service['secureEmployeeRepo'], 'findOne').mockResolvedValue(null);
 
-      await expect(service.findEmployeeById(mockUser, 'nonexistent')).rejects.toThrow(NotFoundException);
+      await expect(service.findEmployeeById(mockUser, 'nonexistent')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
   describe('findEmployeeByEmail', () => {
     it('should return employee when found', async () => {
-      jest.spyOn(service['secureEmployeeRepo'], 'findOne').mockResolvedValue(mockEmployee as Employee);
+      jest
+        .spyOn(service['secureEmployeeRepo'], 'findOne')
+        .mockResolvedValue(mockEmployee as Employee);
 
       const result = await service.findEmployeeByEmail(mockUser, 'john.doe@example.com');
 
@@ -198,14 +224,16 @@ const mockUser = {
       const result = await service.createEmployee(mockUser, {
         firstName: 'John',
         lastName: 'Doe',
-        email: 'john.doe@example.com'
-  });
+        email: 'john.doe@example.com',
+      });
 
       expect(result).toEqual(mockEmployee);
     });
 
     it('should throw ConflictException when email already exists', async () => {
-      jest.spyOn(service['secureEmployeeRepo'], 'findOne').mockResolvedValue(mockEmployee as Employee);
+      jest
+        .spyOn(service['secureEmployeeRepo'], 'findOne')
+        .mockResolvedValue(mockEmployee as Employee);
 
       await expect(
         service.createEmployee(mockUser, { email: 'john.doe@example.com' }),
@@ -216,7 +244,9 @@ const mockUser = {
   describe('updateEmployee', () => {
     it('should update employee and invalidate cache', async () => {
       jest.spyOn(cacheService, 'getOrSet').mockResolvedValue(mockEmployee as Employee);
-      jest.spyOn(service['secureEmployeeRepo'], 'save').mockResolvedValue({ ...mockEmployee, firstName: 'Jane' } as Employee);
+      jest
+        .spyOn(service['secureEmployeeRepo'], 'save')
+        .mockResolvedValue({ ...mockEmployee, firstName: 'Jane' } as Employee);
       jest.spyOn(cacheService, 'del').mockResolvedValue(undefined);
 
       const result = await service.updateEmployee(mockUser, 'employee-1', { firstName: 'Jane' });
@@ -228,7 +258,9 @@ const mockUser = {
     it('should throw ConflictException when updating to existing email', async () => {
       const existingEmployee = { ...mockEmployee, id: 'employee-2' };
       jest.spyOn(cacheService, 'getOrSet').mockResolvedValue(mockEmployee as Employee);
-      jest.spyOn(service['secureEmployeeRepo'], 'findOne').mockResolvedValue(existingEmployee as Employee);
+      jest
+        .spyOn(service['secureEmployeeRepo'], 'findOne')
+        .mockResolvedValue(existingEmployee as Employee);
 
       await expect(
         service.updateEmployee(mockUser, 'employee-1', { email: 'existing@example.com' }),
@@ -250,7 +282,9 @@ const mockUser = {
 
   describe('findEmployeesByDepartment', () => {
     it('should return employees in department', async () => {
-      jest.spyOn(service['secureEmployeeRepo'], 'find').mockResolvedValue([mockEmployee] as Employee[]);
+      jest
+        .spyOn(service['secureEmployeeRepo'], 'find')
+        .mockResolvedValue([mockEmployee] as Employee[]);
 
       const result = await service.findEmployeesByDepartment(mockUser, 'Engineering');
 
@@ -260,7 +294,9 @@ const mockUser = {
 
   describe('findEmployeesByStatus', () => {
     it('should return employees with status', async () => {
-      jest.spyOn(service['secureEmployeeRepo'], 'find').mockResolvedValue([mockEmployee] as Employee[]);
+      jest
+        .spyOn(service['secureEmployeeRepo'], 'find')
+        .mockResolvedValue([mockEmployee] as Employee[]);
 
       const result = await service.findEmployeesByStatus(mockUser, EmploymentStatus.ACTIVE);
 
@@ -283,7 +319,9 @@ const mockUser = {
 
   describe('findAllAttendance', () => {
     it('should return all attendance records for tenant', async () => {
-      jest.spyOn(service['secureAttendanceRepo'], 'find').mockResolvedValue([mockAttendance] as Attendance[]);
+      jest
+        .spyOn(service['secureAttendanceRepo'], 'find')
+        .mockResolvedValue([mockAttendance] as Attendance[]);
 
       const result = await service.findAllAttendance(mockUser);
 
@@ -291,7 +329,9 @@ const mockUser = {
     });
 
     it('should filter by employeeId when provided', async () => {
-      jest.spyOn(service['secureAttendanceRepo'], 'find').mockResolvedValue([mockAttendance] as Attendance[]);
+      jest
+        .spyOn(service['secureAttendanceRepo'], 'find')
+        .mockResolvedValue([mockAttendance] as Attendance[]);
 
       const result = await service.findAllAttendance(mockUser, 'employee-1');
 
@@ -301,7 +341,9 @@ const mockUser = {
     it('should filter by date range when provided', async () => {
       const startDate = new Date('2024-03-01');
       const endDate = new Date('2024-03-31');
-      jest.spyOn(service['secureAttendanceRepo'], 'find').mockResolvedValue([mockAttendance] as Attendance[]);
+      jest
+        .spyOn(service['secureAttendanceRepo'], 'find')
+        .mockResolvedValue([mockAttendance] as Attendance[]);
 
       const result = await service.findAllAttendance(mockUser, undefined, startDate, endDate);
 
@@ -323,20 +365,24 @@ const mockUser = {
       jest.spyOn(cacheService, 'getOrSet').mockImplementation(async (_key, fn) => fn());
       jest.spyOn(service['secureAttendanceRepo'], 'findOne').mockResolvedValue(null);
 
-      await expect(service.findAttendanceById(mockUser, 'nonexistent')).rejects.toThrow(NotFoundException);
+      await expect(service.findAttendanceById(mockUser, 'nonexistent')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
   describe('createAttendance', () => {
     it('should create and save attendance', async () => {
       jest.spyOn(cacheService, 'getOrSet').mockResolvedValue(mockEmployee as Employee);
-      jest.spyOn(service['secureAttendanceRepo'], 'save').mockResolvedValue(mockAttendance as Attendance);
+      jest
+        .spyOn(service['secureAttendanceRepo'], 'save')
+        .mockResolvedValue(mockAttendance as Attendance);
 
       const result = await service.createAttendance(mockUser, {
         employeeId: 'employee-1',
         date: new Date('2024-03-01'),
-        status: AttendanceStatus.PRESENT
-  });
+        status: AttendanceStatus.PRESENT,
+      });
 
       expect(result).toEqual(mockAttendance);
     });
@@ -345,10 +391,14 @@ const mockUser = {
   describe('updateAttendance', () => {
     it('should update attendance and invalidate cache', async () => {
       jest.spyOn(cacheService, 'getOrSet').mockResolvedValue(mockAttendance as Attendance);
-      jest.spyOn(service['secureAttendanceRepo'], 'save').mockResolvedValue({ ...mockAttendance, status: AttendanceStatus.LATE } as Attendance);
+      jest
+        .spyOn(service['secureAttendanceRepo'], 'save')
+        .mockResolvedValue({ ...mockAttendance, status: AttendanceStatus.LATE } as Attendance);
       jest.spyOn(cacheService, 'del').mockResolvedValue(undefined);
 
-      const result = await service.updateAttendance(mockUser, 'attendance-1', { status: AttendanceStatus.LATE });
+      const result = await service.updateAttendance(mockUser, 'attendance-1', {
+        status: AttendanceStatus.LATE,
+      });
 
       expect(result.status).toBe(AttendanceStatus.LATE);
       expect(cacheService.del).toHaveBeenCalled();
@@ -376,7 +426,9 @@ const mockUser = {
         { ...mockAttendance, id: 'attendance-4', status: AttendanceStatus.LATE },
         { ...mockAttendance, id: 'attendance-5', status: AttendanceStatus.HALF_DAY },
       ];
-      jest.spyOn(service['secureAttendanceRepo'], 'find').mockResolvedValue(attendanceRecords as Attendance[]);
+      jest
+        .spyOn(service['secureAttendanceRepo'], 'find')
+        .mockResolvedValue(attendanceRecords as Attendance[]);
 
       const result = await service.getAttendanceStatistics(
         mockUser,
@@ -391,8 +443,8 @@ const mockUser = {
         absent: 1,
         late: 1,
         halfDay: 1,
-        attendanceRate: 40
-  });
+        attendanceRate: 40,
+      });
     });
 
     it('should return 0 attendance rate when no records', async () => {
@@ -451,7 +503,9 @@ const mockUser = {
       jest.spyOn(cacheService, 'getOrSet').mockImplementation(async (_key, fn) => fn());
       jest.spyOn(service['secureLeaveRepo'], 'findOne').mockResolvedValue(null);
 
-      await expect(service.findLeaveById(mockUser, 'nonexistent')).rejects.toThrow(NotFoundException);
+      await expect(service.findLeaveById(mockUser, 'nonexistent')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -465,11 +519,10 @@ const mockUser = {
         type: LeaveType.ANNUAL,
         startDate: new Date('2024-03-15'),
         endDate: new Date('2024-03-17'),
-        days: 3
-  });
+        days: 3,
+      });
 
       expect(result).toEqual(mockLeave);
-      
     });
 
     it('should calculate days when not provided', async () => {
@@ -480,8 +533,8 @@ const mockUser = {
         employeeId: 'employee-1',
         type: LeaveType.ANNUAL,
         startDate: new Date('2024-03-15'),
-        endDate: new Date('2024-03-17')
-  });
+        endDate: new Date('2024-03-17'),
+      });
 
       expect(result.days).toBe(3);
     });
@@ -490,7 +543,9 @@ const mockUser = {
   describe('updateLeave', () => {
     it('should update leave and invalidate cache', async () => {
       jest.spyOn(cacheService, 'getOrSet').mockResolvedValue(mockLeave as Leave);
-      jest.spyOn(service['secureLeaveRepo'], 'save').mockResolvedValue({ ...mockLeave, reason: 'Updated reason' } as Leave);
+      jest
+        .spyOn(service['secureLeaveRepo'], 'save')
+        .mockResolvedValue({ ...mockLeave, reason: 'Updated reason' } as Leave);
       jest.spyOn(cacheService, 'del').mockResolvedValue(undefined);
 
       const result = await service.updateLeave(mockUser, 'leave-1', { reason: 'Updated reason' });
@@ -518,8 +573,8 @@ const mockUser = {
       jest.spyOn(service['secureLeaveRepo'], 'save').mockResolvedValue({
         ...mockLeave,
         status: LeaveStatus.APPROVED,
-        approvedBy: 'manager-1'
-  } as Leave);
+        approvedBy: 'manager-1',
+      } as Leave);
       jest.spyOn(cacheService, 'del').mockResolvedValue(undefined);
 
       const result = await service.approveLeave(mockUser, 'leave-1', 'manager-1');
@@ -533,7 +588,9 @@ const mockUser = {
       const approvedLeave = { ...mockLeave, status: LeaveStatus.APPROVED };
       jest.spyOn(cacheService, 'getOrSet').mockResolvedValue(approvedLeave as Leave);
 
-      await expect(service.approveLeave(mockUser, 'leave-1', 'manager-1')).rejects.toThrow(BadRequestException);
+      await expect(service.approveLeave(mockUser, 'leave-1', 'manager-1')).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -543,8 +600,8 @@ const mockUser = {
       jest.spyOn(cacheService, 'getOrSet').mockResolvedValue(pendingLeave as Leave);
       jest.spyOn(service['secureLeaveRepo'], 'save').mockResolvedValue({
         ...pendingLeave,
-        status: LeaveStatus.REJECTED
-  } as Leave);
+        status: LeaveStatus.REJECTED,
+      } as Leave);
       jest.spyOn(cacheService, 'del').mockResolvedValue(undefined);
 
       const result = await service.rejectLeave(mockUser, 'leave-1');
@@ -565,7 +622,13 @@ const mockUser = {
     it('should calculate leave balance correctly', async () => {
       const approvedLeaves = [
         { ...mockLeave, days: 3, status: LeaveStatus.APPROVED, startDate: new Date('2024-03-15') },
-        { ...mockLeave, id: 'leave-2', days: 2, status: LeaveStatus.APPROVED, startDate: new Date('2024-06-10') },
+        {
+          ...mockLeave,
+          id: 'leave-2',
+          days: 2,
+          status: LeaveStatus.APPROVED,
+          startDate: new Date('2024-06-10'),
+        },
       ];
       jest.spyOn(service['secureLeaveRepo'], 'find').mockResolvedValue(approvedLeaves as Leave[]);
 
@@ -575,8 +638,8 @@ const mockUser = {
         year: 2024,
         totalDaysTaken: 5,
         annualLeaveAllowance: 12,
-        remainingDays: 7
-  });
+        remainingDays: 7,
+      });
     });
 
     it('should only count approved leaves in year range', async () => {

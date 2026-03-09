@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { LoggerService } from './logger.service';
 import * as winston from 'winston';
-import { createMockUser } from '@/common/test/test-helpers';
+import { LoggerService } from './logger.service';
 
 // Mock winston
 jest.mock('winston', () => {
@@ -32,12 +31,12 @@ jest.mock('winston', () => {
 });
 
 const mockUser = {
-    id: 'user1',
-    tenantId: 'tenant1',
-    roles: ['admin'],
-  };
+  id: 'user1',
+  tenantId: 'tenant1',
+  roles: ['admin'],
+};
 
-  describe('LoggerService', () => {
+describe('LoggerService', () => {
   let service: LoggerService;
   let mockWinstonLogger: any;
 
@@ -57,9 +56,9 @@ const mockUser = {
   describe('setContext', () => {
     it('should set context', () => {
       service.setContext('TestContext');
-      
+
       service.log('test message');
-      
+
       expect(mockWinstonLogger.info).toHaveBeenCalledWith('test message', {
         context: 'TestContext',
       });
@@ -156,7 +155,7 @@ const mockUser = {
 
   describe('logRequest', () => {
     it('should log HTTP request', () => {
-      service.logRequest('GET', '/api/users', 200, 150, 'user-123', mockUser);
+      service.logRequest('GET', '/api/users', 200, 150, 'user-123', 'tenant1');
 
       expect(mockWinstonLogger.info).toHaveBeenCalledWith('HTTP Request', {
         context: 'HTTP',
@@ -165,7 +164,7 @@ const mockUser = {
         statusCode: 200,
         responseTime: 150,
         userId: 'user-123',
-        tenantId: 'tenant-456',
+        tenantId: 'tenant1',
       });
     });
 

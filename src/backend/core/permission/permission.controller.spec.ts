@@ -1,10 +1,10 @@
+import { createMockUser } from '@/common/test/test-helpers';
 import { Test, TestingModule } from '@nestjs/testing';
-import { PermissionController } from './permission.controller';
-import { PermissionService } from './permission.service';
 import { CreatePermissionDto } from './dto/create-permission.dto';
 import { UpdatePermissionDto } from './dto/update-permission.dto';
 import { Permission, PermissionAction } from './entities/permission.entity';
-import { createMockUser } from '@/common/test/test-helpers';
+import { PermissionController } from './permission.controller';
+import { PermissionService } from './permission.service';
 
 describe('PermissionController', () => {
   let controller: PermissionController;
@@ -109,7 +109,7 @@ describe('PermissionController', () => {
     it('should return a permission by resource', async () => {
       mockPermissionService.findByResource.mockResolvedValue(mockPermission);
 
-      const result = await controller.findByResource(mockPermission.resource, mockTenantId);
+      const result = await controller.findByResource(mockUser, mockPermission.resource);
 
       expect(result).toEqual(mockPermission);
       expect(service.findByResource).toHaveBeenCalledWith(mockUser, mockPermission.resource);
@@ -144,18 +144,10 @@ describe('PermissionController', () => {
       const updatedPermission = { ...mockPermission, ...updateDto };
       mockPermissionService.update.mockResolvedValue(updatedPermission);
 
-      const result = await controller.update(
-        mockPermission.id,
-        updateDto,
-        mockTenantId,
-      );
+      const result = await controller.update(mockUser, mockPermission.id, updateDto);
 
       expect(result).toEqual(updatedPermission);
-      expect(service.update).toHaveBeenCalledWith(
-        mockPermission.id,
-        updateDto,
-        mockTenantId,
-      );
+      expect(service.update).toHaveBeenCalledWith(mockUser, mockPermission.id, updateDto);
     });
   });
 
