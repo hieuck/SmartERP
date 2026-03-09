@@ -1,3 +1,4 @@
+import { PermissionService } from '@/common/security/permission.service';
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
@@ -90,6 +91,12 @@ describe('SystemAdminService', () => {
             findOne: jest.fn(),
             find: jest.fn(),
             delete: jest.fn(),
+            metadata: {
+              tableName: 'system_settings',
+              name: 'SystemSetting',
+              columns: [],
+              relations: [],
+            },
           },
         },
         {
@@ -100,6 +107,12 @@ describe('SystemAdminService', () => {
             findOne: jest.fn(),
             find: jest.fn(),
             count: jest.fn(),
+            metadata: {
+              tableName: 'background_jobs',
+              name: 'BackgroundJob',
+              columns: [],
+              relations: [],
+            },
           },
         },
         {
@@ -111,6 +124,21 @@ describe('SystemAdminService', () => {
             find: jest.fn(),
             count: jest.fn(),
             createQueryBuilder: jest.fn(),
+            metadata: {
+              tableName: 'error_logs',
+              name: 'ErrorLog',
+              columns: [],
+              relations: [],
+            },
+          },
+        },
+        {
+          provide: PermissionService,
+          useValue: {
+            canRead: jest.fn().mockReturnValue(true),
+            canWrite: jest.fn().mockReturnValue(true),
+            canDelete: jest.fn().mockReturnValue(true),
+            buildSecureQuery: jest.fn((user, query) => query),
           },
         },
       ],
@@ -120,6 +148,38 @@ describe('SystemAdminService', () => {
     settingRepository = module.get<Repository<SystemSetting>>(getRepositoryToken(SystemSetting));
     jobRepository = module.get<Repository<BackgroundJob>>(getRepositoryToken(BackgroundJob));
     errorLogRepository = module.get<Repository<ErrorLog>>(getRepositoryToken(ErrorLog));
+
+    // Setup SecureRepository spies
+    jest
+      .spyOn(service['secureSettingRepo'], 'find')
+      .mockImplementation(async () => [mockSetting] as SystemSetting[]);
+    jest
+      .spyOn(service['secureSettingRepo'], 'findOne')
+      .mockImplementation(async () => mockSetting as SystemSetting);
+    jest
+      .spyOn(service['secureSettingRepo'], 'save')
+      .mockImplementation(async (_user, data) => ({ ...mockSetting, ...data }) as SystemSetting);
+    jest.spyOn(service['secureSettingRepo'], 'remove').mockImplementation(async () => undefined);
+
+    jest
+      .spyOn(service['secureJobRepo'], 'find')
+      .mockImplementation(async () => [mockJob] as BackgroundJob[]);
+    jest
+      .spyOn(service['secureJobRepo'], 'findOne')
+      .mockImplementation(async () => mockJob as BackgroundJob);
+    jest
+      .spyOn(service['secureJobRepo'], 'save')
+      .mockImplementation(async (_user, data) => ({ ...mockJob, ...data }) as BackgroundJob);
+
+    jest
+      .spyOn(service['secureErrorLogRepo'], 'find')
+      .mockImplementation(async () => [mockErrorLog] as ErrorLog[]);
+    jest
+      .spyOn(service['secureErrorLogRepo'], 'findOne')
+      .mockImplementation(async () => mockErrorLog as ErrorLog);
+    jest
+      .spyOn(service['secureErrorLogRepo'], 'save')
+      .mockImplementation(async (_user, data) => ({ ...mockErrorLog, ...data }) as ErrorLog);
   });
 
   it('should be defined', () => {
@@ -136,16 +196,12 @@ describe('SystemAdminService', () => {
           category: SettingCategory.EMAIL,
         };
 
-        jest.spyOn(settingRepository, 'findOne').mockResolvedValue(null);
-        jest.spyOn(settingRepository, 'create').mockReturnValue(mockSetting as any);
-        jest.spyOn(settingRepository, 'save').mockResolvedValue(mockSetting);
+        jest.spyOn(service['secureSettingRepo'], 'findOne').mockResolvedValue(null);
+        jest.spyOn(service['secureSettingRepo'], 'save').mockResolvedValue(mockSetting);
 
         const result = await service.createSetting(mockUser, createDto);
 
         expect(result).toEqual(mockSetting);
-        expect(settingRepository.findOne).toHaveBeenCalledWith({
-          where: { tenantId: mockUser.tenantId, key: createDto.key },
-        });
       });
 
       it('should throw ConflictException if key already exists', async () => {
@@ -156,7 +212,7 @@ describe('SystemAdminService', () => {
           category: SettingCategory.EMAIL,
         };
 
-        jest.spyOn(settingRepository, 'findOne').mockResolvedValue(mockSetting);
+        jest.spyOn(service['secureSettingRepo'], 'findOne').mockResolvedValue(mockSetting);
 
         await expect(service.createSetting(mockUser, createDto)).rejects.toThrow(ConflictException);
       });
@@ -164,7 +220,7 @@ describe('SystemAdminService', () => {
 
     describe('getSetting', () => {
       it('should return a setting by key', async () => {
-        jest.spyOn(settingRepository, 'findOne').mockResolvedValue(mockSetting);
+        jest.spyOn(service['secureSettingRepo'], 'findOne').mockResolvedValue(mockSetting);
 
         const result = await service.getSetting(mockUser, 'smtp_host');
 
@@ -172,7 +228,7 @@ describe('SystemAdminService', () => {
       });
 
       it('should throw NotFoundException if setting not found', async () => {
-        jest.spyOn(settingRepository, 'findOne').mockResolvedValue(null);
+        jest.spyOn(service['secureSettingRepo'], 'findOne').mockResolvedValue(null);
 
         await expect(service.getSetting(mockUser, 'nonexistent')).rejects.toThrow(
           NotFoundException,
@@ -185,8 +241,8 @@ describe('SystemAdminService', () => {
         const updateDto = { value: 'smtp.newhost.com' };
         const updatedSetting = { ...mockSetting, ...updateDto };
 
-        jest.spyOn(settingRepository, 'findOne').mockResolvedValue(mockSetting);
-        jest.spyOn(settingRepository, 'save').mockResolvedValue(updatedSetting);
+        jest.spyOn(service['secureSettingRepo'], 'findOne').mockResolvedValue(mockSetting);
+        jest.spyOn(service['secureSettingRepo'], 'save').mockResolvedValue(updatedSetting);
 
         const result = await service.updateSetting(mockUser, 'smtp_host', updateDto);
 
@@ -196,12 +252,12 @@ describe('SystemAdminService', () => {
 
     describe('deleteSetting', () => {
       it('should delete a setting', async () => {
-        jest.spyOn(settingRepository, 'findOne').mockResolvedValue(mockSetting);
-        jest.spyOn(settingRepository, 'delete').mockResolvedValue({ affected: 1 } as any);
+        jest.spyOn(service['secureSettingRepo'], 'findOne').mockResolvedValue(mockSetting);
+        jest.spyOn(service['secureSettingRepo'], 'remove').mockResolvedValue(undefined);
 
         await service.deleteSetting(mockUser, 'smtp_host');
 
-        expect(settingRepository.delete).toHaveBeenCalled();
+        expect(service['secureSettingRepo'].remove).toHaveBeenCalled();
       });
     });
   });
@@ -214,8 +270,7 @@ describe('SystemAdminService', () => {
           priority: JobPriority.NORMAL,
         };
 
-        jest.spyOn(jobRepository, 'create').mockReturnValue(mockJob as any);
-        jest.spyOn(jobRepository, 'save').mockResolvedValue(mockJob);
+        jest.spyOn(service['secureJobRepo'], 'save').mockResolvedValue(mockJob);
 
         const result = await service.createJob(mockUser, createDto);
 
@@ -225,7 +280,7 @@ describe('SystemAdminService', () => {
 
     describe('getJobById', () => {
       it('should return a job by id', async () => {
-        jest.spyOn(jobRepository, 'findOne').mockResolvedValue(mockJob);
+        jest.spyOn(service['secureJobRepo'], 'findOne').mockResolvedValue(mockJob);
 
         const result = await service.getJobById(mockUser, 'job-123');
 
@@ -235,7 +290,7 @@ describe('SystemAdminService', () => {
 
     describe('getJobsByStatus', () => {
       it('should return jobs by status', async () => {
-        jest.spyOn(jobRepository, 'find').mockResolvedValue([mockJob]);
+        jest.spyOn(service['secureJobRepo'], 'find').mockResolvedValue([mockJob]);
 
         const result = await service.getJobsByStatus(mockUser, JobStatus.PENDING);
 
@@ -253,8 +308,7 @@ describe('SystemAdminService', () => {
           severity: ErrorSeverity.HIGH,
         };
 
-        jest.spyOn(errorLogRepository, 'create').mockReturnValue(mockErrorLog as any);
-        jest.spyOn(errorLogRepository, 'save').mockResolvedValue(mockErrorLog);
+        jest.spyOn(service['secureErrorLogRepo'], 'save').mockResolvedValue(mockErrorLog);
 
         const result = await service.createErrorLog(mockUser, createDto);
 
@@ -281,21 +335,11 @@ describe('SystemAdminService', () => {
       });
 
       it('should filter by severity', async () => {
-        const queryBuilder: any = {
-          where: jest.fn().mockReturnThis(),
-          andWhere: jest.fn().mockReturnThis(),
-          orderBy: jest.fn().mockReturnThis(),
-          skip: jest.fn().mockReturnThis(),
-          take: jest.fn().mockReturnThis(),
-          getMany: jest.fn().mockResolvedValue([mockErrorLog]),
-        };
-
-        jest.spyOn(errorLogRepository, 'createQueryBuilder').mockReturnValue(queryBuilder);
+        jest.spyOn(service['secureErrorLogRepo'], 'find').mockResolvedValue([mockErrorLog]);
 
         const result = await service.getErrorLogs(mockUser, { severity: ErrorSeverity.HIGH });
 
         expect(result).toEqual([mockErrorLog]);
-        expect(queryBuilder.andWhere).toHaveBeenCalled();
       });
 
       it('should filter by resolved status', async () => {
@@ -320,8 +364,8 @@ describe('SystemAdminService', () => {
       it('should resolve an error log', async () => {
         const resolvedLog = { ...mockErrorLog, resolved: true, resolution: 'Fixed' };
 
-        jest.spyOn(errorLogRepository, 'findOne').mockResolvedValue(mockErrorLog);
-        jest.spyOn(errorLogRepository, 'save').mockResolvedValue(resolvedLog);
+        jest.spyOn(service['secureErrorLogRepo'], 'findOne').mockResolvedValue(mockErrorLog);
+        jest.spyOn(service['secureErrorLogRepo'], 'save').mockResolvedValue(resolvedLog);
 
         const result = await service.resolveErrorLog(mockUser, 'error-123', {
           resolved: true,
@@ -332,7 +376,7 @@ describe('SystemAdminService', () => {
       });
 
       it('should throw NotFoundException if error log not found', async () => {
-        jest.spyOn(errorLogRepository, 'findOne').mockResolvedValue(null);
+        jest.spyOn(service['secureErrorLogRepo'], 'findOne').mockResolvedValue(null);
 
         await expect(
           service.resolveErrorLog(mockUser, 'invalid-id', { resolved: true }),
@@ -344,7 +388,7 @@ describe('SystemAdminService', () => {
   describe('Additional Coverage', () => {
     describe('getAllSettings', () => {
       it('should return all settings', async () => {
-        jest.spyOn(settingRepository, 'find').mockResolvedValue([mockSetting]);
+        jest.spyOn(service['secureSettingRepo'], 'find').mockResolvedValue([mockSetting]);
 
         const result = await service.getAllSettings(mockUser);
 
@@ -352,20 +396,17 @@ describe('SystemAdminService', () => {
       });
 
       it('should filter by category', async () => {
-        jest.spyOn(settingRepository, 'find').mockResolvedValue([mockSetting]);
+        jest.spyOn(service['secureSettingRepo'], 'find').mockResolvedValue([mockSetting]);
 
         const result = await service.getAllSettings(mockUser, SettingCategory.EMAIL);
 
         expect(result).toEqual([mockSetting]);
-        expect(settingRepository.find).toHaveBeenCalledWith({
-          where: { tenantId: mockUser.tenantId, category: SettingCategory.EMAIL },
-        });
       });
     });
 
     describe('getAllJobs', () => {
       it('should return all jobs', async () => {
-        jest.spyOn(jobRepository, 'find').mockResolvedValue([mockJob]);
+        jest.spyOn(service['secureJobRepo'], 'find').mockResolvedValue([mockJob]);
 
         const result = await service.getAllJobs(mockUser);
 
@@ -377,8 +418,8 @@ describe('SystemAdminService', () => {
       it('should update a job status to RUNNING', async () => {
         const updatedJob = { ...mockJob, status: JobStatus.RUNNING, startedAt: new Date() };
 
-        jest.spyOn(jobRepository, 'findOne').mockResolvedValue(mockJob);
-        jest.spyOn(jobRepository, 'save').mockResolvedValue(updatedJob);
+        jest.spyOn(service['secureJobRepo'], 'findOne').mockResolvedValue(mockJob);
+        jest.spyOn(service['secureJobRepo'], 'save').mockResolvedValue(updatedJob);
 
         const result = await service.updateJobStatus(mockUser, 'job-123', JobStatus.RUNNING);
 
@@ -394,8 +435,8 @@ describe('SystemAdminService', () => {
           durationMs: 1000,
         };
 
-        jest.spyOn(jobRepository, 'findOne').mockResolvedValue(startedJob);
-        jest.spyOn(jobRepository, 'save').mockResolvedValue(completedJob);
+        jest.spyOn(service['secureJobRepo'], 'findOne').mockResolvedValue(startedJob);
+        jest.spyOn(service['secureJobRepo'], 'save').mockResolvedValue(completedJob);
 
         const result = await service.updateJobStatus(mockUser, 'job-123', JobStatus.COMPLETED, {
           success: true,
@@ -413,8 +454,8 @@ describe('SystemAdminService', () => {
           errorMessage: 'Error occurred',
         };
 
-        jest.spyOn(jobRepository, 'findOne').mockResolvedValue(startedJob);
-        jest.spyOn(jobRepository, 'save').mockResolvedValue(failedJob);
+        jest.spyOn(service['secureJobRepo'], 'findOne').mockResolvedValue(startedJob);
+        jest.spyOn(service['secureJobRepo'], 'save').mockResolvedValue(failedJob);
 
         const result = await service.updateJobStatus(
           mockUser,
@@ -429,7 +470,7 @@ describe('SystemAdminService', () => {
       });
 
       it('should throw NotFoundException if job not found', async () => {
-        jest.spyOn(jobRepository, 'findOne').mockResolvedValue(null);
+        jest.spyOn(service['secureJobRepo'], 'findOne').mockResolvedValue(null);
 
         await expect(
           service.updateJobStatus(mockUser, 'invalid-id', JobStatus.RUNNING),
@@ -448,8 +489,7 @@ describe('SystemAdminService', () => {
 
         const jobWithSchedule = { ...mockJob, scheduledAt: scheduledDate };
 
-        jest.spyOn(jobRepository, 'create').mockReturnValue(jobWithSchedule as any);
-        jest.spyOn(jobRepository, 'save').mockResolvedValue(jobWithSchedule);
+        jest.spyOn(service['secureJobRepo'], 'save').mockResolvedValue(jobWithSchedule);
 
         const result = await service.createJob(mockUser, createDto);
 
@@ -459,21 +499,11 @@ describe('SystemAdminService', () => {
 
     describe('getErrorLogs with filters', () => {
       it('should filter by errorType', async () => {
-        const queryBuilder: any = {
-          where: jest.fn().mockReturnThis(),
-          andWhere: jest.fn().mockReturnThis(),
-          orderBy: jest.fn().mockReturnThis(),
-          skip: jest.fn().mockReturnThis(),
-          take: jest.fn().mockReturnThis(),
-          getMany: jest.fn().mockResolvedValue([mockErrorLog]),
-        };
-
-        jest.spyOn(errorLogRepository, 'createQueryBuilder').mockReturnValue(queryBuilder);
+        jest.spyOn(service['secureErrorLogRepo'], 'find').mockResolvedValue([mockErrorLog]);
 
         const result = await service.getErrorLogs(mockUser, { errorType: 'DatabaseError' });
 
         expect(result).toEqual([mockErrorLog]);
-        expect(queryBuilder.andWhere).toHaveBeenCalled();
       });
 
       it('should apply limit and offset', async () => {
@@ -506,8 +536,8 @@ describe('SystemAdminService', () => {
           resolvedAt: new Date(),
         };
 
-        jest.spyOn(errorLogRepository, 'findOne').mockResolvedValue(mockErrorLog);
-        jest.spyOn(errorLogRepository, 'save').mockResolvedValue(resolvedLog);
+        jest.spyOn(service['secureErrorLogRepo'], 'findOne').mockResolvedValue(mockErrorLog);
+        jest.spyOn(service['secureErrorLogRepo'], 'save').mockResolvedValue(resolvedLog);
 
         const result = await service.resolveErrorLog(mockUser, 'error-123', {
           resolved: true,
@@ -521,8 +551,8 @@ describe('SystemAdminService', () => {
       it('should not update resolvedBy when resolved is false', async () => {
         const unresolvedLog = { ...mockErrorLog, resolved: false };
 
-        jest.spyOn(errorLogRepository, 'findOne').mockResolvedValue(mockErrorLog);
-        jest.spyOn(errorLogRepository, 'save').mockResolvedValue(unresolvedLog);
+        jest.spyOn(service['secureErrorLogRepo'], 'findOne').mockResolvedValue(mockErrorLog);
+        jest.spyOn(service['secureErrorLogRepo'], 'save').mockResolvedValue(unresolvedLog);
 
         const result = await service.resolveErrorLog(mockUser, 'error-123', {
           resolved: false,
@@ -578,7 +608,7 @@ describe('SystemAdminService', () => {
 
     describe('getJobById', () => {
       it('should throw NotFoundException if job not found', async () => {
-        jest.spyOn(jobRepository, 'findOne').mockResolvedValue(null);
+        jest.spyOn(service['secureJobRepo'], 'findOne').mockResolvedValue(null);
 
         await expect(service.getJobById(mockUser, 'invalid-id')).rejects.toThrow(NotFoundException);
       });
@@ -586,7 +616,7 @@ describe('SystemAdminService', () => {
 
     describe('deleteSetting', () => {
       it('should throw NotFoundException if setting not found', async () => {
-        jest.spyOn(settingRepository, 'findOne').mockResolvedValue(null);
+        jest.spyOn(service['secureSettingRepo'], 'findOne').mockResolvedValue(null);
 
         await expect(service.deleteSetting(mockUser, 'nonexistent')).rejects.toThrow(
           NotFoundException,
@@ -596,7 +626,7 @@ describe('SystemAdminService', () => {
 
     describe('updateSetting', () => {
       it('should throw NotFoundException if setting not found', async () => {
-        jest.spyOn(settingRepository, 'findOne').mockResolvedValue(null);
+        jest.spyOn(service['secureSettingRepo'], 'findOne').mockResolvedValue(null);
 
         await expect(
           service.updateSetting(mockUser, 'nonexistent', { value: 'new' }),

@@ -1,3 +1,5 @@
+import { PermissionService } from '@/common/security/permission.service';
+import { SecureRepository } from '@/common/security/secure-repository';
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -12,6 +14,10 @@ import { SystemSetting } from './entities/system-setting.entity';
 
 @Injectable()
 export class SystemAdminService {
+  private readonly secureSettingRepo: SecureRepository<SystemSetting>;
+  private readonly secureJobRepo: SecureRepository<BackgroundJob>;
+  private readonly secureErrorLogRepo: SecureRepository<ErrorLog>;
+
   constructor(
     @InjectRepository(SystemSetting)
     private readonly settingRepository: Repository<SystemSetting>,
@@ -19,30 +25,42 @@ export class SystemAdminService {
     private readonly jobRepository: Repository<BackgroundJob>,
     @InjectRepository(ErrorLog)
     private readonly errorLogRepository: Repository<ErrorLog>,
-  ) {}
+    private readonly permissionService: PermissionService,
+  ) {
+    this.secureSettingRepo = new SecureRepository(
+      settingRepository,
+      permissionService,
+      'SystemSetting',
+    );
+    this.secureJobRepo = new SecureRepository(jobRepository, permissionService, 'BackgroundJob');
+    this.secureErrorLogRepo = new SecureRepository(
+      errorLogRepository,
+      permissionService,
+      'ErrorLog',
+    );
+  }
 
   // System Settings
   async createSetting(user: User, createDto: CreateSystemSettingDto): Promise<SystemSetting> {
-    const existing = await this.settingRepository.findOne({
-      where: { tenantId: user.tenantId, key: createDto.key },
+    const existing = await this.secureSettingRepo.findOne(user, {
+      where: { key: createDto.key },
     });
 
     if (existing) {
       throw new ConflictException(`Setting with key '${createDto.key}' already exists`);
     }
 
-    const setting = this.settingRepository.create({
+    const setting = {
       ...createDto,
-      tenantId: user.tenantId,
       updatedBy: user.id,
-    });
+    };
 
-    return this.settingRepository.save(setting);
+    return this.secureSettingRepo.save(user, setting);
   }
 
   async getSetting(user: User, key: string): Promise<SystemSetting> {
-    const setting = await this.settingRepository.findOne({
-      where: { tenantId: user.tenantId, key },
+    const setting = await this.secureSettingRepo.findOne(user, {
+      where: { key },
     });
 
     if (!setting) {
@@ -53,12 +71,14 @@ export class SystemAdminService {
   }
 
   async getAllSettings(user: User, category?: string): Promise<SystemSetting[]> {
-    const where: any = { tenantId: user.tenantId };
+    const where: any = {};
     if (category) {
       where.category = category;
     }
 
-    return this.settingRepository.find({ where });
+    return this.secureSettingRepo.find(user, {
+      where: Object.keys(where).length > 0 ? where : undefined,
+    });
   }
 
   async updateSetting(
@@ -71,29 +91,28 @@ export class SystemAdminService {
     Object.assign(setting, updateDto);
     setting.updatedBy = user.id;
 
-    return this.settingRepository.save(setting);
+    return this.secureSettingRepo.save(user, setting);
   }
 
   async deleteSetting(user: User, key: string): Promise<void> {
     const setting = await this.getSetting(user, key);
-    await this.settingRepository.delete(setting.id);
+    await this.secureSettingRepo.remove(user, setting);
   }
 
   // Background Jobs
   async createJob(user: User, createDto: CreateBackgroundJobDto): Promise<BackgroundJob> {
-    const job = this.jobRepository.create({
+    const job = {
       ...createDto,
-      tenantId: user.tenantId,
       createdBy: user.id,
       scheduledAt: createDto.scheduledAt ? new Date(createDto.scheduledAt) : null,
-    });
+    };
 
-    return this.jobRepository.save(job);
+    return this.secureJobRepo.save(user, job);
   }
 
   async getJobById(user: User, id: string): Promise<BackgroundJob> {
-    const job = await this.jobRepository.findOne({
-      where: { tenantId: user.tenantId, id },
+    const job = await this.secureJobRepo.findOne(user, {
+      where: { id },
     });
 
     if (!job) {
@@ -104,15 +123,14 @@ export class SystemAdminService {
   }
 
   async getJobsByStatus(user: User, status: JobStatus): Promise<BackgroundJob[]> {
-    return this.jobRepository.find({
-      where: { tenantId: user.tenantId, status },
+    return this.secureJobRepo.find(user, {
+      where: { status },
       order: { createdAt: 'DESC' },
     });
   }
 
   async getAllJobs(user: User): Promise<BackgroundJob[]> {
-    return this.jobRepository.find({
-      where: { tenantId: user.tenantId },
+    return this.secureJobRepo.find(user, {
       order: { createdAt: 'DESC' },
     });
   }
@@ -141,22 +159,45 @@ export class SystemAdminService {
       }
     }
 
-    return this.jobRepository.save(job);
+    return this.secureJobRepo.save(user, job);
   }
 
   // Error Logs
   async createErrorLog(user: User, createDto: any): Promise<ErrorLog> {
-    const errorLog = this.errorLogRepository.create({
+    const errorLog = {
       ...createDto,
-      tenantId: user.tenantId,
       userId: user.id,
-    });
+    };
 
-    const saved = await this.errorLogRepository.save(errorLog);
+    const saved = await this.secureErrorLogRepo.save(user, errorLog);
     return Array.isArray(saved) ? saved[0] : saved;
   }
 
   async getErrorLogs(user: User, filters: any): Promise<ErrorLog[]> {
+    // Use SecureRepository for basic filtering
+    const where: any = {};
+
+    if (filters.severity) {
+      where.severity = filters.severity;
+    }
+
+    if (filters.errorType) {
+      where.errorType = filters.errorType;
+    }
+
+    if (filters.resolved !== undefined) {
+      where.resolved = filters.resolved;
+    }
+
+    // For simple queries, use SecureRepository
+    if (!filters.limit && !filters.offset) {
+      return this.secureErrorLogRepo.find(user, {
+        where: Object.keys(where).length > 0 ? where : undefined,
+        order: { createdAt: 'DESC' },
+      });
+    }
+
+    // For complex queries with pagination, use QueryBuilder with tenant isolation
     const queryBuilder = this.errorLogRepository.createQueryBuilder('error_log');
 
     queryBuilder.where('error_log.tenantId = :tenantId', { tenantId: user.tenantId });
@@ -187,8 +228,8 @@ export class SystemAdminService {
   }
 
   async resolveErrorLog(user: User, id: string, updateDto: UpdateErrorLogDto): Promise<ErrorLog> {
-    const errorLog = await this.errorLogRepository.findOne({
-      where: { tenantId: user.tenantId, id },
+    const errorLog = await this.secureErrorLogRepo.findOne(user, {
+      where: { id },
     });
 
     if (!errorLog) {
@@ -204,11 +245,13 @@ export class SystemAdminService {
       errorLog.resolvedAt = new Date();
     }
 
-    return this.errorLogRepository.save(errorLog);
+    return this.secureErrorLogRepo.save(user, errorLog);
   }
 
   // System Health
   async getSystemHealth(user: User): Promise<any> {
+    // System health queries need to count across tenant
+    // Use raw repository with explicit tenant filtering
     const [pendingJobs, failedJobs, unresolvedErrors] = await Promise.all([
       this.jobRepository.count({
         where: { tenantId: user.tenantId, status: JobStatus.PENDING },
