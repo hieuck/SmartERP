@@ -1,5 +1,6 @@
 ---
 inclusion: manual
+description: 'ROADMAP update guide for role-based, phase-driven development tracking. Defines status indicators, progress tracking tables, and update patterns for SmartERP development phases.'
 ---
 
 # ROADMAP Update Guide

@@ -1,5 +1,6 @@
 ---
 inclusion: manual
+description: 'CHANGELOG update guide following Keep a Changelog standard. Defines categories (Added, Changed, Fixed, Security), entry format, and best practices for documenting changes.'
 ---
 
 # CHANGELOG Update Guide

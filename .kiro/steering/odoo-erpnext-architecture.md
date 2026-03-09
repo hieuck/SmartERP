@@ -1,8 +1,95 @@
 ---
-inclusion: always
+inclusion: manual
+description: '⚠️ DEPRECATED: File này đã được split thành 2 files mới. Redirect to multi-tenant-architecture-patterns.md (general) và erp-implementation-guide.md (ERP-specific). File này sẽ bị xóa trong v3.0.0. Use #odoo-erpnext-architecture to load legacy content.'
 ---
 
-# Kiến trúc Odoo & ERPNext - Nguyên tắc bắt buộc
+# ⚠️ DEPRECATED: Kiến trúc Odoo & ERPNext
+
+**Status**: 🚫 Deprecated (v2.1.0)  
+**Removal**: v3.0.0 (2026-06-30)
+
+---
+
+## 📢 Important Notice
+
+File này đã được **refactored** thành 2 files mới để tách biệt general patterns và ERP-specific content:
+
+### ✅ NEW: Multi-Tenant Architecture Patterns (General)
+
+**File**: `.kiro/steering/multi-tenant-architecture-patterns.md`  
+**Type**: Auto-included  
+**Content**: 70% general, domain-agnostic patterns
+
+- Tenant isolation pattern
+- Permission system
+- Audit trail
+- Caching strategies
+- Testing patterns
+- API design
+- Status management
+- Workflow patterns
+
+**Use for**: Any multi-tenant application (SaaS, B2B, Enterprise)
+
+---
+
+### ✅ NEW: ERP Implementation Guide (Specific)
+
+**File**: `.kiro/steering/erp-implementation-guide.md`  
+**Type**: Manual inclusion (`#erp-implementation-guide`)  
+**Content**: 30% ERP-specific patterns
+
+- Odoo/ERPNext research workflow
+- ERP module structure
+- Accounting patterns
+- Inventory patterns
+- Manufacturing patterns
+- SmartERP business logic
+
+**Use for**: ERP features, Odoo/ERPNext research
+
+---
+
+## 🔄 Migration Guide
+
+**Old way** (deprecated):
+
+```typescript
+// All patterns mixed in one file
+// Hard to reuse for non-ERP projects
+```
+
+**New way** (recommended):
+
+```typescript
+// General patterns: Always included
+// ERP patterns: Include when needed with #erp-implementation-guide
+```
+
+---
+
+## 📚 Quick Reference
+
+**For general multi-tenant development:**
+→ Read: `.kiro/steering/multi-tenant-architecture-patterns.md` (auto-included)
+
+**For ERP-specific features:**
+→ Include: `#erp-implementation-guide` in chat
+→ Read: `.kiro/steering/erp-implementation-guide.md`
+
+**For SecureRepository implementation:**
+→ Activate skill: `discloseContext({ name: 'secure-repository-pattern' })`
+
+---
+
+## ⚠️ Legacy Content Below (For Reference Only)
+
+**Note**: Content below is kept for backward compatibility until v3.0.0.  
+**Please use new files above for all new development.**
+
+---
+
+# Kiến trúc Odoo & ERPNext - Nguyên tắc bắt buộc (LEGACY)
 
 ## ⚠️ QUAN TRỌNG: Research Trước Khi Code
 

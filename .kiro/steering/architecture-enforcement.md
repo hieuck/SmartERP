@@ -1,5 +1,6 @@
 ---
 inclusion: auto
+description: 'Automated architecture compliance checks and enforcement rules for SecureRepository pattern, PermissionService injection, and tenant isolation. Defines pre-commit hooks, CI/CD gates, and exception list for legacy code refactoring.'
 ---
 
 # Architecture Enforcement - Automated Compliance

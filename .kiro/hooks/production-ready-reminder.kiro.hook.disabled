@@ -1,0 +1,16 @@
+{
+  "name": "Production Ready Reminder",
+  "version": "2.0.0",
+  "description": "Autonomous verification: Tự động verify architecture compliance sau mỗi tool use (chỉ check code files, domain-agnostic)",
+  "when": {
+    "type": "postToolUse",
+    "toolTypes": [
+      "write",
+      "shell"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "✅ PRODUCTION READY CHECK (Autonomous Mode):\n\n**IMPORTANT: Internal checkpoint - TỰ ĐỘNG verify, KHÔNG hỏi user.**\n\n**FILE TYPE FILTER**: Chỉ check các file types sau:\n- ✅ .service.ts (services)\n- ✅ .controller.ts (controllers)\n- ✅ .entity.ts (entities)\n- ✅ .spec.ts (tests)\n- ⏭️ SKIP: .json, .md, .yml, .yaml, .txt, config files\n\n**Nếu file KHÔNG phải code file → SKIP check này và continue.**\n\n**Nếu file LÀ code file → Verify tuân thủ architecture principles:**\n1. SecureRepository pattern (không direct repository query)\n2. Tenant isolation (mọi query có tenantId filter)\n3. Permission check (PermissionService injection)\n4. Audit trail (createdBy, updatedBy, timestamps)\n5. Tests coverage (mock SecureRepository đúng cách)\n\n→ Nếu vi phạm: TỰ ĐỘNG fix ngay\n→ Nếu tuân thủ: Continue work\n→ Target: Production-ready product\n\n→ Continue autonomous work."
+  }
+}
