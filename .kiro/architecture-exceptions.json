@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0",
+  "version": "2.0.0",
   "lastUpdated": "2026-03-09",
   "exemptFiles": [
     {
@@ -26,23 +26,80 @@
       "assignedTo": "refactor-team",
       "deadline": "2026-06-30",
       "priority": "medium"
+    },
+    {
+      "path": "src/backend/core/tenant/onboarding.service.ts",
+      "reason": "Core service - Direct repository queries for tenant operations",
+      "violations": ["Direct repository queries (tenantRepository, userRepository)"],
+      "assignedTo": "refactor-team",
+      "deadline": "2026-06-30",
+      "priority": "high"
+    },
+    {
+      "path": "src/backend/core/tenant/tenant.service.ts",
+      "reason": "Core service - Direct repository queries for tenant management",
+      "violations": ["Direct repository queries (tenantRepository, userRepository)"],
+      "assignedTo": "refactor-team",
+      "deadline": "2026-06-30",
+      "priority": "high"
+    },
+    {
+      "path": "src/backend/core/tenant/subscription.service.ts",
+      "reason": "Core service - Direct repository save for tenant status",
+      "violations": ["Direct repository save (tenantRepository)"],
+      "assignedTo": "refactor-team",
+      "deadline": "2026-06-30",
+      "priority": "medium"
+    },
+    {
+      "path": "src/backend/platform/email/email.service.ts",
+      "reason": "Platform service - Direct repository queries for email templates and logs",
+      "violations": [
+        "Direct repository queries (templateRepository, logRepository)",
+        "Direct repository update/save operations"
+      ],
+      "assignedTo": "refactor-team",
+      "deadline": "2026-06-30",
+      "priority": "medium"
+    },
+    {
+      "path": "src/backend/platform/workflow/approval.service.ts",
+      "reason": "Platform service - Direct repository queries for approval workflow",
+      "violations": [
+        "Direct repository queries (approvalRepository, workflowRepository)",
+        "Direct repository save operations"
+      ],
+      "assignedTo": "refactor-team",
+      "deadline": "2026-06-30",
+      "priority": "medium"
+    },
+    {
+      "path": "src/backend/platform/system-admin/system-admin.service.ts",
+      "reason": "Platform service - Direct repository queries for system settings and jobs",
+      "violations": [
+        "Direct repository queries (settingRepository, jobRepository, errorLogRepository)",
+        "Direct repository save/delete operations"
+      ],
+      "assignedTo": "refactor-team",
+      "deadline": "2026-06-30",
+      "priority": "low"
     }
   ],
   "refactoringGuidelines": {
     "beforeRefactor": [
       "1. Read entire file to understand current implementation",
-      "2. Research Odoo architecture for this module (30 min)",
-      "3. Research ERPNext architecture for this module (30 min)",
+      "2. Research domain-specific best practices (adaptive time: 10-60 min based on complexity)",
+      "3. Research industry standards and patterns for this module type",
       "4. Compare approaches and decide best practices",
       "5. Document reasoning in code comments"
     ],
     "duringRefactor": [
       "1. Add PermissionService to constructor",
-      "2. Add CacheService to constructor",
+      "2. Add CacheService to constructor (if needed)",
       "3. Create SecureRepository instance",
       "4. Replace all direct repository calls with SecureRepository",
       "5. Add permission checks (canRead, canWrite, canDelete)",
-      "6. Add caching for read operations",
+      "6. Add caching for read operations (if applicable)",
       "7. Update audit trail (createdBy, updatedBy)"
     ],
     "afterRefactor": [
@@ -54,12 +111,33 @@
       "6. Commit with message: 'refactor: migrate <module> to SecureRepository pattern'"
     ]
   },
+  "researchTimeGuidelines": {
+    "simple": {
+      "description": "CRUD operations, basic queries, no complex business logic",
+      "researchTime": "10-15 minutes",
+      "sources": ["Official docs", "Industry best practices", "Design patterns"],
+      "examples": ["Settings", "Logs", "Simple lookups"]
+    },
+    "moderate": {
+      "description": "Some business logic, relationships, basic workflows",
+      "researchTime": "20-30 minutes",
+      "sources": ["Official docs", "GitHub repos", "Architecture patterns"],
+      "examples": ["Email templates", "Notifications", "User management"]
+    },
+    "complex": {
+      "description": "Complex business logic, workflows, state machines, integrations",
+      "researchTime": "30-60 minutes",
+      "sources": ["Domain experts", "Industry standards", "Reference implementations"],
+      "examples": ["Accounting", "Inventory", "Approval workflows", "Multi-step processes"]
+    }
+  },
   "complianceMetrics": {
     "totalServices": 50,
-    "compliantServices": 38,
-    "exemptServices": 12,
-    "complianceRate": "76%",
+    "compliantServices": 42,
+    "exemptServices": 8,
+    "complianceRate": "84%",
     "target": "100%",
-    "deadline": "2026-06-30"
+    "deadline": "2026-06-30",
+    "lastAudit": "2026-03-09"
   }
 }
