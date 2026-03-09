@@ -1,7 +1,6 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { Repository } from 'typeorm';
-import { SecureRepository } from './secure-repository';
 import { PermissionService, User } from './permission.service';
+import { SecureRepository } from './secure-repository';
 
 class TestEntity {
   id: string;
@@ -33,11 +32,7 @@ describe('SecureRepository', () => {
 
     user = { id: 'user1', tenantId: 'tenant1', roles: ['user'] };
 
-    secureRepo = new SecureRepository(
-      mockRepository,
-      mockPermissionService,
-      'TestEntity',
-    );
+    secureRepo = new SecureRepository(mockRepository, mockPermissionService, 'TestEntity');
   });
 
   describe('findOne', () => {
@@ -68,15 +63,13 @@ describe('SecureRepository', () => {
       mockRepository.findOne.mockResolvedValue(record);
       mockPermissionService.canRead.mockReturnValue(false);
 
-      await expect(
-        secureRepo.findOne(user, { where: { id: 'record1' } }),
-      ).rejects.toThrow();
+      await expect(secureRepo.findOne(user, { where: { id: 'record1' } })).rejects.toThrow();
     });
   });
 
   describe('find', () => {
     it('should apply secure query filters', async () => {
-      const baseWhere = { status: 'active' };
+      const baseWhere = { status: 'active' } as any;
       const secureWhere = { status: 'active', tenantId: 'tenant1' };
 
       mockPermissionService.buildSecureQuery.mockReturnValue(secureWhere);
@@ -101,6 +94,7 @@ describe('SecureRepository', () => {
         name: 'Test',
       };
 
+      mockPermissionService.canWrite.mockReturnValue(true);
       mockRepository.save.mockResolvedValue(savedRecord);
 
       const result = await secureRepo.save(user, newRecord);
