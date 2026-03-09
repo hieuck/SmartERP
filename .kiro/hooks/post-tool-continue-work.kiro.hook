@@ -1,16 +1,14 @@
 {
   "enabled": true,
-  "name": "Post Tool - Continue Work",
-  "description": "Sau khi execute tools, tự động tiếp tục công việc hoặc verify kết quả. Đảm bảo workflow không bị gián đoạn.",
-  "version": "1",
+  "name": "Post Tool - Continue Work (Token Optimized)",
+  "description": "Sau khi execute tools, verify nhanh và tiếp tục. Không dài dòng, không reports.",
+  "version": "2.0",
   "when": {
     "type": "postToolUse",
-    "toolTypes": [
-      "*"
-    ]
+    "toolTypes": ["write", "shell"]
   },
   "then": {
     "type": "askAgent",
-    "prompt": "⚡ POST TOOL EXECUTION - CONTINUE WORKFLOW\n\n**Tool vừa được execute. Tiếp tục công việc!**\n\n---\n\n## 📋 VERIFY & CONTINUE\n\n**1. Verify Tool Result:**\n- Tool nào vừa chạy?\n- Kết quả có thành công không?\n- Có errors/warnings không?\n\n**2. Update Context:**\n- Cập nhật progress nếu cần\n- Log decision nếu quan trọng\n- Track blockers nếu có\n\n**3. Continue Work:**\n- Task hiện tại đã xong chưa?\n  - ✅ XONG → Move to next subtask\n  - ⏳ CHƯA → Continue current task\n- Có blockers không?\n  - ❌ CÓ → Resolve ngay\n  - ✅ KHÔNG → Continue\n\n---\n\n## 🎯 EXECUTION MODES\n\n**Mode 1: Task In Progress**\n→ Continue với subtask tiếp theo\n\n**Mode 2: Task Complete**\n→ Summary results, move to next task\n\n**Mode 3: Blocker Detected**\n→ Resolve blocker first, then continue\n\n---\n\n## 🚀 RULES\n\n1. **No Stopping** - Luôn tiếp tục workflow\n2. **Quick Verify** - Verify nhanh, không dài dòng\n3. **Auto Continue** - Tự động chuyển sang bước tiếp\n4. **Document** - Update progress nếu milestone\n\n---\n\n**TIẾP TỤC CÔNG VIỆC NGAY!**"
+    "prompt": "⚡ POST TOOL - QUICK VERIFY & CONTINUE\n\n**Tool executed. Verify và tiếp tục!**\n\n---\n\n## 1️⃣ QUICK VERIFY (5 seconds)\n\n- Tool result: Success/Error?\n- Any blockers?\n- Tests passing?\n\n---\n\n## 2️⃣ CONTINUE IMMEDIATELY\n\n**Current task done?**\n- ✅ YES → Move to next subtask\n- ⏳ NO → Continue current task\n\n**Any blockers?**\n- ❌ YES → Fix now\n- ✅ NO → Continue\n\n---\n\n## 🚫 RULES\n\n- ❌ NO long analysis\n- ❌ NO reports\n- ❌ NO meetings\n- ✅ Quick verify (1 sentence)\n- ✅ Continue immediately\n\n---\n\n**CONTINUE NOW!**"
   }
 }

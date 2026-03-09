@@ -152,7 +152,8 @@ export class SystemAdminService {
       userId: user.id,
     });
 
-    return this.errorLogRepository.save(errorLog);
+    const saved = await this.errorLogRepository.save(errorLog);
+    return Array.isArray(saved) ? saved[0] : saved;
   }
 
   async getErrorLogs(user: User, filters: any): Promise<ErrorLog[]> {

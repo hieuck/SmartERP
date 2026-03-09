@@ -1,11 +1,11 @@
+import { CacheService } from '@/common/cache/cache.service';
+import { PermissionService } from '@/common/security/permission.service';
+import { createMockUser } from '@/common/test/test-helpers';
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { CustomerService } from './customer.service';
 import { Customer } from './entities/customer.entity';
-import { NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
-import { CacheService } from '@/common/cache/cache.service';
-import { PermissionService } from '@/common/security/permission.service';
-import { createMockUser } from '@/common/test/test-helpers';
 
 describe('CustomerService', () => {
   let service: CustomerService;
@@ -20,7 +20,20 @@ describe('CustomerService', () => {
     softDelete: jest.fn(),
     remove: jest.fn(),
     count: jest.fn(),
-    => mockQueryBuilder)
+    createQueryBuilder: jest.fn(() => mockQueryBuilder),
+  };
+
+  const mockQueryBuilder = {
+    where: jest.fn().mockReturnThis(),
+    andWhere: jest.fn().mockReturnThis(),
+    orWhere: jest.fn().mockReturnThis(),
+    orderBy: jest.fn().mockReturnThis(),
+    skip: jest.fn().mockReturnThis(),
+    take: jest.fn().mockReturnThis(),
+    getMany: jest.fn(),
+    getOne: jest.fn(),
+    getManyAndCount: jest.fn(),
+    getCount: jest.fn(),
   };
 
   const mockCacheService = {
@@ -28,7 +41,7 @@ describe('CustomerService', () => {
     set: jest.fn(),
     del: jest.fn(),
     getOrSet: jest.fn(),
-    invalidateEntity: jest.fn()
+    invalidateEntity: jest.fn(),
   };
 
   const mockPermissionService = {
@@ -37,7 +50,7 @@ describe('CustomerService', () => {
     buildSecureQuery: jest.fn((user, where) => where),
     canRead: jest.fn().mockReturnValue(true),
     canWrite: jest.fn().mockReturnValue(true),
-    canDelete: jest.fn().mockReturnValue(true)
+    canDelete: jest.fn().mockReturnValue(true),
   };
 
   const mockUser = createMockUser();
@@ -49,7 +62,7 @@ describe('CustomerService', () => {
     tenantId: 'tenant-1',
     status: 'active',
     creditLimit: 1000,
-    currentBalance: 1500
+    currentBalance: 1500,
   };
 
   beforeEach(async () => {
@@ -58,18 +71,18 @@ describe('CustomerService', () => {
         CustomerService,
         {
           provide: getRepositoryToken(Customer),
-          useValue: mockCustomerRepository
-  },
+          useValue: mockCustomerRepository,
+        },
         {
           provide: CacheService,
-          useValue: mockCacheService
-  },
+          useValue: mockCacheService,
+        },
         {
           provide: PermissionService,
-          useValue: mockPermissionService
-  },
-      ]
-  }).compile();
+          useValue: mockPermissionService,
+        },
+      ],
+    }).compile();
 
     service = module.get<CustomerService>(CustomerService);
   });

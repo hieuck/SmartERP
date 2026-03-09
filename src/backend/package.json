@@ -21,7 +21,9 @@
     "migration:generate": "typeorm migration:generate -d src/config/typeorm.config.ts",
     "migration:run": "typeorm migration:run -d src/config/typeorm-migration.config.ts",
     "migration:revert": "typeorm migration:revert -d src/config/typeorm-migration.config.ts",
-    "seed:test-users": "ts-node scripts/seed-test-users.ts"
+    "seed:test-users": "ts-node scripts/seed-test-users.ts",
+    "config:validate": "ts-node ../../scripts/validate-config.ts",
+    "config:check-env": "ts-node ../../scripts/check-env.ts"
   },
   "dependencies": {
     "@nestjs/cache-manager": "^2.1.0",

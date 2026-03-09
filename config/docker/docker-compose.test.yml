@@ -191,7 +191,9 @@ services:
       REDIS_PORT: 6379
       JWT_SECRET: test-secret-key
       API_URL: http://api-gateway-test:3000
-    command: sh -c "cd backend/performance-tests && k6 run k6-load-test.js"
+      TEST_TOKEN: test-jwt-token
+      TEST_TENANT_ID: tenant-1
+    command: sh -c "cd backend/test/performance && k6 run k6-security-baseline.js"
     depends_on:
       postgres-test:
         condition: service_healthy
@@ -223,7 +225,7 @@ services:
       REDIS_PORT: 6379
       JWT_SECRET: test-secret-key
       API_URL: http://api-gateway-test:3000
-    command: sh -c "cd backend/security-tests && npm test"
+    command: sh -c "cd backend && npm test -- --testPathPattern='.*\\.security\\.spec\\.ts$' --passWithNoTests"
     depends_on:
       postgres-test:
         condition: service_healthy

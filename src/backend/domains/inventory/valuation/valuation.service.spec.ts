@@ -12,7 +12,15 @@ describe('ValuationService', () => {
   const mockRepository = {
     find: jest.fn(),
     save: jest.fn(),
-    create: jest.fn()
+    create: jest.fn(),
+    createQueryBuilder: jest.fn()
+  };
+
+  const mockQueryBuilder = {
+    select: jest.fn().mockReturnThis(),
+    where: jest.fn().mockReturnThis(),
+    andWhere: jest.fn().mockReturnThis(),
+    getRawOne: jest.fn()
   };
 
   beforeEach(async () => {

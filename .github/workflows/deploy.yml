@@ -130,6 +130,9 @@ jobs:
     environment:
       name: ${{ needs.determine-environment.outputs.environment }}
       url: https://app.${{ needs.determine-environment.outputs.domain }}
+      # Production requires Tech Lead + PM approval
+      # Staging auto-deploys
+      reviewers: ${{ needs.determine-environment.outputs.environment == 'production' && 'tech-lead,pm' || '' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

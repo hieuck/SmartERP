@@ -160,22 +160,22 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build test environment
-        run: docker-compose -f docker-compose.test.yml build
+        run: docker-compose -f config/docker/docker-compose.test.yml build test-performance
 
       - name: Run performance tests
-        run: docker-compose -f docker-compose.test.yml run --rm test-performance
+        run: docker-compose -f config/docker/docker-compose.test.yml run --rm test-performance
 
       - name: Upload performance results
         uses: actions/upload-artifact@v3
         if: always()
         with:
           name: performance-test-results
-          path: backend/performance-tests/results/
-          retention-days: 7
+          path: performance-report.json
+          retention-days: 30
 
       - name: Cleanup
         if: always()
-        run: docker-compose -f docker-compose.test.yml down -v
+        run: docker-compose -f config/docker/docker-compose.test.yml down -v
 
   # Security tests
   security-tests:
@@ -188,17 +188,52 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build test environment
-        run: docker-compose -f docker-compose.test.yml build
+        run: docker-compose -f config/docker/docker-compose.test.yml build test-security
 
-      - name: Run security tests
-        run: docker-compose -f docker-compose.test.yml run --rm test-security
+      - name: Run all security tests
+        run: docker-compose -f config/docker/docker-compose.test.yml run --rm test-security
+
+      - name: Run tenant isolation tests
+        run: |
+          docker-compose -f config/docker/docker-compose.test.yml run --rm test-security \
+          npm test -- --testPathPattern=".*\\.security\\.spec\\.ts$" \
+          --testNamePattern="Tenant Isolation"
+
+      - name: Run permission denial tests
+        run: |
+          docker-compose -f config/docker/docker-compose.test.yml run --rm test-security \
+          npm test -- --testPathPattern=".*\\.security\\.spec\\.ts$" \
+          --testNamePattern="Permission Denial"
 
       - name: Run security audit
         run: docker-compose run --rm api-gateway npm audit --audit-level=moderate
 
+      - name: Generate security test report
+        if: always()
+        run: |
+          docker-compose -f config/docker/docker-compose.test.yml run --rm test-security \
+          npm test -- --testPathPattern=".*\\.security\\.spec\\.ts$" \
+          --json --outputFile=security-test-results.json || true
+
+      - name: Upload security test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: security-test-results
+          path: security-test-results.json
+          retention-days: 30
+
+      - name: Upload security test coverage
+        uses: codecov/codecov-action@v3
+        if: always()
+        with:
+          files: ./coverage/lcov.info
+          flags: security
+          name: security-tests-coverage
+
       - name: Cleanup
         if: always()
-        run: docker-compose -f docker-compose.test.yml down -v
+        run: docker-compose -f config/docker/docker-compose.test.yml down -v
 
   docker-build:
     name: Build Docker Images

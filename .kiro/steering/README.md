@@ -16,7 +16,6 @@ Steering files provide guidance and best practices for SmartERP development.
    - Usage: `#changelog-guide` in chat
 
 2. **roadmap-guide.md** - ROADMAP Update Guide
-   - Role-based structure (Tech Lead, Developer, QA)
    - Status indicators (✅ ⏳ ⚠️ ❌)
    - Progress tracking tables
    - Update patterns for tasks
@@ -37,13 +36,6 @@ Steering files provide guidance and best practices for SmartERP development.
    - Code comment standards
    - Usage: Auto-included (always active)
 
-5. **team-collaboration.md** - Team Collaboration Guidelines
-   - When to use each agent (Tech Lead, Senior Dev, QA, Junior Dev)
-   - Task delegation strategy
-   - Autonomous workflow explanation
-   - Best practices for team coordination
-   - Usage: Auto-included (always active)
-
 ---
 
 ## 🎯 How to Use
@@ -52,9 +44,8 @@ Steering files provide guidance and best practices for SmartERP development.
 
 These files are automatically loaded in every conversation:
 
-- `odoo-erpnext-architecture.md`
-- `vietnamese-communication.md`
-- `team-collaboration.md`
+- `odoo-erpnext-architecture.md` - Architecture principles
+- `vietnamese-communication.md` - Communication guidelines
 
 ### Manual Inclusion
 
@@ -74,12 +65,29 @@ Agent: [Loads changelog-guide.md and provides guidance]
 
 ## 🔧 Hooks Integration
 
+### post-tool-continue-work.kiro.hook (v2.0 - Token Optimized)
+
+- **Trigger**: postToolUse (write, shell tools only)
+- **Action**: Quick verify (1 sentence) → Continue immediately
+- **Status**: ✅ Active
+
 ### git-commit-milestone.kiro.hook
 
 - **Trigger**: agentStop (after task completion)
 - **Action**: Suggest git commit if milestone completed
 - **Uses**: Both changelog-guide.md and roadmap-guide.md
 - **Format**: Conventional Commits with detailed body
+- **Status**: ✅ Active
+
+### pre-commit-quality-gate.kiro.hook
+
+- **Trigger**: userTriggered (manual)
+- **Action**: Run lint, type-check, tests, security audit
+- **Status**: ✅ Active
+
+### Disabled Hooks (Team Disbanded)
+
+- **autonomous-workflow.kiro.hook** - ❌ Disabled (team disbanded, no delegation)
 
 ---
 
@@ -114,11 +122,10 @@ Agent: [Loads changelog-guide.md and provides guidance]
 | ---------------------------- | ------ | --------- | ------------ |
 | odoo-erpnext-architecture.md | Auto   | ✅ Active | 2026-03-07   |
 | vietnamese-communication.md  | Auto   | ✅ Active | 2026-03-07   |
-| team-collaboration.md        | Auto   | ✅ Active | 2026-03-09   |
 | changelog-guide.md           | Manual | ✅ Active | 2026-03-09   |
 | roadmap-guide.md             | Manual | ✅ Active | 2026-03-09   |
 
 ---
 
 **Last Updated**: 2026-03-09  
-**Total Guides**: 5 (3 auto, 2 manual)
+**Total Guides**: 4 (2 auto, 2 manual)
