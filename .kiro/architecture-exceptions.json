@@ -15,14 +15,6 @@
       "priority": "medium"
     },
     {
-      "path": "src/backend/core/tenant/subscription.service.ts",
-      "reason": "Core service - Direct repository save for tenant status",
-      "violations": ["Direct repository save (tenantRepository)"],
-      "assignedTo": "refactor-team",
-      "deadline": "2026-06-30",
-      "priority": "medium"
-    },
-    {
       "path": "src/backend/platform/email/email.service.ts",
       "reason": "Platform service - Direct repository queries for email templates and logs",
       "violations": [
@@ -104,9 +96,9 @@
   },
   "complianceMetrics": {
     "totalServices": 50,
-    "compliantServices": 45,
-    "exemptServices": 5,
-    "complianceRate": "90%",
+    "compliantServices": 46,
+    "exemptServices": 4,
+    "complianceRate": "92%",
     "target": "100%",
     "deadline": "2026-06-30",
     "lastAudit": "2026-03-09"

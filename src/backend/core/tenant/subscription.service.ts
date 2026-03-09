@@ -267,10 +267,15 @@ export class SubscriptionService {
 
   /**
    * Check if subscription is expired
+   *
+   * NOTE: This is a system operation (cron job) without user context.
+   * Uses raw repository for cross-tenant queries - this is intentional and allowed.
+   * System operations that need to query/update multiple tenants should use raw repository.
    */
   async checkExpiredSubscriptions() {
     const now = new Date();
 
+    // System operation: Query across all tenants (no user context)
     const expiredTenants = await this.tenantRepository
       .createQueryBuilder('tenant')
       .where('tenant.subscriptionEndDate < :now', { now })
@@ -280,6 +285,7 @@ export class SubscriptionService {
     for (const tenant of expiredTenants) {
       // Suspend tenant if subscription expired
       tenant.status = TenantStatus.SUSPENDED;
+      // System operation: Direct save without user context
       await this.tenantRepository.save(tenant);
 
       // TODO: Send notification email
