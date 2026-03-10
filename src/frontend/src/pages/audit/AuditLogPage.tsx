@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card, Table, Tag, Select, DatePicker, Space, Descriptions, Drawer, Button, Row, Col, Statistic } from 'antd';
 import { EyeOutlined, UserOutlined, FileTextOutlined, ClockCircleOutlined } from '@ant-design/icons';
-import { auditService, AuditLog, AuditAction, AuditEntity } from '../../services/auditService';
+import { auditService, AuditLog, AuditAction, AuditEntity } from '../../services/audit/auditService';
 import dayjs from 'dayjs';
 import { useResponsive } from '../../hooks/useResponsive';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';

@@ -11,7 +11,7 @@ import { BrowserRouter } from 'react-router-dom';
 import WorkerList from '../../pages/production/WorkerList';
 import AttendanceTracking from '../../pages/production/AttendanceTracking';
 import ProductionOrderList from '../../pages/production/ProductionOrderList';
-import productionService from '../../services/productionService';
+import productionService from '../../services/production/productionService';
 
 // Mock the production service
 vi.mock('../../services/productionService', () => ({

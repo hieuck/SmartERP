@@ -1,9 +1,9 @@
-import { config } from 'dotenv';
-import * as path from 'path';
 import { DataSource } from 'typeorm';
+import { config } from 'dotenv';
 
 config();
 
+// Migration-only config - no entities needed since migration has SQL
 export default new DataSource({
   type: 'postgres',
   host: process.env.DB_HOST || 'localhost',
@@ -11,7 +11,8 @@ export default new DataSource({
   username: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD || 'postgres',
   database: process.env.DB_NAME || 'erp_production',
-  migrations: [path.join(__dirname, '..', 'migrations', '*.{ts,js}')],
+  entities: [], // Empty - migrations don't need entities
+  migrations: ['src/migrations/*{.ts,.js}'],
   synchronize: false,
-  logging: true,
+  logging: process.env.NODE_ENV === 'development',
 });

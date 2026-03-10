@@ -4,7 +4,7 @@ import type { ColumnsType, MenuProps } from 'antd/es/table';
 import { PlusOutlined, SearchOutlined, ShoppingOutlined, EyeOutlined, EditOutlined, DeleteOutlined, MoreOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import purchaseOrderService, { PurchaseOrderStatus } from '../../services/purchaseOrderService';
+import purchaseOrderService, { PurchaseOrderStatus } from '../../services/logistics/purchaseOrderService';
 import dayjs from 'dayjs';
 
 const { Title } = Typography;

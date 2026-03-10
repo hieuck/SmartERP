@@ -23,7 +23,7 @@ import {
   SUCCESS_MESSAGES,
   ERROR_MESSAGES,
 } from '../../constants/ui';
-import productionService, { Worker } from '../../services/productionService';
+import productionService, { Worker } from '../../services/production/productionService';
 import { useResponsive } from '../../hooks/useResponsive';
 
 const { Option } = Select;

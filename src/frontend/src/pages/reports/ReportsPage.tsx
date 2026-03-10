@@ -1,8 +1,22 @@
 import React, { useState } from 'react';
 import { Card, Tabs, DatePicker, Button, Space, Table, message, Row, Col, Statistic, Typography } from 'antd';
 import { FilePdfOutlined, FileExcelOutlined, BarChartOutlined } from '@ant-design/icons';
-import reportingService from '../../services/report/reportingService';
 import dayjs from 'dayjs';
+import {
+  useSalesReport,
+  useDailySalesReport,
+  useProductPerformanceReport,
+  useInventoryReport,
+  useLowStockReport,
+  useInventoryMovementsReport,
+  useCustomerReport,
+  useTopCustomersReport,
+  useFinancialReport,
+  useProfitLossReport,
+  useCashFlowReport,
+  useExportReportPDF,
+  useExportReportExcel,
+} from '../../hooks/useReports';
 
 const { RangePicker } = DatePicker;
 const { Title } = Typography;
@@ -12,9 +26,25 @@ const ReportsPage: React.FC = () => {
     dayjs().startOf('month').format('YYYY-MM-DD'),
     dayjs().endOf('month').format('YYYY-MM-DD'),
   ]);
-  const [loading, setLoading] = useState(false);
   const [reportData, setReportData] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('sales');
+  const [selectedReport, setSelectedReport] = useState<string>('sales');
+
+  // Hooks for different reports
+  const salesReport = useSalesReport({ startDate: dateRange[0], endDate: dateRange[1] });
+  const dailySalesReport = useDailySalesReport({ startDate: dateRange[0], endDate: dateRange[1] });
+  const productPerformanceReport = useProductPerformanceReport({ startDate: dateRange[0], endDate: dateRange[1] });
+  const inventoryReport = useInventoryReport();
+  const lowStockReport = useLowStockReport();
+  const inventoryMovementsReport = useInventoryMovementsReport({ startDate: dateRange[0], endDate: dateRange[1] });
+  const customerReport = useCustomerReport({ startDate: dateRange[0], endDate: dateRange[1] });
+  const topCustomersReport = useTopCustomersReport({ startDate: dateRange[0], endDate: dateRange[1] });
+  const financialReport = useFinancialReport({ startDate: dateRange[0], endDate: dateRange[1] });
+  const profitLossReport = useProfitLossReport({ startDate: dateRange[0], endDate: dateRange[1] });
+  const cashFlowReport = useCashFlowReport({ startDate: dateRange[0], endDate: dateRange[1] });
+
+  const exportPDF = useExportReportPDF();
+  const exportExcel = useExportReportExcel();
 
   const handleDateRangeChange = (dates: any) => {
     if (dates) {
@@ -23,71 +53,63 @@ const ReportsPage: React.FC = () => {
   };
 
   const fetchReport = async (reportType: string) => {
-    setLoading(true);
+    setSelectedReport(reportType);
     try {
       let data;
-      const params = { startDate: dateRange[0], endDate: dateRange[1] };
 
       switch (reportType) {
         case 'sales':
-          data = await reportingService.getSalesReport(params);
+          data = salesReport.data;
           break;
         case 'daily-sales':
-          data = await reportingService.getDailySales(params);
+          data = dailySalesReport.data;
           break;
         case 'product-performance':
-          data = await reportingService.getProductPerformance(params);
+          data = productPerformanceReport.data;
           break;
         case 'inventory':
-          data = await reportingService.getInventoryReport();
+          data = inventoryReport.data;
           break;
         case 'inventory-low-stock':
-          data = await reportingService.getLowStockReport();
+          data = lowStockReport.data;
           break;
         case 'inventory-movements':
-          data = await reportingService.getInventoryMovements(params);
+          data = inventoryMovementsReport.data;
           break;
         case 'customers':
-          data = await reportingService.getCustomerReport(params);
+          data = customerReport.data;
           break;
         case 'top-customers':
-          data = await reportingService.getTopCustomers(params);
+          data = topCustomersReport.data;
           break;
         case 'financial':
-          data = await reportingService.getFinancialReport(params);
+          data = financialReport.data;
           break;
         case 'profit-loss':
-          data = await reportingService.getProfitLoss(params);
+          data = profitLossReport.data;
           break;
         case 'cash-flow':
-          data = await reportingService.getCashFlow(params);
+          data = cashFlowReport.data;
           break;
         default:
           data = null;
       }
 
       setReportData(data);
-      message.success('Tải báo cáo thành công');
+      if (data) {
+        message.success('Tải báo cáo thành công');
+      }
     } catch (error) {
       message.error('Không thể tải báo cáo');
-      console.error('Error fetching report:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
   const handleExportPDF = async (reportType: string) => {
     try {
-      const blob = await reportingService.exportPDF(reportType, {
+      await exportPDF(reportType, {
         startDate: dateRange[0],
         endDate: dateRange[1],
       });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${reportType}-${dayjs().format('YYYYMMDD')}.pdf`;
-      link.click();
-      window.URL.revokeObjectURL(url);
       message.success('Đã xuất báo cáo PDF');
     } catch (error) {
       message.error('Không thể xuất báo cáo PDF');
@@ -96,21 +118,17 @@ const ReportsPage: React.FC = () => {
 
   const handleExportExcel = async (reportType: string) => {
     try {
-      const blob = await reportingService.exportExcel(reportType, {
+      await exportExcel(reportType, {
         startDate: dateRange[0],
         endDate: dateRange[1],
       });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${reportType}-${dayjs().format('YYYYMMDD')}.xlsx`;
-      link.click();
-      window.URL.revokeObjectURL(url);
       message.success('Đã xuất báo cáo Excel');
     } catch (error) {
       message.error('Không thể xuất báo cáo Excel');
     }
   };
+
+  const isLoading = selectedReport === 'sales' ? salesReport.isLoading : false;
 
   const renderSalesReports = () => (
     <Space direction="vertical" style={{ width: '100%' }} size="large">
@@ -118,7 +136,7 @@ const ReportsPage: React.FC = () => {
         <Space direction="vertical" style={{ width: '100%' }}>
           <Space>
             <RangePicker value={[dayjs(dateRange[0]), dayjs(dateRange[1])]} onChange={handleDateRangeChange} />
-            <Button type="primary" onClick={() => fetchReport('sales')} loading={loading}>
+            <Button type="primary" onClick={() => fetchReport('sales')} loading={salesReport.isLoading}>
               Xem báo cáo
             </Button>
             <Button icon={<FilePdfOutlined />} onClick={() => handleExportPDF('sales')}>
@@ -128,6 +146,7 @@ const ReportsPage: React.FC = () => {
               Excel
             </Button>
           </Space>
+          {salesReport.error && <div style={{ color: 'red' }}>Lỗi: {salesReport.error.message}</div>}
           {reportData && (
             <Row gutter={16}>
               <Col span={8}>
@@ -146,24 +165,26 @@ const ReportsPage: React.FC = () => {
 
       <Card title="Doanh thu theo ngày">
         <Space>
-          <Button type="primary" onClick={() => fetchReport('daily-sales')} loading={loading}>
+          <Button type="primary" onClick={() => fetchReport('daily-sales')} loading={dailySalesReport.isLoading}>
             Xem báo cáo
           </Button>
           <Button icon={<FilePdfOutlined />} onClick={() => handleExportPDF('daily-sales')}>
             PDF
           </Button>
         </Space>
+        {dailySalesReport.error && <div style={{ color: 'red' }}>Lỗi: {dailySalesReport.error.message}</div>}
       </Card>
 
       <Card title="Hiệu suất sản phẩm">
         <Space>
-          <Button type="primary" onClick={() => fetchReport('product-performance')} loading={loading}>
+          <Button type="primary" onClick={() => fetchReport('product-performance')} loading={productPerformanceReport.isLoading}>
             Xem báo cáo
           </Button>
           <Button icon={<FileExcelOutlined />} onClick={() => handleExportExcel('product-performance')}>
             Excel
           </Button>
         </Space>
+        {productPerformanceReport.error && <div style={{ color: 'red' }}>Lỗi: {productPerformanceReport.error.message}</div>}
       </Card>
     </Space>
   );

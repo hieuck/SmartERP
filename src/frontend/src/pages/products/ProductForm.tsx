@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Form, Input, InputNumber, Select, Button, Card, Space, message, Typography, Row, Col, Modal } from 'antd';
 import { SaveOutlined, ArrowLeftOutlined, AppstoreOutlined, PlusOutlined } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import productService, { CreateProductDto, UpdateProductDto } from '../../services/productService';
+import { productService, CreateProductDto, UpdateProductDto } from '../../services/inventory/productService';
 
 const { Title } = Typography;
 const { TextArea } = Input;

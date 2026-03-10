@@ -1,0 +1,48 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.actionBar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.saveButton {
+  margin-left: 8px;
+}
+
+.stepsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.stepCard {
+  border: 1px solid #f0f0f0;
+  border-radius: 4px;
+  padding: 16px;
+}
+
+.stepForm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.formItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.formLabel {
+  font-weight: 500;
+  color: #262626;
+}
+
+.formControl {
+  width: 100%;
+}

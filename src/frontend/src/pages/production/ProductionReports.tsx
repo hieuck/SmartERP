@@ -33,7 +33,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import productionService from '../../services/productionService';
+import productionService from '../../services/production/productionService';
 import dayjs, { Dayjs } from 'dayjs';
 import { useResponsive } from '../../hooks/useResponsive';
 

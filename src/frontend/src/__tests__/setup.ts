@@ -2,19 +2,27 @@ import { expect, afterEach, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 
+// Mock localStorage interface
+interface LocalStorageMock {
+  getItem: ReturnType<typeof vi.fn>;
+  setItem: ReturnType<typeof vi.fn>;
+  removeItem: ReturnType<typeof vi.fn>;
+  clear: ReturnType<typeof vi.fn>;
+}
+
 // Cleanup after each test
 afterEach(() => {
   cleanup();
 });
 
 // Mock localStorage
-const localStorageMock = {
+const localStorageMock: LocalStorageMock = {
   getItem: vi.fn(),
   setItem: vi.fn(),
   removeItem: vi.fn(),
   clear: vi.fn(),
 };
-global.localStorage = localStorageMock as any;
+global.localStorage = localStorageMock as unknown as Storage;
 
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {

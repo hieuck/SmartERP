@@ -3,7 +3,7 @@ import { Card, Descriptions, Table, Tag, Button, Space, Typography, Spin, messag
 import { ArrowLeftOutlined, EditOutlined, SendOutlined, CloseOutlined, DollarOutlined, PrinterOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { invoiceService, InvoiceStatus, InvoiceItem } from '../../services/invoiceService';
+import { invoiceService, InvoiceStatus, InvoiceItem } from '../../services/accounting/invoiceService';
 import dayjs from 'dayjs';
 import type { ColumnsType } from 'antd/es/table';
 

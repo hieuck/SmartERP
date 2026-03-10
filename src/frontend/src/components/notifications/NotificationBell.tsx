@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Badge, Dropdown, Button, List, Typography, Space, Empty, Spin } from 'antd';
 import { BellOutlined, CheckOutlined, DeleteOutlined, SettingOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import notificationService, { Notification } from '../../services/notificationService';
+import notificationService, { Notification } from '../../services/notification/notificationService';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 

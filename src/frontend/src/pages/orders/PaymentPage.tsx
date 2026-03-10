@@ -15,9 +15,9 @@ import {
   List,
 } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
-import orderService from '../../services/orderService';
-import { customerService } from '../../services/customerService';
-import { supplierService } from '../../services/supplierService';
+import orderService from '../../services/order/orderService';
+import { customerService } from '../../services/crm/customerService';
+import { supplierService } from '../../services/logistics/supplierService';
 import dayjs from 'dayjs';
 import { useResponsive } from '../../hooks/useResponsive';
 

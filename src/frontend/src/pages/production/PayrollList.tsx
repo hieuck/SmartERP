@@ -33,7 +33,7 @@ import {
   CalculatorOutlined,
   MoreOutlined,
 } from '@ant-design/icons';
-import productionService, { Payroll } from '../../services/productionService';
+import productionService, { Payroll } from '../../services/production/productionService';
 import dayjs from 'dayjs';
 import { useResponsive } from '../../hooks/useResponsive';
 import type { MenuProps } from 'antd';

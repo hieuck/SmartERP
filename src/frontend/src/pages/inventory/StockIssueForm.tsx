@@ -14,8 +14,8 @@ import {
 } from 'antd';
 import { SaveOutlined, ArrowLeftOutlined, PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { inventoryService, StockIssueItem } from '../../services/inventoryService';
-import { productService } from '../../services/productService';
+import { inventoryService, StockIssueItem } from '../../services/inventory/inventoryService';
+import { productService } from '../../services/inventory/productService';
 import { useResponsive } from '../../hooks/useResponsive';
 import MobileFormItemCard from '../../components/common/MobileFormItemCard';
 import dayjs from 'dayjs';

@@ -4,7 +4,7 @@ import type { ColumnsType, MenuProps } from 'antd/es/table';
 import { PlusOutlined, SearchOutlined, UserOutlined, EyeOutlined, EditOutlined, DeleteOutlined, MoreOutlined, LockOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import authService from '../../services/authService';
+import authService from '../../services/auth/authService';
 import dayjs from 'dayjs';
 
 const { Title } = Typography;

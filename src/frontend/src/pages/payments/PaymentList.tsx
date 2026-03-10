@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Table, Button, Space, Tag, Select, DatePicker, Card, message, Popconfirm, Modal } from 'antd';
 import { PlusOutlined, DeleteOutlined, EyeOutlined, CheckOutlined, RollbackOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { paymentService, Payment, PaymentMethod, PaymentStatus } from '../../services/paymentService';
+import { Payment, PaymentMethod, PaymentStatus } from '../../services/accounting/paymentService';
 import dayjs from 'dayjs';
 import { useResponsive } from '../../hooks/useResponsive';
+import { usePayments, useDeletePayment, useCompletePayment, useProcessRefund } from '../../hooks/usePayments';
 
 const { RangePicker } = DatePicker;
 
@@ -33,42 +34,23 @@ const methodLabels: Record<PaymentMethod, string> = {
 export default function PaymentList() {
   const navigate = useNavigate();
   const { isMobile } = useResponsive();
-  const [loading, setLoading] = useState(false);
-  const [payments, setPayments] = useState<Payment[]>([]);
-  const [total, setTotal] = useState(0);
   const [refundModalVisible, setRefundModalVisible] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [filters, setFilters] = useState({
-    page: 1,
-    limit: 10,
+    search: '',
     status: undefined as PaymentStatus | undefined,
-    method: undefined as PaymentMethod | undefined,
-    startDate: undefined as string | undefined,
-    endDate: undefined as string | undefined,
   });
 
-  useEffect(() => {
-    fetchPayments();
-  }, [filters]);
-
-  const fetchPayments = async () => {
-    setLoading(true);
-    try {
-      const response = await paymentService.getAll(filters);
-      setPayments(response.data || []);
-      setTotal(response.total || 0);
-    } catch (error: any) {
-      message.error('Không thể tải danh sách thanh toán: ' + (error.message || 'Lỗi không xác định'));
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Hooks for payment operations
+  const { data: payments = [], isLoading } = usePayments(filters);
+  const deletePaymentMutation = useDeletePayment();
+  const completePaymentMutation = useCompletePayment();
+  const refundMutation = useProcessRefund();
 
   const handleDelete = async (id: string) => {
     try {
-      await paymentService.delete(id);
+      await deletePaymentMutation.mutateAsync(id);
       message.success('Xóa thanh toán thành công');
-      fetchPayments();
     } catch (error: any) {
       message.error('Không thể xóa thanh toán: ' + (error.message || 'Lỗi không xác định'));
     }
@@ -76,9 +58,8 @@ export default function PaymentList() {
 
   const handleComplete = async (id: string) => {
     try {
-      await paymentService.complete(id);
+      await completePaymentMutation.mutateAsync(id);
       message.success('Xác nhận thanh toán thành công');
-      fetchPayments();
     } catch (error: any) {
       message.error('Không thể xác nhận thanh toán: ' + (error.message || 'Lỗi không xác định'));
     }
@@ -87,11 +68,14 @@ export default function PaymentList() {
   const handleRefund = async (amount: number, reason: string) => {
     if (!selectedPayment) return;
     try {
-      await paymentService.refund(selectedPayment.id, { amount, reason });
+      await refundMutation.mutateAsync({
+        id: selectedPayment.id,
+        amount,
+        reason,
+      });
       message.success('Hoàn tiền thành công');
       setRefundModalVisible(false);
       setSelectedPayment(null);
-      fetchPayments();
     } catch (error: any) {
       message.error('Không thể hoàn tiền: ' + (error.message || 'Lỗi không xác định'));
     }
@@ -262,7 +246,7 @@ export default function PaymentList() {
           </Space>
 
           <Table
-            loading={loading}
+            loading={isLoading || deletePaymentMutation.isPending || completePaymentMutation.isPending || refundMutation.isPending}
             dataSource={payments}
             columns={columns}
             rowKey="id"

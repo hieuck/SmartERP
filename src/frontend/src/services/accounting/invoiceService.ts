@@ -123,3 +123,5 @@ export const invoiceService = {
     return response.data;
   },
 };
+
+export default invoiceService;

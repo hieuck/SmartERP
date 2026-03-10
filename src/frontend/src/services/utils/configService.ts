@@ -43,9 +43,29 @@ export interface BackupConfig {
   retention: number;
 }
 
+export interface AllConfigs {
+  company: CompanyInfo;
+  codeFormats: CodeFormats;
+  general: GeneralConfig;
+  email: EmailConfig;
+  backup: BackupConfig;
+}
+
+export interface ConfigHistoryEntry {
+  key: string;
+  value: unknown;
+  timestamp: string;
+  changedBy?: string;
+}
+
+export interface EmailTestResult {
+  success: boolean;
+  message: string;
+}
+
 const configService = {
   // Get all configurations
-  getAllConfigs: async (): Promise<any> => {
+  getAllConfigs: async (): Promise<AllConfigs> => {
     const response = await api.get('/config');
     return response.data;
   },
@@ -94,17 +114,12 @@ const configService = {
     return response.data;
   },
 
-  testEmailConnection: async (
-    config: EmailConfig,
-  ): Promise<{ success: boolean; message: string }> => {
+  testEmailConnection: async (config: EmailConfig): Promise<EmailTestResult> => {
     const response = await api.post('/config/email/test-connection', config);
     return response.data;
   },
 
-  sendTestEmail: async (
-    config: EmailConfig,
-    to: string,
-  ): Promise<{ success: boolean; message: string }> => {
+  sendTestEmail: async (config: EmailConfig, to: string): Promise<EmailTestResult> => {
     const response = await api.post('/config/email/send-test', { ...config, to });
     return response.data;
   },
@@ -121,7 +136,7 @@ const configService = {
   },
 
   // Configuration History
-  getConfigHistory: async (key?: string): Promise<any[]> => {
+  getConfigHistory: async (key?: string): Promise<ConfigHistoryEntry[]> => {
     const response = await api.get('/config/history', { params: { key } });
     return response.data;
   },

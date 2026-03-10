@@ -21,7 +21,7 @@ import {
   Col,
 } from 'antd';
 import { SaveOutlined, ArrowLeftOutlined } from '@ant-design/icons';
-import productionService from '../../services/productionService';
+import productionService from '../../services/production/productionService';
 import dayjs from 'dayjs';
 
 const { Option } = Select;

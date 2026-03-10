@@ -30,7 +30,7 @@ import configService, {
   GeneralConfig,
   EmailConfig,
   BackupConfig,
-} from '../../services/configService';
+} from '../../services/utils/configService';
 import dayjs from 'dayjs';
 
 const { Title, Paragraph } = Typography;

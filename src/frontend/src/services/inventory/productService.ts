@@ -158,3 +158,5 @@ export const productService = {
     return productService.delete(id);
   },
 };
+
+export default productService;

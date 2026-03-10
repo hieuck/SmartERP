@@ -22,7 +22,7 @@ import {
   DatePicker,
 } from 'antd';
 import { PlusOutlined, ArrowLeftOutlined, ToolOutlined } from '@ant-design/icons';
-import productionService, { MoldMaintenance } from '../../services/productionService';
+import productionService, { MoldMaintenance } from '../../services/production/productionService';
 import dayjs from 'dayjs';
 import { useResponsive } from '../../hooks/useResponsive';
 

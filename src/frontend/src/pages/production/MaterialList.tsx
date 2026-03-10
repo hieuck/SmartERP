@@ -17,7 +17,7 @@ import {
   SUCCESS_MESSAGES,
   ERROR_MESSAGES,
 } from '../../constants/ui';
-import productionService, { Material } from '../../services/productionService';
+import productionService, { Material } from '../../services/production/productionService';
 import type { ColumnsType } from 'antd/es/table';
 import { useResponsive } from '../../hooks/useResponsive';
 

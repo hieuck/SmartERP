@@ -4,7 +4,7 @@ import type { ColumnsType } from 'antd/es/table';
 import { SearchOutlined, SwapOutlined, ArrowUpOutlined, ArrowDownOutlined, SyncOutlined, ToolOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import inventoryServiceNew, { StockMovementType } from '../../services/inventoryService';
+import inventoryServiceNew, { StockMovementType } from '../../services/inventory/inventoryService';
 import dayjs from 'dayjs';
 
 const { Title } = Typography;

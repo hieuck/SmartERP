@@ -28,7 +28,7 @@ import {
   CheckCircleOutlined,
   CloseCircleOutlined,
 } from '@ant-design/icons';
-import productionService, { Attendance, Worker } from '../../services/productionService';
+import productionService, { Attendance, Worker } from '../../services/production/productionService';
 import dayjs, { Dayjs } from 'dayjs';
 import { useResponsive } from '../../hooks/useResponsive';
 

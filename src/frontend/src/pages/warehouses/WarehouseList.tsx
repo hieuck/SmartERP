@@ -11,7 +11,7 @@ import { Tag, message } from 'antd';
 import StandardListPage from '../../components/common/StandardListPage';
 import { createExpandableRender } from '../../components/common/ExpandableContent';
 import { COLUMN_WIDTHS, SUCCESS_MESSAGES, ERROR_MESSAGES } from '../../constants/ui';
-import warehouseService, { Warehouse } from '../../services/warehouseService';
+import warehouseService, { Warehouse } from '../../services/inventory/warehouseService';
 import type { ColumnsType } from 'antd/es/table';
 import { useResponsive } from '../../hooks/useResponsive';
 

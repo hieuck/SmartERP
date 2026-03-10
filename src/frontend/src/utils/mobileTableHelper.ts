@@ -91,7 +91,7 @@ export function createResponsiveColumn<T>(config: {
   key: string;
   desktopWidth: number;
   mobileWidth?: number;
-  render?: (value: any, record: T, index: number) => React.ReactNode;
+  render?: (value: unknown, record: T, index: number) => React.ReactNode;
   align?: 'left' | 'center' | 'right';
   ellipsis?: boolean;
   isMobile: boolean;

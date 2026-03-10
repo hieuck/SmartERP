@@ -1,0 +1,22 @@
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: #f0f2f5;
+}
+
+.errorDetails {
+  margin-top: 24px;
+  padding: 16px;
+  background: #fff;
+  border-radius: 8px;
+  text-align: left;
+}
+
+.errorStack {
+  font-size: 12px;
+  color: #ff4d4f;
+  margin: 0;
+  overflow-x: auto;
+}

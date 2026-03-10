@@ -77,7 +77,24 @@ export interface LowStockItem {
   minQuantity: number;
 }
 
-export const inventoryServiceNew = {
+export interface StockReceipt {
+  id: string;
+  receiptNumber: string;
+  warehouseId: string;
+  supplierId?: string;
+  items: Array<{
+    productId: string;
+    quantity: number;
+    unitPrice: number;
+  }>;
+  totalAmount: number;
+  status: 'draft' | 'received' | 'verified';
+  receivedDate: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const inventoryService = {
   getAll: async (params: InventoryQueryParams) => {
     const response = await api.get('/inventory', { params });
     return response.data;
@@ -202,4 +219,4 @@ export const inventoryServiceNew = {
   },
 };
 
-export default inventoryServiceNew;
+export default inventoryService;

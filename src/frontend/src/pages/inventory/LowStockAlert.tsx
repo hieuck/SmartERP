@@ -4,7 +4,7 @@ import type { ColumnsType } from 'antd/es/table';
 import { WarningOutlined, InboxOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import inventoryServiceNew from '../../services/inventoryService';
+import inventoryServiceNew from '../../services/inventory/inventoryService';
 
 const { Title, Text } = Typography;
 

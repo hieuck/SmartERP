@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, Tabs, Form, Input, Select, Switch, Button, Space, message, Table, Popconfirm, Modal } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, SaveOutlined } from '@ant-design/icons';
-import { settingsService, Setting, SettingType, SettingCategory } from '../../services/settingsService';
+import { Setting, SettingType, SettingCategory } from '../../services/utils/settingsService';
+import { useSettingsByCategory, useCreateSetting, useUpdateSetting, useDeleteSetting } from '../../hooks/useSettings';
 
 const { TabPane } = Tabs;
 const { TextArea } = Input;
@@ -25,40 +26,31 @@ const typeLabels: Record<SettingType, string> = {
 };
 
 export default function SettingsPage() {
-  const [loading, setLoading] = useState(false);
-  const [settings, setSettings] = useState<Setting[]>([]);
   const [activeCategory, setActiveCategory] = useState<SettingCategory>(SettingCategory.GENERAL);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingSetting, setEditingSetting] = useState<Setting | null>(null);
   const [form] = Form.useForm();
 
-  useEffect(() => {
-    fetchSettings();
-  }, [activeCategory]);
-
-  const fetchSettings = async () => {
-    setLoading(true);
-    try {
-      const data = await settingsService.getByCategory(activeCategory);
-      setSettings(data);
-    } catch (error: any) {
-      message.error('Không thể tải cài đặt: ' + (error.message || 'Lỗi không xác định'));
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Hooks for settings operations
+  const { data: settings = [], isLoading } = useSettingsByCategory(activeCategory);
+  const createMutation = useCreateSetting();
+  const updateMutation = useUpdateSetting();
+  const deleteMutation = useDeleteSetting();
 
   const handleSave = async (values: any) => {
     try {
       if (editingSetting) {
-        await settingsService.update(editingSetting.key, {
-          value: values.value,
-          description: values.description,
-          isPublic: values.isPublic,
+        await updateMutation.mutateAsync({
+          key: editingSetting.key,
+          data: {
+            value: values.value,
+            description: values.description,
+            isPublic: values.isPublic,
+          },
         });
         message.success('Cập nhật cài đặt thành công');
       } else {
-        await settingsService.create({
+        await createMutation.mutateAsync({
           key: values.key,
           value: values.value,
           type: values.type,
@@ -71,7 +63,6 @@ export default function SettingsPage() {
       setModalVisible(false);
       setEditingSetting(null);
       form.resetFields();
-      fetchSettings();
     } catch (error: any) {
       message.error('Không thể lưu cài đặt: ' + (error.message || 'Lỗi không xác định'));
     }
@@ -79,9 +70,11 @@ export default function SettingsPage() {
 
   const handleDelete = async (key: string) => {
     try {
-      await settingsService.delete(key);
+      await deleteMutation.mutateAsync({
+        key,
+        category: activeCategory,
+      });
       message.success('Xóa cài đặt thành công');
-      fetchSettings();
     } catch (error: any) {
       message.error('Không thể xóa cài đặt: ' + (error.message || 'Lỗi không xác định'));
     }
@@ -201,7 +194,7 @@ export default function SettingsPage() {
           {Object.entries(categoryLabels).map(([key, label]) => (
             <TabPane tab={label} key={key}>
               <Table
-                loading={loading}
+                loading={isLoading || createMutation.isPending || updateMutation.isPending || deleteMutation.isPending}
                 dataSource={settings}
                 columns={columns}
                 rowKey="key"
@@ -310,7 +303,7 @@ export default function SettingsPage() {
 
           <Form.Item>
             <Space>
-              <Button type="primary" htmlType="submit" icon={<SaveOutlined />}>
+              <Button type="primary" htmlType="submit" icon={<SaveOutlined />} loading={createMutation.isPending || updateMutation.isPending}>
                 Lưu
               </Button>
               <Button

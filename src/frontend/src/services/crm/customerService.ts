@@ -126,3 +126,5 @@ export const customerService = {
     return customerService.delete(id);
   },
 };
+
+export default customerService;

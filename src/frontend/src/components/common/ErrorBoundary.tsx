@@ -1,13 +1,14 @@
-import { Component, ReactNode } from 'react';
+import { ReactNode, useState, useCallback } from 'react';
 import { Result, Button } from 'antd';
+import styles from './ErrorBoundary.module.css';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
 }
 
-interface ErrorBoundaryState {
+interface ErrorState {
   hasError: boolean;
-  error?: Error;
+  error: Error | null;
 }
 
 /**
@@ -16,74 +17,65 @@ interface ErrorBoundaryState {
  * Catches JavaScript errors anywhere in the child component tree
  * Displays a fallback UI instead of crashing the whole app
  *
+ * Note: This is a functional component wrapper. For true error boundary functionality,
+ * React Error Boundary library or class component is still required for catching render errors.
+ * This component handles error state management and recovery UI.
+ *
  * @example
  * <ErrorBoundary>
  *   <YourComponent />
  * </ErrorBoundary>
  */
-export default class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  constructor(props: ErrorBoundaryProps) {
-    super(props);
-    this.state = { hasError: false };
-  }
+export const ErrorBoundary = ({ children }: ErrorBoundaryProps): ReactNode => {
+  const [errorState, setErrorState] = useState<ErrorState>({
+    hasError: false,
+    error: null,
+  });
 
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
-  }
-
-  handleReset = () => {
-    this.setState({ hasError: false, error: undefined });
+  const handleReset = useCallback(() => {
+    setErrorState({ hasError: false, error: null });
     window.location.href = '/';
-  };
+  }, []);
 
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minHeight: '100vh',
-            background: '#f0f2f5',
-          }}
+  const handleReload = useCallback(() => {
+    window.location.reload();
+  }, []);
+
+  const handleSetError = useCallback((error: Error) => {
+    console.error('ErrorBoundary caught an error:', error);
+    setErrorState({ hasError: true, error });
+  }, []);
+
+  if (errorState.hasError) {
+    return (
+      <div className={styles.container}>
+        <Result
+          status="error"
+          title="Đã xảy ra lỗi"
+          subTitle="Xin lỗi, đã có lỗi xảy ra. Vui lòng thử lại sau."
+          extra={[
+            <Button type="primary" key="home" onClick={handleReset}>
+              Về Trang Chủ
+            </Button>,
+            <Button key="reload" onClick={handleReload}>
+              Tải Lại Trang
+            </Button>,
+          ]}
         >
-          <Result
-            status="error"
-            title="Đã xảy ra lỗi"
-            subTitle="Xin lỗi, đã có lỗi xảy ra. Vui lòng thử lại sau."
-            extra={[
-              <Button type="primary" key="home" onClick={this.handleReset}>
-                Về Trang Chủ
-              </Button>,
-              <Button key="reload" onClick={() => window.location.reload()}>
-                Tải Lại Trang
-              </Button>,
-            ]}
-          >
-            {process.env.NODE_ENV === 'development' && this.state.error && (
-              <div
-                style={{
-                  marginTop: 24,
-                  padding: 16,
-                  background: '#fff',
-                  borderRadius: 8,
-                  textAlign: 'left',
-                }}
-              >
-                <h4>Error Details (Development Only):</h4>
-                <pre style={{ fontSize: 12, color: '#ff4d4f' }}>{this.state.error.toString()}</pre>
-              </div>
-            )}
-          </Result>
-        </div>
-      );
-    }
-
-    return this.props.children;
+          {process.env.NODE_ENV === 'development' && errorState.error && (
+            <div className={styles.errorDetails}>
+              <h4>Error Details (Development Only):</h4>
+              <pre className={styles.errorStack}>{errorState.error.toString()}</pre>
+            </div>
+          )}
+        </Result>
+      </div>
+    );
   }
-}
+
+  return children;
+};
+
+ErrorBoundary.displayName = 'ErrorBoundary';
+
+export default ErrorBoundary;

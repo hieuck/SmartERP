@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Form, Switch, Button, Space, Typography, Divider, message, Spin, Alert } from 'antd';
 import { SaveOutlined, BellOutlined, MailOutlined } from '@ant-design/icons';
-import notificationService, { NotificationPreferences } from '../../services/notificationService';
+import notificationService, { NotificationPreferences } from '../../services/notification/notificationService';
 
 const { Title, Text, Paragraph } = Typography;
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Card, Button, Space, Select, Input, Form, message } from 'antd';
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
+import styles from './WorkflowBuilder.module.css';
 
 const { Option } = Select;
 
@@ -45,13 +46,13 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ onSave }) => {
   };
 
   return (
-    <div>
-      <Space direction="vertical" style={{ width: '100%' }} size="large">
-        <div>
+    <div className={styles.container}>
+      <Space direction="vertical" className={styles.stepsContainer} size="large">
+        <div className={styles.actionBar}>
           <Button type="primary" icon={<PlusOutlined />} onClick={addStep}>
             Thêm bước
           </Button>
-          <Button style={{ marginLeft: 8 }} onClick={handleSave}>
+          <Button className={styles.saveButton} onClick={handleSave}>
             Lưu quy trình
           </Button>
         </div>

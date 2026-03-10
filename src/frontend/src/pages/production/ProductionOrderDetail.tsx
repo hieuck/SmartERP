@@ -39,7 +39,7 @@ import productionService, {
   ProductionProgress,
   QualityInspection,
   Worker,
-} from '../../services/productionService';
+} from '../../services/production/productionService';
 import dayjs from 'dayjs';
 import { useResponsive } from '../../hooks/useResponsive';
 

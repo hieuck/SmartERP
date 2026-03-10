@@ -24,8 +24,8 @@ import {
   CheckCircleOutlined,
   CloseCircleOutlined,
 } from '@ant-design/icons';
-import returnService, { Return } from '../../services/returnService';
-import shippingService, { Shipment } from '../../services/shippingService';
+import returnService, { Return } from '../../services/order/returnService';
+import shippingService, { Shipment } from '../../services/logistics/shippingService';
 import dayjs from 'dayjs';
 import { useResponsive } from '../../hooks/useResponsive';
 

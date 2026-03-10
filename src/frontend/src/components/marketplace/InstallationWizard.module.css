@@ -1,0 +1,16 @@
+.stepsContainer {
+  margin-bottom: 24px;
+}
+
+.stepContent {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 300px;
+}
+
+.stepActions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 24px;
+}

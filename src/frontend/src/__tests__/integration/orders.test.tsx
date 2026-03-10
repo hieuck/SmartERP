@@ -9,9 +9,9 @@ import SalesOrderList from '../../pages/orders/SalesOrderList';
 import PurchaseOrderForm from '../../pages/orders/PurchaseOrderForm';
 import PurchaseOrderList from '../../pages/orders/PurchaseOrderList';
 import PaymentPage from '../../pages/orders/PaymentPage';
-import { orderService } from '../../services/orderService';
-import { productService } from '../../services/productService';
-import { customerService } from '../../services/customerService';
+import { orderService } from '../../services/order/orderService';
+import { productService } from '../../services/inventory/productService';
+import { customerService } from '../../services/crm/customerService';
 
 // Mock services
 vi.mock('../../services/orderService');

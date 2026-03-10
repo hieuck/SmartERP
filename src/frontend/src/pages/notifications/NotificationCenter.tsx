@@ -10,7 +10,7 @@ import {
   CloseCircleOutlined,
   MoreOutlined,
 } from '@ant-design/icons';
-import notificationService, { NotificationType, NotificationPriority } from '../../services/notificationService';
+import notificationService, { NotificationType, NotificationPriority } from '../../services/notification/notificationService';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/vi';

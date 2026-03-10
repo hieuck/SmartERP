@@ -1,4 +1,4 @@
-import api from '../api';
+import api from './api';
 
 export interface DashboardOverview {
   revenue: {
@@ -83,3 +83,5 @@ export const dashboardService = {
     return response.data;
   },
 };
+
+export default dashboardService;

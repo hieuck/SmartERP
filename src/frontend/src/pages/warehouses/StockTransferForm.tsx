@@ -33,8 +33,8 @@ import dayjs from 'dayjs';
 import warehouseService, {
   StockTransfer,
   StockTransferItem,
-} from '../../services/warehouseService';
-import { productService } from '../../services/productService';
+} from '../../services/inventory/warehouseService';
+import { productService } from '../../services/inventory/productService';
 
 const StockTransferForm = () => {
   const navigate = useNavigate();

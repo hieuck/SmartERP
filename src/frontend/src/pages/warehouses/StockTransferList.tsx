@@ -10,7 +10,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Table, Button, Space, Input, Tag, Card, Select, List, Dropdown } from 'antd';
 import { PlusOutlined, EyeOutlined, SearchOutlined, MoreOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import warehouseService, { StockTransfer } from '../../services/warehouseService';
+import warehouseService, { StockTransfer } from '../../services/inventory/warehouseService';
 import { useResponsive } from '../../hooks/useResponsive';
 import type { ColumnsType } from 'antd/es/table';
 import type { MenuProps } from 'antd';

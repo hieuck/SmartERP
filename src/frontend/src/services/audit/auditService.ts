@@ -94,3 +94,5 @@ export const auditService = {
     return response.data;
   },
 };
+
+export default auditService;

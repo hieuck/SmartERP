@@ -18,7 +18,7 @@ import {
 import StandardListPage from '../../components/common/StandardListPage';
 import MobileListCard from '../../components/common/MobileListCard';
 import { COLUMN_WIDTHS, formatDate } from '../../constants/ui';
-import productionService, { ProductionOrder } from '../../services/productionService';
+import productionService, { ProductionOrder } from '../../services/production/productionService';
 import type { ColumnsType } from 'antd/es/table';
 import type { MenuProps } from 'antd';
 import { useResponsive } from '../../hooks/useResponsive';

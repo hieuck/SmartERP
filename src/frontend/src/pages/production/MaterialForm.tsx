@@ -9,7 +9,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Form, Input, Select, InputNumber, Button, Card, message, Space, Row, Col } from 'antd';
 import { SaveOutlined, ArrowLeftOutlined } from '@ant-design/icons';
-import productionService from '../../services/productionService';
+import productionService from '../../services/production/productionService';
 
 const { Option } = Select;
 

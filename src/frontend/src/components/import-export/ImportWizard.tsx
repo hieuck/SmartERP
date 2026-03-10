@@ -21,7 +21,7 @@ import {
   DownloadOutlined,
 } from '@ant-design/icons';
 import type { UploadFile } from 'antd/es/upload/interface';
-import importExportService, { ImportResult } from '../../services/importExportService';
+import importExportService, { ImportResult } from '../../services/import-export/importExportService';
 
 const { Step } = Steps;
 const { Text, Title, Paragraph } = Typography;

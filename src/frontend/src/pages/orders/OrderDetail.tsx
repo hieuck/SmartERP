@@ -3,7 +3,7 @@ import { Card, Descriptions, Table, Tag, Button, Space, Typography, Spin, messag
 import { ArrowLeftOutlined, EditOutlined, CheckOutlined, CloseOutlined, DollarOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { orderServiceNew, OrderStatus, PaymentStatus, OrderItem } from '../../services/orderService';
+import { orderServiceNew, OrderStatus, PaymentStatus, OrderItem } from '../../services/order/orderService';
 import dayjs from 'dayjs';
 import type { ColumnsType } from 'antd/es/table';
 

@@ -26,7 +26,7 @@ import {
   Dropdown,
 } from 'antd';
 import { PlusOutlined, CheckOutlined, DollarOutlined, MoreOutlined } from '@ant-design/icons';
-import productionService, { AdvancePayment, Worker } from '../../services/productionService';
+import productionService, { AdvancePayment, Worker } from '../../services/production/productionService';
 import dayjs, { Dayjs } from 'dayjs';
 import { useResponsive } from '../../hooks/useResponsive';
 import type { MenuProps } from 'antd';

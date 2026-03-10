@@ -20,7 +20,7 @@ import {
   SUCCESS_MESSAGES,
   ERROR_MESSAGES,
 } from '../../constants/ui';
-import { inventoryService, StockReceipt } from '../../services/inventoryService';
+import { inventoryService, StockReceipt } from '../../services/inventory/inventoryService';
 import { printDocument } from '../../components/PrintTemplate';
 import { useResponsive } from '../../hooks/useResponsive';
 import type { ColumnsType } from 'antd/es/table';

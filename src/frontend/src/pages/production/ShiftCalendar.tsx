@@ -26,7 +26,7 @@ import productionService, {
   ShiftAssignment,
   Worker,
   Shift,
-} from '../../services/productionService';
+} from '../../services/production/productionService';
 import dayjs, { Dayjs } from 'dayjs';
 
 const { Option } = Select;

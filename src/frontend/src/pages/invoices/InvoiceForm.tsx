@@ -18,9 +18,9 @@ import {
 } from 'antd';
 import { PlusOutlined, DeleteOutlined, SaveOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import invoiceService, { InvoiceStatus, CreateInvoiceDto, UpdateInvoiceDto } from '../../services/invoiceService';
-import customerService from '../../services/customerService';
-import orderService from '../../services/orderService';
+import invoiceService, { InvoiceStatus, CreateInvoiceDto, UpdateInvoiceDto } from '../../services/accounting/invoiceService';
+import customerService from '../../services/crm/customerService';
+import orderService from '../../services/order/orderService';
 
 const { Title, Text } = Typography;
 const { Option } = Select;

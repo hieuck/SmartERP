@@ -1,0 +1,72 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.filterSection {
+  margin-bottom: 16px;
+}
+
+.mapContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.locationGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 8px;
+}
+
+.locationCard {
+  cursor: pointer;
+  text-align: center;
+  color: white;
+  transition: transform 0.2s ease;
+}
+
+.locationCard:hover {
+  transform: scale(1.05);
+}
+
+.locationCardBody {
+  padding: 8px;
+}
+
+.locationIcon {
+  font-size: 20px;
+}
+
+.locationCode {
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.locationUsage {
+  font-size: 10px;
+}
+
+.legendSection {
+  margin-top: 16px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.statusAvailable {
+  background-color: #52c41a;
+}
+
+.statusFull {
+  background-color: #ff4d4f;
+}
+
+.statusReserved {
+  background-color: #faad14;
+}
+
+.statusMaintenance {
+  background-color: #d9d9d9;
+}

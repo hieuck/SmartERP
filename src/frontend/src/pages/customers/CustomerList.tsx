@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Table, Button, Input, Space, Card, Tag, Popconfirm, message, Typography } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, UserOutlined } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import customerService from '../../services/customerService';
+import customerService from '../../services/crm/customerService';
 import type { ColumnsType } from 'antd/es/table';
 
 const { Title } = Typography;

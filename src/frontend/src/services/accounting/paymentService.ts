@@ -115,3 +115,5 @@ export const paymentService = {
     return response.data;
   },
 };
+
+export default paymentService;

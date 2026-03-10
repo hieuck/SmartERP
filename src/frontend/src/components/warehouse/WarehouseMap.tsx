@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Card, Row, Col, Tag, Tooltip, Space, Select } from 'antd';
 import { EnvironmentOutlined } from '@ant-design/icons';
+import styles from './WarehouseMap.module.css';
 
 const { Option } = Select;
 
@@ -103,9 +104,13 @@ export const WarehouseMap: React.FC = () => {
 
   const filteredLocations = locations.filter((loc) => loc.zone === selectedZone);
 
+  const getStatusClass = (status: keyof typeof statusColors) => {
+    return styles[`status${status.charAt(0).toUpperCase() + status.slice(1)}`];
+  };
+
   return (
-    <div>
-      <div style={{ marginBottom: 16 }}>
+    <div className={styles.container}>
+      <div className={styles.filterSection}>
         <Space>
           <span>Khu vực:</span>
           <Select value={selectedZone} onChange={setSelectedZone} style={{ width: 120 }}>
@@ -136,17 +141,12 @@ export const WarehouseMap: React.FC = () => {
               >
                 <Card
                   size="small"
-                  style={{
-                    backgroundColor: statusColors[location.status],
-                    color: 'white',
-                    cursor: 'pointer',
-                    textAlign: 'center',
-                  }}
+                  className={`${styles.locationCard} ${getStatusClass(location.status)}`}
                   bodyStyle={{ padding: '8px' }}
                 >
-                  <EnvironmentOutlined style={{ fontSize: 20 }} />
-                  <div style={{ fontSize: 12, marginTop: 4 }}>{location.code}</div>
-                  <div style={{ fontSize: 10 }}>
+                  <EnvironmentOutlined className={styles.locationIcon} />
+                  <div className={styles.locationCode}>{location.code}</div>
+                  <div className={styles.locationUsage}>
                     {Math.round((location.used / location.capacity) * 100)}%
                   </div>
                 </Card>
@@ -155,13 +155,11 @@ export const WarehouseMap: React.FC = () => {
           ))}
         </Row>
 
-        <div style={{ marginTop: 16 }}>
-          <Space>
-            <Tag color={statusColors.available}>Còn trống</Tag>
-            <Tag color={statusColors.full}>Đầy</Tag>
-            <Tag color={statusColors.reserved}>Đã đặt</Tag>
-            <Tag color={statusColors.maintenance}>Bảo trì</Tag>
-          </Space>
+        <div className={styles.legendSection}>
+          <Tag color={statusColors.available}>Còn trống</Tag>
+          <Tag color={statusColors.full}>Đầy</Tag>
+          <Tag color={statusColors.reserved}>Đã đặt</Tag>
+          <Tag color={statusColors.maintenance}>Bảo trì</Tag>
         </div>
       </Card>
     </div>

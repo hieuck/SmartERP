@@ -1,4 +1,4 @@
-import api from '../api';
+import api from './api';
 
 export interface RegisterRequest {
   email: string;
@@ -62,3 +62,5 @@ export const authService = {
     await api.post('/auth/change-password', data);
   },
 };
+
+export default authService;

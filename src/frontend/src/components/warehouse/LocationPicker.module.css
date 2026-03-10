@@ -1,0 +1,30 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.instructionText {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.cascaderContainer {
+  width: 100%;
+}
+
+.selectedLocationSection {
+  margin-top: 8px;
+}
+
+.selectedLocationLabel {
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.selectedLocationTag {
+  display: inline-block;
+  margin-top: 8px;
+}

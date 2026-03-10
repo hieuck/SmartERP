@@ -1,23 +1,29 @@
 import api from './api';
 
+export interface SearchFilters {
+  [key: string]: unknown;
+}
+
 export interface SearchQuery {
   query: string;
-  filters?: Record<string, any>;
+  filters?: SearchFilters;
   from?: number;
   size?: number;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
 }
 
+export interface SearchHit {
+  _id: string;
+  _source: Record<string, unknown>;
+  _score: number;
+  _index: string;
+}
+
 export interface SearchResult {
   hits: {
     total: { value: number };
-    hits: Array<{
-      _id: string;
-      _source: any;
-      _score: number;
-      _index: string;
-    }>;
+    hits: SearchHit[];
   };
 }
 
@@ -25,7 +31,7 @@ export interface SavedFilter {
   id: string;
   name: string;
   module: string;
-  filters: Record<string, any>;
+  filters: SearchFilters;
   createdAt: string;
 }
 
@@ -39,7 +45,7 @@ const searchService = {
   },
 
   // Search products
-  searchProducts: async (query: string, filters?: Record<string, any>): Promise<SearchResult> => {
+  searchProducts: async (query: string, filters?: SearchFilters): Promise<SearchResult> => {
     const response = await api.get('/search/products', {
       params: { q: query, ...filters },
     });
@@ -47,7 +53,7 @@ const searchService = {
   },
 
   // Search customers
-  searchCustomers: async (query: string, filters?: Record<string, any>): Promise<SearchResult> => {
+  searchCustomers: async (query: string, filters?: SearchFilters): Promise<SearchResult> => {
     const response = await api.get('/search/customers', {
       params: { q: query, ...filters },
     });
@@ -55,7 +61,7 @@ const searchService = {
   },
 
   // Search suppliers
-  searchSuppliers: async (query: string, filters?: Record<string, any>): Promise<SearchResult> => {
+  searchSuppliers: async (query: string, filters?: SearchFilters): Promise<SearchResult> => {
     const response = await api.get('/search/suppliers', {
       params: { q: query, ...filters },
     });
@@ -63,7 +69,7 @@ const searchService = {
   },
 
   // Search orders
-  searchOrders: async (query: string, filters?: Record<string, any>): Promise<SearchResult> => {
+  searchOrders: async (query: string, filters?: SearchFilters): Promise<SearchResult> => {
     const response = await api.get('/search/orders', {
       params: { q: query, ...filters },
     });
@@ -92,7 +98,7 @@ const searchService = {
     return module ? allFilters.filter((f) => f.module === module) : allFilters;
   },
 
-  saveFilter: (name: string, module: string, filters: Record<string, any>): SavedFilter => {
+  saveFilter: (name: string, module: string, filters: SearchFilters): SavedFilter => {
     const savedFilters = searchService.getSavedFilters();
     const newFilter: SavedFilter = {
       id: Date.now().toString(),

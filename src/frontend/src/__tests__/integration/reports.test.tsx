@@ -5,7 +5,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { configureStore } from '@reduxjs/toolkit';
 import authReducer from '../../store/slices/authSlice';
 import ReportsPage from '../../pages/reports/ReportsPage';
-import reportService from '../../services/reportService';
+import reportService from '../../services/report/reportService';
 
 // Mock services
 vi.mock('../../services/reportService', () => ({

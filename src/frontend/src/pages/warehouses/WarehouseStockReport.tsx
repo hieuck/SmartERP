@@ -9,7 +9,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Table, Card, Select, Space, Input, Tabs, Button } from 'antd';
 import { SearchOutlined, DownloadOutlined } from '@ant-design/icons';
-import warehouseService, { WarehouseStock } from '../../services/warehouseService';
+import warehouseService, { WarehouseStock } from '../../services/inventory/warehouseService';
 import { useResponsive } from '../../hooks/useResponsive';
 
 const { TabPane } = Tabs;

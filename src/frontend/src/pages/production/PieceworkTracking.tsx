@@ -30,8 +30,8 @@ import {
   CheckCircleOutlined,
   BarChartOutlined,
 } from '@ant-design/icons';
-import productionService, { Worker } from '../../services/productionService';
-import { productService } from '../../services/productService';
+import productionService, { Worker } from '../../services/production/productionService';
+import { productService } from '../../services/inventory/productService';
 import dayjs, { Dayjs } from 'dayjs';
 import { useResponsive } from '../../hooks/useResponsive';
 import { formatCurrency, formatDate } from '../../constants/ui';

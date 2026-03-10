@@ -6,11 +6,11 @@ module.exports = {
     '^.+\\.(t|j)s$': 'ts-jest',
   },
   collectCoverageFrom: [
-    '**/*.(t|j)s',
+    'src/**/*.(t|j)s',
     '!**/*.spec.ts',
+    '!src/**/__tests__/**',
     '!**/node_modules/**',
     '!**/dist/**',
-    '!**/test/**',
   ],
   coverageDirectory: './coverage',
   coverageThreshold: {
@@ -20,15 +20,13 @@ module.exports = {
       lines: 80,
       statements: 80,
     },
-    // Critical security paths must have 100% coverage
-    './common/security/**/*.ts': {
+    './src/common/security/**/*.ts': {
       branches: 100,
       functions: 100,
       lines: 100,
       statements: 100,
     },
-    // Core domain services need high coverage
-    './domains/**/services/**/*.ts': {
+    './src/domains/**/services/**/*.ts': {
       branches: 85,
       functions: 85,
       lines: 85,
@@ -37,9 +35,20 @@ module.exports = {
   },
   testEnvironment: 'node',
   moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/$1',
-    '^@modules/(.*)$': '<rootDir>/modules/$1',
-    '^@common/(.*)$': '<rootDir>/common/$1',
-    '^@config/(.*)$': '<rootDir>/config/$1',
+    '^@/common/(.*)$': '<rootDir>/src/common/$1',
+    '^@/config/(.*)$': '<rootDir>/src/config/$1',
+    '^@/core/(.*)$': '<rootDir>/src/core/$1',
+    '^@/domains/(.*)$': '<rootDir>/src/domains/$1',
+    '^@/platform/(.*)$': '<rootDir>/src/platform/$1',
+    '^@/integrations/(.*)$': '<rootDir>/src/integrations/$1',
+    '^@/utilities/(.*)$': '<rootDir>/src/utilities/$1',
+    '^@/(.*)$': '<rootDir>/src/$1',
+    '^@common/(.*)$': '<rootDir>/src/common/$1',
+    '^@config/(.*)$': '<rootDir>/src/config/$1',
+    '^@core/(.*)$': '<rootDir>/src/core/$1',
+    '^@domains/(.*)$': '<rootDir>/src/domains/$1',
+    '^@platform/(.*)$': '<rootDir>/src/platform/$1',
+    '^@integrations/(.*)$': '<rootDir>/src/integrations/$1',
+    '^@utilities/(.*)$': '<rootDir>/src/utilities/$1',
   },
 };

@@ -4,9 +4,17 @@
  * Requirements: 22.10, 24.4
  */
 
+export interface PerformanceEntryWithStartTime extends PerformanceEntry {
+  startTime: number;
+}
+
 export interface PerformanceMetrics {
   pageLoadTime: number;
   domContentLoaded: number;
+  timeToInteractive: number;
+  firstContentfulPaint: number;
+  largestContentfulPaint: number;
+} domContentLoaded: number;
   timeToInteractive: number;
   firstContentfulPaint: number;
   largestContentfulPaint: number;
@@ -16,7 +24,7 @@ class PerformanceMonitor {
   /**
    * Get page load performance metrics
    */
-  getPageLoadMetrics(): PerformanceMetrics | null {
+rics | null {
     if (!window.performance || !window.performance.timing) {
       return null;
     }
@@ -28,8 +36,8 @@ class PerformanceMonitor {
 
     return {
       pageLoadTime: timing.loadEventEnd - timing.navigationStart,
-      domContentLoaded: timing.domContentLoadedEventEnd - timing.navigationStart,
-      timeToInteractive: timing.domInteractive - timing.navigationStart,
+      iming.navigationStart,
+   timing.domInteractive - timing.navigationStart,
       firstContentfulPaint: this.getFirstContentfulPaint(),
       largestContentfulPaint: this.getLargestContentfulPaint(),
     };
@@ -39,18 +47,18 @@ class PerformanceMonitor {
    * Get First Contentful Paint (FCP)
    */
   private getFirstContentfulPaint(): number {
-    const paintEntries = window.performance.getEntriesByType('paint');
+EntriesByType('paint');
     const fcpEntry = paintEntries.find((entry) => entry.name === 'first-contentful-paint');
-    return fcpEntry ? fcpEntry.startTime : 0;
+    return fcpEntry ? fcpEntry.startTim
   }
 
   /**
    * Get Largest Contentful Paint (LCP)
    */
   private getLargestContentfulPaint(): number {
-    const lcpEntries = window.performance.getEntriesByType('largest-contentful-paint');
+    ct lcpEntries = window.performance.getEntriesByType('largest-contentful-paint');
     if (lcpEntries.length > 0) {
-      const lastEntry = lcpEntries[lcpEntries.length - 1] as any;
+      const lastEntry = lcpEntries[lcpEntries.length - 1] as PerformanceEntryWithStartTime;
       return lastEntry.startTime;
     }
     return 0;
@@ -66,7 +74,7 @@ class PerformanceMonitor {
       console.group('Performance Metrics');
       console.log(`Page Load Time: ${metrics.pageLoadTime}ms`);
       console.log(`DOM Content Loaded: ${metrics.domContentLoaded}ms`);
-      console.log(`Time to Interactive: ${metrics.timeToInteractive}ms`);
+Interactive: ${metrics.timeToInteractive}ms`);
       console.log(`First Contentful Paint: ${metrics.firstContentfulPaint}ms`);
       console.log(`Largest Contentful Paint: ${metrics.largestContentfulPaint}ms`);
       console.groupEnd();
@@ -81,7 +89,7 @@ class PerformanceMonitor {
   }
 
   /**
-   * Monitor resource loading
+   * Monitor resoading
    */
   getResourceMetrics(): Array<{ name: string; duration: number; size: number }> {
     const resources = window.performance.getEntriesByType(
@@ -124,7 +132,7 @@ class PerformanceMonitor {
   /**
    * Check if performance meets requirements
    */
-  checkRequirements(): { passed: boolean; issues: string[] } {
+  checkRequirements{ passed: boolean; issues: string[] } {
     const metrics = this.getPageLoadMetrics();
     const issues: string[] = [];
 

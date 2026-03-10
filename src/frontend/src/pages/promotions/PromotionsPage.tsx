@@ -17,7 +17,7 @@ import {
   Tabs,
 } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, GiftOutlined } from '@ant-design/icons';
-import promotionService, { Promotion, Coupon } from '../../services/promotionService';
+import promotionService, { Promotion, Coupon } from '../../services/crm/promotionService';
 import dayjs from 'dayjs';
 import { useResponsive } from '../../hooks/useResponsive';
 

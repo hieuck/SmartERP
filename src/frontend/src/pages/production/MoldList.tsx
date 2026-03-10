@@ -12,7 +12,7 @@ import { PlusOutlined, ToolOutlined, WarningOutlined } from '@ant-design/icons';
 import StandardListPage from '../../components/common/StandardListPage';
 import { createExpandableRender } from '../../components/common/ExpandableContent';
 import { formatDate, COLUMN_WIDTHS, SUCCESS_MESSAGES, ERROR_MESSAGES } from '../../constants/ui';
-import productionService, { Mold } from '../../services/productionService';
+import productionService, { Mold } from '../../services/production/productionService';
 import dayjs from 'dayjs';
 import type { ColumnsType } from 'antd/es/table';
 import { useResponsive } from '../../hooks/useResponsive';

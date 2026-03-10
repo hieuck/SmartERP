@@ -3,7 +3,7 @@ import { Card, Descriptions, Tag, Button, Space, Typography, Spin, message, Moda
 import { ArrowLeftOutlined, EditOutlined, CheckOutlined, RollbackOutlined, ReconciliationOutlined, DollarCircleOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { paymentService, PaymentStatus, PaymentMethod } from '../../services/paymentService';
+import { paymentService, PaymentStatus, PaymentMethod } from '../../services/accounting/paymentService';
 import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
