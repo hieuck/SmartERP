@@ -1,16 +1,29 @@
-import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Layout, Form, Input, Button, Typography, Card, Row, Col, Checkbox, Space, message } from 'antd';
 import { UserOutlined, MailOutlined, PhoneOutlined, LockOutlined, ShopOutlined, GlobalOutlined } from '@ant-design/icons';
-import axios from 'axios';
+import { useDispatch } from 'react-redux';
+import { useMutation } from '@tanstack/react-query';
+import { authService } from '../../services/auth/authService';
+import { setCredentials } from '../../store/slices/authSlice';
 
 const { Header, Content } = Layout;
 const { Title, Text, Paragraph } = Typography;
 
+interface RegisterFormValues {
+  companyName: string;
+  slug: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  password: string;
+  confirmPassword: string;
+  terms: boolean;
+}
+
 export default function RegisterPage() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const [form] = Form.useForm();
+  const dispatch = useDispatch();
+  const [form] = Form.useForm<RegisterFormValues>();
 
   const handleCompanyNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const companyName = e.target.value;
@@ -24,34 +37,41 @@ export default function RegisterPage() {
     form.setFieldsValue({ slug });
   };
 
-  const handleSubmit = async (values: any) => {
-    setLoading(true);
-    try {
-      await axios.post('/api/v1/tenants/register', {
-        companyName: values.companyName,
-        slug: values.slug,
-        adminUser: {
-          fullName: values.fullName,
-          email: values.email,
-          phone: values.phone,
-          password: values.password,
-        },
-        plan: 'free_trial',
+  const registerMutation = useMutation({
+    mutationFn: async (values: RegisterFormValues) => {
+      return authService.register({
+        email: values.email,
+        password: values.password,
+        firstName: values.fullName.split(' ')[0],
+        lastName: values.fullName.split(' ').slice(1).join(' '),
+        tenantId: values.slug,
       });
-
-      message.success('Đăng ký thành công! Vui lòng kiểm tra email để kích hoạt tài khoản.');
-      setTimeout(() => navigate('/login'), 2000);
-    } catch (error: any) {
+    },
+    onSuccess: (data) => {
+      dispatch(setCredentials({
+        user: {
+          ...data.user,
+          username: data.user.email,
+          roles: [data.user.role],
+        },
+        accessToken: data.token,
+        refreshToken: data.refreshToken || data.token,
+      }));
+      message.success('Đăng ký thành công! Chào mừng bạn đến với SmartERP.');
+      setTimeout(() => navigate('/dashboard', { replace: true }), 1500);
+    },
+    onError: (error: any) => {
       const errorMsg = error.response?.data?.message || 'Đăng ký thất bại. Vui lòng thử lại.';
       message.error(errorMsg);
-    } finally {
-      setLoading(false);
-    }
+    },
+  });
+
+  const handleSubmit = (values: RegisterFormValues) => {
+    registerMutation.mutate(values);
   };
 
   return (
     <Layout style={{ minHeight: '100vh', background: '#f0f2f5' }}>
-      {/* Header */}
       <Header style={{ background: '#fff', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', padding: '0 24px' }}>
         <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 8, height: '100%' }}>
           <div style={{ width: 32, height: 32, background: '#1890ff', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -61,7 +81,6 @@ export default function RegisterPage() {
         </Link>
       </Header>
 
-      {/* Main Content */}
       <Content style={{ padding: '48px 24px' }}>
         <Row justify="center">
           <Col xs={24} sm={20} md={16} lg={12} xl={10}>
@@ -80,7 +99,6 @@ export default function RegisterPage() {
                 autoComplete="off"
                 requiredMark={false}
               >
-                {/* Company Info Section */}
                 <Title level={4} style={{ marginBottom: 16 }}>Thông tin công ty</Title>
 
                 <Form.Item
@@ -113,7 +131,6 @@ export default function RegisterPage() {
                   />
                 </Form.Item>
 
-                {/* Personal Info Section */}
                 <Title level={4} style={{ marginTop: 24, marginBottom: 16 }}>Thông tin cá nhân</Title>
 
                 <Form.Item
@@ -213,11 +230,12 @@ export default function RegisterPage() {
                     type="primary"
                     htmlType="submit"
                     size="large"
-                    loading={loading}
+                    loading={registerMutation.isPending}
+                    disabled={registerMutation.isPending}
                     block
                     style={{ height: 48, fontSize: 16, fontWeight: 600 }}
                   >
-                    Đăng ký miễn phí
+                    {registerMutation.isPending ? 'Đang xử lý...' : 'Đăng ký miễn phí'}
                   </Button>
                 </Form.Item>
 
@@ -232,7 +250,6 @@ export default function RegisterPage() {
               </Form>
             </Card>
 
-            {/* Benefits */}
             <Card style={{ marginTop: 24, borderRadius: 16, background: '#f6f8fa' }}>
               <Title level={5} style={{ marginBottom: 16 }}>Bạn sẽ nhận được:</Title>
               <Space direction="vertical" size="small">

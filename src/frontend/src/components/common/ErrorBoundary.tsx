@@ -1,81 +1,82 @@
-import { ReactNode, useState, useCallback } from 'react';
+import React, { ReactNode } from 'react';
 import { Result, Button } from 'antd';
-import styles from './ErrorBoundary.module.css';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
 }
 
-interface ErrorState {
+interface ErrorBoundaryState {
   hasError: boolean;
   error: Error | null;
 }
 
 /**
- * ErrorBoundary Component
- *
- * Catches JavaScript errors anywhere in the child component tree
- * Displays a fallback UI instead of crashing the whole app
- *
- * Note: This is a functional component wrapper. For true error boundary functionality,
- * React Error Boundary library or class component is still required for catching render errors.
- * This component handles error state management and recovery UI.
- *
- * @example
+ * Error Boundary Component
+ * Catches unhandled errors in child components
+ * Displays fallback UI and allows user to retry
+ * 
+ * Usage:
  * <ErrorBoundary>
  *   <YourComponent />
  * </ErrorBoundary>
  */
-export const ErrorBoundary = ({ children }: ErrorBoundaryProps): ReactNode => {
-  const [errorState, setErrorState] = useState<ErrorState>({
-    hasError: false,
-    error: null,
-  });
-
-  const handleReset = useCallback(() => {
-    setErrorState({ hasError: false, error: null });
-    window.location.href = '/';
-  }, []);
-
-  const handleReload = useCallback(() => {
-    window.location.reload();
-  }, []);
-
-  const handleSetError = useCallback((error: Error) => {
-    console.error('ErrorBoundary caught an error:', error);
-    setErrorState({ hasError: true, error });
-  }, []);
-
-  if (errorState.hasError) {
-    return (
-      <div className={styles.container}>
-        <Result
-          status="error"
-          title="Đã xảy ra lỗi"
-          subTitle="Xin lỗi, đã có lỗi xảy ra. Vui lòng thử lại sau."
-          extra={[
-            <Button type="primary" key="home" onClick={handleReset}>
-              Về Trang Chủ
-            </Button>,
-            <Button key="reload" onClick={handleReload}>
-              Tải Lại Trang
-            </Button>,
-          ]}
-        >
-          {process.env.NODE_ENV === 'development' && errorState.error && (
-            <div className={styles.errorDetails}>
-              <h4>Error Details (Development Only):</h4>
-              <pre className={styles.errorStack}>{errorState.error.toString()}</pre>
-            </div>
-          )}
-        </Result>
-      </div>
-    );
+export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = {
+      hasError: false,
+      error: null,
+    };
   }
 
-  return children;
-};
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return {
+      hasError: true,
+      error,
+    };
+  }
 
-ErrorBoundary.displayName = 'ErrorBoundary';
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    // Log error to console in development
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Error caught by boundary:', error, errorInfo);
+    }
+
+    // Could send error to tracking service here
+    // Example: Sentry.captureException(error, { contexts: { react: errorInfo } });
+  }
+
+  handleReset = () => {
+    this.setState({
+      hasError: false,
+      error: null,
+    });
+  };
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: '48px 24px', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Result
+            status="error"
+            title="Oops! Something went wrong"
+            subTitle={
+              process.env.NODE_ENV === 'development'
+                ? this.state.error?.message
+                : 'An unexpected error occurred. Please try again.'
+            }
+            extra={
+              <Button type="primary" onClick={this.handleReset}>
+                Try Again
+              </Button>
+            }
+          />
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 export default ErrorBoundary;

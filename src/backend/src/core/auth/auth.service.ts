@@ -6,6 +6,7 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -16,10 +17,15 @@ import { v4 as uuidv4 } from 'uuid';
 import { SubscriptionPlan, Tenant, TenantStatus } from '../tenant/entities/tenant.entity';
 import { User as UserEntity } from '../user/entities/user.entity';
 import { RegisterTenantDto } from './dto/register-tenant.dto';
+import { TokenBlacklistService } from './services/token-blacklist.service';
+import { AccountLockoutService } from './services/account-lockout.service';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
   private readonly secureUserRepo: SecureRepository<UserEntity>;
+  private readonly PASSWORD_MIN_LENGTH = 8;
+  private readonly PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,}$/;
 
   constructor(
     private readonly jwtService: JwtService,
@@ -30,6 +36,8 @@ export class AuthService {
     private readonly dataSource: DataSource,
     private readonly cacheService: CacheService,
     private readonly permissionService: PermissionService,
+    private readonly tokenBlacklistService: TokenBlacklistService,
+    private readonly accountLockoutService: AccountLockoutService,
   ) {
     this.secureUserRepo = new SecureRepository(
       this.userRepository,
@@ -39,10 +47,11 @@ export class AuthService {
   }
 
   /**
-   * Validate user credentials
-   * Note: We don't cache validateUser because it involves password comparison
-   * which should always be done fresh for security reasons
-   * Note: Uses raw repo because this is called during login (no tenant context yet)
+   * Validate user credentials with security checks
+   * - Checks account lockout status
+   * - Verifies tenant is active
+   * - Records failed attempts
+   * - Validates password
    * @param email User email
    * @param password Plain text password
    * @returns User object if valid, null otherwise
@@ -51,12 +60,42 @@ export class AuthService {
     email: string,
     password: string,
   ): Promise<Omit<UserEntity, 'password'> | null> {
+    // Sanitize email input
+    const sanitizedEmail = email.trim().toLowerCase();
+
+    // Check if account is locked (CRITICAL FIX #14)
+    const isLocked = await this.accountLockoutService.isAccountLocked(sanitizedEmail);
+    if (isLocked) {
+      const remainingTime = await this.accountLockoutService.getRemainingLockoutTime(
+        sanitizedEmail,
+      );
+      this.logger.warn('Login attempt on locked account', {
+        email: sanitizedEmail,
+        remainingLockoutTime: remainingTime,
+      });
+      return null;
+    }
+
     // Find user by email - use raw repo (no tenant context during login)
     const user = await this.userRepository.findOne({
-      where: { email, status: 'active' },
+      where: { email: sanitizedEmail, status: 'active' },
+      relations: ['tenant'],
     });
 
     if (!user) {
+      // Record failed attempt for account lockout
+      await this.accountLockoutService.recordFailedAttempt(sanitizedEmail);
+      this.logger.warn('Login attempt with non-existent email', { email: sanitizedEmail });
+      return null;
+    }
+
+    // CRITICAL FIX #7: Verify tenant is active before allowing login
+    if (!user.tenant || user.tenant.status !== TenantStatus.ACTIVE) {
+      await this.accountLockoutService.recordFailedAttempt(sanitizedEmail);
+      this.logger.warn('Login attempt to inactive tenant', {
+        userId: user.id,
+        tenantStatus: user.tenant?.status,
+      });
       return null;
     }
 
@@ -64,8 +103,25 @@ export class AuthService {
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
+      // Record failed attempt for account lockout
+      await this.accountLockoutService.recordFailedAttempt(sanitizedEmail);
+      this.logger.warn('Failed login attempt', {
+        email: sanitizedEmail,
+        userId: user.id,
+        tenantId: user.tenantId,
+      });
       return null;
     }
+
+    // Reset failed attempts on successful login
+    await this.accountLockoutService.resetAttempts(sanitizedEmail);
+
+    // Log successful login
+    this.logger.log('User login successful', {
+      userId: user.id,
+      email: sanitizedEmail,
+      tenantId: user.tenantId,
+    });
 
     // Return user without password
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -115,6 +171,20 @@ export class AuthService {
     const SALT_ROUNDS = 12; // Minimum 10, recommended 12 for production
     const salt = await bcrypt.genSalt(SALT_ROUNDS);
     return bcrypt.hash(password, salt);
+  }
+
+  /**
+   * Decode JWT token without verification (for logout)
+   * @param token JWT token
+   * @returns Decoded token payload
+   */
+  decodeToken(token: string): any {
+    try {
+      return this.jwtService.decode(token);
+    } catch (error) {
+      this.logger.error('Failed to decode token', { error: error.message });
+      return null;
+    }
   }
 
   /**
@@ -209,22 +279,48 @@ export class AuthService {
 
   /**
    * Refresh access token using refresh token
+   * CRITICAL FIX #2: Add token expiration validation
+   * CRITICAL FIX #1: Check if token is revoked
    * Note: Uses raw repo because we only have token, not full user context yet
    * @param refreshToken Refresh token
    * @returns New access token
    */
   async refreshToken(refreshToken: string): Promise<{ accessToken: string }> {
     try {
-      // Verify refresh token
+      // Verify refresh token signature
       const payload = this.jwtService.verify(refreshToken);
+
+      // CRITICAL FIX #2: Check if token is actually expired
+      if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
+        this.logger.warn('Refresh token has expired', { userId: payload.sub });
+        throw new UnauthorizedException('Refresh token has expired');
+      }
+
+      // CRITICAL FIX #1: Check if token was revoked
+      const isRevoked = await this.tokenBlacklistService.isTokenRevoked(refreshToken);
+      if (isRevoked) {
+        this.logger.warn('Attempt to use revoked refresh token', { userId: payload.sub });
+        throw new UnauthorizedException('Refresh token has been revoked');
+      }
 
       // Get user from database - use raw repo (no tenant context from token alone)
       const user = await this.userRepository.findOne({
         where: { id: payload.sub, status: 'active' },
+        relations: ['tenant'],
       });
 
       if (!user) {
+        this.logger.warn('User not found for token refresh', { userId: payload.sub });
         throw new UnauthorizedException('User not found');
+      }
+
+      // Verify tenant is still active
+      if (!user.tenant || user.tenant.status !== TenantStatus.ACTIVE) {
+        this.logger.warn('Token refresh for inactive tenant', {
+          userId: user.id,
+          tenantStatus: user.tenant?.status,
+        });
+        throw new UnauthorizedException('Tenant is no longer active');
       }
 
       // Generate new access token
@@ -236,10 +332,19 @@ export class AuthService {
         role: user.role,
       };
 
+      this.logger.log('Token refreshed successfully', {
+        userId: user.id,
+        tenantId: user.tenantId,
+      });
+
       return {
         accessToken: this.jwtService.sign(newPayload, { expiresIn: '15m' }),
       };
     } catch (error) {
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+      this.logger.error('Token refresh failed', { error: error.message });
       throw new UnauthorizedException('Invalid refresh token');
     }
   }
@@ -269,27 +374,16 @@ export class AuthService {
    * @returns Tenant, user, and access tokens
    */
   async registerTenant(registerTenantDto: RegisterTenantDto): Promise<{
-    success: boolean;
-    data: {
-      tenant: {
-        id: string;
-        name: string;
-        subdomain: string;
-        plan: SubscriptionPlan;
-        trialEndsAt: Date;
-      };
-      user: {
-        id: string;
-        email: string;
-        firstName?: string;
-        lastName?: string;
-        role: string;
-        emailVerified: boolean;
-      };
-      accessToken: string;
-      refreshToken: string;
-      emailVerificationToken: string;
+    user: {
+      id: string;
+      email: string;
+      firstName?: string;
+      lastName?: string;
+      tenantId: string;
+      role: string;
     };
+    token: string;
+    refreshToken: string;
   }> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -379,27 +473,16 @@ export class AuthService {
       const refreshToken = this.jwtService.sign({ sub: savedUser.id }, { expiresIn: '7d' });
 
       return {
-        success: true,
-        data: {
-          tenant: {
-            id: savedTenant.id,
-            name: savedTenant.name,
-            subdomain: savedTenant.code,
-            plan: savedTenant.subscriptionPlan,
-            trialEndsAt: savedTenant.subscriptionEndDate,
-          },
-          user: {
-            id: savedUser.id,
-            email: savedUser.email,
-            firstName: savedUser.firstName,
-            lastName: savedUser.lastName,
-            role: savedUser.role,
-            emailVerified: savedUser.emailVerified,
-          },
-          accessToken,
-          refreshToken,
-          emailVerificationToken, // Send this via email in production
+        user: {
+          id: savedUser.id,
+          email: savedUser.email,
+          firstName: savedUser.firstName,
+          lastName: savedUser.lastName,
+          tenantId: savedUser.tenantId,
+          role: savedUser.role,
         },
+        token: accessToken,
+        refreshToken,
       };
     } catch (error) {
       // Rollback transaction on error
@@ -458,69 +541,175 @@ export class AuthService {
     };
   }
 
+  /**
+   * Request password reset with constant-time response
+   * CRITICAL FIX #8: Prevent account enumeration via timing attacks
+   * @param email User email
+   * @returns Generic success message (same timing regardless of email existence)
+   */
   async forgotPassword(email: string): Promise<{
     success: boolean;
     message: string;
     resetToken?: string;
   }> {
+    const startTime = Date.now();
+    const CONSTANT_TIME_MS = 500; // Constant response time
+
+    // Sanitize email input
+    const sanitizedEmail = email.trim().toLowerCase();
+
     // Find user by email - use raw repo (no user context during password reset)
     const user = await this.userRepository.findOne({
-      where: { email, status: 'active' },
+      where: { email: sanitizedEmail, status: 'active' },
     });
 
-    if (!user) {
-      return {
-        success: true,
-        message: 'If the email exists, a password reset link has been sent',
-      };
+    if (user) {
+      // Generate reset token
+      const resetToken = uuidv4();
+      const resetExpires = new Date();
+      resetExpires.setHours(resetExpires.getHours() + 1); // 1 hour expiry
+
+      user.resetPasswordToken = resetToken;
+      user.resetPasswordExpires = resetExpires;
+      await this.userRepository.save(user);
+
+      // Invalidate email cache
+      const cacheKey = generateCacheKey('user-email', 'global', sanitizedEmail);
+      await this.cacheService.del(cacheKey);
+
+      this.logger.log('Password reset requested', {
+        userId: user.id,
+        email: sanitizedEmail,
+      });
+
+      // In production, send email here
+      // await this.emailService.sendPasswordReset(user.email, resetToken);
+    } else {
+      this.logger.warn('Password reset requested for non-existent email', {
+        email: sanitizedEmail,
+      });
     }
 
-    const resetToken = uuidv4();
-    const resetExpires = new Date();
-    resetExpires.setHours(resetExpires.getHours() + 1);
+    // CRITICAL FIX #8: Constant-time response to prevent timing attacks
+    const elapsedTime = Date.now() - startTime;
+    if (elapsedTime < CONSTANT_TIME_MS) {
+      await new Promise(resolve => setTimeout(resolve, CONSTANT_TIME_MS - elapsedTime));
+    }
 
-    user.resetPasswordToken = resetToken;
-    user.resetPasswordExpires = resetExpires;
-    await this.userRepository.save(user);
-
-    const cacheKey = generateCacheKey('user-email', 'global', email);
-    await this.cacheService.del(cacheKey);
-
+    // Return generic message (same for existing and non-existing emails)
     return {
       success: true,
       message: 'If the email exists, a password reset link has been sent',
-      resetToken,
     };
   }
 
+
+
+  /**
+   * Validate password strength
+   * Requirements: 8+ chars, uppercase, lowercase, digit
+   * @param password Password to validate
+   * @throws BadRequestException if password is weak
+   */
+  private validatePasswordStrength(password: string): void {
+    if (!password || password.length < this.PASSWORD_MIN_LENGTH) {
+      throw new BadRequestException(
+        `Password must be at least ${this.PASSWORD_MIN_LENGTH} characters`,
+      );
+    }
+
+    if (!this.PASSWORD_REGEX.test(password)) {
+      throw new BadRequestException(
+        'Password must contain uppercase, lowercase, and numeric characters',
+      );
+    }
+  }
+
+  /**
+   * Reset password with security validations
+   * CRITICAL FIX #3: Add tenant verification
+   * CRITICAL FIX #6: Add password strength validation
+   * @param token Password reset token
+   * @param newPassword New password
+   * @param tenantId Optional tenant ID for verification
+   * @returns Success message
+   */
   async resetPassword(
     token: string,
     newPassword: string,
+    tenantId?: string,
   ): Promise<{
     success: boolean;
     message: string;
   }> {
+    // Validate token format (CRITICAL FIX #10)
+    if (!token || token.length < 36) {
+      this.logger.warn('Invalid reset token format attempted');
+      throw new BadRequestException('Invalid reset token format');
+    }
+
+    // Validate password strength (CRITICAL FIX #6)
+    this.validatePasswordStrength(newPassword);
+
     // Find user by token - use raw repo (no user context from token alone)
     const user = await this.userRepository.findOne({
       where: { resetPasswordToken: token },
+      relations: ['tenant'],
     });
 
     if (!user) {
+      this.logger.warn('Password reset attempted with invalid token');
       throw new BadRequestException('Invalid or expired reset token');
     }
 
+    // Check token expiration
     if (!user.resetPasswordExpires || user.resetPasswordExpires < new Date()) {
+      this.logger.warn('Password reset attempted with expired token', {
+        userId: user.id,
+        tokenExpiry: user.resetPasswordExpires,
+      });
       throw new BadRequestException('Reset token has expired');
     }
 
+    // CRITICAL FIX #3: Verify tenant context if provided
+    if (tenantId && user.tenantId !== tenantId) {
+      this.logger.error('Cross-tenant password reset attempt detected', {
+        userId: user.id,
+        requestedTenantId: tenantId,
+        userTenantId: user.tenantId,
+      });
+      throw new UnauthorizedException('Tenant mismatch');
+    }
+
+    // Verify tenant is still active
+    if (!user.tenant || user.tenant.status !== TenantStatus.ACTIVE) {
+      this.logger.warn('Password reset for inactive tenant', {
+        userId: user.id,
+        tenantStatus: user.tenant?.status,
+      });
+      throw new UnauthorizedException('Tenant is no longer active');
+    }
+
+    // Hash new password
     const hashedPassword = await this.hashPassword(newPassword);
+
+    // Update user
     user.password = hashedPassword;
     user.resetPasswordToken = null;
     user.resetPasswordExpires = null;
     await this.userRepository.save(user);
 
+    // Invalidate email cache
     const cacheKey = generateCacheKey('user-email', 'global', user.email);
     await this.cacheService.del(cacheKey);
+
+    // Revoke all existing tokens for this user (security best practice)
+    await this.tokenBlacklistService.revokeUserTokens(user.id);
+
+    this.logger.log('Password reset successfully', {
+      userId: user.id,
+      tenantId: user.tenantId,
+    });
 
     return {
       success: true,

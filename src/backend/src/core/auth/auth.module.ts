@@ -12,10 +12,13 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
+import { TokenBlacklistService } from './services/token-blacklist.service';
+import { AccountLockoutService } from './services/account-lockout.service';
+import { TwoFactorAuthService } from './services/two-factor-auth.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, Tenant]), // ← Add User and Tenant repositories
+    TypeOrmModule.forFeature([User, Tenant]),
     UserModule,
     PassportModule,
     CacheModule,
@@ -32,7 +35,14 @@ import { LocalStrategy } from './strategies/local.strategy';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, LocalStrategy],
-  exports: [AuthService, JwtModule],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    LocalStrategy,
+    TokenBlacklistService,
+    AccountLockoutService,
+    TwoFactorAuthService,
+  ],
+  exports: [AuthService, JwtModule, TokenBlacklistService, AccountLockoutService],
 })
 export class AuthModule {}

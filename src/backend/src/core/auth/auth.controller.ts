@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, UseGuards, Request, Query } from '@nestjs/common';
+import { Controller, Post, Get, Body, UseGuards, Request, Query, HttpCode, HttpStatus, BadRequestException, UnauthorizedException, Logger } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBody, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
@@ -9,6 +9,8 @@ import { RegisterDto } from './dto/register.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { TokenBlacklistService } from './services/token-blacklist.service';
+import { AccountLockoutService } from './services/account-lockout.service';
 
 import { User } from '@/common/security/permission.service';
 class LoginDto {
@@ -19,14 +21,36 @@ class LoginDto {
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  private readonly logger = new Logger(AuthController.name);
+
+  constructor(
+    private readonly authService: AuthService,
+    private readonly tokenBlacklistService: TokenBlacklistService,
+    private readonly accountLockoutService: AccountLockoutService,
+  ) {}
 
   @UseGuards(ThrottlerGuard, LocalAuthGuard)
-  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 attempts per minute
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('login')
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'User login' })
   @ApiBody({ type: LoginDto })
   async login(@Request() req) {
+    const email = req.user?.email;
+    
+    // Check if account is locked
+    const isLocked = await this.accountLockoutService.isAccountLocked(email);
+    if (isLocked) {
+      const remainingTime = await this.accountLockoutService.getRemainingLockoutTime(email);
+      this.logger.warn(`Login attempt to locked account: ${email}`);
+      throw new UnauthorizedException(
+        `Account is locked. Try again in ${remainingTime} seconds.`,
+      );
+    }
+
+    // Reset failed attempts on successful login
+    await this.accountLockoutService.resetAttempts(email);
+    
     return this.authService.login(req.user);
   }
 
@@ -79,9 +103,29 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Post('logout')
+  @HttpCode(HttpStatus.OK)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'User logout' })
-  async logout(@Request() _req) {
+  async logout(@Request() req) {
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
+      try {
+        // Decode token to get expiration time
+        const decoded = this.authService.decodeToken(token);
+        if (decoded && decoded.exp) {
+          const expiresIn = decoded.exp - Math.floor(Date.now() / 1000);
+          if (expiresIn > 0) {
+            // Revoke token by adding to blacklist
+            await this.tokenBlacklistService.revokeToken(token, expiresIn);
+            this.logger.log(`Token revoked for user: ${decoded.sub}`);
+          }
+        }
+      } catch (error) {
+        this.logger.error(`Failed to revoke token on logout: ${error.message}`);
+      }
+    }
+
     return {
       message: 'Logged out successfully',
       statusCode: 200,
@@ -100,9 +144,20 @@ export class AuthController {
   @UseGuards(ThrottlerGuard)
   @Throttle({ default: { limit: 5, ttl: 3600000 } })
   @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Reset password with token' })
   @ApiBody({ type: ResetPasswordDto })
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+    // Validate token format
+    if (!resetPasswordDto.token || resetPasswordDto.token.length < 36) {
+      throw new BadRequestException('Invalid reset token format');
+    }
+
+    // Validate password strength
+    if (!resetPasswordDto.newPassword || resetPasswordDto.newPassword.length < 8) {
+      throw new BadRequestException('Password must be at least 8 characters');
+    }
+
     return this.authService.resetPassword(resetPasswordDto.token, resetPasswordDto.newPassword);
   }
 
