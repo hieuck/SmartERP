@@ -1,3 +1,17 @@
+/**
+ * Landing Page Component
+ *
+ * Main landing page for SmartERP displaying:
+ * - Hero section with call-to-action
+ * - Product features overview
+ * - Pricing information
+ * - FAQ section
+ * - Contact information
+ * - Footer with legal links
+ *
+ * Includes SEO optimization with meta tags and Google Analytics tracking
+ */
+
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
@@ -13,71 +27,55 @@ import Hero from '../../components/marketing/Hero';
 import Features from '../../components/marketing/Features';
 import Pricing from '../../components/marketing/Pricing';
 import CTA from '../../components/marketing/CTA';
+import {
+  TESTIMONIALS,
+  FAQ_ITEMS,
+  CONTACT_INFO,
+  LAYOUT_CONSTANTS,
+  COLORS,
+  TYPOGRAPHY,
+  GA_CONFIG,
+} from '../../constants/landing-page';
 
 const { Header, Content, Footer } = Layout;
 const { Title, Paragraph, Text } = Typography;
 const { Panel } = Collapse;
 
-// Initialize Google Analytics
-const GA_MEASUREMENT_ID = 'G-XXXXXXXXXX'; // TODO: Replace with your actual GA4 Measurement ID
-if (GA_MEASUREMENT_ID !== 'G-XXXXXXXXXX') {
-  ReactGA.initialize(GA_MEASUREMENT_ID);
-}
+/**
+ * Initialize Google Analytics
+ */
+const initializeAnalytics = (): void => {
+  try {
+    if (GA_CONFIG.MEASUREMENT_ID !== GA_CONFIG.PLACEHOLDER_ID) {
+      ReactGA.initialize(GA_CONFIG.MEASUREMENT_ID);
+    }
+  } catch (error) {
+    console.warn('Failed to initialize Google Analytics:', error);
+  }
+};
 
-export default function LandingPage() {
-  // Track page view
+initializeAnalytics();
+
+/**
+ * Landing Page Component
+ * @returns React component
+ */
+export default function LandingPage(): React.ReactElement {
+  /**
+   * Track page view on component mount
+   */
   useEffect(() => {
-    if (GA_MEASUREMENT_ID !== 'G-XXXXXXXXXX') {
-      ReactGA.send({ hitType: 'pageview', page: '/', title: 'Landing Page' });
+    try {
+      if (GA_CONFIG.MEASUREMENT_ID !== GA_CONFIG.PLACEHOLDER_ID) {
+        ReactGA.send({ hitType: 'pageview', page: '/', title: 'Landing Page' });
+      }
+    } catch (error) {
+      console.warn('Failed to track page view:', error);
     }
   }, []);
 
-  const testimonials = [
-    {
-      name: 'Nguyễn Văn A',
-      company: 'Công ty TNHH ABC',
-      role: 'Giám đốc điều hành',
-      content: 'SmartERP giúp chúng tôi quản lý kho hàng hiệu quả hơn 80%. Không còn tình trạng thiếu hụt hoặc tồn kho dư thừa.',
-    },
-    {
-      name: 'Trần Thị B',
-      company: 'Nhà máy XYZ',
-      role: 'Trưởng phòng sản xuất',
-      content: 'Phần mềm dễ sử dụng, đội ngũ hỗ trợ nhiệt tình. Chúng tôi đã tăng năng suất sản xuất 30% sau 3 tháng sử dụng.',
-    },
-    {
-      name: 'Lê Văn C',
-      company: 'Xưởng DEF',
-      role: 'Chủ doanh nghiệp',
-      content: 'Giá cả hợp lý, tính năng đầy đủ. Đặc biệt là báo cáo thống kê rất trực quan, giúp tôi ra quyết định nhanh chóng.',
-    },
-  ];
-
-  const faqItems = [
-    {
-      key: '1',
-      label: 'SmartERP có phù hợp với doanh nghiệp nhỏ không?',
-      children: 'Có, SmartERP được thiết kế linh hoạt cho mọi quy mô từ xưởng nhỏ đến nhà máy lớn. Bạn có thể bắt đầu với gói cơ bản và nâng cấp khi doanh nghiệp phát triển.',
-    },
-    {
-      key: '2',
-      label: 'Tôi có cần kiến thức kỹ thuật để sử dụng không?',
-      children: 'Không cần. SmartERP có giao diện thân thiện, dễ sử dụng. Chúng tôi cũng cung cấp đào tạo miễn phí và hỗ trợ 24/7.',
-    },
-    {
-      key: '3',
-      label: 'Dữ liệu của tôi có an toàn không?',
-      children: 'Tuyệt đối an toàn. Chúng tôi sử dụng mã hóa SSL, backup tự động hàng ngày, và tuân thủ các tiêu chuẩn bảo mật quốc tế.',
-    },
-    {
-      key: '4',
-      label: 'Tôi có thể hủy đăng ký bất cứ lúc nào không?',
-      children: 'Có, bạn có thể hủy đăng ký bất cứ lúc nào mà không mất phí. Chúng tôi không ràng buộc hợp đồng dài hạn.',
-    },
-  ];
-
   return (
-    <Layout style={{ minHeight: '100vh', background: '#fff' }}>
+    <Layout style={{ minHeight: '100vh', background: COLORS.WHITE }}>
       {/* SEO Meta Tags */}
       <Helmet>
         <title>SmartERP - Giải pháp quản lý sản xuất & kinh doanh</title>
@@ -100,14 +98,14 @@ export default function LandingPage() {
       </Helmet>
 
       {/* Header */}
-      <Header style={{ background: '#fff', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', position: 'sticky', top: 0, zIndex: 1000, padding: '0 24px' }}>
+      <Header style={{ background: COLORS.WHITE, boxShadow: '0 2px 8px rgba(0,0,0,0.1)', position: 'sticky', top: 0, zIndex: 1000, padding: '0 24px' }}>
         <Row justify="space-between" align="middle" style={{ height: '100%' }}>
           <Col>
             <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ width: 32, height: 32, background: '#1890ff', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Text strong style={{ color: '#fff', fontSize: 20 }}>S</Text>
+              <div style={{ width: 32, height: 32, background: COLORS.PRIMARY, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Text strong style={{ color: COLORS.WHITE, fontSize: TYPOGRAPHY.FONT_SIZE_LARGE }}>S</Text>
               </div>
-              <Text strong style={{ fontSize: 20, color: '#000' }}>SmartERP</Text>
+              <Text strong style={{ fontSize: TYPOGRAPHY.FONT_SIZE_LARGE, color: '#000' }}>SmartERP</Text>
             </Link>
           </Col>
           <Col>
@@ -136,25 +134,27 @@ export default function LandingPage() {
       </div>
 
       {/* Testimonials Section */}
-      <div style={{ padding: '80px 24px', background: '#fff' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-          <Title level={2} style={{ textAlign: 'center', marginBottom: 60 }}>
+      <div style={{ padding: LAYOUT_CONSTANTS.SECTION_PADDING, background: COLORS.WHITE }}>
+        <div style={{ maxWidth: LAYOUT_CONSTANTS.MAX_WIDTH, margin: '0 auto' }}>
+          <Title level={TYPOGRAPHY.HEADING_LEVEL_2} style={{ textAlign: 'center', marginBottom: 60 }}>
             Khách hàng nói gì về chúng tôi
           </Title>
-          <Row gutter={[32, 32]}>
-            {testimonials.map((testimonial, index) => (
+          <Row gutter={LAYOUT_CONSTANTS.GRID_GUTTER}>
+            {TESTIMONIALS.map((testimonial, index) => (
               <Col xs={24} sm={12} lg={8} key={index}>
                 <Card hoverable style={{ height: '100%' }}>
                   <div style={{ marginBottom: 16 }}>
                     {[...Array(5)].map((_, i) => (
-                      <StarFilled key={i} style={{ color: '#fadb14', fontSize: 20, marginRight: 4 }} />
+                      <StarFilled key={i} style={{ color: COLORS.STAR_COLOR, fontSize: 20, marginRight: 4 }} />
                     ))}
                   </div>
-                  <Paragraph style={{ fontSize: 16, marginBottom: 24, fontStyle: 'italic' }}>
+                  <Paragraph style={{ fontSize: TYPOGRAPHY.FONT_SIZE_SMALL, marginBottom: 24, fontStyle: 'italic' }}>
                     "{testimonial.content}"
                   </Paragraph>
                   <div>
-                    <Text strong style={{ display: 'block', fontSize: 16 }}>{testimonial.name}</Text>
+                    <Text strong style={{ display: 'block', fontSize: TYPOGRAPHY.FONT_SIZE_SMALL }}>
+                      {testimonial.name}
+                    </Text>
                     <Text type="secondary">{testimonial.role}</Text>
                     <br />
                     <Text type="secondary">{testimonial.company}</Text>
@@ -172,13 +172,13 @@ export default function LandingPage() {
       </div>
 
       {/* FAQ Section */}
-      <div style={{ padding: '80px 24px', background: '#fff' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-          <Title level={2} style={{ textAlign: 'center', marginBottom: 60 }}>
+      <div style={{ padding: LAYOUT_CONSTANTS.SECTION_PADDING, background: COLORS.WHITE }}>
+        <div style={{ maxWidth: LAYOUT_CONSTANTS.MAX_WIDTH, margin: '0 auto' }}>
+          <Title level={TYPOGRAPHY.HEADING_LEVEL_2} style={{ textAlign: 'center', marginBottom: 60 }}>
             Câu hỏi thường gặp
           </Title>
           <Collapse accordion>
-            {faqItems.map((item) => (
+            {FAQ_ITEMS.map((item) => (
               <Panel header={item.label} key={item.key}>
                 <Paragraph>{item.children}</Paragraph>
               </Panel>
@@ -188,26 +188,26 @@ export default function LandingPage() {
       </div>
 
       {/* Contact Section */}
-      <div style={{ padding: '80px 24px', background: '#f5f5f5' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', textAlign: 'center' }}>
-          <Title level={2} style={{ marginBottom: 60 }}>
+      <div style={{ padding: LAYOUT_CONSTANTS.SECTION_PADDING, background: COLORS.LIGHT_BG }}>
+        <div style={{ maxWidth: LAYOUT_CONSTANTS.MAX_WIDTH, margin: '0 auto', textAlign: 'center' }}>
+          <Title level={TYPOGRAPHY.HEADING_LEVEL_2} style={{ marginBottom: 60 }}>
             Liên hệ với chúng tôi
           </Title>
-          <Row gutter={[32, 32]} justify="center">
+          <Row gutter={LAYOUT_CONSTANTS.GRID_GUTTER} justify="center">
             <Col xs={24} sm={8}>
-              <PhoneOutlined style={{ fontSize: 48, color: '#1890ff', marginBottom: 16 }} />
-              <Title level={4}>Hotline</Title>
-              <Text style={{ fontSize: 18 }}>1900-xxxx</Text>
+              <PhoneOutlined style={{ fontSize: 48, color: COLORS.PRIMARY, marginBottom: 16 }} />
+              <Title level={TYPOGRAPHY.HEADING_LEVEL_4}>Hotline</Title>
+              <Text style={{ fontSize: TYPOGRAPHY.FONT_SIZE_MEDIUM }}>{CONTACT_INFO.phone}</Text>
             </Col>
             <Col xs={24} sm={8}>
-              <MailOutlined style={{ fontSize: 48, color: '#1890ff', marginBottom: 16 }} />
-              <Title level={4}>Email</Title>
-              <Text style={{ fontSize: 18 }}>contact@smarterp.vn</Text>
+              <MailOutlined style={{ fontSize: 48, color: COLORS.PRIMARY, marginBottom: 16 }} />
+              <Title level={TYPOGRAPHY.HEADING_LEVEL_4}>Email</Title>
+              <Text style={{ fontSize: TYPOGRAPHY.FONT_SIZE_MEDIUM }}>{CONTACT_INFO.email}</Text>
             </Col>
             <Col xs={24} sm={8}>
-              <EnvironmentOutlined style={{ fontSize: 48, color: '#1890ff', marginBottom: 16 }} />
-              <Title level={4}>Địa chỉ</Title>
-              <Text style={{ fontSize: 18 }}>Hà Nội, Việt Nam</Text>
+              <EnvironmentOutlined style={{ fontSize: 48, color: COLORS.PRIMARY, marginBottom: 16 }} />
+              <Title level={TYPOGRAPHY.HEADING_LEVEL_4}>Địa chỉ</Title>
+              <Text style={{ fontSize: TYPOGRAPHY.FONT_SIZE_MEDIUM }}>{CONTACT_INFO.address}</Text>
             </Col>
           </Row>
         </div>
@@ -217,39 +217,39 @@ export default function LandingPage() {
       <CTA />
       </Content>
 
-      <Footer style={{ background: '#001529', color: '#fff', padding: '40px 24px 24px' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-          <Row gutter={[32, 32]}>
+      <Footer style={{ background: COLORS.DARK_BG, color: COLORS.WHITE, padding: LAYOUT_CONSTANTS.FOOTER_PADDING }}>
+        <div style={{ maxWidth: LAYOUT_CONSTANTS.MAX_WIDTH, margin: '0 auto' }}>
+          <Row gutter={LAYOUT_CONSTANTS.GRID_GUTTER}>
             <Col xs={24} sm={12} lg={8}>
-              <Title level={4} style={{ color: '#fff' }}>SmartERP</Title>
-              <Paragraph style={{ color: 'rgba(255,255,255,0.65)' }}>
+              <Title level={TYPOGRAPHY.HEADING_LEVEL_4} style={{ color: COLORS.WHITE }}>SmartERP</Title>
+              <Paragraph style={{ color: COLORS.TEXT_SECONDARY }}>
                 Giải pháp quản lý toàn diện cho doanh nghiệp sản xuất và thương mại
               </Paragraph>
             </Col>
             <Col xs={24} sm={12} lg={8}>
-              <Title level={4} style={{ color: '#fff' }}>Liên hệ</Title>
+              <Title level={TYPOGRAPHY.HEADING_LEVEL_4} style={{ color: COLORS.WHITE }}>Liên hệ</Title>
               <Space direction="vertical">
-                <Text style={{ color: 'rgba(255,255,255,0.65)' }}>
-                  <PhoneOutlined /> 1900-xxxx
+                <Text style={{ color: COLORS.TEXT_SECONDARY }}>
+                  <PhoneOutlined /> {CONTACT_INFO.phone}
                 </Text>
-                <Text style={{ color: 'rgba(255,255,255,0.65)' }}>
-                  <MailOutlined /> contact@smarterp.vn
+                <Text style={{ color: COLORS.TEXT_SECONDARY }}>
+                  <MailOutlined /> {CONTACT_INFO.email}
                 </Text>
-                <Text style={{ color: 'rgba(255,255,255,0.65)' }}>
-                  <EnvironmentOutlined /> Hà Nội, Việt Nam
+                <Text style={{ color: COLORS.TEXT_SECONDARY }}>
+                  <EnvironmentOutlined /> {CONTACT_INFO.address}
                 </Text>
               </Space>
             </Col>
             <Col xs={24} sm={12} lg={8}>
-              <Title level={4} style={{ color: '#fff' }}>Pháp lý</Title>
+              <Title level={TYPOGRAPHY.HEADING_LEVEL_4} style={{ color: COLORS.WHITE }}>Pháp lý</Title>
               <Space direction="vertical">
-                <a href="/privacy" style={{ color: 'rgba(255,255,255,0.65)' }}>Chính sách bảo mật</a>
-                <a href="/terms" style={{ color: 'rgba(255,255,255,0.65)' }}>Điều khoản sử dụng</a>
+                <a href="/privacy" style={{ color: COLORS.TEXT_SECONDARY }}>Chính sách bảo mật</a>
+                <a href="/terms" style={{ color: COLORS.TEXT_SECONDARY }}>Điều khoản sử dụng</a>
               </Space>
             </Col>
           </Row>
-          <div style={{ textAlign: 'center', marginTop: 40, paddingTop: 24, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-            <Text style={{ color: 'rgba(255,255,255,0.65)' }}>
+          <div style={{ textAlign: 'center', marginTop: 40, paddingTop: 24, borderTop: `1px solid ${COLORS.BORDER_LIGHT}` }}>
+            <Text style={{ color: COLORS.TEXT_SECONDARY }}>
               © 2026 SmartERP. All rights reserved.
             </Text>
           </div>
