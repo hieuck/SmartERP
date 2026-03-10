@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { ErrorBoundary } from '../ErrorBoundary';
+import { ErrorBoundary } from '../../../../components/common/ErrorBoundary';
 
 describe('ErrorBoundary Component', () => {
   beforeEach(() => {
