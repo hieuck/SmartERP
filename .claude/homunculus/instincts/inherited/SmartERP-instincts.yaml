@@ -1,0 +1,884 @@
+# Instincts generated from https://github.com/hieuck/SmartERP
+# Generated: 2026-03-10T12:41:39.022Z
+# Version: 2.0
+
+---
+id: SmartERP-commit-conventional
+trigger: "when writing a commit message"
+confidence: 0.85
+domain: git
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Commit Conventional
+
+## Action
+
+Use conventional commit format with prefixes: refactor, fix, feat, docs, test
+
+## Evidence
+
+- 56 commits analyzed
+- Detected conventional commit pattern
+- Examples: refactor: achieve 100% SecureRepository compliance - all services migrated, wip: refactor email.service to SecureRepository pattern (partial)
+
+---
+id: SmartERP-commit-length
+trigger: "when writing a commit message"
+confidence: 0.6
+domain: git
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Commit Length
+
+## Action
+
+Write moderate-length commit messages (~50 characters)
+
+## Evidence
+
+- Average commit message length: 57 chars
+- Based on 56 commits
+
+---
+id: SmartERP-naming-files
+trigger: "when creating a new file"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Naming Files
+
+## Action
+
+Use camelCase naming convention
+
+## Evidence
+
+- Analyzed file naming patterns in repository
+- Dominant pattern: camelCase
+
+---
+id: SmartERP-import-relative
+trigger: "when importing modules"
+confidence: 0.75
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Import Relative
+
+## Action
+
+Use relative imports for project files
+
+## Evidence
+
+- Import analysis shows relative import pattern
+- Example: import { x } from '../lib/x'
+
+---
+id: SmartERP-export-style
+trigger: "when exporting from a module"
+confidence: 0.7
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Export Style
+
+## Action
+
+Prefer named exports
+
+## Evidence
+
+- Export pattern analysis
+- Dominant style: named
+
+---
+id: SmartERP-arch-type-based
+trigger: "when adding new code"
+confidence: 0.8
+domain: architecture
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Arch Type Based
+
+## Action
+
+Place code in the appropriate type folder (components/, services/, utils/, etc.)
+
+## Evidence
+
+- Type-based module organization detected
+- Folders: backend, frontend, mobile, shared
+
+---
+id: SmartERP-test-colocate
+trigger: "when writing tests"
+confidence: 0.85
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Test Colocate
+
+## Action
+
+Place test file next to the source file (e.g., Button.test.tsx next to Button.tsx)
+
+## Evidence
+
+- Colocated test pattern detected
+- Tests live alongside source files
+
+---
+id: SmartERP-test-framework
+trigger: "when writing tests"
+confidence: 0.9
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Test Framework
+
+## Action
+
+Use vitest as the test framework
+
+## Evidence
+
+- Test framework detected: vitest
+- File pattern: *.spec.ts
+
+---
+id: SmartERP-test-naming
+trigger: "when creating a test file"
+confidence: 0.85
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Test Naming
+
+## Action
+
+Name test files using the pattern: *.spec.ts
+
+## Evidence
+
+- File pattern: *.spec.ts
+- Consistent across test files
+
+---
+id: SmartERP-test-mocking
+trigger: "when mocking dependencies in tests"
+confidence: 0.75
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Test Mocking
+
+## Action
+
+Use jest.mock for mocking
+
+## Evidence
+
+- Mocking pattern detected: jest.mock
+- Consistent across test files
+
+---
+id: SmartERP-test-types
+trigger: "when planning tests for a feature"
+confidence: 0.7
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Test Types
+
+## Action
+
+Write unit, integration, e2e tests to match project standards
+
+## Evidence
+
+- Test types detected: unit, integration, e2e
+- Coverage config: no
+
+---
+id: SmartERP-workflow-database-migration
+trigger: "when modifying the database schema or adding tables"
+confidence: 0.75
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Workflow Database Migration
+
+## Action
+
+Follow the database-migration workflow:
+1. Create migration file
+2. Update schema definitions
+3. Generate/update types
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~5x per month
+- Files: migrations/*, **/schema.*
+
+---
+id: SmartERP-workflow-feature-development
+trigger: "when implementing a new feature"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Workflow Feature Development
+
+## Action
+
+Follow the feature-development workflow:
+1. Add feature implementation
+2. Add tests for feature
+3. Update documentation
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~14x per month
+- Files: backend/monolith-app/src/modules/report/dto/*, backend/monolith-app/src/*, backend/monolith-app/src/modules/settings/entities/*
+
+---
+id: SmartERP-workflow-test-driven-development
+trigger: "when adding new functionality"
+confidence: 0.7
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Workflow Test Driven Development
+
+## Action
+
+Follow the test-driven-development workflow:
+1. Write failing test
+2. Implement code to pass test
+3. Refactor if needed
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~4x per month
+- Files: **/*.test.*, **/*.spec.*, src/**/*
+
+---
+id: SmartERP-workflow-refactoring
+trigger: "when refactoring code"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Workflow Refactoring
+
+## Action
+
+Follow the refactoring workflow:
+1. Ensure tests pass before refactor
+2. Refactor code structure
+3. Verify tests still pass
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~18x per month
+- Files: src/**/*
+
+---
+id: SmartERP-workflow-secure-repository-migration
+trigger: "when doing secure repository migration"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Workflow Secure Repository Migration
+
+## Action
+
+Follow the secure-repository-migration workflow:
+1. Add SecureRepository and PermissionService injection
+2. Update method signatures: tenantId string → User parameter
+3. Replace direct repository calls with SecureRepository
+4. Update all tests to mock SecureRepository methods
+5. Remove from architecture-exceptions.json
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~15x per month
+- Files: src/backend/domains/*/**.service.ts, src/backend/domains/*/**.service.spec.ts, .kiro/architecture-exceptions.json
+
+---
+id: SmartERP-workflow-test-fixing-secure-repository
+trigger: "when doing test fixing secure repository"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Workflow Test Fixing Secure Repository
+
+## Action
+
+Follow the test-fixing-secure-repository workflow:
+1. Add PermissionService mock with canRead/canWrite/canDelete methods
+2. Fix controller method signatures to use User type instead of string
+3. Add mockQueryBuilder with orderBy, select, getMany, getOne methods
+4. Update repository mock createQueryBuilder methods
+5. Fix DTO field names to match actual DTOs
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~20x per month
+- Files: src/backend/**/**.spec.ts, src/backend/**/**.controller.spec.ts, src/backend/**/**.service.spec.ts
+
+---
+id: SmartERP-workflow-module-creation
+trigger: "when doing module creation"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Workflow Module Creation
+
+## Action
+
+Follow the module-creation workflow:
+1. Create entity with tenant isolation and audit fields
+2. Create DTOs (create, update, query)
+3. Implement service with SecureRepository pattern
+4. Create controller with role-based access control
+5. Write comprehensive unit tests
+6. Register module in app.module.ts
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~8x per month
+- Files: src/backend/domains/*/entities/*.entity.ts, src/backend/domains/*/dto/*.dto.ts, src/backend/domains/*/*.service.ts
+
+---
+id: SmartERP-workflow-compilation-error-fixing
+trigger: "when doing compilation error fixing"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Workflow Compilation Error Fixing
+
+## Action
+
+Follow the compilation-error-fixing workflow:
+1. Run TypeScript compiler to identify errors
+2. Create Python script to fix specific error patterns
+3. Execute script to fix parameter mismatches and type issues
+4. Update method signatures to align with SecureRepository pattern
+5. Verify compilation success
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~10x per month
+- Files: src/backend/**/**.ts, src/backend/scripts/fix-*.py, src/backend/build-errors*.txt
+
+---
+id: SmartERP-workflow-kiro-hook-configuration
+trigger: "when doing kiro hook configuration"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Workflow Kiro Hook Configuration
+
+## Action
+
+Follow the kiro-hook-configuration workflow:
+1. Update hook configuration files
+2. Modify hook triggers and actions
+3. Update architecture compliance rules
+4. Enable/disable hooks based on project phase
+5. Update steering documentation
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~12x per month
+- Files: .kiro/hooks/*.kiro.hook, .kiro/settings/mcp.json, .kiro/steering/*.md
+
+---
+id: SmartERP-workflow-documentation-update
+trigger: "when doing documentation update"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Workflow Documentation Update
+
+## Action
+
+Follow the documentation-update workflow:
+1. Update CHANGELOG.md with recent changes
+2. Update ROADMAP.md with progress and next steps
+3. Create/update architectural decision records
+4. Update implementation guides
+5. Archive outdated documentation
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~8x per month
+- Files: CHANGELOG.md, ROADMAP.md, docs/**/*.md
+
+---
+id: smarterp-conventional-commits
+trigger: "When creating a commit message"
+confidence: 0.9
+domain: git
+source: repo-analysis
+source_repo: hieuck/SmartERP
+---
+
+# Smarterp Conventional Commits
+
+## Action
+
+Use conventional commit format with prefixes: refactor, fix, feat, docs, test
+
+## Evidence
+
+- 100% of commits follow conventional format
+- Prefixes consistently used: refactor, fix, feat, docs, test
+
+---
+id: smarterp-commit-compliance-percentage
+trigger: "When making refactor commits"
+confidence: 0.85
+domain: git
+source: repo-analysis
+source_repo: hieuck/SmartERP
+---
+
+# Smarterp Commit Compliance Percentage
+
+## Action
+
+Include compliance percentage in commit message (e.g., '98% compliance', '100% SecureRepository compliance')
+
+## Evidence
+
+- refactor: remove hr.service from exception list (98% compliance)
+- refactor: achieve 100% SecureRepository compliance - all services migrated
+
+---
+id: smarterp-camelcase-files
+trigger: "When creating new files"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: hieuck/SmartERP
+---
+
+# Smarterp Camelcase Files
+
+## Action
+
+Use camelCase naming convention for files
+
+## Evidence
+
+- Naming convention analysis shows camelCase for files
+- Consistent pattern in existing codebase
+
+---
+id: smarterp-pascalcase-classes
+trigger: "When creating new classes"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: hieuck/SmartERP
+---
+
+# Smarterp Pascalcase Classes
+
+## Action
+
+Use PascalCase naming convention for classes
+
+## Evidence
+
+- Naming convention analysis shows PascalCase for classes
+- Standard TypeScript convention followed
+
+---
+id: smarterp-screaming-snake-constants
+trigger: "When creating constants"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: hieuck/SmartERP
+---
+
+# Smarterp Screaming Snake Constants
+
+## Action
+
+Use SCREAMING_SNAKE_CASE naming convention for constants
+
+## Evidence
+
+- Naming convention analysis shows SCREAMING_SNAKE_CASE for constants
+- Standard TypeScript convention
+
+---
+id: smarterp-relative-imports
+trigger: "When importing modules within the project"
+confidence: 0.75
+domain: code-style
+source: repo-analysis
+source_repo: hieuck/SmartERP
+---
+
+# Smarterp Relative Imports
+
+## Action
+
+Use relative import paths
+
+## Evidence
+
+- Import style analysis shows relative imports preferred
+- Consistent pattern in codebase structure
+
+---
+id: smarterp-named-exports
+trigger: "When exporting from modules"
+confidence: 0.75
+domain: code-style
+source: repo-analysis
+source_repo: hieuck/SmartERP
+---
+
+# Smarterp Named Exports
+
+## Action
+
+Use named exports instead of default exports
+
+## Evidence
+
+- Export style analysis shows named exports preferred
+- TypeScript best practices followed
+
+---
+id: smarterp-vitest-framework
+trigger: "When writing tests"
+confidence: 0.9
+domain: testing
+source: repo-analysis
+source_repo: hieuck/SmartERP
+---
+
+# Smarterp Vitest Framework
+
+## Action
+
+Use vitest testing framework
+
+## Evidence
+
+- Testing framework identified as vitest
+- vitest.config.ts files present
+
+---
+id: smarterp-spec-test-files
+trigger: "When creating test files"
+confidence: 0.85
+domain: testing
+source: repo-analysis
+source_repo: hieuck/SmartERP
+---
+
+# Smarterp Spec Test Files
+
+## Action
+
+Use *.spec.ts file pattern for test files
+
+## Evidence
+
+- Test file pattern analysis shows *.spec.ts
+- Consistent across all test examples
+
+---
+id: smarterp-jest-mock-style
+trigger: "When mocking dependencies in tests"
+confidence: 0.8
+domain: testing
+source: repo-analysis
+source_repo: hieuck/SmartERP
+---
+
+# Smarterp Jest Mock Style
+
+## Action
+
+Use jest.mock() style for mocking
+
+## Evidence
+
+- Mocking style identified as jest.mock
+- Standard pattern in test files
+
+---
+id: smarterp-try-catch-errors
+trigger: "When handling errors"
+confidence: 0.75
+domain: code-style
+source: repo-analysis
+source_repo: hieuck/SmartERP
+---
+
+# Smarterp Try Catch Errors
+
+## Action
+
+Use try-catch blocks for error handling
+
+## Evidence
+
+- Error handling style analysis shows try-catch
+- No custom error classes detected
+
+---
+id: smarterp-secure-repository-migration
+trigger: "When refactoring a service to comply with architecture standards"
+confidence: 0.95
+domain: workflow
+source: repo-analysis
+source_repo: hieuck/SmartERP
+---
+
+# Smarterp Secure Repository Migration
+
+## Action
+
+Follow SecureRepository migration pattern: inject SecureRepository and PermissionService, update method signatures from tenantId string to User parameter, replace direct repository calls
+
+## Evidence
+
+- 15+ commits showing this pattern
+- refactor: achieve 100% SecureRepository compliance
+- wip: refactor email.service to SecureRepository pattern
+
+---
+id: smarterp-fix-secure-repository-tests
+trigger: "When tests fail after SecureRepository migration"
+confidence: 0.92
+domain: workflow
+source: repo-analysis
+source_repo: hieuck/SmartERP
+---
+
+# Smarterp Fix Secure Repository Tests
+
+## Action
+
+Add PermissionService mock with canRead/canWrite/canDelete methods, fix controller signatures to use User type, add mockQueryBuilder with proper methods
+
+## Evidence
+
+- 20+ test fixing commits
+- Pattern of fixing tests after SecureRepository changes
+- Consistent mock structure needed
+
+---
+id: smarterp-module-creation-pattern
+trigger: "When adding a new domain module to the system"
+confidence: 0.88
+domain: workflow
+source: repo-analysis
+source_repo: hieuck/SmartERP
+---
+
+# Smarterp Module Creation Pattern
+
+## Action
+
+Create complete CRUD module: entity with tenant isolation, DTOs, service with SecureRepository, controller with RBAC, unit tests, register in app.module.ts
+
+## Evidence
+
+- 8+ module creation workflows
+- Consistent pattern in backend/domains structure
+- feat: add legacy code checkpoint hook for entire project
+
+---
+id: smarterp-batch-compilation-fixes
+trigger: "When there are multiple TypeScript compilation errors to resolve"
+confidence: 0.85
+domain: workflow
+source: repo-analysis
+source_repo: hieuck/SmartERP
+---
+
+# Smarterp Batch Compilation Fixes
+
+## Action
+
+Create Python script to fix error patterns in batch, focus on parameter mismatches and SecureRepository alignment, verify compilation success
+
+## Evidence
+
+- 10+ compilation fixing sessions
+- Pattern of automated script-based fixes
+- Batch error resolution approach
+
+---
+id: smarterp-kiro-hook-updates
+trigger: "When updating development automation and workflow rules"
+confidence: 0.82
+domain: workflow
+source: repo-analysis
+source_repo: hieuck/SmartERP
+---
+
+# Smarterp Kiro Hook Updates
+
+## Action
+
+Update hook configuration files, modify triggers and actions, update architecture compliance rules, enable/disable hooks based on project phase
+
+## Evidence
+
+- 12+ hook configuration updates
+- .kiro/ directory structure
+- feat: add legacy code checkpoint hook
+
+---
+id: smarterp-documentation-maintenance
+trigger: "When documenting progress, decisions, or architectural changes"
+confidence: 0.78
+domain: workflow
+source: repo-analysis
+source_repo: hieuck/SmartERP
+---
+
+# Smarterp Documentation Maintenance
+
+## Action
+
+Update CHANGELOG.md and ROADMAP.md, create architectural decision records, update implementation guides, archive outdated docs
+
+## Evidence
+
+- 8+ documentation updates
+- docs: add comprehensive project assessment report
+- Structured docs/ folder
+
+---
+id: smarterp-turborepo-structure
+trigger: "When organizing project files"
+confidence: 0.9
+domain: architecture
+source: repo-analysis
+source_repo: hieuck/SmartERP
+---
+
+# Smarterp Turborepo Structure
+
+## Action
+
+Follow turborepo structure with backend, frontend, mobile, shared directories under src/
+
+## Evidence
+
+- Folder structure analysis shows turborepo
+- src/backend/, src/frontend/, src/mobile/, src/shared/ directories
+
+---
+id: smarterp-colocated-tests
+trigger: "When placing test files"
+confidence: 0.8
+domain: architecture
+source: repo-analysis
+source_repo: hieuck/SmartERP
+---
+
+# Smarterp Colocated Tests
+
+## Action
+
+Place test files colocated with source files
+
+## Evidence
+
+- Test location analysis shows colocated
+- *.spec.ts files alongside source files
+
+---
+id: smarterp-wip-commits-allowed
+trigger: "When making partial progress on refactoring"
+confidence: 0.7
+domain: git
+source: repo-analysis
+source_repo: hieuck/SmartERP
+---
+
+# Smarterp Wip Commits Allowed
+
+## Action
+
+Use 'wip:' prefix for work-in-progress commits during incremental refactoring
+
+## Evidence
+
+- wip: refactor email.service to SecureRepository pattern (partial)
+- Pattern of incremental refactoring commits
+
