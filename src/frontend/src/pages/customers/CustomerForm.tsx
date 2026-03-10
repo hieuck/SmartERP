@@ -1,9 +1,13 @@
+import {
+  customerService,
+  type CreateCustomerDto,
+  type UpdateCustomerDto,
+} from '@/services/crm/customerService';
+import { ArrowLeftOutlined, SaveOutlined, UserOutlined } from '@ant-design/icons';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Button, Card, Col, Form, Input, InputNumber, message, Row, Space, Typography } from 'antd';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Form, Input, InputNumber, Button, Card, Space, message, Typography, Row, Col } from 'antd';
-import { SaveOutlined, ArrowLeftOutlined, UserOutlined } from '@ant-design/icons';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import customerService, { CreateCustomerDto, UpdateCustomerDto } from '../../services/customerService';
 
 const { Title } = Typography;
 const { TextArea } = Input;
@@ -151,9 +155,7 @@ export default function CustomerForm() {
               <Button type="primary" htmlType="submit" icon={<SaveOutlined />} loading={loading}>
                 {isEdit ? 'Cập nhật' : 'Tạo mới'}
               </Button>
-              <Button onClick={() => navigate('/dashboard/customers')}>
-                Hủy
-              </Button>
+              <Button onClick={() => navigate('/dashboard/customers')}>Hủy</Button>
             </Space>
           </Form.Item>
         </Form>

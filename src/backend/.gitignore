@@ -6,6 +6,8 @@ yarn.lock
 # Build output
 dist/
 build/
+build-errors*.txt
+compilation-errors.txt
 
 # Environment
 .env
@@ -42,6 +44,17 @@ test-results/
 # Temporary files
 lint-output*.txt
 test-results*.txt
+test-output*.txt
+*.tmp
+*.log
+
+# Build artifacts
+dist/
+build/
+coverage/
+
+# Logs directory
+logs/
 
 # Misc
 *.pid

@@ -9,7 +9,6 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./backend/migrations:/docker-entrypoint-initdb.d
     ports:
       - '${POSTGRES_PORT:-5432}:5432'
     healthcheck:
@@ -36,20 +35,26 @@ services:
     networks:
       - smart-network
 
-  # API Gateway
-  api-gateway:
+  # Backend (Monolith)
+  backend:
     build:
-      context: ./backend/api-gateway
+      context: ../../src/backend
       dockerfile: Dockerfile
-    container_name: smart-erp-api-gateway
+    container_name: smart-erp-backend
     environment:
       - NODE_ENV=${NODE_ENV:-development}
       - PORT=3000
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-erp_production}
-      - REDIS_URL=redis://redis:6379
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=${POSTGRES_USER:-postgres}
+      - DB_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - DB_NAME=${POSTGRES_DB:-erp_production}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
       - JWT_SECRET=${JWT_SECRET:-your-secret-key-change-in-production}
       - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-15m}
       - REFRESH_TOKEN_EXPIRES_IN=${REFRESH_TOKEN_EXPIRES_IN:-7d}
+      - CORS_ORIGIN=*
     ports:
       - '3000:3000'
     depends_on:
@@ -58,228 +63,24 @@ services:
       redis:
         condition: service_healthy
     volumes:
-      - ./backend/api-gateway/src:/app/src:ro
+      - ../../src/backend/src:/app/src:ro
     networks:
       - smart-network
     restart: unless-stopped
 
-  # Auth Service
-  auth-service:
+  # Frontend
+  frontend:
     build:
-      context: ./backend/auth-service
+      context: ../../src/frontend
       dockerfile: Dockerfile
-    container_name: smart-erp-auth-service
+    container_name: smart-erp-frontend
     environment:
-      - NODE_ENV=${NODE_ENV:-development}
-      - PORT=3006
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-erp_production}
-      - REDIS_URL=redis://redis:6379
-      - JWT_SECRET=${JWT_SECRET:-your-secret-key-change-in-production}
+      - VITE_API_URL=http://localhost:3000/api
+      - VITE_WS_URL=ws://localhost:3000
     ports:
-      - '3006:3006'
+      - '80:80'
     depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    volumes:
-      - ./backend/auth-service/src:/app/src:ro
-    networks:
-      - smart-network
-    restart: unless-stopped
-
-  # Product Service
-  product-service:
-    build:
-      context: ./backend/product-service
-      dockerfile: Dockerfile
-    container_name: smart-erp-product-service
-    environment:
-      - NODE_ENV=${NODE_ENV:-development}
-      - PORT=3001
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-erp_production}
-      - REDIS_URL=redis://redis:6379
-    ports:
-      - '3001:3001'
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    volumes:
-      - ./backend/product-service/src:/app/src:ro
-    networks:
-      - smart-network
-    restart: unless-stopped
-
-  # Inventory Service
-  inventory-service:
-    build:
-      context: ./backend/inventory-service
-      dockerfile: Dockerfile
-    container_name: smart-erp-inventory-service
-    environment:
-      - NODE_ENV=${NODE_ENV:-development}
-      - PORT=3002
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-erp_production}
-      - REDIS_URL=redis://redis:6379
-    ports:
-      - '3002:3002'
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    volumes:
-      - ./backend/inventory-service/src:/app/src:ro
-    networks:
-      - smart-network
-    restart: unless-stopped
-
-  # Order Service
-  order-service:
-    build:
-      context: ./backend/order-service
-      dockerfile: Dockerfile
-    container_name: smart-erp-order-service
-    environment:
-      - NODE_ENV=${NODE_ENV:-development}
-      - PORT=3003
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-erp_production}
-      - REDIS_URL=redis://redis:6379
-    ports:
-      - '3003:3003'
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    volumes:
-      - ./backend/order-service/src:/app/src:ro
-    networks:
-      - smart-network
-    restart: unless-stopped
-
-  # Customer Service
-  customer-service:
-    build:
-      context: ./backend/customer-service
-      dockerfile: Dockerfile
-    container_name: smart-erp-customer-service
-    environment:
-      - NODE_ENV=${NODE_ENV:-development}
-      - PORT=3004
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-erp_production}
-      - REDIS_URL=redis://redis:6379
-    ports:
-      - '3004:3004'
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    volumes:
-      - ./backend/customer-service/src:/app/src:ro
-    networks:
-      - smart-network
-    restart: unless-stopped
-
-  # Supplier Service
-  supplier-service:
-    build:
-      context: ./backend/supplier-service
-      dockerfile: Dockerfile
-    container_name: smart-erp-supplier-service
-    environment:
-      - NODE_ENV=${NODE_ENV:-development}
-      - PORT=3005
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-erp_production}
-      - REDIS_URL=redis://redis:6379
-    ports:
-      - '3005:3005'
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    volumes:
-      - ./backend/supplier-service/src:/app/src:ro
-    networks:
-      - smart-network
-    restart: unless-stopped
-
-  # Payment Service
-  payment-service:
-    build:
-      context: ./backend/payment-service
-      dockerfile: Dockerfile
-    container_name: smart-erp-payment-service
-    environment:
-      - NODE_ENV=${NODE_ENV:-development}
-      - PORT=3007
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-erp_production}
-      - REDIS_URL=redis://redis:6379
-    ports:
-      - '3007:3007'
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    volumes:
-      - ./backend/payment-service/src:/app/src:ro
-    networks:
-      - smart-network
-    restart: unless-stopped
-
-  # Report Service
-  report-service:
-    build:
-      context: ./backend/report-service
-      dockerfile: Dockerfile
-    container_name: smart-erp-report-service
-    environment:
-      - NODE_ENV=${NODE_ENV:-development}
-      - PORT=3008
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-erp_production}
-      - REDIS_URL=redis://redis:6379
-    ports:
-      - '3008:3008'
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    volumes:
-      - ./backend/report-service/src:/app/src:ro
-    networks:
-      - smart-network
-    restart: unless-stopped
-
-  # Notification Service
-  notification-service:
-    build:
-      context: ./backend/notification-service
-      dockerfile: Dockerfile
-    container_name: smart-erp-notification-service
-    environment:
-      - NODE_ENV=${NODE_ENV:-development}
-      - PORT=3009
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-erp_production}
-      - REDIS_URL=redis://redis:6379
-      - SMTP_HOST=${SMTP_HOST:-smtp.gmail.com}
-      - SMTP_PORT=${SMTP_PORT:-587}
-      - SMTP_USER=${SMTP_USER:-}
-      - SMTP_PASSWORD=${SMTP_PASSWORD:-}
-    ports:
-      - '3009:3009'
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    volumes:
-      - ./backend/notification-service/src:/app/src:ro
+      - backend
     networks:
       - smart-network
     restart: unless-stopped

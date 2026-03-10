@@ -2,6 +2,7 @@
 .expo/
 dist/
 web-build/
+build/
 
 # Node
 node_modules/
@@ -26,6 +27,8 @@ Thumbs.db
 
 # Testing
 coverage/
+.nyc_output/
+test-results/
 
 # Build
 *.jks
@@ -38,3 +41,4 @@ coverage/
 # Temporary
 *.log
 *.tmp
+
