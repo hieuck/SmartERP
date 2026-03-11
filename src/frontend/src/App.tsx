@@ -1,10 +1,10 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
-import { lazy, Suspense } from 'react';
 import { Spin } from 'antd';
-import { RootState } from './store';
-import { useInactivityLogout } from './hooks/useInactivityLogout';
+import { lazy, Suspense } from 'react';
+import { useSelector } from 'react-redux';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import MainLayout from './components/layout/MainLayout';
+import { useInactivityLogout } from './hooks/useInactivityLogout';
+import { RootState } from './store';
 
 // Eager load critical pages
 import LoginPage from './pages/auth/LoginPage';

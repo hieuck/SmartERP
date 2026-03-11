@@ -32,7 +32,6 @@ export class SystemSetting {
   id: string;
 
   @Column()
-  @Index()
   tenantId: string;
 
   @Column({ unique: false })

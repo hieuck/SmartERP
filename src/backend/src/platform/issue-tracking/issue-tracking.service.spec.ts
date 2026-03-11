@@ -57,7 +57,7 @@ describe('IssueTrackingService', () => {
     save: jest.fn(),
     findOne: jest.fn(),
     find: jest.fn(),
-    => {
+    createQueryBuilder: jest.fn(() => {
       const queryBuilder = {
         where: jest.fn().mockReturnThis(),
         andWhere: jest.fn().mockReturnThis(),
@@ -65,7 +65,7 @@ describe('IssueTrackingService', () => {
         skip: jest.fn().mockReturnThis(),
         take: jest.fn().mockReturnThis(),
         getManyAndCount: jest.fn().mockResolvedValue([[], 0])
-  };
+      };
       return queryBuilder;
     })
   };

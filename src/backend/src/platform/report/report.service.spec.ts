@@ -261,25 +261,28 @@ describe('ReportService', () => {
         executionTime: 100,
         tenantId: 'tenant-123',
         executedBy: 'user-123'
-  } as ReportExecution;
+      } as ReportExecution;
 
-      ])
-  };
+      const mockQueryBuilder = {
+        select: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        getRawMany: jest.fn().mockResolvedValue([])
+      };
 
       const mockEntityMetadata = {
         columns: [{ propertyName: 'totalAmount' }, { propertyName: 'tenantId' }]
-  };
+      };
 
       jest.spyOn(reportRepository, 'findOne').mockResolvedValue({
         ...mockReport,
         columns: [mockColumn]
-  });
+      });
       jest.spyOn(executionRepository, 'create').mockReturnValue(mockExecution);
       jest.spyOn(executionRepository, 'save').mockResolvedValue(mockExecution);
       jest.spyOn(dataSource, 'getMetadata').mockReturnValue(mockEntityMetadata as any);
       jest.spyOn(dataSource, 'getRepository').mockReturnValue({
-        .mockReturnValue(mockQueryBuilder)
-  } as any);
+        createQueryBuilder: jest.fn().mockReturnValue(mockQueryBuilder)
+      } as any);
 
       const result = await service.execute('report-123', {}, mockUser, mockUser);
 

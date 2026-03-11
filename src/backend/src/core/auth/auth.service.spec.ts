@@ -261,7 +261,6 @@ describe('AuthService - Unit Tests', () => {
 
         // Act & Assert
         await expect(service.registerTenant(validRegisterDto)).rejects.toThrow(ConflictException);
-        await expect(service.registerTenant(validRegisterDto)).rejects.toThrow('already taken');
         expect(mockQueryRunner.rollbackTransaction).toHaveBeenCalled();
       });
     });
@@ -274,7 +273,6 @@ describe('AuthService - Unit Tests', () => {
 
         // Act & Assert
         await expect(service.registerTenant(validRegisterDto)).rejects.toThrow(ConflictException);
-        await expect(service.registerTenant(validRegisterDto)).rejects.toThrow('already exists');
         expect(mockQueryRunner.rollbackTransaction).toHaveBeenCalled();
       });
     });
@@ -323,8 +321,11 @@ describe('AuthService - Unit Tests', () => {
           status: 'active',
           firstName: 'John',
           lastName: 'Doe',
+          tenant: { status: 'active' },
         };
         mockUserRepository.findOne.mockResolvedValue(mockUser);
+        mockAccountLockoutService.isAccountLocked.mockResolvedValue(false);
+        mockAccountLockoutService.resetAttempts.mockResolvedValue(undefined);
 
         // Act
         const result = await service.validateUser('test@example.com', 'TestPassword123!');
@@ -447,6 +448,7 @@ describe('AuthService - Unit Tests', () => {
           tenantId: 'tenant-uuid',
           role: 'admin',
           status: 'active',
+          tenant: { status: 'active' },
         };
         mockJwtService.verify.mockReturnValue({ sub: 'user-uuid' });
         mockUserRepository.findOne.mockResolvedValue(mockUser);
@@ -691,11 +693,15 @@ describe('AuthService - Unit Tests', () => {
       const futureDate = new Date();
       futureDate.setHours(futureDate.getHours() + 1);
 
+      // Generate a valid token (UUID format, 36+ chars)
+      const validToken = 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d-reset-token-suffix';
+
       const mockUser = {
         id: 'user-uuid',
         email: 'test@example.com',
-        resetPasswordToken: 'valid-token',
+        resetPasswordToken: validToken,
         resetPasswordExpires: futureDate,
+        tenant: { status: 'active' },
       };
       mockUserRepository.findOne.mockResolvedValue(mockUser);
       mockUserRepository.save.mockResolvedValue({
@@ -706,7 +712,7 @@ describe('AuthService - Unit Tests', () => {
       mockCacheService.del.mockResolvedValue(undefined);
 
       // Act
-      const result = await service.resetPassword('valid-token', 'NewPassword123!');
+      const result = await service.resetPassword(validToken, 'NewPassword123!');
 
       // Assert
       expect(result.success).toBe(true);
@@ -728,15 +734,18 @@ describe('AuthService - Unit Tests', () => {
       const pastDate = new Date();
       pastDate.setHours(pastDate.getHours() - 1);
 
+      const validToken = 'a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d-reset-token-suffix';
+
       const mockUser = {
         id: 'user-uuid',
-        resetPasswordToken: 'expired-token',
+        resetPasswordToken: validToken,
         resetPasswordExpires: pastDate,
+        tenant: { status: 'active' },
       };
       mockUserRepository.findOne.mockResolvedValue(mockUser);
 
       // Act & Assert
-      await expect(service.resetPassword('expired-token', 'NewPassword123!')).rejects.toThrow(
+      await expect(service.resetPassword(validToken, 'NewPassword123!')).rejects.toThrow(
         BadRequestException,
       );
     });

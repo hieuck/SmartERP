@@ -23,7 +23,7 @@ export class EmailController {
     @CurrentUser() user: User,
     @Param('id') id: string,
   ): Promise<EmailTemplate> {
-    return this.emailService.findTemplateById(user.tenantId, id);
+    return this.emailService.findTemplateById(user, id);
   }
 
   @Post('templates')
@@ -40,12 +40,12 @@ export class EmailController {
     @Param('id') id: string,
     @Body() data: Partial<EmailTemplate>,
   ): Promise<EmailTemplate> {
-    return this.emailService.updateTemplate(user.tenantId, id, data);
+    return this.emailService.updateTemplate(user, id, data);
   }
 
   @Delete('templates/:id')
   async deleteTemplate(@CurrentUser() user: User, @Param('id') id: string): Promise<void> {
-    return this.emailService.deleteTemplate(user.tenantId, id);
+    return this.emailService.deleteTemplate(user, id);
   }
 
   // Email Sending Endpoints
@@ -58,7 +58,7 @@ export class EmailController {
     @Body('cc') cc?: string,
     @Body('bcc') bcc?: string,
   ): Promise<EmailLog> {
-    return this.emailService.sendEmail(user.tenantId, to, subject, body, cc, bcc);
+    return this.emailService.sendEmail(user, to, subject, body, cc, bcc);
   }
 
   @Post('send-template')
@@ -68,7 +68,7 @@ export class EmailController {
     @Body('templateId') templateId: string,
     @Body('variables') variables: Record<string, string>,
   ): Promise<EmailLog> {
-    return this.emailService.sendTemplateEmail(user.tenantId, to, templateId, variables);
+    return this.emailService.sendTemplateEmail(user, to, templateId, variables);
   }
 
   // Email Logs Endpoints
@@ -79,6 +79,6 @@ export class EmailController {
 
   @Get('logs/:id')
   async findLogById(@CurrentUser() user: User, @Param('id') id: string): Promise<EmailLog> {
-    return this.emailService.findLogById(user.tenantId, id);
+    return this.emailService.findLogById(user, id);
   }
 }

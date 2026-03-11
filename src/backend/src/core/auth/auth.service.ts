@@ -1,7 +1,7 @@
-import { CacheTTL, generateCacheKey } from '@/common/cache/cache.config';
-import { CacheService } from '@/common/cache/cache.service';
-import { PermissionService, User } from '@/common/security/permission.service';
-import { SecureRepository } from '@/common/security/secure-repository';
+import { CacheTTL, generateCacheKey } from '@common/cache/cache.config';
+import { CacheService } from '@common/cache/cache.service';
+import { PermissionService, User } from '@common/security/permission.service';
+import { SecureRepository } from '@common/security/secure-repository';
 import {
   BadRequestException,
   ConflictException,

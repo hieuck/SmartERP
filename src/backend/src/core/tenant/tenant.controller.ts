@@ -1,4 +1,4 @@
-import { User } from '@/common/security/permission.service';
+import { User } from '@common/security/permission.service';
 import {
   Body,
   Controller,
@@ -88,37 +88,32 @@ export class TenantController {
   // Onboarding Endpoints
   @Get(':id/onboarding/status')
   @ApiOperation({ summary: 'Get onboarding status' })
-  getOnboardingStatus(@Param('id') id: string) {
-    return this.onboardingService.getOnboardingStatus(id);
+  getOnboardingStatus(@CurrentUser() user: User) {
+    return this.onboardingService.getOnboardingStatus(user);
   }
 
   @Post(':id/onboarding/complete')
   @ApiOperation({ summary: 'Complete onboarding process' })
   completeOnboarding(
-    @Param('id') id: string,
+    @CurrentUser() user: User,
     @Body() dto: CompleteOnboardingDto,
-    @Request() req: ExpressRequest & { user?: { id: string } },
   ) {
-    return this.onboardingService.completeOnboarding(id, dto, req.user?.id);
+    return this.onboardingService.completeOnboarding(user, dto);
   }
 
   @Post(':id/onboarding/skip')
   @ApiOperation({ summary: 'Skip onboarding' })
-  skipOnboarding(
-    @Param('id') id: string,
-    @Request() req: ExpressRequest & { user?: { id: string } },
-  ) {
-    return this.onboardingService.skipOnboarding(id, req.user?.id);
+  skipOnboarding(@CurrentUser() user: User) {
+    return this.onboardingService.skipOnboarding(user);
   }
 
   @Post(':id/onboarding/invite')
   @ApiOperation({ summary: 'Invite team member' })
   inviteTeamMember(
-    @Param('id') id: string,
+    @CurrentUser() user: User,
     @Body() body: { email: string },
-    @Request() req: ExpressRequest & { user?: { id: string } },
   ) {
-    return this.onboardingService.inviteTeamMember(id, body.email, req.user?.id);
+    return this.onboardingService.inviteTeamMember(user, body.email);
   }
 
   // Subscription Management Endpoints

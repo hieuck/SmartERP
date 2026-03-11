@@ -1,7 +1,11 @@
 import { DataSource } from 'typeorm';
 import { config } from 'dotenv';
+import * as path from 'path';
 
 config();
+
+const isProduction = process.env.NODE_ENV === 'production';
+const baseDir = isProduction ? __dirname : path.join(__dirname, '..', '..');
 
 export default new DataSource({
   type: 'postgres',
@@ -10,8 +14,9 @@ export default new DataSource({
   username: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD || 'postgres',
   database: process.env.DB_NAME || 'erp_production',
-  entities: ['src/**/*.entity{.ts,.js}'],
-  migrations: ['src/migrations/*{.ts,.js}'],
+  entities: isProduction
+    ? [path.join(baseDir, 'dist/**/*.entity.js')]
+    : [path.join(baseDir, 'src/**/*.entity.ts')],
   synchronize: false,
   logging: process.env.NODE_ENV === 'development',
 });

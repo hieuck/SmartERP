@@ -125,5 +125,3 @@ export const purchaseOrderService = {
 };
 
 export default purchaseOrderService;
-
-export default purchaseOrderService;

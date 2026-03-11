@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { CacheService } from '@/common/cache/cache.service';
+import { CacheService } from '@common/cache/cache.service';
 
 /**
  * Token Blacklist Service

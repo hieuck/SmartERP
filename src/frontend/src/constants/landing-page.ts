@@ -123,6 +123,6 @@ export const TYPOGRAPHY = {
  * GA Configuration
  */
 export const GA_CONFIG = {
-  MEASUREMENT_ID: process.env.VITE_GA_MEASUREMENT_ID || 'G-XXXXXXXXXX',
+  MEASUREMENT_ID: import.meta.env.VITE_GA_MEASUREMENT_ID || 'G-XXXXXXXXXX',
   PLACEHOLDER_ID: 'G-XXXXXXXXXX',
 };

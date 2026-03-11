@@ -4,76 +4,95 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { LoggingMiddleware } from '@common/middleware/logging.middleware';
-import { MetricsMiddleware } from '@common/middleware/metrics.middleware';
-import { TenantMiddleware } from '@common/middleware/tenant.middleware';
+import { LoggingMiddleware } from './common/middleware/logging.middleware';
+import { MetricsMiddleware } from './common/middleware/metrics.middleware';
+import { TenantMiddleware } from './common/middleware/tenant.middleware';
 
-import { CustomThrottlerGuard } from '@common/guards/throttler.guard';
+import { CustomThrottlerGuard } from './common/guards/throttler.guard';
 
-import { CacheModule as CustomCacheModule } from '@common/cache/cache.module';
-import { CommonModule } from '@common/common.module';
-import { GdprModule } from '@common/gdpr/gdpr.module';
-import { LoggerModule } from '@common/logger/logger.module';
-import { MetricsModule } from '@common/metrics/metrics.module';
-import { SecurityModule } from '@common/security/security.module';
+import { CacheModule as CustomCacheModule } from './common/cache/cache.module';
+import { CommonModule } from './common/common.module';
+import { GdprModule } from './common/gdpr/gdpr.module';
+import { LoggerModule } from './common/logger/logger.module';
+import { MetricsModule } from './common/metrics/metrics.module';
+import { SecurityModule } from './common/security/security.module';
 
-import { AuthModule } from '@core/auth/auth.module';
-import { PermissionModule } from '@core/permission/permission.module';
-import { SettingsModule } from '@core/settings/settings.module';
-import { TenantModule } from '@core/tenant/tenant.module';
-import { UserModule } from '@core/user/user.module';
+import { AuthModule } from './core/auth/auth.module';
+import { PermissionModule } from './core/permission/permission.module';
+import { SettingsModule } from './core/settings/settings.module';
+import { TenantModule } from './core/tenant/tenant.module';
+import { UserModule } from './core/user/user.module';
 
-import { AccountingDomainModule } from '@domains/accounting/accounting.module';
+import { AccountingDomainModule } from './domains/accounting/accounting.module';
 
-import { SerialBatchModule } from '@domains/inventory/serial-batch/serial-batch.module';
-import { ValuationModule } from '@domains/inventory/valuation/valuation.module';
+import { SerialBatchModule } from './domains/inventory/serial-batch/serial-batch.module';
+import { ValuationModule } from './domains/inventory/valuation/valuation.module';
 
-import { AttendanceModule } from '@domains/hr/attendance/attendance.module';
-import { LeaveModule } from '@domains/hr/leave/leave.module';
-import { PayrollModule } from '@domains/hr/payroll/payroll.module';
+import { AttendanceModule } from './domains/hr/attendance/attendance.module';
+import { LeaveModule } from './domains/hr/leave/leave.module';
+import { PayrollModule } from './domains/hr/payroll/payroll.module';
 
-import { BOMModule } from '@domains/manufacturing/bom/bom.module';
-import { MaterialModule } from '@domains/manufacturing/material/material.module';
-import { MoldModule } from '@domains/manufacturing/mold/mold.module';
-import { QualityCheckModule } from '@domains/manufacturing/quality-check/quality-check.module';
-import { WorkCenterModule } from '@domains/manufacturing/work-center/work-center.module';
+import { BOMModule } from './domains/manufacturing/bom/bom.module';
+import { MaterialModule } from './domains/manufacturing/material/material.module';
+import { MoldModule } from './domains/manufacturing/mold/mold.module';
+import { QualityCheckModule } from './domains/manufacturing/quality-check/quality-check.module';
+import { WorkCenterModule } from './domains/manufacturing/work-center/work-center.module';
 
-import { OrderModule as EcommerceOrderModule } from '@domains/ecommerce/order/order.module';
-import { ProductCatalogModule } from '@domains/ecommerce/product-catalog/product-catalog.module';
-import { ShoppingCartModule } from '@domains/ecommerce/shopping-cart/shopping-cart.module';
+import { OrderModule as EcommerceOrderModule } from './domains/ecommerce/order/order.module';
+import { ProductCatalogModule } from './domains/ecommerce/product-catalog/product-catalog.module';
+import { ShoppingCartModule } from './domains/ecommerce/shopping-cart/shopping-cart.module';
 
-import { ProjectModule } from '@domains/project/project.module';
+import { ProjectModule } from './domains/project/project.module';
 
-import { AuditModule } from '@platform/audit/audit.module';
-import { DashboardModule } from '@platform/dashboard/dashboard.module';
-import { DocumentModule } from '@platform/document/document.module';
-import { EmailModule } from '@platform/email/email.module';
-import { IssueTrackingModule } from '@platform/issue-tracking/issue-tracking.module';
-import { NotificationModule } from '@platform/notification/notification.module';
-import { ReportModule } from '@platform/report/report.module';
-import { SearchModule } from '@platform/search/search.module';
-import { SupportModule } from '@platform/support/support.module';
-import { SystemAdminModule } from '@platform/system-admin/system-admin.module';
-import { WorkflowModule } from '@platform/workflow/workflow.module';
+import { AuditModule } from './platform/audit/audit.module';
+import { DashboardModule } from './platform/dashboard/dashboard.module';
+import { DocumentModule } from './platform/document/document.module';
+import { EmailModule } from './platform/email/email.module';
+import { IssueTrackingModule } from './platform/issue-tracking/issue-tracking.module';
+import { NotificationModule } from './platform/notification/notification.module';
+import { ReportModule } from './platform/report/report.module';
+import { SearchModule } from './platform/search/search.module';
+import { SupportModule } from './platform/support/support.module';
+import { SystemAdminModule } from './platform/system-admin/system-admin.module';
+import { WorkflowModule } from './platform/workflow/workflow.module';
 
-import { IntegrationModule } from '@integrations/integration/integration.module';
-import { PaymentGatewayModule } from '@integrations/payment-gateway/payment-gateway.module';
-import { ShippingModule } from '@integrations/shipping/shipping.module';
+import { IntegrationModule } from './integrations/integration/integration.module';
+import { PaymentGatewayModule } from './integrations/payment-gateway/payment-gateway.module';
+import { ShippingModule } from './integrations/shipping/shipping.module';
 
-import { HealthModule } from '@utilities/health/health.module';
-import { ImportExportModule } from '@utilities/import-export/import-export.module';
-import { ScheduledJobsModule } from '@utilities/scheduled-jobs/scheduled-jobs.module';
-import { SeedModule } from '@utilities/seed/seed.module';
+import { getCacheConfig } from './config/cache.config';
+import { HealthModule } from './utilities/health/health.module';
+import { ImportExportModule } from './utilities/import-export/import-export.module';
+import { ScheduledJobsModule } from './utilities/scheduled-jobs/scheduled-jobs.module';
+import { SeedModule } from './utilities/seed/seed.module';
 
-const ProductModule = { module: class ProductModule {} };
-const InventoryModule = { module: class InventoryModule {} };
-const CustomerModule = { module: class CustomerModule {} };
-const SupplierModule = { module: class SupplierModule {} };
-const PaymentModule = { module: class PaymentModule {} };
-const CrmModule = { module: class CrmModule {} };
-const HrModule = { module: class HrModule {} };
-const CategoryModule = { module: class CategoryModule {} };
-const RoleModule = { module: class RoleModule {} };
+// Placeholder modules - to be implemented
+@Module({})
+class ProductModule {}
+
+@Module({})
+class InventoryModule {}
+
+@Module({})
+class CustomerModule {}
+
+@Module({})
+class SupplierModule {}
+
+@Module({})
+class PaymentModule {}
+
+@Module({})
+class CrmModule {}
+
+@Module({})
+class HrModule {}
+
+@Module({})
+class CategoryModule {}
+
+@Module({})
+class RoleModule {}
 
 @Module({
   imports: [
@@ -84,28 +103,33 @@ const RoleModule = { module: class RoleModule {} };
 
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        type: 'postgres',
-        host: configService.get('DB_HOST', 'localhost'),
-        port: configService.get('DB_PORT', 5432),
-        username: configService.get('DB_USER', 'postgres'),
-        password: configService.get('DB_PASSWORD', 'postgres'),
-        database: configService.get('DB_NAME', 'smarterp'),
-        entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-        synchronize:
-          configService.get('NODE_ENV') === 'test' || configService.get('DB_SYNC') === 'true',
-        logging: configService.get('NODE_ENV') === 'development',
-      }),
+      useFactory: (configService: ConfigService) => {
+        const isProduction = configService.get('NODE_ENV') === 'production';
+        return {
+          type: 'postgres',
+          host: configService.get('DB_HOST', 'localhost'),
+          port: configService.get('DB_PORT', 5432),
+          username: configService.get('DB_USER', 'postgres'),
+          password: configService.get('DB_PASSWORD', 'postgres'),
+          database: configService.get('DB_NAME', 'erp_production'),
+          entities: isProduction
+            ? [__dirname + '/dist/**/*.entity.js']
+            : [__dirname + '/../**/*.entity.ts'],
+          synchronize: false,
+          logging: configService.get('NODE_ENV') === 'development',
+          migrations: isProduction
+            ? [__dirname + '/dist/migrations/*.js']
+            : [__dirname + '/../migrations/*.ts'],
+          migrationsRun: isProduction,
+        };
+      },
       inject: [ConfigService],
     }),
 
     CacheModule.registerAsync({
       isGlobal: true,
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => {
-        const { getCacheConfig } = await import('@config/cache.config');
-        return getCacheConfig(configService);
-      },
+      useFactory: getCacheConfig,
       inject: [ConfigService],
     }),
 
@@ -166,15 +190,15 @@ const RoleModule = { module: class RoleModule {} };
     ScheduledJobsModule,
     SeedModule,
 
-    ProductModule.module,
-    InventoryModule.module,
-    CustomerModule.module,
-    SupplierModule.module,
-    PaymentModule.module,
-    CrmModule.module,
-    HrModule.module,
-    CategoryModule.module,
-    RoleModule.module,
+    ProductModule,
+    InventoryModule,
+    CustomerModule,
+    SupplierModule,
+    PaymentModule,
+    CrmModule,
+    HrModule,
+    CategoryModule,
+    RoleModule,
   ],
   providers: [
     {

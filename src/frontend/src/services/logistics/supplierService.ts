@@ -132,3 +132,5 @@ export const supplierService = {
     return supplierService.delete(id);
   },
 };
+
+export default supplierService;

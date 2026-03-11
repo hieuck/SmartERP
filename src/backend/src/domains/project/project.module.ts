@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { SecurityModule } from '@common/security/security.module';
 import { ProjectService } from './project.service';
 import { TaskService } from './task.service';
 import { TimeTrackingService } from './time-tracking.service';
@@ -19,6 +20,7 @@ import { TimeEntry } from './entities/time-entry.entity';
       TaskDependency,
       TimeEntry,
     ]),
+    SecurityModule,
   ],
   controllers: [
     ProjectController,

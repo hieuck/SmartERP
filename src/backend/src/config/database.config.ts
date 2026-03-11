@@ -1,5 +1,5 @@
-import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
+import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 
 /**
  * Database Configuration with Optimized Connection Pooling
@@ -22,7 +22,7 @@ export const getDatabaseConfig = (configService: ConfigService): TypeOrmModuleOp
     port: configService.get('DB_PORT', 5432),
     username: configService.get('DB_USER', 'postgres'),
     password: configService.get('DB_PASSWORD', 'postgres'),
-    database: configService.get('DB_NAME', 'smarterp'),
+    database: configService.get('DB_NAME', 'erp_production'),
     entities: [__dirname + '/../**/*.entity{.ts,.js}'],
 
     // Synchronize only in test environment

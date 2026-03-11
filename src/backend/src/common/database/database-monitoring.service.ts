@@ -114,7 +114,7 @@ export class DatabaseMonitoringService {
       const sizeMB = sizeBytes / (1024 * 1024);
 
       this.metricsService.recordGauge('database_size_bytes', sizeBytes, {
-        database: 'smarterp',
+        database: (this.dataSource.options as any).database || 'unknown',
       });
 
       this.logger.debug(`Database size: ${sizeMB.toFixed(2)} MB`);

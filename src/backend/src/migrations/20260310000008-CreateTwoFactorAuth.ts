@@ -33,7 +33,6 @@ export class CreateTwoFactorAuth1741700000008 implements MigrationInterface {
           {
             name: 'backup_codes',
             type: 'text',
-            isArray: true,
             isNullable: false,
           },
           {

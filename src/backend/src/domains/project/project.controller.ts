@@ -16,10 +16,10 @@ import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { Project, ProjectStatus } from './entities/project.entity';
 import { JwtAuthGuard } from '../../core/auth/guards/jwt-auth.guard';
-import { RolesGuard } from '@/common/guards/roles.guard';
-import { Roles } from '@/common/decorators/roles.decorator';
+import { RolesGuard } from '@common/guards/roles.guard';
+import { Roles } from '@common/decorators/roles.decorator';
 
-import { User } from '@/common/security/permission.service';
+import { User } from '@common/security/permission.service';
 @ApiTags('projects')
 @ApiBearerAuth()
 @Controller('projects')
@@ -34,7 +34,7 @@ export class ProjectController {
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async create(@Body() dto: CreateProjectDto, @Request() req): Promise<Project> {
-    return this.projectService.create(dto, req.user.tenantId, req.user);
+    return this.projectService.create(dto, req.user);
   }
 
   @Get()
@@ -48,7 +48,7 @@ export class ProjectController {
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
   ): Promise<Project[]> {
-    return this.projectService.findAll(req.user.tenantId, {
+    return this.projectService.findAll(req.user, {
       status,
       projectManagerId,
       startDate: startDate ? new Date(startDate) : undefined,
@@ -74,7 +74,7 @@ export class ProjectController {
     projectsByStatus: Record<ProjectStatus, number>;
   }> {
     return this.projectService.getStatistics(
-      req.user.tenantId,
+      req.user,
       startDate ? new Date(startDate) : undefined,
       endDate ? new Date(endDate) : undefined,
     );
@@ -86,7 +86,7 @@ export class ProjectController {
   @ApiResponse({ status: 200, description: 'Project retrieved successfully', type: Project })
   @ApiResponse({ status: 404, description: 'Project not found' })
   async findOne(@Param('id') id: string, @Request() req): Promise<Project> {
-    return this.projectService.findOne(id, req.user.tenantId);
+    return this.projectService.findOne(id, req.user);
   }
 
   @Get('code/:code')
@@ -95,7 +95,7 @@ export class ProjectController {
   @ApiResponse({ status: 200, description: 'Project retrieved successfully', type: Project })
   @ApiResponse({ status: 404, description: 'Project not found' })
   async findByCode(@Param('code') code: string, @Request() req): Promise<Project> {
-    return this.projectService.findByCode(code, req.user.tenantId);
+    return this.projectService.findByCode(code, req.user);
   }
 
   @Put(':id')
@@ -108,7 +108,7 @@ export class ProjectController {
     @Body() dto: UpdateProjectDto,
     @Request() req,
   ): Promise<Project> {
-    return this.projectService.update(id, dto, req.user.tenantId, req.user);
+    return this.projectService.update(id, dto, req.user);
   }
 
   @Put(':id/status')
@@ -121,7 +121,7 @@ export class ProjectController {
     @Body('status') status: ProjectStatus,
     @Request() req,
   ): Promise<Project> {
-    return this.projectService.updateStatus(id, status, req.user.tenantId, req.user);
+    return this.projectService.updateStatus(id, status, req.user);
   }
 
   @Put(':id/progress')
@@ -134,7 +134,7 @@ export class ProjectController {
     @Body('progress') progress: number,
     @Request() req,
   ): Promise<Project> {
-    return this.projectService.updateProgress(id, progress, req.user.tenantId, req.user);
+    return this.projectService.updateProgress(id, progress, req.user);
   }
 
   @Delete(':id')
@@ -143,6 +143,6 @@ export class ProjectController {
   @ApiResponse({ status: 200, description: 'Project deleted successfully' })
   @ApiResponse({ status: 404, description: 'Project not found' })
   async remove(@Param('id') id: string, @Request() req): Promise<void> {
-    return this.projectService.remove(id, req.user.tenantId, req.user);
+    return this.projectService.remove(id, req.user);
   }
 }

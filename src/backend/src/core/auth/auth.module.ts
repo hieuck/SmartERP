@@ -1,5 +1,5 @@
-import { CacheModule } from '@/common/cache/cache.module';
-import { SecurityModule } from '@/common/security/security.module';
+import { CacheModule } from '@common/cache/cache.module';
+import { SecurityModule } from '@common/security/security.module';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';

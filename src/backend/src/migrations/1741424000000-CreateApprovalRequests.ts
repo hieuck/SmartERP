@@ -37,8 +37,8 @@ export class CreateApprovalRequests1741424000000 implements MigrationInterface {
           },
           {
             name: 'status',
-            type: 'enum',
-            enum: ['pending', 'approved', 'rejected', 'cancelled'],
+            type: 'varchar',
+            length: '50',
             default: "'pending'",
             isNullable: false,
           },

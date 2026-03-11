@@ -107,11 +107,6 @@ describe('ShoppingCartService', () => {
         },
       ],
     }).compile();
-          provide: getRepositoryToken(ProductCatalog),
-          useValue: mockProductRepository,
-        },
-      ],
-    }).compile();
 
     service = module.get<ShoppingCartService>(ShoppingCartService);
     cartRepository = module.get<Repository<ShoppingCart>>(getRepositoryToken(ShoppingCart));

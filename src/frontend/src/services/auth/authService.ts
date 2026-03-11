@@ -3,9 +3,9 @@ import api from './api';
 export interface RegisterRequest {
   email: string;
   password: string;
-  firstName: string;
-  lastName: string;
-  tenantId: string;
+  fullName: string;
+  companyName: string;
+  phone: string;
 }
 
 export interface LoginRequest {
@@ -53,9 +53,7 @@ export const authService = {
       const response = await api.post('/auth/register', data);
       return response.data;
     } catch (error: any) {
-      throw new Error(
-        error?.response?.data?.message || 'Registration failed'
-      );
+      throw new Error(error?.response?.data?.message || 'Registration failed');
     }
   },
 
@@ -78,9 +76,7 @@ export const authService = {
       } else if (error?.response?.status === 429) {
         throw new Error('Too many login attempts. Please try again later.');
       }
-      throw new Error(
-        error?.response?.data?.message || 'Login failed'
-      );
+      throw new Error(error?.response?.data?.message || 'Login failed');
     }
   },
 
@@ -103,16 +99,12 @@ export const authService = {
    * @returns New tokens
    * @throws Error if refresh fails
    */
-  refreshToken: async (
-    refreshToken: string,
-  ): Promise<{ token: string; refreshToken?: string }> => {
+  refreshToken: async (refreshToken: string): Promise<{ token: string; refreshToken?: string }> => {
     try {
       const response = await api.post('/auth/refresh', { refreshToken });
       return response.data;
     } catch (error: any) {
-      throw new Error(
-        error?.response?.data?.message || 'Token refresh failed'
-      );
+      throw new Error(error?.response?.data?.message || 'Token refresh failed');
     }
   },
 
@@ -126,9 +118,7 @@ export const authService = {
       const response = await api.get('/auth/me');
       return response.data;
     } catch (error: any) {
-      throw new Error(
-        error?.response?.data?.message || 'Failed to fetch user info'
-      );
+      throw new Error(error?.response?.data?.message || 'Failed to fetch user info');
     }
   },
 
@@ -141,9 +131,7 @@ export const authService = {
     try {
       await api.post('/auth/change-password', data);
     } catch (error: any) {
-      throw new Error(
-        error?.response?.data?.message || 'Password change failed'
-      );
+      throw new Error(error?.response?.data?.message || 'Password change failed');
     }
   },
 };

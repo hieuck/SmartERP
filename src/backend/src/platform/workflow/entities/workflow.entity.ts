@@ -7,11 +7,13 @@ import {
   DeleteDateColumn,
 } from 'typeorm';
 
-export enum WorkflowStatus {
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
-  DRAFT = 'draft',
-}
+export const WorkflowStatus = {
+  ACTIVE: 'active',
+  INACTIVE: 'inactive',
+  DRAFT: 'draft',
+} as const;
+
+export type WorkflowStatus = (typeof WorkflowStatus)[keyof typeof WorkflowStatus];
 
 @Entity('workflows')
 export class Workflow {

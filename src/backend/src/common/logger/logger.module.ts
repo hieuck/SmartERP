@@ -3,6 +3,7 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggingInterceptor } from './logging.interceptor';
 import { MetricsController } from './metrics.controller';
 import { AlertService } from './alert.service';
+import { LoggerService } from './logger.service';
 
 /**
  * Logger Module
@@ -17,12 +18,13 @@ import { AlertService } from './alert.service';
 @Module({
   controllers: [MetricsController],
   providers: [
+    LoggerService,
     AlertService,
     {
       provide: APP_INTERCEPTOR,
       useClass: LoggingInterceptor,
     },
   ],
-  exports: [AlertService],
+  exports: [LoggerService, AlertService],
 })
 export class LoggerModule {}

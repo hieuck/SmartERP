@@ -77,8 +77,8 @@ export class CreateEcommerceProductCatalogCart20260307215647
           },
           {
             name: 'status',
-            type: 'enum',
-            enum: ['draft', 'active', 'inactive', 'out_of_stock'],
+            type: 'varchar',
+            length: '50',
             default: "'draft'",
           },
           {
@@ -252,8 +252,8 @@ export class CreateEcommerceProductCatalogCart20260307215647
           },
           {
             name: 'status',
-            type: 'enum',
-            enum: ['active', 'abandoned', 'converted', 'expired'],
+            type: 'varchar',
+            length: '50',
             default: "'active'",
           },
           {

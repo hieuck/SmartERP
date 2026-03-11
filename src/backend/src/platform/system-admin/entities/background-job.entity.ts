@@ -31,7 +31,6 @@ export class BackgroundJob {
   id: string;
 
   @Column()
-  @Index()
   tenantId: string;
 
   @Column()

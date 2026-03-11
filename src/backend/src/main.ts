@@ -1,16 +1,17 @@
-import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import helmet from 'helmet';
-import * as compression from 'compression';
-import { AppModule } from './app.module';
-import { LoggerService } from '@common/logger/logger.service';
 import { HttpExceptionFilter } from '@common/filters/http-exception.filter';
 import { CorrelationIdInterceptor } from '@common/interceptors/correlation-id.interceptor';
 import { QueryPerformanceInterceptor } from '@common/interceptors/query-performance.interceptor';
-import { MetricsService } from '@common/metrics/metrics.service';
+import { LoggerService } from '@common/logger/logger.service';
 import { MetricsInterceptor } from '@common/metrics/metrics.interceptor';
+import { MetricsService } from '@common/metrics/metrics.service';
 import { ResponseTransformInterceptor } from '@common/response/field-filter.interceptor';
+import { ValidationPipe } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import * as compression from 'compression';
+import helmet from 'helmet';
+import 'tsconfig-paths/register';
+import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -60,7 +61,7 @@ async function bootstrap() {
   );
 
   app.enableCors({
-    origin: process.env.CORS_ORIGIN || '*',
+    origin: process.env.CORS_ORIGIN || 'http://localhost:5175',
     credentials: true,
   });
 

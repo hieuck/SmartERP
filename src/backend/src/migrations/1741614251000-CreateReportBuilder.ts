@@ -30,14 +30,14 @@ export class CreateReportBuilder1741614251000 implements MigrationInterface {
           },
           {
             name: 'type',
-            type: 'enum',
-            enum: ['table', 'chart', 'pivot'],
+            type: 'varchar',
+            length: '50',
             default: "'table'",
           },
           {
             name: 'chartType',
-            type: 'enum',
-            enum: ['bar', 'line', 'pie', 'area', 'donut'],
+            type: 'varchar',
+            length: '50',
             isNullable: true,
           },
           {
@@ -103,18 +103,12 @@ export class CreateReportBuilder1741614251000 implements MigrationInterface {
     );
 
     // Create indexes for reports
-    await queryRunner.query(
-      `CREATE INDEX "IDX_reports_tenantId" ON "reports" ("tenantId")`,
-    );
-    await queryRunner.query(
-      `CREATE INDEX "IDX_reports_reference" ON "reports" ("reference")`,
-    );
+    await queryRunner.query(`CREATE INDEX "IDX_reports_tenantId" ON "reports" ("tenantId")`);
+    await queryRunner.query(`CREATE INDEX "IDX_reports_reference" ON "reports" ("reference")`);
     await queryRunner.query(
       `CREATE INDEX "IDX_reports_sourceEntity" ON "reports" ("sourceEntity")`,
     );
-    await queryRunner.query(
-      `CREATE INDEX "IDX_reports_isPublic" ON "reports" ("isPublic")`,
-    );
+    await queryRunner.query(`CREATE INDEX "IDX_reports_isPublic" ON "reports" ("isPublic")`);
 
     // Create foreign key for createdBy
     await queryRunner.createForeignKey(
@@ -153,14 +147,14 @@ export class CreateReportBuilder1741614251000 implements MigrationInterface {
           },
           {
             name: 'type',
-            type: 'enum',
-            enum: ['text', 'number', 'date', 'datetime', 'boolean', 'currency', 'percentage'],
+            type: 'varchar',
+            length: '50',
             default: "'text'",
           },
           {
             name: 'aggregation',
-            type: 'enum',
-            enum: ['none', 'sum', 'avg', 'count', 'min', 'max'],
+            type: 'varchar',
+            length: '50',
             default: "'none'",
           },
           {
@@ -234,8 +228,8 @@ export class CreateReportBuilder1741614251000 implements MigrationInterface {
           },
           {
             name: 'status',
-            type: 'enum',
-            enum: ['pending', 'running', 'completed', 'failed'],
+            type: 'varchar',
+            length: '50',
             default: "'pending'",
           },
           {

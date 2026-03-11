@@ -8,6 +8,9 @@ export enum SettingDataType {
   JSON = 'JSON',
 }
 
+// Alias for backward compatibility
+export type SettingType = SettingDataType;
+
 // Sync with backend: SettingCategory
 export enum SettingCategory {
   GENERAL = 'GENERAL',

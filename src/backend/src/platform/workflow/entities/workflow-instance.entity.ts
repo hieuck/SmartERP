@@ -6,13 +6,15 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-export enum WorkflowInstanceStatus {
-  PENDING = 'pending',
-  IN_PROGRESS = 'in_progress',
-  APPROVED = 'approved',
-  REJECTED = 'rejected',
-  CANCELLED = 'cancelled',
-}
+export const WorkflowInstanceStatus = {
+  PENDING: 'pending',
+  IN_PROGRESS: 'in_progress',
+  APPROVED: 'approved',
+  REJECTED: 'rejected',
+  CANCELLED: 'cancelled',
+} as const;
+
+export type WorkflowInstanceStatus = typeof WorkflowInstanceStatus[keyof typeof WorkflowInstanceStatus];
 
 @Entity('workflow_instances')
 export class WorkflowInstance {

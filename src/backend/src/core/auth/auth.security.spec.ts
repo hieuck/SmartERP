@@ -4,8 +4,8 @@ import { AccountLockoutService } from './services/account-lockout.service';
 import { TokenBlacklistService } from './services/token-blacklist.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
-import { UserEntity } from '../user/entities/user.entity';
-import { TenantEntity } from '../tenant/entities/tenant.entity';
+import { User } from '../user/entities/user.entity';
+import { Tenant } from '../tenant/entities/tenant.entity';
 
 describe('AuthService - Security Tests', () => {
   let authService: AuthService;
@@ -35,11 +35,11 @@ describe('AuthService - Security Tests', () => {
         AccountLockoutService,
         TokenBlacklistService,
         {
-          provide: getRepositoryToken(UserEntity),
+          provide: getRepositoryToken(User),
           useValue: mockUserRepository,
         },
         {
-          provide: getRepositoryToken(TenantEntity),
+          provide: getRepositoryToken(Tenant),
           useValue: mockTenantRepository,
         },
         {

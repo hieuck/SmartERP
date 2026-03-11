@@ -1,8 +1,27 @@
-import { Link, useNavigate } from 'react-router-dom';
-import { Layout, Form, Input, Button, Typography, Card, Row, Col, Checkbox, Space, message } from 'antd';
-import { UserOutlined, MailOutlined, PhoneOutlined, LockOutlined, ShopOutlined, GlobalOutlined } from '@ant-design/icons';
-import { useDispatch } from 'react-redux';
+import {
+  GlobalOutlined,
+  LockOutlined,
+  MailOutlined,
+  PhoneOutlined,
+  ShopOutlined,
+  UserOutlined,
+} from '@ant-design/icons';
 import { useMutation } from '@tanstack/react-query';
+import {
+  Button,
+  Card,
+  Checkbox,
+  Col,
+  Form,
+  Input,
+  Layout,
+  Row,
+  Space,
+  Typography,
+  message,
+} from 'antd';
+import { useDispatch } from 'react-redux';
+import { Link, useNavigate } from 'react-router-dom';
 import { authService } from '../../services/auth/authService';
 import { setCredentials } from '../../store/slices/authSlice';
 
@@ -42,26 +61,28 @@ export default function RegisterPage() {
       return authService.register({
         email: values.email,
         password: values.password,
-        firstName: values.fullName.split(' ')[0],
-        lastName: values.fullName.split(' ').slice(1).join(' '),
-        tenantId: values.slug,
+        fullName: values.fullName,
+        companyName: values.companyName,
+        phone: values.phone,
       });
     },
     onSuccess: (data) => {
-      dispatch(setCredentials({
-        user: {
-          ...data.user,
-          username: data.user.email,
-          roles: [data.user.role],
-        },
-        accessToken: data.token,
-        refreshToken: data.refreshToken || data.token,
-      }));
+      dispatch(
+        setCredentials({
+          user: {
+            ...data.user,
+            username: data.user.email,
+            roles: [data.user.role],
+          },
+          accessToken: data.token,
+          refreshToken: data.refreshToken || data.token,
+        }),
+      );
       message.success('Đăng ký thành công! Chào mừng bạn đến với SmartERP.');
       setTimeout(() => navigate('/dashboard', { replace: true }), 1500);
     },
     onError: (error: any) => {
-      const errorMsg = error.response?.data?.message || 'Đăng ký thất bại. Vui lòng thử lại.';
+      const errorMsg = error.message || 'Đăng ký thất bại. Vui lòng thử lại.';
       message.error(errorMsg);
     },
   });
@@ -72,12 +93,28 @@ export default function RegisterPage() {
 
   return (
     <Layout style={{ minHeight: '100vh', background: '#f0f2f5' }}>
-      <Header style={{ background: '#fff', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', padding: '0 24px' }}>
+      <Header
+        style={{ background: '#fff', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', padding: '0 24px' }}
+      >
         <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 8, height: '100%' }}>
-          <div style={{ width: 32, height: 32, background: '#1890ff', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Text strong style={{ color: '#fff', fontSize: 20 }}>P</Text>
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              background: '#1890ff',
+              borderRadius: 8,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Text strong style={{ color: '#fff', fontSize: 20 }}>
+              P
+            </Text>
           </div>
-          <Text strong style={{ fontSize: 20, color: '#000' }}>SmartERP</Text>
+          <Text strong style={{ fontSize: 20, color: '#000' }}>
+            SmartERP
+          </Text>
         </Link>
       </Header>
 
@@ -86,7 +123,9 @@ export default function RegisterPage() {
           <Col xs={24} sm={20} md={16} lg={12} xl={10}>
             <Card style={{ borderRadius: 16, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
               <div style={{ textAlign: 'center', marginBottom: 32 }}>
-                <Title level={2} style={{ marginBottom: 8 }}>Đăng ký dùng thử miễn phí</Title>
+                <Title level={2} style={{ marginBottom: 8 }}>
+                  Đăng ký dùng thử miễn phí
+                </Title>
                 <Paragraph style={{ color: '#595959', fontSize: 16 }}>
                   14 ngày dùng thử, không cần thẻ tín dụng
                 </Paragraph>
@@ -99,7 +138,9 @@ export default function RegisterPage() {
                 autoComplete="off"
                 requiredMark={false}
               >
-                <Title level={4} style={{ marginBottom: 16 }}>Thông tin công ty</Title>
+                <Title level={4} style={{ marginBottom: 16 }}>
+                  Thông tin công ty
+                </Title>
 
                 <Form.Item
                   name="companyName"
@@ -119,30 +160,34 @@ export default function RegisterPage() {
                   label="Tên miền (subdomain)"
                   rules={[
                     { required: true, message: 'Vui lòng nhập tên miền' },
-                    { pattern: /^[a-z0-9-]+$/, message: 'Tên miền chỉ chứa chữ thường, số và dấu gạch ngang' }
+                    {
+                      pattern: /^[a-z0-9-]+$/,
+                      message: 'Tên miền chỉ chứa chữ thường, số và dấu gạch ngang',
+                    },
                   ]}
                   extra="Đây sẽ là địa chỉ truy cập hệ thống của bạn"
                 >
-                  <Input
-                    prefix={<GlobalOutlined />}
-                    addonAfter=".smarterp.vn"
-                    placeholder="cong-ty-abc"
-                    size="large"
-                  />
+                  <Space.Compact style={{ width: '100%' }}>
+                    <Input
+                      prefix={<GlobalOutlined />}
+                      placeholder="cong-ty-abc"
+                      size="large"
+                      style={{ flex: 1 }}
+                    />
+                    <Input value=".smarterp.vn" disabled size="large" style={{ width: 120 }} />
+                  </Space.Compact>
                 </Form.Item>
 
-                <Title level={4} style={{ marginTop: 24, marginBottom: 16 }}>Thông tin cá nhân</Title>
+                <Title level={4} style={{ marginTop: 24, marginBottom: 16 }}>
+                  Thông tin cá nhân
+                </Title>
 
                 <Form.Item
                   name="fullName"
                   label="Họ và tên"
                   rules={[{ required: true, message: 'Vui lòng nhập họ tên' }]}
                 >
-                  <Input
-                    prefix={<UserOutlined />}
-                    placeholder="Nguyễn Văn A"
-                    size="large"
-                  />
+                  <Input prefix={<UserOutlined />} placeholder="Nguyễn Văn A" size="large" />
                 </Form.Item>
 
                 <Form.Item
@@ -150,14 +195,10 @@ export default function RegisterPage() {
                   label="Email"
                   rules={[
                     { required: true, message: 'Vui lòng nhập email' },
-                    { type: 'email', message: 'Email không hợp lệ' }
+                    { type: 'email', message: 'Email không hợp lệ' },
                   ]}
                 >
-                  <Input
-                    prefix={<MailOutlined />}
-                    placeholder="email@example.com"
-                    size="large"
-                  />
+                  <Input prefix={<MailOutlined />} placeholder="email@example.com" size="large" />
                 </Form.Item>
 
                 <Form.Item
@@ -165,14 +206,10 @@ export default function RegisterPage() {
                   label="Số điện thoại"
                   rules={[
                     { required: true, message: 'Vui lòng nhập số điện thoại' },
-                    { pattern: /^[0-9]{10,11}$/, message: 'Số điện thoại không hợp lệ' }
+                    { pattern: /^[0-9]{10,11}$/, message: 'Số điện thoại không hợp lệ' },
                   ]}
                 >
-                  <Input
-                    prefix={<PhoneOutlined />}
-                    placeholder="0912345678"
-                    size="large"
-                  />
+                  <Input prefix={<PhoneOutlined />} placeholder="0912345678" size="large" />
                 </Form.Item>
 
                 <Form.Item
@@ -180,14 +217,14 @@ export default function RegisterPage() {
                   label="Mật khẩu"
                   rules={[
                     { required: true, message: 'Vui lòng nhập mật khẩu' },
-                    { min: 8, message: 'Mật khẩu phải có ít nhất 8 ký tự' }
+                    { min: 8, message: 'Mật khẩu phải có ít nhất 8 ký tự' },
+                    {
+                      pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+                      message: 'Mật khẩu phải chứa ít nhất một chữ hoa, một chữ thường và một số',
+                    },
                   ]}
                 >
-                  <Input.Password
-                    prefix={<LockOutlined />}
-                    placeholder="••••••••"
-                    size="large"
-                  />
+                  <Input.Password prefix={<LockOutlined />} placeholder="••••••••" size="large" />
                 </Form.Item>
 
                 <Form.Item
@@ -206,22 +243,30 @@ export default function RegisterPage() {
                     }),
                   ]}
                 >
-                  <Input.Password
-                    prefix={<LockOutlined />}
-                    placeholder="••••••••"
-                    size="large"
-                  />
+                  <Input.Password prefix={<LockOutlined />} placeholder="••••••••" size="large" />
                 </Form.Item>
 
                 <Form.Item
                   name="terms"
                   valuePropName="checked"
                   rules={[
-                    { validator: (_, value) => value ? Promise.resolve() : Promise.reject(new Error('Vui lòng đồng ý với điều khoản')) }
+                    {
+                      validator: (_, value) =>
+                        value
+                          ? Promise.resolve()
+                          : Promise.reject(new Error('Vui lòng đồng ý với điều khoản')),
+                    },
                   ]}
                 >
                   <Checkbox>
-                    Tôi đồng ý với <a href="#" style={{ color: '#1890ff' }}>Điều khoản dịch vụ</a> và <a href="#" style={{ color: '#1890ff' }}>Chính sách bảo mật</a>
+                    Tôi đồng ý với{' '}
+                    <a href="#" style={{ color: '#1890ff' }}>
+                      Điều khoản dịch vụ
+                    </a>{' '}
+                    và{' '}
+                    <a href="#" style={{ color: '#1890ff' }}>
+                      Chính sách bảo mật
+                    </a>
                   </Checkbox>
                 </Form.Item>
 
@@ -251,7 +296,9 @@ export default function RegisterPage() {
             </Card>
 
             <Card style={{ marginTop: 24, borderRadius: 16, background: '#f6f8fa' }}>
-              <Title level={5} style={{ marginBottom: 16 }}>Bạn sẽ nhận được:</Title>
+              <Title level={5} style={{ marginBottom: 16 }}>
+                Bạn sẽ nhận được:
+              </Title>
               <Space direction="vertical" size="small">
                 <Text>✓ 14 ngày dùng thử miễn phí</Text>
                 <Text>✓ Không cần thẻ tín dụng</Text>

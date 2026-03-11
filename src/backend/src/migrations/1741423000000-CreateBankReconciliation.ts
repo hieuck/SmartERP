@@ -41,8 +41,8 @@ export class CreateBankReconciliation1741423000000 implements MigrationInterface
           },
           {
             name: 'status',
-            type: 'enum',
-            enum: ['draft', 'reconciled'],
+            type: 'varchar',
+            length: '50',
             default: "'draft'",
           },
           {

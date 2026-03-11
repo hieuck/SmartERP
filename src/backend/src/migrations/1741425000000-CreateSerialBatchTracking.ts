@@ -44,8 +44,8 @@ export class CreateSerialBatchTracking1741425000000 implements MigrationInterfac
           },
           {
             name: 'status',
-            type: 'enum',
-            enum: ['available', 'sold', 'damaged'],
+            type: 'varchar',
+            length: '50',
             default: "'available'",
             isNullable: false,
           },

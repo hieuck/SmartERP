@@ -21,7 +21,7 @@ describe('DashboardService', () => {
 
   const mockOrderRepository = {
     remove: jest.fn().mockResolvedValue(undefined),
-    save: jest.fn((data) => Promise.resolve({ id: \'1\', ...data })),
+    save: jest.fn((data) => Promise.resolve({ id: '1', ...data })),
     findOne: jest.fn().mockResolvedValue(null),
     find: jest.fn().mockResolvedValue([]),
     count: jest.fn(),
@@ -29,7 +29,7 @@ describe('DashboardService', () => {
 
   const mockProductRepository = {
     remove: jest.fn().mockResolvedValue(undefined),
-    save: jest.fn((data) => Promise.resolve({ id: \'1\', ...data })),
+    save: jest.fn((data) => Promise.resolve({ id: '1', ...data })),
     findOne: jest.fn().mockResolvedValue(null),
     find: jest.fn().mockResolvedValue([]),
     count: jest.fn(),
@@ -37,7 +37,7 @@ describe('DashboardService', () => {
 
   const mockCustomerRepository = {
     remove: jest.fn().mockResolvedValue(undefined),
-    save: jest.fn((data) => Promise.resolve({ id: \'1\', ...data })),
+    save: jest.fn((data) => Promise.resolve({ id: '1', ...data })),
     findOne: jest.fn().mockResolvedValue(null),
     find: jest.fn().mockResolvedValue([]),
     count: jest.fn(),
@@ -45,7 +45,7 @@ describe('DashboardService', () => {
 
   const mockInventoryRepository = {
     remove: jest.fn().mockResolvedValue(undefined),
-    save: jest.fn((data) => Promise.resolve({ id: \'1\', ...data })),
+    save: jest.fn((data) => Promise.resolve({ id: '1', ...data })),
     findOne: jest.fn().mockResolvedValue(null),
     find: jest.fn().mockResolvedValue([]),
     count: jest.fn(),
@@ -53,7 +53,7 @@ describe('DashboardService', () => {
 
   const mockPaymentRepository = {
     remove: jest.fn().mockResolvedValue(undefined),
-    save: jest.fn((data) => Promise.resolve({ id: \'1\', ...data })),
+    save: jest.fn((data) => Promise.resolve({ id: '1', ...data })),
     findOne: jest.fn().mockResolvedValue(null),
     find: jest.fn().mockResolvedValue([]),
     count: jest.fn(),
@@ -61,10 +61,10 @@ describe('DashboardService', () => {
 
   const mockCategoryRepository = {
     remove: jest.fn().mockResolvedValue(undefined),
-    save: jest.fn((data) => Promise.resolve({ id: \'1\', ...data })),
+    save: jest.fn((data) => Promise.resolve({ id: '1', ...data })),
     findOne: jest.fn().mockResolvedValue(null),
     find: jest.fn().mockResolvedValue([]),
-    };
+  };
 
   const mockCacheService = {
     getOrSet: jest.fn((key, callback) => callback()),

@@ -23,7 +23,6 @@ export class ErrorLog {
   id: string;
 
   @Column()
-  @Index()
   tenantId: string;
 
   @Column()

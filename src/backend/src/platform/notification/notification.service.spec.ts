@@ -19,7 +19,7 @@ describe('NotificationService', () => {
     message: 'Test message',
     type: NotificationType.INFO,
     status: NotificationStatus.UNREAD,
-    createdAt: new Date()
+    createdAt: new Date(),
   };
 
   const mockRepository = {
@@ -31,12 +31,12 @@ describe('NotificationService', () => {
     delete: jest.fn(),
     remove: jest.fn(),
     count: jest.fn(),
-    => mockQueryBuilder)
+    createQueryBuilder: jest.fn(() => mockQueryBuilder),
   };
 
   const mockCacheService = {
     getOrSet: jest.fn(),
-    del: jest.fn()
+    del: jest.fn(),
   };
 
   const mockUser = createMockUser();
@@ -47,23 +47,23 @@ describe('NotificationService', () => {
         NotificationService,
         {
           provide: getRepositoryToken(Notification),
-          useValue: mockRepository
-  },
+          useValue: mockRepository,
+        },
         {
           provide: CacheService,
-          useValue: mockCacheService
-  },
+          useValue: mockCacheService,
+        },
         {
           provide: PermissionService,
           useValue: {
             canRead: jest.fn().mockReturnValue(true),
             canWrite: jest.fn().mockReturnValue(true),
             canDelete: jest.fn().mockReturnValue(true),
-            buildSecureQuery: jest.fn((user, where) => where)
-  }
-  },
-      ]
-  }).compile();
+            buildSecureQuery: jest.fn((user, where) => where),
+          },
+        },
+      ],
+    }).compile();
 
     service = module.get<NotificationService>(NotificationService);
     cacheService = module.get<CacheService>(CacheService);
@@ -129,8 +129,8 @@ describe('NotificationService', () => {
       const customNotif = {
         ...mockNotification,
         type: NotificationType.WARNING,
-        link: '/orders/123'
-  };
+        link: '/orders/123',
+      };
       mockRepository.save.mockResolvedValue(customNotif);
 
       const result = await service.create(
@@ -167,8 +167,8 @@ describe('NotificationService', () => {
       const readNotif = {
         ...mockNotification,
         status: NotificationStatus.READ,
-        readAt: new Date()
-  };
+        readAt: new Date(),
+      };
       mockCacheService.getOrSet.mockResolvedValue(mockNotification);
       mockRepository.save.mockResolvedValue(readNotif);
       mockCacheService.del.mockResolvedValue(undefined);
@@ -186,8 +186,8 @@ describe('NotificationService', () => {
       mockRepository.find.mockResolvedValue([mockNotification]);
       mockRepository.save.mockResolvedValue({
         ...mockNotification,
-        status: NotificationStatus.READ
-  });
+        status: NotificationStatus.READ,
+      });
 
       await service.markAllAsRead(mockUser);
 
