@@ -1,28 +1,12 @@
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
-  UpdateDateColumn,
+  Entity,
   Index,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
-
-export enum SettingCategory {
-  GENERAL = 'general',
-  EMAIL = 'email',
-  NOTIFICATION = 'notification',
-  SECURITY = 'security',
-  BACKUP = 'backup',
-  INTEGRATION = 'integration',
-  PERFORMANCE = 'performance',
-}
-
-export enum SettingType {
-  STRING = 'string',
-  NUMBER = 'number',
-  BOOLEAN = 'boolean',
-  JSON = 'json',
-}
+import { SettingCategory, SettingType } from '../enums';
 
 @Entity('system_settings')
 @Index(['tenantId', 'key'], { unique: true })

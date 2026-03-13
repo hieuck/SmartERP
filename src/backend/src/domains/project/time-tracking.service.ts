@@ -1,12 +1,11 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between } from 'typeorm';
-import { TimeEntry } from './entities/time-entry.entity';
-import { Task } from './entities/task.entity';
-import { Project } from './entities/project.entity';
-import { User as UserEntity } from '../../core/user/entities/user.entity';
-import { CreateTimeEntryDto } from './dto/create-time-entry.dto';
 import { User } from '@/common/security/permission.service';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Project } from './entities/project.entity';
+import { Task } from './entities/task.entity';
+import { TimeEntry } from './entities/time-entry.entity';
+import { CreateTimeEntryDto } from './dto/create-time-entry.dto';
 
 /**
  * TimeTrackingService handles time entry logging and calculations
@@ -280,10 +279,7 @@ export class TimeTrackingService {
   private async updateTaskActualHours(taskId: string, tenantId: string): Promise<void> {
     const totalHours = await this.getTotalHoursByTask(taskId, tenantId);
 
-    await this.taskRepository.update(
-      { id: taskId, tenantId },
-      { actualHours: totalHours },
-    );
+    await this.taskRepository.update({ id: taskId, tenantId }, { actualHours: totalHours });
   }
 
   /**

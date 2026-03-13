@@ -1,6 +1,6 @@
 import { IsEnum, IsString, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { OrderStatus, PaymentStatus, ShippingStatus } from '../entities/order.entity';
+import { OrderStatus, PaymentStatus, ShippingStatus } from '../../enums/ecommerce.enum';
 
 export class UpdateOrderStatusDto {
   @ApiProperty({ enum: OrderStatus, example: OrderStatus.CONFIRMED, required: false })

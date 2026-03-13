@@ -3,7 +3,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PermissionService } from '../../../common/security/permission.service';
-import { Order, PaymentStatus } from './entities/order.entity';
+import { Order } from '../entities/order.entity';
+import { PaymentStatus } from '../../enums/ecommerce.enum';
 import { PaymentService } from './payment.service';
 
 describe('PaymentService', () => {

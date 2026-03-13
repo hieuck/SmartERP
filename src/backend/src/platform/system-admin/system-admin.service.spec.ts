@@ -3,10 +3,10 @@ import { ConflictException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User } from '../../core/user/entities/user.entity';
-import { BackgroundJob, JobPriority, JobStatus } from './entities/background-job.entity';
-import { ErrorLog, ErrorSeverity } from './entities/error-log.entity';
-import { SettingCategory, SettingType, SystemSetting } from './entities/system-setting.entity';
+import { User } from '@core/user/entities/user.entity';
+import { BackgroundJob, JobPriority, JobStatus } from '@platform/enums/platform.enum';
+import { ErrorLog, ErrorSeverity } from '@platform/enums/platform.enum';
+import { SettingCategory, SettingType, SystemSetting } from '@platform/enums/platform.enum';
 import { SystemAdminService } from './system-admin.service';
 
 describe('SystemAdminService', () => {

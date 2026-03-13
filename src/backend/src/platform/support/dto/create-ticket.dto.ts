@@ -1,7 +1,7 @@
-import { IsString, IsEnum, IsOptional, IsNotEmpty } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IssuePriority, IssueType } from '../../issue-tracking/entities/issue.entity';
-import { TicketChannel } from '../entities/ticket.entity';
+import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IssuePriority, IssueType } from '@/platform/issue-tracking/enums';
+import { TicketChannel } from '../enums';
 
 export class CreateTicketDto {
   @ApiProperty({ description: 'Ticket title' })

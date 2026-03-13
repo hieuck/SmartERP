@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { WorkOrder, WorkOrderStatus } from './entities/work-order.entity';
+import { WorkOrder } from '../entities/work-order.entity';
+import { WorkOrderStatus } from '../enums/work-order-status.enum';
 
 @Injectable()
 export class WorkOrderService {
@@ -74,7 +75,12 @@ export class WorkOrderService {
     return this.workOrderRepository.save(workOrder);
   }
 
-  async finish(id: string, producedQuantity: number, tenantId: string, user: any): Promise<WorkOrder> {
+  async finish(
+    id: string,
+    producedQuantity: number,
+    tenantId: string,
+    user: any,
+  ): Promise<WorkOrder> {
     const workOrder = await this.findOne(tenantId, id);
 
     if (workOrder.status !== WorkOrderStatus.IN_PROGRESS) {

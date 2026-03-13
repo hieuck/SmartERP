@@ -1,9 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Account, AccountType } from '../account/entities/account.entity';
+import { Account } from '../account/entities/account.entity';
+import { AccountType } from '../account/enums/account-type.enum';
 import { JournalLine } from '../account/entities/journal-line.entity';
-import { JournalEntryStatus } from '../account/entities/journal-entry.entity';
+import { JournalEntryStatus } from '../account/enums/journal-entry-status.enum';
+import { Product } from '@/domains/inventory/product/entities/product.entity';
+import { Customer } from '@/domains/sales/customer/entities/customer.entity';
+import { Invoice } from '../account/entities/invoice.entity';
+import { Payment } from '../payment/entities/payment.entity';
 import { SecureRepository } from '@/common/security/secure-repository';
 import { PermissionService, User } from '@/common/security/permission.service';
 
@@ -46,6 +51,68 @@ export interface GeneralLedgerReport {
   closingBalance: number;
 }
 
+export interface SalesSummary {
+  period: {
+    startDate: Date;
+    endDate: Date;
+  };
+  totalSales: number;
+  totalInvoices: number;
+  totalPaid: number;
+  totalOutstanding: number;
+  averageOrderValue: number;
+  salesByCustomer: {
+    customerId: string;
+    customerName: string;
+    totalSales: number;
+    invoiceCount: number;
+  }[];
+}
+
+export interface InventorySummary {
+  products: {
+    productId: string;
+    sku: string;
+    name: string;
+    quantity: number;
+    cost: number;
+    value: number;
+    minLevel: number;
+    maxLevel: number;
+    status: string;
+  }[];
+  totalProducts: number;
+  totalValue: number;
+  lowStockCount: number;
+}
+
+export interface InventoryValuation {
+  products: {
+    productId: string;
+    sku: string;
+    name: string;
+    quantity: number;
+    cost: number;
+    totalValue: number;
+  }[];
+  totalValue: number;
+}
+
+export interface InventoryMovement {
+  movements: {
+    productId: string;
+    sku: string;
+    name: string;
+    movementType: string;
+    quantity: number;
+    date: Date;
+    reference: string;
+  }[];
+  totalMovements: number;
+  totalQuantityIn: number;
+  totalQuantityOut: number;
+}
+
 @Injectable()
 export class ReportsService {
   private secureAccountRepo: SecureRepository<Account>;
@@ -56,6 +123,14 @@ export class ReportsService {
     private readonly accountRepository: Repository<Account>,
     @InjectRepository(JournalLine)
     private readonly journalLineRepository: Repository<JournalLine>,
+    @InjectRepository(Product)
+    private readonly productRepository: Repository<Product>,
+    @InjectRepository(Customer)
+    private readonly customerRepository: Repository<Customer>,
+    @InjectRepository(Invoice)
+    private readonly invoiceRepository: Repository<Invoice>,
+    @InjectRepository(Payment)
+    private readonly paymentRepository: Repository<Payment>,
     private readonly permissionService: PermissionService,
   ) {
     // Initialize secure repositories
@@ -69,6 +144,10 @@ export class ReportsService {
       permissionService,
       'JournalLine',
     );
+    this.productRepository = productRepository;
+    this.customerRepository = customerRepository;
+    this.invoiceRepository = invoiceRepository;
+    this.paymentRepository = paymentRepository;
   }
 
   async getTrialBalance(user: User, asOfDate: Date): Promise<TrialBalanceReport> {
@@ -213,6 +292,163 @@ export class ReportsService {
       investing: { activities: [], total: 0 },
       financing: { activities: [], total: 0 },
       netCashFlow: 0,
+    };
+  }
+
+  async getSalesSummary(
+    user: User,
+    startDate: Date,
+    endDate: Date,
+    customerId?: string,
+  ): Promise<SalesSummary> {
+    // Query invoices within date range
+    const invoiceQuery = this.invoiceRepository
+      .createQueryBuilder('invoice')
+      .where('invoice.tenantId = :tenantId', { tenantId: user.tenantId })
+      .andWhere('invoice.invoiceDate BETWEEN :startDate AND :endDate', {
+        startDate,
+        endDate,
+      })
+      .andWhere('invoice.status IN (:...statuses)', {
+        statuses: ['sent', 'paid', 'overdue'],
+      });
+
+    if (customerId) {
+      invoiceQuery.andWhere('invoice.customerId = :customerId', { customerId });
+    }
+
+    const invoices = await invoiceQuery.getMany();
+
+    let totalSales = 0;
+    let totalPaid = 0;
+    let totalOutstanding = 0;
+    const salesByCustomerMap = new Map<string, { customerId: string; customerName: string; totalSales: number; invoiceCount: number }>();
+
+    for (const invoice of invoices) {
+      totalSales += Number(invoice.totalAmount);
+      totalPaid += Number(invoice.paidAmount);
+      totalOutstanding += Number(invoice.totalAmount) - Number(invoice.paidAmount);
+
+      const customerId = invoice.customerId;
+      if (customerId) {
+        const existing = salesByCustomerMap.get(customerId) || {
+          customerId,
+          customerName: 'Customer ' + customerId.substring(0, 8),
+          totalSales: 0,
+          invoiceCount: 0,
+        };
+        existing.totalSales += Number(invoice.totalAmount);
+        existing.invoiceCount += 1;
+        salesByCustomerMap.set(customerId, existing);
+      }
+    }
+
+    const salesByCustomer = Array.from(salesByCustomerMap.values());
+
+    return {
+      period: { startDate, endDate },
+      totalSales,
+      totalInvoices: invoices.length,
+      totalPaid,
+      totalOutstanding,
+      averageOrderValue: invoices.length > 0 ? totalSales / invoices.length : 0,
+      salesByCustomer,
+    };
+  }
+
+  async getInventorySummary(
+    user: User,
+    productId?: string,
+    categoryId?: string,
+    lowStockOnly?: boolean,
+  ): Promise<InventorySummary> {
+    const productQuery = this.productRepository
+      .createQueryBuilder('product')
+      .where('product.tenantId = :tenantId', { tenantId: user.tenantId });
+
+    if (productId) {
+      productQuery.andWhere('product.id = :productId', { productId });
+    }
+
+    if (categoryId) {
+      productQuery.andWhere('product.categoryId = :categoryId', { categoryId });
+    }
+
+    if (lowStockOnly) {
+      productQuery.andWhere('product.stockQuantity <= product.minStockLevel');
+    }
+
+    const products = await productQuery.getMany();
+
+    const productSummaries = products.map((product) => ({
+      productId: product.id,
+      sku: product.sku,
+      name: product.name,
+      quantity: product.stockQuantity,
+      cost: Number(product.cost) || 0,
+      value: product.stockQuantity * (Number(product.cost) || 0),
+      minLevel: product.minStockLevel,
+      maxLevel: product.maxStockLevel,
+      status: product.status,
+    }));
+
+    const totalValue = productSummaries.reduce((sum, p) => sum + p.value, 0);
+    const lowStockCount = productSummaries.filter((p) => p.quantity <= p.minLevel).length;
+
+    return {
+      products: productSummaries,
+      totalProducts: products.length,
+      totalValue,
+      lowStockCount,
+    };
+  }
+
+  async getInventoryValuation(
+    user: User,
+    productId?: string,
+    warehouseId?: string,
+  ): Promise<InventoryValuation> {
+    const productQuery = this.productRepository
+      .createQueryBuilder('product')
+      .where('product.tenantId = :tenantId', { tenantId: user.tenantId });
+
+    if (productId) {
+      productQuery.andWhere('product.id = :productId', { productId });
+    }
+
+    const products = await productQuery.getMany();
+
+    const productValuations = products.map((product) => ({
+      productId: product.id,
+      sku: product.sku,
+      name: product.name,
+      quantity: product.stockQuantity,
+      cost: Number(product.cost) || 0,
+      totalValue: product.stockQuantity * (Number(product.cost) || 0),
+    }));
+
+    const totalValue = productValuations.reduce((sum, p) => sum + p.totalValue, 0);
+
+    return {
+      products: productValuations,
+      totalValue,
+    };
+  }
+
+  async getInventoryMovement(
+    user: User,
+    startDate: Date,
+    endDate: Date,
+    productId?: string,
+    warehouseId?: string,
+  ): Promise<InventoryMovement> {
+    // TODO: Implement inventory movement tracking
+    // This would require an inventory movement/transaction entity
+    return {
+      movements: [],
+      totalMovements: 0,
+      totalQuantityIn: 0,
+      totalQuantityOut: 0,
     };
   }
 }

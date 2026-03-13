@@ -1,30 +1,34 @@
-import { IsNotEmpty, IsString, IsOptional, IsEnum, IsInt, Min, IsBoolean } from 'class-validator';
-import { IssuePriority } from '../../issue-tracking/entities/issue.entity';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsBoolean, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, Min } from 'class-validator';
+import { IssuePriority } from '@/platform/issue-tracking/enums';
 
 export class CreateSLADto {
-  @IsNotEmpty()
+  @ApiProperty({ description: 'SLA name' })
   @IsString()
+  @IsNotEmpty()
   name: string;
 
-  @IsOptional()
+  @ApiPropertyOptional({ description: 'SLA description' })
   @IsString()
+  @IsOptional()
   description?: string;
 
-  @IsNotEmpty()
-  @IsEnum(IssuePriority)
-  priority: IssuePriority;
-
-  @IsNotEmpty()
+  @ApiProperty({ description: 'Response time in hours' })
   @IsInt()
   @Min(1)
   responseTimeHours: number;
 
-  @IsNotEmpty()
+  @ApiProperty({ description: 'Resolution time in hours' })
   @IsInt()
   @Min(1)
   resolutionTimeHours: number;
 
+  @ApiPropertyOptional({ enum: IssuePriority, description: 'Filter by priority' })
+  @IsEnum(IssuePriority)
   @IsOptional()
+  priority?: IssuePriority;
+
+  @ApiProperty({ description: 'Is active' })
   @IsBoolean()
-  isActive?: boolean;
+  isActive: boolean;
 }

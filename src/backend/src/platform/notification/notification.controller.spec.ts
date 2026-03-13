@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotificationController } from './notification.controller';
 import { NotificationService } from './notification.service';
-import { NotificationType } from './entities/notification.entity';
+import { NotificationType } from '../enums/platform.enum';
 import { createMockUser } from '@/common/test/test-helpers';
 
 describe('NotificationController', () => {

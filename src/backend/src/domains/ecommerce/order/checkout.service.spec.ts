@@ -3,7 +3,7 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ShoppingCart } from '../shopping-cart/entities/shopping-cart.entity';
+import { ShoppingCart } from '@/domains/ecommerce/shopping-cart/entities/shopping-cart.entity';
 import { CheckoutService } from './checkout.service';
 import { OrderItem } from './entities/order-item.entity';
 import { Order } from './entities/order.entity';

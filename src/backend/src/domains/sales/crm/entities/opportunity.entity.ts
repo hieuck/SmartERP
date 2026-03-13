@@ -1,3 +1,4 @@
+import { OpportunityStage } from '../enums/opportunity-stage.enum';
 import {
   Entity,
   Column,
@@ -6,15 +7,6 @@ import {
   UpdateDateColumn,
   DeleteDateColumn,
 } from 'typeorm';
-
-export enum OpportunityStage {
-  PROSPECTING = 'prospecting',
-  QUALIFICATION = 'qualification',
-  PROPOSAL = 'proposal',
-  NEGOTIATION = 'negotiation',
-  CLOSED_WON = 'closed_won',
-  CLOSED_LOST = 'closed_lost',
-}
 
 @Entity('opportunities')
 export class Opportunity {

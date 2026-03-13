@@ -1,18 +1,49 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ScheduledJobsService, ScheduledJob } from './scheduled-jobs.service';
+import { SchedulerRegistry } from '@nestjs/schedule';
 
 describe('ScheduledJobsService', () => {
   let service: ScheduledJobsService;
+  let schedulerRegistry: SchedulerRegistry;
+
+  const mockSchedulerRegistry = {
+    addCronJob: jest.fn(),
+    deleteCronJob: jest.fn(),
+    doesExist: jest.fn().mockReturnValue(false),
+  };
 
   beforeEach(async () => {
+    jest.clearAllMocks();
+    
     const module: TestingModule = await Test.createTestingModule({
-      providers: [ScheduledJobsService],
+      providers: [
+        ScheduledJobsService,
+        {
+          provide: SchedulerRegistry,
+          useValue: mockSchedulerRegistry,
+        },
+      ],
     }).compile();
 
     service = module.get<ScheduledJobsService>(ScheduledJobsService);
+    schedulerRegistry = module.get<SchedulerRegistry>(SchedulerRegistry);
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    // Cleanup: Stop all cron jobs to prevent Jest hanging
+    // This is critical for tests that create enabled jobs
+    const tenant1Jobs = await service.listJobs('tenant1');
+    const tenant2Jobs = await service.listJobs('tenant2');
+    const allJobs = [...tenant1Jobs, ...tenant2Jobs];
+    
+    for (const job of allJobs) {
+      try {
+        await service.deleteJob(job.id);
+      } catch (error) {
+        // Ignore errors during cleanup
+      }
+    }
+    
     jest.clearAllMocks();
   });
 
@@ -53,7 +84,8 @@ describe('ScheduledJobsService', () => {
 
       await service.createJob(tenantId, jobData);
       // Add small delay to ensure unique timestamp
-      await new Promise(resolve => setTimeout(resolve, 10));
+      const UNIQUE_TIMESTAMP_DELAY_MS = 10;
+      await new Promise(resolve => setTimeout(resolve, UNIQUE_TIMESTAMP_DELAY_MS));
       await service.createJob(tenantId, { ...jobData, name: 'Test Job 2' });
       await service.createJob('tenant2', { ...jobData, name: 'Other Tenant Job' });
 
@@ -130,7 +162,7 @@ describe('ScheduledJobsService', () => {
         name: 'Test Job',
         schedule: '0 0 * * *',
         handler: 'testHandler',
-        enabled: true,
+        enabled: false, // Disabled to avoid cron registration
       };
 
       const created = await service.createJob(tenantId, jobData);
@@ -140,6 +172,10 @@ describe('ScheduledJobsService', () => {
 
       expect(result).toBeUndefined();
     });
+
+    it('should throw NotFoundException for non-existent job', async () => {
+      await expect(service.deleteJob('nonexistent')).rejects.toThrow('Job nonexistent not found');
+    });
   });
 
   describe('runJob', () => {
@@ -148,8 +184,8 @@ describe('ScheduledJobsService', () => {
       const jobData: Omit<ScheduledJob, 'id'> = {
         name: 'Test Job',
         schedule: '0 0 * * *',
-        handler: 'testHandler',
-        enabled: true,
+        handler: 'backup', // Use valid handler
+        enabled: false, // Disabled to avoid cron registration
       };
 
       const created = await service.createJob(tenantId, jobData);
@@ -161,7 +197,7 @@ describe('ScheduledJobsService', () => {
       expect(result?.lastRun).toBeInstanceOf(Date);
     });
 
-    it('should throw error for non-existent job', async () => {
+    it('should throw NotFoundException for non-existent job', async () => {
       await expect(service.runJob('nonexistent')).rejects.toThrow('Job nonexistent not found');
     });
   });

@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Report, ReportType, ChartType } from './entities/report.entity';
-import { ReportColumn, ColumnType, AggregationType } from './entities/report-column.entity';
-import { User as UserEntity } from '../../core/user/entities/user.entity';
+import { Report } from './entities/report.entity';
+import { ReportColumn } from './entities/report-column.entity';
+import { ReportType, ChartType, ColumnType, AggregationType } from './enums';
+import { User as UserEntity } from '../user/entities/user.entity';
 import { User } from '@/common/security/permission.service';
 
 export enum ReportCategory {

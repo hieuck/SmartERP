@@ -1,7 +1,24 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Table, Button, Input, Space, Card, Tag, Popconfirm, message, Typography, Rate } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, ShopOutlined } from '@ant-design/icons';
+import {
+  Table,
+  Button,
+  Input,
+  Space,
+  Card,
+  Tag,
+  Popconfirm,
+  message,
+  Typography,
+  Rate,
+} from 'antd';
+import {
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  SearchOutlined,
+  ShopOutlined,
+} from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import supplierService from '../../services/logistics/supplierService';
 import type { ColumnsType } from 'antd/es/table';

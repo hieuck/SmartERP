@@ -1,9 +1,24 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Form, Input, InputNumber, Button, Card, Space, message, Typography, Row, Col, Rate } from 'antd';
+import {
+  Form,
+  Input,
+  InputNumber,
+  Button,
+  Card,
+  Space,
+  message,
+  Typography,
+  Row,
+  Col,
+  Rate,
+} from 'antd';
 import { SaveOutlined, ArrowLeftOutlined, ShopOutlined } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import supplierService, { CreateSupplierDto, UpdateSupplierDto } from '../../services/logistics/supplierService';
+import supplierService, {
+  CreateSupplierDto,
+  UpdateSupplierDto,
+} from '../../services/logistics/supplierService';
 
 const { Title } = Typography;
 const { TextArea } = Input;
@@ -149,10 +164,7 @@ export default function SupplierForm() {
             </Col>
 
             <Col xs={24} md={12}>
-              <Form.Item
-                name="discount"
-                label="Chiết khấu (%)"
-              >
+              <Form.Item name="discount" label="Chiết khấu (%)">
                 <InputNumber min={0} max={100} style={{ width: '100%' }} />
               </Form.Item>
             </Col>
@@ -179,9 +191,7 @@ export default function SupplierForm() {
               <Button type="primary" htmlType="submit" icon={<SaveOutlined />} loading={loading}>
                 {isEdit ? 'Cập nhật' : 'Tạo mới'}
               </Button>
-              <Button onClick={() => navigate('/dashboard/suppliers')}>
-                Hủy
-              </Button>
+              <Button onClick={() => navigate('/dashboard/suppliers')}>Hủy</Button>
             </Space>
           </Form.Item>
         </Form>

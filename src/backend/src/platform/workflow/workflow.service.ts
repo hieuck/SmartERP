@@ -1,8 +1,9 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Workflow, WorkflowStatus } from './entities/workflow.entity';
-import { WorkflowInstance, WorkflowInstanceStatus } from './entities/workflow-instance.entity';
+import { Workflow } from './entities/workflow.entity';
+import { WorkflowInstance } from './entities/workflow-instance.entity';
+import { WorkflowStatus, WorkflowInstanceStatus } from './enums';
 import { CacheService } from '@/common/cache/cache.service';
 import { CacheTTL, generateCacheKey } from '@/common/cache/cache.config';
 import { SecureRepository } from '@/common/security/secure-repository';

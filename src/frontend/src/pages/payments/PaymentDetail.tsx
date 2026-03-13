@@ -1,9 +1,31 @@
 import React from 'react';
-import { Card, Descriptions, Tag, Button, Space, Typography, Spin, message, Modal, Alert } from 'antd';
-import { ArrowLeftOutlined, EditOutlined, CheckOutlined, RollbackOutlined, ReconciliationOutlined, DollarCircleOutlined } from '@ant-design/icons';
+import {
+  Card,
+  Descriptions,
+  Tag,
+  Button,
+  Space,
+  Typography,
+  Spin,
+  message,
+  Modal,
+  Alert,
+} from 'antd';
+import {
+  ArrowLeftOutlined,
+  EditOutlined,
+  CheckOutlined,
+  RollbackOutlined,
+  ReconciliationOutlined,
+  DollarCircleOutlined,
+} from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { paymentService, PaymentStatus, PaymentMethod } from '../../services/accounting/paymentService';
+import {
+  paymentService,
+  PaymentStatus,
+  PaymentMethod,
+} from '../../services/accounting/paymentService';
 import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
@@ -124,7 +146,14 @@ const PaymentDetail: React.FC = () => {
     <div style={{ padding: '24px' }}>
       <Space direction="vertical" style={{ width: '100%' }} size="large">
         <Card>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 16,
+            }}
+          >
             <Title level={3}>
               <DollarCircleOutlined /> Chi tiết thanh toán: {payment.paymentNumber}
             </Title>
@@ -133,7 +162,10 @@ const PaymentDetail: React.FC = () => {
                 Quay lại
               </Button>
               {canEdit && (
-                <Button icon={<EditOutlined />} onClick={() => navigate(`/dashboard/payments/${id}`)}>
+                <Button
+                  icon={<EditOutlined />}
+                  onClick={() => navigate(`/dashboard/payments/${id}`)}
+                >
                   Chỉnh sửa
                 </Button>
               )}

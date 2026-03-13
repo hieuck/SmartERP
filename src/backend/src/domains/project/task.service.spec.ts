@@ -1,13 +1,16 @@
+import { createMockUser } from '@/common/test/test-helpers';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { Project } from '../entities/project.entity';
+import { TaskDependency } from '../entities/task-dependency.entity';
+import { Task } from '../entities/task.entity';
+import { DependencyType } from '../enums/dependency-type.enum';
+import { TaskPriority } from '../enums/task-priority.enum';
+import { TaskStatus } from '../enums/task-status.enum';
+import { User } from '../user/entities/user.entity';
 import { TaskService } from './task.service';
-import { Task, TaskStatus, TaskPriority } from './entities/task.entity';
-import { TaskDependency, DependencyType } from './entities/task-dependency.entity';
-import { Project } from './entities/project.entity';
-import { User } from '../../core/user/entities/user.entity';
-import { createMockUser } from '@/common/test/test-helpers';
 
 describe('TaskService', () => {
   let service: TaskService;
@@ -18,13 +21,13 @@ describe('TaskService', () => {
   const mockUser: User = {
     id: 'user-1',
     tenantId: 'tenant-1',
-    email: 'test@example.com'
+    email: 'test@example.com',
   } as User;
 
   const mockProject: Project = {
     id: 'project-1',
     tenantId: 'tenant-1',
-    code: 'PRJ-2026-0001'
+    code: 'PRJ-2026-0001',
   } as Project;
 
   const mockTask: Task = {
@@ -36,7 +39,7 @@ describe('TaskService', () => {
     priority: TaskPriority.HIGH,
     projectId: 'project-1',
     progress: 0,
-    actualHours: 0
+    actualHours: 0,
   } as Task;
 
   const mockTaskRepository = {
@@ -46,7 +49,7 @@ describe('TaskService', () => {
     save: jest.fn(),
     findOne: jest.fn(),
     find: jest.fn(),
-    update: jest.fn()
+    update: jest.fn(),
   };
 
   const mockDependencyRepository = {
@@ -55,7 +58,7 @@ describe('TaskService', () => {
     save: jest.fn(),
     findOne: jest.fn(),
     find: jest.fn(),
-    remove: jest.fn()
+    remove: jest.fn(),
   };
 
   const mockProjectRepository = {
@@ -63,7 +66,7 @@ describe('TaskService', () => {
     save: jest.fn((data) => Promise.resolve({ id: '1', ...data })),
     remove: jest.fn().mockResolvedValue(undefined),
     count: jest.fn().mockResolvedValue(0),
-    findOne: jest.fn()
+    findOne: jest.fn(),
   };
 
   const mockUser = createMockUser();
@@ -74,22 +77,24 @@ describe('TaskService', () => {
         TaskService,
         {
           provide: getRepositoryToken(Task),
-          useValue: mockTaskRepository
-  },
+          useValue: mockTaskRepository,
+        },
         {
           provide: getRepositoryToken(TaskDependency),
-          useValue: mockDependencyRepository
-  },
+          useValue: mockDependencyRepository,
+        },
         {
           provide: getRepositoryToken(Project),
-          useValue: mockProjectRepository
-  },
-      ]
-  }).compile();
+          useValue: mockProjectRepository,
+        },
+      ],
+    }).compile();
 
     service = module.get<TaskService>(TaskService);
     taskRepository = module.get<Repository<Task>>(getRepositoryToken(Task));
-    dependencyRepository = module.get<Repository<TaskDependency>>(getRepositoryToken(TaskDependency));
+    dependencyRepository = module.get<Repository<TaskDependency>>(
+      getRepositoryToken(TaskDependency),
+    );
     projectRepository = module.get<Repository<Project>>(getRepositoryToken(Project));
   });
 
@@ -102,8 +107,8 @@ describe('TaskService', () => {
       const dto = {
         title: 'New Task',
         projectId: 'project-1',
-        status: TaskStatus.TODO
-  };
+        status: TaskStatus.TODO,
+      };
 
       mockProjectRepository.findOne.mockResolvedValue(mockProject);
       mockTaskRepository.create.mockReturnValue({ ...dto, tenantId: 'tenant-1' });
@@ -147,8 +152,8 @@ describe('TaskService', () => {
         ...mockTask,
         status: TaskStatus.COMPLETED,
         completedDate: expect.any(Date),
-        progress: 100
-  });
+        progress: 100,
+      });
 
       const result = await service.updateStatus('task-1', TaskStatus.COMPLETED, mockUser, mockUser);
 
@@ -162,15 +167,13 @@ describe('TaskService', () => {
       const dto = {
         taskId: 'task-1',
         dependsOnTaskId: 'task-2',
-        type: DependencyType.FINISH_TO_START
-  };
+        type: DependencyType.FINISH_TO_START,
+      };
 
       const task1 = { ...mockTask, id: 'task-1' };
       const task2 = { ...mockTask, id: 'task-2' };
 
-      mockTaskRepository.findOne
-        .mockResolvedValueOnce(task1)
-        .mockResolvedValueOnce(task2);
+      mockTaskRepository.findOne.mockResolvedValueOnce(task1).mockResolvedValueOnce(task2);
       mockDependencyRepository.find.mockResolvedValue([]);
       mockDependencyRepository.findOne.mockResolvedValue(null);
       mockDependencyRepository.create.mockReturnValue(dto);
@@ -185,8 +188,8 @@ describe('TaskService', () => {
     it('should throw BadRequestException for self-dependency', async () => {
       const dto = {
         taskId: 'task-1',
-        dependsOnTaskId: 'task-1'
-  };
+        dependsOnTaskId: 'task-1',
+      };
 
       mockTaskRepository.findOne.mockResolvedValue(mockTask);
 
@@ -198,8 +201,8 @@ describe('TaskService', () => {
     it('should throw BadRequestException if dependency already exists', async () => {
       const dto = {
         taskId: 'task-1',
-        dependsOnTaskId: 'task-2'
-  };
+        dependsOnTaskId: 'task-2',
+      };
 
       mockTaskRepository.findOne.mockResolvedValue(mockTask);
       mockDependencyRepository.find.mockResolvedValue([]);
@@ -243,10 +246,10 @@ describe('TaskService', () => {
             {
               dependsOnTaskId: 'task-2',
               type: DependencyType.FINISH_TO_START,
-              lagDays: 0
-  },
-          ]
-  },
+              lagDays: 0,
+            },
+          ],
+        },
       ];
 
       mockTaskRepository.find.mockResolvedValue(tasks);

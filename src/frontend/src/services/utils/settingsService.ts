@@ -27,7 +27,7 @@ export interface Setting {
   id: string;
   key: string;
   value: string;
-  dataType: SettingDataType; // Changed from 'type' to match backend
+  dataType: SettingDataType;
   category: SettingCategory;
   description?: string;
   isPublic: boolean;
@@ -38,7 +38,7 @@ export interface Setting {
 export interface CreateSettingDto {
   key: string;
   value: string;
-  dataType?: SettingDataType; // Changed from 'type' to match backend
+  dataType?: SettingDataType;
   category: SettingCategory;
   description?: string;
   isPublic?: boolean;
@@ -46,8 +46,8 @@ export interface CreateSettingDto {
 
 export interface UpdateSettingDto {
   value?: string;
-  dataType?: SettingDataType; // Added to match backend
-  category?: SettingCategory; // Added to match backend
+  dataType?: SettingDataType;
+  category?: SettingCategory;
   description?: string;
   isPublic?: boolean;
 }
@@ -69,7 +69,6 @@ export const settingsService = {
   },
 
   update: async (key: string, data: UpdateSettingDto): Promise<Setting> => {
-    // Changed from PUT to PATCH to match backend
     const response = await api.patch(`/settings/${key}`, data);
     return response.data;
   },

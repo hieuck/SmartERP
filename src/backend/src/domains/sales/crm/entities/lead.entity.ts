@@ -1,3 +1,5 @@
+import { LeadStatus } from '../enums/lead-status.enum';
+import { LeadSource } from '../enums/lead-source.enum';
 import {
   Entity,
   Column,
@@ -6,25 +8,6 @@ import {
   UpdateDateColumn,
   DeleteDateColumn,
 } from 'typeorm';
-
-export enum LeadStatus {
-  NEW = 'new',
-  CONTACTED = 'contacted',
-  QUALIFIED = 'qualified',
-  UNQUALIFIED = 'unqualified',
-  CONVERTED = 'converted',
-  LOST = 'lost',
-}
-
-export enum LeadSource {
-  WEBSITE = 'website',
-  REFERRAL = 'referral',
-  SOCIAL_MEDIA = 'social_media',
-  EMAIL = 'email',
-  PHONE = 'phone',
-  EVENT = 'event',
-  OTHER = 'other',
-}
 
 @Entity('leads')
 export class Lead {

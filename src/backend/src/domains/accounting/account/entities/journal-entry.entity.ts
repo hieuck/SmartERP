@@ -7,13 +7,8 @@ import {
   BeforeUpdate,
 } from 'typeorm';
 import { BaseEntity } from '../../../../common/entities/base.entity';
+import { JournalEntryStatus } from '../enums/journal-entry-status.enum';
 import { JournalLine } from './journal-line.entity';
-
-export enum JournalEntryStatus {
-  DRAFT = 'draft',
-  POSTED = 'posted',
-  CANCELLED = 'cancelled',
-}
 
 @Entity('journal_entries')
 @Index(['tenantId', 'number'], { unique: true })

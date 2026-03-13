@@ -1,9 +1,26 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Form, Input, InputNumber, Select, Button, Card, Space, message, Typography, Row, Col, Modal } from 'antd';
+import {
+  Form,
+  Input,
+  InputNumber,
+  Select,
+  Button,
+  Card,
+  Space,
+  message,
+  Typography,
+  Row,
+  Col,
+  Modal,
+} from 'antd';
 import { SaveOutlined, ArrowLeftOutlined, AppstoreOutlined, PlusOutlined } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { productService, CreateProductDto, UpdateProductDto } from '../../services/inventory/productService';
+import {
+  productService,
+  CreateProductDto,
+  UpdateProductDto,
+} from '../../services/inventory/productService';
 
 const { Title } = Typography;
 const { TextArea } = Input;
@@ -229,9 +246,7 @@ export default function ProductForm() {
                 <Button type="primary" htmlType="submit" icon={<SaveOutlined />} loading={loading}>
                   {isEdit ? 'Cập nhật' : 'Tạo mới'}
                 </Button>
-                <Button onClick={() => navigate('/dashboard/products')}>
-                  Hủy
-                </Button>
+                <Button onClick={() => navigate('/dashboard/products')}>Hủy</Button>
               </Space>
             </Form.Item>
           </Form>

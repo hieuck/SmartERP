@@ -31,7 +31,7 @@ test.describe('Dashboard', () => {
 
   test('should display top products table', async ({ page }) => {
     await expect(page.locator('text=/sản phẩm bán chạy/i')).toBeVisible();
-    
+
     // Check for table
     const table = page.locator('table').first();
     await expect(table).toBeVisible();
@@ -39,7 +39,7 @@ test.describe('Dashboard', () => {
 
   test('should display top customers table', async ({ page }) => {
     await expect(page.locator('text=/khách hàng hàng đầu/i')).toBeVisible();
-    
+
     // Check for table
     const tables = page.locator('table');
     await expect(tables.nth(1)).toBeVisible();
@@ -62,13 +62,13 @@ test.describe('Dashboard', () => {
 
   test('should refresh data when clicking refresh button', async ({ page }) => {
     const refreshButton = page.getByRole('button', { name: /làm mới/i });
-    
+
     if (await refreshButton.isVisible()) {
       await refreshButton.click();
-      
+
       // Should show loading state
       await expect(page.locator('.ant-spin')).toBeVisible();
-      
+
       // Wait for data to load
       await page.waitForLoadState('networkidle');
     }
@@ -77,10 +77,10 @@ test.describe('Dashboard', () => {
   test('should be responsive on mobile', async ({ page }) => {
     // Set mobile viewport
     await page.setViewportSize({ width: 375, height: 667 });
-    
+
     // Dashboard should still be visible
     await expect(page.locator('text=/dashboard/i')).toBeVisible();
-    
+
     // KPI cards should stack vertically
     const cards = page.locator('.ant-card');
     await expect(cards.first()).toBeVisible();

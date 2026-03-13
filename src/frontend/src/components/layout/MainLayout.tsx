@@ -69,7 +69,7 @@ export default function MainLayout() {
     <Layout style={{ minHeight: '100vh' }}>
       {/* Desktop/Tablet Sidebar */}
       {!isMobile && <Sidebar collapsed={collapsed} />}
-      
+
       {/* Mobile Drawer */}
       {isMobile && (
         <Drawer
@@ -82,10 +82,10 @@ export default function MainLayout() {
           <Sidebar collapsed={false} />
         </Drawer>
       )}
-      
+
       <Layout>
         <Header collapsed={collapsed} onToggle={handleToggle} />
-        <Content 
+        <Content
           className="main-content"
           style={{
             padding: isMobile ? '12px' : isTablet ? '16px' : '24px',

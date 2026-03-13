@@ -1,23 +1,13 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  UseGuards,
-  Request,
-  Patch,
-} from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { GdprService } from './gdpr.service';
-import { CreateConsentDto } from './dto/create-consent.dto';
-import { RequestDataExportDto } from './dto/request-data-export.dto';
-import { RequestDataDeletionDto } from './dto/request-data-deletion.dto';
-import { ApproveDeletionDto } from './dto/approve-deletion.dto';
-import { ConsentType } from './entities/consent.entity';
+import { Body, Controller, Get, Param, Patch, Post, Request } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../decorators/roles.decorator';
+import { ApproveDeletionDto } from './dto/approve-deletion.dto';
+import { CreateConsentDto } from './dto/create-consent.dto';
+import { RequestDataDeletionDto } from './dto/request-data-deletion.dto';
+import { RequestDataExportDto } from './dto/request-data-export.dto';
+import { ConsentType } from './enums';
+import { GdprService } from './gdpr.service';
 
-import { User } from '@/common/security/permission.service';
 @ApiTags('GDPR')
 @ApiBearerAuth()
 @Controller('gdpr')

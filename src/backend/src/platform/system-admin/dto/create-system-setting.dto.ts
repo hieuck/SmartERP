@@ -1,6 +1,6 @@
-import { IsString, IsEnum, IsOptional, IsBoolean } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { SettingCategory, SettingType } from '../entities/system-setting.entity';
+import { IsBoolean, IsEnum, IsOptional, IsString } from 'class-validator';
+import { SettingCategory, SettingType } from '../enums';
 
 export class CreateSystemSettingDto {
   @ApiProperty({ example: 'smtp_host' })

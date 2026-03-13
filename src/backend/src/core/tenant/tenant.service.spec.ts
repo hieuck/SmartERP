@@ -5,7 +5,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../user/entities/user.entity';
-import { BillingCycle, SubscriptionPlan, Tenant, TenantStatus } from './entities/tenant.entity';
+import { Tenant } from '../entities/tenant.entity';
+import { TenantStatus } from '../enums/tenant-status.enum';
+import { SubscriptionPlan } from '../enums/subscription-plan.enum';
+import { BillingCycle } from '../enums/billing-cycle.enum';
 import { TenantService } from './tenant.service';
 
 const mockUser = {

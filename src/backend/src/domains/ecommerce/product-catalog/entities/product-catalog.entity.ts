@@ -9,15 +9,9 @@ import {
   BeforeInsert,
   BeforeUpdate,
 } from 'typeorm';
-import { User as UserEntity } from '../../../../core/user/entities/user.entity';
-import { User } from '@/common/security/permission.service';
+import { User as UserEntity } from '../../../../core/user/entities/user.entity';import { ProductStatus } from '../enums/product-status.enum';
 
-export enum ProductStatus {
-  DRAFT = 'draft',
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
-  OUT_OF_STOCK = 'out_of_stock',
-}
+import { User } from '@/common/security/permission.service';
 
 /**
  * ProductCatalog entity for eCommerce products

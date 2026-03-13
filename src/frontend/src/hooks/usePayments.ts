@@ -66,7 +66,11 @@ export const useCompletePayment = (): UseMutationResult<void, Error, string> => 
  * Hook for processing refund
  * @returns Mutation for processing refund
  */
-export const useProcessRefund = (): UseMutationResult<void, Error, { id: string; amount: number; reason: string }> => {
+export const useProcessRefund = (): UseMutationResult<
+  void,
+  Error,
+  { id: string; amount: number; reason: string }
+> => {
   const queryClient = useQueryClient();
 
   return useMutation({

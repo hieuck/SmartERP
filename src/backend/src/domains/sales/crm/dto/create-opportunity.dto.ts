@@ -1,17 +1,17 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
-  IsString,
+  IsDateString,
   IsEnum,
   IsNumber,
   IsOptional,
+  IsString,
   IsUUID,
-  IsDateString,
-  Min,
   Max,
   MaxLength,
+  Min,
 } from 'class-validator';
-import { Type } from 'class-transformer';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { OpportunityStage } from '../entities/opportunity.entity';
+import { OpportunityStage } from '../enums/opportunity-stage.enum';
 
 export class CreateOpportunityDto {
   @ApiProperty({ example: 'Q1 2024 Deal', description: 'Opportunity name' })

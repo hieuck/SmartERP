@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { ProductService } from './product.service';
-import { Product } from './entities/product.entity';
+;
 import { NotFoundException, ConflictException } from '@nestjs/common';
 import { CacheService } from '@/common/cache/cache.service';
 import { PermissionService } from '@/common/security/permission.service';

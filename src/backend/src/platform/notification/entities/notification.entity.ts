@@ -1,3 +1,5 @@
+import { NotificationType } from '../enums/notification-type.enum';
+import { NotificationStatus } from '../enums/notification-status.enum';
 import {
   Entity,
   Column,
@@ -5,19 +7,6 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
-
-export enum NotificationType {
-  INFO = 'info',
-  SUCCESS = 'success',
-  WARNING = 'warning',
-  ERROR = 'error',
-}
-
-export enum NotificationStatus {
-  UNREAD = 'unread',
-  READ = 'read',
-  ARCHIVED = 'archived',
-}
 
 @Entity('notifications')
 export class Notification {

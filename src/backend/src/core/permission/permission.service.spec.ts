@@ -6,7 +6,8 @@ import { Cache } from 'cache-manager';
 import { In, Repository } from 'typeorm';
 import { CreatePermissionDto } from './dto/create-permission.dto';
 import { UpdatePermissionDto } from './dto/update-permission.dto';
-import { Permission, PermissionAction } from './entities/permission.entity';
+import { Permission } from '../entities/permission.entity';
+import { PermissionAction } from '../enums/permission-action.enum';
 import { PermissionService } from './permission.service';
 
 const mockUser = {

@@ -13,18 +13,18 @@ interface UseSessionTimeoutConfig {
  * Hook for automatic logout after inactivity
  * Tracks user activity (mouse, keyboard, scroll, touch)
  * Logs out user after specified timeout period
- * 
+ *
  * Usage:
  * useSessionTimeout({ timeoutMs: 30 * 60 * 1000 });
  */
 export const useSessionTimeout = (config: UseSessionTimeoutConfig = {}) => {
   const timeoutMs = config.timeoutMs || 30 * 60 * 1000; // 30 minutes
   const warningMs = config.warningMs || 5 * 60 * 1000; // 5 minutes before timeout
-  
+
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
-  
+
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const warningTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastActivityRef = useRef<number>(Date.now());
@@ -44,7 +44,7 @@ export const useSessionTimeout = (config: UseSessionTimeoutConfig = {}) => {
 
     // Set logout timeout
     timeoutRef.current = setTimeout(() => {
-      console.log('Session expired due to inactivity');
+      // Session expired due to inactivity
       dispatch(clearCredentials());
       navigate('/login', { replace: true });
     }, timeoutMs);

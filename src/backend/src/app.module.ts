@@ -33,9 +33,6 @@ import { LeaveModule } from './domains/hr/leave/leave.module';
 import { PayrollModule } from './domains/hr/payroll/payroll.module';
 
 import { BOMModule } from './domains/manufacturing/bom/bom.module';
-import { MaterialModule } from './domains/manufacturing/material/material.module';
-import { MoldModule } from './domains/manufacturing/mold/mold.module';
-import { QualityCheckModule } from './domains/manufacturing/quality-check/quality-check.module';
 import { WorkCenterModule } from './domains/manufacturing/work-center/work-center.module';
 
 import { OrderModule as EcommerceOrderModule } from './domains/ecommerce/order/order.module';
@@ -66,33 +63,11 @@ import { ImportExportModule } from './utilities/import-export/import-export.modu
 import { ScheduledJobsModule } from './utilities/scheduled-jobs/scheduled-jobs.module';
 import { SeedModule } from './utilities/seed/seed.module';
 
-// Placeholder modules - to be implemented
-@Module({})
-class ProductModule {}
-
-@Module({})
-class InventoryModule {}
-
-@Module({})
-class CustomerModule {}
-
-@Module({})
-class SupplierModule {}
-
-@Module({})
-class PaymentModule {}
-
-@Module({})
-class CrmModule {}
-
-@Module({})
-class HrModule {}
-
-@Module({})
-class CategoryModule {}
-
-@Module({})
-class RoleModule {}
+import { ProductModule } from './domains/inventory/product/product.module';
+import { InventoryModule } from './domains/inventory/inventory.module';
+import { CustomerModule } from './domains/sales/customer/customer.module';
+import { SupplierModule } from './domains/purchasing/supplier/supplier.module';
+import { CrmModule } from './domains/sales/crm/crm.module';
 
 @Module({
   imports: [
@@ -161,9 +136,6 @@ class RoleModule {}
     PayrollModule,
     BOMModule,
     WorkCenterModule,
-    MaterialModule,
-    MoldModule,
-    QualityCheckModule,
     ProductCatalogModule,
     ShoppingCartModule,
     EcommerceOrderModule,
@@ -194,11 +166,7 @@ class RoleModule {}
     InventoryModule,
     CustomerModule,
     SupplierModule,
-    PaymentModule,
     CrmModule,
-    HrModule,
-    CategoryModule,
-    RoleModule,
   ],
   providers: [
     {

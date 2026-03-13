@@ -8,13 +8,9 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { Account } from '../../account/entities/account.entity';
-import { BankTransaction } from './bank-transaction.entity';
+import { Account } from '../../account/entities/account.entity';import { BankStatementStatus } from '../enums/bank-statement-status.enum';
 
-export enum BankStatementStatus {
-  DRAFT = 'draft',
-  RECONCILED = 'reconciled',
-}
+import { BankTransaction } from './bank-transaction.entity';
 
 @Entity('bank_statements')
 export class BankStatement {

@@ -24,12 +24,12 @@ class SyncService {
 
   async syncAll(): Promise<SyncResult> {
     if (this.isSyncing) {
-      console.log('Sync already in progress');
+      // Sync already in progress
       return { success: false, synced: 0, failed: 0, errors: [] };
     }
 
     if (!networkStatusService.getStatus()) {
-      console.log('Cannot sync: offline');
+      // Cannot sync: offline
       return { success: false, synced: 0, failed: 0, errors: [] };
     }
 

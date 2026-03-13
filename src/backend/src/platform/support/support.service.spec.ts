@@ -2,13 +2,13 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User } from '../../core/user/entities/user.entity';
-import { IssuePriority, IssueStatus, IssueType } from '../issue-tracking/entities/issue.entity';
-import { AssignmentRule, AssignmentStrategy } from './entities/assignment-rule.entity';
-import { CannedResponse } from './entities/canned-response.entity';
-import { ArticleStatus, KnowledgeBaseArticle } from './entities/knowledge-base-article.entity';
-import { SLA } from './entities/sla.entity';
-import { Ticket, TicketChannel, TicketSatisfactionRating } from './entities/ticket.entity';
+import { User } from '@core/user/entities/user.entity';
+import { IssuePriority, IssueStatus, IssueType } from '@platform/issue-tracking/enums';
+import { AssignmentRule, AssignmentStrategy } from '@platform/support/enums';
+import { CannedResponse } from '@platform/support/enums';
+import { ArticleStatus, KnowledgeBaseArticle } from '@platform/support/enums';
+import { SLA } from '@platform/support/enums';
+import { Ticket, TicketChannel, TicketSatisfactionRating } from '@platform/support/enums';
 import { SupportService } from './support.service';
 
 const createMockUser = (): User => ({

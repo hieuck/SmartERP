@@ -2,8 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { Repository } from 'typeorm';
-import { Tenant, TenantStatus } from '../../core/tenant/entities/tenant.entity';
-import { User } from '../../core/user/entities/user.entity';
+import { Tenant } from '@core/tenant/entities/tenant.entity';
+import { TenantStatus } from '@core/tenant/enums/tenant-status.enum';
+import { User } from '@core/user/entities/user.entity';
 
 @Injectable()
 export class SeedService {

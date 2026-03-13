@@ -29,8 +29,7 @@ export class UserService {
       throw new NotFoundException('User not found');
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password, ...profile } = user;
+    const { password: _, ...profile } = user;
     return profile;
   }
 
@@ -63,8 +62,7 @@ export class UserService {
 
     const updatedUser = await this.secureUserRepo.save(currentUser, user);
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password, ...profile } = updatedUser;
+    const { password: _, ...profile } = updatedUser;
     return profile;
   }
 

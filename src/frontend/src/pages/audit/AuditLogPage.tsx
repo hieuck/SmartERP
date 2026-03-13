@@ -1,10 +1,44 @@
 import { useState, useEffect } from 'react';
-import { Card, Table, Tag, Select, DatePicker, Space, Descriptions, Drawer, Button, Row, Col, Statistic } from 'antd';
-import { EyeOutlined, UserOutlined, FileTextOutlined, ClockCircleOutlined } from '@ant-design/icons';
-import { auditService, AuditLog, AuditAction, AuditEntity } from '../../services/audit/auditService';
+import {
+  Card,
+  Table,
+  Tag,
+  Select,
+  DatePicker,
+  Space,
+  Descriptions,
+  Drawer,
+  Button,
+  Row,
+  Col,
+  Statistic,
+} from 'antd';
+import {
+  EyeOutlined,
+  UserOutlined,
+  FileTextOutlined,
+  ClockCircleOutlined,
+} from '@ant-design/icons';
+import {
+  auditService,
+  AuditLog,
+  AuditAction,
+  AuditEntity,
+} from '../../services/audit/auditService';
 import dayjs from 'dayjs';
 import { useResponsive } from '../../hooks/useResponsive';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+} from 'recharts';
 
 const { RangePicker } = DatePicker;
 
@@ -222,7 +256,13 @@ export default function AuditLogPage() {
                 <YAxis />
                 <Tooltip labelFormatter={(label) => dayjs(label).format('DD/MM/YYYY')} />
                 <Legend />
-                <Line type="monotone" dataKey="count" name="Số hoạt động" stroke="#1890ff" strokeWidth={2} />
+                <Line
+                  type="monotone"
+                  dataKey="count"
+                  name="Số hoạt động"
+                  stroke="#1890ff"
+                  strokeWidth={2}
+                />
               </LineChart>
             </ResponsiveContainer>
           </Card>
@@ -323,9 +363,7 @@ export default function AuditLogPage() {
             <Descriptions.Item label="ID">{selectedLog.id}</Descriptions.Item>
             <Descriptions.Item label="Người dùng">{selectedLog.userId}</Descriptions.Item>
             <Descriptions.Item label="Hành động">
-              <Tag color={actionColors[selectedLog.action]}>
-                {actionLabels[selectedLog.action]}
-              </Tag>
+              <Tag color={actionColors[selectedLog.action]}>{actionLabels[selectedLog.action]}</Tag>
             </Descriptions.Item>
             <Descriptions.Item label="Đối tượng">
               {entityLabels[selectedLog.entity]}
@@ -335,9 +373,7 @@ export default function AuditLogPage() {
               {dayjs(selectedLog.createdAt).format('DD/MM/YYYY HH:mm:ss')}
             </Descriptions.Item>
             <Descriptions.Item label="IP">{selectedLog.ipAddress || '-'}</Descriptions.Item>
-            <Descriptions.Item label="User Agent">
-              {selectedLog.userAgent || '-'}
-            </Descriptions.Item>
+            <Descriptions.Item label="User Agent">{selectedLog.userAgent || '-'}</Descriptions.Item>
             {selectedLog.oldValue && (
               <Descriptions.Item label="Giá trị cũ">
                 {renderValue(selectedLog.oldValue)}

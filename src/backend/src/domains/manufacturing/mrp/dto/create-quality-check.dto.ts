@@ -12,7 +12,8 @@ import {
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { QualityCheckType, QualityCheckResult } from '../entities/quality-check.entity';
+import { QualityCheckType } from '../enums/quality-check-type.enum';
+import { QualityCheckResult } from '../enums/quality-check-result.enum';
 
 export class QualityCheckItemDto {
   @ApiProperty({ example: 'Thickness', description: 'Parameter name' })

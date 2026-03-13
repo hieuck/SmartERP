@@ -4,7 +4,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { User } from '../user/entities/user.entity';
 import { BusinessType, CompanySize, CompleteOnboardingDto } from './dto/complete-onboarding.dto';
-import { Tenant } from './entities/tenant.entity';
+import { Tenant } from '../entities/tenant.entity';
 import { OnboardingService } from './onboarding.service';
 
 describe('OnboardingService', () => {

@@ -1,21 +1,14 @@
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
-  ManyToOne,
-  JoinColumn,
   CreateDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { User } from '../../../core/user/entities/user.entity';
-
-export enum ConsentType {
-  TERMS_OF_SERVICE = 'terms_of_service',
-  PRIVACY_POLICY = 'privacy_policy',
-  MARKETING_EMAILS = 'marketing_emails',
-  DATA_PROCESSING = 'data_processing',
-  COOKIES = 'cookies',
-}
+import { ConsentType } from '../enums/consent-type.enum';
 
 @Entity('consents')
 export class Consent {

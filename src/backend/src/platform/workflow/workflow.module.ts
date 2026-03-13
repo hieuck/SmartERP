@@ -1,14 +1,14 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { WorkflowController } from './workflow.controller';
-import { WorkflowService } from './workflow.service';
+import { CacheModule } from '@/common/cache/cache.module';
+import { SecurityModule } from '@/common/security/security.module';
 import { ApprovalController } from './approval.controller';
 import { ApprovalService } from './approval.service';
+import { ApprovalRequest } from './entities/approval-request.entity';
 import { Workflow } from './entities/workflow.entity';
 import { WorkflowInstance } from './entities/workflow-instance.entity';
-import { ApprovalRequest } from './entities/approval-request.entity';
-import { CacheModule } from '../../common/cache/cache.module';
-import { SecurityModule } from '../../common/security/security.module';
+import { WorkflowController } from './workflow.controller';
+import { WorkflowService } from './workflow.service';
 
 @Module({
   imports: [

@@ -13,19 +13,22 @@ export class CreateIssueTracking1741500000000 implements MigrationInterface {
     await queryRunner.query(`
       CREATE TABLE "issues" (
         "id" uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-        "tenant_id" varchar NOT NULL,
+        "tenant_id" uuid NOT NULL,
         "reference" varchar UNIQUE NOT NULL,
         "title" varchar NOT NULL,
         "description" text NOT NULL,
         "status" "issue_status_enum" NOT NULL DEFAULT 'new',
         "priority" "issue_priority_enum" NOT NULL DEFAULT 'medium',
         "type" "issue_type_enum" NOT NULL DEFAULT 'task',
-        "reporter_id" varchar NOT NULL,
-        "assignee_id" varchar,
+        "reporter_id" uuid NOT NULL,
+        "assignee_id" uuid,
         "created_at" timestamp NOT NULL DEFAULT now(),
         "updated_at" timestamp NOT NULL DEFAULT now(),
         "resolved_at" timestamp,
-        "closed_at" timestamp
+        "closed_at" timestamp,
+        CONSTRAINT "FK_issues_tenant" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("id") ON DELETE CASCADE,
+        CONSTRAINT "FK_issues_reporter" FOREIGN KEY ("reporter_id") REFERENCES "users"("id") ON DELETE CASCADE,
+        CONSTRAINT "FK_issues_assignee" FOREIGN KEY ("assignee_id") REFERENCES "users"("id") ON DELETE SET NULL
       );
     `);
 
@@ -41,14 +44,15 @@ export class CreateIssueTracking1741500000000 implements MigrationInterface {
     await queryRunner.query(`
       CREATE TABLE "issue_comments" (
         "id" uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-        "tenant_id" varchar NOT NULL,
+        "tenant_id" uuid NOT NULL,
         "issue_id" uuid NOT NULL,
-        "author_id" varchar NOT NULL,
+        "author_id" uuid NOT NULL,
         "content" text NOT NULL,
         "is_internal" boolean NOT NULL DEFAULT false,
         "created_at" timestamp NOT NULL DEFAULT now(),
-        CONSTRAINT "FK_issue_comments_issue" FOREIGN KEY ("issue_id") 
-          REFERENCES "issues"("id") ON DELETE CASCADE
+        CONSTRAINT "FK_issue_comments_tenant" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("id") ON DELETE CASCADE,
+        CONSTRAINT "FK_issue_comments_issue" FOREIGN KEY ("issue_id") REFERENCES "issues"("id") ON DELETE CASCADE,
+        CONSTRAINT "FK_issue_comments_author" FOREIGN KEY ("author_id") REFERENCES "users"("id") ON DELETE CASCADE
       );
     `);
 
@@ -62,16 +66,17 @@ export class CreateIssueTracking1741500000000 implements MigrationInterface {
     await queryRunner.query(`
       CREATE TABLE "issue_attachments" (
         "id" uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-        "tenant_id" varchar NOT NULL,
+        "tenant_id" uuid NOT NULL,
         "issue_id" uuid NOT NULL,
-        "uploaded_by" varchar NOT NULL,
+        "uploaded_by" uuid NOT NULL,
         "file_name" varchar NOT NULL,
         "file_path" varchar NOT NULL,
         "file_size" integer NOT NULL,
         "mime_type" varchar NOT NULL,
         "created_at" timestamp NOT NULL DEFAULT now(),
-        CONSTRAINT "FK_issue_attachments_issue" FOREIGN KEY ("issue_id") 
-          REFERENCES "issues"("id") ON DELETE CASCADE
+        CONSTRAINT "FK_issue_attachments_tenant" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("id") ON DELETE CASCADE,
+        CONSTRAINT "FK_issue_attachments_issue" FOREIGN KEY ("issue_id") REFERENCES "issues"("id") ON DELETE CASCADE,
+        CONSTRAINT "FK_issue_attachments_uploaded_by" FOREIGN KEY ("uploaded_by") REFERENCES "users"("id") ON DELETE CASCADE
       );
     `);
 

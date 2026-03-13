@@ -31,7 +31,7 @@ export class ProductCatalogController {
   @ApiOperation({ summary: 'Create new product' })
   @ApiResponse({ status: 201, description: 'Product created successfully' })
   async create(@Body() dto: CreateProductDto, @Request() req) {
-    return this.productCatalogService.create(dto, req.user);
+    return this.productCatalogService.create(dto as any, req.user);
   }
 
   @Get()
@@ -75,7 +75,7 @@ export class ProductCatalogController {
   @ApiOperation({ summary: 'Update product' })
   @ApiResponse({ status: 200, description: 'Product updated successfully' })
   async update(@Param('id') id: string, @Body() dto: UpdateProductDto, @Request() req) {
-    return this.productCatalogService.update(id, dto, req.user);
+    return this.productCatalogService.update(id, dto as any, req.user);
   }
 
   @Delete(':id')

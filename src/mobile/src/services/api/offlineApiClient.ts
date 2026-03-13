@@ -27,7 +27,6 @@ class OfflineApiClient {
         if (useCache) {
           const cached = await this.getCachedResponse(url);
           if (cached) {
-            console.log('Using cached data due to request failure');
             return cached;
           }
         }

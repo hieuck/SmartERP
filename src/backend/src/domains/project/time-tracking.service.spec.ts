@@ -1,13 +1,12 @@
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { Project } from '../entities/project.entity';
+import { Task } from '../entities/task.entity';
+import { TimeEntry } from '../entities/time-entry.entity';
+import { User } from '../user/entities/user.entity';
 import { TimeTrackingService } from './time-tracking.service';
-import { TimeEntry } from './entities/time-entry.entity';
-import { Task } from './entities/task.entity';
-import { Project } from './entities/project.entity';
-import { User } from '../../core/user/entities/user.entity';
-import { createMockUser } from '@/common/test/test-helpers';
 
 describe('TimeTrackingService', () => {
   let service: TimeTrackingService;

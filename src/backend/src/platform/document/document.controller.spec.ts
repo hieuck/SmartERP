@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { DocumentController } from './document.controller';
 import { DocumentService } from './document.service';
-import { DocumentType } from './entities/document.entity';
+import { DocumentType } from './enums/document-type.enum';
 import { createMockUser } from '@/common/test/test-helpers';
 
 describe('DocumentController', () => {

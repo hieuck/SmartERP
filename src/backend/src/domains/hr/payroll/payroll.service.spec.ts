@@ -2,8 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PayrollService } from './payroll.service';
-import { SalaryStructure } from './entities/salary-structure.entity';
-import { Payslip, PayslipStatus } from './entities/payslip.entity';
+;
+;
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 
 describe('PayrollService', () => {

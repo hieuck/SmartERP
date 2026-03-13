@@ -1,5 +1,5 @@
 import { IsString, IsEnum, IsOptional, IsObject, IsBoolean } from 'class-validator';
-import { TemplateType } from '../entities/email-template.entity';
+import { TemplateType } from '../enums/email.enum';
 
 export class CreateEmailTemplateDto {
   @IsString()

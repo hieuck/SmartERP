@@ -2,6 +2,7 @@ import { CacheTTL, generateCacheKey } from '@/common/cache/cache.config';
 import { CacheService } from '@/common/cache/cache.service';
 import { PermissionService, User } from '@/common/security/permission.service';
 import { SecureRepository } from '@/common/security/secure-repository';
+import { TenantStatus } from '@/core/tenant/enums/tenant-status.enum';
 import {
   BadRequestException,
   ConflictException,
@@ -14,7 +15,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { User as UserEntity } from '../user/entities/user.entity';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
-import { Tenant, TenantStatus } from './entities/tenant.entity';
+import { Tenant } from './entities/tenant.entity';
 
 @Injectable()
 export class TenantService {

@@ -14,11 +14,13 @@ import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { DataSource, Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
-import { SubscriptionPlan, Tenant, TenantStatus } from '../tenant/entities/tenant.entity';
+import { SubscriptionPlan } from '../tenant/enums/subscription-plan.enum';
+import { TenantStatus } from '../tenant/enums/tenant-status.enum';
+import { Tenant } from '../tenant/entities/tenant.entity';
 import { User as UserEntity } from '../user/entities/user.entity';
 import { RegisterTenantDto } from './dto/register-tenant.dto';
-import { TokenBlacklistService } from './services/token-blacklist.service';
 import { AccountLockoutService } from './services/account-lockout.service';
+import { TokenBlacklistService } from './services/token-blacklist.service';
 
 @Injectable()
 export class AuthService {
@@ -66,9 +68,8 @@ export class AuthService {
     // Check if account is locked (CRITICAL FIX #14)
     const isLocked = await this.accountLockoutService.isAccountLocked(sanitizedEmail);
     if (isLocked) {
-      const remainingTime = await this.accountLockoutService.getRemainingLockoutTime(
-        sanitizedEmail,
-      );
+      const remainingTime =
+        await this.accountLockoutService.getRemainingLockoutTime(sanitizedEmail);
       this.logger.warn('Login attempt on locked account', {
         email: sanitizedEmail,
         remainingLockoutTime: remainingTime,
@@ -124,8 +125,7 @@ export class AuthService {
     });
 
     // Return user without password
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password: _, ...result } = user;
+    const { password: _password, ...result } = user;
     return result;
   }
 
@@ -593,7 +593,7 @@ export class AuthService {
     // CRITICAL FIX #8: Constant-time response to prevent timing attacks
     const elapsedTime = Date.now() - startTime;
     if (elapsedTime < CONSTANT_TIME_MS) {
-      await new Promise(resolve => setTimeout(resolve, CONSTANT_TIME_MS - elapsedTime));
+      await new Promise((resolve) => setTimeout(resolve, CONSTANT_TIME_MS - elapsedTime));
     }
 
     // Return generic message (same for existing and non-existing emails)
@@ -602,8 +602,6 @@ export class AuthService {
       message: 'If the email exists, a password reset link has been sent',
     };
   }
-
-
 
   /**
    * Validate password strength

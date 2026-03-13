@@ -19,7 +19,7 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { ProcessPaymentDto, VerifyPaymentDto } from './dto/payment.dto';
 import { RefundDto } from './dto/refund.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
-import { OrderStatus, PaymentStatus, ShippingStatus } from './entities/order.entity';
+import { OrderStatus, PaymentStatus, ShippingStatus } from '../enums/ecommerce.enum';
 import { OrderService } from './order.service';
 import { PaymentService } from './payment.service';
 
@@ -47,17 +47,17 @@ export class OrderController {
   @ApiResponse({ status: 200, description: 'Orders retrieved successfully' })
   async findAll(
     @CurrentUser() user: User,
-    @Query('status') status?: OrderStatus,
-    @Query('paymentStatus') paymentStatus?: PaymentStatus,
-    @Query('shippingStatus') shippingStatus?: ShippingStatus,
+    @Query('status') status?: string,
+    @Query('paymentStatus') paymentStatus?: string,
+    @Query('shippingStatus') shippingStatus?: string,
     @Query('customerId') customerId?: string,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
   ) {
     const filters = {
-      status,
-      paymentStatus,
-      shippingStatus,
+      status: status as OrderStatus,
+      paymentStatus: paymentStatus as PaymentStatus,
+      shippingStatus: shippingStatus as ShippingStatus,
       customerId,
       startDate: startDate ? new Date(startDate) : undefined,
       endDate: endDate ? new Date(endDate) : undefined,

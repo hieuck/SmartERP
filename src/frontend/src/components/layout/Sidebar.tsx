@@ -151,24 +151,30 @@ export default function Sidebar({ collapsed }: SidebarProps) {
     if (path.startsWith('/dashboard/inventory/receipts')) return '/dashboard/inventory/receipts';
     if (path.startsWith('/dashboard/inventory/issues')) return '/dashboard/inventory/issues';
     if (path.startsWith('/dashboard/inventory')) return '/dashboard/inventory/stock';
-    if (path.startsWith('/dashboard/warehouses/transfers')) return '/dashboard/warehouses/transfers';
-    if (path.startsWith('/dashboard/warehouses/stock-report')) return '/dashboard/warehouses/stock-report';
+    if (path.startsWith('/dashboard/warehouses/transfers'))
+      return '/dashboard/warehouses/transfers';
+    if (path.startsWith('/dashboard/warehouses/stock-report'))
+      return '/dashboard/warehouses/stock-report';
     if (path.startsWith('/dashboard/warehouses')) return '/dashboard/warehouses';
     if (path.startsWith('/dashboard/orders/sales')) return '/dashboard/orders/sales';
     if (path.startsWith('/dashboard/orders/purchase')) return '/dashboard/orders/purchase';
     if (path.startsWith('/dashboard/orders/payments')) return '/dashboard/orders/payments';
     if (path.startsWith('/dashboard/production/workers')) return '/dashboard/production/workers';
-    if (path.startsWith('/dashboard/production/attendance')) return '/dashboard/production/attendance';
-    if (path.startsWith('/dashboard/production/piecework')) return '/dashboard/production/piecework';
+    if (path.startsWith('/dashboard/production/attendance'))
+      return '/dashboard/production/attendance';
+    if (path.startsWith('/dashboard/production/piecework'))
+      return '/dashboard/production/piecework';
     if (path.startsWith('/dashboard/production/shifts')) return '/dashboard/production/shifts';
     if (path.startsWith('/dashboard/production/payroll')) return '/dashboard/production/payroll';
     if (path.startsWith('/dashboard/production/advances')) return '/dashboard/production/advances';
-    if (path.startsWith('/dashboard/production/materials')) return '/dashboard/production/materials';
+    if (path.startsWith('/dashboard/production/materials'))
+      return '/dashboard/production/materials';
     if (path.startsWith('/dashboard/production/molds')) return '/dashboard/production/molds';
     if (path.startsWith('/dashboard/production/orders')) return '/dashboard/production/orders';
     if (path.startsWith('/dashboard/production/reports')) return '/dashboard/production/reports';
     if (path.startsWith('/dashboard/promotions')) return '/dashboard/promotions';
-    if (path.startsWith('/dashboard/notifications/preferences')) return '/dashboard/notifications/preferences';
+    if (path.startsWith('/dashboard/notifications/preferences'))
+      return '/dashboard/notifications/preferences';
     if (path.startsWith('/dashboard/notifications')) return '/dashboard/notifications';
     if (path.startsWith('/dashboard/search')) return '/dashboard/search';
     if (path.startsWith('/dashboard/tenancy')) return '/dashboard/tenancy';

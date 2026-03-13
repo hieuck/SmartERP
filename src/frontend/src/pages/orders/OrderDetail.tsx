@@ -1,9 +1,31 @@
 import React from 'react';
-import { Card, Descriptions, Table, Tag, Button, Space, Typography, Spin, message, Modal } from 'antd';
-import { ArrowLeftOutlined, EditOutlined, CheckOutlined, CloseOutlined, DollarOutlined } from '@ant-design/icons';
+import {
+  Card,
+  Descriptions,
+  Table,
+  Tag,
+  Button,
+  Space,
+  Typography,
+  Spin,
+  message,
+  Modal,
+} from 'antd';
+import {
+  ArrowLeftOutlined,
+  EditOutlined,
+  CheckOutlined,
+  CloseOutlined,
+  DollarOutlined,
+} from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { orderServiceNew, OrderStatus, PaymentStatus, OrderItem } from '../../services/order/orderService';
+import {
+  orderServiceNew,
+  OrderStatus,
+  PaymentStatus,
+  OrderItem,
+} from '../../services/order/orderService';
 import dayjs from 'dayjs';
 import type { ColumnsType } from 'antd/es/table';
 
@@ -147,20 +169,34 @@ const OrderDetail: React.FC = () => {
 
   const canEdit = order.status === OrderStatus.DRAFT || order.status === OrderStatus.PENDING;
   const canConfirm = order.status === OrderStatus.PENDING;
-  const canCancel = order.status !== OrderStatus.DELIVERED && order.status !== OrderStatus.CANCELLED;
+  const canCancel =
+    order.status !== OrderStatus.DELIVERED && order.status !== OrderStatus.CANCELLED;
 
   return (
     <div style={{ padding: '24px' }}>
       <Space direction="vertical" style={{ width: '100%' }} size="large">
         <Card>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 16,
+            }}
+          >
             <Title level={3}>Chi tiết đơn hàng: {order.orderNumber}</Title>
             <Space>
-              <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/dashboard/orders/sales')}>
+              <Button
+                icon={<ArrowLeftOutlined />}
+                onClick={() => navigate('/dashboard/orders/sales')}
+              >
                 Quay lại
               </Button>
               {canEdit && (
-                <Button icon={<EditOutlined />} onClick={() => navigate(`/dashboard/orders/sales/${id}/edit`)}>
+                <Button
+                  icon={<EditOutlined />}
+                  onClick={() => navigate(`/dashboard/orders/sales/${id}/edit`)}
+                >
                   Chỉnh sửa
                 </Button>
               )}
@@ -192,12 +228,16 @@ const OrderDetail: React.FC = () => {
               </Text>
             </Descriptions.Item>
             <Descriptions.Item label="Đã thanh toán">
-              <Text style={{ fontSize: 16 }}>
-                {order.paidAmount.toLocaleString('vi-VN')} ₫
-              </Text>
+              <Text style={{ fontSize: 16 }}>{order.paidAmount.toLocaleString('vi-VN')} ₫</Text>
             </Descriptions.Item>
             <Descriptions.Item label="Còn lại">
-              <Text strong style={{ fontSize: 16, color: order.paidAmount < order.total ? '#ff4d4f' : '#52c41a' }}>
+              <Text
+                strong
+                style={{
+                  fontSize: 16,
+                  color: order.paidAmount < order.total ? '#ff4d4f' : '#52c41a',
+                }}
+              >
                 {(order.total - order.paidAmount).toLocaleString('vi-VN')} ₫
               </Text>
             </Descriptions.Item>

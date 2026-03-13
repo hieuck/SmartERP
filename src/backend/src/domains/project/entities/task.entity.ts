@@ -11,27 +11,13 @@ import {
   BeforeUpdate,
   Index,
 } from 'typeorm';
-import { User as UserEntity } from '../../../core/user/entities/user.entity';
+import { User as UserEntity } from '../../../core/user/entities/user.entity';import { TaskStatus } from '../enums/task-status.enum';
+import { TaskPriority } from '../enums/task-priority.enum';
+
 import { Project } from './project.entity';
 import { TaskDependency } from './task-dependency.entity';
 import { TimeEntry } from './time-entry.entity';
 import { User } from '@/common/security/permission.service';
-
-export enum TaskStatus {
-  TODO = 'todo',
-  IN_PROGRESS = 'in_progress',
-  IN_REVIEW = 'in_review',
-  BLOCKED = 'blocked',
-  COMPLETED = 'completed',
-  CANCELLED = 'cancelled',
-}
-
-export enum TaskPriority {
-  LOW = 'low',
-  MEDIUM = 'medium',
-  HIGH = 'high',
-  URGENT = 'urgent',
-}
 
 @Entity('tasks')
 @Index(['tenantId', 'projectId'])

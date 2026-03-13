@@ -2,7 +2,8 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SalaryStructure } from './entities/salary-structure.entity';
-import { Payslip, PayslipStatus } from './entities/payslip.entity';
+import { Payslip } from './entities/payslip.entity';
+import { PayslipStatus } from './enums/payslip-status.enum';
 import { CreateSalaryStructureDto } from './dto/create-salary-structure.dto';
 
 @Injectable()

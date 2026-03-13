@@ -1,24 +1,23 @@
+import { Roles } from '@/common/decorators/roles.decorator';
+import { RolesGuard } from '@/common/guards/roles.guard';
 import {
+  Body,
   Controller,
+  Delete,
   Get,
+  Param,
   Post,
   Put,
-  Delete,
-  Body,
-  Param,
   Query,
-  UseGuards,
   Request,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { TimeTrackingService } from './time-tracking.service';
-import { CreateTimeEntryDto } from './dto/create-time-entry.dto';
-import { TimeEntry } from './entities/time-entry.entity';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../core/auth/guards/jwt-auth.guard';
-import { RolesGuard } from '@/common/guards/roles.guard';
-import { Roles } from '@/common/decorators/roles.decorator';
+import { TimeEntry } from './entities/time-entry.entity';
+import { CreateTimeEntryDto } from './dto/create-time-entry.dto';
+import { TimeTrackingService } from './time-tracking.service';
 
-import { User } from '@/common/security/permission.service';
 @ApiTags('time-tracking')
 @ApiBearerAuth()
 @Controller('time-tracking')
@@ -39,7 +38,11 @@ export class TimeTrackingController {
   @Get()
   @Roles('admin', 'manager', 'project_manager', 'user')
   @ApiOperation({ summary: 'Get all time entries' })
-  @ApiResponse({ status: 200, description: 'Time entries retrieved successfully', type: [TimeEntry] })
+  @ApiResponse({
+    status: 200,
+    description: 'Time entries retrieved successfully',
+    type: [TimeEntry],
+  })
   async findAll(
     @Request() req,
     @Query('userId') userId?: string,
@@ -97,8 +100,14 @@ export class TimeTrackingController {
   @Roles('admin', 'manager', 'project_manager', 'user')
   @ApiOperation({ summary: 'Get total hours by task' })
   @ApiResponse({ status: 200, description: 'Total hours retrieved successfully' })
-  async getTotalHoursByTask(@Param('taskId') taskId: string, @Request() req): Promise<{ totalHours: number }> {
-    const totalHours = await this.timeTrackingService.getTotalHoursByTask(taskId, req.user.tenantId);
+  async getTotalHoursByTask(
+    @Param('taskId') taskId: string,
+    @Request() req,
+  ): Promise<{ totalHours: number }> {
+    const totalHours = await this.timeTrackingService.getTotalHoursByTask(
+      taskId,
+      req.user.tenantId,
+    );
     return { totalHours };
   }
 
@@ -106,8 +115,14 @@ export class TimeTrackingController {
   @Roles('admin', 'manager', 'project_manager', 'user')
   @ApiOperation({ summary: 'Get total hours by project' })
   @ApiResponse({ status: 200, description: 'Total hours retrieved successfully' })
-  async getTotalHoursByProject(@Param('projectId') projectId: string, @Request() req): Promise<{ totalHours: number }> {
-    const totalHours = await this.timeTrackingService.getTotalHoursByProject(projectId, req.user.tenantId);
+  async getTotalHoursByProject(
+    @Param('projectId') projectId: string,
+    @Request() req,
+  ): Promise<{ totalHours: number }> {
+    const totalHours = await this.timeTrackingService.getTotalHoursByProject(
+      projectId,
+      req.user.tenantId,
+    );
     return { totalHours };
   }
 

@@ -8,16 +8,7 @@ import {
   ManyToMany,
 } from 'typeorm';
 import { Role } from '../../../domains/hr/role/entities/role.entity';
-
-export enum PermissionAction {
-  CREATE = 'create',
-  READ = 'read',
-  UPDATE = 'update',
-  DELETE = 'delete',
-  APPROVE = 'approve',
-  EXPORT = 'export',
-  IMPORT = 'import',
-}
+import { PermissionAction } from '../enums/permission-action.enum';
 
 @Entity('permissions')
 export class Permission {

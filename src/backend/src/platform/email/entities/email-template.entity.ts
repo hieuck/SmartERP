@@ -1,3 +1,4 @@
+import { TemplateType } from '../enums/template-type.enum';
 import {
   Entity,
   Column,
@@ -6,15 +7,6 @@ import {
   UpdateDateColumn,
   DeleteDateColumn,
 } from 'typeorm';
-
-export enum TemplateType {
-  WELCOME = 'welcome',
-  ORDER_CONFIRMATION = 'order_confirmation',
-  INVOICE = 'invoice',
-  PASSWORD_RESET = 'password_reset',
-  NOTIFICATION = 'notification',
-  CUSTOM = 'custom',
-}
 
 @Entity('email_templates')
 export class EmailTemplate {

@@ -1,24 +1,8 @@
-import { Entity, Column, Index } from 'typeorm';
+import { Entity, Column, Index } from 'typeorm';import { ProductStatus } from '../enums/product-status.enum';
+import { ProductType } from '../enums/product-type.enum';
+import { TrackingType } from '../enums/tracking-type.enum';
+
 import { BaseEntity } from '@/common/entities/base.entity';
-
-export enum ProductStatus {
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
-  DISCONTINUED = 'discontinued',
-  OUT_OF_STOCK = 'out_of_stock',
-}
-
-export enum ProductType {
-  PHYSICAL = 'physical',
-  DIGITAL = 'digital',
-  SERVICE = 'service',
-}
-
-export enum TrackingType {
-  NONE = 'none',
-  SERIAL = 'serial',
-  BATCH = 'batch',
-}
 
 @Entity('products')
 @Index(['tenantId', 'sku'], { unique: true })

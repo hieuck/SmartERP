@@ -15,14 +15,14 @@ interface RateLimitState {
 /**
  * Hook for client-side rate limiting
  * Default: 5 attempts per 60 seconds
- * 
+ *
  * Usage:
  * const { isLimited, attempts, remainingTime, recordAttempt } = useRateLimit();
- * 
+ *
  * if (isLimited) {
  *   return <div>Too many attempts. Try again in {remainingTime}s</div>;
  * }
- * 
+ *
  * const handleSubmit = () => {
  *   recordAttempt();
  *   // ... submit logic

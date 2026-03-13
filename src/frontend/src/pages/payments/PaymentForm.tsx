@@ -71,7 +71,7 @@ const PaymentForm: React.FC = () => {
     try {
       setLoading(true);
       const payment = await paymentService.getById(Number(id));
-      
+
       form.setFieldsValue({
         invoiceId: payment.invoiceId,
         orderId: payment.orderId,
@@ -122,7 +122,7 @@ const PaymentForm: React.FC = () => {
   const handleSubmit = async (values: any) => {
     try {
       setLoading(true);
-      
+
       const paymentData = {
         invoiceId: values.invoiceId,
         orderId: values.orderId,
@@ -141,7 +141,7 @@ const PaymentForm: React.FC = () => {
         await paymentService.create(paymentData as CreatePaymentDto);
         message.success('Tạo thanh toán thành công');
       }
-      
+
       navigate('/dashboard/payments');
     } catch (error: any) {
       message.error(error.response?.data?.message || 'Có lỗi xảy ra');
@@ -197,7 +197,7 @@ const PaymentForm: React.FC = () => {
                     (option?.children as string).toLowerCase().includes(input.toLowerCase())
                   }
                 >
-                  {invoices.map(invoice => (
+                  {invoices.map((invoice) => (
                     <Option key={invoice.id} value={invoice.id}>
                       {invoice.invoiceNumber} - {invoice.totalAmount.toLocaleString('vi-VN')} ₫
                     </Option>
@@ -218,7 +218,7 @@ const PaymentForm: React.FC = () => {
                     (option?.children as string).toLowerCase().includes(input.toLowerCase())
                   }
                 >
-                  {orders.map(order => (
+                  {orders.map((order) => (
                     <Option key={order.id} value={order.id}>
                       {order.orderNumber} - {order.totalAmount.toLocaleString('vi-VN')} ₫
                     </Option>
@@ -236,10 +236,18 @@ const PaymentForm: React.FC = () => {
                   {selectedInvoice && (
                     <>
                       <Text>Hóa đơn: {selectedInvoice.invoiceNumber}</Text>
-                      <Text>Tổng tiền: {selectedInvoice.totalAmount.toLocaleString('vi-VN')} ₫</Text>
-                      <Text>Đã thanh toán: {selectedInvoice.paidAmount.toLocaleString('vi-VN')} ₫</Text>
+                      <Text>
+                        Tổng tiền: {selectedInvoice.totalAmount.toLocaleString('vi-VN')} ₫
+                      </Text>
+                      <Text>
+                        Đã thanh toán: {selectedInvoice.paidAmount.toLocaleString('vi-VN')} ₫
+                      </Text>
                       <Text strong>
-                        Còn lại: {(selectedInvoice.totalAmount - selectedInvoice.paidAmount).toLocaleString('vi-VN')} ₫
+                        Còn lại:{' '}
+                        {(selectedInvoice.totalAmount - selectedInvoice.paidAmount).toLocaleString(
+                          'vi-VN',
+                        )}{' '}
+                        ₫
                       </Text>
                     </>
                   )}
@@ -247,9 +255,15 @@ const PaymentForm: React.FC = () => {
                     <>
                       <Text>Đơn hàng: {selectedOrder.orderNumber}</Text>
                       <Text>Tổng tiền: {selectedOrder.totalAmount.toLocaleString('vi-VN')} ₫</Text>
-                      <Text>Đã thanh toán: {selectedOrder.paidAmount.toLocaleString('vi-VN')} ₫</Text>
+                      <Text>
+                        Đã thanh toán: {selectedOrder.paidAmount.toLocaleString('vi-VN')} ₫
+                      </Text>
                       <Text strong>
-                        Còn lại: {(selectedOrder.totalAmount - selectedOrder.paidAmount).toLocaleString('vi-VN')} ₫
+                        Còn lại:{' '}
+                        {(selectedOrder.totalAmount - selectedOrder.paidAmount).toLocaleString(
+                          'vi-VN',
+                        )}{' '}
+                        ₫
                       </Text>
                     </>
                   )}
@@ -348,9 +362,7 @@ const PaymentForm: React.FC = () => {
               <Button type="primary" htmlType="submit" icon={<SaveOutlined />} loading={loading}>
                 {id ? 'Cập nhật' : 'Tạo thanh toán'}
               </Button>
-              <Button onClick={() => navigate('/dashboard/payments')}>
-                Hủy
-              </Button>
+              <Button onClick={() => navigate('/dashboard/payments')}>Hủy</Button>
             </Space>
           </Form.Item>
         </Form>

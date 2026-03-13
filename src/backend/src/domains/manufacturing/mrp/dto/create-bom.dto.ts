@@ -13,7 +13,7 @@ import {
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { BomStatus } from '../entities/bom.entity';
+import { BomStatus } from '../enums/bom-status.enum';
 
 export class BomMaterialItemDto {
   @ApiProperty({ example: 'uuid', description: 'Material ID' })

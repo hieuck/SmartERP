@@ -1,14 +1,6 @@
-import { Entity, Column, Index } from 'typeorm';
-import { BaseEntity } from '@/common/entities/base.entity';
+import { Entity, Column, Index } from 'typeorm';import { MaterialType } from '../enums/material-type.enum';
 
-export enum MaterialType {
-  RAW = 'raw',
-  PLASTER = 'plaster',
-  MOLD = 'mold',
-  PAINT = 'paint',
-  ACCESSORY = 'accessory',
-  PACKAGING = 'packaging',
-}
+import { BaseEntity } from '@/common/entities/base.entity';
 
 @Entity('materials')
 @Index(['tenantId', 'code'], { unique: true })

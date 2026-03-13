@@ -1,6 +1,6 @@
 import { IsEnum, IsNumber, IsUUID, Min } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { LeaveType } from '../entities/leave.entity';
+import { LeaveType } from '../../enums/hr.enum';
 
 export class AllocateLeaveDto {
   @ApiProperty({ description: 'Employee ID' })

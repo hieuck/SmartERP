@@ -1,39 +1,21 @@
 import {
-  Entity,
-  PrimaryGeneratedColumn,
+  BeforeInsert,
   Column,
   CreateDateColumn,
-  UpdateDateColumn,
+  Entity,
+  Index,
+  JoinColumn,
   ManyToOne,
   OneToMany,
-  JoinColumn,
-  Index,
-  BeforeInsert,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
-import { User } from '../../../core/user/entities/user.entity';
-import { IssueComment } from './issue-comment.entity';
+import { User } from '@/core/user/entities/user.entity';
+import { IssuePriority } from '../enums/issue-priority.enum';
+import { IssueStatus } from '../enums/issue-status.enum';
+import { IssueType } from '../enums/issue-type.enum';
 import { IssueAttachment } from './issue-attachment.entity';
-
-export enum IssueStatus {
-  NEW = 'new',
-  IN_PROGRESS = 'in_progress',
-  RESOLVED = 'resolved',
-  CLOSED = 'closed',
-}
-
-export enum IssuePriority {
-  LOW = 'low',
-  MEDIUM = 'medium',
-  HIGH = 'high',
-  CRITICAL = 'critical',
-}
-
-export enum IssueType {
-  BUG = 'bug',
-  FEATURE_REQUEST = 'feature_request',
-  TASK = 'task',
-  QUESTION = 'question',
-}
+import { IssueComment } from './issue-comment.entity';
 
 @Entity('issues')
 @Index(['tenantId', 'status'])

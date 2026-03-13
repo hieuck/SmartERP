@@ -2,9 +2,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ReportTemplateService, ReportCategory } from './report-template.service';
-import { Report } from './entities/report.entity';
-import { ReportColumn } from './entities/report-column.entity';
-import { User } from '../../core/user/entities/user.entity';
+import { Report } from '../enums/platform.enum';
+import { ReportColumn } from '../enums/platform.enum';
+import { User } from '../user/entities/user.entity';
 import { createMockUser } from '@/common/test/test-helpers';
 
 describe('ReportTemplateService', () => {

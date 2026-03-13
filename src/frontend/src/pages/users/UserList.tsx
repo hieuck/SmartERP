@@ -1,7 +1,16 @@
 import React, { useState } from 'react';
 import { Table, Button, Space, Tag, Input, Card, message, Typography, Dropdown, Modal } from 'antd';
 import type { ColumnsType, MenuProps } from 'antd/es/table';
-import { PlusOutlined, SearchOutlined, UserOutlined, EyeOutlined, EditOutlined, DeleteOutlined, MoreOutlined, LockOutlined } from '@ant-design/icons';
+import {
+  PlusOutlined,
+  SearchOutlined,
+  UserOutlined,
+  EyeOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  MoreOutlined,
+  LockOutlined,
+} from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import authService from '../../services/auth/authService';
@@ -161,9 +170,7 @@ const UserList: React.FC = () => {
       dataIndex: 'role',
       key: 'role',
       width: 150,
-      render: (role: string) => (
-        <Tag color={roleColors[role]}>{roleLabels[role] || role}</Tag>
-      ),
+      render: (role: string) => <Tag color={roleColors[role]}>{roleLabels[role] || role}</Tag>,
     },
     {
       title: 'Trạng thái',
@@ -171,9 +178,7 @@ const UserList: React.FC = () => {
       key: 'isActive',
       width: 120,
       render: (isActive: boolean) => (
-        <Tag color={isActive ? 'green' : 'red'}>
-          {isActive ? 'Hoạt động' : 'Vô hiệu'}
-        </Tag>
+        <Tag color={isActive ? 'green' : 'red'}>{isActive ? 'Hoạt động' : 'Vô hiệu'}</Tag>
       ),
     },
     {
@@ -181,7 +186,7 @@ const UserList: React.FC = () => {
       dataIndex: 'lastLogin',
       key: 'lastLogin',
       width: 150,
-      render: (date: string) => date ? dayjs(date).format('DD/MM/YYYY HH:mm') : '-',
+      render: (date: string) => (date ? dayjs(date).format('DD/MM/YYYY HH:mm') : '-'),
     },
     {
       title: 'Ngày tạo',

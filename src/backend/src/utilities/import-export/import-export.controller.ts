@@ -1,11 +1,9 @@
 import { Controller, Post, Body, UseGuards, Res } from '@nestjs/common';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { User } from '@/common/security/permission.service';
 import { Response } from 'express';
 import { ImportExportService } from './import-export.service';
-import { JwtAuthGuard } from '../../core/auth/guards/jwt-auth.guard';
-import { TenantId } from '../../common/decorators/tenant-id.decorator';
-
-import { User } from '@/common/security/permission.service';
+import { JwtAuthGuard } from '@core/auth/guards/jwt-auth.guard';
 @Controller('import-export')
 @UseGuards(JwtAuthGuard)
 export class ImportExportController {

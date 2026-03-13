@@ -8,13 +8,13 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { Roles } from '@/common/decorators/roles.decorator';
+import { RolesGuard } from '@/common/guards/roles.guard';
+import { User } from '@/common/security/permission.service';
+import { JwtAuthGuard } from '@core/auth/guards/jwt-auth.guard';
 import { ApprovalService } from './approval.service';
 import { SubmitApprovalDto, RejectApprovalDto } from './dto/approval.dto';
-import { JwtAuthGuard } from '../../core/auth/guards/jwt-auth.guard';
-import { RolesGuard } from '@/common/guards/roles.guard';
-import { Roles } from '@/common/decorators/roles.decorator';
-import { CurrentUser } from '@/common/decorators/current-user.decorator';
-import { User } from '@/common/security/permission.service';
 
 @ApiTags('Approvals')
 @ApiBearerAuth()

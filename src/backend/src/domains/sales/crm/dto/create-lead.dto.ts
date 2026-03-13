@@ -1,15 +1,16 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-  IsString,
   IsEmail,
   IsEnum,
   IsNumber,
   IsOptional,
+  IsString,
   IsUUID,
-  Min,
   MaxLength,
+  Min,
 } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { LeadStatus, LeadSource } from '../entities/lead.entity';
+import { LeadSource } from '../enums/lead-source.enum';
+import { LeadStatus } from '../enums/lead-status.enum';
 
 export class CreateLeadDto {
   @ApiProperty({ example: 'John Doe', description: 'Lead name' })

@@ -14,17 +14,13 @@ export interface PerformanceMetrics {
   timeToInteractive: number;
   firstContentfulPaint: number;
   largestContentfulPaint: number;
-} domContentLoaded: number;
-  timeToInteractive: number;
-  firstContentfulPaint: number;
-  largestContentfulPaint: number;
 }
 
 class PerformanceMonitor {
   /**
    * Get page load performance metrics
    */
-rics | null {
+  getPageLoadMetrics(): PerformanceMetrics | null {
     if (!window.performance || !window.performance.timing) {
       return null;
     }
@@ -36,8 +32,8 @@ rics | null {
 
     return {
       pageLoadTime: timing.loadEventEnd - timing.navigationStart,
-      iming.navigationStart,
-   timing.domInteractive - timing.navigationStart,
+      domContentLoaded: timing.domContentLoadedEventEnd - timing.navigationStart,
+      timeToInteractive: timing.domInteractive - timing.navigationStart,
       firstContentfulPaint: this.getFirstContentfulPaint(),
       largestContentfulPaint: this.getLargestContentfulPaint(),
     };
@@ -47,16 +43,16 @@ rics | null {
    * Get First Contentful Paint (FCP)
    */
   private getFirstContentfulPaint(): number {
-EntriesByType('paint');
+    const paintEntries = window.performance.getEntriesByType('paint');
     const fcpEntry = paintEntries.find((entry) => entry.name === 'first-contentful-paint');
-    return fcpEntry ? fcpEntry.startTim
+    return fcpEntry ? fcpEntry.startTime : 0;
   }
 
   /**
    * Get Largest Contentful Paint (LCP)
    */
   private getLargestContentfulPaint(): number {
-    ct lcpEntries = window.performance.getEntriesByType('largest-contentful-paint');
+    const lcpEntries = window.performance.getEntriesByType('largest-contentful-paint');
     if (lcpEntries.length > 0) {
       const lastEntry = lcpEntries[lcpEntries.length - 1] as PerformanceEntryWithStartTime;
       return lastEntry.startTime;
@@ -65,31 +61,33 @@ EntriesByType('paint');
   }
 
   /**
-   * Log performance metrics to console
+   * Log performance metrics (development only)
    */
   logMetrics(): void {
-    const metrics = this.getPageLoadMetrics();
+    if (process.env.NODE_ENV !== 'production') {
+      const metrics = this.getPageLoadMetrics();
 
-    if (metrics) {
-      console.group('Performance Metrics');
-      console.log(`Page Load Time: ${metrics.pageLoadTime}ms`);
-      console.log(`DOM Content Loaded: ${metrics.domContentLoaded}ms`);
-Interactive: ${metrics.timeToInteractive}ms`);
-      console.log(`First Contentful Paint: ${metrics.firstContentfulPaint}ms`);
-      console.log(`Largest Contentful Paint: ${metrics.largestContentfulPaint}ms`);
-      console.groupEnd();
+      if (metrics) {
+        console.group('Performance Metrics');
+        console.log(`Page Load Time: ${metrics.pageLoadTime}ms`);
+        console.log(`DOM Content Loaded: ${metrics.domContentLoaded}ms`);
+        console.log(`Time To Interactive: ${metrics.timeToInteractive}ms`);
+        console.log(`First Contentful Paint: ${metrics.firstContentfulPaint}ms`);
+        console.log(`Largest Contentful Paint: ${metrics.largestContentfulPaint}ms`);
+        console.groupEnd();
 
-      // Check against requirements
-      if (metrics.pageLoadTime > 3000) {
-        console.warn('⚠️ Page load time exceeds 3 seconds (Requirement 22.10)');
-      } else {
-        console.log('✅ Page load time meets requirements');
+        // Check against requirements
+        if (metrics.pageLoadTime > 3000) {
+          console.warn('⚠️ Page load time exceeds 3 seconds (Requirement 22.10)');
+        } else {
+          console.log('✅ Page load time meets requirements');
+        }
       }
     }
   }
 
   /**
-   * Monitor resoading
+   * Monitor resource loading
    */
   getResourceMetrics(): Array<{ name: string; duration: number; size: number }> {
     const resources = window.performance.getEntriesByType(
@@ -132,7 +130,7 @@ Interactive: ${metrics.timeToInteractive}ms`);
   /**
    * Check if performance meets requirements
    */
-  checkRequirements{ passed: boolean; issues: string[] } {
+  checkRequirements(): { passed: boolean; issues: string[] } {
     const metrics = this.getPageLoadMetrics();
     const issues: string[] = [];
 

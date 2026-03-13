@@ -1,30 +1,37 @@
-import { IsOptional, IsString, IsEnum, IsInt, Min, IsBoolean } from 'class-validator';
-import { IssuePriority } from '../../issue-tracking/entities/issue.entity';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsBoolean, IsEnum, IsInt, IsOptional, IsString, Min } from 'class-validator';
+import { IssuePriority } from '@/platform/issue-tracking/enums';
 
 export class UpdateSLADto {
-  @IsOptional()
+  @ApiPropertyOptional({ description: 'SLA name' })
   @IsString()
+  @IsOptional()
   name?: string;
 
-  @IsOptional()
+  @ApiPropertyOptional({ description: 'SLA description' })
   @IsString()
+  @IsOptional()
   description?: string;
 
-  @IsOptional()
-  @IsEnum(IssuePriority)
-  priority?: IssuePriority;
-
-  @IsOptional()
+  @ApiPropertyOptional({ description: 'Response time in hours' })
   @IsInt()
+  @IsOptional()
   @Min(1)
   responseTimeHours?: number;
 
-  @IsOptional()
+  @ApiPropertyOptional({ description: 'Resolution time in hours' })
   @IsInt()
+  @IsOptional()
   @Min(1)
   resolutionTimeHours?: number;
 
+  @ApiPropertyOptional({ enum: IssuePriority, description: 'Filter by priority' })
+  @IsEnum(IssuePriority)
   @IsOptional()
+  priority?: IssuePriority;
+
+  @ApiPropertyOptional({ description: 'Is active' })
   @IsBoolean()
+  @IsOptional()
   isActive?: boolean;
 }

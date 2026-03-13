@@ -1,5 +1,17 @@
 import React, { useState } from 'react';
-import { Card, Tabs, DatePicker, Button, Space, Table, message, Row, Col, Statistic, Typography } from 'antd';
+import {
+  Card,
+  Tabs,
+  DatePicker,
+  Button,
+  Space,
+  Table,
+  message,
+  Row,
+  Col,
+  Statistic,
+  Typography,
+} from 'antd';
 import { FilePdfOutlined, FileExcelOutlined, BarChartOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import {
@@ -33,12 +45,21 @@ const ReportsPage: React.FC = () => {
   // Hooks for different reports
   const salesReport = useSalesReport({ startDate: dateRange[0], endDate: dateRange[1] });
   const dailySalesReport = useDailySalesReport({ startDate: dateRange[0], endDate: dateRange[1] });
-  const productPerformanceReport = useProductPerformanceReport({ startDate: dateRange[0], endDate: dateRange[1] });
+  const productPerformanceReport = useProductPerformanceReport({
+    startDate: dateRange[0],
+    endDate: dateRange[1],
+  });
   const inventoryReport = useInventoryReport();
   const lowStockReport = useLowStockReport();
-  const inventoryMovementsReport = useInventoryMovementsReport({ startDate: dateRange[0], endDate: dateRange[1] });
+  const inventoryMovementsReport = useInventoryMovementsReport({
+    startDate: dateRange[0],
+    endDate: dateRange[1],
+  });
   const customerReport = useCustomerReport({ startDate: dateRange[0], endDate: dateRange[1] });
-  const topCustomersReport = useTopCustomersReport({ startDate: dateRange[0], endDate: dateRange[1] });
+  const topCustomersReport = useTopCustomersReport({
+    startDate: dateRange[0],
+    endDate: dateRange[1],
+  });
   const financialReport = useFinancialReport({ startDate: dateRange[0], endDate: dateRange[1] });
   const profitLossReport = useProfitLossReport({ startDate: dateRange[0], endDate: dateRange[1] });
   const cashFlowReport = useCashFlowReport({ startDate: dateRange[0], endDate: dateRange[1] });
@@ -135,8 +156,15 @@ const ReportsPage: React.FC = () => {
       <Card title="Báo cáo doanh thu">
         <Space direction="vertical" style={{ width: '100%' }}>
           <Space>
-            <RangePicker value={[dayjs(dateRange[0]), dayjs(dateRange[1])]} onChange={handleDateRangeChange} />
-            <Button type="primary" onClick={() => fetchReport('sales')} loading={salesReport.isLoading}>
+            <RangePicker
+              value={[dayjs(dateRange[0]), dayjs(dateRange[1])]}
+              onChange={handleDateRangeChange}
+            />
+            <Button
+              type="primary"
+              onClick={() => fetchReport('sales')}
+              loading={salesReport.isLoading}
+            >
               Xem báo cáo
             </Button>
             <Button icon={<FilePdfOutlined />} onClick={() => handleExportPDF('sales')}>
@@ -146,7 +174,9 @@ const ReportsPage: React.FC = () => {
               Excel
             </Button>
           </Space>
-          {salesReport.error && <div style={{ color: 'red' }}>Lỗi: {salesReport.error.message}</div>}
+          {salesReport.error && (
+            <div style={{ color: 'red' }}>Lỗi: {salesReport.error.message}</div>
+          )}
           {reportData && (
             <Row gutter={16}>
               <Col span={8}>
@@ -165,26 +195,41 @@ const ReportsPage: React.FC = () => {
 
       <Card title="Doanh thu theo ngày">
         <Space>
-          <Button type="primary" onClick={() => fetchReport('daily-sales')} loading={dailySalesReport.isLoading}>
+          <Button
+            type="primary"
+            onClick={() => fetchReport('daily-sales')}
+            loading={dailySalesReport.isLoading}
+          >
             Xem báo cáo
           </Button>
           <Button icon={<FilePdfOutlined />} onClick={() => handleExportPDF('daily-sales')}>
             PDF
           </Button>
         </Space>
-        {dailySalesReport.error && <div style={{ color: 'red' }}>Lỗi: {dailySalesReport.error.message}</div>}
+        {dailySalesReport.error && (
+          <div style={{ color: 'red' }}>Lỗi: {dailySalesReport.error.message}</div>
+        )}
       </Card>
 
       <Card title="Hiệu suất sản phẩm">
         <Space>
-          <Button type="primary" onClick={() => fetchReport('product-performance')} loading={productPerformanceReport.isLoading}>
+          <Button
+            type="primary"
+            onClick={() => fetchReport('product-performance')}
+            loading={productPerformanceReport.isLoading}
+          >
             Xem báo cáo
           </Button>
-          <Button icon={<FileExcelOutlined />} onClick={() => handleExportExcel('product-performance')}>
+          <Button
+            icon={<FileExcelOutlined />}
+            onClick={() => handleExportExcel('product-performance')}
+          >
             Excel
           </Button>
         </Space>
-        {productPerformanceReport.error && <div style={{ color: 'red' }}>Lỗi: {productPerformanceReport.error.message}</div>}
+        {productPerformanceReport.error && (
+          <div style={{ color: 'red' }}>Lỗi: {productPerformanceReport.error.message}</div>
+        )}
       </Card>
     </Space>
   );
@@ -207,10 +252,17 @@ const ReportsPage: React.FC = () => {
 
       <Card title="Cảnh báo tồn thấp">
         <Space>
-          <Button type="primary" onClick={() => fetchReport('inventory-low-stock')} loading={loading}>
+          <Button
+            type="primary"
+            onClick={() => fetchReport('inventory-low-stock')}
+            loading={loading}
+          >
             Xem báo cáo
           </Button>
-          <Button icon={<FileExcelOutlined />} onClick={() => handleExportExcel('inventory-low-stock')}>
+          <Button
+            icon={<FileExcelOutlined />}
+            onClick={() => handleExportExcel('inventory-low-stock')}
+          >
             Excel
           </Button>
         </Space>
@@ -219,11 +271,21 @@ const ReportsPage: React.FC = () => {
       <Card title="Lịch sử xuất nhập">
         <Space direction="vertical" style={{ width: '100%' }}>
           <Space>
-            <RangePicker value={[dayjs(dateRange[0]), dayjs(dateRange[1])]} onChange={handleDateRangeChange} />
-            <Button type="primary" onClick={() => fetchReport('inventory-movements')} loading={loading}>
+            <RangePicker
+              value={[dayjs(dateRange[0]), dayjs(dateRange[1])]}
+              onChange={handleDateRangeChange}
+            />
+            <Button
+              type="primary"
+              onClick={() => fetchReport('inventory-movements')}
+              loading={loading}
+            >
               Xem báo cáo
             </Button>
-            <Button icon={<FileExcelOutlined />} onClick={() => handleExportExcel('inventory-movements')}>
+            <Button
+              icon={<FileExcelOutlined />}
+              onClick={() => handleExportExcel('inventory-movements')}
+            >
               Excel
             </Button>
           </Space>
@@ -237,7 +299,10 @@ const ReportsPage: React.FC = () => {
       <Card title="Báo cáo khách hàng">
         <Space direction="vertical" style={{ width: '100%' }}>
           <Space>
-            <RangePicker value={[dayjs(dateRange[0]), dayjs(dateRange[1])]} onChange={handleDateRangeChange} />
+            <RangePicker
+              value={[dayjs(dateRange[0]), dayjs(dateRange[1])]}
+              onChange={handleDateRangeChange}
+            />
             <Button type="primary" onClick={() => fetchReport('customers')} loading={loading}>
               Xem báo cáo
             </Button>
@@ -266,7 +331,10 @@ const ReportsPage: React.FC = () => {
       <Card title="Báo cáo tài chính">
         <Space direction="vertical" style={{ width: '100%' }}>
           <Space>
-            <RangePicker value={[dayjs(dateRange[0]), dayjs(dateRange[1])]} onChange={handleDateRangeChange} />
+            <RangePicker
+              value={[dayjs(dateRange[0]), dayjs(dateRange[1])]}
+              onChange={handleDateRangeChange}
+            />
             <Button type="primary" onClick={() => fetchReport('financial')} loading={loading}>
               Xem báo cáo
             </Button>
@@ -281,7 +349,7 @@ const ReportsPage: React.FC = () => {
         <Space>
           <Button type="primary" onClick={() => fetchReport('profit-loss')} loading={loading}>
             Xem báo cáo
-            </Button>
+          </Button>
           <Button icon={<FilePdfOutlined />} onClick={() => handleExportPDF('profit-loss')}>
             PDF
           </Button>

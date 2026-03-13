@@ -1,19 +1,11 @@
 import {
+  Column,
+  CreateDateColumn,
   Entity,
   PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  JoinColumn,
-  CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
-
-export enum ApprovalStatus {
-  PENDING = 'pending',
-  APPROVED = 'approved',
-  REJECTED = 'rejected',
-  CANCELLED = 'cancelled',
-}
+import { ApprovalStatus } from '../enums';
 
 @Entity('approval_requests')
 export class ApprovalRequest {

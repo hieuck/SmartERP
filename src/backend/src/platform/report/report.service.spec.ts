@@ -3,10 +3,10 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { ReportService } from './report.service';
-import { Report, ReportType, ChartType } from './entities/report.entity';
-import { ReportColumn, ColumnType, AggregationType } from './entities/report-column.entity';
-import { ReportExecution, ExecutionStatus } from './entities/report-execution.entity';
-import { User } from '../../core/user/entities/user.entity';
+import { Report, ReportType, ChartType } from '../enums/platform.enum';
+import { ReportColumn, ColumnType, AggregationType } from '../enums/platform.enum';
+import { ReportExecution, ExecutionStatus } from '../enums/platform.enum';
+import { User } from '../user/entities/user.entity';
 import { createMockUser } from '@/common/test/test-helpers';
 
 describe('ReportService', () => {

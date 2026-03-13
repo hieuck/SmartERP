@@ -1,8 +1,16 @@
-import { IsString, IsEnum, IsBoolean, IsOptional, IsNotEmpty, IsArray, IsNumber } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IssuePriority, IssueType } from '../../issue-tracking/entities/issue.entity';
-import { TicketChannel } from '../entities/ticket.entity';
-import { AssignmentStrategy } from '../entities/assignment-rule.entity';
+import {
+  IsArray,
+  IsBoolean,
+  IsEnum,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
+import { AssignmentStrategy } from '../enums';
+import { IssuePriority, IssueType } from '@/platform/issue-tracking/enums';
+import { TicketChannel } from '../enums';
 
 export class CreateAssignmentRuleDto {
   @ApiProperty({ description: 'Rule name' })

@@ -1,13 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Issue, IssueStatus } from './entities/issue.entity';
+import { Issue } from './entities/issue.entity';
+import { IssueStatus } from '../enums/platform.enum';
 import { IssueComment } from './entities/issue-comment.entity';
 import { IssueAttachment } from './entities/issue-attachment.entity';
 import { CreateIssueDto } from './dto/create-issue.dto';
 import { UpdateIssueDto } from './dto/update-issue.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
-import { User } from '../../core/user/entities/user.entity';
+import { User } from '@/core/user/entities/user.entity';
 
 @Injectable()
 export class IssueTrackingService {

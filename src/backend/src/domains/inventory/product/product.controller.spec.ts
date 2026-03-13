@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ProductController } from './product.controller';
 import { ProductService } from './product.service';
-import { ProductStatus } from './entities/product.entity';
+;
 import { createMockUser } from '@/common/test/test-helpers';
 
 describe('ProductController (Unit)', () => {

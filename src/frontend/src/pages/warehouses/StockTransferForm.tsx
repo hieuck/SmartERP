@@ -1,117 +1,92 @@
-// @ts-nocheck
 /**
  * Stock Transfer Form Page
- * Create and manage stock transfers between warehouses
+ * Create and view stock transfers between warehouses
  * Requirements: 27.3
  */
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  Form,
-  Input,
-  Button,
   Card,
-  Space,
+  Form,
   Select,
   DatePicker,
-  Table,
-  InputNumber,
+  Button,
+  Space,
   message,
   Spin,
-  Popconfirm,
+  Table,
+  InputNumber,
+  Input,
+  Tag,
+  Descriptions,
 } from 'antd';
-import {
-  SaveOutlined,
-  ArrowLeftOutlined,
-  PlusOutlined,
-  DeleteOutlined,
-  CheckOutlined,
-} from '@ant-design/icons';
+import { SaveOutlined, ArrowLeftOutlined, PlusOutlined, DeleteOutlined } from '@ant-design/icons';
+import warehouseService from '../../services/inventory/warehouseService';
 import dayjs from 'dayjs';
-import warehouseService, {
-  StockTransfer,
-  StockTransferItem,
-} from '../../services/inventory/warehouseService';
-import { productService } from '../../services/inventory/productService';
+
+const { Option } = Select;
 
 const StockTransferForm = () => {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { id } = useParams();
   const queryClient = useQueryClient();
   const [form] = Form.useForm();
   const isEdit = !!id;
-  const [items, setItems] = useState<StockTransferItem[]>([]);
+  const [items, setItems] = useState<any[]>([]);
 
-  // Fetch warehouses
-  const { data: warehouses } = useQuery({
-    queryKey: ['warehouses', { status: 'active' }],
-    queryFn: () => warehouseService.getWarehouses({ status: 'active' }),
-  });
-
-  // Fetch products
-  const { data: products } = useQuery({
-    queryKey: ['products', { status: 'active' }],
-    queryFn: () => productService.getProducts({ status: 'active' }),
-  });
-
-  // Fetch transfer data for edit
-  const { data: transfer, isLoading } = useQuery({
+  // Fetch transfer data for viewing/editing
+  const { data: transferData, isLoading } = useQuery({
     queryKey: ['stockTransfer', id],
     queryFn: () => warehouseService.getStockTransfer(id!),
     enabled: isEdit,
   });
 
-  // Create/Update mutation
-  const saveMutation = useMutation({
-    mutationFn: (data: Partial<StockTransfer>) =>
-      isEdit
-        ? warehouseService.updateStockTransfer(id!, data)
-        : warehouseService.createStockTransfer(data),
-    onSuccess: () => {
-      message.success(`Stock transfer ${isEdit ? 'updated' : 'created'} successfully`);
-      queryClient.invalidateQueries({ queryKey: ['stockTransfers'] });
-      navigate('/warehouses/transfers');
-    },
-    onError: () => {
-      message.error(`Failed to ${isEdit ? 'update' : 'create'} stock transfer`);
-    },
+  // Fetch warehouses for dropdown
+  const { data: warehousesData } = useQuery({
+    queryKey: ['warehouses'],
+    queryFn: () => warehouseService.getWarehouses(),
   });
 
-  // Approve mutation
-  const approveMutation = useMutation({
-    mutationFn: (id: string) => warehouseService.approveStockTransfer(id),
-    onSuccess: () => {
-      message.success('Stock transfer approved successfully');
-      queryClient.invalidateQueries({ queryKey: ['stockTransfers'] });
-      navigate('/warehouses/transfers');
-    },
-    onError: () => {
-      message.error('Failed to approve stock transfer');
-    },
-  });
-
-  // Populate form when editing
   useEffect(() => {
-    if (transfer?.data) {
+    if (transferData?.data) {
+      const transfer = transferData.data;
       form.setFieldsValue({
-        ...transfer.data,
-        transferDate: dayjs(transfer.data.transferDate),
+        fromWarehouseId: transfer.fromWarehouseId,
+        toWarehouseId: transfer.toWarehouseId,
+        transferDate: transfer.transferDate ? dayjs(transfer.transferDate) : undefined,
+        notes: transfer.notes,
       });
-      setItems(transfer.data.items || []);
+      if (transfer.items) {
+        setItems(transfer.items);
+      }
     }
-  }, [transfer, form]);
+  }, [transferData, form]);
+
+  const createMutation = useMutation({
+    mutationFn: (data: any) => warehouseService.createStockTransfer(data),
+    onSuccess: () => {
+      message.success('Tạo phiếu chuyển kho thành công');
+      queryClient.invalidateQueries({ queryKey: ['stockTransfers'] });
+      navigate('/dashboard/warehouses/transfers');
+    },
+    onError: () => {
+      message.error('Tạo phiếu chuyển kho thất bại');
+    },
+  });
+
+  const onFinish = (values: any) => {
+    const data = {
+      ...values,
+      transferDate: values.transferDate?.toDate(),
+      items: items,
+    };
+    createMutation.mutate(data);
+  };
 
   const addItem = () => {
-    setItems([
-      ...items,
-      {
-        id: `temp-${Date.now()}`,
-        productId: '',
-        quantity: 1,
-      },
-    ]);
+    setItems([...items, { productId: '', quantity: 1 }]);
   };
 
   const removeItem = (index: number) => {
@@ -124,178 +99,155 @@ const StockTransferForm = () => {
     setItems(newItems);
   };
 
-  const onFinish = (values: any) => {
-    if (items.length === 0) {
-      message.error('Please add at least one item');
-      return;
-    }
-
-    const data = {
-      ...values,
-      transferDate: values.transferDate.format('YYYY-MM-DD'),
-      items: items.map(({ id, ...item }) => item),
-    };
-
-    saveMutation.mutate(data);
-  };
-
-  const itemColumns = [
-    {
-      title: 'Product',
-      dataIndex: 'productId',
-      key: 'productId',
-      render: (_: any, record: StockTransferItem, index: number) => (
-        <Select
-          style={{ width: '100%' }}
-          placeholder="Select product"
-          value={record.productId}
-          onChange={(value) => updateItem(index, 'productId', value)}
-          showSearch
-          filterOption={(input, option) =>
-            (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-          }
-          options={products?.data?.map((p: any) => ({
-            label: `${p.sku} - ${p.name}`,
-            value: p.id,
-          }))}
-        />
-      ),
-    },
-    {
-      title: 'Quantity',
-      dataIndex: 'quantity',
-      key: 'quantity',
-      width: 150,
-      render: (_: any, record: StockTransferItem, index: number) => (
-        <InputNumber
-          min={1}
-          value={record.quantity}
-          onChange={(value) => updateItem(index, 'quantity', value || 1)}
-          style={{ width: '100%' }}
-        />
-      ),
-    },
-    {
-      title: 'Notes',
-      dataIndex: 'notes',
-      key: 'notes',
-      render: (_: any, record: StockTransferItem, index: number) => (
-        <Input
-          placeholder="Notes"
-          value={record.notes}
-          onChange={(e) => updateItem(index, 'notes', e.target.value)}
-        />
-      ),
-    },
-    {
-      title: 'Actions',
-      key: 'actions',
-      width: 80,
-      render: (_: any, __: StockTransferItem, index: number) => (
-        <Button type="link" danger icon={<DeleteOutlined />} onClick={() => removeItem(index)} />
-      ),
-    },
-  ];
-
   if (isEdit && isLoading) {
     return (
-      <div style={{ textAlign: 'center', padding: '50px' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', padding: 50 }}>
         <Spin size="large" />
       </div>
     );
   }
 
-  const canApprove = isEdit && transfer?.data?.status === 'pending';
+  // View mode for existing transfer
+  if (isEdit && transferData?.data) {
+    const transfer = transferData.data;
+    const statusColors: Record<string, string> = {
+      draft: 'default',
+      pending: 'processing',
+      in_transit: 'warning',
+      completed: 'success',
+      cancelled: 'error',
+    };
 
+    return (
+      <Card
+        title="Chi tiết phiếu chuyển kho"
+        extra={
+          <Button
+            icon={<ArrowLeftOutlined />}
+            onClick={() => navigate('/dashboard/warehouses/transfers')}
+          >
+            Quay lại
+          </Button>
+        }
+      >
+        <Descriptions bordered column={2}>
+          <Descriptions.Item label="Mã phiếu">{transfer.code}</Descriptions.Item>
+          <Descriptions.Item label="Trạng thái">
+            <Tag color={statusColors[transfer.status]}>
+              {transfer.status?.replace('_', ' ')?.toUpperCase()}
+            </Tag>
+          </Descriptions.Item>
+          <Descriptions.Item label="Kho nguồn">{transfer.fromWarehouseName || transfer.fromWarehouseId}</Descriptions.Item>
+          <Descriptions.Item label="Kho đích">{transfer.toWarehouseName || transfer.toWarehouseId}</Descriptions.Item>
+          <Descriptions.Item label="Ngày chuyển">
+            {transfer.transferDate ? dayjs(transfer.transferDate).format('DD/MM/YYYY') : '-'}
+          </Descriptions.Item>
+          <Descriptions.Item label="Ghi chú">{transfer.notes || '-'}</Descriptions.Item>
+        </Descriptions>
+
+        {transfer.items && transfer.items.length > 0 && (
+          <Card title="Danh sách sản phẩm" size="small" style={{ marginTop: 16 }}>
+            <Table
+              dataSource={transfer.items}
+              rowKey="productId"
+              pagination={false}
+              size="small"
+              columns={[
+                { title: 'Sản phẩm', dataIndex: 'productName', key: 'productName' },
+                { title: 'Số lượng', dataIndex: 'quantity', key: 'quantity', align: 'right' as const },
+              ]}
+            />
+          </Card>
+        )}
+      </Card>
+    );
+  }
+
+  // Create mode
   return (
     <Card
-      title={isEdit ? 'Edit Stock Transfer' : 'New Stock Transfer'}
+      title="Tạo phiếu chuyển kho"
       extra={
-        <Space>
-          {canApprove && (
-            <Popconfirm
-              title="Are you sure you want to approve this transfer?"
-              onConfirm={() => approveMutation.mutate(id!)}
-              okText="Yes"
-              cancelText="No"
-            >
-              <Button type="primary" icon={<CheckOutlined />} loading={approveMutation.isPending}>
-                Approve
-              </Button>
-            </Popconfirm>
-          )}
-          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/warehouses/transfers')}>
-            Back
-          </Button>
-        </Space>
+        <Button
+          icon={<ArrowLeftOutlined />}
+          onClick={() => navigate('/dashboard/warehouses/transfers')}
+        >
+          Quay lại
+        </Button>
       }
     >
-      <Form
-        form={form}
-        layout="vertical"
-        onFinish={onFinish}
-        initialValues={{
-          transferDate: dayjs(),
-          status: 'draft',
-        }}
-      >
+      <Form form={form} layout="vertical" onFinish={onFinish} style={{ maxWidth: 800 }}>
         <Form.Item
-          label="From Warehouse"
+          label="Kho nguồn"
           name="fromWarehouseId"
-          rules={[{ required: true, message: 'Please select source warehouse' }]}
+          rules={[{ required: true, message: 'Vui lòng chọn kho nguồn' }]}
         >
-          <Select
-            placeholder="Select source warehouse"
-            options={warehouses?.data?.map((w: any) => ({
-              label: `${w.code} - ${w.name}`,
-              value: w.id,
-            }))}
-          />
+          <Select placeholder="Chọn kho nguồn">
+            {(warehousesData?.data || []).map((w: any) => (
+              <Option key={w.id} value={w.id}>
+                {w.name}
+              </Option>
+            ))}
+          </Select>
         </Form.Item>
 
         <Form.Item
-          label="To Warehouse"
+          label="Kho đích"
           name="toWarehouseId"
-          rules={[{ required: true, message: 'Please select destination warehouse' }]}
+          rules={[{ required: true, message: 'Vui lòng chọn kho đích' }]}
         >
-          <Select
-            placeholder="Select destination warehouse"
-            options={warehouses?.data?.map((w: any) => ({
-              label: `${w.code} - ${w.name}`,
-              value: w.id,
-            }))}
-          />
+          <Select placeholder="Chọn kho đích">
+            {(warehousesData?.data || []).map((w: any) => (
+              <Option key={w.id} value={w.id}>
+                {w.name}
+              </Option>
+            ))}
+          </Select>
         </Form.Item>
 
         <Form.Item
-          label="Transfer Date"
+          label="Ngày chuyển"
           name="transferDate"
-          rules={[{ required: true, message: 'Please select transfer date' }]}
+          rules={[{ required: true, message: 'Vui lòng chọn ngày' }]}
         >
-          <DatePicker style={{ width: '100%' }} />
+          <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" />
         </Form.Item>
 
-        <Form.Item label="Notes" name="notes">
-          <Input.TextArea rows={3} placeholder="Enter notes" />
+        <Form.Item label="Ghi chú" name="notes">
+          <Input.TextArea rows={2} placeholder="Nhập ghi chú" />
         </Form.Item>
 
         <Card
-          title="Transfer Items"
+          title="Sản phẩm chuyển"
           size="small"
           extra={
             <Button type="dashed" icon={<PlusOutlined />} onClick={addItem}>
-              Add Item
+              Thêm
             </Button>
           }
           style={{ marginBottom: 16 }}
         >
-          <Table
-            columns={itemColumns}
-            dataSource={items}
-            rowKey="id"
-            pagination={false}
-            size="small"
-          />
+          {items.map((item, index) => (
+            <Space key={index} style={{ display: 'flex', marginBottom: 8 }}>
+              <Input
+                placeholder="Mã sản phẩm"
+                value={item.productId}
+                onChange={(e) => updateItem(index, 'productId', e.target.value)}
+                style={{ width: 200 }}
+              />
+              <InputNumber
+                min={1}
+                value={item.quantity}
+                onChange={(v) => updateItem(index, 'quantity', v)}
+                placeholder="Số lượng"
+              />
+              <Button
+                danger
+                icon={<DeleteOutlined />}
+                onClick={() => removeItem(index)}
+              />
+            </Space>
+          ))}
         </Card>
 
         <Form.Item>
@@ -304,11 +256,11 @@ const StockTransferForm = () => {
               type="primary"
               htmlType="submit"
               icon={<SaveOutlined />}
-              loading={saveMutation.isPending}
+              loading={createMutation.isPending}
             >
-              Save
+              Tạo phiếu
             </Button>
-            <Button onClick={() => navigate('/warehouses/transfers')}>Cancel</Button>
+            <Button onClick={() => navigate('/dashboard/warehouses/transfers')}>Hủy</Button>
           </Space>
         </Form.Item>
       </Form>

@@ -1,11 +1,5 @@
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn } from 'typeorm';
-
-export enum EmailStatus {
-  PENDING = 'pending',
-  SENT = 'sent',
-  FAILED = 'failed',
-  BOUNCED = 'bounced',
-}
+import { EmailStatus } from '../enums/email-status.enum';
 
 @Entity('email_logs')
 export class EmailLog {

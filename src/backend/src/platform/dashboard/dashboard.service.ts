@@ -1,11 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Order } from '../../domains/sales/order/entities/order.entity';
-import { Product } from '../../domains/inventory/product/entities/product.entity';
-import { Customer } from '../../domains/sales/customer/entities/customer.entity';
-import { Inventory } from '../../domains/inventory/stock/entities/inventory.entity';
-import { Payment } from '../../domains/accounting/payment/entities/payment.entity';
+import { Order } from '@/domains/sales/order/entities/order.entity';
+import { Product } from '@/domains/inventory/product/entities/product.entity';
+import { Customer } from '@/domains/sales/customer/entities/customer.entity';
+import { Inventory } from '@/domains/inventory/stock/entities/inventory.entity';
+import { Payment } from '@/domains/accounting/payment/entities/payment.entity';
 import { CacheService } from '@/common/cache/cache.service';
 import { CacheTTL, generateCacheKey } from '@/common/cache/cache.config';
 import { User } from '@/common/security/permission.service';

@@ -1,14 +1,15 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { User } from '@/common/security/permission.service';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Task, TaskStatus } from './entities/task.entity';
-import { TaskDependency, DependencyType } from './entities/task-dependency.entity';
 import { Project } from './entities/project.entity';
-import { User as UserEntity } from '../../core/user/entities/user.entity';
+import { TaskDependency } from './entities/task-dependency.entity';
+import { Task } from './entities/task.entity';
+import { DependencyType } from './enums/dependency-type.enum';
+import { TaskStatus } from './enums/task-status.enum';
+import { CreateTaskDependencyDto } from './dto/create-task-dependency.dto';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
-import { CreateTaskDependencyDto } from './dto/create-task-dependency.dto';
-import { User } from '@/common/security/permission.service';
 
 /**
  * TaskService handles task CRUD, dependencies, and Gantt chart data
@@ -146,12 +147,7 @@ export class TaskService {
   /**
    * Update task status
    */
-  async updateStatus(
-    id: string,
-    status: TaskStatus,
-    tenantId: string,
-    user: User,
-  ): Promise<Task> {
+  async updateStatus(id: string, status: TaskStatus, tenantId: string, user: User): Promise<Task> {
     const task = await this.findOne(id, tenantId);
 
     task.status = status;
@@ -209,11 +205,7 @@ export class TaskService {
     }
 
     // Check for circular dependency
-    const hasCircular = await this.hasCircularDependency(
-      dto.taskId,
-      dto.dependsOnTaskId,
-      tenantId,
-    );
+    const hasCircular = await this.hasCircularDependency(dto.taskId, dto.dependsOnTaskId, tenantId);
 
     if (hasCircular) {
       throw new BadRequestException('Circular dependency detected');

@@ -5,7 +5,7 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { AttendanceService } from './attendance.service';
 import { Attendance } from './entities/attendance.entity';
 import { Employee } from '../employee/entities/employee.entity';
-import { User } from '../user/entities/user.entity';
+import { User } from '@/common/security/permission.service';
 import { createMockUser } from '@/common/test/test-helpers';
 
 describe('AttendanceService', () => {

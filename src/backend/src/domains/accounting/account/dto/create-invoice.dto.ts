@@ -9,7 +9,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { InvoiceType } from '../entities/invoice.entity';
+import { InvoiceType } from '../enums';
 
 export class InvoiceItemDto {
   @IsString()

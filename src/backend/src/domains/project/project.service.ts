@@ -3,9 +3,10 @@ import { SecureRepository } from '@/common/security/secure-repository';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { Project } from './entities/project.entity';
+import { ProjectStatus } from './enums/project-status.enum';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
-import { Project, ProjectStatus } from './entities/project.entity';
 
 /**
  * ProjectService handles project CRUD and status management

@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner, Table, TableForeignKey } from 'typeorm';
+import { MigrationInterface, QueryRunner, Table } from 'typeorm';
 
 export class CreateReportBuilder1741614251000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -98,6 +98,20 @@ export class CreateReportBuilder1741614251000 implements MigrationInterface {
             default: 'CURRENT_TIMESTAMP',
           },
         ],
+        foreignKeys: [
+          {
+            columnNames: ['tenantId'],
+            referencedTableName: 'tenants',
+            referencedColumnNames: ['id'],
+            onDelete: 'CASCADE',
+          },
+          {
+            columnNames: ['createdBy'],
+            referencedTableName: 'users',
+            referencedColumnNames: ['id'],
+            onDelete: 'CASCADE',
+          },
+        ],
       }),
       true,
     );
@@ -109,17 +123,6 @@ export class CreateReportBuilder1741614251000 implements MigrationInterface {
       `CREATE INDEX "IDX_reports_sourceEntity" ON "reports" ("sourceEntity")`,
     );
     await queryRunner.query(`CREATE INDEX "IDX_reports_isPublic" ON "reports" ("isPublic")`);
-
-    // Create foreign key for createdBy
-    await queryRunner.createForeignKey(
-      'reports',
-      new TableForeignKey({
-        columnNames: ['createdBy'],
-        referencedColumnNames: ['id'],
-        referencedTableName: 'users',
-        onDelete: 'CASCADE',
-      }),
-    );
 
     // Create report_columns table
     await queryRunner.createTable(
@@ -187,6 +190,20 @@ export class CreateReportBuilder1741614251000 implements MigrationInterface {
             type: 'uuid',
           },
         ],
+        foreignKeys: [
+          {
+            columnNames: ['reportId'],
+            referencedTableName: 'reports',
+            referencedColumnNames: ['id'],
+            onDelete: 'CASCADE',
+          },
+          {
+            columnNames: ['tenantId'],
+            referencedTableName: 'tenants',
+            referencedColumnNames: ['id'],
+            onDelete: 'CASCADE',
+          },
+        ],
       }),
       true,
     );
@@ -197,17 +214,6 @@ export class CreateReportBuilder1741614251000 implements MigrationInterface {
     );
     await queryRunner.query(
       `CREATE INDEX "IDX_report_columns_tenantId" ON "report_columns" ("tenantId")`,
-    );
-
-    // Create foreign key for reportId
-    await queryRunner.createForeignKey(
-      'report_columns',
-      new TableForeignKey({
-        columnNames: ['reportId'],
-        referencedColumnNames: ['id'],
-        referencedTableName: 'reports',
-        onDelete: 'CASCADE',
-      }),
     );
 
     // Create report_executions table
@@ -271,6 +277,26 @@ export class CreateReportBuilder1741614251000 implements MigrationInterface {
             default: 'CURRENT_TIMESTAMP',
           },
         ],
+        foreignKeys: [
+          {
+            columnNames: ['reportId'],
+            referencedTableName: 'reports',
+            referencedColumnNames: ['id'],
+            onDelete: 'CASCADE',
+          },
+          {
+            columnNames: ['tenantId'],
+            referencedTableName: 'tenants',
+            referencedColumnNames: ['id'],
+            onDelete: 'CASCADE',
+          },
+          {
+            columnNames: ['executedBy'],
+            referencedTableName: 'users',
+            referencedColumnNames: ['id'],
+            onDelete: 'CASCADE',
+          },
+        ],
       }),
       true,
     );
@@ -287,27 +313,6 @@ export class CreateReportBuilder1741614251000 implements MigrationInterface {
     );
     await queryRunner.query(
       `CREATE INDEX "IDX_report_executions_executedAt" ON "report_executions" ("executedAt")`,
-    );
-
-    // Create foreign keys for report_executions
-    await queryRunner.createForeignKey(
-      'report_executions',
-      new TableForeignKey({
-        columnNames: ['reportId'],
-        referencedColumnNames: ['id'],
-        referencedTableName: 'reports',
-        onDelete: 'CASCADE',
-      }),
-    );
-
-    await queryRunner.createForeignKey(
-      'report_executions',
-      new TableForeignKey({
-        columnNames: ['executedBy'],
-        referencedColumnNames: ['id'],
-        referencedTableName: 'users',
-        onDelete: 'CASCADE',
-      }),
     );
   }
 

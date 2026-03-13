@@ -5,8 +5,8 @@ export class CreatePayroll1741428000000 implements MigrationInterface {
     await queryRunner.query(`
       CREATE TABLE "salary_structures" (
         "id" uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-        "tenant_id" varchar NOT NULL,
-        "employee_id" varchar NOT NULL,
+        "tenant_id" uuid NOT NULL,
+        "employee_id" uuid NOT NULL,
         "base_salary" decimal(15,2) NOT NULL,
         "allowances" decimal(15,2) NOT NULL DEFAULT 0,
         "deductions" decimal(15,2) NOT NULL DEFAULT 0,
@@ -14,7 +14,9 @@ export class CreatePayroll1741428000000 implements MigrationInterface {
         "effective_to" date,
         "is_active" boolean NOT NULL DEFAULT true,
         "created_at" timestamp NOT NULL DEFAULT now(),
-        "updated_at" timestamp NOT NULL DEFAULT now()
+        "updated_at" timestamp NOT NULL DEFAULT now(),
+        CONSTRAINT "FK_salary_structures_tenant" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("id") ON DELETE CASCADE,
+        CONSTRAINT "FK_salary_structures_employee" FOREIGN KEY ("employee_id") REFERENCES "users"("id") ON DELETE CASCADE
       )
     `);
 
@@ -33,9 +35,9 @@ export class CreatePayroll1741428000000 implements MigrationInterface {
     await queryRunner.query(`
       CREATE TABLE "payslips" (
         "id" uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-        "tenant_id" varchar NOT NULL,
-        "employee_id" varchar NOT NULL,
-        "salary_structure_id" varchar NOT NULL,
+        "tenant_id" uuid NOT NULL,
+        "employee_id" uuid NOT NULL,
+        "salary_structure_id" uuid NOT NULL,
         "month" integer NOT NULL,
         "year" integer NOT NULL,
         "base_salary" decimal(15,2) NOT NULL,
@@ -48,6 +50,8 @@ export class CreatePayroll1741428000000 implements MigrationInterface {
         "payment_date" date,
         "created_at" timestamp NOT NULL DEFAULT now(),
         "updated_at" timestamp NOT NULL DEFAULT now(),
+        CONSTRAINT "FK_payslips_tenant" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("id") ON DELETE CASCADE,
+        CONSTRAINT "FK_payslips_employee" FOREIGN KEY ("employee_id") REFERENCES "users"("id") ON DELETE CASCADE,
         CONSTRAINT "FK_payslips_salary_structure" FOREIGN KEY ("salary_structure_id") REFERENCES "salary_structures"("id") ON DELETE RESTRICT
       )
     `);

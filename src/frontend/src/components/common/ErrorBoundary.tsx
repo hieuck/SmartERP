@@ -14,7 +14,7 @@ interface ErrorBoundaryState {
  * Error Boundary Component
  * Catches unhandled errors in child components
  * Displays fallback UI and allows user to retry
- * 
+ *
  * Usage:
  * <ErrorBoundary>
  *   <YourComponent />
@@ -56,7 +56,15 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{ padding: '48px 24px', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div
+          style={{
+            padding: '48px 24px',
+            minHeight: '100vh',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
           <Result
             status="error"
             title="Oops! Something went wrong"

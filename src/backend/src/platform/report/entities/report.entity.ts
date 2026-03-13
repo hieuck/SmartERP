@@ -1,36 +1,23 @@
+import { User } from '@/common/security/permission.service';
 import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-  ManyToOne,
-  OneToMany,
-  JoinColumn,
   BeforeInsert,
   BeforeUpdate,
+  Column,
+  CreateDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
-import { User as UserEntity } from '../../../core/user/entities/user.entity';
+import { ChartType } from '../enums/chart-type.enum';
+import { ReportType } from '../enums/report-type.enum';
 import { ReportColumn } from './report-column.entity';
-import { User } from '@/common/security/permission.service';
-
-export enum ReportType {
-  TABLE = 'table',
-  CHART = 'chart',
-  PIVOT = 'pivot',
-}
-
-export enum ChartType {
-  BAR = 'bar',
-  LINE = 'line',
-  PIE = 'pie',
-  AREA = 'area',
-  DONUT = 'donut',
-}
 
 /**
  * Report entity for storing report definitions
- * 
+ *
  * Security Notes:
  * - Query field should be validated to prevent SQL injection
  * - Only allow queries on authorized entities
@@ -42,7 +29,7 @@ export class Report {
   id: string;
 
   @Column({ unique: true })
-  reference: string; // Auto-generated: RPT-YYYY-NNNN
+  reference: string;
 
   @Column()
   name: string;
@@ -56,31 +43,18 @@ export class Report {
   @Column({ type: 'enum', enum: ChartType, nullable: true })
   chartType: ChartType;
 
-  // Source table/entity to query (e.g., 'orders', 'products')
   @Column()
   sourceEntity: string;
 
-  /**
-   * Query configuration (JSON)
-   * Format: { type: 'queryBuilder' | 'raw', config: {...} }
-   * - queryBuilder: TypeORM QueryBuilder config (safe)
-   * - raw: Raw SQL (admin only, sanitized)
-   */
   @Column({ type: 'jsonb', nullable: true })
   query: any;
 
-  /**
-   * Filters configuration (JSON)
-   * Format: [{ field: 'status', operator: '=', value: 'active' }]
-   */
   @Column({ type: 'jsonb', nullable: true })
   filters: any;
 
-  // Grouping configuration (array of field names)
   @Column({ type: 'jsonb', nullable: true })
   groupBy: string[];
 
-  // Sorting configuration { field: 'createdAt', order: 'DESC' }
   @Column({ type: 'jsonb', nullable: true })
   orderBy: any;
 
@@ -88,10 +62,10 @@ export class Report {
   isActive: boolean;
 
   @Column({ default: false })
-  isPublic: boolean; // Can be viewed by all users in tenant
+  isPublic: boolean;
 
   @Column({ default: false })
-  isScheduled: boolean; // Is this report scheduled to run?
+  isScheduled: boolean;
 
   @Column()
   tenantId: string;
@@ -115,7 +89,6 @@ export class Report {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  // Auto-generate reference before insert
   @BeforeInsert()
   generateReference() {
     if (!this.reference) {
@@ -127,7 +100,6 @@ export class Report {
     }
   }
 
-  // Validation
   @BeforeInsert()
   @BeforeUpdate()
   validate() {
@@ -143,7 +115,6 @@ export class Report {
       throw new Error('Chart type is required for chart reports');
     }
 
-    // Validate groupBy is array if provided
     if (this.groupBy && !Array.isArray(this.groupBy)) {
       throw new Error('groupBy must be an array');
     }

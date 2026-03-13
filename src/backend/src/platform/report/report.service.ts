@@ -1,10 +1,11 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
-import { Report, ReportType } from './entities/report.entity';
-import { ReportColumn, AggregationType } from './entities/report-column.entity';
-import { ReportExecution, ExecutionStatus } from './entities/report-execution.entity';
-import { User as UserEntity } from '../../core/user/entities/user.entity';
+import { Report } from './entities/report.entity';
+import { ReportColumn } from './entities/report-column.entity';
+import { ReportExecution } from './entities/report-execution.entity';
+import { ReportType, AggregationType } from '../enums/platform.enum';
+import { User as UserEntity } from '@/core/user/entities/user.entity';
 import { User } from '@/common/security/permission.service';
 
 // Whitelist of allowed aggregation functions (security)

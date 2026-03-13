@@ -2,7 +2,7 @@ import { BadRequestException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { MoreThan, Repository } from 'typeorm';
-import { StockValuation } from './entities/stock-valuation.entity';
+import { StockValuation } from '../enums/inventory.enum';
 import { ValuationService } from './valuation.service';
 
 describe('ValuationService', () => {

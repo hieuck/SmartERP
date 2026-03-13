@@ -1,13 +1,6 @@
 import { Entity, Column, Index, ManyToOne, JoinColumn } from 'typeorm';
+import { AccountType } from '../enums/account-type.enum';
 import { BaseEntity } from '../../../../common/entities/base.entity';
-
-export enum AccountType {
-  ASSET = 'asset',
-  LIABILITY = 'liability',
-  EQUITY = 'equity',
-  INCOME = 'income', // Changed from REVENUE to match Odoo/ERPNext
-  EXPENSE = 'expense',
-}
 
 @Entity('accounts')
 @Index(['tenantId', 'code'], { unique: true })

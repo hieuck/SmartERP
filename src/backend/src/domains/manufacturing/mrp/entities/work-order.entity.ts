@@ -1,22 +1,8 @@
 import { Entity, Column, Index } from 'typeorm';
+import { WorkOrderStatus } from '../enums/work-order-status.enum';
+import { WorkOrderPriority } from '../enums/work-order-priority.enum';
+
 import { BaseEntity } from '@/common/entities/base.entity';
-
-export enum WorkOrderStatus {
-  DRAFT = 'draft',
-  PLANNED = 'planned',
-  READY = 'ready',
-  IN_PROGRESS = 'in_progress',
-  PAUSED = 'paused',
-  COMPLETED = 'completed',
-  CANCELLED = 'cancelled',
-}
-
-export enum WorkOrderPriority {
-  LOW = 'low',
-  NORMAL = 'normal',
-  HIGH = 'high',
-  URGENT = 'urgent',
-}
 
 @Entity('work_orders')
 @Index(['tenantId', 'orderNumber'], { unique: true })
@@ -62,8 +48,8 @@ export class WorkOrder extends BaseEntity {
   @Column({ type: 'decimal', precision: 10, scale: 2, name: 'quantity_planned' })
   quantityPlanned: number;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0, name: 'quantity_produced' })
-  quantityProduced: number;
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0, name: 'qty_produced' })
+  qtyProduced: number;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0, name: 'quantity_rejected' })
   quantityRejected: number;

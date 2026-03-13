@@ -9,7 +9,7 @@ import {
   IsObject,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ProductStatus } from '../entities/product-catalog.entity';
+import { ProductStatus } from '../../enums/ecommerce.enum';
 
 export class CreateProductDto {
   @ApiProperty({ example: 'PROD-001' })

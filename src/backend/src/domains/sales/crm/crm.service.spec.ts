@@ -1,12 +1,14 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { CrmService } from './crm.service';
-import { Lead, LeadStatus } from './entities/lead.entity';
-import { Opportunity, OpportunityStage } from './entities/opportunity.entity';
-import { NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { CacheService } from '@/common/cache/cache.service';
 import { PermissionService } from '@/common/security/permission.service';
 import { createMockUser } from '@/common/test/test-helpers';
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { Lead } from '../entities/lead.entity';
+import { Opportunity } from '../entities/opportunity.entity';
+import { LeadStatus } from '../enums/lead-status.enum';
+import { OpportunityStage } from '../enums/opportunity-stage.enum';
+import { CrmService } from './crm.service';
 
 describe('CrmService', () => {
   let service: CrmService;
@@ -339,9 +341,7 @@ describe('CrmService', () => {
       });
       mockOpportunityRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findOpportunityById(mockUser, '999')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.findOpportunityById(mockUser, '999')).rejects.toThrow(NotFoundException);
     });
 
     it('should move opportunity stage', async () => {
@@ -549,4 +549,3 @@ describe('CrmService', () => {
     });
   });
 });
-

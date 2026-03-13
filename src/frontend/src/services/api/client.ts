@@ -51,7 +51,7 @@ api.interceptors.request.use(
 
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 /**
@@ -86,7 +86,7 @@ api.interceptors.response.use(
         const response = await axios.post(
           `${API_BASE_URL}/auth/refresh`,
           {},
-          { withCredentials: true }
+          { withCredentials: true },
         );
 
         const { token: newAccessToken } = response.data;
@@ -118,12 +118,13 @@ api.interceptors.response.use(
 
     // Handle 423 Locked - account lockout
     if (error.response?.status === 423) {
-      const lockoutMessage = error.response?.data?.message || 'Account is locked. Please try again later.';
+      const lockoutMessage =
+        error.response?.data?.message || 'Account is locked. Please try again later.';
       error.message = lockoutMessage;
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export default api;

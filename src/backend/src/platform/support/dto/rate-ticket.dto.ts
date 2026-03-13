@@ -1,5 +1,6 @@
-import { IsNotEmpty, IsInt, Min, Max, IsOptional, IsString } from 'class-validator';
-import { TicketSatisfactionRating } from '../entities/ticket.entity';
+import { IsInt, IsNotEmpty, IsOptional, IsString, Max, Min } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { TicketSatisfactionRating } from '../enums';
 
 export class RateTicketDto {
   @IsNotEmpty()

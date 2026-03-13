@@ -1,21 +1,30 @@
+import { CacheTTL, generateCacheKey } from '@/common/cache/cache.config';
+import { CacheService } from '@/common/cache/cache.service';
+import {
+  BaseRecord as PermissionRecord,
+  PermissionService,
+  User,
+} from '@/common/security/permission.service';
+import { SecureRepository } from '@/common/security/secure-repository';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Material, MaterialType } from './entities/material.entity';
-import { Mold, MoldStatus } from './entities/mold.entity';
-import { Bom, BomStatus } from './entities/bom.entity';
-import { WorkOrder, WorkOrderStatus } from './entities/work-order.entity';
-import { QualityCheck, QualityCheckResult } from './entities/quality-check.entity';
-import { CacheService } from '@/common/cache/cache.service';
-import { CacheTTL, generateCacheKey } from '@/common/cache/cache.config';
-import { SecureRepository } from '@/common/security/secure-repository';
-import { PermissionService, User, BaseRecord as PermissionRecord } from '@/common/security/permission.service';
+import { BOM } from './entities/bom.entity';
+import { Material } from './entities/material.entity';
+import { Mold } from './entities/mold.entity';
+import { QualityCheck } from './entities/quality-check.entity';
+import { WorkOrder } from './entities/work-order.entity';
+import { BomStatus } from './enums/bom-status.enum';
+import { MaterialType } from './enums/material-type.enum';
+import { MoldStatus } from './enums/mold-status.enum';
+import { QualityCheckResult } from './enums/quality-check-result.enum';
+import { WorkOrderStatus } from './enums/work-order-status.enum';
 
 @Injectable()
 export class ProductionService {
   private secureMaterialRepo: SecureRepository<Material & PermissionRecord>;
   private secureMoldRepo: SecureRepository<Mold & PermissionRecord>;
-  private secureBomRepo: SecureRepository<Bom & PermissionRecord>;
+  private secureBomRepo: SecureRepository<BOM & PermissionRecord>;
   private secureWorkOrderRepo: SecureRepository<WorkOrder & PermissionRecord>;
   private secureQualityCheckRepo: SecureRepository<QualityCheck & PermissionRecord>;
 
@@ -24,8 +33,8 @@ export class ProductionService {
     private readonly materialRepository: Repository<Material>,
     @InjectRepository(Mold)
     private readonly moldRepository: Repository<Mold>,
-    @InjectRepository(Bom)
-    private readonly bomRepository: Repository<Bom>,
+    @InjectRepository(BOM)
+    private readonly bomRepository: Repository<BOM>,
     @InjectRepository(WorkOrder)
     private readonly workOrderRepository: Repository<WorkOrder>,
     @InjectRepository(QualityCheck)
@@ -192,7 +201,7 @@ export class ProductionService {
 
   // ==================== BOM MANAGEMENT ====================
 
-  async findAllBoms(user: User, productId?: string, status?: BomStatus): Promise<Bom[]> {
+  async findAllBoms(user: User, productId?: string, status?: BomStatus): Promise<BOM[]> {
     const where: { productId?: string; status?: BomStatus } = {};
     if (productId) {
       where.productId = productId;
@@ -207,7 +216,7 @@ export class ProductionService {
     });
   }
 
-  async findBomById(id: string, user: User): Promise<Bom> {
+  async findBomById(id: string, user: User): Promise<BOM> {
     const cacheKey = generateCacheKey('bom', user.tenantId, id);
     return this.cacheService.getOrSet(
       cacheKey,
@@ -222,7 +231,7 @@ export class ProductionService {
     );
   }
 
-  async createBom(data: Partial<Bom>, user: User): Promise<Bom> {
+  async createBom(data: Partial<BOM>, user: User): Promise<BOM> {
     // Calculate total material cost
     let totalMaterialCost = 0;
     if (data.materialItems) {
@@ -240,7 +249,7 @@ export class ProductionService {
     return this.secureBomRepo.save(user, bom);
   }
 
-  async updateBom(id: string, data: Partial<Bom>, user: User): Promise<Bom> {
+  async updateBom(id: string, data: Partial<BOM>, user: User): Promise<BOM> {
     const bom = await this.findBomById(id, user);
 
     // Recalculate costs if material items changed
@@ -271,7 +280,7 @@ export class ProductionService {
     await this.cacheService.del(cacheKey);
   }
 
-  async setDefaultBom(id: string, productId: string, user: User): Promise<Bom> {
+  async setDefaultBom(id: string, productId: string, user: User): Promise<BOM> {
     // Unset other default BOMs for this product
     const boms = await this.findAllBoms(user, productId);
     for (const bom of boms) {
@@ -442,7 +451,7 @@ export class ProductionService {
   ): Promise<WorkOrder> {
     const workOrder = await this.findWorkOrderById(id, user);
 
-    workOrder.quantityProduced = quantityProduced;
+    workOrder.qtyProduced = quantityProduced;
     workOrder.quantityRejected = quantityRejected;
     workOrder.completionPercentage = (quantityProduced / workOrder.quantityPlanned) * 100;
 
@@ -492,7 +501,7 @@ export class ProductionService {
     }
 
     // Calculate quantities based on result
-    if (data.result === QualityCheckResult.PASSED) {
+    if (data.result === QualityCheckResult.PASS) {
       data.quantityPassed = data.quantityChecked;
       data.quantityFailed = 0;
     } else if (data.result === QualityCheckResult.FAILED) {
@@ -558,10 +567,12 @@ export class ProductionService {
     }
 
     const totalChecks = filteredChecks.length;
-    const passedChecks = filteredChecks.filter((c) => c.result === QualityCheckResult.PASSED)
-      .length;
-    const failedChecks = filteredChecks.filter((c) => c.result === QualityCheckResult.FAILED)
-      .length;
+    const passedChecks = filteredChecks.filter(
+      (c) => c.result === QualityCheckResult.PASS,
+    ).length;
+    const failedChecks = filteredChecks.filter(
+      (c) => c.result === QualityCheckResult.FAILED,
+    ).length;
     const conditionalChecks = filteredChecks.filter(
       (c) => c.result === QualityCheckResult.CONDITIONAL,
     ).length;

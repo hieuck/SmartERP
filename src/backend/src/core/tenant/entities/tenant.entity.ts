@@ -1,3 +1,6 @@
+import { TenantStatus } from '../enums/tenant-status.enum';
+import { SubscriptionPlan } from '../enums/subscription-plan.enum';
+import { BillingCycle } from '../enums/billing-cycle.enum';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -6,24 +9,6 @@ import {
   UpdateDateColumn,
   DeleteDateColumn,
 } from 'typeorm';
-
-export enum TenantStatus {
-  ACTIVE = 'active',
-  SUSPENDED = 'suspended',
-  CANCELLED = 'cancelled',
-}
-
-export enum SubscriptionPlan {
-  FREE = 'free',
-  BASIC = 'basic',
-  PROFESSIONAL = 'professional',
-  ENTERPRISE = 'enterprise',
-}
-
-export enum BillingCycle {
-  MONTHLY = 'monthly',
-  YEARLY = 'yearly',
-}
 
 @Entity('tenants')
 export class Tenant {

@@ -162,7 +162,9 @@ const hrService = {
       const response = await api.get('/hr/employees');
       return response.data;
     } catch (error) {
-      throw new Error(`Failed to fetch employees: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to fetch employees: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   },
 
@@ -177,7 +179,9 @@ const hrService = {
       const response = await api.get(`/hr/employees/${id}`);
       return response.data;
     } catch (error) {
-      throw new Error(`Failed to fetch employee ${id}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to fetch employee ${id}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   },
 
@@ -192,7 +196,9 @@ const hrService = {
       const response = await api.post('/hr/employees', data);
       return response.data;
     } catch (error) {
-      throw new Error(`Failed to create employee: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to create employee: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   },
 
@@ -208,7 +214,9 @@ const hrService = {
       const response = await api.put(`/hr/employees/${id}`, data);
       return response.data;
     } catch (error) {
-      throw new Error(`Failed to update employee ${id}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to update employee ${id}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   },
 
@@ -221,7 +229,9 @@ const hrService = {
     try {
       await api.delete(`/hr/employees/${id}`);
     } catch (error) {
-      throw new Error(`Failed to delete employee ${id}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to delete employee ${id}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   },
 
@@ -238,7 +248,9 @@ const hrService = {
       const response = await api.get('/hr/attendance', { params });
       return response.data;
     } catch (error) {
-      throw new Error(`Failed to fetch attendance records: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to fetch attendance records: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   },
 
@@ -253,7 +265,9 @@ const hrService = {
       const response = await api.get(`/hr/attendance/employee/${employeeId}`);
       return response.data;
     } catch (error) {
-      throw new Error(`Failed to fetch attendance for employee ${employeeId}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to fetch attendance for employee ${employeeId}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   },
 
@@ -268,7 +282,9 @@ const hrService = {
       const response = await api.post('/hr/attendance', data);
       return response.data;
     } catch (error) {
-      throw new Error(`Failed to create attendance record: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to create attendance record: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   },
 
@@ -284,7 +300,9 @@ const hrService = {
       const response = await api.put(`/hr/attendance/${id}`, data);
       return response.data;
     } catch (error) {
-      throw new Error(`Failed to update attendance record ${id}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to update attendance record ${id}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   },
 
@@ -300,7 +318,9 @@ const hrService = {
       const response = await api.get('/hr/leaves');
       return response.data;
     } catch (error) {
-      throw new Error(`Failed to fetch leave requests: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to fetch leave requests: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   },
 
@@ -315,7 +335,9 @@ const hrService = {
       const response = await api.get(`/hr/leaves/employee/${employeeId}`);
       return response.data;
     } catch (error) {
-      throw new Error(`Failed to fetch leaves for employee ${employeeId}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to fetch leaves for employee ${employeeId}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   },
 
@@ -330,7 +352,9 @@ const hrService = {
       const response = await api.post('/hr/leaves', data);
       return response.data;
     } catch (error) {
-      throw new Error(`Failed to create leave request: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to create leave request: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   },
 
@@ -346,7 +370,9 @@ const hrService = {
       const response = await api.post(`/hr/leaves/${id}/approve`, { approvedBy });
       return response.data;
     } catch (error) {
-      throw new Error(`Failed to approve leave ${id}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to approve leave ${id}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   },
 
@@ -361,7 +387,9 @@ const hrService = {
       const response = await api.post(`/hr/leaves/${id}/reject`);
       return response.data;
     } catch (error) {
-      throw new Error(`Failed to reject leave ${id}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to reject leave ${id}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
   },
 };

@@ -3,10 +3,11 @@ import { SecureRepository } from '@/common/security/secure-repository';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ShoppingCart } from '../shopping-cart/entities/shopping-cart.entity';
+import { ShoppingCart } from '@/domains/ecommerce/shopping-cart/entities/shopping-cart.entity';
 import { CheckoutDto } from './dto/checkout.dto';
+import { Order } from './entities/order.entity';
 import { OrderItem } from './entities/order-item.entity';
-import { Order, OrderStatus, PaymentStatus, ShippingStatus } from './entities/order.entity';
+import { OrderStatus, PaymentStatus, ShippingStatus } from '../enums/ecommerce.enum';
 
 /**
  * CheckoutService handles checkout flow and order creation from cart

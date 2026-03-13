@@ -1,18 +1,18 @@
+import { CacheTTL, generateCacheKey } from '@/common/cache/cache.config';
+import { CacheService } from '@/common/cache/cache.service';
+import { PermissionService, User } from '@/common/security/permission.service';
+import { SecureRepository } from '@/common/security/secure-repository';
 import {
+  BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
-  ConflictException,
-  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Like } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Customer } from './entities/customer.entity';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
-import { CacheService } from '@/common/cache/cache.service';
-import { CacheTTL, generateCacheKey } from '@/common/cache/cache.config';
-import { SecureRepository } from '@/common/security/secure-repository';
-import { PermissionService, User } from '@/common/security/permission.service';
 
 @Injectable()
 export class CustomerService {
@@ -98,11 +98,7 @@ export class CustomerService {
     return this.secureCustomerRepo.save(user, customer);
   }
 
-  async update(
-    user: User,
-    id: string,
-    updateCustomerDto: UpdateCustomerDto,
-  ): Promise<Customer> {
+  async update(user: User, id: string, updateCustomerDto: UpdateCustomerDto): Promise<Customer> {
     const customer = await this.findOne(user, id);
 
     // Check email uniqueness if email is being updated

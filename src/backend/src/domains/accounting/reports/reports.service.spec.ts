@@ -2,9 +2,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ReportsService } from './reports.service';
-import { Account, AccountType } from '../account/entities/account.entity';
-import { JournalLine } from '../account/entities/journal-line.entity';
-import { JournalEntryStatus } from '../account/entities/journal-entry.entity';
+import { Account, AccountType } from '@/domains/accounting/account/entities/account.entity';
+import { JournalLine } from '@/domains/accounting/account/entities/journal-line.entity';
+import { JournalEntryStatus } from '@/domains/accounting/account/enums/accounting.enum';
 import { PermissionService } from '@/common/security/permission.service';
 import { createMockUser } from '@/common/test/test-helpers';
 

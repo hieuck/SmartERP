@@ -11,22 +11,8 @@ import {
   BeforeUpdate,
 } from 'typeorm';
 import { Employee } from '../../employee/entities/employee.entity';
-
-export enum LeaveType {
-  ANNUAL = 'annual',
-  SICK = 'sick',
-  UNPAID = 'unpaid',
-  MATERNITY = 'maternity',
-  PATERNITY = 'paternity',
-  COMPASSIONATE = 'compassionate',
-}
-
-export enum LeaveStatus {
-  PENDING = 'pending',
-  APPROVED = 'approved',
-  REJECTED = 'rejected',
-  CANCELLED = 'cancelled',
-}
+import { LeaveType } from '../enums/leave-type.enum';
+import { LeaveStatus } from '../enums/leave-status.enum';
 
 @Entity('leaves')
 @Index(['tenantId', 'employeeId', 'status'])

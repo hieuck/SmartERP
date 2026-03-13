@@ -11,18 +11,17 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { CacheTTL } from '@/common/decorators/cache-ttl.decorator';
+import { Roles } from '@/common/decorators/roles.decorator';
+import { CacheInterceptor } from '@/common/interceptors/cache.interceptor';
+import { User } from '@/common/security/permission.service';
+import { CacheTTL as CacheTTLConstant } from '@/config/cache.config';
+import { AddColumnDto } from './dto/add-column.dto';
+import { CreateReportDto } from './dto/create-report.dto';
+import { ExecuteReportDto } from './dto/execute-report.dto';
+import { UpdateReportDto } from './dto/update-report.dto';
 import { ReportService } from './report.service';
 import { ReportTemplateService } from './report-template.service';
-import { CreateReportDto } from './dto/create-report.dto';
-import { UpdateReportDto } from './dto/update-report.dto';
-import { AddColumnDto } from './dto/add-column.dto';
-import { ExecuteReportDto } from './dto/execute-report.dto';
-import { Roles } from '../../common/decorators/roles.decorator';
-import { CacheInterceptor } from '../../common/interceptors/cache.interceptor';
-import { CacheTTL } from '../../common/decorators/cache-ttl.decorator';
-import { CacheTTL as CacheTTLConstant } from '../../config/cache.config';
-
-import { User } from '@/common/security/permission.service';
 @ApiTags('reports')
 @ApiBearerAuth()
 @Controller('reports')

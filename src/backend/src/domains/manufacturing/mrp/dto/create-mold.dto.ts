@@ -11,7 +11,8 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { MoldStatus, MoldCondition } from '../entities/mold.entity';
+import { MoldStatus } from '../enums/mold-status.enum';
+import { MoldCondition } from '../enums/mold-condition.enum';
 
 export class CreateMoldDto {
   @ApiProperty({ example: 'MOLD-001', description: 'Mold code' })

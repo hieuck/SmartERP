@@ -2,9 +2,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { GdprService } from './gdpr.service';
-import { Consent, ConsentType } from './entities/consent.entity';
-import { DataExportRequest, ExportStatus } from './entities/data-export-request.entity';
-import { DataDeletionRequest, DeletionStatus } from './entities/data-deletion-request.entity';
+import { Consent } from './entities/consent.entity';
+import { DataExportRequest } from './entities/data-export-request.entity';
+import { DataDeletionRequest } from './entities/data-deletion-request.entity';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 
 describe('GdprService', () => {

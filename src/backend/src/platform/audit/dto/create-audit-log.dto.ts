@@ -1,5 +1,5 @@
 import { IsString, IsEnum, IsOptional, IsObject, IsUUID } from 'class-validator';
-import { AuditAction } from '../entities/audit-log.entity';
+import { AuditAction } from '../enums/audit.enum';
 
 export class CreateAuditLogDto {
   @IsUUID()

@@ -2,9 +2,9 @@ import { CacheService } from '@/common/cache/cache.service';
 import { createMockUser } from '@/common/test/test-helpers';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Product } from '../../domains/inventory/product/entities/product.entity';
-import { Customer } from '../../domains/sales/customer/entities/customer.entity';
-import { Order } from '../../domains/sales/order/entities/order.entity';
+import { Product } from '@/domains/inventory/product/entities/product.entity';
+import { Customer } from '@/domains/sales/customer/entities/customer.entity';
+import { Order } from '@/domains/sales/order/entities/order.entity';
 import { SearchService } from './search.service';
 
 describe('SearchService', () => {

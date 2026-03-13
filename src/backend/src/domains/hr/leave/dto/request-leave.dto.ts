@@ -1,6 +1,6 @@
 import { IsDateString, IsEnum, IsString, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { LeaveType } from '../entities/leave.entity';
+import { LeaveType } from '../../enums/hr.enum';
 
 export class RequestLeaveDto {
   @ApiProperty({ description: 'Employee ID' })

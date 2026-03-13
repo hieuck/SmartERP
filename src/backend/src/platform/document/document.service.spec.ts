@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { DocumentService } from './document.service';
-import { Document, DocumentType } from './entities/document.entity';
+import { Document } from '../enums/platform.enum';
 import { NotFoundException } from '@nestjs/common';
 import { CacheService } from '@/common/cache/cache.service';
 import { PermissionService } from '@/common/security/permission.service';

@@ -1,5 +1,5 @@
-import { IsString, IsEnum, IsOptional, IsArray, IsUUID } from 'class-validator';
-import { WorkflowStatus } from '../entities/workflow.entity';
+import { IsArray, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
+import { WorkflowStatus } from '../enums';
 
 export class CreateWorkflowDto {
   @IsString()

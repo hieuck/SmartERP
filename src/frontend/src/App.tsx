@@ -34,6 +34,7 @@ const ReportsPage = lazy(() => import('./pages/reports/ReportsPage'));
 // Warehouse pages (Requirements: 27.1, 27.3, 27.4)
 const WarehouseList = lazy(() => import('./pages/warehouses/WarehouseList'));
 const WarehouseForm = lazy(() => import('./pages/warehouses/WarehouseForm'));
+// Warehouse pages (continued)
 const StockTransferList = lazy(() => import('./pages/warehouses/StockTransferList'));
 const StockTransferForm = lazy(() => import('./pages/warehouses/StockTransferForm'));
 const WarehouseStockReport = lazy(() => import('./pages/warehouses/WarehouseStockReport'));

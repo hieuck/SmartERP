@@ -1,10 +1,6 @@
 import { Entity, Column, Index } from 'typeorm';
+import { InvoiceType } from '../enums/invoice-type.enum';
 import { BaseEntity } from '../../../../common/entities/base.entity';
-
-export enum InvoiceType {
-  SALES = 'sales',
-  PURCHASE = 'purchase',
-}
 
 @Entity('invoices')
 @Index(['tenantId', 'invoiceNumber'], { unique: true })

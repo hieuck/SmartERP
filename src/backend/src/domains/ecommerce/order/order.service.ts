@@ -1,14 +1,16 @@
-import { User } from '@/common/security/permission.service';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { PermissionService } from '../../../common/security/permission.service';
+import { User, PermissionService } from '../../../common/security/permission.service';
 import { SecureRepository } from '../../../common/security/secure-repository';
 import { CancelOrderDto } from './dto/cancel-order.dto';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
+import { Order } from './entities/order.entity';
 import { OrderItem } from './entities/order-item.entity';
-import { Order, OrderStatus, PaymentStatus, ShippingStatus } from './entities/order.entity';
+import { OrderStatus } from './enums/order-status.enum';
+import { PaymentStatus } from './enums/payment-status.enum';
+import { ShippingStatus } from './enums/shipping-status.enum';
 
 /**
  * OrderService handles order CRUD and status management

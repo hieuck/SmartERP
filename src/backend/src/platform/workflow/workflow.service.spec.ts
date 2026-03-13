@@ -4,8 +4,8 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { WorkflowInstance, WorkflowInstanceStatus } from './entities/workflow-instance.entity';
-import { Workflow, WorkflowStatus } from './entities/workflow.entity';
+import { WorkflowInstance, WorkflowInstanceStatus } from '@platform/enums/platform.enum';
+import { Workflow, WorkflowStatus } from '@platform/enums/platform.enum';
 import { WorkflowService } from './workflow.service';
 
 const mockUser = {

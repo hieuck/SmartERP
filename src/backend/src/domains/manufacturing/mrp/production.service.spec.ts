@@ -4,11 +4,15 @@ import { createMockUser } from '@/common/test/test-helpers';
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Bom } from './entities/bom.entity';
-import { Material, MaterialType } from './entities/material.entity';
-import { Mold, MoldStatus } from './entities/mold.entity';
-import { QualityCheck, QualityCheckResult } from './entities/quality-check.entity';
-import { WorkOrder, WorkOrderStatus } from './entities/work-order.entity';
+import { BOM } from './entities/bom.entity';
+import { Material } from './entities/material.entity';
+import { Mold } from './entities/mold.entity';
+import { QualityCheck } from './entities/quality-check.entity';
+import { WorkOrder } from './entities/work-order.entity';
+import { MaterialType } from './enums/material-type.enum';
+import { MoldStatus } from './enums/mold-status.enum';
+import { QualityCheckResult } from './enums/quality-check-result.enum';
+import { WorkOrderStatus } from './enums/work-order-status.enum';
 import { ProductionService } from './production.service';
 
 describe('ProductionService', () => {
@@ -78,7 +82,7 @@ describe('ProductionService', () => {
           useValue: mockMoldRepository,
         },
         {
-          provide: getRepositoryToken(Bom),
+          provide: getRepositoryToken(BOM),
           useValue: mockBomRepository,
         },
         {
@@ -537,7 +541,7 @@ describe('ProductionService', () => {
       mockCacheService.del.mockResolvedValue(undefined);
       mockWorkOrderRepository.save.mockResolvedValue({
         ...mockWorkOrder,
-        quantityProduced: 50,
+        qtyProduced: 50,
         quantityRejected: 5,
         completionPercentage: 50,
       });
@@ -662,7 +666,7 @@ describe('ProductionService', () => {
     it('should calculate quantities for passed result', async () => {
       const checkData = {
         quantityChecked: 100,
-        result: QualityCheckResult.PASSED,
+        result: QualityCheckResult.PASS,
       };
 
       mockQualityCheckRepository.count.mockResolvedValue(0);
@@ -679,8 +683,8 @@ describe('ProductionService', () => {
     });
 
     it('should approve quality check', async () => {
-      const mockCheck = { id: '1' };
-      mockQualityCheckRepository.findOne.mockResolvedValue(mockCheck);
+      const mockCheck = { id: '1', checkNumber: 'QC-000001' };
+      mockCacheService.getOrSet.mockResolvedValue(mockCheck);
       mockQualityCheckRepository.save.mockResolvedValue({
         ...mockCheck,
         approvedBy: 'user-1',
@@ -696,7 +700,7 @@ describe('ProductionService', () => {
     it('should get quality statistics', async () => {
       const mockChecks = [
         {
-          result: QualityCheckResult.PASSED,
+          result: QualityCheckResult.PASS,
           quantityChecked: 100,
           quantityPassed: 100,
           quantityFailed: 0,
@@ -708,7 +712,7 @@ describe('ProductionService', () => {
           quantityFailed: 50,
         },
         {
-          result: QualityCheckResult.PASSED,
+          result: QualityCheckResult.PASS,
           quantityChecked: 75,
           quantityPassed: 75,
           quantityFailed: 0,
@@ -802,7 +806,7 @@ describe('ProductionService', () => {
     it('should get quality statistics with date range', async () => {
       const mockChecks = [
         {
-          result: QualityCheckResult.PASSED,
+          result: QualityCheckResult.PASS,
           quantityChecked: 100,
           quantityPassed: 100,
           quantityFailed: 0,
@@ -816,7 +820,7 @@ describe('ProductionService', () => {
           checkDate: new Date('2023-12-31'),
         },
         {
-          result: QualityCheckResult.PASSED,
+          result: QualityCheckResult.PASS,
           quantityChecked: 75,
           quantityPassed: 75,
           quantityFailed: 0,

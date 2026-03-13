@@ -1,12 +1,12 @@
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
-  UpdateDateColumn,
+  Entity,
   Index,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
-import { IssuePriority } from '../../issue-tracking/entities/issue.entity';
+import { IssuePriority } from '@platform/issue-tracking/enums/issue-priority.enum';
 
 @Entity('slas')
 @Index(['tenantId', 'isActive'])

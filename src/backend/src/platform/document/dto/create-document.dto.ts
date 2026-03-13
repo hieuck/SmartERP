@@ -1,5 +1,5 @@
 import { IsString, IsEnum, IsOptional, IsNumber, IsArray, IsUUID } from 'class-validator';
-import { DocumentType, AccessLevel } from '../entities/document.entity';
+import { DocumentType, AccessLevel } from '../enums/document.enum';
 
 export class CreateDocumentDto {
   @IsString()

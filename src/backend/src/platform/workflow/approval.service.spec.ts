@@ -3,8 +3,8 @@ import { BadRequestException, ForbiddenException, NotFoundException } from '@nes
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { ApprovalService } from './approval.service';
-import { ApprovalRequest, ApprovalStatus } from './entities/approval-request.entity';
-import { Workflow } from './entities/workflow.entity';
+import { ApprovalRequest, ApprovalStatus } from '@platform/enums/platform.enum';
+import { Workflow } from '@platform/enums/platform.enum';
 
 describe('ApprovalService', () => {
   let service: ApprovalService;

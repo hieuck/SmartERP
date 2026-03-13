@@ -4,16 +4,28 @@ import { AccountLockoutService } from './services/account-lockout.service';
 import { TokenBlacklistService } from './services/token-blacklist.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
-import { User } from '../user/entities/user.entity';
-import { Tenant } from '../tenant/entities/tenant.entity';
+import { User } from '@core/user/entities/user.entity';
+import { Tenant } from '@core/tenant/entities/tenant.entity';
+import { DataSource } from 'typeorm';
+import { CacheService } from '@common/cache/cache.service';
+import { PermissionService } from '@common/security/permission.service';
+import { Repository } from 'typeorm';
+
+// Test constants
+const MAX_FAILED_LOGIN_ATTEMPTS = 5;
+const TOKEN_TTL_SECONDS = 3600; // 1 hour
+const TOKEN_TTL_MS = 3600000; // 1 hour in milliseconds
+const EMAIL_VERIFICATION_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+const CONCURRENT_LOGIN_ATTEMPTS = 5;
+const CONCURRENT_TOKEN_REFRESH = 3;
 
 describe('AuthService - Security Tests', () => {
   let authService: AuthService;
   let accountLockoutService: AccountLockoutService;
   let tokenBlacklistService: TokenBlacklistService;
   let jwtService: JwtService;
-  let mockUserRepository: any;
-  let mockTenantRepository: any;
+  let mockUserRepository: Partial<jest.Mocked<Repository<User>>>;
+  let mockTenantRepository: Partial<jest.Mocked<Repository<Tenant>>>;
 
   beforeEach(async () => {
     mockUserRepository = {
@@ -41,6 +53,39 @@ describe('AuthService - Security Tests', () => {
         {
           provide: getRepositoryToken(Tenant),
           useValue: mockTenantRepository,
+        },
+        {
+          provide: DataSource,
+          useValue: {
+            createQueryRunner: jest.fn().mockReturnValue({
+              connect: jest.fn(),
+              startTransaction: jest.fn(),
+              commitTransaction: jest.fn(),
+              rollbackTransaction: jest.fn(),
+              release: jest.fn(),
+              manager: {
+                findOne: jest.fn(),
+                create: jest.fn(),
+                save: jest.fn(),
+              },
+            }),
+          },
+        },
+        {
+          provide: CacheService,
+          useValue: {
+            get: jest.fn(),
+            set: jest.fn(),
+            del: jest.fn(),
+            getOrSet: jest.fn(),
+          },
+        },
+        {
+          provide: PermissionService,
+          useValue: {
+            hasPermission: jest.fn().mockResolvedValue(true),
+            checkPermission: jest.fn(),
+          },
         },
         {
           provide: JwtService,
@@ -72,7 +117,7 @@ describe('AuthService - Security Tests', () => {
     it('should lock account after 5 failed attempts', async () => {
       const email = 'test@example.com';
 
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < MAX_FAILED_LOGIN_ATTEMPTS; i++) {
         await accountLockoutService.recordFailedAttempt(email);
       }
 
@@ -88,7 +133,7 @@ describe('AuthService - Security Tests', () => {
         password: 'hashed-password',
         tenantId: 'tenant-1',
         isLocked: true,
-      };
+      } as unknown as User;
 
       mockUserRepository.findOne.mockResolvedValue(user);
       jest.spyOn(accountLockoutService, 'isAccountLocked').mockResolvedValue(true);
@@ -109,7 +154,7 @@ describe('AuthService - Security Tests', () => {
     it('should return remaining lockout time', async () => {
       const email = 'test@example.com';
 
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < MAX_FAILED_LOGIN_ATTEMPTS; i++) {
         await accountLockoutService.recordFailedAttempt(email);
       }
 
@@ -132,16 +177,16 @@ describe('AuthService - Security Tests', () => {
       const token = 'valid-jwt-token';
       const revokeSpy = jest.spyOn(tokenBlacklistService, 'revokeToken');
 
-      await tokenBlacklistService.revokeToken(token, 3600);
+      await tokenBlacklistService.revokeToken(token, TOKEN_TTL_SECONDS);
 
-      expect(revokeSpy).toHaveBeenCalledWith(token, 3600);
+      expect(revokeSpy).toHaveBeenCalledWith(token, TOKEN_TTL_SECONDS);
     });
 
     it('should check if token is revoked', async () => {
       const token = 'revoked-token';
       const isRevokedSpy = jest.spyOn(tokenBlacklistService, 'isTokenRevoked');
 
-      await tokenBlacklistService.revokeToken(token, 3600);
+      await tokenBlacklistService.revokeToken(token, TOKEN_TTL_SECONDS);
       const isRevoked = await tokenBlacklistService.isTokenRevoked(token);
 
       expect(isRevokedSpy).toHaveBeenCalledWith(token);
@@ -158,7 +203,7 @@ describe('AuthService - Security Tests', () => {
 
     it('should reject expired tokens', async () => {
       const expiredToken = {
-        exp: Math.floor(Date.now() / 1000) - 3600,
+        exp: Math.floor(Date.now() / 1000) - TOKEN_TTL_SECONDS,
         sub: 'user-123',
         tenantId: 'tenant-1',
       };
@@ -172,7 +217,7 @@ describe('AuthService - Security Tests', () => {
     it('should validate token signature', async () => {
       const validToken = 'valid-jwt-token';
       const decodedToken = {
-        exp: Math.floor(Date.now() / 1000) + 3600,
+        exp: Math.floor(Date.now() / 1000) + TOKEN_TTL_SECONDS,
         sub: 'user-123',
         tenantId: 'tenant-1',
       };
@@ -194,7 +239,7 @@ describe('AuthService - Security Tests', () => {
         email: 'user1@tenant1.com',
         tenantId: tenant1.id,
         password: 'hashed-password',
-      };
+      } as unknown as User;
 
       mockUserRepository.findOne.mockResolvedValue(user1);
 
@@ -214,7 +259,7 @@ describe('AuthService - Security Tests', () => {
         tenantId: inactiveTenant.id,
         password: 'hashed-password',
         tenant: inactiveTenant,
-      };
+      } as unknown as User;
 
       mockUserRepository.findOne.mockResolvedValue(user);
 
@@ -249,8 +294,8 @@ describe('AuthService - Security Tests', () => {
         email: 'user@tenant1.com',
         tenantId: 'tenant-1',
         resetPasswordToken: 'reset-token-123',
-        resetPasswordExpires: new Date(Date.now() + 3600000),
-      };
+        resetPasswordExpires: new Date(Date.now() + TOKEN_TTL_MS),
+      } as unknown as User;
 
       mockUserRepository.findOne.mockResolvedValue(user);
 
@@ -299,7 +344,7 @@ describe('AuthService - Security Tests', () => {
     it('should check password reset token expiration', async () => {
       const expiredToken = {
         resetPasswordToken: 'token-123',
-        resetPasswordExpires: new Date(Date.now() - 3600000),
+        resetPasswordExpires: new Date(Date.now() - TOKEN_TTL_MS),
       };
 
       const isExpired = expiredToken.resetPasswordExpires < new Date();
@@ -311,7 +356,7 @@ describe('AuthService - Security Tests', () => {
         id: 'user-1',
         email: 'user@example.com',
         resetPasswordToken: 'token-123',
-        resetPasswordExpires: new Date(Date.now() + 3600000),
+        resetPasswordExpires: new Date(Date.now() + TOKEN_TTL_MS),
       };
 
       user.resetPasswordToken = null;
@@ -338,7 +383,7 @@ describe('AuthService - Security Tests', () => {
         id: 'user-1',
         email: 'user@example.com',
         emailVerificationToken: 'verify-token-123',
-        emailVerificationExpires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        emailVerificationExpires: new Date(Date.now() + EMAIL_VERIFICATION_TTL_MS),
       };
 
       const isExpired = user.emailVerificationExpires < new Date();
@@ -350,7 +395,7 @@ describe('AuthService - Security Tests', () => {
         id: 'user-1',
         email: 'user@example.com',
         emailVerificationToken: 'verify-token-123',
-        emailVerificationExpires: new Date(Date.now() - 3600000),
+        emailVerificationExpires: new Date(Date.now() - TOKEN_TTL_MS),
       };
 
       const isExpired = user.emailVerificationExpires < new Date();
@@ -406,17 +451,17 @@ describe('AuthService - Security Tests', () => {
         email,
         password: 'hashed-password',
         tenantId: 'tenant-1',
-      };
+      } as unknown as User;
 
       mockUserRepository.findOne.mockResolvedValue(user);
 
-      const promises = Array(5).fill(null).map(() =>
+      const promises = Array(CONCURRENT_LOGIN_ATTEMPTS).fill(null).map(() =>
         mockUserRepository.findOne({ where: { email } })
       );
 
       const results = await Promise.all(promises);
 
-      expect(results).toHaveLength(5);
+      expect(results).toHaveLength(CONCURRENT_LOGIN_ATTEMPTS);
       results.forEach(result => {
         expect(result.email).toBe(email);
       });
@@ -428,13 +473,13 @@ describe('AuthService - Security Tests', () => {
 
       jest.spyOn(jwtService, 'sign').mockReturnValue(newToken);
 
-      const promises = Array(3).fill(null).map(() =>
+      const promises = Array(CONCURRENT_TOKEN_REFRESH).fill(null).map(() =>
         Promise.resolve(jwtService.sign({ sub: 'user-1' }))
       );
 
       const results = await Promise.all(promises);
 
-      expect(results).toHaveLength(3);
+      expect(results).toHaveLength(CONCURRENT_TOKEN_REFRESH);
       results.forEach(result => {
         expect(result).toBe(newToken);
       });

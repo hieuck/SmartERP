@@ -3,7 +3,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { NotFoundException, ConflictException } from '@nestjs/common';
 import { SettingsService } from './settings.service';
-import { Setting } from './entities/setting.entity';
+import { Setting } from '../entities/setting.entity';
 import { CreateSettingDto, SettingCategory, SettingDataType } from './dto/create-setting.dto';
 import { UpdateSettingDto } from './dto/update-setting.dto';
 import { createMockUser } from '@/common/test/test-helpers';

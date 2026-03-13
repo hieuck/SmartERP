@@ -1,6 +1,6 @@
 import { IsString, IsEnum, IsOptional, IsNotEmpty } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IssueStatus, IssuePriority, IssueType } from '../entities/issue.entity';
+import { IssueStatus, IssuePriority, IssueType } from '../enums/issue.enum';
 
 export class CreateIssueDto {
   @ApiProperty({ example: 'Login button not working' })

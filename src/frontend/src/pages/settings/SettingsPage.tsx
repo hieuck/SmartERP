@@ -1,8 +1,26 @@
+import { DeleteOutlined, EditOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons';
+import {
+  Button,
+  Card,
+  Form,
+  Input,
+  message,
+  Modal,
+  Popconfirm,
+  Select,
+  Space,
+  Switch,
+  Table,
+  Tabs,
+} from 'antd';
 import { useState } from 'react';
-import { Card, Tabs, Form, Input, Select, Switch, Button, Space, message, Table, Popconfirm, Modal } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, SaveOutlined } from '@ant-design/icons';
-import { Setting, SettingType, SettingCategory } from '../../services/utils/settingsService';
-import { useSettingsByCategory, useCreateSetting, useUpdateSetting, useDeleteSetting } from '../../hooks/useSettings';
+import {
+  useCreateSetting,
+  useDeleteSetting,
+  useSettingsByCategory,
+  useUpdateSetting,
+} from '../../hooks/useSettings';
+import { Setting, SettingCategory } from '../../services/utils/settingsService';
 
 const { TabPane } = Tabs;
 const { TextArea } = Input;
@@ -18,11 +36,11 @@ const categoryLabels: Record<SettingCategory, string> = {
   [SettingCategory.SECURITY]: 'Bảo mật',
 };
 
-const typeLabels: Record<SettingType, string> = {
-  [SettingType.STRING]: 'Chuỗi',
-  [SettingType.NUMBER]: 'Số',
-  [SettingType.BOOLEAN]: 'Đúng/Sai',
-  [SettingType.JSON]: 'JSON',
+const typeLabels: Record<SettingDataType, string> = {
+  [SettingDataType.STRING]: 'Chuỗi',
+  [SettingDataType.NUMBER]: 'Số',
+  [SettingDataType.BOOLEAN]: 'Đúng/Sai',
+  [SettingDataType.JSON]: 'JSON',
 };
 
 export default function SettingsPage() {
@@ -96,17 +114,17 @@ export default function SettingsPage() {
     setEditingSetting(null);
     form.resetFields();
     form.setFieldsValue({
-      type: SettingType.STRING,
+      dataType: SettingDataType.STRING,
       isPublic: false,
     });
     setModalVisible(true);
   };
 
-  const renderValue = (value: string, type: SettingType) => {
-    if (type === SettingType.BOOLEAN) {
+  const renderValue = (value: string, type: SettingDataType) => {
+    if (type === SettingDataType.BOOLEAN) {
       return value === 'true' ? 'Có' : 'Không';
     }
-    if (type === SettingType.JSON) {
+    if (type === SettingDataType.JSON) {
       try {
         return <pre style={{ margin: 0 }}>{JSON.stringify(JSON.parse(value), null, 2)}</pre>;
       } catch {
@@ -133,9 +151,9 @@ export default function SettingsPage() {
     {
       title: 'Loại',
       dataIndex: 'type',
-      key: 'type',
+      key: 'dataType',
       width: 100,
-      render: (type: SettingType) => typeLabels[type],
+      render: (type: SettingDataType) => typeLabels[type],
     },
     {
       title: 'Mô tả',
@@ -190,11 +208,19 @@ export default function SettingsPage() {
           </Button>
         }
       >
-        <Tabs activeKey={activeCategory} onChange={(key) => setActiveCategory(key as SettingCategory)}>
+        <Tabs
+          activeKey={activeCategory}
+          onChange={(key) => setActiveCategory(key as SettingCategory)}
+        >
           {Object.entries(categoryLabels).map(([key, label]) => (
             <TabPane tab={label} key={key}>
               <Table
-                loading={isLoading || createMutation.isPending || updateMutation.isPending || deleteMutation.isPending}
+                loading={
+                  isLoading ||
+                  createMutation.isPending ||
+                  updateMutation.isPending ||
+                  deleteMutation.isPending
+                }
                 dataSource={settings}
                 columns={columns}
                 rowKey="key"
@@ -303,7 +329,12 @@ export default function SettingsPage() {
 
           <Form.Item>
             <Space>
-              <Button type="primary" htmlType="submit" icon={<SaveOutlined />} loading={createMutation.isPending || updateMutation.isPending}>
+              <Button
+                type="primary"
+                htmlType="submit"
+                icon={<SaveOutlined />}
+                loading={createMutation.isPending || updateMutation.isPending}
+              >
                 Lưu
               </Button>
               <Button

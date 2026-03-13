@@ -4,7 +4,10 @@ import { BadRequestException, Injectable, Logger, NotFoundException } from '@nes
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UpgradeSubscriptionDto } from './dto/upgrade-subscription.dto';
-import { BillingCycle, SubscriptionPlan, Tenant, TenantStatus } from './entities/tenant.entity';
+import { BillingCycle } from './enums/billing-cycle.enum';
+import { SubscriptionPlan } from './enums/subscription-plan.enum';
+import { TenantStatus } from './enums/tenant-status.enum';
+import { Tenant } from './entities/tenant.entity';
 
 // Pricing configuration (in VND)
 const PRICING = {

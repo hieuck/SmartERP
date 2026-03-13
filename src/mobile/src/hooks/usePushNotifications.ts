@@ -25,9 +25,7 @@ export const usePushNotifications = () => {
 
     responseListener.current = PushNotificationService.addNotificationResponseListener(
       (response) => {
-        // Handle notification tap
-        console.log('Notification tapped:', response);
-        // You can navigate to specific screens based on notification data
+        // Handle notification tap - navigate to specific screens based on notification data
       },
     );
 

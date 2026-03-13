@@ -1,18 +1,7 @@
-import { Entity, Column, Index } from 'typeorm';
+import { Entity, Column, Index } from 'typeorm';import { QualityCheckType } from '../enums/quality-check-type.enum';
+import { QualityCheckResult } from '../enums/quality-check-result.enum';
+
 import { BaseEntity } from '@/common/entities/base.entity';
-
-export enum QualityCheckType {
-  INCOMING = 'incoming',
-  IN_PROCESS = 'in_process',
-  FINAL = 'final',
-  RANDOM = 'random',
-}
-
-export enum QualityCheckResult {
-  PASSED = 'passed',
-  FAILED = 'failed',
-  CONDITIONAL = 'conditional',
-}
 
 @Entity('quality_checks')
 @Index(['tenantId', 'checkNumber'], { unique: true })

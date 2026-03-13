@@ -1,15 +1,16 @@
+import { createMockUser } from '@/common/test/test-helpers';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { WorkOrder } from '../entities/work-order.entity';
+import { WorkOrderStatus } from '../enums/work-order-status.enum';
 import { WorkOrderService } from './work-order.service';
-import { WorkOrder, WorkOrderStatus } from './entities/work-order.entity';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
-import { createMockUser } from '@/common/test/test-helpers';
 
 describe('WorkOrderService', () => {
   let service: WorkOrderService;
   let repository: Repository<WorkOrder>;
-  
+
   const mockUser = createMockUser();
 
   const mockRepository = {
@@ -96,9 +97,7 @@ describe('WorkOrderService', () => {
     it('should throw NotFoundException if not found', async () => {
       mockRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findOne('nonexistent', 'tenant1')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.findOne('nonexistent', 'tenant1')).rejects.toThrow(NotFoundException);
     });
   });
 

@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository, Between } from 'typeorm';
 import { AuditService } from './audit.service';
-import { AuditLog, AuditAction } from './entities/audit-log.entity';
+import { AuditLog, AuditAction } from '../enums/platform.enum';
 import { CacheService } from '@/common/cache/cache.service';
 import { PermissionService } from '@/common/security/permission.service';
 import { createMockUser } from '@/common/test/test-helpers';

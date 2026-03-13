@@ -4,8 +4,8 @@ import { BankReconciliationController } from './bank-reconciliation.controller';
 import { BankReconciliationService } from './bank-reconciliation.service';
 import { BankStatement } from './entities/bank-statement.entity';
 import { BankTransaction } from './entities/bank-transaction.entity';
-import { JournalEntry } from '../account/entities/journal-entry.entity';
-import { Account } from '../account/entities/account.entity';
+import { JournalEntry } from '@/domains/accounting/account/entities/journal-entry.entity';
+import { Account } from '@/domains/accounting/account/entities/account.entity';
 import { SecurityModule } from '@/common/security/security.module';
 
 @Module({

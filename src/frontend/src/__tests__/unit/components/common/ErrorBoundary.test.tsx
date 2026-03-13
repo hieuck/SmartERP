@@ -12,7 +12,7 @@ describe('ErrorBoundary Component', () => {
       render(
         <ErrorBoundary>
           <div>Test Content</div>
-        </ErrorBoundary>
+        </ErrorBoundary>,
       );
 
       expect(screen.getByText('Test Content')).toBeInTheDocument();
@@ -23,7 +23,7 @@ describe('ErrorBoundary Component', () => {
         <ErrorBoundary>
           <div>First Child</div>
           <div>Second Child</div>
-        </ErrorBoundary>
+        </ErrorBoundary>,
       );
 
       expect(screen.getByText('First Child')).toBeInTheDocument();
@@ -40,7 +40,7 @@ describe('ErrorBoundary Component', () => {
       const { rerender } = render(
         <ErrorBoundary>
           <div>Test Content</div>
-        </ErrorBoundary>
+        </ErrorBoundary>,
       );
 
       // Simulate error by re-rendering with error state
@@ -52,7 +52,7 @@ describe('ErrorBoundary Component', () => {
       render(
         <ErrorBoundary>
           <div>Test Content</div>
-        </ErrorBoundary>
+        </ErrorBoundary>,
       );
 
       // Error UI is not shown initially
@@ -63,12 +63,12 @@ describe('ErrorBoundary Component', () => {
       render(
         <ErrorBoundary>
           <div>Test Content</div>
-        </ErrorBoundary>
+        </ErrorBoundary>,
       );
 
       // Error UI is not shown initially
       expect(
-        screen.queryByText('Xin lỗi, đã có lỗi xảy ra. Vui lòng thử lại sau.')
+        screen.queryByText('Xin lỗi, đã có lỗi xảy ra. Vui lòng thử lại sau.'),
       ).not.toBeInTheDocument();
     });
   });
@@ -78,7 +78,7 @@ describe('ErrorBoundary Component', () => {
       render(
         <ErrorBoundary>
           <div>Test Content</div>
-        </ErrorBoundary>
+        </ErrorBoundary>,
       );
 
       // Home button is not shown initially
@@ -89,7 +89,7 @@ describe('ErrorBoundary Component', () => {
       render(
         <ErrorBoundary>
           <div>Test Content</div>
-        </ErrorBoundary>
+        </ErrorBoundary>,
       );
 
       // Reload button is not shown initially
@@ -105,7 +105,7 @@ describe('ErrorBoundary Component', () => {
       render(
         <ErrorBoundary>
           <div>Test Content</div>
-        </ErrorBoundary>
+        </ErrorBoundary>,
       );
 
       expect(screen.queryByText(/Error Details/)).not.toBeInTheDocument();
@@ -120,7 +120,7 @@ describe('ErrorBoundary Component', () => {
       render(
         <ErrorBoundary>
           <div>Test Content</div>
-        </ErrorBoundary>
+        </ErrorBoundary>,
       );
 
       // Error details are not shown when there's no error
@@ -142,22 +142,14 @@ describe('ErrorBoundary Component', () => {
     });
 
     it('should handle null children gracefully', () => {
-      render(
-        <ErrorBoundary>
-          {null}
-        </ErrorBoundary>
-      );
+      render(<ErrorBoundary>{null}</ErrorBoundary>);
 
       // Should render without crashing
       expect(screen.queryByText('Test Content')).not.toBeInTheDocument();
     });
 
     it('should handle undefined children gracefully', () => {
-      render(
-        <ErrorBoundary>
-          {undefined}
-        </ErrorBoundary>
-      );
+      render(<ErrorBoundary>{undefined}</ErrorBoundary>);
 
       // Should render without crashing
       expect(screen.queryByText('Test Content')).not.toBeInTheDocument();
@@ -170,7 +162,7 @@ describe('ErrorBoundary Component', () => {
             <div>First</div>
             <div>Second</div>
           </>
-        </ErrorBoundary>
+        </ErrorBoundary>,
       );
 
       expect(screen.getByText('First')).toBeInTheDocument();
@@ -199,7 +191,7 @@ describe('ErrorBoundary Component', () => {
       render(
         <ErrorBoundary>
           <div>Test Content</div>
-        </ErrorBoundary>
+        </ErrorBoundary>,
       );
 
       const container = screen.getByText('Test Content').parentElement;
@@ -210,7 +202,7 @@ describe('ErrorBoundary Component', () => {
       render(
         <ErrorBoundary>
           <div>Test Content</div>
-        </ErrorBoundary>
+        </ErrorBoundary>,
       );
 
       // Buttons are not rendered initially
@@ -224,14 +216,14 @@ describe('ErrorBoundary Component', () => {
       const { rerender } = render(
         <ErrorBoundary>
           <div>Test Content</div>
-        </ErrorBoundary>
+        </ErrorBoundary>,
       );
 
       // Re-render with same children
       rerender(
         <ErrorBoundary>
           <div>Test Content</div>
-        </ErrorBoundary>
+        </ErrorBoundary>,
       );
 
       // Should still render correctly
@@ -249,7 +241,7 @@ describe('ErrorBoundary Component', () => {
       const { rerender } = render(
         <ErrorBoundary>
           <TestChild />
-        </ErrorBoundary>
+        </ErrorBoundary>,
       );
 
       const initialRenderCount = renderSpy.mock.calls.length;
@@ -257,7 +249,7 @@ describe('ErrorBoundary Component', () => {
       rerender(
         <ErrorBoundary>
           <TestChild />
-        </ErrorBoundary>
+        </ErrorBoundary>,
       );
 
       // Should not cause additional renders
@@ -270,14 +262,14 @@ describe('ErrorBoundary Component', () => {
       const { rerender } = render(
         <ErrorBoundary>
           <div>Test 1</div>
-        </ErrorBoundary>
+        </ErrorBoundary>,
       );
 
       for (let i = 0; i < 10; i++) {
         rerender(
           <ErrorBoundary>
             <div>Test {i}</div>
-          </ErrorBoundary>
+          </ErrorBoundary>,
         );
       }
 
@@ -294,7 +286,7 @@ describe('ErrorBoundary Component', () => {
               </div>
             </div>
           </div>
-        </ErrorBoundary>
+        </ErrorBoundary>,
       );
 
       expect(screen.getByText('Deeply Nested')).toBeInTheDocument();
@@ -306,7 +298,7 @@ describe('ErrorBoundary Component', () => {
       render(
         <ErrorBoundary>
           <button onClick={handleClick}>Click Me</button>
-        </ErrorBoundary>
+        </ErrorBoundary>,
       );
 
       const button = screen.getByText('Click Me');
@@ -321,7 +313,7 @@ describe('ErrorBoundary Component', () => {
       render(
         <ErrorBoundary>
           <div>Content with Ant Design</div>
-        </ErrorBoundary>
+        </ErrorBoundary>,
       );
 
       expect(screen.getByText('Content with Ant Design')).toBeInTheDocument();
@@ -331,7 +323,7 @@ describe('ErrorBoundary Component', () => {
       const { container } = render(
         <ErrorBoundary>
           <div>Test Content</div>
-        </ErrorBoundary>
+        </ErrorBoundary>,
       );
 
       // Component should render without CSS errors
@@ -342,7 +334,7 @@ describe('ErrorBoundary Component', () => {
       render(
         <ErrorBoundary>
           <div>Router Content</div>
-        </ErrorBoundary>
+        </ErrorBoundary>,
       );
 
       expect(screen.getByText('Router Content')).toBeInTheDocument();

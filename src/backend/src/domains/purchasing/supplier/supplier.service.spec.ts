@@ -1,11 +1,11 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { SupplierService } from './supplier.service';
-import { Supplier } from './entities/supplier.entity';
-import { NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { CacheService } from '@/common/cache/cache.service';
 import { PermissionService } from '@/common/security/permission.service';
 import { createMockUser } from '@/common/test/test-helpers';
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { Supplier } from '../../entities/supplier.entity';
+import { SupplierService } from './supplier.service';
 
 describe('SupplierService', () => {
   let service: SupplierService;

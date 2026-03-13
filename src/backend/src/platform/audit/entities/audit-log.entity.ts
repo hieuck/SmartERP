@@ -1,13 +1,5 @@
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, Index } from 'typeorm';
-
-export enum AuditAction {
-  CREATE = 'create',
-  UPDATE = 'update',
-  DELETE = 'delete',
-  READ = 'read',
-  LOGIN = 'login',
-  LOGOUT = 'logout',
-}
+import { AuditAction } from '../enums/audit-action.enum';
 
 @Entity('audit_logs')
 @Index(['tenantId', 'createdAt'])

@@ -9,7 +9,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { ProductStatus } from '../entities/product-catalog.entity';
+import { ProductStatus } from '../../enums/ecommerce.enum';
 
 export class SearchProductDto {
   @ApiPropertyOptional({ example: 't-shirt' })

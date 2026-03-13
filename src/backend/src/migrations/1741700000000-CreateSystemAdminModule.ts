@@ -29,7 +29,7 @@ export class CreateSystemAdminModule1741700000000 implements MigrationInterface 
     await queryRunner.query(`
       CREATE TABLE "system_settings" (
         "id" uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-        "tenantId" varchar NOT NULL,
+        "tenantId" uuid NOT NULL,
         "key" varchar NOT NULL,
         "value" text NOT NULL,
         "type" "setting_type_enum" NOT NULL DEFAULT 'string',
@@ -39,7 +39,9 @@ export class CreateSystemAdminModule1741700000000 implements MigrationInterface 
         "isEditable" boolean NOT NULL DEFAULT true,
         "createdAt" timestamp NOT NULL DEFAULT now(),
         "updatedAt" timestamp NOT NULL DEFAULT now(),
-        "updatedBy" varchar
+        "updatedBy" uuid,
+        CONSTRAINT "FK_system_settings_tenant" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE,
+        CONSTRAINT "FK_system_settings_updatedBy" FOREIGN KEY ("updatedBy") REFERENCES "users"("id") ON DELETE SET NULL
       )
     `);
 
@@ -60,7 +62,7 @@ export class CreateSystemAdminModule1741700000000 implements MigrationInterface 
     await queryRunner.query(`
       CREATE TABLE "background_jobs" (
         "id" uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-        "tenantId" varchar NOT NULL,
+        "tenantId" uuid NOT NULL,
         "jobType" varchar NOT NULL,
         "description" text,
         "status" "job_status_enum" NOT NULL DEFAULT 'pending',
@@ -75,9 +77,11 @@ export class CreateSystemAdminModule1741700000000 implements MigrationInterface 
         "startedAt" timestamp,
         "completedAt" timestamp,
         "durationMs" int,
-        "createdBy" varchar,
+        "createdBy" uuid,
         "createdAt" timestamp NOT NULL DEFAULT now(),
-        "updatedAt" timestamp NOT NULL DEFAULT now()
+        "updatedAt" timestamp NOT NULL DEFAULT now(),
+        CONSTRAINT "FK_background_jobs_tenant" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE,
+        CONSTRAINT "FK_background_jobs_createdBy" FOREIGN KEY ("createdBy") REFERENCES "users"("id") ON DELETE SET NULL
       )
     `);
 
@@ -102,22 +106,25 @@ export class CreateSystemAdminModule1741700000000 implements MigrationInterface 
     await queryRunner.query(`
       CREATE TABLE "error_logs" (
         "id" uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-        "tenantId" varchar NOT NULL,
+        "tenantId" uuid NOT NULL,
         "errorType" varchar NOT NULL,
         "message" text NOT NULL,
         "stackTrace" text,
         "severity" "error_severity_enum" NOT NULL DEFAULT 'medium',
         "context" jsonb,
-        "userId" varchar,
+        "userId" uuid,
         "endpoint" varchar,
         "method" varchar,
         "ipAddress" varchar,
         "userAgent" varchar,
         "resolved" boolean NOT NULL DEFAULT false,
-        "resolvedBy" varchar,
+        "resolvedBy" uuid,
         "resolvedAt" timestamp,
         "resolution" text,
-        "createdAt" timestamp NOT NULL DEFAULT now()
+        "createdAt" timestamp NOT NULL DEFAULT now(),
+        CONSTRAINT "FK_error_logs_tenant" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE,
+        CONSTRAINT "FK_error_logs_userId" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE SET NULL,
+        CONSTRAINT "FK_error_logs_resolvedBy" FOREIGN KEY ("resolvedBy") REFERENCES "users"("id") ON DELETE SET NULL
       )
     `);
 

@@ -8,8 +8,9 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ApprovalRequest, ApprovalStatus } from './entities/approval-request.entity';
+import { ApprovalRequest } from './entities/approval-request.entity';
 import { Workflow } from './entities/workflow.entity';
+import { ApprovalStatus } from './enums';
 
 @Injectable()
 export class ApprovalService {

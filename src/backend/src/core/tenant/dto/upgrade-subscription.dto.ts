@@ -1,12 +1,13 @@
-import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { SubscriptionPlan, BillingCycle } from '../entities/tenant.entity';
+import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { BillingCycle } from '../enums/billing-cycle.enum';
+import { SubscriptionPlan } from '../enums/subscription-plan.enum';
 
 export class UpgradeSubscriptionDto {
   @ApiProperty({
     description: 'Subscription plan',
     enum: SubscriptionPlan,
-    example: SubscriptionPlan.PROFESSIONAL,
+    example: SubscriptionPlan.PRO,
   })
   @IsNotEmpty()
   @IsEnum(SubscriptionPlan)

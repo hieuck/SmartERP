@@ -1,37 +1,31 @@
 # Automation Scripts
 
-Scripts để tăng velocity từ 6.5/10 lên 10/10.
+Production-ready automation scripts for Smart-ERP development.
 
 ## 🚀 Quick Start
 
 ```powershell
-# 1. Fix security imports (dry run first)
-.\scripts\fix-security-imports.ps1 -DryRun
-.\scripts\fix-security-imports.ps1
+# 1. Generate new CRUD module
+.\scripts\generate-crud-module.ps1 -EntityName Product -Domain inventory
 
-# 2. Fix test parameters
-.\scripts\fix-test-parameters.ps1 -DryRun
-.\scripts\fix-test-parameters.ps1
-
-# 3. Generate new CRUD service
+# 2. Generate new CRUD service
 .\scripts\generate-crud-service.ps1 -EntityName Product -Domain inventory
 
-# 4. Track velocity
-.\scripts\velocity-tracker.ps1 -Action log -Points 3 -Task "Fixed 10 security imports"
+# 3. Track velocity
+.\scripts\velocity-tracker.ps1 -Action log -Points 3 -Task "Implemented Product module"
 .\scripts\velocity-tracker.ps1 -Action report
 ```
 
-## 📊 Expected Impact
+## 📊 Available Scripts
 
-| Script                | Time Saved | Usage   | Weekly Impact       |
-| --------------------- | ---------- | ------- | ------------------- |
-| fix-security-imports  | 2 hours    | 1x/week | 2 hours             |
-| fix-test-parameters   | 1.5 hours  | 1x/week | 1.5 hours           |
-| generate-crud-service | 1 hour     | 5x/week | 5 hours             |
-| velocity-tracker      | 15 min     | Daily   | 1.25 hours          |
-| **TOTAL**             |            |         | **9.75 hours/week** |
-
-**Velocity Improvement:** 6.5/10 → 9/10 (target: 10/10 with practice)
+| Script                | Purpose                          | Usage   |
+| --------------------- | -------------------------------- | ------- |
+| generate-crud-module  | Generate complete CRUD module    | As needed |
+| generate-crud-service | Generate CRUD service only       | As needed |
+| velocity-tracker      | Track development velocity       | Daily   |
+| backup-automation     | Automated backup (.ps1 & .sh)    | Scheduled |
+| deploy-production     | Production deployment (.ps1 & .sh) | Release |
+| start-all             | Start all services (.ps1 & .sh)  | Development |
 
 ## 📝 Templates
 

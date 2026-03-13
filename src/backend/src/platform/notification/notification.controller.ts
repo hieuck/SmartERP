@@ -3,8 +3,8 @@ import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { NotificationService } from './notification.service';
 import { JwtAuthGuard } from '../../core/auth/guards/jwt-auth.guard';
 import { TenantId } from '../../common/decorators/tenant-id.decorator';
-import { Notification, NotificationType } from './entities/notification.entity';
-
+import { Notification } from './entities/notification.entity';
+import { NotificationType } from './enums';
 import { User } from '@/common/security/permission.service';
 @Controller('notifications')
 @UseGuards(JwtAuthGuard)

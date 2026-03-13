@@ -1,19 +1,7 @@
-import { Entity, Column, Index } from 'typeorm';
+import { Entity, Column, Index } from 'typeorm';import { MoldStatus } from '../enums/mold-status.enum';
+import { MoldCondition } from '../enums/mold-condition.enum';
+
 import { BaseEntity } from '@/common/entities/base.entity';
-
-export enum MoldStatus {
-  ACTIVE = 'active',
-  MAINTENANCE = 'maintenance',
-  DAMAGED = 'damaged',
-  RETIRED = 'retired',
-}
-
-export enum MoldCondition {
-  EXCELLENT = 'excellent',
-  GOOD = 'good',
-  FAIR = 'fair',
-  POOR = 'poor',
-}
 
 @Entity('molds')
 @Index(['tenantId', 'code'], { unique: true })

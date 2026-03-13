@@ -2,10 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { IssueTrackingService } from './issue-tracking.service';
-import { Issue, IssueStatus, IssuePriority, IssueType } from './entities/issue.entity';
-import { IssueComment } from './entities/issue-comment.entity';
-import { IssueAttachment } from './entities/issue-attachment.entity';
-import { User } from '../../core/user/entities/user.entity';
+import { Issue, IssueStatus, IssuePriority, IssueType } from '../enums/platform.enum';
+import { IssueComment } from '../enums/platform.enum';
+import { IssueAttachment } from '../enums/platform.enum';
+import { User } from '../user/entities/user.entity';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 
 describe('IssueTrackingService', () => {

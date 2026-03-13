@@ -10,7 +10,10 @@ import {
   CloseCircleOutlined,
   MoreOutlined,
 } from '@ant-design/icons';
-import notificationService, { NotificationType, NotificationPriority } from '../../services/notification/notificationService';
+import notificationService, {
+  NotificationType,
+  NotificationPriority,
+} from '../../services/notification/notificationService';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/vi';
@@ -122,7 +125,12 @@ export default function NotificationCenter() {
           Đánh dấu đã đọc
         </Menu.Item>
       )}
-      <Menu.Item key="delete" icon={<DeleteOutlined />} danger onClick={() => handleDelete(item.id)}>
+      <Menu.Item
+        key="delete"
+        icon={<DeleteOutlined />}
+        danger
+        onClick={() => handleDelete(item.id)}
+      >
         Xóa
       </Menu.Item>
     </Menu>
@@ -141,7 +149,10 @@ export default function NotificationCenter() {
         extra={
           <Space>
             <Button.Group>
-              <Button type={filter === 'all' ? 'primary' : 'default'} onClick={() => setFilter('all')}>
+              <Button
+                type={filter === 'all' ? 'primary' : 'default'}
+                onClick={() => setFilter('all')}
+              >
                 Tất cả
               </Button>
               <Button

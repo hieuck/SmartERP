@@ -272,9 +272,11 @@ describe('LoginPage - Integration Tests', () => {
       };
 
       jest.spyOn(authService, 'authService').mockImplementation(() => ({
-        login: jest.fn().mockImplementation(
-          () => new Promise(resolve => setTimeout(() => resolve(mockLoginResponse), 1000))
-        ),
+        login: jest
+          .fn()
+          .mockImplementation(
+            () => new Promise((resolve) => setTimeout(() => resolve(mockLoginResponse), 1000)),
+          ),
       }));
 
       renderLoginPage();
@@ -313,7 +315,10 @@ describe('LoginPage - Integration Tests', () => {
     it('should have proper ARIA labels', () => {
       renderLoginPage();
 
-      expect(screen.getByLabelText(/email address/i)).toHaveAttribute('aria-label', 'Email address');
+      expect(screen.getByLabelText(/email address/i)).toHaveAttribute(
+        'aria-label',
+        'Email address',
+      );
       expect(screen.getByLabelText(/password/i)).toHaveAttribute('aria-label', 'Password');
     });
 

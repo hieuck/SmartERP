@@ -1,15 +1,6 @@
-import {
-  IsString,
-  IsEnum,
-  IsOptional,
-  IsBoolean,
-  IsArray,
-  IsObject,
-  ValidateNested,
-} from 'class-validator';
-import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ReportType, ChartType } from '../entities/report.entity';
+import { IsArray, IsBoolean, IsEnum, IsObject, IsOptional, IsString } from 'class-validator';
+import { ChartType, ReportType } from '../enums';
 
 export class CreateReportDto {
   @ApiProperty({ example: 'Monthly Sales Report' })

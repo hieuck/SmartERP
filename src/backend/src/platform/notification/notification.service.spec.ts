@@ -4,7 +4,7 @@ import { createMockUser } from '@/common/test/test-helpers';
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Notification, NotificationStatus, NotificationType } from './entities/notification.entity';
+import { Notification, NotificationStatus, NotificationType } from '../enums/platform.enum';
 import { NotificationService } from './notification.service';
 
 describe('NotificationService', () => {

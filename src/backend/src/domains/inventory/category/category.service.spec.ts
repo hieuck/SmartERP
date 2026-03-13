@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { CategoryService } from './category.service';
-import { Category } from './entities/category.entity';
+;
 import { NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { CacheService } from '@/common/cache/cache.service';
 import { PermissionService } from '@/common/security/permission.service';

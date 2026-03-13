@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { WorkflowController } from './workflow.controller';
 import { WorkflowService } from './workflow.service';
-import { Workflow, WorkflowStatus } from './entities/workflow.entity';
-import { WorkflowInstance, WorkflowInstanceStatus } from './entities/workflow-instance.entity';
+import { Workflow, WorkflowStatus } from '@platform/enums/platform.enum';
+import { WorkflowInstance, WorkflowInstanceStatus } from '@platform/enums/platform.enum';
 import { createMockUser } from '@/common/test/test-helpers';
 
 describe('WorkflowController', () => {

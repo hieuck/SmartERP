@@ -10,18 +10,11 @@ import {
   BeforeInsert,
   BeforeUpdate,
 } from 'typeorm';
-import { Product } from '../../../inventory/product/entities/product.entity';
+import { Product } from '../../../inventory/product/entities/product.entity';import { WorkOrderStatus } from '../enums/work-order-status.enum';
+
 import { BOM } from '../../bom/entities/bom.entity';
 import { User as UserEntity } from '../../../../core/user/entities/user.entity';
 import { User } from '@/common/security/permission.service';
-
-export enum WorkOrderStatus {
-  DRAFT = 'draft',
-  CONFIRMED = 'confirmed',
-  IN_PROGRESS = 'in_progress',
-  DONE = 'done',
-  CANCELLED = 'cancelled',
-}
 
 @Entity('work_orders')
 @Index(['tenantId', 'productId'])

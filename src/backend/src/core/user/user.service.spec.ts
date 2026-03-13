@@ -6,7 +6,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
-import { User } from './entities/user.entity';
+import { User } from '../entities/user.entity';
 import { UserService } from './user.service';
 
 describe('UserService', () => {

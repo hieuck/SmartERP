@@ -32,7 +32,8 @@ const StockList: React.FC = () => {
 
   const { data, isLoading } = useQuery({
     queryKey: ['inventory', { page, pageSize, search, warehouseId: warehouseFilter }],
-    queryFn: () => inventoryServiceNew.getAll({ page, limit: pageSize, search, warehouseId: warehouseFilter }),
+    queryFn: () =>
+      inventoryServiceNew.getAll({ page, limit: pageSize, search, warehouseId: warehouseFilter }),
   });
 
   const { data: warehouses } = useQuery({

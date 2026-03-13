@@ -1,13 +1,16 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Consent, ConsentType } from './entities/consent.entity';
-import { DataExportRequest, ExportStatus } from './entities/data-export-request.entity';
-import { DataDeletionRequest, DeletionStatus } from './entities/data-deletion-request.entity';
-import { CreateConsentDto } from './dto/create-consent.dto';
-import { RequestDataExportDto } from './dto/request-data-export.dto';
-import { RequestDataDeletionDto } from './dto/request-data-deletion.dto';
 import { ApproveDeletionDto } from './dto/approve-deletion.dto';
+import { CreateConsentDto } from './dto/create-consent.dto';
+import { RequestDataDeletionDto } from './dto/request-data-deletion.dto';
+import { RequestDataExportDto } from './dto/request-data-export.dto';
+import { Consent } from './entities/consent.entity';
+import { DataDeletionRequest } from './entities/data-deletion-request.entity';
+import { DataExportRequest } from './entities/data-export-request.entity';
+import { ConsentType } from './enums/consent-type.enum';
+import { DeletionStatus } from './enums/deletion-status.enum';
+import { ExportStatus } from './enums/export-status.enum';
 
 @Injectable()
 export class GdprService {
@@ -22,11 +25,7 @@ export class GdprService {
 
   // ==================== CONSENT MANAGEMENT ====================
 
-  async createConsent(
-    userId: string,
-    tenantId: string,
-    dto: CreateConsentDto,
-  ): Promise<Consent> {
+  async createConsent(userId: string, tenantId: string, dto: CreateConsentDto): Promise<Consent> {
     // Revoke previous consent of same type if exists
     await this.consentRepository.update(
       { userId, tenantId, type: dto.type, granted: true },
@@ -42,11 +41,7 @@ export class GdprService {
     return this.consentRepository.save(consent);
   }
 
-  async revokeConsent(
-    userId: string,
-    tenantId: string,
-    type: ConsentType,
-  ): Promise<void> {
+  async revokeConsent(userId: string, tenantId: string, type: ConsentType): Promise<void> {
     await this.consentRepository.update(
       { userId, tenantId, type, granted: true, revokedAt: null },
       { revokedAt: new Date() },
@@ -60,11 +55,7 @@ export class GdprService {
     });
   }
 
-  async hasActiveConsent(
-    userId: string,
-    tenantId: string,
-    type: ConsentType,
-  ): Promise<boolean> {
+  async hasActiveConsent(userId: string, tenantId: string, type: ConsentType): Promise<boolean> {
     const consent = await this.consentRepository.findOne({
       where: { userId, tenantId, type, granted: true, revokedAt: null },
     });
@@ -87,11 +78,7 @@ export class GdprService {
     return this.exportRepository.save(request);
   }
 
-  async getExportRequest(
-    id: string,
-    userId: string,
-    tenantId: string,
-  ): Promise<DataExportRequest> {
+  async getExportRequest(id: string, userId: string, tenantId: string): Promise<DataExportRequest> {
     const request = await this.exportRepository.findOne({
       where: { id, userId, tenantId },
     });
@@ -103,10 +90,7 @@ export class GdprService {
     return request;
   }
 
-  async getUserExportRequests(
-    userId: string,
-    tenantId: string,
-  ): Promise<DataExportRequest[]> {
+  async getUserExportRequests(userId: string, tenantId: string): Promise<DataExportRequest[]> {
     return this.exportRepository.find({
       where: { userId, tenantId },
       order: { createdAt: 'DESC' },
@@ -137,13 +121,13 @@ export class GdprService {
       // 2. Format according to request.format (JSON/CSV/PDF)
       // 3. Upload to secure storage (S3, MinIO, etc.)
       // 4. Generate download URL with expiry
-      
+
       // For now, just mark as completed
       request.status = ExportStatus.COMPLETED;
       request.completedAt = new Date();
       request.fileUrl = 'https://example.com/exports/user-data.json'; // TODO: Real URL
       request.fileSize = 1024; // TODO: Real size
-      
+
       await this.exportRepository.save(request);
     } catch (error) {
       request.status = ExportStatus.FAILED;
@@ -194,10 +178,7 @@ export class GdprService {
     return request;
   }
 
-  async getUserDeletionRequests(
-    userId: string,
-    tenantId: string,
-  ): Promise<DataDeletionRequest[]> {
+  async getUserDeletionRequests(userId: string, tenantId: string): Promise<DataDeletionRequest[]> {
     return this.deletionRepository.find({
       where: { userId, tenantId },
       order: { createdAt: 'DESC' },
@@ -257,11 +238,11 @@ export class GdprService {
       // 2. Keep audit logs for compliance
       // 3. Handle foreign key constraints
       // 4. Notify user via email
-      
+
       // For now, just mark as completed
       request.status = DeletionStatus.COMPLETED;
       request.completedAt = new Date();
-      
+
       await this.deletionRepository.save(request);
     } catch (error) {
       request.status = DeletionStatus.FAILED;

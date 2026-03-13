@@ -3,9 +3,10 @@ import { SecureRepository } from '@/common/security/secure-repository';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ProductCatalog } from '../product-catalog/entities/product-catalog.entity';
+import { ProductCatalog } from '@/domains/ecommerce/product-catalog/entities/product-catalog.entity';
+import { ShoppingCart } from './entities/shopping-cart.entity';
 import { CartItem } from './entities/cart-item.entity';
-import { CartStatus, ShoppingCart } from './entities/shopping-cart.entity';
+import { CartStatus } from './enums/cart-status.enum';
 
 @Injectable()
 export class ShoppingCartService {

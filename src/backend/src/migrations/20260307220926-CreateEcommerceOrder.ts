@@ -69,11 +69,13 @@ export class CreateEcommerceOrder20260307220926 implements MigrationInterface {
         "cancelledBy" uuid,
         "cancellationReason" text,
         "cancelledAt" timestamp,
-        "tenantId" varchar NOT NULL,
+        "tenantId" uuid NOT NULL,
         "createdAt" timestamp NOT NULL DEFAULT now(),
         "updatedAt" timestamp NOT NULL DEFAULT now(),
-        CONSTRAINT "FK_orders_customer" FOREIGN KEY ("customerId") 
-          REFERENCES "users"("id") ON DELETE SET NULL
+        CONSTRAINT "FK_orders_tenant" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE,
+        CONSTRAINT "FK_orders_customer" FOREIGN KEY ("customerId") REFERENCES "users"("id") ON DELETE SET NULL,
+        CONSTRAINT "FK_orders_cart" FOREIGN KEY ("cartId") REFERENCES "shopping_carts"("id") ON DELETE SET NULL,
+        CONSTRAINT "FK_orders_cancelledBy" FOREIGN KEY ("cancelledBy") REFERENCES "users"("id") ON DELETE SET NULL
       )
     `);
 
@@ -113,11 +115,12 @@ export class CreateEcommerceOrder20260307220926 implements MigrationInterface {
         "quantity" integer NOT NULL,
         "selectedVariant" jsonb,
         "notes" text,
-        "tenantId" varchar NOT NULL,
+        "tenantId" uuid NOT NULL,
         "createdAt" timestamp NOT NULL DEFAULT now(),
         "updatedAt" timestamp NOT NULL DEFAULT now(),
-        CONSTRAINT "FK_order_items_order" FOREIGN KEY ("orderId") 
-          REFERENCES "orders"("id") ON DELETE CASCADE
+        CONSTRAINT "FK_order_items_tenant" FOREIGN KEY ("tenantId") REFERENCES "tenants"("id") ON DELETE CASCADE,
+        CONSTRAINT "FK_order_items_order" FOREIGN KEY ("orderId") REFERENCES "orders"("id") ON DELETE CASCADE,
+        CONSTRAINT "FK_order_items_product" FOREIGN KEY ("productId") REFERENCES "product_catalog"("id") ON DELETE SET NULL
       )
     `);
 

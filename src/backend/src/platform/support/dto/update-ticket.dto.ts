@@ -1,63 +1,86 @@
-import { IsOptional, IsEnum, IsString, IsBoolean, IsDateString, IsInt, Min, Max } from 'class-validator';
-import { IssueStatus, IssuePriority, IssueType } from '../../issue-tracking/entities/issue.entity';
-import { TicketChannel, TicketSatisfactionRating } from '../entities/ticket.entity';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsBoolean,
+  IsDateString,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+} from 'class-validator';
+import { IssuePriority, IssueStatus, IssueType, TicketChannel } from '../enums';
 
 export class UpdateTicketDto {
-  @IsOptional()
+  @ApiPropertyOptional({ description: 'Ticket title' })
   @IsString()
+  @IsOptional()
   title?: string;
 
-  @IsOptional()
+  @ApiPropertyOptional({ description: 'Ticket description' })
   @IsString()
+  @IsOptional()
   description?: string;
 
-  @IsOptional()
+  @ApiPropertyOptional({ enum: IssueStatus, description: 'Ticket status' })
   @IsEnum(IssueStatus)
+  @IsOptional()
   status?: IssueStatus;
 
-  @IsOptional()
+  @ApiPropertyOptional({ enum: IssuePriority, description: 'Ticket priority' })
   @IsEnum(IssuePriority)
+  @IsOptional()
   priority?: IssuePriority;
 
-  @IsOptional()
+  @ApiPropertyOptional({ enum: IssueType, description: 'Ticket type' })
   @IsEnum(IssueType)
+  @IsOptional()
   type?: IssueType;
 
-  @IsOptional()
-  @IsString()
-  assigneeId?: string;
-
-  @IsOptional()
+  @ApiPropertyOptional({ enum: TicketChannel, description: 'Ticket channel' })
   @IsEnum(TicketChannel)
+  @IsOptional()
   channel?: TicketChannel;
 
-  @IsOptional()
+  @ApiPropertyOptional({ description: 'SLA ID' })
   @IsString()
+  @IsOptional()
   slaId?: string;
 
+  @ApiPropertyOptional({ description: 'Assignee ID' })
+  @IsString()
   @IsOptional()
-  @IsDateString()
-  responseDueAt?: Date;
+  assigneeId?: string;
 
-  @IsOptional()
+  @ApiPropertyOptional({ description: 'Response due at' })
   @IsDateString()
-  resolutionDueAt?: Date;
-
   @IsOptional()
+  responseDueAt?: string;
+
+  @ApiPropertyOptional({ description: 'Resolution due at' })
+  @IsDateString()
+  @IsOptional()
+  resolutionDueAt?: string;
+
+  @ApiPropertyOptional({ description: 'Satisfaction rating' })
   @IsInt()
+  @IsOptional()
   @Min(1)
   @Max(5)
-  satisfactionRating?: TicketSatisfactionRating;
+  satisfactionRating?: number;
 
-  @IsOptional()
+  @ApiPropertyOptional({ description: 'Satisfaction comment' })
   @IsString()
+  @IsOptional()
   satisfactionComment?: string;
 
-  @IsOptional()
+  @ApiPropertyOptional({ description: 'Is escalated' })
   @IsBoolean()
+  @IsOptional()
   isEscalated?: boolean;
 
-  @IsOptional()
+  @ApiPropertyOptional({ description: 'Escalated to ID' })
   @IsString()
+  @IsOptional()
   escalatedToId?: string;
 }

@@ -1,16 +1,7 @@
-import { Entity, Column, Index, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, Column, Index, ManyToOne, JoinColumn } from 'typeorm';import { InventoryTransactionType } from '../enums/inventory-transaction-type.enum';
+
 import { BaseEntity } from '@/common/entities/base.entity';
 import { Product } from '../../product/entities/product.entity';
-
-export enum InventoryTransactionType {
-  PURCHASE = 'purchase',
-  SALE = 'sale',
-  ADJUSTMENT = 'adjustment',
-  TRANSFER = 'transfer',
-  RETURN = 'return',
-  DAMAGE = 'damage',
-  LOSS = 'loss',
-}
 
 @Entity('inventory')
 @Index(['tenantId', 'productId', 'warehouseId'], { unique: true })

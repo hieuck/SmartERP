@@ -1,5 +1,6 @@
 import { Controller, Post, Get, Body, Param, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { User } from '@/core/user/entities/user.entity';
 import { SerialBatchService } from './serial-batch.service';
 import { CreateSerialNumberDto } from './dto/create-serial-number.dto';
 import { CreateBatchDto } from './dto/create-batch.dto';
@@ -7,7 +8,6 @@ import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../common/guards/roles.guard';
 import { Roles } from '../../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
-import { User } from '../../../common/security/permission.service';
 
 @ApiTags('Serial/Batch Tracking')
 @ApiBearerAuth()

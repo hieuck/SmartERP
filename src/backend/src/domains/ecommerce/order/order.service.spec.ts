@@ -2,8 +2,10 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { OrderItem } from './entities/order-item.entity';
-import { Order, OrderStatus, PaymentStatus } from './entities/order.entity';
+import { PermissionService } from '@/common/security/permission.service';
+import { Order } from '../entities/order.entity';
+import { OrderItem } from '../entities/order-item.entity';
+import { OrderStatus, PaymentStatus } from '../../enums/ecommerce.enum';
 import { OrderService } from './order.service';
 
 describe('OrderService', () => {

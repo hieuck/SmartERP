@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { WorkCenter } from './entities/work-center.entity';
+import { WorkCenter } from '../enums/manufacturing.enum';
 import { WorkCenterService } from './work-center.service';
 import { WorkCenterController } from './work-center.controller';
 

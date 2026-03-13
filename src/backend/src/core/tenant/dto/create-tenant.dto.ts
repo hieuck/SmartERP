@@ -1,6 +1,8 @@
-import { IsString, IsOptional, IsEnum, IsNumber, IsArray, Min, Max } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { TenantStatus, SubscriptionPlan, BillingCycle } from '../entities/tenant.entity';
+import { IsArray, IsEnum, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
+import { BillingCycle } from '../enums/billing-cycle.enum';
+import { SubscriptionPlan } from '../enums/subscription-plan.enum';
+import { TenantStatus } from '../enums/tenant-status.enum';
 
 export class CreateTenantDto {
   @ApiProperty({ example: 'Acme Corporation' })

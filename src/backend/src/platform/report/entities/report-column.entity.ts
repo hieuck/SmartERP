@@ -1,32 +1,15 @@
 import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  JoinColumn,
   BeforeInsert,
   BeforeUpdate,
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
 } from 'typeorm';
+import { AggregationType } from '../enums/aggregation-type.enum';
+import { ColumnType } from '../enums/column-type.enum';
 import { Report } from './report.entity';
-
-export enum ColumnType {
-  TEXT = 'text',
-  NUMBER = 'number',
-  DATE = 'date',
-  DATETIME = 'datetime',
-  BOOLEAN = 'boolean',
-  CURRENCY = 'currency',
-  PERCENTAGE = 'percentage',
-}
-
-export enum AggregationType {
-  NONE = 'none',
-  SUM = 'sum',
-  AVG = 'avg',
-  COUNT = 'count',
-  MIN = 'min',
-  MAX = 'max',
-}
 
 /**
  * ReportColumn entity for defining report columns
@@ -44,45 +27,36 @@ export class ReportColumn {
   @Column()
   reportId: string;
 
-  // Field name from source entity (e.g., 'customer.name', 'totalAmount')
   @Column()
   fieldName: string;
 
-  // Display label for the column
   @Column()
   label: string;
 
   @Column({ type: 'enum', enum: ColumnType, default: ColumnType.TEXT })
   type: ColumnType;
 
-  // Aggregation function (for grouped reports)
   @Column({ type: 'enum', enum: AggregationType, default: AggregationType.NONE })
   aggregation: AggregationType;
 
-  // Column width (for UI rendering)
   @Column({ nullable: true })
   width: number;
 
-  // Display order
   @Column({ default: 0 })
   sequence: number;
 
-  // Is this column visible?
   @Column({ default: true })
   isVisible: boolean;
 
-  // Is this column sortable?
   @Column({ default: true })
   isSortable: boolean;
 
-  // Format string (e.g., '0,0.00' for numbers, 'YYYY-MM-DD' for dates)
   @Column({ nullable: true })
   format: string;
 
   @Column()
   tenantId: string;
 
-  // Validation
   @BeforeInsert()
   @BeforeUpdate()
   validate() {

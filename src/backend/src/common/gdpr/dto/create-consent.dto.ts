@@ -1,5 +1,5 @@
-import { IsEnum, IsString, IsBoolean, IsOptional } from 'class-validator';
-import { ConsentType } from '../entities/consent.entity';
+import { IsBoolean, IsEnum, IsOptional, IsString } from 'class-validator';
+import { ConsentType } from '../enums';
 
 export class CreateConsentDto {
   @IsEnum(ConsentType)

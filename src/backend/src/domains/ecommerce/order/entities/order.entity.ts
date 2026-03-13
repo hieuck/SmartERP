@@ -10,35 +10,12 @@ import {
   BeforeInsert,
   BeforeUpdate,
 } from 'typeorm';
-import { User as UserEntity } from '../../../../core/user/entities/user.entity';
+import { User as UserEntity } from '../../../../core/user/entities/user.entity';import { OrderStatus } from '../enums/order-status.enum';
+import { PaymentStatus } from '../enums/payment-status.enum';
+import { ShippingStatus } from '../enums/shipping-status.enum';
+
 import { OrderItem } from './order-item.entity';
 import { User } from '@/common/security/permission.service';
-
-export enum OrderStatus {
-  PENDING = 'pending',
-  CONFIRMED = 'confirmed',
-  PROCESSING = 'processing',
-  SHIPPED = 'shipped',
-  DELIVERED = 'delivered',
-  CANCELLED = 'cancelled',
-  REFUNDED = 'refunded',
-}
-
-export enum PaymentStatus {
-  PENDING = 'pending',
-  PAID = 'paid',
-  FAILED = 'failed',
-  REFUNDED = 'refunded',
-}
-
-export enum ShippingStatus {
-  PENDING = 'pending',
-  PREPARING = 'preparing',
-  SHIPPED = 'shipped',
-  IN_TRANSIT = 'in_transit',
-  DELIVERED = 'delivered',
-  RETURNED = 'returned',
-}
 
 /**
  * Order entity for eCommerce orders

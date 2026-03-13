@@ -1,20 +1,15 @@
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
-  UpdateDateColumn,
+  Entity,
   Index,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
-import { IssuePriority, IssueType } from '../../issue-tracking/entities/issue.entity';
-import { TicketChannel } from './ticket.entity';
-
-export enum AssignmentStrategy {
-  ROUND_ROBIN = 'round_robin',
-  LEAST_ACTIVE = 'least_active',
-  SKILL_BASED = 'skill_based',
-  RANDOM = 'random',
-}
+import { IssuePriority } from '@platform/issue-tracking/enums/issue-priority.enum';
+import { IssueType } from '@platform/issue-tracking/enums/issue-type.enum';
+import { AssignmentStrategy } from '@platform/support/enums/assignment-strategy.enum';
+import { TicketChannel } from '@platform/support/enums/ticket-channel.enum';
 
 @Entity('assignment_rules')
 @Index(['tenantId', 'isActive'])

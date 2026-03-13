@@ -11,7 +11,7 @@ export class CreateTwoFactorAuth1741700000008 implements MigrationInterface {
             type: 'uuid',
             isPrimary: true,
             generationStrategy: 'uuid',
-            default: 'gen_random_uuid()',
+            default: 'uuid_generate_v4()',
           },
           {
             name: 'user_id',
@@ -93,6 +93,14 @@ export class CreateTwoFactorAuth1741700000008 implements MigrationInterface {
       new TableIndex({
         name: 'idx_two_factor_auth_enabled',
         columnNames: ['enabled'],
+      }),
+    );
+
+    await queryRunner.createIndex(
+      'two_factor_auth',
+      new TableIndex({
+        name: 'idx_two_factor_auth_tenant_id',
+        columnNames: ['tenant_id'],
       }),
     );
   }

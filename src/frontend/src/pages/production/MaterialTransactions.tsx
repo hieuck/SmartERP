@@ -27,7 +27,9 @@ import {
   ArrowUpOutlined,
   ArrowDownOutlined,
 } from '@ant-design/icons';
-import productionService, { MaterialTransaction } from '../../services/production/productionService';
+import productionService, {
+  MaterialTransaction,
+} from '../../services/production/productionService';
 import dayjs from 'dayjs';
 import { useResponsive } from '../../hooks/useResponsive';
 

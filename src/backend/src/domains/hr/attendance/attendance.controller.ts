@@ -7,7 +7,6 @@ import { CheckOutDto } from './dto/check-out.dto';
 import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@/common/guards/roles.guard';
 import { Roles } from '@/common/decorators/roles.decorator';
-import { User as UserEntity } from '@/core/user/entities/user.entity';
 import { User } from '@/common/security/permission.service';
 
 @ApiTags('Attendance')

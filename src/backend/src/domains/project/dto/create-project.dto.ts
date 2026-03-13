@@ -1,6 +1,16 @@
-import { IsString, IsOptional, IsEnum, IsDateString, IsNumber, Min, Max, Length } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ProjectStatus, ProjectPriority } from '../entities/project.entity';
+import {
+  IsDateString,
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Length,
+  Max,
+  Min,
+} from 'class-validator';
+import { ProjectPriority } from '../enums/project-priority.enum';
+import { ProjectStatus } from '../enums/project-status.enum';
 
 export class CreateProjectDto {
   @ApiProperty({ example: 'ERP Implementation', maxLength: 200 })

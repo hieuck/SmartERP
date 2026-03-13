@@ -1,28 +1,16 @@
 import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  JoinColumn,
-  CreateDateColumn,
-  UpdateDateColumn,
   BeforeInsert,
+  Column,
+  CreateDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { User } from '../../../core/user/entities/user.entity';
-
-export enum ExportStatus {
-  PENDING = 'pending',
-  PROCESSING = 'processing',
-  COMPLETED = 'completed',
-  FAILED = 'failed',
-  EXPIRED = 'expired',
-}
-
-export enum ExportFormat {
-  JSON = 'json',
-  CSV = 'csv',
-  PDF = 'pdf',
-}
+import { ExportFormat } from '../enums/export-format.enum';
+import { ExportStatus } from '../enums/export-status.enum';
 
 @Entity('data_export_requests')
 export class DataExportRequest {

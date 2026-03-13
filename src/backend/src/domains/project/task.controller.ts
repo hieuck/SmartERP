@@ -1,27 +1,27 @@
+import { Roles } from '@/common/decorators/roles.decorator';
+import { RolesGuard } from '@/common/guards/roles.guard';
 import {
+  Body,
   Controller,
+  Delete,
   Get,
+  Param,
   Post,
   Put,
-  Delete,
-  Body,
-  Param,
   Query,
-  UseGuards,
   Request,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { TaskService } from './task.service';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../../core/auth/guards/jwt-auth.guard';
+import { TaskDependency } from './entities/task-dependency.entity';
+import { Task } from './entities/task.entity';
+import { TaskStatus } from './enums/task-status.enum';
+import { CreateTaskDependencyDto } from './dto/create-task-dependency.dto';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
-import { CreateTaskDependencyDto } from './dto/create-task-dependency.dto';
-import { Task, TaskStatus } from './entities/task.entity';
-import { TaskDependency } from './entities/task-dependency.entity';
-import { JwtAuthGuard } from '../../core/auth/guards/jwt-auth.guard';
-import { RolesGuard } from '@/common/guards/roles.guard';
-import { Roles } from '@/common/decorators/roles.decorator';
+import { TaskService } from './task.service';
 
-import { User } from '@/common/security/permission.service';
 @ApiTags('tasks')
 @ApiBearerAuth()
 @Controller('tasks')
@@ -81,11 +81,7 @@ export class TaskController {
   @ApiOperation({ summary: 'Update task' })
   @ApiResponse({ status: 200, description: 'Task updated successfully', type: Task })
   @ApiResponse({ status: 404, description: 'Task not found' })
-  async update(
-    @Param('id') id: string,
-    @Body() dto: UpdateTaskDto,
-    @Request() req,
-  ): Promise<Task> {
+  async update(@Param('id') id: string, @Body() dto: UpdateTaskDto, @Request() req): Promise<Task> {
     return this.taskService.update(id, dto, req.user.tenantId, req.user);
   }
 
@@ -135,7 +131,11 @@ export class TaskController {
   @Get(':id/dependencies')
   @Roles('admin', 'manager', 'project_manager', 'user')
   @ApiOperation({ summary: 'Get task dependencies' })
-  @ApiResponse({ status: 200, description: 'Dependencies retrieved successfully', type: [TaskDependency] })
+  @ApiResponse({
+    status: 200,
+    description: 'Dependencies retrieved successfully',
+    type: [TaskDependency],
+  })
   async getDependencies(@Param('id') id: string, @Request() req): Promise<TaskDependency[]> {
     return this.taskService.getDependencies(id, req.user.tenantId);
   }

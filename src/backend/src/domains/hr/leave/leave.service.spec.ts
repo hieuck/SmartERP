@@ -3,10 +3,12 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { LeaveService } from './leave.service';
-import { Leave, LeaveType, LeaveStatus } from './entities/leave.entity';
+import { Leave } from './entities/leave.entity';
 import { LeaveBalance } from './entities/leave-balance.entity';
+import { LeaveType } from './enums/leave-type.enum';
+import { LeaveStatus } from './enums/leave-status.enum';
 import { Employee } from '../employee/entities/employee.entity';
-import { User } from '../user/entities/user.entity';
+import { User } from '@/common/security/permission.service';
 import { createMockUser } from '@/common/test/test-helpers';
 
 describe('LeaveService', () => {

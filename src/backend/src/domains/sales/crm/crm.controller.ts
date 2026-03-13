@@ -1,13 +1,12 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards } from '@nestjs/common';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
-import { CrmService } from './crm.service';
+import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
-import { TenantId } from '@/common/decorators/tenant-id.decorator';
 import { Lead } from './entities/lead.entity';
 import { Opportunity } from './entities/opportunity.entity';
+import { CrmService } from './crm.service';
 import { CreateLeadDto } from './dto/create-lead.dto';
-import { UpdateLeadDto } from './dto/update-lead.dto';
 import { CreateOpportunityDto } from './dto/create-opportunity.dto';
+import { UpdateLeadDto } from './dto/update-lead.dto';
 import { UpdateOpportunityDto } from './dto/update-opportunity.dto';
 
 import { User } from '@/common/security/permission.service';
@@ -28,10 +27,7 @@ export class CrmController {
   }
 
   @Post('leads')
-  async createLead(
-    @CurrentUser() user: User,
-    @Body() createLeadDto: CreateLeadDto,
-  ): Promise<Lead> {
+  async createLead(@CurrentUser() user: User, @Body() createLeadDto: CreateLeadDto): Promise<Lead> {
     return this.crmService.createLead(user, createLeadDto);
   }
 

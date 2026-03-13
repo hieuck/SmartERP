@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { BOM } from './entities/bom.entity';
-import { BOMLine } from './entities/bom-line.entity';
+import { BOM } from '../enums/manufacturing.enum';
+import { BOMLine } from '../enums/manufacturing.enum';
 
 @Injectable()
 export class BOMService {

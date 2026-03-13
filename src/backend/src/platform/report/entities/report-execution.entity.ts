@@ -7,15 +7,9 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { Report } from './report.entity';
-import { User as UserEntity } from '../../../core/user/entities/user.entity';
+import { ExecutionStatus } from '../enums/execution-status.enum';
+import { User as UserEntity } from '@/core/user/entities/user.entity';
 import { User } from '@/common/security/permission.service';
-
-export enum ExecutionStatus {
-  PENDING = 'pending',
-  RUNNING = 'running',
-  COMPLETED = 'completed',
-  FAILED = 'failed',
-}
 
 /**
  * ReportExecution entity for tracking report execution history

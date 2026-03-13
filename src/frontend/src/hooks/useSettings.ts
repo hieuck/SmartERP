@@ -7,7 +7,9 @@ import { useQueryClient } from '@tanstack/react-query';
  * @param category - Settings category
  * @returns Query result with settings data
  */
-export const useSettingsByCategory = (category: SettingCategory): UseQueryResult<Setting[], Error> => {
+export const useSettingsByCategory = (
+  category: SettingCategory,
+): UseQueryResult<Setting[], Error> => {
   return useQuery({
     queryKey: ['settings', category],
     queryFn: async () => {
@@ -42,7 +44,11 @@ export const useCreateSetting = (): UseMutationResult<Setting, Error, any> => {
  * Hook for updating a setting
  * @returns Mutation for updating setting
  */
-export const useUpdateSetting = (): UseMutationResult<Setting, Error, { key: string; data: any }> => {
+export const useUpdateSetting = (): UseMutationResult<
+  Setting,
+  Error,
+  { key: string; data: any }
+> => {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -62,7 +68,11 @@ export const useUpdateSetting = (): UseMutationResult<Setting, Error, { key: str
  * Hook for deleting a setting
  * @returns Mutation for deleting setting
  */
-export const useDeleteSetting = (): UseMutationResult<void, Error, { key: string; category: SettingCategory }> => {
+export const useDeleteSetting = (): UseMutationResult<
+  void,
+  Error,
+  { key: string; category: SettingCategory }
+> => {
   const queryClient = useQueryClient();
 
   return useMutation({

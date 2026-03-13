@@ -15,11 +15,17 @@ export default function CTA() {
           Dùng thử miễn phí 14 ngày, không cần thẻ tín dụng
         </Paragraph>
         <Link to="/register">
-          <Button 
-            type="primary" 
-            size="large" 
-            icon={<ArrowRightOutlined />} 
-            style={{ height: 50, fontSize: 18, padding: '0 40px', background: '#fff', color: '#1890ff' }}
+          <Button
+            type="primary"
+            size="large"
+            icon={<ArrowRightOutlined />}
+            style={{
+              height: 50,
+              fontSize: 18,
+              padding: '0 40px',
+              background: '#fff',
+              color: '#1890ff',
+            }}
           >
             Đăng ký ngay
           </Button>

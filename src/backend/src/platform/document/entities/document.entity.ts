@@ -1,3 +1,5 @@
+import { DocumentType } from '../enums/document-type.enum';
+import { AccessLevel } from '../enums/access-level.enum';
 import {
   Entity,
   Column,
@@ -6,17 +8,6 @@ import {
   UpdateDateColumn,
   DeleteDateColumn,
 } from 'typeorm';
-
-export enum DocumentType {
-  FILE = 'file',
-  FOLDER = 'folder',
-}
-
-export enum AccessLevel {
-  PRIVATE = 'private',
-  TEAM = 'team',
-  PUBLIC = 'public',
-}
 
 @Entity('documents')
 export class Document {

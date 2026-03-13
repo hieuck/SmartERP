@@ -1,6 +1,6 @@
 import { IsNumber, IsString, IsOptional, IsEnum } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { InventoryTransactionType } from '../entities/inventory.entity';
+import { InventoryTransactionType } from '../../enums/inventory.enum';
 
 export class AdjustInventoryDto {
   @ApiProperty({ example: 10 })

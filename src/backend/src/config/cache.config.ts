@@ -1,5 +1,6 @@
 import { CacheModuleOptions } from '@nestjs/cache-manager';
 import { ConfigService } from '@nestjs/config';
+import { Logger } from '@nestjs/common';
 import { redisStore } from 'cache-manager-redis-yet';
 import type { RedisClientOptions } from 'redis';
 
@@ -23,6 +24,7 @@ import type { RedisClientOptions } from 'redis';
 export const getCacheConfig = async (
   configService: ConfigService,
 ): Promise<CacheModuleOptions<RedisClientOptions>> => {
+  const logger = new Logger('CacheConfig');
   const redisHost = configService.get<string>('REDIS_HOST', 'localhost');
   const redisPort = configService.get<number>('REDIS_PORT', 6379);
   const redisPassword = configService.get<string>('REDIS_PASSWORD');
@@ -30,19 +32,23 @@ export const getCacheConfig = async (
   const cacheTtl = configService.get<number>('CACHE_TTL', 300); // 5 minutes default
   const cacheMax = configService.get<number>('CACHE_MAX', 100);
 
+  const MAX_REDIS_RETRIES = 3;
+
   return {
     store: await redisStore({
       socket: {
         host: redisHost,
         port: redisPort,
         reconnectStrategy: (retries: number) => {
-          if (retries > 3) {
-            // Stop retrying after 3 attempts
-            console.error('Redis connection failed after 3 attempts');
+          if (retries > MAX_REDIS_RETRIES) {
+            // Stop retrying after max attempts
+            logger.error(`Redis connection failed after ${MAX_REDIS_RETRIES} attempts`);
             return false;
           }
           // Exponential backoff: 100ms, 200ms, 400ms
-          return Math.min(retries * 100, 3000);
+          const BACKOFF_BASE_MS = 100;
+          const MAX_BACKOFF_MS = 3000;
+          return Math.min(retries * BACKOFF_BASE_MS, MAX_BACKOFF_MS);
         },
       },
       password: redisPassword,

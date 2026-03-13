@@ -1,0 +1,234 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { ManagementController } from './management.controller';
+import { HrService } from './hr.service';
+import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
+import { createMockUser } from '@/common/test/test-helpers';
+
+describe('HrController', () => {
+  let controller: ManagementController;
+  let service: HrService;
+
+  const mockHrService = {
+    findAllEmployees: jest.fn(),
+    findEmployeeById: jest.fn(),
+    createEmployee: jest.fn(),
+    updateEmployee: jest.fn(),
+    deleteEmployee: jest.fn(),
+    findAllAttendance: jest.fn(),
+    createAttendance: jest.fn(),
+    updateAttendance: jest.fn(),
+    findAllLeaves: jest.fn(),
+    createLeave: jest.fn(),
+    approveLeave: jest.fn(),
+    rejectLeave: jest.fn(),
+  };
+
+  const mockUser = createMockUser();
+
+  const mockJwtAuthGuard = {
+    canActivate: jest.fn(() => true),
+  };
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      controllers: [ManagementController],
+      providers: [
+        {
+          provide: HrService,
+          useValue: mockHrService,
+        },
+      ],
+    })
+      .overrideGuard(JwtAuthGuard)
+      .useValue(mockJwtAuthGuard)
+      .compile();
+
+    controller = module.get<ManagementController>(ManagementController);
+    service = module.get<HrService>(HrService);
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should be defined', () => {
+    expect(controller).toBeDefined();
+  });
+
+  describe('Employee Endpoints', () => {
+    it('should find all employees', async () => {
+      const tenantId = 'tenant-1';
+      const mockEmployees = [{ id: '1', name: 'John' }];
+      mockHrService.findAllEmployees.mockResolvedValue(mockEmployees);
+
+      const result = await controller.findAllEmployees(mockUser);
+
+      expect(result).toEqual(mockEmployees);
+      expect(service.findAllEmployees).toHaveBeenCalledWith(mockUser);
+    });
+
+    it('should find employee by id', async () => {
+      const tenantId = 'tenant-1';
+      const employeeId = 'emp-1';
+      const mockEmployee = { id: employeeId, name: 'John' };
+      mockHrService.findEmployeeById.mockResolvedValue(mockEmployee);
+
+      const result = await controller.findEmployeeById(mockUser, employeeId);
+
+      expect(result).toEqual(mockEmployee);
+      expect(service.findEmployeeById).toHaveBeenCalledWith(mockUser, employeeId);
+    });
+
+    it('should create employee', async () => {
+      const tenantId = 'tenant-1';
+      const createDto = { name: 'John', position: 'Developer' };
+      const mockEmployee = { id: 'emp-1', ...createDto };
+      mockHrService.createEmployee.mockResolvedValue(mockEmployee);
+
+      const result = await controller.createEmployee(mockUser, createDto as any);
+
+      expect(result).toEqual(mockEmployee);
+      expect(service.createEmployee).toHaveBeenCalledWith(mockUser, createDto);
+    });
+
+    it('should update employee', async () => {
+      const tenantId = 'tenant-1';
+      const employeeId = 'emp-1';
+      const updateDto = { position: 'Senior Developer' };
+      const mockEmployee = { id: employeeId, name: 'John', ...updateDto };
+      mockHrService.updateEmployee.mockResolvedValue(mockEmployee);
+
+      const result = await controller.updateEmployee(mockUser, employeeId, updateDto as any);
+
+      expect(result).toEqual(mockEmployee);
+      expect(service.updateEmployee).toHaveBeenCalledWith(mockUser, employeeId, updateDto);
+    });
+
+    it('should delete employee', async () => {
+      const tenantId = 'tenant-1';
+      const employeeId = 'emp-1';
+      mockHrService.deleteEmployee.mockResolvedValue(undefined);
+
+      await controller.deleteEmployee(mockUser, employeeId);
+
+      expect(service.deleteEmployee).toHaveBeenCalledWith(mockUser, employeeId);
+    });
+  });
+
+  describe('Attendance Endpoints', () => {
+    it('should find all attendance with date range', async () => {
+      const tenantId = 'tenant-1';
+      const mockAttendance = [{ id: '1', date: '2024-01-01' }];
+      mockHrService.findAllAttendance.mockResolvedValue(mockAttendance);
+
+      const result = await controller.findAllAttendance(mockUser, '2024-01-01', '2024-01-31');
+
+      expect(result).toEqual(mockAttendance);
+      expect(service.findAllAttendance).toHaveBeenCalledWith(mockUser,
+        undefined,
+        new Date('2024-01-01'),
+        new Date('2024-01-31'),
+      );
+    });
+
+    it('should find attendance by employee', async () => {
+      const tenantId = 'tenant-1';
+      const employeeId = 'emp-1';
+      const mockAttendance = [{ id: '1', employeeId }];
+      mockHrService.findAllAttendance.mockResolvedValue(mockAttendance);
+
+      const result = await controller.findAttendanceByEmployee(mockUser, employeeId);
+
+      expect(result).toEqual(mockAttendance);
+      expect(service.findAllAttendance).toHaveBeenCalledWith(mockUser, employeeId);
+    });
+
+    it('should create attendance', async () => {
+      const tenantId = 'tenant-1';
+      const createDto = { employeeId: 'emp-1', date: '2024-01-01' };
+      const mockAttendance = { id: 'att-1', ...createDto };
+      mockHrService.createAttendance.mockResolvedValue(mockAttendance);
+
+      const result = await controller.createAttendance(mockUser, createDto as any);
+
+      expect(result).toEqual(mockAttendance);
+      expect(service.createAttendance).toHaveBeenCalledWith(mockUser, createDto);
+    });
+
+    it('should update attendance', async () => {
+      const tenantId = 'tenant-1';
+      const attendanceId = 'att-1';
+      const updateDto = { status: 'present' };
+      const mockAttendance = { id: attendanceId, ...updateDto };
+      mockHrService.updateAttendance.mockResolvedValue(mockAttendance);
+
+      const result = await controller.updateAttendance(mockUser, attendanceId, updateDto as any);
+
+      expect(result).toEqual(mockAttendance);
+      expect(service.updateAttendance).toHaveBeenCalledWith(mockUser, attendanceId, updateDto);
+    });
+  });
+
+  describe('Leave Endpoints', () => {
+    it('should find all leaves', async () => {
+      const tenantId = 'tenant-1';
+      const mockLeaves = [{ id: '1', type: 'annual' }];
+      mockHrService.findAllLeaves.mockResolvedValue(mockLeaves);
+
+      const result = await controller.findAllLeaves(mockUser);
+
+      expect(result).toEqual(mockLeaves);
+      expect(service.findAllLeaves).toHaveBeenCalledWith(mockUser);
+    });
+
+    it('should find leaves by employee', async () => {
+      const tenantId = 'tenant-1';
+      const employeeId = 'emp-1';
+      const mockLeaves = [{ id: '1', employeeId }];
+      mockHrService.findAllLeaves.mockResolvedValue(mockLeaves);
+
+      const result = await controller.findLeavesByEmployee(mockUser, employeeId);
+
+      expect(result).toEqual(mockLeaves);
+      expect(service.findAllLeaves).toHaveBeenCalledWith(mockUser, employeeId);
+    });
+
+    it('should create leave', async () => {
+      const tenantId = 'tenant-1';
+      const createDto = { employeeId: 'emp-1', type: 'annual' };
+      const mockLeave = { id: 'leave-1', ...createDto };
+      mockHrService.createLeave.mockResolvedValue(mockLeave);
+
+      const result = await controller.createLeave(mockUser, createDto as any);
+
+      expect(result).toEqual(mockLeave);
+      expect(service.createLeave).toHaveBeenCalledWith(mockUser, createDto);
+    });
+
+    it('should approve leave', async () => {
+      const tenantId = 'tenant-1';
+      const leaveId = 'leave-1';
+      const approvedBy = 'manager-1';
+      const mockLeave = { id: leaveId, status: 'approved', approvedBy };
+      mockHrService.approveLeave.mockResolvedValue(mockLeave);
+
+      const result = await controller.approveLeave(mockUser, leaveId, approvedBy);
+
+      expect(result).toEqual(mockLeave);
+      expect(service.approveLeave).toHaveBeenCalledWith(mockUser, leaveId, approvedBy);
+    });
+
+    it('should reject leave', async () => {
+      const tenantId = 'tenant-1';
+      const leaveId = 'leave-1';
+      const mockLeave = { id: leaveId, status: 'rejected' };
+      mockHrService.rejectLeave.mockResolvedValue(mockLeave);
+
+      const result = await controller.rejectLeave(mockUser, leaveId);
+
+      expect(result).toEqual(mockLeave);
+      expect(service.rejectLeave).toHaveBeenCalledWith(mockUser, leaveId);
+    });
+  });
+});
+

@@ -1,4 +1,5 @@
 import { Cache } from 'cache-manager';
+import { Logger } from '@nestjs/common';
 
 /**
  * Cache Invalidation Helper
@@ -11,6 +12,7 @@ import { Cache } from 'cache-manager';
  * - Invalidate related caches
  */
 export class CacheInvalidationHelper {
+  private static readonly logger = new Logger(CacheInvalidationHelper.name);
   /**
    * Invalidate cache by exact key
    */
@@ -56,6 +58,6 @@ export class CacheInvalidationHelper {
     // Note: This is a simplified implementation
     // In production, you might want to use Redis SCAN command
     // or maintain a separate index of cache keys per tenant
-    console.warn(`Tenant-wide cache invalidation requested for: ${tenantId}`);
+    this.logger.warn(`Tenant-wide cache invalidation requested for: ${tenantId}`);
   }
 }

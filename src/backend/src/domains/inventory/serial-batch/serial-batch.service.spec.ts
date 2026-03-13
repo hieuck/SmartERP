@@ -3,10 +3,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { SerialBatchService } from './serial-batch.service';
-import { SerialNumber, SerialNumberStatus } from './entities/serial-number.entity';
-import { Batch } from './entities/batch.entity';
-import { BatchStock } from './entities/batch-stock.entity';
-import { Product, TrackingType } from '../product/entities/product.entity';
+import { Product, TrackingType } from '@/domains/inventory/product/entities/product.entity';
 import { createMockUser } from '@/common/test/test-helpers';
 
 describe('SerialBatchService', () => {

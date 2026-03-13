@@ -4,10 +4,10 @@ import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger'
 import { ProductionService } from './production.service';
 import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
 import { TenantGuard } from '@/common/guards/tenant.guard';
-import { MaterialType } from './entities/material.entity';
-import { MoldStatus } from './entities/mold.entity';
-import { BomStatus } from './entities/bom.entity';
-import { WorkOrderStatus } from './entities/work-order.entity';
+import { MaterialType } from './enums/material-type.enum';
+import { MoldStatus } from './enums/mold-status.enum';
+import { BomStatus } from './enums/bom-status.enum';
+import { WorkOrderStatus } from './enums/work-order-status.enum';
 import { CreateMaterialDto } from './dto/create-material.dto';
 import { UpdateMaterialDto } from './dto/update-material.dto';
 import { CreateMoldDto } from './dto/create-mold.dto';

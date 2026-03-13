@@ -5,6 +5,10 @@ import { ReportsService } from './reports.service';
 import { GetTrialBalanceDto } from './dto/get-trial-balance.dto';
 import { GetGeneralLedgerDto } from './dto/get-general-ledger.dto';
 import { GetCashFlowDto } from './dto/get-cash-flow.dto';
+import { GetSalesSummaryDto } from './dto/get-sales-summary.dto';
+import { GetInventorySummaryDto } from './dto/get-inventory-summary.dto';
+import { GetInventoryValuationDto } from './dto/get-inventory-valuation.dto';
+import { GetInventoryMovementDto } from './dto/get-inventory-movement.dto';
 import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
 import { TenantId } from '@/common/decorators/tenant-id.decorator';
 
@@ -50,6 +54,62 @@ export class ReportsController {
       user,
       new Date(dto.startDate),
       new Date(dto.endDate),
+    );
+  }
+
+  @Get('sales-summary')
+  @ApiOperation({ summary: 'Get sales summary report' })
+  async getSalesSummary(
+    @CurrentUser() user: User,
+    @Query() dto: GetSalesSummaryDto,
+  ) {
+    return this.reportsService.getSalesSummary(
+      user,
+      new Date(dto.startDate),
+      new Date(dto.endDate),
+      dto.customerId,
+    );
+  }
+
+  @Get('inventory-summary')
+  @ApiOperation({ summary: 'Get inventory summary report' })
+  async getInventorySummary(
+    @CurrentUser() user: User,
+    @Query() dto: GetInventorySummaryDto,
+  ) {
+    return this.reportsService.getInventorySummary(
+      user,
+      dto.productId,
+      dto.categoryId,
+      dto.lowStockOnly,
+    );
+  }
+
+  @Get('inventory-valuation')
+  @ApiOperation({ summary: 'Get inventory valuation report' })
+  async getInventoryValuation(
+    @CurrentUser() user: User,
+    @Query() dto: GetInventoryValuationDto,
+  ) {
+    return this.reportsService.getInventoryValuation(
+      user,
+      dto.productId,
+      dto.warehouseId,
+    );
+  }
+
+  @Get('inventory-movement')
+  @ApiOperation({ summary: 'Get inventory movement report' })
+  async getInventoryMovement(
+    @CurrentUser() user: User,
+    @Query() dto: GetInventoryMovementDto,
+  ) {
+    return this.reportsService.getInventoryMovement(
+      user,
+      new Date(dto.startDate),
+      new Date(dto.endDate),
+      dto.productId,
+      dto.warehouseId,
     );
   }
 }

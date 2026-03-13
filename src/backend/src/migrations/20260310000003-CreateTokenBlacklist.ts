@@ -11,7 +11,7 @@ export class CreateTokenBlacklist1741700000003 implements MigrationInterface {
             type: 'uuid',
             isPrimary: true,
             generationStrategy: 'uuid',
-            default: 'gen_random_uuid()',
+            default: 'uuid_generate_v4()',
           },
           {
             name: 'token_hash',

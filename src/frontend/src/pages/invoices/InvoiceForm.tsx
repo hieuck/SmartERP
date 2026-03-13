@@ -18,7 +18,11 @@ import {
 } from 'antd';
 import { PlusOutlined, DeleteOutlined, SaveOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import invoiceService, { InvoiceStatus, CreateInvoiceDto, UpdateInvoiceDto } from '../../services/accounting/invoiceService';
+import invoiceService, {
+  InvoiceStatus,
+  CreateInvoiceDto,
+  UpdateInvoiceDto,
+} from '../../services/accounting/invoiceService';
 import customerService from '../../services/crm/customerService';
 import orderService from '../../services/order/orderService';
 
@@ -80,7 +84,7 @@ const InvoiceForm: React.FC = () => {
     try {
       setLoading(true);
       const invoice = await invoiceService.getById(Number(id));
-      
+
       form.setFieldsValue({
         invoiceNumber: invoice.invoiceNumber,
         customerId: invoice.customerId,
@@ -93,7 +97,7 @@ const InvoiceForm: React.FC = () => {
 
       setTax(invoice.taxAmount);
       setDiscount(invoice.discountAmount);
-      
+
       // Load items if available
       if (invoice.orderId) {
         await loadOrders(invoice.customerId);
@@ -146,11 +150,11 @@ const InvoiceForm: React.FC = () => {
   };
 
   const removeItem = (key: string) => {
-    setItems(items.filter(item => item.key !== key));
+    setItems(items.filter((item) => item.key !== key));
   };
 
   const updateItem = (key: string, field: keyof InvoiceItem, value: any) => {
-    const newItems = items.map(item => {
+    const newItems = items.map((item) => {
       if (item.key === key) {
         const updated = { ...item, [field]: value };
         if (field === 'quantity' || field === 'unitPrice') {
@@ -171,7 +175,7 @@ const InvoiceForm: React.FC = () => {
 
     try {
       setLoading(true);
-      
+
       const invoiceData = {
         customerId: values.customerId,
         orderId: values.orderId,
@@ -192,7 +196,7 @@ const InvoiceForm: React.FC = () => {
         await invoiceService.create(invoiceData as CreateInvoiceDto);
         message.success('Tạo hóa đơn thành công');
       }
-      
+
       navigate('/dashboard/invoices');
     } catch (error: any) {
       message.error(error.response?.data?.message || 'Có lỗi xảy ra');
@@ -249,9 +253,7 @@ const InvoiceForm: React.FC = () => {
       dataIndex: 'amount',
       key: 'amount',
       width: 150,
-      render: (value: number) => (
-        <Text strong>{value.toLocaleString('vi-VN')} ₫</Text>
-      ),
+      render: (value: number) => <Text strong>{value.toLocaleString('vi-VN')} ₫</Text>,
     },
     {
       title: '',
@@ -305,7 +307,7 @@ const InvoiceForm: React.FC = () => {
                     (option?.children as string).toLowerCase().includes(input.toLowerCase())
                   }
                 >
-                  {customers.map(customer => (
+                  {customers.map((customer) => (
                     <Option key={customer.id} value={customer.id}>
                       {customer.name}
                     </Option>
@@ -316,12 +318,8 @@ const InvoiceForm: React.FC = () => {
 
             <Col xs={24} md={12}>
               <Form.Item name="orderId" label="Đơn hàng (tùy chọn)">
-                <Select
-                  placeholder="Chọn đơn hàng"
-                  allowClear
-                  onChange={handleOrderChange}
-                >
-                  {orders.map(order => (
+                <Select placeholder="Chọn đơn hàng" allowClear onChange={handleOrderChange}>
+                  {orders.map((order) => (
                     <Option key={order.id} value={order.id}>
                       {order.orderNumber} - {order.totalAmount.toLocaleString('vi-VN')} ₫
                     </Option>
@@ -376,13 +374,7 @@ const InvoiceForm: React.FC = () => {
             Thêm mục hàng
           </Button>
 
-          <Table
-            columns={columns}
-            dataSource={items}
-            pagination={false}
-            bordered
-            size="small"
-          />
+          <Table columns={columns} dataSource={items} pagination={false} bordered size="small" />
 
           <Row gutter={16} style={{ marginTop: 24 }}>
             <Col xs={24} md={12}>
@@ -427,7 +419,9 @@ const InvoiceForm: React.FC = () => {
 
                   <Row justify="space-between">
                     <Title level={5}>Tổng cộng:</Title>
-                    <Title level={5} type="danger">{total.toLocaleString('vi-VN')} ₫</Title>
+                    <Title level={5} type="danger">
+                      {total.toLocaleString('vi-VN')} ₫
+                    </Title>
                   </Row>
                 </Space>
               </Card>
@@ -439,9 +433,7 @@ const InvoiceForm: React.FC = () => {
               <Button type="primary" htmlType="submit" icon={<SaveOutlined />} loading={loading}>
                 {id ? 'Cập nhật' : 'Tạo hóa đơn'}
               </Button>
-              <Button onClick={() => navigate('/dashboard/invoices')}>
-                Hủy
-              </Button>
+              <Button onClick={() => navigate('/dashboard/invoices')}>Hủy</Button>
             </Space>
           </Form.Item>
         </Form>

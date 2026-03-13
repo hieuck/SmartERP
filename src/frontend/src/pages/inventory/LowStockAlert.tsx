@@ -130,13 +130,11 @@ const LowStockAlert: React.FC = () => {
     },
   ];
 
-  const criticalCount = data?.data?.filter((item: LowStock) => 
-    getStockLevel(item).level === 'critical'
-  ).length || 0;
+  const criticalCount =
+    data?.data?.filter((item: LowStock) => getStockLevel(item).level === 'critical').length || 0;
 
-  const warningCount = data?.data?.filter((item: LowStock) => 
-    getStockLevel(item).level === 'warning'
-  ).length || 0;
+  const warningCount =
+    data?.data?.filter((item: LowStock) => getStockLevel(item).level === 'warning').length || 0;
 
   return (
     <div style={{ padding: '24px' }}>
@@ -146,9 +144,7 @@ const LowStockAlert: React.FC = () => {
             <Title level={3}>
               <WarningOutlined style={{ color: '#ff4d4f' }} /> Cảnh báo tồn kho thấp
             </Title>
-            <Button onClick={() => navigate('/dashboard/inventory/stock')}>
-              Quay lại tồn kho
-            </Button>
+            <Button onClick={() => navigate('/dashboard/inventory/stock')}>Quay lại tồn kho</Button>
           </div>
 
           {(criticalCount > 0 || warningCount > 0) && (

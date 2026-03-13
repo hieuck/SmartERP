@@ -8,8 +8,7 @@ import {
   JoinColumn,
   Index,
 } from 'typeorm';
-import { User as UserEntity } from '../../../../core/user/entities/user.entity';
-import { User } from '@/common/security/permission.service';
+import { User } from '@/core/user/entities/user.entity';
 
 @Entity('salary_structures')
 @Index(['tenantId', 'employeeId'])
@@ -24,9 +23,9 @@ export class SalaryStructure {
   @Column({ name: 'employee_id' })
   employeeId: string;
 
-  @ManyToOne(() => UserEntity)
+  @ManyToOne(() => User)
   @JoinColumn({ name: 'employee_id' })
-  employee: UserEntity;
+  employee: User;
 
   @Column({ type: 'decimal', precision: 15, scale: 2, name: 'base_salary' })
   baseSalary: number;

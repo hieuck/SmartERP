@@ -11,24 +11,11 @@ import {
   BeforeUpdate,
   Index,
 } from 'typeorm';
-import { User as UserEntity } from '../../../core/user/entities/user.entity';
+import { User as UserEntity } from '../../../core/user/entities/user.entity';import { ProjectStatus } from '../enums/project-status.enum';
+import { ProjectPriority } from '../enums/project-priority.enum';
+
 import { Task } from './task.entity';
 import { User } from '@/common/security/permission.service';
-
-export enum ProjectStatus {
-  DRAFT = 'draft',
-  ACTIVE = 'active',
-  ON_HOLD = 'on_hold',
-  COMPLETED = 'completed',
-  CANCELLED = 'cancelled',
-}
-
-export enum ProjectPriority {
-  LOW = 'low',
-  MEDIUM = 'medium',
-  HIGH = 'high',
-  URGENT = 'urgent',
-}
 
 @Entity('projects')
 @Index(['tenantId', 'status'])

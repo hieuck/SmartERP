@@ -8,7 +8,7 @@ import {
   JoinColumn,
   Index,
 } from 'typeorm';
-import { User } from '../../../core/user/entities/user.entity';
+import { User } from '@core/user/entities/user.entity';
 
 @Entity('canned_responses')
 @Index(['tenantId', 'isActive'])

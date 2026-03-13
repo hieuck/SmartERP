@@ -10,7 +10,8 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { WorkOrderStatus, WorkOrderPriority } from '../entities/work-order.entity';
+import { WorkOrderStatus } from '../enums/work-order-status.enum';
+import { WorkOrderPriority } from '../enums/work-order-priority.enum';
 
 export class CreateWorkOrderDto {
   @ApiProperty({ example: 'WO-001', description: 'Work order number' })

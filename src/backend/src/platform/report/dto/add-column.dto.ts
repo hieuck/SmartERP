@@ -1,13 +1,6 @@
-import {
-  IsString,
-  IsEnum,
-  IsOptional,
-  IsBoolean,
-  IsNumber,
-  Min,
-} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ColumnType, AggregationType } from '../entities/report-column.entity';
+import { IsBoolean, IsEnum, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { AggregationType, ColumnType } from '../enums';
 
 export class AddColumnDto {
   @ApiProperty({ example: 'totalAmount', description: 'Field name from entity' })

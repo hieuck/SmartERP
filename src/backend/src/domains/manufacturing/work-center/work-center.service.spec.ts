@@ -1,9 +1,9 @@
+import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { WorkCenter } from '../entities/work-center.entity';
 import { WorkCenterService } from './work-center.service';
-import { WorkCenter } from './entities/work-center.entity';
-import { NotFoundException } from '@nestjs/common';
 
 describe('WorkCenterService', () => {
   let service: WorkCenterService;
@@ -89,9 +89,7 @@ describe('WorkCenterService', () => {
     it('should throw NotFoundException if not found', async () => {
       mockRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findOne('nonexistent', 'tenant1')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.findOne('nonexistent', 'tenant1')).rejects.toThrow(NotFoundException);
     });
   });
 

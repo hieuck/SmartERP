@@ -6,12 +6,14 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { DataSource, Repository } from 'typeorm';
-import { Tenant, TenantStatus, SubscriptionPlan } from '../tenant/entities/tenant.entity';
+import { SubscriptionPlan } from '../tenant/enums/subscription-plan.enum';
+import { TenantStatus } from '../tenant/enums/tenant-status.enum';
+import { Tenant } from '../tenant/entities/tenant.entity';
 import { User } from '../user/entities/user.entity';
 import { AuthService } from './auth.service';
 import { RegisterTenantDto } from './dto/register-tenant.dto';
-import { TokenBlacklistService } from './services/token-blacklist.service';
 import { AccountLockoutService } from './services/account-lockout.service';
+import { TokenBlacklistService } from './services/token-blacklist.service';
 
 describe('AuthService - Unit Tests', () => {
   let service: AuthService;

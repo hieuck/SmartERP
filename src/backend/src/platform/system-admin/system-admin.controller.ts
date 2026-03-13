@@ -1,15 +1,15 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { Roles } from '../../common/decorators/roles.decorator';
-import { RolesGuard } from '../../common/guards/roles.guard';
-import { JwtAuthGuard } from '../../core/auth/guards/jwt-auth.guard';
-import { User } from '../../core/user/entities/user.entity';
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { Roles } from '@/common/decorators/roles.decorator';
+import { RolesGuard } from '@/common/guards/roles.guard';
+import { JwtAuthGuard } from '@core/auth/guards/jwt-auth.guard';
+import { JobStatus } from './enums';
+import { User } from '@core/user/entities/user.entity';
 import { CreateBackgroundJobDto } from './dto/create-background-job.dto';
 import { CreateSystemSettingDto } from './dto/create-system-setting.dto';
 import { UpdateErrorLogDto } from './dto/update-error-log.dto';
 import { UpdateSystemSettingDto } from './dto/update-system-setting.dto';
-import { JobStatus } from './entities/background-job.entity';
 import { SystemAdminService } from './system-admin.service';
 
 @ApiTags('system-admin')

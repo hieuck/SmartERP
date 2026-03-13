@@ -156,7 +156,8 @@ export default function Dashboard() {
               prefix={<InboxOutlined />}
             />
             <div style={{ marginTop: 8, fontSize: 12, color: '#8c8c8c' }}>
-              Giá trị: {new Intl.NumberFormat('vi-VN').format(overview?.inventory?.totalValue || 0)}₫
+              Giá trị: {new Intl.NumberFormat('vi-VN').format(overview?.inventory?.totalValue || 0)}
+              ₫
             </div>
           </Card>
         </Col>

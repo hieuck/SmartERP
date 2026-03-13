@@ -1,7 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Table, Button, Input, Space, Card, Tag, Popconfirm, message, Typography } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, UserOutlined } from '@ant-design/icons';
+import {
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  SearchOutlined,
+  UserOutlined,
+} from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import customerService from '../../services/crm/customerService';
 import type { ColumnsType } from 'antd/es/table';
@@ -80,9 +86,7 @@ export default function CustomerList() {
       key: 'balance',
       width: 120,
       render: (value: number) => (
-        <Tag color={value > 0 ? 'red' : 'green'}>
-          {value.toLocaleString('vi-VN')} ₫
-        </Tag>
+        <Tag color={value > 0 ? 'red' : 'green'}>{value.toLocaleString('vi-VN')} ₫</Tag>
       ),
     },
     {

@@ -1,6 +1,6 @@
-import { IsString, IsEnum, IsBoolean, IsOptional, IsNotEmpty, IsArray } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ArticleStatus } from '../entities/knowledge-base-article.entity';
+import { IsArray, IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { ArticleStatus } from '../enums';
 
 export class CreateKnowledgeBaseArticleDto {
   @ApiProperty({ description: 'Article title' })
@@ -24,7 +24,11 @@ export class CreateKnowledgeBaseArticleDto {
   @IsOptional()
   tags?: string[];
 
-  @ApiPropertyOptional({ enum: ArticleStatus, description: 'Article status', default: ArticleStatus.DRAFT })
+  @ApiPropertyOptional({
+    enum: ArticleStatus,
+    description: 'Article status',
+    default: ArticleStatus.DRAFT,
+  })
   @IsEnum(ArticleStatus)
   @IsOptional()
   status?: ArticleStatus;

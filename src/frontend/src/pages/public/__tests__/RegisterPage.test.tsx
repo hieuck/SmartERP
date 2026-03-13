@@ -41,7 +41,9 @@ describe('RegisterPage', () => {
       renderRegisterPage();
 
       // Assert
-      expect(screen.getByRole('button', { name: /register|sign up|create account/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /register|sign up|create account/i }),
+      ).toBeInTheDocument();
     });
 
     it('should render login link', () => {
@@ -74,7 +76,9 @@ describe('RegisterPage', () => {
 
       // Assert
       await waitFor(() => {
-        expect(screen.getByText(/company name.*required|please enter.*company/i)).toBeInTheDocument();
+        expect(
+          screen.getByText(/company name.*required|please enter.*company/i),
+        ).toBeInTheDocument();
       });
     });
 
@@ -91,7 +95,9 @@ describe('RegisterPage', () => {
 
       // Assert
       await waitFor(() => {
-        expect(screen.getByText(/subdomain.*required|please enter.*subdomain/i)).toBeInTheDocument();
+        expect(
+          screen.getByText(/subdomain.*required|please enter.*subdomain/i),
+        ).toBeInTheDocument();
       });
     });
 
@@ -108,7 +114,9 @@ describe('RegisterPage', () => {
 
       // Assert
       await waitFor(() => {
-        expect(screen.getByText(/subdomain.*format|only.*letters|alphanumeric/i)).toBeInTheDocument();
+        expect(
+          screen.getByText(/subdomain.*format|only.*letters|alphanumeric/i),
+        ).toBeInTheDocument();
       });
     });
 
@@ -180,7 +188,9 @@ describe('RegisterPage', () => {
 
       // Assert
       await waitFor(() => {
-        expect(screen.getByText(/password.*match|confirm.*password|do not match/i)).toBeInTheDocument();
+        expect(
+          screen.getByText(/password.*match|confirm.*password|do not match/i),
+        ).toBeInTheDocument();
       });
     });
 
@@ -324,7 +334,9 @@ describe('RegisterPage', () => {
 
       // Assert
       await waitFor(() => {
-        expect(screen.getByText(/email.*already.*exists|email.*taken|already registered/i)).toBeInTheDocument();
+        expect(
+          screen.getByText(/email.*already.*exists|email.*taken|already registered/i),
+        ).toBeInTheDocument();
       });
     });
 
@@ -353,7 +365,9 @@ describe('RegisterPage', () => {
 
       // Assert
       await waitFor(() => {
-        expect(screen.getByText(/subdomain.*already.*taken|subdomain.*exists|already in use/i)).toBeInTheDocument();
+        expect(
+          screen.getByText(/subdomain.*already.*taken|subdomain.*exists|already in use/i),
+        ).toBeInTheDocument();
       });
     });
 

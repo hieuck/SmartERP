@@ -1,6 +1,17 @@
-import { IsString, IsOptional, IsEnum, IsDateString, IsNumber, IsUUID, Min, Max, Length } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { TaskStatus, TaskPriority } from '../entities/task.entity';
+import {
+  IsDateString,
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Length,
+  Max,
+  Min,
+} from 'class-validator';
+import { TaskPriority } from '../enums/task-priority.enum';
+import { TaskStatus } from '../enums/task-status.enum';
 
 export class CreateTaskDto {
   @ApiProperty({ example: 'Implement user authentication', maxLength: 200 })

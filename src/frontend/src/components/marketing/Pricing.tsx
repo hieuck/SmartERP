@@ -46,7 +46,9 @@ export default function Pricing() {
           <Col xs={24} sm={12} lg={8}>
             <Card hoverable style={{ textAlign: 'center', height: '100%' }}>
               <Title level={3}>Gói cơ bản</Title>
-              <Title level={2} style={{ color: '#1890ff' }}>299.000đ/tháng</Title>
+              <Title level={2} style={{ color: '#1890ff' }}>
+                299.000đ/tháng
+              </Title>
               <Paragraph>Phù hợp cho xưởng nhỏ</Paragraph>
               <div style={{ textAlign: 'left', marginBottom: 24 }}>
                 {pricingFeatures.basic.map((feature, idx) => (
@@ -64,12 +66,26 @@ export default function Pricing() {
             </Card>
           </Col>
           <Col xs={24} sm={12} lg={8}>
-            <Card hoverable style={{ textAlign: 'center', border: '2px solid #1890ff', height: '100%' }}>
-              <div style={{ background: '#1890ff', color: '#fff', padding: '4px 16px', borderRadius: 4, display: 'inline-block', marginBottom: 16 }}>
+            <Card
+              hoverable
+              style={{ textAlign: 'center', border: '2px solid #1890ff', height: '100%' }}
+            >
+              <div
+                style={{
+                  background: '#1890ff',
+                  color: '#fff',
+                  padding: '4px 16px',
+                  borderRadius: 4,
+                  display: 'inline-block',
+                  marginBottom: 16,
+                }}
+              >
                 Phổ biến nhất
               </div>
               <Title level={3}>Gói chuyên nghiệp</Title>
-              <Title level={2} style={{ color: '#1890ff' }}>599.000đ/tháng</Title>
+              <Title level={2} style={{ color: '#1890ff' }}>
+                599.000đ/tháng
+              </Title>
               <Paragraph>Phù hợp cho nhà máy vừa</Paragraph>
               <div style={{ textAlign: 'left', marginBottom: 24 }}>
                 {pricingFeatures.pro.map((feature, idx) => (
@@ -89,7 +105,9 @@ export default function Pricing() {
           <Col xs={24} sm={12} lg={8}>
             <Card hoverable style={{ textAlign: 'center', height: '100%' }}>
               <Title level={3}>Gói doanh nghiệp</Title>
-              <Title level={2} style={{ color: '#1890ff' }}>Liên hệ</Title>
+              <Title level={2} style={{ color: '#1890ff' }}>
+                Liên hệ
+              </Title>
               <Paragraph>Giải pháp tùy chỉnh</Paragraph>
               <div style={{ textAlign: 'left', marginBottom: 24 }}>
                 {pricingFeatures.enterprise.map((feature, idx) => (

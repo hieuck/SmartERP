@@ -1,22 +1,8 @@
-import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
-import { Issue } from '../../issue-tracking/entities/issue.entity';
-import { User } from '../../../core/user/entities/user.entity';
-
-export enum TicketChannel {
-  EMAIL = 'email',
-  PHONE = 'phone',
-  CHAT = 'chat',
-  PORTAL = 'portal',
-  SOCIAL_MEDIA = 'social_media',
-}
-
-export enum TicketSatisfactionRating {
-  VERY_DISSATISFIED = 1,
-  DISSATISFIED = 2,
-  NEUTRAL = 3,
-  SATISFIED = 4,
-  VERY_SATISFIED = 5,
-}
+import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
+import { User } from '@core/user/entities/user.entity';
+import { Issue } from '@platform/issue-tracking/entities/issue.entity';
+import { TicketChannel } from '@platform/support/enums/ticket-channel.enum';
+import { TicketSatisfactionRating } from '@platform/support/enums/ticket-satisfaction-rating.enum';
 
 @Entity('tickets')
 @Index(['tenantId', 'customerId'])

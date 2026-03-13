@@ -1,10 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ProductionController } from './production.controller';
 import { ProductionService } from './production.service';
-import { MaterialType } from './entities/material.entity';
-import { MoldStatus } from './entities/mold.entity';
-import { BomStatus } from './entities/bom.entity';
-import { WorkOrderStatus } from './entities/work-order.entity';
+import { MaterialType } from './enums/material-type.enum';
+import { MoldStatus } from './enums/mold-status.enum';
+import { BomStatus } from './enums/bom-status.enum';
+import { WorkOrderStatus } from './enums/work-order-status.enum';
 import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
 import { createMockUser } from '@/common/test/test-helpers';
 

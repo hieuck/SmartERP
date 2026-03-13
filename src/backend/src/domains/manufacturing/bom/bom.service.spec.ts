@@ -2,8 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { BOMService } from './bom.service';
-import { BOM, BOMType } from './entities/bom.entity';
-import { BOMLine } from './entities/bom-line.entity';
+import { BOM, BOMType } from '../entities/bom.entity';
+import { BOMLine } from '../entities/bom.entity';
 import { NotFoundException } from '@nestjs/common';
 
 describe('BOMService', () => {

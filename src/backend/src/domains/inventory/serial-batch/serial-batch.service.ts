@@ -1,10 +1,11 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { SerialNumber, SerialNumberStatus } from './entities/serial-number.entity';
+import { SerialNumber } from './entities/serial-number.entity';
 import { Batch } from './entities/batch.entity';
 import { BatchStock } from './entities/batch-stock.entity';
-import { Product } from '../product/entities/product.entity';
+import { Product } from '@/domains/inventory/product/entities/product.entity';
+import { SerialNumberStatus } from './enums/serial-number-status.enum';
 import { CreateSerialNumberDto } from './dto/create-serial-number.dto';
 import { CreateBatchDto } from './dto/create-batch.dto';
 import { User } from '@/common/security/permission.service';

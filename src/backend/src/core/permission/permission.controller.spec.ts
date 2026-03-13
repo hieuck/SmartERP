@@ -2,7 +2,8 @@ import { createMockUser } from '@/common/test/test-helpers';
 import { Test, TestingModule } from '@nestjs/testing';
 import { CreatePermissionDto } from './dto/create-permission.dto';
 import { UpdatePermissionDto } from './dto/update-permission.dto';
-import { Permission, PermissionAction } from './entities/permission.entity';
+import { Permission } from '@core/permission/entities/permission.entity';
+import { PermissionAction } from '@core/permission/enums/permission-action.enum';
 import { PermissionController } from './permission.controller';
 import { PermissionService } from './permission.service';
 

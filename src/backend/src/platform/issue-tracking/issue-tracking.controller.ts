@@ -1,14 +1,14 @@
 import { Body, Controller, Get, Param, Patch, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { Roles } from '../../common/decorators/roles.decorator';
-import { RolesGuard } from '../../common/guards/roles.guard';
-import { JwtAuthGuard } from '../../core/auth/guards/jwt-auth.guard';
-import { User } from '../../core/user/entities/user.entity';
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { Roles } from '@/common/decorators/roles.decorator';
+import { RolesGuard } from '@/common/guards/roles.guard';
+import { JwtAuthGuard } from '@core/auth/guards/jwt-auth.guard';
+import { User } from '@/core/user/entities/user.entity';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { CreateIssueDto } from './dto/create-issue.dto';
 import { UpdateIssueDto } from './dto/update-issue.dto';
-import { IssueStatus } from './entities/issue.entity';
+import { IssueStatus } from './enums';
 import { IssueTrackingService } from './issue-tracking.service';
 
 @ApiTags('Issue Tracking')

@@ -3,10 +3,13 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ProductCatalog, ProductStatus } from '../product-catalog/entities/product-catalog.entity';
-import { CartItem } from './entities/cart-item.entity';
-import { CartStatus, ShoppingCart } from './entities/shopping-cart.entity';
+import { ProductCatalog } from '@/domains/ecommerce/product-catalog/entities/product-catalog.entity';
+import { ProductStatus } from '@/domains/ecommerce/product-catalog/enums/product-status.enum';
+import { ShoppingCart } from '../entities/shopping-cart.entity';
+import { CartItem } from '../entities/cart-item.entity';
+import { CartStatus } from '../enums/cart-status.enum';
 import { ShoppingCartService } from './shopping-cart.service';
+import { PermissionService } from '@/common/security/permission.service';
 
 describe('ShoppingCartService', () => {
   let service: ShoppingCartService;

@@ -1,6 +1,6 @@
 import { IsUUID, IsEnum, IsNumber, IsOptional } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { DependencyType } from '../entities/task-dependency.entity';
+import { DependencyType } from '../enums/project.enum';
 
 export class CreateTaskDependencyDto {
   @ApiProperty({ example: 'uuid-of-task' })

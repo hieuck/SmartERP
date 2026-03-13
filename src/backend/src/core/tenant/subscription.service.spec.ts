@@ -4,7 +4,10 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { UpgradeSubscriptionDto } from './dto/upgrade-subscription.dto';
-import { BillingCycle, SubscriptionPlan, Tenant, TenantStatus } from './entities/tenant.entity';
+import { Tenant } from '@core/tenant/entities/tenant.entity';
+import { TenantStatus } from '@core/tenant/enums/tenant-status.enum';
+import { SubscriptionPlan } from '@core/tenant/enums/subscription-plan.enum';
+import { BillingCycle } from '@core/tenant/enums/billing-cycle.enum';
 import { SubscriptionService } from './subscription.service';
 
 describe('SubscriptionService', () => {

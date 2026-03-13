@@ -10,11 +10,11 @@ import { User } from '../user/entities/user.entity';
 import { UserModule } from '../user/user.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { AccountLockoutService } from './services/account-lockout.service';
+import { TokenBlacklistService } from './services/token-blacklist.service';
+import { TwoFactorAuthService } from './services/two-factor-auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
-import { TokenBlacklistService } from './services/token-blacklist.service';
-import { AccountLockoutService } from './services/account-lockout.service';
-import { TwoFactorAuthService } from './services/two-factor-auth.service';
 
 @Module({
   imports: [

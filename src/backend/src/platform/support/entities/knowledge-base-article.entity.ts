@@ -8,13 +8,9 @@ import {
   JoinColumn,
   Index,
 } from 'typeorm';
-import { User } from '../../../core/user/entities/user.entity';
+import { User } from '@core/user/entities/user.entity';
+import { ArticleStatus } from '@platform/support/enums/article-status.enum';
 
-export enum ArticleStatus {
-  DRAFT = 'draft',
-  PUBLISHED = 'published',
-  ARCHIVED = 'archived',
-}
 
 @Entity('knowledge_base_articles')
 @Index(['tenantId', 'status'])

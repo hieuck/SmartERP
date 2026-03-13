@@ -1,10 +1,11 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between } from 'typeorm';
-import { Leave, LeaveType, LeaveStatus } from './entities/leave.entity';
+import { Leave } from './entities/leave.entity';
 import { LeaveBalance } from './entities/leave-balance.entity';
+import { LeaveType } from './enums/leave-type.enum';
+import { LeaveStatus } from './enums/leave-status.enum';
 import { Employee } from '../employee/entities/employee.entity';
-import { User as UserEntity } from '../user/entities/user.entity';
 import { User } from '@/common/security/permission.service';
 
 @Injectable()

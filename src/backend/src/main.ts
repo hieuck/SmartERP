@@ -103,6 +103,9 @@ async function bootstrap() {
 }
 
 bootstrap().catch((error) => {
-  console.error('Failed to start application:', error);
+  // Use NestJS built-in logger as fallback when app fails to bootstrap
+  const { Logger } = require('@nestjs/common');
+  const fallbackLogger = new Logger('Bootstrap');
+  fallbackLogger.error('Failed to start application', error.stack || error);
   process.exit(1);
 });

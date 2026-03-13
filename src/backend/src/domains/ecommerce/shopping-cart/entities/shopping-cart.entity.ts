@@ -10,16 +10,10 @@ import {
   BeforeInsert,
   BeforeUpdate,
 } from 'typeorm';
-import { User as UserEntity } from '../../../../core/user/entities/user.entity';
+import { User as UserEntity } from '../../../../core/user/entities/user.entity';import { CartStatus } from '../enums/cart-status.enum';
+
 import { CartItem } from './cart-item.entity';
 import { User } from '@/common/security/permission.service';
-
-export enum CartStatus {
-  ACTIVE = 'active',
-  ABANDONED = 'abandoned',
-  CONVERTED = 'converted', // Converted to order
-  EXPIRED = 'expired',
-}
 
 /**
  * ShoppingCart entity for eCommerce cart management

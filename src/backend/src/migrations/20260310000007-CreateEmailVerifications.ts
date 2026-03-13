@@ -11,7 +11,7 @@ export class CreateEmailVerifications1741700000007 implements MigrationInterface
             type: 'uuid',
             isPrimary: true,
             generationStrategy: 'uuid',
-            default: 'gen_random_uuid()',
+            default: 'uuid_generate_v4()',
           },
           {
             name: 'user_id',

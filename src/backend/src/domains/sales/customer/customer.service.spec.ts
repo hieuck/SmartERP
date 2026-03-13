@@ -4,8 +4,8 @@ import { createMockUser } from '@/common/test/test-helpers';
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { Customer } from '../../entities/customer.entity';
 import { CustomerService } from './customer.service';
-import { Customer } from './entities/customer.entity';
 
 describe('CustomerService', () => {
   let service: CustomerService;

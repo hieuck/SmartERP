@@ -1,6 +1,6 @@
 import { createMockUser } from '@/common/test/test-helpers';
 import { Test, TestingModule } from '@nestjs/testing';
-import { TenantStatus } from './entities/tenant.entity';
+import { TenantStatus } from '../enums/tenant-status.enum';
 import { OnboardingService } from './onboarding.service';
 import { SubscriptionService } from './subscription.service';
 import { TenantController } from './tenant.controller';

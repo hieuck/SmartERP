@@ -14,7 +14,8 @@ const features = [
   {
     icon: <AppstoreOutlined style={{ fontSize: 32, color: '#1890ff' }} />,
     title: 'Quản lý kho hàng',
-    description: 'Theo dõi tồn kho, nhập xuất hàng hóa tự động, cảnh báo hết hàng cho mọi loại sản phẩm',
+    description:
+      'Theo dõi tồn kho, nhập xuất hàng hóa tự động, cảnh báo hết hàng cho mọi loại sản phẩm',
   },
   {
     icon: <ShoppingCartOutlined style={{ fontSize: 32, color: '#1890ff' }} />,

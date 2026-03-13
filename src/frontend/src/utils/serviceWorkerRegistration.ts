@@ -12,7 +12,9 @@ export function register() {
       navigator.serviceWorker
         .register(swUrl)
         .then((registration) => {
-          console.log('Service Worker registered:', registration);
+          if (import.meta.env.DEV) {
+            console.log('Service Worker registered:', registration);
+          }
 
           // Check for updates periodically
           setInterval(() => {
@@ -26,7 +28,9 @@ export function register() {
                 if (installingWorker.state === 'installed') {
                   if (navigator.serviceWorker.controller) {
                     // New content available, notify user
-                    console.log('New content available, please refresh.');
+                    if (import.meta.env.DEV) {
+                      console.log('New content available, please refresh.');
+                    }
 
                     // Optionally show a notification to the user
                     if (window.confirm('New version available! Reload to update?')) {
@@ -34,7 +38,9 @@ export function register() {
                     }
                   } else {
                     // Content cached for offline use
-                    console.log('Content cached for offline use.');
+                    if (import.meta.env.DEV) {
+                      console.log('Content cached for offline use.');
+                    }
                   }
                 }
               };
@@ -42,7 +48,9 @@ export function register() {
           };
         })
         .catch((error) => {
-          console.error('Service Worker registration failed:', error);
+          if (import.meta.env.DEV) {
+            console.error('Service Worker registration failed:', error);
+          }
         });
     });
   }

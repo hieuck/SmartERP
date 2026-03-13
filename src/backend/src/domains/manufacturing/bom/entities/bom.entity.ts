@@ -11,13 +11,9 @@ import {
   BeforeInsert,
   BeforeUpdate,
 } from 'typeorm';
-import { Product } from '../../../inventory/product/entities/product.entity';
-import { BOMLine } from './bom-line.entity';
+import { Product } from '../../../inventory/product/entities/product.entity';import { BOMType } from '../enums/b-o-m-type.enum';
 
-export enum BOMType {
-  MANUFACTURE = 'manufacture',
-  KIT = 'kit',
-}
+import { BOMLine } from './bom-line.entity';
 
 @Entity('boms')
 @Index(['tenantId', 'productId'])

@@ -1,7 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Table, Button, Input, Space, Card, Tag, Popconfirm, message, Typography } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined, AppstoreOutlined } from '@ant-design/icons';
+import {
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  SearchOutlined,
+  AppstoreOutlined,
+} from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { productService } from '../../services/inventory/productService';
 import type { ColumnsType } from 'antd/es/table';
@@ -85,9 +91,7 @@ export default function ProductList() {
       key: 'stock',
       width: 100,
       render: (stock: number, record: Product) => (
-        <Tag color={stock <= record.lowStockThreshold ? 'red' : 'green'}>
-          {stock}
-        </Tag>
+        <Tag color={stock <= record.lowStockThreshold ? 'red' : 'green'}>{stock}</Tag>
       ),
     },
     {

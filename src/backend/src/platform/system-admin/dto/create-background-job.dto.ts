@@ -1,6 +1,6 @@
-import { IsString, IsEnum, IsOptional, IsObject, IsInt, Min, IsDateString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { JobPriority } from '../entities/background-job.entity';
+import { IsDateString, IsEnum, IsInt, IsObject, IsOptional, IsString, Min } from 'class-validator';
+import { JobPriority } from '../enums';
 
 export class CreateBackgroundJobDto {
   @ApiProperty({ example: 'email_batch_send' })

@@ -1,11 +1,12 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { Roles } from '../../common/decorators/roles.decorator';
-import { RolesGuard } from '../../common/guards/roles.guard';
-import { JwtAuthGuard } from '../../core/auth/guards/jwt-auth.guard';
-import { User } from '../../core/user/entities/user.entity';
-import { IssueStatus } from '../issue-tracking/entities/issue.entity';
+import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { Roles } from '@/common/decorators/roles.decorator';
+import { RolesGuard } from '@/common/guards/roles.guard';
+import { IssueStatus } from '@platform/issue-tracking/enums/issue-status.enum';
+import { JwtAuthGuard } from '@core/auth/guards/jwt-auth.guard';
+import { ArticleStatus, TicketChannel } from '@platform/support/enums';
+import { User } from '@core/user/entities/user.entity';
 import { CreateAssignmentRuleDto } from './dto/create-assignment-rule.dto';
 import { CreateCannedResponseDto } from './dto/create-canned-response.dto';
 import { CreateKnowledgeBaseArticleDto } from './dto/create-knowledge-base-article.dto';
@@ -17,8 +18,6 @@ import { UpdateCannedResponseDto } from './dto/update-canned-response.dto';
 import { UpdateKnowledgeBaseArticleDto } from './dto/update-knowledge-base-article.dto';
 import { UpdateSLADto } from './dto/update-sla.dto';
 import { UpdateTicketDto } from './dto/update-ticket.dto';
-import { ArticleStatus } from './entities/knowledge-base-article.entity';
-import { TicketChannel } from './entities/ticket.entity';
 import { SupportService } from './support.service';
 
 @ApiTags('Support & Helpdesk')

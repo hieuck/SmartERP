@@ -4,8 +4,8 @@ import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { EmailService } from './email.service';
-import { EmailLog, EmailStatus } from './entities/email-log.entity';
-import { EmailTemplate, TemplateType } from './entities/email-template.entity';
+import { EmailLog } from '../enums/platform.enum';
+import { EmailTemplate } from '../enums/platform.enum';
 
 describe('EmailService', () => {
   let service: EmailService;

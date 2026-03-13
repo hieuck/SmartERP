@@ -3,7 +3,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between } from 'typeorm';
 import { Attendance } from './entities/attendance.entity';
 import { Employee } from '../employee/entities/employee.entity';
-import { User as UserEntity } from '../user/entities/user.entity';
 import { User } from '@/common/security/permission.service';
 
 @Injectable()

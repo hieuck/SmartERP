@@ -1,11 +1,12 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { PermissionService, User } from '../../../common/security/permission.service';
+import { User, PermissionService } from '../../../common/security/permission.service';
 import { SecureRepository } from '../../../common/security/secure-repository';
 import { ProcessPaymentDto, VerifyPaymentDto } from './dto/payment.dto';
 import { RefundDto } from './dto/refund.dto';
-import { Order, PaymentStatus } from './entities/order.entity';
+import { Order } from './entities/order.entity';
+import { PaymentStatus } from '../enums/ecommerce.enum';
 
 /**
  * PaymentService handles payment gateway integration

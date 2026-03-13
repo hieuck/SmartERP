@@ -1,9 +1,31 @@
 import React from 'react';
-import { Card, Descriptions, Table, Tag, Button, Space, Typography, Spin, message, Modal } from 'antd';
-import { ArrowLeftOutlined, EditOutlined, SendOutlined, CloseOutlined, DollarOutlined, PrinterOutlined } from '@ant-design/icons';
+import {
+  Card,
+  Descriptions,
+  Table,
+  Tag,
+  Button,
+  Space,
+  Typography,
+  Spin,
+  message,
+  Modal,
+} from 'antd';
+import {
+  ArrowLeftOutlined,
+  EditOutlined,
+  SendOutlined,
+  CloseOutlined,
+  DollarOutlined,
+  PrinterOutlined,
+} from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { invoiceService, InvoiceStatus, InvoiceItem } from '../../services/accounting/invoiceService';
+import {
+  invoiceService,
+  InvoiceStatus,
+  InvoiceItem,
+} from '../../services/accounting/invoiceService';
 import dayjs from 'dayjs';
 import type { ColumnsType } from 'antd/es/table';
 
@@ -145,14 +167,22 @@ const InvoiceDetail: React.FC = () => {
 
   const canEdit = invoice.status === InvoiceStatus.DRAFT;
   const canSend = invoice.status === InvoiceStatus.DRAFT;
-  const canCancel = invoice.status !== InvoiceStatus.PAID && invoice.status !== InvoiceStatus.CANCELLED;
+  const canCancel =
+    invoice.status !== InvoiceStatus.PAID && invoice.status !== InvoiceStatus.CANCELLED;
   const isOverdue = invoice.status === InvoiceStatus.OVERDUE;
 
   return (
     <div style={{ padding: '24px' }}>
       <Space direction="vertical" style={{ width: '100%' }} size="large">
         <Card>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 16,
+            }}
+          >
             <Title level={3}>Chi tiết hóa đơn: {invoice.invoiceNumber}</Title>
             <Space>
               <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/dashboard/invoices')}>
@@ -162,7 +192,10 @@ const InvoiceDetail: React.FC = () => {
                 In
               </Button>
               {canEdit && (
-                <Button icon={<EditOutlined />} onClick={() => navigate(`/dashboard/invoices/${id}`)}>
+                <Button
+                  icon={<EditOutlined />}
+                  onClick={() => navigate(`/dashboard/invoices/${id}`)}
+                >
                   Chỉnh sửa
                 </Button>
               )}
@@ -210,12 +243,16 @@ const InvoiceDetail: React.FC = () => {
               </Text>
             </Descriptions.Item>
             <Descriptions.Item label="Đã thanh toán">
-              <Text style={{ fontSize: 16 }}>
-                {invoice.paidAmount.toLocaleString('vi-VN')} ₫
-              </Text>
+              <Text style={{ fontSize: 16 }}>{invoice.paidAmount.toLocaleString('vi-VN')} ₫</Text>
             </Descriptions.Item>
             <Descriptions.Item label="Còn lại">
-              <Text strong style={{ fontSize: 16, color: invoice.paidAmount < invoice.total ? '#ff4d4f' : '#52c41a' }}>
+              <Text
+                strong
+                style={{
+                  fontSize: 16,
+                  color: invoice.paidAmount < invoice.total ? '#ff4d4f' : '#52c41a',
+                }}
+              >
                 {(invoice.total - invoice.paidAmount).toLocaleString('vi-VN')} ₫
               </Text>
             </Descriptions.Item>

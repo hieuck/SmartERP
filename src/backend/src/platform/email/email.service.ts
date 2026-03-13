@@ -5,8 +5,10 @@ import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Cache } from 'cache-manager';
 import { Repository } from 'typeorm';
-import { EmailLog, EmailStatus } from './entities/email-log.entity';
-import { EmailTemplate, TemplateType } from './entities/email-template.entity';
+import { EmailLog } from './entities/email-log.entity';
+import { EmailTemplate } from './entities/email-template.entity';
+import { EmailStatus } from './enums/email-status.enum';
+import { TemplateType } from './enums/template-type.enum';
 
 @Injectable()
 export class EmailService {

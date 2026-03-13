@@ -15,11 +15,11 @@ import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger'
 import { ProductService } from './product.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { ProductStatus } from './entities/product.entity';
-import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
-import { TenantGuard } from '@/common/guards/tenant.guard';
+import { ProductStatus } from './enums/product-status.enum';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { User } from '@/common/security/permission.service';
+import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
+import { TenantGuard } from '@/common/guards/tenant.guard';
 @ApiTags('products')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, TenantGuard)

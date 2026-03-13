@@ -1,10 +1,33 @@
 import React, { useState } from 'react';
-import { Table, Button, Space, Tag, Input, Select, Card, message, Typography, Dropdown } from 'antd';
+import {
+  Table,
+  Button,
+  Space,
+  Tag,
+  Input,
+  Select,
+  Card,
+  message,
+  Typography,
+  Dropdown,
+} from 'antd';
 import type { ColumnsType, MenuProps } from 'antd/es/table';
-import { PlusOutlined, SearchOutlined, ShoppingOutlined, EyeOutlined, EditOutlined, DeleteOutlined, MoreOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
+import {
+  PlusOutlined,
+  SearchOutlined,
+  ShoppingOutlined,
+  EyeOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  MoreOutlined,
+  CheckOutlined,
+  CloseOutlined,
+} from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import purchaseOrderService, { PurchaseOrderStatus } from '../../services/logistics/purchaseOrderService';
+import purchaseOrderService, {
+  PurchaseOrderStatus,
+} from '../../services/logistics/purchaseOrderService';
 import dayjs from 'dayjs';
 
 const { Title } = Typography;
@@ -52,7 +75,8 @@ const PurchaseOrderList: React.FC = () => {
 
   const { data, isLoading } = useQuery({
     queryKey: ['purchase-orders', { page, pageSize, search, status: statusFilter }],
-    queryFn: () => purchaseOrderService.getAll({ page, limit: pageSize, search, status: statusFilter }),
+    queryFn: () =>
+      purchaseOrderService.getAll({ page, limit: pageSize, search, status: statusFilter }),
   });
 
   const approveMutation = useMutation({
@@ -105,7 +129,8 @@ const PurchaseOrderList: React.FC = () => {
           },
         ]
       : []),
-    ...(record.status !== PurchaseOrderStatus.RECEIVED && record.status !== PurchaseOrderStatus.CANCELLED
+    ...(record.status !== PurchaseOrderStatus.RECEIVED &&
+    record.status !== PurchaseOrderStatus.CANCELLED
       ? [
           {
             key: 'edit',
@@ -115,7 +140,8 @@ const PurchaseOrderList: React.FC = () => {
           },
         ]
       : []),
-    ...(record.status !== PurchaseOrderStatus.RECEIVED && record.status !== PurchaseOrderStatus.CANCELLED
+    ...(record.status !== PurchaseOrderStatus.RECEIVED &&
+    record.status !== PurchaseOrderStatus.CANCELLED
       ? [
           {
             key: 'cancel',
@@ -174,7 +200,7 @@ const PurchaseOrderList: React.FC = () => {
       dataIndex: 'expectedDate',
       key: 'expectedDate',
       width: 120,
-      render: (date: string) => date ? dayjs(date).format('DD/MM/YYYY') : '-',
+      render: (date: string) => (date ? dayjs(date).format('DD/MM/YYYY') : '-'),
     },
     {
       title: 'Tổng tiền',
@@ -240,12 +266,24 @@ const PurchaseOrderList: React.FC = () => {
               onChange={setStatusFilter}
               allowClear
             >
-              <Option value={PurchaseOrderStatus.DRAFT}>{statusLabels[PurchaseOrderStatus.DRAFT]}</Option>
-              <Option value={PurchaseOrderStatus.PENDING}>{statusLabels[PurchaseOrderStatus.PENDING]}</Option>
-              <Option value={PurchaseOrderStatus.APPROVED}>{statusLabels[PurchaseOrderStatus.APPROVED]}</Option>
-              <Option value={PurchaseOrderStatus.ORDERED}>{statusLabels[PurchaseOrderStatus.ORDERED]}</Option>
-              <Option value={PurchaseOrderStatus.RECEIVED}>{statusLabels[PurchaseOrderStatus.RECEIVED]}</Option>
-              <Option value={PurchaseOrderStatus.CANCELLED}>{statusLabels[PurchaseOrderStatus.CANCELLED]}</Option>
+              <Option value={PurchaseOrderStatus.DRAFT}>
+                {statusLabels[PurchaseOrderStatus.DRAFT]}
+              </Option>
+              <Option value={PurchaseOrderStatus.PENDING}>
+                {statusLabels[PurchaseOrderStatus.PENDING]}
+              </Option>
+              <Option value={PurchaseOrderStatus.APPROVED}>
+                {statusLabels[PurchaseOrderStatus.APPROVED]}
+              </Option>
+              <Option value={PurchaseOrderStatus.ORDERED}>
+                {statusLabels[PurchaseOrderStatus.ORDERED]}
+              </Option>
+              <Option value={PurchaseOrderStatus.RECEIVED}>
+                {statusLabels[PurchaseOrderStatus.RECEIVED]}
+              </Option>
+              <Option value={PurchaseOrderStatus.CANCELLED}>
+                {statusLabels[PurchaseOrderStatus.CANCELLED]}
+              </Option>
             </Select>
           </Space>
 

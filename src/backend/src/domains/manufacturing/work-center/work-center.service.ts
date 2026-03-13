@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { WorkCenter } from './entities/work-center.entity';
+import { WorkCenter } from '../entities/work-center.entity';
 
 @Injectable()
 export class WorkCenterService {
@@ -38,7 +38,7 @@ export class WorkCenterService {
     });
   }
 
-    async findActive(tenantId: string): Promise<WorkCenter[]> {
+  async findActive(tenantId: string): Promise<WorkCenter[]> {
     return this.workCenterRepository.find({
       where: { tenantId, isActive: true },
     });

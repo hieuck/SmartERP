@@ -1,24 +1,25 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
-import { Ticket, TicketChannel } from './entities/ticket.entity';
-import { SLA } from './entities/sla.entity';
-import { AssignmentRule, AssignmentStrategy } from './entities/assignment-rule.entity';
-import { KnowledgeBaseArticle, ArticleStatus } from './entities/knowledge-base-article.entity';
+import { IssueStatus } from '@platform/issue-tracking/enums/issue-status.enum';
+import { TicketChannel, AssignmentStrategy, ArticleStatus } from '@platform/support/enums';
+import { User } from '@core/user/entities/user.entity';
+import { AssignmentRule } from './entities/assignment-rule.entity';
 import { CannedResponse } from './entities/canned-response.entity';
-import { CreateTicketDto } from './dto/create-ticket.dto';
-import { UpdateTicketDto } from './dto/update-ticket.dto';
-import { CreateSLADto } from './dto/create-sla.dto';
-import { UpdateSLADto } from './dto/update-sla.dto';
+import { KnowledgeBaseArticle } from './entities/knowledge-base-article.entity';
+import { SLA } from './entities/sla.entity';
+import { Ticket } from './entities/ticket.entity';
 import { CreateAssignmentRuleDto } from './dto/create-assignment-rule.dto';
-import { UpdateAssignmentRuleDto } from './dto/update-assignment-rule.dto';
-import { CreateKnowledgeBaseArticleDto } from './dto/create-knowledge-base-article.dto';
-import { UpdateKnowledgeBaseArticleDto } from './dto/update-knowledge-base-article.dto';
 import { CreateCannedResponseDto } from './dto/create-canned-response.dto';
-import { UpdateCannedResponseDto } from './dto/update-canned-response.dto';
+import { CreateKnowledgeBaseArticleDto } from './dto/create-knowledge-base-article.dto';
+import { CreateSLADto } from './dto/create-sla.dto';
+import { CreateTicketDto } from './dto/create-ticket.dto';
 import { RateTicketDto } from './dto/rate-ticket.dto';
-import { User } from '../../core/user/entities/user.entity';
-import { IssueStatus } from '../issue-tracking/entities/issue.entity';
+import { UpdateAssignmentRuleDto } from './dto/update-assignment-rule.dto';
+import { UpdateCannedResponseDto } from './dto/update-canned-response.dto';
+import { UpdateKnowledgeBaseArticleDto } from './dto/update-knowledge-base-article.dto';
+import { UpdateSLADto } from './dto/update-sla.dto';
+import { UpdateTicketDto } from './dto/update-ticket.dto';
 
 @Injectable()
 export class SupportService {

@@ -1,11 +1,11 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { OrderService } from './order.service';
-import { Order } from './entities/order.entity';
-import { NotFoundException, ConflictException } from '@nestjs/common';
 import { CacheService } from '@/common/cache/cache.service';
 import { PermissionService } from '@/common/security/permission.service';
 import { createMockUser } from '@/common/test/test-helpers';
+import { ConflictException, NotFoundException } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { Order } from '../../entities/order.entity';
+import { OrderService } from './order.service';
 
 describe('OrderService', () => {
   let service: OrderService;
@@ -19,7 +19,7 @@ describe('OrderService', () => {
     update: jest.fn(),
     softDelete: jest.fn(),
     remove: jest.fn(),
-    count: jest.fn()
+    count: jest.fn(),
   };
 
   const mockCacheService = {
@@ -27,7 +27,7 @@ describe('OrderService', () => {
     set: jest.fn(),
     del: jest.fn(),
     getOrSet: jest.fn(),
-    invalidateEntity: jest.fn()
+    invalidateEntity: jest.fn(),
   };
 
   const mockPermissionService = {
@@ -36,7 +36,7 @@ describe('OrderService', () => {
     buildSecureQuery: jest.fn((user, where) => where),
     canRead: jest.fn().mockReturnValue(true),
     canWrite: jest.fn().mockReturnValue(true),
-    canDelete: jest.fn().mockReturnValue(true)
+    canDelete: jest.fn().mockReturnValue(true),
   };
 
   const mockUser = createMockUser();
@@ -47,18 +47,18 @@ describe('OrderService', () => {
         OrderService,
         {
           provide: getRepositoryToken(Order),
-          useValue: mockOrderRepository
-  },
+          useValue: mockOrderRepository,
+        },
         {
           provide: CacheService,
-          useValue: mockCacheService
-  },
+          useValue: mockCacheService,
+        },
         {
           provide: PermissionService,
-          useValue: mockPermissionService
-  },
-      ]
-  }).compile();
+          useValue: mockPermissionService,
+        },
+      ],
+    }).compile();
 
     service = module.get<OrderService>(OrderService);
   });
@@ -130,9 +130,7 @@ describe('OrderService', () => {
       const orderData = { orderNumber: 'ORD-001' };
       mockOrderRepository.findOne.mockResolvedValue({ id: '1' });
 
-      await expect(service.create(mockUser, orderData as any)).rejects.toThrow(
-        ConflictException,
-      );
+      await expect(service.create(mockUser, orderData as any)).rejects.toThrow(ConflictException);
     });
   });
 

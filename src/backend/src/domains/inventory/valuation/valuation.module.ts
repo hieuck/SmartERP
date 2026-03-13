@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ValuationController } from './valuation.controller';
 import { ValuationService } from './valuation.service';
-import { StockValuation } from './entities/stock-valuation.entity';
+import { StockValuation } from '../enums/inventory.enum';
 
 @Module({
   imports: [TypeOrmModule.forFeature([StockValuation])],

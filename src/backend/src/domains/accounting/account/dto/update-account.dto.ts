@@ -1,5 +1,5 @@
 import { IsString, IsOptional, IsEnum, IsNumber, IsBoolean } from 'class-validator';
-import { AccountType } from '../entities/account.entity';
+import { AccountType } from '../enums';
 
 export class UpdateAccountDto {
   @IsString()

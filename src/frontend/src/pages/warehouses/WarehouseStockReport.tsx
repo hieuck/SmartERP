@@ -1,18 +1,22 @@
-// @ts-nocheck
 /**
  * Warehouse Stock Report Page
- * Displays stock levels per warehouse and consolidated view
+ * Displays stock levels across warehouses
  * Requirements: 27.4
  */
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Table, Card, Select, Space, Input, Tabs, Button } from 'antd';
-import { SearchOutlined, DownloadOutlined } from '@ant-design/icons';
-import warehouseService, { WarehouseStock } from '../../services/inventory/warehouseService';
+import { Card, Table, Select, Space, Statistic, Row, Col, Tag, Input } from 'antd';
+import {
+  BarChartOutlined,
+  SearchOutlined,
+  InboxOutlined,
+  WarningOutlined,
+} from '@ant-design/icons';
+import warehouseService from '../../services/inventory/warehouseService';
 import { useResponsive } from '../../hooks/useResponsive';
 
-const { TabPane } = Tabs;
+const { Option } = Select;
 
 const WarehouseStockReport = () => {
   const { isMobile } = useResponsive();
@@ -20,190 +24,150 @@ const WarehouseStockReport = () => {
   const [search, setSearch] = useState('');
 
   // Fetch warehouses
-  const { data: warehouses } = useQuery({
-    queryKey: ['warehouses', { status: 'active' }],
-    queryFn: () => warehouseService.getWarehouses({ status: 'active' }),
+  const { data: warehousesData } = useQuery({
+    queryKey: ['warehouses'],
+    queryFn: () => warehouseService.getWarehouses(),
   });
 
-  // Fetch stock by warehouse
-  const { data: warehouseStock, isLoading: warehouseStockLoading } = useQuery({
-    queryKey: ['warehouseStock', selectedWarehouse, search],
-    queryFn: () => warehouseService.getStockByWarehouse(selectedWarehouse!, { search }),
-    enabled: !!selectedWarehouse,
+  // Fetch stock report
+  const { data: stockData, isLoading } = useQuery({
+    queryKey: ['warehouseStockReport', { warehouseId: selectedWarehouse, search }],
+    queryFn: () =>
+      selectedWarehouse
+        ? warehouseService.getStockByWarehouse(selectedWarehouse, { search })
+        : warehouseService.getConsolidatedStock({ search }),
   });
 
-  // Fetch consolidated stock
-  const { data: consolidatedStock, isLoading: consolidatedStockLoading } = useQuery({
-    queryKey: ['consolidatedStock', search],
-    queryFn: () => warehouseService.getConsolidatedStock({ search }),
-  });
+  const stockItems = stockData?.data || [];
+  const totalItems = stockItems.length;
+  const lowStockItems = stockItems.filter((item: any) => item.quantity <= (item.minQuantity || 0));
 
-  const warehouseColumns = [
+  const columns = [
     {
-      title: 'Product SKU',
-      dataIndex: 'productSku',
-      key: 'productSku',
-      width: 120,
-    },
-    {
-      title: 'Product Name',
+      title: 'Sản phẩm',
       dataIndex: 'productName',
       key: 'productName',
     },
     {
-      title: 'Quantity',
-      dataIndex: 'quantity',
-      key: 'quantity',
-      width: 100,
-      align: 'right' as const,
+      title: 'SKU',
+      dataIndex: 'sku',
+      key: 'sku',
     },
     {
-      title: 'Reserved',
-      dataIndex: 'reservedQuantity',
-      key: 'reservedQuantity',
-      width: 100,
-      align: 'right' as const,
-    },
-    {
-      title: 'Available',
-      dataIndex: 'availableQuantity',
-      key: 'availableQuantity',
-      width: 100,
-      align: 'right' as const,
-    },
-  ];
-
-  const consolidatedColumns = [
-    {
-      title: 'Product SKU',
-      dataIndex: 'productSku',
-      key: 'productSku',
-      width: 120,
-    },
-    {
-      title: 'Product Name',
-      dataIndex: 'productName',
-      key: 'productName',
-    },
-    {
-      title: 'Warehouse',
+      title: 'Kho',
       dataIndex: 'warehouseName',
       key: 'warehouseName',
-      width: 200,
     },
     {
-      title: 'Quantity',
+      title: 'Tồn kho',
       dataIndex: 'quantity',
       key: 'quantity',
-      width: 100,
       align: 'right' as const,
+      render: (qty: number, record: any) => {
+        const isLow = qty <= (record.minQuantity || 0);
+        return (
+          <span style={{ color: isLow ? '#cf1322' : undefined, fontWeight: isLow ? 600 : 400 }}>
+            {qty?.toLocaleString('vi-VN') || 0}
+          </span>
+        );
+      },
     },
     {
-      title: 'Reserved',
-      dataIndex: 'reservedQuantity',
-      key: 'reservedQuantity',
-      width: 100,
+      title: 'Tối thiểu',
+      dataIndex: 'minQuantity',
+      key: 'minQuantity',
       align: 'right' as const,
+      render: (v: number) => v?.toLocaleString('vi-VN') || '-',
     },
     {
-      title: 'Available',
-      dataIndex: 'availableQuantity',
-      key: 'availableQuantity',
-      width: 100,
-      align: 'right' as const,
+      title: 'Trạng thái',
+      key: 'status',
+      render: (_: any, record: any) => {
+        const isLow = record.quantity <= (record.minQuantity || 0);
+        return isLow ? (
+          <Tag color="red" icon={<WarningOutlined />}>
+            Sắp hết
+          </Tag>
+        ) : (
+          <Tag color="green">Đủ hàng</Tag>
+        );
+      },
     },
   ];
 
-  const handleExport = () => {
-    // TODO: Implement export functionality
-    console.log('Export report');
-  };
-
   return (
-    <Card
-      title="Warehouse Stock Report"
-      extra={
-        <Button icon={<DownloadOutlined />} onClick={handleExport}>
-          Export
-        </Button>
-      }
-    >
-      <Tabs defaultActiveKey="warehouse">
-        <TabPane tab="By Warehouse" key="warehouse">
-          <Space direction="vertical" style={{ width: '100%', marginBottom: 16 }}>
-            <Space>
-              <Select
-                placeholder="Select warehouse"
-                style={{ width: 300 }}
-                value={selectedWarehouse}
-                onChange={setSelectedWarehouse}
-                options={warehouses?.data?.map((w: any) => ({
-                  label: `${w.code} - ${w.name}`,
-                  value: w.id,
-                }))}
-              />
-              <Input
-                placeholder="Search products..."
-                prefix={<SearchOutlined />}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                style={{ width: 300 }}
-              />
-            </Space>
-          </Space>
-
-          {selectedWarehouse ? (
-            <Table
-              size={isMobile ? 'small' : 'middle'}
-              scroll={{ x: 'max-content' }}
-              columns={warehouseColumns}
-              dataSource={warehouseStock?.data || []}
-              rowKey={(record) => `${record.warehouseId}-${record.productId}`}
-              loading={warehouseStockLoading}
-              pagination={{
-                total: warehouseStock?.meta?.total,
-                pageSize: warehouseStock?.meta?.limit,
-                current: warehouseStock?.meta?.page,
-                showSizeChanger: true,
-                showTotal: (total) => `Total ${total} products`,
-              }}
+    <div>
+      <Row gutter={16} style={{ marginBottom: 16 }}>
+        <Col span={isMobile ? 12 : 8}>
+          <Card>
+            <Statistic
+              title="Tổng mặt hàng"
+              value={totalItems}
+              prefix={<InboxOutlined />}
             />
-          ) : (
-            <div style={{ textAlign: 'center', padding: '50px', color: '#999' }}>
-              Please select a warehouse to view stock
-            </div>
-          )}
-        </TabPane>
+          </Card>
+        </Col>
+        <Col span={isMobile ? 12 : 8}>
+          <Card>
+            <Statistic
+              title="Sắp hết hàng"
+              value={lowStockItems.length}
+              valueStyle={{ color: '#cf1322' }}
+              prefix={<WarningOutlined />}
+            />
+          </Card>
+        </Col>
+        <Col span={isMobile ? 24 : 8}>
+          <Card>
+            <Statistic
+              title="Kho đang xem"
+              value={selectedWarehouse ? (warehousesData?.data?.find((w: any) => w.id === selectedWarehouse)?.name || 'N/A') : 'Tất cả'}
+              prefix={<BarChartOutlined />}
+            />
+          </Card>
+        </Col>
+      </Row>
 
-        <TabPane tab="Consolidated View" key="consolidated">
-          <Space direction="vertical" style={{ width: '100%', marginBottom: 16 }}>
+      <Card title="Báo cáo tồn kho">
+        <Space direction="vertical" style={{ width: '100%', marginBottom: 16 }}>
+          <Space wrap>
+            <Select
+              placeholder="Chọn kho"
+              style={{ width: isMobile ? '100%' : 200 }}
+              allowClear
+              value={selectedWarehouse}
+              onChange={setSelectedWarehouse}
+            >
+              {(warehousesData?.data || []).map((w: any) => (
+                <Option key={w.id} value={w.id}>
+                  {w.name}
+                </Option>
+              ))}
+            </Select>
             <Input
-              placeholder="Search products..."
+              placeholder="Tìm sản phẩm..."
               prefix={<SearchOutlined />}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              style={{ width: 300 }}
+              style={{ width: isMobile ? '100%' : 250 }}
             />
           </Space>
+        </Space>
 
-          <Table
-            size={isMobile ? 'small' : 'middle'}
-            scroll={{ x: 'max-content' }}
-            columns={consolidatedColumns}
-            dataSource={consolidatedStock?.data || []}
-            rowKey={(record) => `${record.warehouseId}-${record.productId}`}
-            loading={consolidatedStockLoading}
-            pagination={{
-              total: consolidatedStock?.meta?.total,
-              pageSize: consolidatedStock?.meta?.limit,
-              current: consolidatedStock?.meta?.page,
-              showSizeChanger: true,
-              showTotal: (total) => `Total ${total} items`,
-            }}
-          />
-        </TabPane>
-      </Tabs>
-    </Card>
+        <Table
+          columns={columns}
+          dataSource={stockItems}
+          rowKey={(record: any) => `${record.productId}-${record.warehouseId}`}
+          loading={isLoading}
+          size={isMobile ? 'small' : 'middle'}
+          scroll={{ x: 'max-content' }}
+          pagination={{
+            showSizeChanger: true,
+            showTotal: (total) => `Tổng ${total} mặt hàng`,
+          }}
+        />
+      </Card>
+    </div>
   );
 };
 

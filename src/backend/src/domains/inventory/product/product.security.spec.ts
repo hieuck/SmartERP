@@ -12,7 +12,7 @@ import { createMockUser } from '@/common/test/test-helpers';
 import { ForbiddenException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Product } from './entities/product.entity';
+;
 import { ProductService } from './product.service';
 
 describe('ProductService - Security Tests', () => {

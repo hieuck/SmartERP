@@ -3,7 +3,9 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Project, ProjectPriority, ProjectStatus } from './entities/project.entity';
+import { Project } from '../entities/project.entity';
+import { ProjectPriority } from '../enums/project-priority.enum';
+import { ProjectStatus } from '../enums/project-status.enum';
 import { ProjectService } from './project.service';
 
 describe('ProjectService', () => {

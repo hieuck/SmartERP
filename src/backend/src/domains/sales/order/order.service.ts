@@ -1,18 +1,18 @@
+import { CacheTTL, generateCacheKey } from '@/common/cache/cache.config';
+import { CacheService } from '@/common/cache/cache.service';
+import { PermissionService, User } from '@/common/security/permission.service';
+import { SecureRepository } from '@/common/security/secure-repository';
 import {
+  BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
-  ConflictException,
-  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between } from 'typeorm';
+import { Between, Repository } from 'typeorm';
 import { Order } from './entities/order.entity';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
-import { CacheService } from '@/common/cache/cache.service';
-import { CacheTTL, generateCacheKey } from '@/common/cache/cache.config';
-import { SecureRepository } from '@/common/security/secure-repository';
-import { PermissionService, User } from '@/common/security/permission.service';
 
 @Injectable()
 export class OrderService {
@@ -24,11 +24,7 @@ export class OrderService {
     private readonly cacheService: CacheService,
     private readonly permissionService: PermissionService,
   ) {
-    this.secureOrderRepo = new SecureRepository(
-      orderRepository,
-      permissionService,
-      'Order',
-    );
+    this.secureOrderRepo = new SecureRepository(orderRepository, permissionService, 'Order');
   }
 
   async findAll(

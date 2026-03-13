@@ -3,7 +3,8 @@ import { SecureRepository } from '@/common/security/secure-repository';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ProductCatalog, ProductStatus } from './entities/product-catalog.entity';
+import { ProductCatalog } from './entities/product-catalog.entity';
+import { ProductStatus } from './enums/product-status.enum';
 
 @Injectable()
 export class ProductCatalogService {

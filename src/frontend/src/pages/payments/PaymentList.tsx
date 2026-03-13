@@ -1,11 +1,33 @@
 import { useState } from 'react';
-import { Table, Button, Space, Tag, Select, DatePicker, Card, message, Popconfirm, Modal } from 'antd';
-import { PlusOutlined, DeleteOutlined, EyeOutlined, CheckOutlined, RollbackOutlined } from '@ant-design/icons';
+import {
+  Table,
+  Button,
+  Space,
+  Tag,
+  Select,
+  DatePicker,
+  Card,
+  message,
+  Popconfirm,
+  Modal,
+} from 'antd';
+import {
+  PlusOutlined,
+  DeleteOutlined,
+  EyeOutlined,
+  CheckOutlined,
+  RollbackOutlined,
+} from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { Payment, PaymentMethod, PaymentStatus } from '../../services/accounting/paymentService';
 import dayjs from 'dayjs';
 import { useResponsive } from '../../hooks/useResponsive';
-import { usePayments, useDeletePayment, useCompletePayment, useProcessRefund } from '../../hooks/usePayments';
+import {
+  usePayments,
+  useDeletePayment,
+  useCompletePayment,
+  useProcessRefund,
+} from '../../hooks/usePayments';
 
 const { RangePicker } = DatePicker;
 
@@ -246,7 +268,12 @@ export default function PaymentList() {
           </Space>
 
           <Table
-            loading={isLoading || deletePaymentMutation.isPending || completePaymentMutation.isPending || refundMutation.isPending}
+            loading={
+              isLoading ||
+              deletePaymentMutation.isPending ||
+              completePaymentMutation.isPending ||
+              refundMutation.isPending
+            }
             dataSource={payments}
             columns={columns}
             rowKey="id"

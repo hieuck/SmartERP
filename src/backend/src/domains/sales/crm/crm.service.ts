@@ -1,17 +1,18 @@
+import { CacheTTL, generateCacheKey } from '@/common/cache/cache.config';
+import { CacheService } from '@/common/cache/cache.service';
+import { PermissionService, User } from '@/common/security/permission.service';
+import { SecureRepository } from '@/common/security/secure-repository';
 import {
+  BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
-  ConflictException,
-  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Lead, LeadStatus } from './entities/lead.entity';
-import { Opportunity, OpportunityStage } from './entities/opportunity.entity';
-import { CacheService } from '@/common/cache/cache.service';
-import { CacheTTL, generateCacheKey } from '@/common/cache/cache.config';
-import { SecureRepository } from '@/common/security/secure-repository';
-import { PermissionService, User } from '@/common/security/permission.service';
+import { Lead } from './entities/lead.entity';
+import { Opportunity } from './entities/opportunity.entity';
+import { LeadStatus, OpportunityStage } from './enums';
 
 @Injectable()
 export class CrmService {
@@ -233,10 +234,7 @@ export class CrmService {
     await this.cacheService.del(cacheKey);
   }
 
-  async findOpportunitiesByStage(
-    user: User,
-    stage: OpportunityStage,
-  ): Promise<Opportunity[]> {
+  async findOpportunitiesByStage(user: User, stage: OpportunityStage): Promise<Opportunity[]> {
     return this.secureOpportunityRepo.find(user, {
       where: { stage },
       order: { createdAt: 'DESC' },

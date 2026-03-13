@@ -17,11 +17,11 @@ import { Request as ExpressRequest } from 'express';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { TenantStatus } from './enums/tenant-status.enum';
 import { CompleteOnboardingDto } from './dto/complete-onboarding.dto';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
 import { UpgradeSubscriptionDto } from './dto/upgrade-subscription.dto';
-import { TenantStatus } from './entities/tenant.entity';
 import { OnboardingService } from './onboarding.service';
 import { SubscriptionService } from './subscription.service';
 import { TenantService } from './tenant.service';
@@ -94,10 +94,7 @@ export class TenantController {
 
   @Post(':id/onboarding/complete')
   @ApiOperation({ summary: 'Complete onboarding process' })
-  completeOnboarding(
-    @CurrentUser() user: User,
-    @Body() dto: CompleteOnboardingDto,
-  ) {
+  completeOnboarding(@CurrentUser() user: User, @Body() dto: CompleteOnboardingDto) {
     return this.onboardingService.completeOnboarding(user, dto);
   }
 
@@ -109,10 +106,7 @@ export class TenantController {
 
   @Post(':id/onboarding/invite')
   @ApiOperation({ summary: 'Invite team member' })
-  inviteTeamMember(
-    @CurrentUser() user: User,
-    @Body() body: { email: string },
-  ) {
+  inviteTeamMember(@CurrentUser() user: User, @Body() body: { email: string }) {
     return this.onboardingService.inviteTeamMember(user, body.email);
   }
 

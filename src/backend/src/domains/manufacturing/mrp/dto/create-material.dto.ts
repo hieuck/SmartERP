@@ -1,6 +1,6 @@
 import { IsString, IsEnum, IsNumber, IsOptional, IsUUID, Min, MaxLength } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { MaterialType } from '../entities/material.entity';
+import { MaterialType } from '../enums/material-type.enum';
 
 export class CreateMaterialDto {
   @ApiProperty({ example: 'MAT-001', description: 'Material code' })

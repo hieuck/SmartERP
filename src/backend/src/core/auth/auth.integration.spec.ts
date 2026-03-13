@@ -1,11 +1,12 @@
 import { CacheService } from '@/common/cache/cache.service';
 import { PermissionService } from '@/common/security/permission.service';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
-import { Tenant, TenantStatus, SubscriptionPlan } from '../tenant/entities/tenant.entity';
+import { SubscriptionPlan } from '../tenant/enums/subscription-plan.enum';
+import { TenantStatus } from '../tenant/enums/tenant-status.enum';
+import { Tenant } from '../tenant/entities/tenant.entity';
 import { User } from '../user/entities/user.entity';
 import { AuthService } from './auth.service';
 import { RegisterTenantDto } from './dto/register-tenant.dto';

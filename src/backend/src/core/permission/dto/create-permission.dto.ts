@@ -1,6 +1,6 @@
 import { IsString, IsNotEmpty, IsArray, IsEnum, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { PermissionAction } from '../entities/permission.entity';
+import { PermissionAction } from '../enums/permission-action.enum';
 
 export class CreatePermissionDto {
   @ApiProperty({ example: 'products' })

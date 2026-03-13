@@ -9,7 +9,7 @@ import {
   Index,
 } from 'typeorm';
 import { Employee } from '../../employee/entities/employee.entity';
-import { LeaveType } from './leave.entity';
+import { LeaveType } from '../enums/leave-type.enum';
 
 @Entity('leave_balances')
 @Index(['tenantId', 'employeeId', 'leaveType', 'year'], { unique: true })

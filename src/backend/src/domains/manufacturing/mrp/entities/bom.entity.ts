@@ -1,18 +1,12 @@
 import { Entity, Column, Index } from 'typeorm';
-import { BaseEntity } from '@/common/entities/base.entity';
+import { BomStatus } from '../enums/bom-status.enum';
 
-export enum BomStatus {
-  DRAFT = 'draft',
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
-  ARCHIVED = 'archived',
-}
+import { BaseEntity } from '@/common/entities/base.entity';
 
 @Entity('boms')
 @Index(['tenantId', 'code'], { unique: true })
 @Index(['tenantId', 'productId'])
-@Index(['tenantId', 'status'])
-export class Bom extends BaseEntity {
+export class BOM extends BaseEntity {
   @Column({ type: 'varchar', length: 50 })
   code: string;
 

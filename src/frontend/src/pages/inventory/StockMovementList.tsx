@@ -1,7 +1,25 @@
 import React, { useState } from 'react';
-import { Table, Button, Space, Tag, Input, Select, Card, message, Typography, DatePicker } from 'antd';
+import {
+  Table,
+  Button,
+  Space,
+  Tag,
+  Input,
+  Select,
+  Card,
+  message,
+  Typography,
+  DatePicker,
+} from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { SearchOutlined, SwapOutlined, ArrowUpOutlined, ArrowDownOutlined, SyncOutlined, ToolOutlined } from '@ant-design/icons';
+import {
+  SearchOutlined,
+  SwapOutlined,
+  ArrowUpOutlined,
+  ArrowDownOutlined,
+  SyncOutlined,
+  ToolOutlined,
+} from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import inventoryServiceNew, { StockMovementType } from '../../services/inventory/inventoryService';
@@ -25,7 +43,10 @@ interface StockMovement {
   createdBy?: { id: number; name: string };
 }
 
-const movementTypeConfig: Record<StockMovementType, { color: string; label: string; icon: React.ReactNode }> = {
+const movementTypeConfig: Record<
+  StockMovementType,
+  { color: string; label: string; icon: React.ReactNode }
+> = {
   [StockMovementType.IN]: { color: 'green', label: 'Nhập kho', icon: <ArrowDownOutlined /> },
   [StockMovementType.OUT]: { color: 'red', label: 'Xuất kho', icon: <ArrowUpOutlined /> },
   [StockMovementType.TRANSFER]: { color: 'blue', label: 'Chuyển kho', icon: <SwapOutlined /> },
@@ -42,14 +63,15 @@ const StockMovementList: React.FC = () => {
 
   const { data, isLoading } = useQuery({
     queryKey: ['stock-movements', { page, pageSize, search, type: typeFilter, dateRange }],
-    queryFn: () => inventoryServiceNew.getMovements({
-      page,
-      limit: pageSize,
-      search,
-      type: typeFilter,
-      startDate: dateRange?.[0],
-      endDate: dateRange?.[1],
-    }),
+    queryFn: () =>
+      inventoryServiceNew.getMovements({
+        page,
+        limit: pageSize,
+        search,
+        type: typeFilter,
+        startDate: dateRange?.[0],
+        endDate: dateRange?.[1],
+      }),
   });
 
   const columns: ColumnsType<StockMovement> = [
@@ -105,7 +127,8 @@ const StockMovementList: React.FC = () => {
         const isPositive = record.type === StockMovementType.IN;
         return (
           <span style={{ color: isPositive ? '#52c41a' : '#ff4d4f' }}>
-            {isPositive ? '+' : '-'}{Math.abs(value).toLocaleString('vi-VN')}
+            {isPositive ? '+' : '-'}
+            {Math.abs(value).toLocaleString('vi-VN')}
           </span>
         );
       },
@@ -141,9 +164,7 @@ const StockMovementList: React.FC = () => {
             <Title level={3}>
               <SyncOutlined /> Lịch sử xuất nhập kho
             </Title>
-            <Button onClick={() => navigate('/dashboard/inventory/stock')}>
-              Quay lại tồn kho
-            </Button>
+            <Button onClick={() => navigate('/dashboard/inventory/stock')}>Quay lại tồn kho</Button>
           </div>
 
           <Space wrap>
@@ -171,10 +192,7 @@ const StockMovementList: React.FC = () => {
               format="DD/MM/YYYY"
               onChange={(dates) => {
                 if (dates) {
-                  setDateRange([
-                    dates[0]!.format('YYYY-MM-DD'),
-                    dates[1]!.format('YYYY-MM-DD'),
-                  ]);
+                  setDateRange([dates[0]!.format('YYYY-MM-DD'), dates[1]!.format('YYYY-MM-DD')]);
                 } else {
                   setDateRange(undefined);
                 }
