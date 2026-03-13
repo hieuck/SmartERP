@@ -2,13 +2,13 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Issue } from './entities/issue.entity';
-import { IssueStatus } from '../enums/platform.enum';
+import { IssueStatus } from './enums/issue-status.enum';
 import { IssueComment } from './entities/issue-comment.entity';
 import { IssueAttachment } from './entities/issue-attachment.entity';
 import { CreateIssueDto } from './dto/create-issue.dto';
 import { UpdateIssueDto } from './dto/update-issue.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
-import { User } from '@/core/user/entities/user.entity';
+import { User } from '@/common/security/permission.service';
 
 @Injectable()
 export class IssueTrackingService {
@@ -22,11 +22,14 @@ export class IssueTrackingService {
   ) {}
 
   async create(user: User, createDto: CreateIssueDto): Promise<Issue> {
-    const issue = this.issueRepository.create({
-      ...createDto,
-      tenantId: user.tenantId,
-      reporterId: user.id,
-    });
+    const issue = new Issue();
+    issue.tenantId = user.tenantId;
+    issue.reporterId = user.id;
+    issue.title = createDto.title;
+    issue.description = createDto.description;
+    if (createDto.priority) issue.priority = createDto.priority;
+    if (createDto.type) issue.type = createDto.type;
+    if (createDto.assigneeId) issue.assigneeId = createDto.assigneeId;
 
     return await this.issueRepository.save(issue);
   }

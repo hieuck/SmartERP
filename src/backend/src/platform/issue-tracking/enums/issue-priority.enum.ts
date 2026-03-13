@@ -3,4 +3,5 @@ export enum IssuePriority {
   MEDIUM = 'medium',
   HIGH = 'high',
   URGENT = 'urgent',
+  CRITICAL = 'critical',
 }

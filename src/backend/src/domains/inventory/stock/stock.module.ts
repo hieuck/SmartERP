@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { StockController } from './stock.controller';
 import { StockService } from './stock.service';
-import { Inventory } from '../enums/inventory.enum';
+import { Inventory } from './entities/inventory.entity';
 import { CacheModule } from '@/common/cache/cache.module';
 import { SecurityModule } from '@/common/security/security.module';
 

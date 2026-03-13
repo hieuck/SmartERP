@@ -6,10 +6,11 @@ import { AccountType } from './enums/account-type.enum';
 import { JournalEntry } from './entities/journal-entry.entity';
 import { Invoice } from './entities/invoice.entity';
 import { InvoiceType } from './enums/invoice-type.enum';
-import { CacheService } from '@/common/cache/cache.service';
-import { CacheTTL, generateCacheKey } from '@/common/cache/cache.config';
-import { SecureRepository } from '@/common/security/secure-repository';
-import { PermissionService, User } from '@/common/security/permission.service';
+import { CreateJournalEntryDto } from './dto/create-journal-entry.dto';
+import { CacheService } from '@common/cache/cache.service';
+import { CacheTTL, generateCacheKey } from '@common/cache/cache.config';
+import { SecureRepository } from '@common/security/secure-repository';
+import { PermissionService, User } from '@common/security/permission.service';
 
 @Injectable()
 export class AccountService {
@@ -232,7 +233,7 @@ export class AccountService {
     );
   }
 
-  async createJournalEntry(user: User, dto: any): Promise<JournalEntry> {
+  async createJournalEntry(user: User, dto: CreateJournalEntryDto): Promise<JournalEntry> {
     // Generate auto number
     const number = await this.generateJournalNumber(user.tenantId);
 

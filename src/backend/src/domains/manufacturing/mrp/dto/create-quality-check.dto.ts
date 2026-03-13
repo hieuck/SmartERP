@@ -160,7 +160,7 @@ export class CreateQualityCheckDto {
 
   @ApiProperty({
     enum: QualityCheckResult,
-    example: QualityCheckResult.PASSED,
+    example: QualityCheckResult.PASS,
     description: 'Overall result',
   })
   @IsEnum(QualityCheckResult)

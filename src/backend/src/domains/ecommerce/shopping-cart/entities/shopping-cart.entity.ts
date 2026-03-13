@@ -10,10 +10,10 @@ import {
   BeforeInsert,
   BeforeUpdate,
 } from 'typeorm';
-import { User as UserEntity } from '../../../../core/user/entities/user.entity';import { CartStatus } from '../enums/cart-status.enum';
-
+import { User } from '@core/user/entities/user.entity';
+import { CartStatus } from '../enums/cart-status.enum';
 import { CartItem } from './cart-item.entity';
-import { User } from '@/common/security/permission.service';
+import { Address } from '../interfaces/address.interface';
 
 /**
  * ShoppingCart entity for eCommerce cart management
@@ -25,12 +25,12 @@ export class ShoppingCart {
 
   @Column({ unique: true })
   sessionId: string; // For guest users
-
   @Column({ nullable: true })
   userId: string; // For logged-in users
 
-  @ManyToOne(() => UserEntity, { nullable: true })
+  @ManyToOne(() => User, { nullable: true })
   @JoinColumn({ name: 'userId' })
+  user: User;({ name: 'userId' })
   user: User;
 
   @Column({ type: 'enum', enum: CartStatus, default: CartStatus.ACTIVE })
@@ -64,11 +64,11 @@ export class ShoppingCart {
 
   // Shipping address (JSON for flexibility)
   @Column({ type: 'jsonb', nullable: true })
-  shippingAddress: any;
+  shippingAddress: Address;
 
   // Billing address (JSON for flexibility)
   @Column({ type: 'jsonb', nullable: true })
-  billingAddress: any;
+  billingAddress: Address;
 
   // Notes
   @Column({ type: 'text', nullable: true })

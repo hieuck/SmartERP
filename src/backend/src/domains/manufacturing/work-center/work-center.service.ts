@@ -1,7 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { WorkCenter } from '../entities/work-center.entity';
+import { WorkCenter } from './entities/work-center.entity';
+import { CreateWorkCenterDto } from './dto/create-work-center.dto';
+import { UpdateWorkCenterDto } from './dto/update-work-center.dto';
 
 @Injectable()
 export class WorkCenterService {
@@ -10,16 +12,16 @@ export class WorkCenterService {
     private readonly workCenterRepository: Repository<WorkCenter>,
   ) {}
 
-  async create(dto: any, tenantId: string, user: any): Promise<WorkCenter> {
+  async create(tenantId: string, dto: CreateWorkCenterDto): Promise<WorkCenter> {
     const workCenter = this.workCenterRepository.create({
       tenantId,
       ...dto,
     });
 
-    return this.workCenterRepository.save(workCenter) as any;
+    return this.workCenterRepository.save(workCenter);
   }
 
-  async findOne(id: string, tenantId: string): Promise<WorkCenter> {
+  async findOne(tenantId: string, id: string): Promise<WorkCenter> {
     const workCenter = await this.workCenterRepository.findOne({
       where: { id, tenantId },
     });
@@ -44,11 +46,16 @@ export class WorkCenterService {
     });
   }
 
-  async update(id: string, dto: any, tenantId: string, user: any): Promise<WorkCenter> {
+  async update(tenantId: string, id: string, dto: UpdateWorkCenterDto): Promise<WorkCenter> {
     const workCenter = await this.findOne(tenantId, id);
 
     Object.assign(workCenter, dto);
 
-    return this.workCenterRepository.save(workCenter) as any;
+    return this.workCenterRepository.save(workCenter);
+  }
+
+  async remove(tenantId: string, id: string): Promise<void> {
+    const workCenter = await this.findOne(tenantId, id);
+    await this.workCenterRepository.remove(workCenter);
   }
 }

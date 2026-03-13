@@ -4,7 +4,6 @@ import { Repository } from 'typeorm';
 import { Report } from './entities/report.entity';
 import { ReportColumn } from './entities/report-column.entity';
 import { ReportType, ChartType, ColumnType, AggregationType } from './enums';
-import { User as UserEntity } from '../user/entities/user.entity';
 import { User } from '@/common/security/permission.service';
 
 export enum ReportCategory {

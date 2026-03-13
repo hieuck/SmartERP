@@ -1,5 +1,6 @@
 import { IsObject } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Address } from '../interfaces/address.interface';
 
 export class UpdateAddressDto {
   @ApiProperty({
@@ -14,5 +15,5 @@ export class UpdateAddressDto {
     },
   })
   @IsObject()
-  address: any;
+  address: Address;
 }

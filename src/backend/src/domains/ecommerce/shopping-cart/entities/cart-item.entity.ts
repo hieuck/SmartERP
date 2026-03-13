@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { ShoppingCart } from './shopping-cart.entity';
 import { ProductCatalog } from '../../product-catalog/entities/product-catalog.entity';
+import { ProductVariant } from '../interfaces/product-variant.interface';
 
 /**
  * CartItem entity for items in shopping cart
@@ -50,7 +51,7 @@ export class CartItem {
 
   // Variant selection (JSON for flexibility)
   @Column({ type: 'jsonb', nullable: true })
-  selectedVariant: any; // { size: 'M', color: 'Red' }
+  selectedVariant: ProductVariant;
 
   // Custom options/notes
   @Column({ type: 'text', nullable: true })

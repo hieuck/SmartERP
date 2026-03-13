@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { BOM } from '../enums/manufacturing.enum';
-import { BOMLine } from '../enums/manufacturing.enum';
+import { BOM } from './entities/bom.entity';
+import { BOMLine } from './entities/bom-line.entity';
 import { BOMService } from './bom.service';
 import { BOMController } from './bom.controller';
 

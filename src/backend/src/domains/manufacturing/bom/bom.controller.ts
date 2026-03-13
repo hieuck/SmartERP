@@ -13,9 +13,7 @@ import { BOMService } from './bom.service';
 import { CreateBOMDto } from './dto/create-bom.dto';
 import { UpdateBOMDto } from './dto/update-bom.dto';
 import { AddBOMLineDto } from './dto/add-bom-line.dto';
-import { Roles } from '../../../common/decorators/roles.decorator';
-
-import { User } from '@/common/security/permission.service';
+import { Roles } from '@common/decorators/roles.decorator';
 @ApiTags('manufacturing-bom')
 @ApiBearerAuth()
 @Controller('manufacturing/bom')
@@ -35,7 +33,7 @@ export class BOMController {
   @ApiOperation({ summary: 'Get BOM by ID' })
   @ApiResponse({ status: 200, description: 'BOM found' })
   async findOne(@Param('id') id: string, @Request() req) {
-    return this.bomService.findOne(id, req.user.tenantId);
+    return this.bomService.findOne(req.user.tenantId, id);
   }
 
   @Get('product/:productId')
@@ -43,7 +41,7 @@ export class BOMController {
   @ApiOperation({ summary: 'Get BOMs by product ID' })
   @ApiResponse({ status: 200, description: 'BOMs found' })
   async findByProduct(@Param('productId') productId: string, @Request() req) {
-    return this.bomService.findByProduct(productId, req.user.tenantId);
+    return this.bomService.findByProduct(req.user.tenantId, productId);
   }
 
   @Get('product/:productId/active')
@@ -87,7 +85,7 @@ export class BOMController {
     @Param('lineId') lineId: string,
     @Request() req,
   ) {
-    // removeLine method not implemented yet
+    return this.bomService.removeLine(req.user.tenantId, bomId, lineId);
   }
 
   @Get(':id/cost')
@@ -104,7 +102,7 @@ export class BOMController {
   @ApiOperation({ summary: 'Delete BOM' })
   @ApiResponse({ status: 200, description: 'BOM deleted successfully' })
   async remove(@Param('id') id: string, @Request() req) {
-    // remove method not implemented yet
+    await this.bomService.remove(req.user.tenantId, id);
     return { message: 'BOM deleted successfully' };
   }
 }

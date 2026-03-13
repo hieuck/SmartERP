@@ -6,6 +6,7 @@ import {
   Min,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ProductVariant } from '../interfaces/product-variant.interface';
 
 export class AddToCartDto {
   @ApiProperty({ example: 'prod-uuid-123' })
@@ -22,7 +23,7 @@ export class AddToCartDto {
   })
   @IsOptional()
   @IsObject()
-  selectedVariant?: any;
+  selectedVariant?: ProductVariant;
 
   @ApiPropertyOptional({ example: 'Gift wrap please' })
   @IsOptional()

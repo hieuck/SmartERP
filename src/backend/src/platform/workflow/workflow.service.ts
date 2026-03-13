@@ -2,8 +2,8 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Workflow } from './entities/workflow.entity';
-import { WorkflowInstance } from './entities/workflow-instance.entity';
-import { WorkflowStatus, WorkflowInstanceStatus } from './enums';
+import { WorkflowInstance, WorkflowInstanceStatus } from './entities/workflow-instance.entity';
+import { WorkflowStatus } from './enums';
 import { CacheService } from '@/common/cache/cache.service';
 import { CacheTTL, generateCacheKey } from '@/common/cache/cache.config';
 import { SecureRepository } from '@/common/security/secure-repository';
@@ -128,7 +128,7 @@ export class WorkflowService {
       throw new BadRequestException('Workflow is not active');
     }
 
-    const instance = {
+    const instance = this.instanceRepository.create({
       workflowId,
       entityType,
       entityId,
@@ -136,7 +136,8 @@ export class WorkflowService {
       status: WorkflowInstanceStatus.IN_PROGRESS,
       currentStep: 0,
       stepHistory: [],
-    };
+      tenantId: user.tenantId,
+    });
 
     return this.secureInstanceRepo.save(user, instance);
   }

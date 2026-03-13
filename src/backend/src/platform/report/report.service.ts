@@ -5,7 +5,7 @@ import { Report } from './entities/report.entity';
 import { ReportColumn } from './entities/report-column.entity';
 import { ReportExecution } from './entities/report-execution.entity';
 import { ReportType, AggregationType } from '../enums/platform.enum';
-import { User as UserEntity } from '@/core/user/entities/user.entity';
+import { ExecutionStatus } from './enums/execution-status.enum';
 import { User } from '@/common/security/permission.service';
 
 // Whitelist of allowed aggregation functions (security)

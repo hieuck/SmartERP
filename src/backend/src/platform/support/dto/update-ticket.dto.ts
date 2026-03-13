@@ -9,7 +9,10 @@ import {
   Max,
   Min,
 } from 'class-validator';
-import { IssuePriority, IssueStatus, IssueType, TicketChannel } from '../enums';
+import { IssuePriority } from '@/platform/issue-tracking/enums/issue-priority.enum';
+import { IssueStatus } from '@/platform/issue-tracking/enums/issue-status.enum';
+import { IssueType } from '@/platform/issue-tracking/enums/issue-type.enum';
+import { TicketChannel } from '../enums';
 
 export class UpdateTicketDto {
   @ApiPropertyOptional({ description: 'Ticket title' })

@@ -12,9 +12,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 import { WorkCenterService } from './work-center.service';
 import { CreateWorkCenterDto } from './dto/create-work-center.dto';
 import { UpdateWorkCenterDto } from './dto/update-work-center.dto';
-import { Roles } from '../../../common/decorators/roles.decorator';
-
-import { User } from '@/common/security/permission.service';
+import { Roles } from '@common/decorators/roles.decorator';
 @ApiTags('manufacturing-work-centers')
 @ApiBearerAuth()
 @Controller('manufacturing/work-centers')
@@ -26,7 +24,7 @@ export class WorkCenterController {
   @ApiOperation({ summary: 'Create a new work center' })
   @ApiResponse({ status: 201, description: 'Work center created successfully' })
   async create(@Body() dto: CreateWorkCenterDto, @Request() req) {
-    return this.workCenterService.create(dto, req.user.tenantId, req.user);
+    return this.workCenterService.create(req.user.tenantId, dto);
   }
 
   @Get()
@@ -42,7 +40,7 @@ export class WorkCenterController {
   @ApiOperation({ summary: 'Get work center by ID' })
   @ApiResponse({ status: 200, description: 'Work center found' })
   async findOne(@Param('id') id: string, @Request() req) {
-    return this.workCenterService.findOne(id, req.user.tenantId);
+    return this.workCenterService.findOne(req.user.tenantId, id);
   }
 
   @Patch(':id')
@@ -54,7 +52,7 @@ export class WorkCenterController {
     @Body() dto: UpdateWorkCenterDto,
     @Request() req,
   ) {
-    return this.workCenterService.update(id, dto, req.user.tenantId, req.user);
+    return this.workCenterService.update(req.user.tenantId, id, dto);
   }
 
   @Delete(':id')
@@ -62,7 +60,7 @@ export class WorkCenterController {
   @ApiOperation({ summary: 'Delete work center' })
   @ApiResponse({ status: 200, description: 'Work center deleted successfully' })
   async remove(@Param('id') id: string, @Request() req) {
-    // remove method not implemented yet
+    await this.workCenterService.remove(req.user.tenantId, id);
     return { message: 'Work center deleted successfully' };
   }
 }

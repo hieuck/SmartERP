@@ -1,12 +1,13 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User, PermissionService } from '../../../common/security/permission.service';
-import { SecureRepository } from '../../../common/security/secure-repository';
+import { User, PermissionService } from '@common/security/permission.service';
+import { SecureRepository } from '@common/security/secure-repository';
 import { ProcessPaymentDto, VerifyPaymentDto } from './dto/payment.dto';
 import { RefundDto } from './dto/refund.dto';
 import { Order } from './entities/order.entity';
 import { PaymentStatus } from '../enums/ecommerce.enum';
+import { PaymentDetails } from './interfaces/payment-details.interface';
 
 /**
  * PaymentService handles payment gateway integration
@@ -209,7 +210,7 @@ export class PaymentService {
   private async processStripe(
     order: Order,
     token?: string,
-    details?: any,
+    details?: PaymentDetails,
   ): Promise<{ success: boolean; transactionId: string; message: string }> {
     // TODO: Implement Stripe integration
     return {
@@ -222,7 +223,7 @@ export class PaymentService {
   private async processPayPal(
     order: Order,
     token?: string,
-    details?: any,
+    details?: PaymentDetails,
   ): Promise<{ success: boolean; transactionId: string; message: string }> {
     // TODO: Implement PayPal integration
     return {
@@ -234,7 +235,7 @@ export class PaymentService {
 
   private async processVNPay(
     order: Order,
-    details?: any,
+    details?: PaymentDetails,
   ): Promise<{ success: boolean; transactionId: string; message: string }> {
     // TODO: Implement VNPay integration
     return {
@@ -246,7 +247,7 @@ export class PaymentService {
 
   private async processMomo(
     order: Order,
-    details?: any,
+    details?: PaymentDetails,
   ): Promise<{ success: boolean; transactionId: string; message: string }> {
     // TODO: Implement Momo integration
     return {

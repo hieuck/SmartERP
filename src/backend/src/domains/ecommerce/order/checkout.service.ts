@@ -1,13 +1,15 @@
-import { PermissionService, User } from '@/common/security/permission.service';
-import { SecureRepository } from '@/common/security/secure-repository';
+import { PermissionService, User } from '@common/security/permission.service';
+import { SecureRepository } from '@common/security/secure-repository';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ShoppingCart } from '@/domains/ecommerce/shopping-cart/entities/shopping-cart.entity';
+import { ShoppingCart } from '@domains/ecommerce/shopping-cart/entities/shopping-cart.entity';
+import { Address } from '@domains/ecommerce/shopping-cart/interfaces/address.interface';
 import { CheckoutDto } from './dto/checkout.dto';
 import { Order } from './entities/order.entity';
 import { OrderItem } from './entities/order-item.entity';
 import { OrderStatus, PaymentStatus, ShippingStatus } from '../enums/ecommerce.enum';
+import { CartStatus } from '@domains/ecommerce/shopping-cart/enums/cart-status.enum';
 
 /**
  * CheckoutService handles checkout flow and order creation from cart
@@ -124,10 +126,10 @@ export class CheckoutService {
     const order = { ...newOrder, items: orderItems };
 
     // Save order (cascade will save items)
-    const savedOrder = await this.secureOrderRepo.save(user, order as any);
+    const savedOrder = await this.secureOrderRepo.save(user, order);
 
     // Mark cart as converted
-    cart.status = 'converted' as any;
+    cart.status = CartStatus.CONVERTED;
     cart.orderId = savedOrder.id;
     cart.convertedAt = new Date();
     await this.secureCartRepo.save(user, cart);
@@ -170,7 +172,7 @@ export class CheckoutService {
    * Calculate tax based on cart and shipping address
    * TODO: Implement actual tax calculation logic based on business rules
    */
-  async calculateTax(cart: ShoppingCart, shippingAddress: any): Promise<number> {
+  async calculateTax(cart: ShoppingCart, shippingAddress: Address): Promise<number> {
     // Simple tax calculation: 10% of subtotal
     // In production, this should use actual tax rules based on location
     const taxRate = 0.1; // 10%
@@ -183,7 +185,7 @@ export class CheckoutService {
    */
   async calculateShipping(
     cart: ShoppingCart,
-    shippingAddress: any,
+    shippingAddress: Address,
     shippingMethod?: string,
   ): Promise<number> {
     // Simple shipping calculation

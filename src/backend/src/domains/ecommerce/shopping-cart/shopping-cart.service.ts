@@ -1,12 +1,14 @@
-import { PermissionService, User } from '@/common/security/permission.service';
-import { SecureRepository } from '@/common/security/secure-repository';
+import { PermissionService, User } from '@common/security/permission.service';
+import { SecureRepository } from '@common/security/secure-repository';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ProductCatalog } from '@/domains/ecommerce/product-catalog/entities/product-catalog.entity';
+import { ProductCatalog } from '@domains/ecommerce/product-catalog/entities/product-catalog.entity';
 import { ShoppingCart } from './entities/shopping-cart.entity';
 import { CartItem } from './entities/cart-item.entity';
 import { CartStatus } from './enums/cart-status.enum';
+import { AddToCartDto } from './dto/add-to-cart.dto';
+import { Address } from './interfaces/address.interface';
 
 @Injectable()
 export class ShoppingCartService {
@@ -85,7 +87,7 @@ export class ShoppingCartService {
   async addItem(
     user: User,
     sessionId: string,
-    dto: { productId: string; quantity: number; selectedVariant?: any },
+    dto: AddToCartDto,
   ): Promise<ShoppingCart> {
     const cart = await this.getOrCreateCart(user, sessionId);
     const product = await this.secureProductRepo.findOne(user, {
@@ -198,14 +200,14 @@ export class ShoppingCartService {
     return this.findOne(user, cartId);
   }
 
-  async updateShippingAddress(user: User, cartId: string, address: any): Promise<ShoppingCart> {
+  async updateShippingAddress(user: User, cartId: string, address: Address): Promise<ShoppingCart> {
     const cart = await this.findOne(user, cartId);
     cart.shippingAddress = address;
     await this.secureCartRepo.save(user, cart);
     return this.findOne(user, cartId);
   }
 
-  async updateBillingAddress(user: User, cartId: string, address: any): Promise<ShoppingCart> {
+  async updateBillingAddress(user: User, cartId: string, address: Address): Promise<ShoppingCart> {
     const cart = await this.findOne(user, cartId);
     cart.billingAddress = address;
     await this.secureCartRepo.save(user, cart);

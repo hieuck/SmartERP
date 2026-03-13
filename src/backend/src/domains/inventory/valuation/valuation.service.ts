@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThan } from 'typeorm';
-import { StockValuation } from '../enums/inventory.enum';
+import { StockValuation } from './entities/stock-valuation.entity';
 
 @Injectable()
 export class ValuationService {
