@@ -4,6 +4,7 @@ import { Repository, Between } from 'typeorm';
 import { Account } from './entities/account.entity';
 import { AccountType } from './enums/account-type.enum';
 import { JournalEntry } from './entities/journal-entry.entity';
+import { JournalEntryStatus } from './enums/journal-entry-status.enum';
 import { Invoice } from './entities/invoice.entity';
 import { InvoiceType } from './enums/invoice-type.enum';
 import { CreateJournalEntryDto } from './dto/create-journal-entry.dto';
@@ -237,13 +238,30 @@ export class AccountService {
     // Generate auto number
     const number = await this.generateJournalNumber(user.tenantId);
 
-    const entry = {
-      ...dto,
+    // Create entry without lines first
+    const entry = this.journalEntryRepository.create({
       number,
-      status: 'draft',
-    };
+      date: dto.date,
+      reference: dto.reference,
+      memo: dto.memo,
+      status: JournalEntryStatus.DRAFT,
+      createdBy: user.id,
+      tenantId: user.tenantId,
+    });
 
-    return this.secureJournalRepo.save(user, entry);
+    // Save entry to get ID
+    const savedEntry = await this.secureJournalRepo.save(user, entry);
+
+    // Create lines with entryId
+    savedEntry.lines = dto.lines.map((lineDto) => ({
+      ...lineDto,
+      entryId: savedEntry.id,
+      tenantId: user.tenantId,
+      createdBy: user.id,
+    })) as any;
+
+    // Save with lines (cascade will save lines)
+    return this.secureJournalRepo.save(user, savedEntry);
   }
 
   async postJournalEntry(user: User, id: string): Promise<JournalEntry> {

@@ -107,10 +107,7 @@ export class AccountController {
   @Post('journal-entries')
   @ApiOperation({ summary: 'Create journal entry' })
   createJournalEntry(@CurrentUser() user: User, @Body() data: CreateJournalEntryDto) {
-    return this.accountingService.createJournalEntry(
-      user,
-      data as unknown as Partial<JournalEntry>,
-    );
+    return this.accountingService.createJournalEntry(user, data);
   }
 
   @Post('journal-entries/:id/post')

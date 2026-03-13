@@ -7,12 +7,39 @@ End-to-end tests using Playwright to ensure the complete user journey works corr
 ## Test Coverage
 
 ### Authentication (`auth.spec.ts`)
-- ✅ Login flow
-- ✅ Registration flow
-- ✅ Session persistence
-- ✅ Logout
-- ✅ Protected routes
-- ✅ Form validation
+
+#### Registration Flow
+- ✅ Display registration form with all required fields
+- ✅ Validate empty form submission
+- ✅ Validate email format
+- ✅ Validate phone format (10-11 digits)
+- ✅ Validate password strength (min 8 chars, uppercase, lowercase, number)
+- ✅ Validate password confirmation match
+- ✅ Validate terms acceptance
+- ✅ Auto-generate slug from company name
+- ✅ Register successfully with valid data
+- ✅ Show error for duplicate email
+- ✅ Link to login page
+
+#### Login Flow
+- ✅ Display login page with all elements
+- ✅ Validate empty form submission
+- ✅ Validate email format
+- ✅ Validate password length (min 6 chars)
+- ✅ Show error for invalid credentials
+- ✅ Login successfully with valid credentials
+- ✅ Remember email when "remember me" checked
+- ✅ Link to registration page
+
+#### Session Management
+- ✅ Persist session after page reload
+- ✅ Logout successfully
+- ✅ Redirect to login when accessing protected route without auth
+- ✅ Redirect authenticated user from login to dashboard
+- ✅ Redirect authenticated user from register to dashboard
+
+#### Complete User Journey
+- ✅ Full registration → logout → login flow
 
 ### Dashboard (`dashboard.spec.ts`)
 - ✅ KPI cards display

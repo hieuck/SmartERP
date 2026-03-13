@@ -3,9 +3,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { DashboardController } from './dashboard.controller';
 import { DashboardMobileController } from './dashboard-mobile.controller';
 import { DashboardService } from './dashboard.service';
-// import { Order } from './entities/order.entity'; // TODO: Create Order entity or import from correct domain
+import { Order } from '@/domains/sales/order/entities/order.entity';
 import { Product } from '@/domains/inventory/product/entities/product.entity';
-// import { Customer } from './entities/customer.entity'; // TODO: Create Customer entity or import from correct domain
+import { Customer } from '@/domains/sales/customer/entities/customer.entity';
 import { Inventory } from '@/domains/inventory/stock/entities/inventory.entity';
 import { Payment } from '@/domains/accounting/payment/entities/payment.entity';
 import { CacheModule } from '@/common/cache/cache.module';
@@ -13,7 +13,7 @@ import { SecurityModule } from '@/common/security/security.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Product, Inventory, Payment]),
+    TypeOrmModule.forFeature([Order, Product, Customer, Inventory, Payment]),
     CacheModule,
     SecurityModule,
   ],

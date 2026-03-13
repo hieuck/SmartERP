@@ -1,10 +1,10 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, FindOptionsWhere } from 'typeorm';
 import { Setting } from './entities/setting.entity';
 import { CreateSettingDto } from './dto/create-setting.dto';
 import { UpdateSettingDto } from './dto/update-setting.dto';
-import { User } from '@/common/security/permission.service';
+import { User } from '@common/security/permission.service';
 
 @Injectable()
 export class SettingsService {
@@ -32,7 +32,7 @@ export class SettingsService {
   }
 
   async findAll(user: User, category?: string): Promise<Setting[]> {
-    const where: any = { tenantId: user.tenantId };
+    const where: FindOptionsWhere<Setting> = { tenantId: user.tenantId };
     if (category) {
       where.category = category;
     }

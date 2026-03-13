@@ -47,6 +47,22 @@ export class CheckoutService {
   }
 
   /**
+   * Convert AddressDto to Address format
+   */
+  private convertToAddress(addressDto: any): Address {
+    return {
+      fullName: addressDto.fullName,
+      phone: addressDto.phone,
+      address: addressDto.addressLine1 + (addressDto.addressLine2 ? `, ${addressDto.addressLine2}` : ''),
+      city: addressDto.city,
+      district: addressDto.state || '',
+      ward: '',
+      postalCode: addressDto.postalCode,
+      country: addressDto.country,
+    };
+  }
+
+  /**
    * Initiate checkout process
    */
   async initiateCheckout(
@@ -66,11 +82,14 @@ export class CheckoutService {
     // Validate cart
     await this.validateCart(cart);
 
+    // Convert address
+    const shippingAddress = this.convertToAddress(dto.shippingAddress);
+
     // Calculate tax
-    const tax = await this.calculateTax(cart, dto.shippingAddress);
+    const tax = await this.calculateTax(cart, shippingAddress);
 
     // Calculate shipping
-    const shipping = await this.calculateShipping(cart, dto.shippingAddress, dto.shippingMethod);
+    const shipping = await this.calculateShipping(cart, shippingAddress, dto.shippingMethod);
 
     // Calculate total
     const total = cart.subtotal + tax + shipping - (cart.discount || 0);
@@ -85,8 +104,14 @@ export class CheckoutService {
     // Initiate checkout to get calculations
     const { cart, tax, shipping, total } = await this.initiateCheckout(dto, user);
 
+    // Convert addresses
+    const shippingAddress = this.convertToAddress(dto.shippingAddress);
+    const billingAddress = dto.billingAddress 
+      ? this.convertToAddress(dto.billingAddress)
+      : shippingAddress;
+
     // Create order
-    const newOrder = {
+    const newOrder = this.orderRepository.create({
       customerId: user.id,
       cartId: cart.id,
       status: OrderStatus.PENDING,
@@ -94,8 +119,8 @@ export class CheckoutService {
       shippingStatus: ShippingStatus.PENDING,
       customerEmail: dto.customerEmail,
       customerPhone: dto.customerPhone,
-      shippingAddress: dto.shippingAddress,
-      billingAddress: dto.billingAddress || dto.shippingAddress,
+      shippingAddress,
+      billingAddress,
       shippingMethod: dto.shippingMethod,
       paymentMethod: dto.paymentMethod,
       couponCode: cart.couponCode,
@@ -106,27 +131,25 @@ export class CheckoutService {
       total,
       customerNotes: dto.customerNotes,
       tenantId: user.tenantId,
-      createdBy: user.id,
-    };
+    });
 
     // Create order items from cart items
-    const orderItems = cart.items.map((cartItem) => ({
-      productId: cartItem.productId,
-      productName: cartItem.productName,
-      productSku: cartItem.productSku,
-      productImage: cartItem.productImage,
-      price: cartItem.price,
-      quantity: cartItem.quantity,
-      selectedVariant: cartItem.selectedVariant,
-      notes: cartItem.notes,
-      tenantId: user.tenantId,
-      createdBy: user.id,
-    }));
-
-    const order = { ...newOrder, items: orderItems };
+    newOrder.items = cart.items.map((cartItem) => 
+      this.orderItemRepository.create({
+        productId: cartItem.productId,
+        productName: cartItem.productName,
+        productSku: cartItem.productSku,
+        productImage: cartItem.productImage,
+        price: cartItem.price,
+        quantity: cartItem.quantity,
+        selectedVariant: cartItem.selectedVariant,
+        notes: cartItem.notes,
+        tenantId: user.tenantId,
+      })
+    );
 
     // Save order (cascade will save items)
-    const savedOrder = await this.secureOrderRepo.save(user, order);
+    const savedOrder = await this.secureOrderRepo.save(user, newOrder);
 
     // Mark cart as converted
     cart.status = CartStatus.CONVERTED;

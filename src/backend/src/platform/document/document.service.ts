@@ -1,12 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, FindOptionsWhere, IsNull } from 'typeorm';
 import { Document } from './entities/document.entity';
 import { DocumentType } from './enums/document-type.enum';
-import { CacheService } from '@/common/cache/cache.service';
-import { CacheTTL, generateCacheKey } from '@/common/cache/cache.config';
-import { SecureRepository } from '@/common/security/secure-repository';
-import { PermissionService, User } from '@/common/security/permission.service';
+import { CacheService } from '@common/cache/cache.service';
+import { CacheTTL, generateCacheKey } from '@common/cache/cache.config';
+import { SecureRepository } from '@common/security/secure-repository';
+import { PermissionService, User } from '@common/security/permission.service';
 
 @Injectable()
 export class DocumentService {
@@ -26,11 +26,11 @@ export class DocumentService {
   }
 
   async findAll(user: User, parentId?: string): Promise<Document[]> {
-    const where: any = {};
+    const where: FindOptionsWhere<Document> = {};
     if (parentId) {
       where.parentId = parentId;
     } else {
-      where.parentId = null;
+      where.parentId = IsNull();
     }
 
     return this.secureDocumentRepo.find(user, {

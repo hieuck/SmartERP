@@ -21,6 +21,7 @@ import { User as UserEntity } from '../user/entities/user.entity';
 import { RegisterTenantDto } from './dto/register-tenant.dto';
 import { AccountLockoutService } from './services/account-lockout.service';
 import { TokenBlacklistService } from './services/token-blacklist.service';
+import { JwtPayload } from './interfaces/jwt-payload.interface';
 
 @Injectable()
 export class AuthService {
@@ -178,9 +179,9 @@ export class AuthService {
    * @param token JWT token
    * @returns Decoded token payload
    */
-  decodeToken(token: string): any {
+  decodeToken(token: string): JwtPayload | null {
     try {
-      return this.jwtService.decode(token);
+      return this.jwtService.decode(token) as JwtPayload;
     } catch (error) {
       this.logger.error('Failed to decode token', { error: error.message });
       return null;

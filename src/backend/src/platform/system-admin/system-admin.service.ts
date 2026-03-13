@@ -1,17 +1,20 @@
-import { PermissionService } from '@/common/security/permission.service';
-import { SecureRepository } from '@/common/security/secure-repository';
+import { PermissionService } from '@common/security/permission.service';
+import { SecureRepository } from '@common/security/secure-repository';
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, FindOptionsWhere } from 'typeorm';
 import { User } from '@core/user/entities/user.entity';
 import { CreateBackgroundJobDto } from './dto/create-background-job.dto';
 import { CreateSystemSettingDto } from './dto/create-system-setting.dto';
+import { CreateErrorLogDto } from './dto/create-error-log.dto';
+import { ErrorLogFiltersDto } from './dto/error-log-filters.dto';
 import { UpdateErrorLogDto } from './dto/update-error-log.dto';
 import { UpdateSystemSettingDto } from './dto/update-system-setting.dto';
 import { BackgroundJob } from './entities/background-job.entity';
 import { ErrorLog } from './entities/error-log.entity';
 import { SystemSetting } from './entities/system-setting.entity';
 import { JobStatus } from './enums';
+import { SystemHealthResponse } from './interfaces/system-health.interface';
 
 @Injectable()
 export class SystemAdminService {
@@ -72,9 +75,9 @@ export class SystemAdminService {
   }
 
   async getAllSettings(user: User, category?: string): Promise<SystemSetting[]> {
-    const where: any = {};
+    const where: FindOptionsWhere<SystemSetting> = {};
     if (category) {
-      where.category = category;
+      where.category = category as any;
     }
 
     return this.secureSettingRepo.find(user, {
@@ -140,7 +143,7 @@ export class SystemAdminService {
     user: User,
     id: string,
     status: JobStatus,
-    result?: any,
+    result?: Record<string, any>,
     errorMessage?: string,
   ): Promise<BackgroundJob> {
     const job = await this.getJobById(user, id);
@@ -164,7 +167,7 @@ export class SystemAdminService {
   }
 
   // Error Logs
-  async createErrorLog(user: User, createDto: any): Promise<ErrorLog> {
+  async createErrorLog(user: User, createDto: CreateErrorLogDto): Promise<ErrorLog> {
     const errorLog = {
       ...createDto,
       userId: user.id,
@@ -174,9 +177,9 @@ export class SystemAdminService {
     return Array.isArray(saved) ? saved[0] : saved;
   }
 
-  async getErrorLogs(user: User, filters: any): Promise<ErrorLog[]> {
+  async getErrorLogs(user: User, filters: ErrorLogFiltersDto): Promise<ErrorLog[]> {
     // Use SecureRepository for basic filtering
-    const where: any = {};
+    const where: FindOptionsWhere<ErrorLog> = {};
 
     if (filters.severity) {
       where.severity = filters.severity;
@@ -250,7 +253,7 @@ export class SystemAdminService {
   }
 
   // System Health
-  async getSystemHealth(user: User): Promise<any> {
+  async getSystemHealth(user: User): Promise<SystemHealthResponse> {
     // System health queries need to count across tenant
     // Use raw repository with explicit tenant filtering
     const [pendingJobs, failedJobs, unresolvedErrors] = await Promise.all([

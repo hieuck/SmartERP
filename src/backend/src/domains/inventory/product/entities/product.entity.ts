@@ -1,7 +1,7 @@
-import { Entity, Column, Index } from 'typeorm';import { ProductStatus } from '../enums/product-status.enum';
+import { Entity, Column, Index } from 'typeorm';
+import { ProductStatus } from '../enums/product-status.enum';
 import { ProductType } from '../enums/product-type.enum';
 import { TrackingType } from '../enums/tracking-type.enum';
-
 import { BaseEntity } from '@/common/entities/base.entity';
 
 @Entity('products')

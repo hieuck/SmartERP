@@ -87,9 +87,8 @@ import { CrmModule } from './domains/sales/crm/crm.module';
           username: configService.get('DB_USER', 'postgres'),
           password: configService.get('DB_PASSWORD', 'postgres'),
           database: configService.get('DB_NAME', 'erp_production'),
-          entities: isProduction
-            ? [__dirname + '/dist/**/*.entity.js']
-            : [__dirname + '/../**/*.entity.ts'],
+          entities: [__dirname + '/**/*.entity{.ts,.js}'],
+          autoLoadEntities: true,
           synchronize: false,
           logging: configService.get('NODE_ENV') === 'development',
           migrations: isProduction

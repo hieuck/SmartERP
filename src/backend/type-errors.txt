@@ -1,0 +1,376 @@
+﻿
+> @smart-erp/monolith-app@1.0.0 type-check
+> tsc --noEmit
+
+src/__tests__/integration/reports/reports.service.spec.ts(6,29): error TS2307: Cannot find module '@/domains/accounting/journal/entities/journal-line.entity' or its corresponding type declarations.
+src/__tests__/integration/reports/reports.service.spec.ts(9,25): error TS2307: Cannot find module '@/domains/accounting/invoice/entities/invoice.entity' or its corresponding type declarations.
+src/__tests__/integration/reports/reports.service.spec.ts(116,52): error TS2345: Argument of type '{ id: string; tenantId: string; role: string; }' is not assignable to parameter of type 'User'.
+  Property 'roles' is missing in type '{ id: string; tenantId: string; role: string; }' but required in type 'User'.
+src/__tests__/integration/reports/reports.service.spec.ts(156,44): error TS2339: Property 'mockReturnValue' does not exist on type '(alias?: string, queryRunner?: QueryRunner) => SelectQueryBuilder<Invoice>'.
+src/__tests__/integration/reports/reports.service.spec.ts(159,9): error TS2345: Argument of type '{ id: string; tenantId: string; role: string; }' is not assignable to parameter of type 'User'.
+  Property 'roles' is missing in type '{ id: string; tenantId: string; role: string; }' but required in type 'User'.
+src/__tests__/integration/reports/reports.service.spec.ts(202,44): error TS2339: Property 'mockReturnValue' does not exist on type '(alias?: string, queryRunner?: QueryRunner) => SelectQueryBuilder<Product>'.
+src/__tests__/integration/reports/reports.service.spec.ts(204,56): error TS2345: Argument of type '{ id: string; tenantId: string; role: string; }' is not assignable to parameter of type 'User'.
+  Property 'roles' is missing in type '{ id: string; tenantId: string; role: string; }' but required in type 'User'.
+src/__tests__/integration/reports/reports.service.spec.ts(237,44): error TS2339: Property 'mockReturnValue' does not exist on type '(alias?: string, queryRunner?: QueryRunner) => SelectQueryBuilder<Product>'.
+src/__tests__/integration/reports/reports.service.spec.ts(239,58): error TS2345: Argument of type '{ id: string; tenantId: string; role: string; }' is not assignable to parameter of type 'User'.
+  Property 'roles' is missing in type '{ id: string; tenantId: string; role: string; }' but required in type 'User'.
+src/common/gdpr/gdpr.service.spec.ts(70,15): error TS2304: Cannot find name 'ConsentType'.
+src/common/gdpr/gdpr.service.spec.ts(90,73): error TS2304: Cannot find name 'ConsentType'.
+src/common/gdpr/gdpr.service.spec.ts(99,80): error TS2304: Cannot find name 'ExportStatus'.
+src/common/gdpr/gdpr.service.spec.ts(122,80): error TS2304: Cannot find name 'DeletionStatus'.
+src/common/gdpr/gdpr.service.spec.ts(134,75): error TS2304: Cannot find name 'DeletionStatus'.
+src/common/gdpr/gdpr.service.spec.ts(142,42): error TS2304: Cannot find name 'DeletionStatus'.
+src/common/gdpr/gdpr.service.spec.ts(143,45): error TS2304: Cannot find name 'DeletionStatus'.
+src/common/gdpr/gdpr.service.spec.ts(150,34): error TS2304: Cannot find name 'DeletionStatus'.
+src/core/auth/auth.controller.spec.ts(168,67): error TS2345: Argument of type '{ success: boolean; data: { tenant: { id: string; name: string; subdomain: string; plan: SubscriptionPlan; trialEndsAt: Date; }; user: { id: string; email: string; firstName: string; lastName: string; role: string; emailVerified: boolean; }; accessToken: string; refreshToken: string; emailVerificationToken: string; ...' is not assignable to parameter of type '{ user: { id: string; email: string; firstName?: string; lastName?: string; tenantId: string; role: string; }; token: string; refreshToken: string; } | Promise<{ user: { id: string; email: string; firstName?: string; lastName?: string; tenantId: string; role: string; }; token: string; refreshToken: string; }>'.
+src/core/auth/auth.service.extended.spec.ts(134,44): error TS2339: Property 'STARTER' does not exist on type 'typeof SubscriptionPlan'.
+src/core/auth/auth.service.extended.spec.ts(159,21): error TS2339: Property 'tenant' does not exist on type '{ user: { id: string; email: string; firstName?: string; lastName?: string; tenantId: string; role: string; }; token: string; refreshToken: string; }'.
+src/core/auth/auth.service.extended.spec.ts(160,21): error TS2339: Property 'accessToken' does not exist on type '{ user: { id: string; email: string; firstName?: string; lastName?: string; tenantId: string; role: string; }; token: string; refreshToken: string; }'.
+src/core/auth/auth.service.extended.spec.ts(271,49): error TS2554: Expected 1 arguments, but got 2.
+src/core/auth/auth.service.extended.spec.ts(275,21): error TS2339: Property 'accessToken' does not exist on type '{ token: string; user: { id: string; email: string; firstName: string; lastName: string; tenantId: string; role: string; }; }'.
+src/core/auth/auth.service.extended.spec.ts(286,58): error TS2554: Expected 1 arguments, but got 2.
+src/core/auth/auth.service.extended.spec.ts(303,51): error TS2554: Expected 1 arguments, but got 2.
+src/core/auth/auth.service.extended.spec.ts(318,30): error TS2339: Property 'verifyToken' does not exist on type 'AuthService'.
+src/core/auth/auth.service.extended.spec.ts(333,28): error TS2339: Property 'verifyToken' does not exist on type 'AuthService'.
+src/core/auth/auth.service.extended.spec.ts(354,34): error TS2554: Expected 1 arguments, but got 2.
+src/core/auth/auth.service.extended.spec.ts(368,36): error TS2339: Property 'getUserFromCache' does not exist on type 'AuthService'.
+src/core/auth/auth.service.extended.spec.ts(383,21): error TS2339: Property 'checkPermission' does not exist on type 'AuthService'.
+src/core/permission/permission.service.spec.ts(9,28): error TS2307: Cannot find module '../entities/permission.entity' or its corresponding type declarations.
+src/core/permission/permission.service.spec.ts(10,34): error TS2307: Cannot find module '../enums/permission-action.enum' or its corresponding type declarations.
+src/core/settings/settings.service.spec.ts(6,25): error TS2307: Cannot find module '../entities/setting.entity' or its corresponding type declarations.
+src/core/tenant/onboarding.service.spec.ts(7,24): error TS2307: Cannot find module '../entities/tenant.entity' or its corresponding type declarations.
+src/core/tenant/tenant.controller.spec.ts(3,30): error TS2307: Cannot find module '../enums/tenant-status.enum' or its corresponding type declarations.
+src/core/tenant/tenant.service.spec.ts(8,24): error TS2307: Cannot find module '../entities/tenant.entity' or its corresponding type declarations.
+src/core/tenant/tenant.service.spec.ts(9,30): error TS2307: Cannot find module '../enums/tenant-status.enum' or its corresponding type declarations.
+src/core/tenant/tenant.service.spec.ts(10,34): error TS2307: Cannot find module '../enums/subscription-plan.enum' or its corresponding type declarations.
+src/core/tenant/tenant.service.spec.ts(11,30): error TS2307: Cannot find module '../enums/billing-cycle.enum' or its corresponding type declarations.
+src/core/user/user.service.spec.ts(9,22): error TS2307: Cannot find module '../entities/user.entity' or its corresponding type declarations.
+src/domains/accounting/account/account.controller.spec.ts(3,38): error TS2307: Cannot find module './accounting.controller' or its corresponding type declarations.
+src/domains/accounting/account/account.controller.spec.ts(8,10): error TS2459: Module '"./entities/account.entity"' declares 'AccountType' locally, but it is not exported.
+src/domains/accounting/account/account.controller.spec.ts(9,10): error TS2305: Module '"./entities/account.entity"' has no exported member 'InvoiceType'.
+src/domains/accounting/account/account.service.coa.spec.ts(8,19): error TS2459: Module '"./entities/account.entity"' declares 'AccountType' locally, but it is not exported.
+src/domains/accounting/account/account.service.coa.spec.ts(9,10): error TS2305: Module '"./entities/account.entity"' has no exported member 'Invoice'.
+src/domains/accounting/account/account.service.coa.spec.ts(10,10): error TS2305: Module '"./entities/account.entity"' has no exported member 'JournalEntry'.
+src/domains/accounting/account/account.service.journal.spec.ts(9,19): error TS2459: Module '"./entities/account.entity"' declares 'AccountType' locally, but it is not exported.
+src/domains/accounting/account/account.service.journal.spec.ts(10,10): error TS2305: Module '"./entities/account.entity"' has no exported member 'Invoice'.
+src/domains/accounting/account/account.service.journal.spec.ts(11,10): error TS2305: Module '"./entities/account.entity"' has no exported member 'JournalEntry'.
+src/domains/accounting/account/account.service.journal.spec.ts(11,24): error TS2305: Module '"./entities/account.entity"' has no exported member 'JournalEntryStatus'.
+src/domains/accounting/account/account.service.journal.spec.ts(12,10): error TS2305: Module '"./entities/account.entity"' has no exported member 'JournalLine'.
+src/domains/accounting/account/account.service.security.spec.ts(8,19): error TS2459: Module '"./entities/account.entity"' declares 'AccountType' locally, but it is not exported.
+src/domains/accounting/account/account.service.security.spec.ts(9,10): error TS2305: Module '"./entities/account.entity"' has no exported member 'Invoice'.
+src/domains/accounting/account/account.service.security.spec.ts(10,10): error TS2305: Module '"./entities/account.entity"' has no exported member 'JournalEntry'.
+src/domains/accounting/account/account.service.spec.ts(8,19): error TS2459: Module '"./entities/account.entity"' declares 'AccountType' locally, but it is not exported.
+src/domains/accounting/account/account.service.spec.ts(9,10): error TS2305: Module '"./entities/account.entity"' has no exported member 'Invoice'.
+src/domains/accounting/account/account.service.spec.ts(9,19): error TS2305: Module '"./entities/account.entity"' has no exported member 'InvoiceType'.
+src/domains/accounting/account/account.service.spec.ts(10,10): error TS2305: Module '"./entities/account.entity"' has no exported member 'JournalEntry'.
+src/domains/accounting/account/account.service.spec.ts(217,65): error TS2345: Argument of type '{ entryDate: Date; description: string; }' is not assignable to parameter of type 'CreateJournalEntryDto'.
+  Type '{ entryDate: Date; description: string; }' is missing the following properties from type 'CreateJournalEntryDto': date, lines
+src/domains/accounting/bank-reconciliation/bank-reconciliation.service.spec.ts(22,5): error TS2353: Object literal may only specify known properties, and 'email' does not exist in type 'User'.
+src/domains/accounting/bank-reconciliation/bank-reconciliation.service.spec.ts(93,43): error TS2345: Argument of type 'User' is not assignable to parameter of type 'CreateBankStatementDto'.
+  Type 'User' is missing the following properties from type 'CreateBankStatementDto': bankAccountId, statementDate, openingBalance, closingBalance, transactions
+src/domains/accounting/reports/reports.service.spec.ts(5,19): error TS2459: Module '"@/domains/accounting/account/entities/account.entity"' declares 'AccountType' locally, but it is not exported.
+src/domains/accounting/reports/reports.service.spec.ts(7,36): error TS2307: Cannot find module '@/domains/accounting/account/enums/accounting.enum' or its corresponding type declarations.
+src/domains/ecommerce/order/checkout.service.spec.ts(273,66): error TS2345: Argument of type '{}' is not assignable to parameter of type 'Address'.
+  Type '{}' is missing the following properties from type 'Address': fullName, phone, address, city, and 3 more.
+src/domains/ecommerce/order/checkout.service.spec.ts(281,71): error TS2345: Argument of type '{}' is not assignable to parameter of type 'Address'.
+  Type '{}' is missing the following properties from type 'Address': fullName, phone, address, city, and 3 more.
+src/domains/ecommerce/order/checkout.service.spec.ts(287,71): error TS2345: Argument of type '{}' is not assignable to parameter of type 'Address'.
+  Type '{}' is missing the following properties from type 'Address': fullName, phone, address, city, and 3 more.
+src/domains/ecommerce/order/order.service.spec.ts(6,23): error TS2307: Cannot find module '../entities/order.entity' or its corresponding type declarations.
+src/domains/ecommerce/order/order.service.spec.ts(7,27): error TS2307: Cannot find module '../entities/order-item.entity' or its corresponding type declarations.
+src/domains/ecommerce/order/order.service.spec.ts(8,44): error TS2307: Cannot find module '../../enums/ecommerce.enum' or its corresponding type declarations.
+src/domains/ecommerce/order/order.service.spec.ts(88,48): error TS2345: Argument of type 'string' is not assignable to parameter of type 'User'.
+src/domains/ecommerce/order/order.service.spec.ts(101,55): error TS2345: Argument of type 'string' is not assignable to parameter of type 'User'.
+src/domains/ecommerce/order/order.service.spec.ts(109,50): error TS2345: Argument of type 'string' is not assignable to parameter of type 'User'.
+src/domains/ecommerce/order/order.service.spec.ts(119,71): error TS2345: Argument of type 'string' is not assignable to parameter of type 'User'.
+src/domains/ecommerce/order/order.service.spec.ts(134,65): error TS2345: Argument of type 'string' is not assignable to parameter of type 'User'.
+src/domains/ecommerce/order/payment.service.spec.ts(6,23): error TS2307: Cannot find module '../entities/order.entity' or its corresponding type declarations.
+src/domains/ecommerce/order/payment.service.spec.ts(7,31): error TS2307: Cannot find module '../../enums/ecommerce.enum' or its corresponding type declarations.
+src/domains/ecommerce/product-catalog/product-catalog.service.spec.ts(6,32): error TS2307: Cannot find module '../entities/product-catalog.entity' or its corresponding type declarations.
+src/domains/ecommerce/product-catalog/product-catalog.service.spec.ts(7,31): error TS2307: Cannot find module '../enums/product-status.enum' or its corresponding type declarations.
+src/domains/ecommerce/shopping-cart/shopping-cart.service.spec.ts(8,30): error TS2307: Cannot find module '../entities/shopping-cart.entity' or its corresponding type declarations.
+src/domains/ecommerce/shopping-cart/shopping-cart.service.spec.ts(9,26): error TS2307: Cannot find module '../entities/cart-item.entity' or its corresponding type declarations.
+src/domains/ecommerce/shopping-cart/shopping-cart.service.spec.ts(10,28): error TS2307: Cannot find module '../enums/cart-status.enum' or its corresponding type declarations.
+src/domains/ecommerce/shopping-cart/shopping-cart.service.spec.ts(378,80): error TS2345: Argument of type '{ fullName: string; phone: string; address: string; }' is not assignable to parameter of type 'Address'.
+  Type '{ fullName: string; phone: string; address: string; }' is missing the following properties from type 'Address': city, district, ward, postalCode
+src/domains/ecommerce/shopping-cart/shopping-cart.service.spec.ts(402,79): error TS2345: Argument of type '{ fullName: string; phone: string; address: string; }' is not assignable to parameter of type 'Address'.
+  Type '{ fullName: string; phone: string; address: string; }' is missing the following properties from type 'Address': city, district, ward, postalCode
+src/domains/hr/attendance/attendance.service.spec.ts(16,34): error TS2352: Conversion of type '{ id: string; tenantId: string; name: string; firstName: string; lastName: string; createdAt: Date; updatedAt: Date; }' to type 'Employee' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ id: string; tenantId: string; name: string; firstName: string; lastName: string; createdAt: Date; updatedAt: Date; }' is missing the following properties from type 'Employee': employeeCode, email, status, employmentType
+src/domains/hr/leave/leave.service.spec.ts(20,34): error TS2352: Conversion of type '{ id: string; tenantId: string; name: string; firstName: string; lastName: string; createdAt: Date; updatedAt: Date; }' to type 'Employee' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ id: string; tenantId: string; name: string; firstName: string; lastName: string; createdAt: Date; updatedAt: Date; }' is missing the following properties from type 'Employee': employeeCode, email, status, employmentType
+src/domains/hr/management/management.controller.spec.ts(3,27): error TS2307: Cannot find module './hr.service' or its corresponding type declarations.
+src/domains/hr/management/management.service.spec.ts(7,10): error TS2305: Module '"../enums/hr.enum"' has no exported member 'Attendance'.
+src/domains/hr/management/management.service.spec.ts(8,10): error TS2305: Module '"../enums/hr.enum"' has no exported member 'Employee'.
+src/domains/hr/management/management.service.spec.ts(9,10): error TS2305: Module '"../enums/hr.enum"' has no exported member 'Leave'.
+src/domains/hr/management/management.service.spec.ts(10,27): error TS2307: Cannot find module './hr.service' or its corresponding type declarations.
+src/domains/hr/management/management.service.spec.ts(135,70): error TS2698: Spread types may only be created from object types.
+src/domains/hr/management/management.service.spec.ts(146,72): error TS2698: Spread types may only be created from object types.
+src/domains/hr/management/management.service.spec.ts(157,67): error TS2698: Spread types may only be created from object types.
+src/domains/hr/payroll/payroll.service.spec.ts(11,39): error TS2304: Cannot find name 'SalaryStructure'.
+src/domains/hr/payroll/payroll.service.spec.ts(12,31): error TS2304: Cannot find name 'Payslip'.
+src/domains/hr/payroll/payroll.service.spec.ts(33,39): error TS2304: Cannot find name 'SalaryStructure'.
+src/domains/hr/payroll/payroll.service.spec.ts(37,39): error TS2304: Cannot find name 'Payslip'.
+src/domains/hr/payroll/payroll.service.spec.ts(44,49): error TS2304: Cannot find name 'SalaryStructure'.
+src/domains/hr/payroll/payroll.service.spec.ts(45,26): error TS2304: Cannot find name 'SalaryStructure'.
+src/domains/hr/payroll/payroll.service.spec.ts(47,41): error TS2304: Cannot find name 'Payslip'.
+src/domains/hr/payroll/payroll.service.spec.ts(47,70): error TS2304: Cannot find name 'Payslip'.
+src/domains/hr/payroll/payroll.service.spec.ts(100,17): error TS2304: Cannot find name 'PayslipStatus'.
+src/domains/hr/payroll/payroll.service.spec.ts(112,34): error TS2304: Cannot find name 'PayslipStatus'.
+src/domains/hr/payroll/payroll.service.spec.ts(141,17): error TS2304: Cannot find name 'PayslipStatus'.
+src/domains/hr/payroll/payroll.service.spec.ts(148,17): error TS2304: Cannot find name 'PayslipStatus'.
+src/domains/hr/payroll/payroll.service.spec.ts(153,34): error TS2304: Cannot find name 'PayslipStatus'.
+src/domains/hr/payroll/payroll.service.spec.ts(159,17): error TS2304: Cannot find name 'PayslipStatus'.
+src/domains/hr/payroll/payroll.service.spec.ts(175,17): error TS2304: Cannot find name 'PayslipStatus'.
+src/domains/hr/payroll/payroll.service.spec.ts(184,17): error TS2304: Cannot find name 'PayslipStatus'.
+src/domains/hr/payroll/payroll.service.spec.ts(190,34): error TS2304: Cannot find name 'PayslipStatus'.
+src/domains/hr/payroll/payroll.service.spec.ts(197,17): error TS2304: Cannot find name 'PayslipStatus'.
+src/domains/hr/role/role.service.spec.ts(61,5): error TS2353: Object literal may only specify known properties, and 'name' does not exist in type 'Permission'.
+src/domains/inventory/category/category.service.spec.ts(50,39): error TS2304: Cannot find name 'Category'.
+src/domains/inventory/product/product.controller.spec.ts(96,22): error TS2304: Cannot find name 'ProductStatus'.
+src/domains/inventory/product/product.controller.spec.ts(138,22): error TS2304: Cannot find name 'ProductStatus'.
+src/domains/inventory/product/product.controller.spec.ts(300,52): error TS2304: Cannot find name 'ProductStatus'.
+src/domains/inventory/product/product.controller.spec.ts(316,52): error TS2304: Cannot find name 'ProductStatus'.
+src/domains/inventory/product/product.security.spec.ts(51,39): error TS2304: Cannot find name 'Product'.
+src/domains/inventory/product/product.service.spec.ts(50,39): error TS2304: Cannot find name 'Product'.
+src/domains/inventory/serial-batch/serial-batch.service.spec.ts(6,19): error TS2459: Module '"@/domains/inventory/product/entities/product.entity"' declares 'TrackingType' locally, but it is not exported.
+src/domains/inventory/serial-batch/serial-batch.service.spec.ts(11,36): error TS2304: Cannot find name 'SerialNumber'.
+src/domains/inventory/serial-batch/serial-batch.service.spec.ts(12,35): error TS2304: Cannot find name 'Batch'.
+src/domains/inventory/serial-batch/serial-batch.service.spec.ts(13,40): error TS2304: Cannot find name 'BatchStock'.
+src/domains/inventory/serial-batch/serial-batch.service.spec.ts(37,39): error TS2304: Cannot find name 'SerialNumber'.
+src/domains/inventory/serial-batch/serial-batch.service.spec.ts(47,39): error TS2304: Cannot find name 'Batch'.
+src/domains/inventory/serial-batch/serial-batch.service.spec.ts(56,39): error TS2304: Cannot find name 'BatchStock'.
+src/domains/inventory/serial-batch/serial-batch.service.spec.ts(76,46): error TS2304: Cannot find name 'SerialNumber'.
+src/domains/inventory/serial-batch/serial-batch.service.spec.ts(76,80): error TS2304: Cannot find name 'SerialNumber'.
+src/domains/inventory/serial-batch/serial-batch.service.spec.ts(77,45): error TS2304: Cannot find name 'Batch'.
+src/domains/inventory/serial-batch/serial-batch.service.spec.ts(77,72): error TS2304: Cannot find name 'Batch'.
+src/domains/inventory/serial-batch/serial-batch.service.spec.ts(78,50): error TS2304: Cannot find name 'BatchStock'.
+src/domains/inventory/serial-batch/serial-batch.service.spec.ts(78,82): error TS2304: Cannot find name 'BatchStock'.
+src/domains/inventory/serial-batch/serial-batch.service.spec.ts(100,17): error TS2304: Cannot find name 'SerialNumberStatus'.
+src/domains/inventory/serial-batch/serial-batch.service.spec.ts(192,19): error TS2304: Cannot find name 'SerialNumberStatus'.
+src/domains/inventory/serial-batch/serial-batch.service.spec.ts(197,19): error TS2304: Cannot find name 'SerialNumberStatus'.
+src/domains/inventory/serial-batch/serial-batch.service.spec.ts(221,17): error TS2304: Cannot find name 'SerialNumberStatus'.
+src/domains/inventory/stock/stock.controller.spec.ts(2,37): error TS2307: Cannot find module './inventory.controller' or its corresponding type declarations.
+src/domains/inventory/stock/stock.controller.spec.ts(3,34): error TS2307: Cannot find module './inventory.service' or its corresponding type declarations.
+src/domains/inventory/stock/stock.service.spec.ts(3,34): error TS2307: Cannot find module './inventory.service' or its corresponding type declarations.
+src/domains/inventory/stock/stock.service.spec.ts(4,10): error TS2305: Module '"../enums/inventory.enum"' has no exported member 'Inventory'.
+src/domains/inventory/valuation/valuation.service.spec.ts(5,10): error TS2305: Module '"../enums/inventory.enum"' has no exported member 'StockValuation'.
+src/domains/manufacturing/bom/bom.service.spec.ts(5,30): error TS2307: Cannot find module '../entities/bom.entity' or its corresponding type declarations.
+src/domains/manufacturing/bom/bom.service.spec.ts(6,25): error TS2307: Cannot find module '../entities/bom.entity' or its corresponding type declarations.
+src/domains/manufacturing/work-center/work-center.service.spec.ts(5,28): error TS2307: Cannot find module '../entities/work-center.entity' or its corresponding type declarations.
+src/domains/manufacturing/work-center/work-center.service.spec.ts(60,58): error TS2554: Expected 2 arguments, but got 3.
+src/domains/manufacturing/work-center/work-center.service.spec.ts(138,62): error TS2554: Expected 3 arguments, but got 4.
+src/domains/manufacturing/work-order/work-order.service.spec.ts(6,27): error TS2307: Cannot find module '../entities/work-order.entity' or its corresponding type declarations.
+src/domains/manufacturing/work-order/work-order.service.spec.ts(7,33): error TS2307: Cannot find module '../enums/work-order-status.enum' or its corresponding type declarations.
+src/domains/manufacturing/work-order/work-order.service.spec.ts(67,58): error TS2554: Expected 2 arguments, but got 3.
+src/domains/manufacturing/work-order/work-order.service.spec.ts(120,58): error TS2554: Expected 2 arguments, but got 3.
+src/domains/manufacturing/work-order/work-order.service.spec.ts(134,54): error TS2554: Expected 2 arguments, but got 3.
+src/domains/manufacturing/work-order/work-order.service.spec.ts(158,56): error TS2554: Expected 2 arguments, but got 3.
+src/domains/manufacturing/work-order/work-order.service.spec.ts(187,70): error TS2554: Expected 3 arguments, but got 4.
+src/domains/manufacturing/work-order/work-order.service.spec.ts(206,57): error TS2345: Argument of type '"tenant1"' is not assignable to parameter of type 'WorkOrderStatus'.
+src/domains/project/project.service.spec.ts(6,25): error TS2307: Cannot find module '../entities/project.entity' or its corresponding type declarations.
+src/domains/project/project.service.spec.ts(7,33): error TS2307: Cannot find module '../enums/project-priority.enum' or its corresponding type declarations.
+src/domains/project/project.service.spec.ts(8,31): error TS2307: Cannot find module '../enums/project-status.enum' or its corresponding type declarations.
+src/domains/project/task.service.spec.ts(6,25): error TS2307: Cannot find module '../entities/project.entity' or its corresponding type declarations.
+src/domains/project/task.service.spec.ts(7,32): error TS2307: Cannot find module '../entities/task-dependency.entity' or its corresponding type declarations.
+src/domains/project/task.service.spec.ts(8,22): error TS2307: Cannot find module '../entities/task.entity' or its corresponding type declarations.
+src/domains/project/task.service.spec.ts(9,32): error TS2307: Cannot find module '../enums/dependency-type.enum' or its corresponding type declarations.
+src/domains/project/task.service.spec.ts(10,30): error TS2307: Cannot find module '../enums/task-priority.enum' or its corresponding type declarations.
+src/domains/project/task.service.spec.ts(11,28): error TS2307: Cannot find module '../enums/task-status.enum' or its corresponding type declarations.
+src/domains/project/task.service.spec.ts(12,22): error TS2307: Cannot find module '../user/entities/user.entity' or its corresponding type declarations.
+src/domains/project/task.service.spec.ts(21,9): error TS2451: Cannot redeclare block-scoped variable 'mockUser'.
+src/domains/project/task.service.spec.ts(72,9): error TS2451: Cannot redeclare block-scoped variable 'mockUser'.
+src/domains/project/task.service.spec.ts(117,53): error TS2345: Argument of type '{ title: string; projectId: string; status: any; }' is not assignable to parameter of type 'string'.
+src/domains/project/task.service.spec.ts(128,45): error TS2345: Argument of type '{ title: string; projectId: string; }' is not assignable to parameter of type 'string'.
+src/domains/project/time-tracking.service.spec.ts(5,25): error TS2307: Cannot find module '../entities/project.entity' or its corresponding type declarations.
+src/domains/project/time-tracking.service.spec.ts(6,22): error TS2307: Cannot find module '../entities/task.entity' or its corresponding type declarations.
+src/domains/project/time-tracking.service.spec.ts(7,27): error TS2307: Cannot find module '../entities/time-entry.entity' or its corresponding type declarations.
+src/domains/project/time-tracking.service.spec.ts(8,22): error TS2307: Cannot find module '../user/entities/user.entity' or its corresponding type declarations.
+src/domains/project/time-tracking.service.spec.ts(122,53): error TS2345: Argument of type '{ taskId: string; date: string; hours: number; isBillable: boolean; hourlyRate: number; }' is not assignable to parameter of type 'string'.
+src/domains/project/time-tracking.service.spec.ts(133,45): error TS2345: Argument of type '{ taskId: string; date: string; hours: number; }' is not assignable to parameter of type 'string'.
+src/domains/purchasing/supplier/supplier.service.spec.ts(7,26): error TS2307: Cannot find module '../../entities/supplier.entity' or its corresponding type declarations.
+src/domains/sales/crm/crm.service.spec.ts(7,22): error TS2307: Cannot find module '../entities/lead.entity' or its corresponding type declarations.
+src/domains/sales/crm/crm.service.spec.ts(8,29): error TS2307: Cannot find module '../entities/opportunity.entity' or its corresponding type declarations.
+src/domains/sales/crm/crm.service.spec.ts(9,28): error TS2307: Cannot find module '../enums/lead-status.enum' or its corresponding type declarations.
+src/domains/sales/crm/crm.service.spec.ts(10,34): error TS2307: Cannot find module '../enums/opportunity-stage.enum' or its corresponding type declarations.
+src/domains/sales/customer/customer.service.spec.ts(7,26): error TS2307: Cannot find module '../../entities/customer.entity' or its corresponding type declarations.
+src/domains/sales/order/order.service.spec.ts(7,23): error TS2307: Cannot find module '../../entities/order.entity' or its corresponding type declarations.
+src/integrations/integration/integration.service.spec.ts(63,31): error TS2345: Argument of type 'string' is not assignable to parameter of type 'User'.
+src/integrations/integration/integration.service.spec.ts(64,31): error TS2345: Argument of type 'string' is not assignable to parameter of type 'User'.
+src/integrations/integration/integration.service.spec.ts(66,52): error TS2345: Argument of type 'string' is not assignable to parameter of type 'User'.
+src/integrations/integration/integration.service.spec.ts(67,52): error TS2345: Argument of type 'string' is not assignable to parameter of type 'User'.
+src/integrations/payment-gateway/payment-gateway.controller.spec.ts(59,31): error TS2554: Expected 3 arguments, but got 2.
+src/integrations/payment-gateway/payment-gateway.controller.spec.ts(77,31): error TS2554: Expected 3 arguments, but got 2.
+src/integrations/payment-gateway/payment-gateway.controller.spec.ts(102,39): error TS2554: Expected 3 arguments, but got 2.
+src/integrations/payment-gateway/payment-gateway.controller.spec.ts(129,39): error TS2554: Expected 3 arguments, but got 2.
+src/integrations/payment-gateway/payment-gateway.controller.spec.ts(144,39): error TS2554: Expected 4 arguments, but got 3.
+src/integrations/payment-gateway/payment-gateway.controller.spec.ts(164,31): error TS2554: Expected 3 arguments, but got 2.
+src/integrations/payment-gateway/payment-gateway.controller.spec.ts(181,31): error TS2554: Expected 3 arguments, but got 2.
+src/integrations/payment-gateway/payment-gateway.controller.spec.ts(196,61): error TS2345: Argument of type 'string' is not assignable to parameter of type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>> & { tenantId?: string; }'.
+  Type 'string' is not assignable to type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+src/integrations/shipping/shipping.controller.spec.ts(62,39): error TS2554: Expected 3 arguments, but got 2.
+src/integrations/shipping/shipping.controller.spec.ts(73,24): error TS2554: Expected 3 arguments, but got 2.
+src/integrations/shipping/shipping.controller.spec.ts(90,39): error TS2554: Expected 3 arguments, but got 2.
+src/integrations/shipping/shipping.controller.spec.ts(107,39): error TS2554: Expected 3 arguments, but got 2.
+src/integrations/shipping/shipping.controller.spec.ts(120,39): error TS2554: Expected 3 arguments, but got 2.
+src/integrations/shipping/shipping.controller.spec.ts(137,39): error TS2554: Expected 3 arguments, but got 2.
+src/integrations/shipping/shipping.controller.spec.ts(152,39): error TS2554: Expected 2-7 arguments, but got 1.
+src/integrations/shipping/shipping.controller.spec.ts(174,9): error TS2345: Argument of type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>> & { tenantId?: string; }' is not assignable to parameter of type 'User'.
+  Type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>> & { tenantId?: string; }' is missing the following properties from type 'User': id, roles
+src/platform/audit/audit.service.spec.ts(5,10): error TS2305: Module '"../enums/platform.enum"' has no exported member 'AuditLog'.
+src/platform/audit/audit.service.spec.ts(5,20): error TS2305: Module '"../enums/platform.enum"' has no exported member 'AuditAction'.
+src/platform/dashboard/dashboard-mobile.controller.spec.ts(52,48): error TS2345: Argument of type 'string' is not assignable to parameter of type 'User'.
+src/platform/dashboard/dashboard-mobile.controller.spec.ts(65,55): error TS2345: Argument of type 'string' is not assignable to parameter of type 'User'.
+src/platform/dashboard/dashboard-mobile.controller.spec.ts(78,54): error TS2345: Argument of type 'string' is not assignable to parameter of type 'User'.
+src/platform/dashboard/dashboard-mobile.controller.spec.ts(91,55): error TS2345: Argument of type 'string' is not assignable to parameter of type 'User'.
+src/platform/dashboard/dashboard-mobile.controller.spec.ts(104,51): error TS2345: Argument of type 'string' is not assignable to parameter of type 'User'.
+src/platform/dashboard/dashboard.service.spec.ts(9,26): error TS2307: Cannot find module '@/domains/inventory/product/entities/category.entity' or its corresponding type declarations.
+src/platform/dashboard/dashboard.service.spec.ts(106,7): error TS2304: Cannot find name 'mockQueryBuilder'.
+src/platform/dashboard/dashboard.service.spec.ts(111,48): error TS2345: Argument of type 'string' is not assignable to parameter of type 'User'.
+src/platform/dashboard/dashboard.service.spec.ts(125,7): error TS2304: Cannot find name 'mockQueryBuilder'.
+src/platform/dashboard/dashboard.service.spec.ts(129,51): error TS2345: Argument of type 'string' is not assignable to parameter of type 'User'.
+src/platform/dashboard/dashboard.service.spec.ts(142,7): error TS2304: Cannot find name 'mockQueryBuilder'.
+src/platform/dashboard/dashboard.service.spec.ts(147,50): error TS2345: Argument of type 'string' is not assignable to parameter of type 'User'.
+src/platform/dashboard/dashboard.service.spec.ts(151,14): error TS2304: Cannot find name 'mockQueryBuilder'.
+src/platform/dashboard/dashboard.service.spec.ts(158,7): error TS2304: Cannot find name 'mockQueryBuilder'.
+src/platform/dashboard/dashboard.service.spec.ts(162,52): error TS2345: Argument of type 'string' is not assignable to parameter of type 'User'.
+src/platform/dashboard/dashboard.service.spec.ts(173,7): error TS2304: Cannot find name 'mockRepository'.
+src/platform/dashboard/dashboard.service.spec.ts(177,51): error TS2345: Argument of type 'string' is not assignable to parameter of type 'User'.
+src/platform/dashboard/dashboard.service.spec.ts(181,14): error TS2304: Cannot find name 'mockQueryBuilder'.
+src/platform/dashboard/dashboard.service.spec.ts(188,7): error TS2304: Cannot find name 'mockQueryBuilder'.
+src/platform/dashboard/dashboard.service.spec.ts(192,52): error TS2345: Argument of type 'string' is not assignable to parameter of type 'User'.
+src/platform/dashboard/dashboard.service.spec.ts(202,7): error TS2304: Cannot find name 'mockQueryBuilder'.
+src/platform/dashboard/dashboard.service.spec.ts(206,57): error TS2345: Argument of type 'string' is not assignable to parameter of type 'User'.
+src/platform/dashboard/dashboard.service.spec.ts(216,7): error TS2304: Cannot find name 'mockRepository'.
+src/platform/dashboard/dashboard.service.spec.ts(227,52): error TS2345: Argument of type 'string' is not assignable to parameter of type 'User'.
+src/platform/dashboard/dashboard.service.spec.ts(231,14): error TS2304: Cannot find name 'mockQueryBuilder'.
+src/platform/dashboard/dashboard.service.spec.ts(238,7): error TS2304: Cannot find name 'mockRepository'.
+src/platform/dashboard/dashboard.service.spec.ts(247,56): error TS2345: Argument of type 'string' is not assignable to parameter of type 'User'.
+src/platform/document/document.service.spec.ts(4,10): error TS2305: Module '"../enums/platform.enum"' has no exported member 'Document'.
+src/platform/document/document.service.spec.ts(58,7): error TS2304: Cannot find name 'mockRepository'.
+src/platform/document/document.service.spec.ts(63,37): error TS2339: Property 'createQueryBuilder' does not exist on type '{ remove: Mock<any, any, any>; find: Mock<any, any, any>; findOne: Mock<any, any, any>; create: Mock<any, any, any>; save: Mock<any, any, any>; update: Mock<...>; softDelete: Mock<...>; }'.
+src/platform/document/document.service.spec.ts(64,14): error TS2304: Cannot find name 'mockQueryBuilder'.
+src/platform/document/document.service.spec.ts(76,14): error TS2304: Cannot find name 'mockQueryBuilder'.
+src/platform/document/document.service.spec.ts(79,14): error TS2304: Cannot find name 'mockQueryBuilder'.
+src/platform/document/document.service.spec.ts(80,14): error TS2304: Cannot find name 'mockQueryBuilder'.
+src/platform/document/document.service.spec.ts(85,7): error TS2304: Cannot find name 'mockRepository'.
+src/platform/document/document.service.spec.ts(90,37): error TS2339: Property 'createQueryBuilder' does not exist on type '{ remove: Mock<any, any, any>; find: Mock<any, any, any>; findOne: Mock<any, any, any>; create: Mock<any, any, any>; save: Mock<any, any, any>; update: Mock<...>; softDelete: Mock<...>; }'.
+src/platform/document/document.service.spec.ts(91,14): error TS2304: Cannot find name 'mockQueryBuilder'.
+src/platform/document/document.service.spec.ts(94,14): error TS2304: Cannot find name 'mockQueryBuilder'.
+src/platform/document/document.service.spec.ts(125,28): error TS2339: Property 'FOLDER' does not exist on type '{ new (): DocumentType; prototype: DocumentType; }'.
+src/platform/document/document.service.spec.ts(131,79): error TS2554: Expected 3 arguments, but got 4.
+src/platform/document/document.service.spec.ts(133,45): error TS2339: Property 'FOLDER' does not exist on type '{ new (): DocumentType; prototype: DocumentType; }'.
+src/platform/document/document.service.spec.ts(147,28): error TS2339: Property 'FILE' does not exist on type '{ new (): DocumentType; prototype: DocumentType; }'.
+src/platform/document/document.service.spec.ts(151,28): error TS2339: Property 'FILE' does not exist on type '{ new (): DocumentType; prototype: DocumentType; }'.
+src/platform/document/document.service.spec.ts(156,45): error TS2339: Property 'FILE' does not exist on type '{ new (): DocumentType; prototype: DocumentType; }'.
+src/platform/document/document.service.spec.ts(166,7): error TS2304: Cannot find name 'mockRepository'.
+src/platform/document/document.service.spec.ts(166,50): error TS2304: Cannot find name 'mockEntity'.
+src/platform/document/document.service.spec.ts(166,65): error TS2304: Cannot find name 'updates'.
+src/platform/document/document.service.spec.ts(171,14): error TS2304: Cannot find name 'mockRepository'.
+src/platform/document/document.service.spec.ts(196,7): error TS2304: Cannot find name 'mockRepository'.
+src/platform/document/document.service.spec.ts(241,82): error TS2554: Expected 3 arguments, but got 4.
+src/platform/document/document.service.spec.ts(278,7): error TS2304: Cannot find name 'mockRepository'.
+src/platform/document/document.service.spec.ts(283,14): error TS2304: Cannot find name 'mockQueryBuilder'.
+src/platform/email/email.controller.spec.ts(59,56): error TS2345: Argument of type 'string' is not assignable to parameter of type 'User'.
+src/platform/email/email.controller.spec.ts(71,56): error TS2345: Argument of type 'string' is not assignable to parameter of type 'User'.
+src/platform/email/email.controller.spec.ts(84,54): error TS2345: Argument of type 'string' is not assignable to parameter of type 'User'.
+src/platform/email/email.controller.spec.ts(97,54): error TS2345: Argument of type 'string' is not assignable to parameter of type 'User'.
+src/platform/email/email.controller.spec.ts(108,54): error TS2345: Argument of type 'string' is not assignable to parameter of type 'User'.
+src/platform/email/email.controller.spec.ts(123,49): error TS2345: Argument of type 'string' is not assignable to parameter of type 'User'.
+src/platform/email/email.controller.spec.ts(137,57): error TS2345: Argument of type 'string' is not assignable to parameter of type 'User'.
+src/platform/email/email.controller.spec.ts(152,51): error TS2345: Argument of type 'string' is not assignable to parameter of type 'User'.
+src/platform/email/email.controller.spec.ts(164,51): error TS2345: Argument of type 'string' is not assignable to parameter of type 'User'.
+src/platform/email/email.service.spec.ts(7,10): error TS2305: Module '"../enums/platform.enum"' has no exported member 'EmailLog'.
+src/platform/email/email.service.spec.ts(8,10): error TS2305: Module '"../enums/platform.enum"' has no exported member 'EmailTemplate'.
+src/platform/email/email.service.spec.ts(178,17): error TS2304: Cannot find name 'TemplateType'.
+src/platform/email/email.service.spec.ts(185,67): error TS2304: Cannot find name 'TemplateType'.
+src/platform/email/email.service.spec.ts(199,17): error TS2304: Cannot find name 'TemplateType'.
+src/platform/email/email.service.spec.ts(204,67): error TS2304: Cannot find name 'TemplateType'.
+src/platform/email/email.service.spec.ts(216,59): error TS2304: Cannot find name 'TemplateType'.
+src/platform/email/email.service.spec.ts(228,17): error TS2304: Cannot find name 'TemplateType'.
+src/platform/email/email.service.spec.ts(285,17): error TS2304: Cannot find name 'TemplateType'.
+src/platform/email/email.service.spec.ts(338,17): error TS2304: Cannot find name 'EmailStatus'.
+src/platform/email/email.service.spec.ts(345,54): error TS2304: Cannot find name 'EmailStatus'.
+src/platform/email/email.service.spec.ts(348,50): error TS2304: Cannot find name 'EmailStatus'.
+src/platform/email/email.service.spec.ts(354,34): error TS2304: Cannot find name 'EmailStatus'.
+src/platform/email/email.service.spec.ts(363,17): error TS2304: Cannot find name 'EmailStatus'.
+src/platform/email/email.service.spec.ts(374,19): error TS2304: Cannot find name 'EmailStatus'.
+src/platform/email/email.service.spec.ts(380,17): error TS2304: Cannot find name 'EmailStatus'.
+src/platform/email/email.service.spec.ts(391,34): error TS2304: Cannot find name 'EmailStatus'.
+src/platform/email/email.service.spec.ts(409,17): error TS2304: Cannot find name 'EmailStatus'.
+src/platform/email/email.service.spec.ts(416,54): error TS2304: Cannot find name 'EmailStatus'.
+src/platform/email/email.service.spec.ts(420,54): error TS2304: Cannot find name 'EmailStatus'.
+src/platform/issue-tracking/issue-tracking.service.spec.ts(5,10): error TS2305: Module '"../enums/platform.enum"' has no exported member 'Issue'.
+src/platform/issue-tracking/issue-tracking.service.spec.ts(5,17): error TS2305: Module '"../enums/platform.enum"' has no exported member 'IssueStatus'.
+src/platform/issue-tracking/issue-tracking.service.spec.ts(5,30): error TS2305: Module '"../enums/platform.enum"' has no exported member 'IssuePriority'.
+src/platform/issue-tracking/issue-tracking.service.spec.ts(5,45): error TS2305: Module '"../enums/platform.enum"' has no exported member 'IssueType'.
+src/platform/issue-tracking/issue-tracking.service.spec.ts(6,10): error TS2305: Module '"../enums/platform.enum"' has no exported member 'IssueComment'.
+src/platform/issue-tracking/issue-tracking.service.spec.ts(7,10): error TS2305: Module '"../enums/platform.enum"' has no exported member 'IssueAttachment'.
+src/platform/issue-tracking/issue-tracking.service.spec.ts(8,22): error TS2307: Cannot find module '../user/entities/user.entity' or its corresponding type declarations.
+src/platform/notification/notification.controller.spec.ts(4,10): error TS2305: Module '"../enums/platform.enum"' has no exported member 'NotificationType'.
+src/platform/notification/notification.service.spec.ts(7,10): error TS2305: Module '"../enums/platform.enum"' has no exported member 'Notification'.
+src/platform/notification/notification.service.spec.ts(7,44): error TS2305: Module '"../enums/platform.enum"' has no exported member 'NotificationType'.
+src/platform/notification/notification.service.spec.ts(34,39): error TS2304: Cannot find name 'mockQueryBuilder'.
+src/platform/report/report-template.service.spec.ts(5,10): error TS2305: Module '"../enums/platform.enum"' has no exported member 'Report'.
+src/platform/report/report-template.service.spec.ts(6,10): error TS2305: Module '"../enums/platform.enum"' has no exported member 'ReportColumn'.
+src/platform/report/report-template.service.spec.ts(7,22): error TS2307: Cannot find module '../user/entities/user.entity' or its corresponding type declarations.
+src/platform/report/report.controller.spec.ts(55,39): error TS2339: Property 'getDashboardSummary' does not exist on type 'ReportController'.
+src/platform/report/report.controller.spec.ts(58,22): error TS2339: Property 'getDashboardSummary' does not exist on type 'ReportService'.
+src/platform/report/report.controller.spec.ts(71,39): error TS2339: Property 'getInventoryReport' does not exist on type 'ReportController'.
+src/platform/report/report.controller.spec.ts(74,22): error TS2339: Property 'getInventoryReport' does not exist on type 'ReportService'.
+src/platform/report/report.controller.spec.ts(87,39): error TS2339: Property 'getLowStockReport' does not exist on type 'ReportController'.
+src/platform/report/report.controller.spec.ts(90,22): error TS2339: Property 'getLowStockReport' does not exist on type 'ReportService'.
+src/platform/report/report.controller.spec.ts(105,39): error TS2339: Property 'getSalesReport' does not exist on type 'ReportController'.
+src/platform/report/report.controller.spec.ts(108,22): error TS2339: Property 'getSalesReport' does not exist on type 'ReportService'.
+src/platform/report/report.controller.spec.ts(127,39): error TS2339: Property 'getTopProducts' does not exist on type 'ReportController'.
+src/platform/report/report.controller.spec.ts(130,22): error TS2339: Property 'getTopProducts' does not exist on type 'ReportService'.
+src/platform/report/report.controller.spec.ts(148,39): error TS2339: Property 'getTopProducts' does not exist on type 'ReportController'.
+src/platform/report/report.controller.spec.ts(151,22): error TS2339: Property 'getTopProducts' does not exist on type 'ReportService'.
+src/platform/report/report.controller.spec.ts(169,39): error TS2339: Property 'getCustomerReport' does not exist on type 'ReportController'.
+src/platform/report/report.controller.spec.ts(172,22): error TS2339: Property 'getCustomerReport' does not exist on type 'ReportService'.
+src/platform/report/report.controller.spec.ts(185,39): error TS2339: Property 'getMaterialsReport' does not exist on type 'ReportController'.
+src/platform/report/report.controller.spec.ts(188,22): error TS2339: Property 'getMaterialsReport' does not exist on type 'ReportService'.
+src/platform/report/report.service.spec.ts(6,10): error TS2305: Module '"../enums/platform.enum"' has no exported member 'Report'.
+src/platform/report/report.service.spec.ts(7,10): error TS2305: Module '"../enums/platform.enum"' has no exported member 'ReportColumn'.
+src/platform/report/report.service.spec.ts(8,10): error TS2305: Module '"../enums/platform.enum"' has no exported member 'ReportExecution'.
+src/platform/report/report.service.spec.ts(8,27): error TS2305: Module '"../enums/platform.enum"' has no exported member 'ExecutionStatus'.
+src/platform/report/report.service.spec.ts(9,22): error TS2307: Cannot find module '../user/entities/user.entity' or its corresponding type declarations.
+src/platform/report/report.service.spec.ts(117,53): error TS2345: Argument of type '{ name: string; sourceEntity: string; type: ReportType; }' is not assignable to parameter of type 'string'.
+src/platform/report/report.service.spec.ts(221,60): error TS2345: Argument of type '{ fieldName: string; label: string; type: ColumnType; }' is not assignable to parameter of type 'Partial<ReportColumn>'.
+  Types of property 'type' are incompatible.
+    Type 'import("E:/GitHub/Kiro AI Team/smart-erp/src/backend/src/platform/enums/platform.enum").ColumnType' is not assignable to type 'import("E:/GitHub/Kiro AI Team/smart-erp/src/backend/src/platform/report/enums/column-type.enum").ColumnType'.
+      Property 'STRING' is missing in type 'import("E:/GitHub/Kiro AI Team/smart-erp/src/backend/src/platform/report/enums/column-type.enum").ColumnType'.
+src/platform/support/support.service.spec.ts(7,10): error TS2305: Module '"@platform/support/enums"' has no exported member 'AssignmentRule'.
+src/platform/support/support.service.spec.ts(8,10): error TS2305: Module '"@platform/support/enums"' has no exported member 'CannedResponse'.
+src/platform/support/support.service.spec.ts(9,25): error TS2305: Module '"@platform/support/enums"' has no exported member 'KnowledgeBaseArticle'.
+src/platform/support/support.service.spec.ts(10,10): error TS2305: Module '"@platform/support/enums"' has no exported member 'SLA'.
+src/platform/support/support.service.spec.ts(11,10): error TS2305: Module '"@platform/support/enums"' has no exported member 'Ticket'.
+src/platform/support/support.service.spec.ts(241,76): error TS2304: Cannot find name 'mockQueryBuilder'.
+src/platform/support/support.service.spec.ts(358,58): error TS2345: Argument of type '{ name: string; priority: IssuePriority; responseTimeHours: number; resolutionTimeHours: number; }' is not assignable to parameter of type 'CreateSLADto'.
+  Property 'isActive' is missing in type '{ name: string; priority: IssuePriority; responseTimeHours: number; resolutionTimeHours: number; }' but required in type 'CreateSLADto'.
+src/platform/support/support.service.spec.ts(529,28): error TS2304: Cannot find name 'mockQueryBuilder'.
+src/platform/support/support.service.spec.ts(534,16): error TS2304: Cannot find name 'mockQueryBuilder'.
+src/platform/system-admin/system-admin.service.spec.ts(7,10): error TS2305: Module '"@platform/enums/platform.enum"' has no exported member 'BackgroundJob'.
+src/platform/system-admin/system-admin.service.spec.ts(7,25): error TS2305: Module '"@platform/enums/platform.enum"' has no exported member 'JobPriority'.
+src/platform/system-admin/system-admin.service.spec.ts(7,38): error TS2305: Module '"@platform/enums/platform.enum"' has no exported member 'JobStatus'.
+src/platform/system-admin/system-admin.service.spec.ts(8,10): error TS2305: Module '"@platform/enums/platform.enum"' has no exported member 'ErrorLog'.
+src/platform/system-admin/system-admin.service.spec.ts(8,20): error TS2305: Module '"@platform/enums/platform.enum"' has no exported member 'ErrorSeverity'.
+src/platform/system-admin/system-admin.service.spec.ts(9,40): error TS2305: Module '"@platform/enums/platform.enum"' has no exported member 'SystemSetting'.
+src/platform/system-admin/system-admin.service.spec.ts(202,62): error TS2345: Argument of type '{ key: string; value: string; type: SettingType; category: SettingCategory; }' is not assignable to parameter of type 'CreateSystemSettingDto'.
+  Types of property 'category' are incompatible.
+    Type 'import("E:/GitHub/Kiro AI Team/smart-erp/src/backend/src/platform/enums/platform.enum").SettingCategory' is not assignable to type 'import("E:/GitHub/Kiro AI Team/smart-erp/src/backend/src/platform/system-admin/enums/setting-category.enum").SettingCategory'.
+      Property 'NOTIFICATION' is missing in type 'import("E:/GitHub/Kiro AI Team/smart-erp/src/backend/src/platform/system-admin/enums/setting-category.enum").SettingCategory'.
+src/platform/system-admin/system-admin.service.spec.ts(217,54): error TS2345: Argument of type '{ key: string; value: string; type: SettingType; category: SettingCategory; }' is not assignable to parameter of type 'CreateSystemSettingDto'.
+  Types of property 'category' are incompatible.
+    Type 'import("E:/GitHub/Kiro AI Team/smart-erp/src/backend/src/platform/enums/platform.enum").SettingCategory' is not assignable to type 'import("E:/GitHub/Kiro AI Team/smart-erp/src/backend/src/platform/system-admin/enums/setting-category.enum").SettingCategory'.
+      Property 'NOTIFICATION' is missing in type 'import("E:/GitHub/Kiro AI Team/smart-erp/src/backend/src/platform/system-admin/enums/setting-category.enum").SettingCategory'.
+src/platform/workflow/approval.service.spec.ts(6,10): error TS2305: Module '"@platform/enums/platform.enum"' has no exported member 'ApprovalRequest'.
+src/platform/workflow/approval.service.spec.ts(6,27): error TS2305: Module '"@platform/enums/platform.enum"' has no exported member 'ApprovalStatus'.
+src/platform/workflow/approval.service.spec.ts(7,10): error TS2305: Module '"@platform/enums/platform.enum"' has no exported member 'Workflow'.
+src/platform/workflow/workflow.controller.spec.ts(4,10): error TS2305: Module '"@platform/enums/platform.enum"' has no exported member 'Workflow'.
+src/platform/workflow/workflow.controller.spec.ts(5,10): error TS2305: Module '"@platform/enums/platform.enum"' has no exported member 'WorkflowInstance'.
+src/platform/workflow/workflow.controller.spec.ts(5,28): error TS2305: Module '"@platform/enums/platform.enum"' has no exported member 'WorkflowInstanceStatus'.
+src/platform/workflow/workflow.service.spec.ts(7,10): error TS2305: Module '"@platform/enums/platform.enum"' has no exported member 'WorkflowInstance'.
+src/platform/workflow/workflow.service.spec.ts(7,28): error TS2305: Module '"@platform/enums/platform.enum"' has no exported member 'WorkflowInstanceStatus'.
+src/platform/workflow/workflow.service.spec.ts(8,10): error TS2305: Module '"@platform/enums/platform.enum"' has no exported member 'Workflow'.

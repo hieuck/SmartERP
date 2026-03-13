@@ -44,82 +44,84 @@ export class Tenant {
   @Column({ default: 'vi' })
   language: string;
 
-  @Column({ default: 'DD/MM/YYYY' })
+  @Column({ name: 'date_format', default: 'DD/MM/YYYY' })
   dateFormat: string;
 
-  @Column({ default: '#,##0.00' })
+  @Column({ name: 'number_format', default: '#,##0.00' })
   numberFormat: string;
 
-  @Column({ type: 'decimal', precision: 5, scale: 2, default: 10 })
+  @Column({ name: 'tax_rate', type: 'decimal', precision: 5, scale: 2, default: 10 })
   taxRate: number;
 
   // Company Info
-  @Column({ nullable: true })
+  @Column({ name: 'company_name', nullable: true })
   companyName: string;
 
-  @Column({ nullable: true })
+  @Column({ name: 'company_address', nullable: true })
   companyAddress: string;
 
-  @Column({ nullable: true })
+  @Column({ name: 'company_phone', nullable: true })
   companyPhone: string;
 
-  @Column({ nullable: true })
+  @Column({ name: 'company_email', nullable: true })
   companyEmail: string;
 
-  @Column({ nullable: true })
+  @Column({ name: 'company_tax_code', nullable: true })
   companyTaxCode: string;
 
-  @Column({ nullable: true })
+  @Column({ name: 'company_website', nullable: true })
   companyWebsite: string;
 
   // Subscription
   @Column({
+    name: 'subscription_plan',
     type: 'enum',
     enum: SubscriptionPlan,
     default: SubscriptionPlan.FREE,
   })
   subscriptionPlan: SubscriptionPlan;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ name: 'subscription_start_date', type: 'timestamp', nullable: true })
   subscriptionStartDate: Date;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ name: 'subscription_end_date', type: 'timestamp', nullable: true })
   subscriptionEndDate: Date;
 
-  @Column({ type: 'int', default: 5 })
+  @Column({ name: 'max_users', type: 'int', default: 5 })
   maxUsers: number;
 
-  @Column({ type: 'bigint', default: 1073741824 }) // 1GB in bytes
+  @Column({ name: 'max_storage', type: 'bigint', default: 1073741824 }) // 1GB in bytes
   maxStorage: number;
 
-  @Column({ type: 'bigint', default: 0 })
+  @Column({ name: 'current_storage', type: 'bigint', default: 0 })
   currentStorage: number;
 
   @Column({ type: 'simple-array', nullable: true })
   features: string[];
 
   @Column({
+    name: 'billing_cycle',
     type: 'enum',
     enum: BillingCycle,
     default: BillingCycle.MONTHLY,
   })
   billingCycle: BillingCycle;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  @Column({ name: 'subscription_amount', type: 'decimal', precision: 10, scale: 2, default: 0 })
   subscriptionAmount: number;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
-  @DeleteDateColumn()
+  @DeleteDateColumn({ name: 'deleted_at' })
   deletedAt: Date;
 
-  @Column({ nullable: true })
+  @Column({ name: 'created_by', nullable: true })
   createdBy: string;
 
-  @Column({ nullable: true })
+  @Column({ name: 'updated_by', nullable: true })
   updatedBy: string;
 }

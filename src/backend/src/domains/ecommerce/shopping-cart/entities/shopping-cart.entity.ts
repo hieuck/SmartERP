@@ -30,7 +30,6 @@ export class ShoppingCart {
 
   @ManyToOne(() => User, { nullable: true })
   @JoinColumn({ name: 'userId' })
-  user: User;({ name: 'userId' })
   user: User;
 
   @Column({ type: 'enum', enum: CartStatus, default: CartStatus.ACTIVE })
