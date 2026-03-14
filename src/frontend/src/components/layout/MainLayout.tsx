@@ -1,22 +1,16 @@
 import { useState, useEffect } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
-import { Layout, message, Drawer } from 'antd';
-import { useDispatch } from 'react-redux';
+import { Outlet } from 'react-router-dom';
+import { Layout, Drawer } from 'antd';
 import Sidebar from './Sidebar';
 import Header from './Header';
-import { logout } from '../../store/slices/authSlice';
 import { useResponsive } from '../../hooks/useResponsive';
 import './MainLayout.css';
 
 const { Content } = Layout;
 
-let logoutTimer: NodeJS.Timeout;
-
 export default function MainLayout() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
   const { isMobile, isTablet } = useResponsive();
 
   // Auto-collapse sidebar on tablet/mobile
@@ -25,37 +19,6 @@ export default function MainLayout() {
       setCollapsed(true);
     }
   }, [isMobile, isTablet]);
-
-  // Auto-logout after 30 minutes of inactivity
-  useEffect(() => {
-    const resetTimer = () => {
-      if (logoutTimer) clearTimeout(logoutTimer);
-
-      logoutTimer = setTimeout(
-        () => {
-          message.warning('Phiên đăng nhập đã hết hạn');
-          dispatch(logout());
-          navigate('/login');
-        },
-        30 * 60 * 1000,
-      ); // 30 minutes
-    };
-
-    // Reset timer on user activity
-    const events = ['mousedown', 'keydown', 'scroll', 'touchstart'];
-    events.forEach((event) => {
-      document.addEventListener(event, resetTimer);
-    });
-
-    resetTimer();
-
-    return () => {
-      if (logoutTimer) clearTimeout(logoutTimer);
-      events.forEach((event) => {
-        document.removeEventListener(event, resetTimer);
-      });
-    };
-  }, [dispatch, navigate]);
 
   const handleToggle = () => {
     if (isMobile) {

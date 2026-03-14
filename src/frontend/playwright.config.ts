@@ -29,7 +29,7 @@ export default defineConfig({
   /* Shared settings for all the projects below */
   use: {
     /* Base URL to use in actions like `await page.goto('/')` */
-    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:5173',
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:5175',
 
     /* Collect trace when retrying the failed test */
     trace: 'on-first-retry',
@@ -74,7 +74,7 @@ export default defineConfig({
     ? undefined
     : {
         command: 'npm run dev',
-        url: 'http://localhost:5173',
+        url: 'http://localhost:5175',
         reuseExistingServer: !process.env.CI,
         timeout: 120 * 1000,
       },

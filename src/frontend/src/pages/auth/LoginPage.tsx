@@ -13,7 +13,6 @@ import {
   Space,
   message,
   Alert,
-  Progress,
 } from 'antd';
 import { LockOutlined, MailOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
@@ -21,12 +20,7 @@ import { useMutation } from '@tanstack/react-query';
 import { authService, LoginRequest } from '../../services/auth/authService';
 import { setCredentials } from '../../store/slices/authSlice';
 import { RootState } from '../../store';
-import {
-  sanitizeEmail,
-  getPasswordStrength,
-  getPasswordStrengthLabel,
-  getPasswordStrengthColor,
-} from '../../utils/sanitize';
+import { sanitizeEmail } from '../../utils/sanitize';
 import { useRateLimit } from '../../hooks/useRateLimit';
 
 const { Header, Content } = Layout;
@@ -51,7 +45,6 @@ export default function LoginPage() {
   const [form] = Form.useForm<LoginRequest>();
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
-  const [passwordStrength, setPasswordStrength] = useState(0);
 
   // Rate limiting: 5 attempts per 60 seconds
   const { isLimited, remainingTime, recordAttempt } = useRateLimit({
@@ -83,13 +76,6 @@ export default function LoginPage() {
       if (!data?.user?.id || !data?.token) {
         message.error('Invalid response from server');
         return;
-      }
-
-      // Handle remember me
-      if (rememberMe) {
-        localStorage.setItem('rememberedEmail', data.user.email);
-      } else {
-        localStorage.removeItem('rememberedEmail');
       }
 
       // Update Redux state with user credentials
@@ -150,6 +136,13 @@ export default function LoginPage() {
     // Sanitize email input
     const sanitizedEmail = sanitizeEmail(values.email);
 
+    // Handle remember me - save email immediately when checkbox is checked
+    if (rememberMe) {
+      localStorage.setItem('rememberedEmail', sanitizedEmail);
+    } else {
+      localStorage.removeItem('rememberedEmail');
+    }
+
     // Clear previous errors
     setErrorMessage(null);
 
@@ -158,11 +151,6 @@ export default function LoginPage() {
       email: sanitizedEmail,
       password: values.password,
     });
-  };
-
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const strength = getPasswordStrength(e.target.value);
-    setPasswordStrength(strength);
   };
 
   return (
@@ -247,7 +235,6 @@ export default function LoginPage() {
                     placeholder="admin@test.com"
                     size="large"
                     disabled={loginMutation.isPending}
-                    aria-label="Email address"
                     type="email"
                   />
                 </Form.Item>
@@ -265,25 +252,8 @@ export default function LoginPage() {
                     placeholder="••••••••"
                     size="large"
                     disabled={loginMutation.isPending || isLimited}
-                    aria-label="Password"
-                    onChange={handlePasswordChange}
                   />
                 </Form.Item>
-
-                {/* Password Strength Indicator */}
-                {passwordStrength > 0 && (
-                  <div style={{ marginBottom: 16 }}>
-                    <Progress
-                      percent={(passwordStrength / 5) * 100}
-                      strokeColor={getPasswordStrengthColor(passwordStrength)}
-                      showInfo={false}
-                      size="small"
-                    />
-                    <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                      Độ mạnh: {getPasswordStrengthLabel(passwordStrength)}
-                    </Typography.Text>
-                  </div>
-                )}
 
                 <Form.Item>
                   <Row justify="space-between" align="middle">
@@ -324,7 +294,6 @@ export default function LoginPage() {
                     disabled={loginMutation.isPending || isLimited}
                     block
                     style={{ height: 48, fontSize: 16, fontWeight: 600 }}
-                    aria-label="Login button"
                   >
                     {loginMutation.isPending ? 'Đang xử lý...' : 'Đăng nhập'}
                   </Button>

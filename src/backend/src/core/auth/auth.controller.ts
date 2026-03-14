@@ -30,7 +30,7 @@ export class AuthController {
   ) {}
 
   @UseGuards(ThrottlerGuard, LocalAuthGuard)
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Throttle({ default: { limit: 100, ttl: 60000 } }) // 100 requests per minute for testing
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'User login' })
@@ -55,7 +55,7 @@ export class AuthController {
   }
 
   @UseGuards(ThrottlerGuard)
-  @Throttle({ default: { limit: 3, ttl: 3600000 } }) // 3 registrations per hour
+  @Throttle({ default: { limit: 50, ttl: 3600000 } }) // 50 registrations per hour for testing
   @Post('register-tenant')
   @ApiOperation({
     summary: 'Register new tenant with admin user',
@@ -67,7 +67,7 @@ export class AuthController {
   }
 
   @UseGuards(ThrottlerGuard)
-  @Throttle({ default: { limit: 3, ttl: 3600000 } })
+  @Throttle({ default: { limit: 50, ttl: 3600000 } }) // 50 registrations per hour for testing
   @Post('register')
   @ApiOperation({ summary: 'User registration' })
   @ApiBody({ type: RegisterDto })

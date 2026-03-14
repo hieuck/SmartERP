@@ -89,7 +89,7 @@ import { CrmModule } from './domains/sales/crm/crm.module';
           database: configService.get('DB_NAME', 'erp_production'),
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
           autoLoadEntities: true,
-          synchronize: false,
+          synchronize: !isProduction, // Enable synchronize for development
           logging: configService.get('NODE_ENV') === 'development',
           migrations: isProduction
             ? [__dirname + '/dist/migrations/*.js']

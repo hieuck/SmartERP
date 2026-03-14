@@ -173,6 +173,7 @@ export default function RegisterPage() {
                       placeholder="cong-ty-abc"
                       size="large"
                       style={{ flex: 1 }}
+                      aria-label="Tên miền"
                     />
                     <Input value=".smarterp.vn" disabled size="large" style={{ width: 120 }} />
                   </Space.Compact>

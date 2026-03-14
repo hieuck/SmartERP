@@ -51,7 +51,9 @@ export const authService = {
   register: async (data: RegisterRequest): Promise<LoginResponse> => {
     try {
       const response = await api.post('/auth/register', data);
-      return response.data;
+      // Backend returns { success, data: { token, user }, message }
+      // Unwrap to get { token, user }
+      return response.data.data || response.data;
     } catch (error: any) {
       throw new Error(error?.response?.data?.message || 'Registration failed');
     }
@@ -66,7 +68,9 @@ export const authService = {
   login: async (credentials: LoginRequest): Promise<LoginResponse> => {
     try {
       const response = await api.post('/auth/login', credentials);
-      return response.data;
+      // Backend returns { success, data: { token, user }, message }
+      // Unwrap to get { token, user }
+      return response.data.data || response.data;
     } catch (error: any) {
       // Handle specific error cases
       if (error?.response?.status === 401) {
