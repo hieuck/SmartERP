@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card, Form, Input, Button, Switch, message, Tabs, Space, Upload, Divider } from 'antd';
 import { SaveOutlined, ReloadOutlined, UploadOutlined } from '@ant-design/icons';
-import { loadPrintConfig, clearConfigCache, PrintConfig } from '../../utils/printConfig';
+import { loadPrintConfig, clearConfigCache, PrintConfig } from '@/utils/printConfig';
 
 const { TabPane } = Tabs;
 

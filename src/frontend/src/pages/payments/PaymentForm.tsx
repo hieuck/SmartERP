@@ -23,9 +23,9 @@ import paymentService, {
   PaymentStatus,
   CreatePaymentDto,
   UpdatePaymentDto,
-} from '../../services/accounting/paymentService';
-import invoiceService from '../../services/accounting/invoiceService';
-import orderService from '../../services/order/orderService';
+} from '@/services/accounting/paymentService';
+import invoiceService from '@/services/accounting/invoiceService';
+import orderService from '@/services/order/orderService';
 
 const { Title, Text } = Typography;
 const { Option } = Select;

@@ -3,10 +3,10 @@ import { Button, Space, Tag, Select, DatePicker, message, Popconfirm } from 'ant
 import { EditOutlined, DeleteOutlined, EyeOutlined, SendOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Invoice, InvoiceStatus } from '../../services/accounting/invoiceService';
-import StandardListPage from '../../components/common/StandardListPage';
-import { formatCurrency, formatDate } from '../../utils/responsive';
-import { useInvoices, useDeleteInvoice, useSendInvoice } from '../../hooks/useInvoices';
+import { Invoice, InvoiceStatus } from '@/services/accounting/invoiceService';
+import StandardListPage from '@/components/common/StandardListPage';
+import { formatCurrency, formatDate } from '@/utils/responsive';
+import { useInvoices, useDeleteInvoice, useSendInvoice } from '@/hooks/useInvoices';
 
 const { RangePicker } = DatePicker;
 

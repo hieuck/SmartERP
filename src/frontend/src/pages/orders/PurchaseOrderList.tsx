@@ -21,9 +21,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import purchaseOrderService, {
   PurchaseOrderStatus,
-} from '../../services/logistics/purchaseOrderService';
-import StandardListPage from '../../components/common/StandardListPage';
-import { formatCurrency } from '../../utils/responsive';
+} from '@/services/logistics/purchaseOrderService';
+import StandardListPage from '@/components/common/StandardListPage';
+import { formatCurrency } from '@/utils/responsive';
 import dayjs from 'dayjs';
 import type { ColumnsType } from 'antd/es/table';
 

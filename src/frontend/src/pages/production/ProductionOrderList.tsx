@@ -7,27 +7,23 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Button, Space, Tag, message, Select, Progress, Popconfirm, Dropdown } from 'antd';
+import { Button, Space, Tag, message, Select, Progress } from 'antd';
 import {
-  PlusOutlined,
   PlayCircleOutlined,
   CheckCircleOutlined,
   EditOutlined,
-  MoreOutlined,
 } from '@ant-design/icons';
-import StandardListPage from '../../components/common/StandardListPage';
-import MobileListCard from '../../components/common/MobileListCard';
-import { COLUMN_WIDTHS, formatDate } from '../../constants/ui';
-import productionService, { ProductionOrder } from '../../services/production/productionService';
+import { useTranslation } from 'react-i18next';
+import StandardListPage from '@/components/common/StandardListPage';
+import productionService, { ProductionOrder } from '@/services/production/productionService';
+import { formatDate } from '@/utils/responsive';
 import type { ColumnsType } from 'antd/es/table';
-import type { MenuProps } from 'antd';
-import { useResponsive } from '../../hooks/useResponsive';
 
 const { Option } = Select;
 
-const ProductionOrderList = () => {
-  const { isMobile } = useResponsive();
+export default function ProductionOrderList() {
   const navigate = useNavigate();
+  const { t } = useTranslation(['production', 'common']);
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<string>();
@@ -51,11 +47,11 @@ const ProductionOrderList = () => {
       return response.data;
     },
     onSuccess: () => {
-      message.success('Bắt đầu lệnh sản xuất thành công');
+      message.success(t('production:messages.saveSuccess'));
       queryClient.invalidateQueries({ queryKey: ['production-orders'] });
     },
     onError: () => {
-      message.error('Bắt đầu lệnh sản xuất thất bại');
+      message.error(t('production:messages.saveError'));
     },
   });
 
@@ -66,11 +62,11 @@ const ProductionOrderList = () => {
       return response.data;
     },
     onSuccess: () => {
-      message.success('Hoàn thành lệnh sản xuất thành công');
+      message.success(t('production:messages.saveSuccess'));
       queryClient.invalidateQueries({ queryKey: ['production-orders'] });
     },
     onError: () => {
-      message.error('Hoàn thành lệnh sản xuất thất bại');
+      message.error(t('production:messages.saveError'));
     },
   });
 
@@ -81,11 +77,11 @@ const ProductionOrderList = () => {
       return response.data;
     },
     onSuccess: () => {
-      message.success('Hủy lệnh sản xuất thành công');
+      message.success(t('production:messages.deleteSuccess'));
       queryClient.invalidateQueries({ queryKey: ['production-orders'] });
     },
     onError: () => {
-      message.error('Hủy lệnh sản xuất thất bại');
+      message.error(t('production:messages.deleteError'));
     },
   });
 
@@ -97,28 +93,21 @@ const ProductionOrderList = () => {
     cancelled: 'red',
   };
 
-  const statusLabels: Record<string, string> = {
-    draft: 'Nháp',
-    in_progress: 'Đang thực hiện',
-    paused: 'Tạm dừng',
-    completed: 'Hoàn thành',
-    cancelled: 'Đã hủy',
-  };
-
   const columns: ColumnsType<ProductionOrder> = [
     {
-      title: 'Mã lệnh',
+      title: t('production:orders.code'),
       dataIndex: 'code',
       key: 'code',
-      width: COLUMN_WIDTHS.code,
+      width: 120,
     },
     {
-      title: 'Sản phẩm',
+      title: t('production:orders.product'),
       dataIndex: ['product', 'name'],
       key: 'product',
+      ellipsis: true,
     },
     {
-      title: 'Số lượng',
+      title: t('production:orders.quantity'),
       key: 'quantity',
       width: 150,
       render: (_: any, record: ProductionOrder) => (
@@ -135,7 +124,7 @@ const ProductionOrderList = () => {
       ),
     },
     {
-      title: 'Lỗi/Phế phẩm',
+      title: t('production:orders.defectsWaste'),
       key: 'defects',
       width: 120,
       align: 'center' as const,
@@ -146,181 +135,94 @@ const ProductionOrderList = () => {
       ),
     },
     {
-      title: 'Ngày bắt đầu',
+      title: t('production:orders.startDate'),
       dataIndex: 'startDate',
       key: 'startDate',
-      width: COLUMN_WIDTHS.date,
-      render: formatDate,
+      width: 120,
+      render: (date: string) => formatDate(date),
     },
     {
-      title: 'Ngày dự kiến',
+      title: t('production:orders.expectedEndDate'),
       dataIndex: 'expectedEndDate',
       key: 'expectedEndDate',
-      width: COLUMN_WIDTHS.date,
-      render: formatDate,
+      width: 120,
+      render: (date: string) => formatDate(date),
     },
     {
-      title: 'Trạng thái',
+      title: t('production:orders.status'),
       dataIndex: 'status',
       key: 'status',
       width: 130,
-      render: (status: string) => <Tag color={statusColors[status]}>{statusLabels[status]}</Tag>,
-    },
-    {
-      title: 'Thao tác',
-      key: 'actions',
-      width: isMobile ? 60 : 200,
-      render: (_: any, record: ProductionOrder) => (
-        <Space size="small">
-          <Button
-            type="link"
-            icon={<EditOutlined />}
-            onClick={() => navigate(`/production/orders/${record.id}`)}
-          >
-            Chi tiết
-          </Button>
-          {record.status === 'draft' && (
-            <Button
-              type="link"
-              icon={<PlayCircleOutlined />}
-              onClick={() => startMutation.mutate(record.id)}
-            >
-              Bắt đầu
-            </Button>
-          )}
-          {record.status === 'in_progress' && (
-            <Popconfirm
-              title="Xác nhận hoàn thành lệnh sản xuất?"
-              onConfirm={() => completeMutation.mutate(record.id)}
-              okText="Có"
-              cancelText="Không"
-            >
-              <Button type="link" icon={<CheckCircleOutlined />} size="small">
-                Hoàn thành
-              </Button>
-            </Popconfirm>
-          )}
-          {(record.status === 'draft' || record.status === 'in_progress') && (
-            <Popconfirm
-              title="Bạn có chắc muốn hủy lệnh này?"
-              onConfirm={() => cancelMutation.mutate(record.id)}
-              okText="Có"
-              cancelText="Không"
-            >
-              <Button type="link" danger size="small">
-                Hủy
-              </Button>
-            </Popconfirm>
-          )}
-        </Space>
+      render: (status: string) => (
+        <Tag color={statusColors[status]}>{t(`production:orders.statuses.${status}`)}</Tag>
       ),
     },
   ];
 
-  const renderMobileItem = (order: ProductionOrder) => {
-    const menuItems: MenuProps['items'] = [
-      {
-        key: 'detail',
-        label: 'Chi tiết',
-        icon: <EditOutlined />,
-        onClick: () => navigate(`/production/orders/${order.id}`),
-      },
-    ];
-
-    if (order.status === 'draft') {
-      menuItems.push({
-        key: 'start',
-        label: 'Bắt đầu',
-        icon: <PlayCircleOutlined />,
-        onClick: () => startMutation.mutate(order.id),
-      });
-    }
-
-    if (order.status === 'in_progress') {
-      menuItems.push({
-        key: 'complete',
-        label: 'Hoàn thành',
-        icon: <CheckCircleOutlined />,
-        onClick: () => {
-          if (window.confirm('Xác nhận hoàn thành lệnh sản xuất?')) {
-            completeMutation.mutate(order.id);
-          }
-        },
-      });
-    }
-
-    if (order.status === 'draft' || order.status === 'in_progress') {
-      menuItems.push({
-        key: 'cancel',
-        label: 'Hủy',
-        danger: true,
-        onClick: () => {
-          if (window.confirm('Bạn có chắc muốn hủy lệnh này?')) {
-            cancelMutation.mutate(order.id);
-          }
-        },
-      });
-    }
-
-    return (
-      <MobileListCard
-        title={order.code}
-        subtitle={order.productName}
-        tags={[
-          <Tag key="status" color={statusColors[order.status]}>
-            {statusLabels[order.status]}
-          </Tag>,
-        ]}
-        extra={
-          <Dropdown menu={{ items: menuItems }} trigger={['click']} placement="bottomRight">
-            <Button
-              type="text"
-              icon={<MoreOutlined />}
-              size="small"
-              onClick={(e) => e.stopPropagation()}
-            />
-          </Dropdown>
-        }
-        details={[
-          { label: 'Số lượng', value: order.quantity.toString() },
-          { label: 'Ngày bắt đầu', value: formatDate(order.startDate) },
-          { label: 'Ngày dự kiến', value: formatDate(order.expectedEndDate) },
-        ]}
-      />
-    );
-  };
+  const filterComponents = (
+    <Select
+      placeholder={t('production:filters.status')}
+      style={{ width: 150 }}
+      allowClear
+      value={status}
+      onChange={setStatus}
+    >
+      <Option value="draft">{t('production:orders.statuses.draft')}</Option>
+      <Option value="in_progress">{t('production:orders.statuses.in_progress')}</Option>
+      <Option value="paused">{t('production:orders.statuses.paused')}</Option>
+      <Option value="completed">{t('production:orders.statuses.completed')}</Option>
+      <Option value="cancelled">{t('production:orders.statuses.cancelled')}</Option>
+    </Select>
+  );
 
   return (
     <StandardListPage
-      title="Lệnh sản xuất"
-      createButtonText="Tạo lệnh sản xuất"
+      title={t('production:orders.list')}
+      createButtonText={t('production:orders.createOrder')}
       onCreateClick={() => navigate('/production/orders/new')}
-      searchPlaceholder="Tìm kiếm lệnh sản xuất..."
+      searchPlaceholder={t('production:orders.searchPlaceholder')}
       searchValue={search}
       onSearchChange={setSearch}
-      filters={
-        <Select
-          placeholder="Trạng thái"
-          style={{ width: 150 }}
-          allowClear
-          value={status}
-          onChange={setStatus}
-        >
-          <Option value="draft">Nháp</Option>
-          <Option value="in_progress">Đang thực hiện</Option>
-          <Option value="paused">Tạm dừng</Option>
-          <Option value="completed">Hoàn thành</Option>
-          <Option value="cancelled">Đã hủy</Option>
-        </Select>
-      }
+      filters={filterComponents}
       columns={columns}
       dataSource={data?.data || []}
-      loading={isLoading}
-      pagination={false}
-      mobileRenderItem={renderMobileItem}
+      loading={isLoading || startMutation.isPending || completeMutation.isPending || cancelMutation.isPending}
       onMobileItemClick={(order) => navigate(`/production/orders/${order.id}`)}
+      pagination={{
+        current: 1,
+        pageSize: 10,
+        total: data?.data?.length || 0,
+        showTotal: (total: number) => t('production:messages.total', { total }),
+        onChange: () => {},
+      }}
+      customContent={
+        <Space style={{ marginBottom: 16 }} wrap>
+          {data?.data?.filter((o: ProductionOrder) => o.status === 'draft').map((order: ProductionOrder) => (
+            <Button
+              key={order.id}
+              type="link"
+              icon={<PlayCircleOutlined />}
+              onClick={() => startMutation.mutate(order.id)}
+            >
+              {t('production:orders.start')} - {order.code}
+            </Button>
+          ))}
+          {data?.data?.filter((o: ProductionOrder) => o.status === 'in_progress').map((order: ProductionOrder) => (
+            <Button
+              key={order.id}
+              type="link"
+              icon={<CheckCircleOutlined />}
+              onClick={() => {
+                if (window.confirm(t('production:orders.confirmComplete'))) {
+                  completeMutation.mutate(order.id);
+                }
+              }}
+            >
+              {t('production:orders.complete')} - {order.code}
+            </Button>
+          ))}
+        </Space>
+      }
     />
   );
-};
-
-export default ProductionOrderList;
+}

@@ -24,12 +24,12 @@ import {
 } from 'antd';
 import { PlusOutlined, CheckOutlined, DollarOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import StandardListPage from '../../components/common/StandardListPage';
+import StandardListPage from '@/components/common/StandardListPage';
 import productionService, {
   AdvancePayment,
   Worker,
-} from '../../services/production/productionService';
-import { formatCurrency, formatDate } from '../../utils/responsive';
+} from '@/services/production/productionService';
+import { formatCurrency, formatDate } from '@/utils/responsive';
 import dayjs from 'dayjs';
 import type { ColumnsType } from 'antd/es/table';
 

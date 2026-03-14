@@ -3,10 +3,10 @@ import { Card, Col, Collapse, Layout, Row, Space, Typography } from 'antd';
 import { useEffect } from 'react';
 import ReactGA from 'react-ga4';
 import { Helmet } from 'react-helmet-async';
-import CTA from '../../components/marketing/CTA';
-import Features from '../../components/marketing/Features';
-import Hero from '../../components/marketing/Hero';
-import Pricing from '../../components/marketing/Pricing';
+import CTA from '@/components/marketing/CTA';
+import Features from '@/components/marketing/Features';
+import Hero from '@/components/marketing/Hero';
+import Pricing from '@/components/marketing/Pricing';
 import {
   COLORS,
   CONTACT_INFO,
@@ -15,7 +15,7 @@ import {
   LAYOUT_CONSTANTS,
   TESTIMONIALS,
   TYPOGRAPHY,
-} from '../../constants/landing-page';
+} from '@/constants/landing-page';
 
 const { Header, Content, Footer } = Layout;
 const { Title, Paragraph, Text } = Typography;
@@ -88,15 +88,17 @@ export default function LandingPage(): React.ReactElement {
         <link rel="canonical" href="https://smarterp.vn" />
       </Helmet>
 
-      {/* Hero Section */}
-      <Hero />
+      {/* Main Content */}
+      <main role="main">
+        {/* Hero Section */}
+        <Hero />
 
-      {/* Features Section */}
-      <div id="features">
-        <Features />
-      </div>
+        {/* Features Section */}
+        <div id="features">
+          <Features />
+        </div>
 
-      {/* Testimonials Section */}
+        {/* Testimonials Section */}
       <div style={{ padding: LAYOUT_CONSTANTS.SECTION_PADDING, background: COLORS.WHITE }}>
         <div style={{ maxWidth: LAYOUT_CONSTANTS.MAX_WIDTH, margin: '0 auto' }}>
           <Title
@@ -224,6 +226,7 @@ export default function LandingPage(): React.ReactElement {
 
       {/* CTA Section */}
       <CTA />
+      </main>
 
       {/* Footer */}
       <Footer

@@ -3,7 +3,7 @@ import { Outlet } from 'react-router-dom';
 import { Layout, Drawer } from 'antd';
 import Sidebar from './Sidebar';
 import Header from './Header';
-import { useResponsive } from '../../hooks/useResponsive';
+import { useResponsive } from '@/hooks/useResponsive';
 import './MainLayout.css';
 
 const { Content } = Layout;

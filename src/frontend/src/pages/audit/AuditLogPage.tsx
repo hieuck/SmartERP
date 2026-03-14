@@ -24,9 +24,9 @@ import {
   AuditLog,
   AuditAction,
   AuditEntity,
-} from '../../services/audit/auditService';
+} from '@/services/audit/auditService';
 import dayjs from 'dayjs';
-import { useResponsive } from '../../hooks/useResponsive';
+import { useResponsive } from '@/hooks/useResponsive';
 import {
   LineChart,
   Line,

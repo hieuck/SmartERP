@@ -1,6 +1,6 @@
 import React from 'react';
 import { Spin } from 'antd';
-import { useLazyImage } from '../../hooks/useLazyImage';
+import { useLazyImage } from '@/hooks/useLazyImage';
 
 interface LazyImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   src: string;

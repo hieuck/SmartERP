@@ -25,7 +25,7 @@ import {
   OrderStatus,
   PaymentStatus,
   OrderItem,
-} from '../../services/order/orderService';
+} from '@/services/order/orderService';
 import dayjs from 'dayjs';
 import type { ColumnsType } from 'antd/es/table';
 

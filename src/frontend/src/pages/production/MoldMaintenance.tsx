@@ -1,38 +1,40 @@
 /**
  * Mold Maintenance Page
- * Track mold maintenance history
- * Requirements: 36.4
+ * Track and manage mold maintenance history
+ * Requirements: 36.2
  */
 
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  Table,
   Button,
   Space,
   Tag,
   message,
-  Card,
   Modal,
   Form,
-  InputNumber,
   Select,
-  Input,
   DatePicker,
+  InputNumber,
+  Input,
+  Card,
 } from 'antd';
 import { PlusOutlined, ArrowLeftOutlined, ToolOutlined } from '@ant-design/icons';
-import productionService, { MoldMaintenance } from '../../services/production/productionService';
+import { useTranslation } from 'react-i18next';
+import StandardListPage from '@/components/common/StandardListPage';
+import productionService, { MoldMaintenance } from '@/services/production/productionService';
+import { formatCurrency, formatDate } from '@/utils/responsive';
 import dayjs from 'dayjs';
-import { useResponsive } from '../../hooks/useResponsive';
+import type { ColumnsType } from 'antd/es/table';
 
 const { Option } = Select;
 const { TextArea } = Input;
 
-const MoldMaintenancePage = () => {
-  const { isMobile } = useResponsive();
-  const { id } = useParams();
+export default function MoldMaintenancePage() {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { t } = useTranslation(['production', 'common']);
   const queryClient = useQueryClient();
   const [modalVisible, setModalVisible] = useState(false);
   const [form] = Form.useForm();
@@ -40,20 +42,31 @@ const MoldMaintenancePage = () => {
   // Fetch mold
   const { data: moldData } = useQuery({
     queryKey: ['mold', id],
-    queryFn: () => productionService.mold.getMold(id!),
+    queryFn: async () => {
+      const response = await productionService.mold.getMold(id!);
+      return response.data;
+    },
+    enabled: !!id,
   });
 
   // Fetch maintenance history
-  const { data, isLoading } = useQuery({
+  const { data: maintenanceData, isLoading } = useQuery({
     queryKey: ['mold-maintenances', id],
-    queryFn: () => productionService.mold.getMoldMaintenances(id!),
+    queryFn: async () => {
+      const response = await productionService.mold.getMoldMaintenances(id!);
+      return response.data;
+    },
+    enabled: !!id,
   });
 
   // Create maintenance mutation
   const createMutation = useMutation({
-    mutationFn: (data: any) => productionService.mold.createMoldMaintenance(id!, data),
+    mutationFn: async (data: any) => {
+      const response = await productionService.mold.createMoldMaintenance(id!, data);
+      return response.data;
+    },
     onSuccess: () => {
-      message.success('Tạo bản ghi bảo trì thành công');
+      message.success(t('production:messages.saveSuccess'));
       queryClient.invalidateQueries({ queryKey: ['mold-maintenances'] });
       queryClient.invalidateQueries({ queryKey: ['mold', id] });
       queryClient.invalidateQueries({ queryKey: ['molds'] });
@@ -61,13 +74,9 @@ const MoldMaintenancePage = () => {
       form.resetFields();
     },
     onError: () => {
-      message.error('Tạo bản ghi bảo trì thất bại');
+      message.error(t('production:messages.saveError'));
     },
   });
-
-  const handleCreate = () => {
-    setModalVisible(true);
-  };
 
   const onFinish = (values: any) => {
     createMutation.mutate({
@@ -84,99 +93,108 @@ const MoldMaintenancePage = () => {
     repair: 'orange',
   };
 
-  const typeLabels: Record<string, string> = {
-    routine: 'Bảo trì định kỳ',
-    repair: 'Sửa chữa',
-  };
-
-  const columns = [
+  const columns: ColumnsType<MoldMaintenance> = [
     {
-      title: 'Ngày',
+      title: t('production:molds.maintenanceDate'),
       dataIndex: 'date',
       key: 'date',
       width: 120,
-      render: (date: Date) => dayjs(date).format('DD/MM/YYYY'),
+      render: (date: string) => formatDate(date),
     },
     {
-      title: 'Loại',
+      title: t('production:molds.maintenanceType'),
       dataIndex: 'type',
       key: 'type',
-      width: 150,
+      width: 120,
       render: (type: string) => (
         <Tag color={typeColors[type]} icon={<ToolOutlined />}>
-          {typeLabels[type]}
+          {t(`production:molds.maintenanceTypes.${type}`)}
         </Tag>
       ),
     },
     {
-      title: 'Mô tả',
+      title: t('production:molds.description'),
       dataIndex: 'description',
       key: 'description',
+      ellipsis: true,
     },
     {
-      title: 'Chi phí',
+      title: t('production:molds.cost'),
       dataIndex: 'cost',
       key: 'cost',
-      width: 120,
+      width: 130,
       align: 'right' as const,
-      render: (value: number) => (value ? value.toLocaleString('vi-VN') + ' đ' : '-'),
+      render: (value: number) => (value ? formatCurrency(value) : '-'),
     },
     {
-      title: 'Người thực hiện',
+      title: t('production:molds.performedBy'),
       dataIndex: 'performedBy',
       key: 'performedBy',
       width: 150,
     },
-    {
-      title: 'Ngày tạo',
-      dataIndex: 'createdAt',
-      key: 'createdAt',
-      width: 150,
-      render: (date: Date) => dayjs(date).format('DD/MM/YYYY HH:mm'),
-    },
   ];
 
-  const totalCost =
-    data?.data?.reduce((sum: number, m: MoldMaintenance) => sum + (m.cost || 0), 0) || 0;
-
   return (
-    <Card
-      title={
-        <Space>
-          <span>Lịch sử bảo trì - {moldData?.data?.name}</span>
-          <Tag color="blue">Mã: {moldData?.data?.code}</Tag>
-          <Tag color="green">Tổng chi phí: {totalCost.toLocaleString('vi-VN')} đ</Tag>
+    <div>
+      <Card
+        title={
+          <Space>
+            <Button
+              icon={<ArrowLeftOutlined />}
+              onClick={() => navigate('/production/molds')}
+            >
+              {t('common:actions.back')}
+            </Button>
+            <span>
+              {t('production:molds.maintenanceHistory')} - {moldData?.name || ''}
+            </span>
+          </Space>
+        }
+        style={{ marginBottom: 16 }}
+      >
+        <Space direction="vertical" style={{ width: '100%' }}>
+          <div>
+            <strong>{t('production:molds.code')}:</strong> {moldData?.code}
+          </div>
+          <div>
+            <strong>{t('production:molds.status')}:</strong>{' '}
+            <Tag color={moldData?.status === 'available' ? 'green' : 'orange'}>
+              {moldData?.status && t(`production:molds.statuses.${moldData.status}`)}
+            </Tag>
+          </div>
+          <div>
+            <strong>{t('production:molds.usageCount')}:</strong> {moldData?.usageCount || 0}
+          </div>
+          <div>
+            <strong>{t('production:molds.lastMaintenance')}:</strong>{' '}
+            {moldData?.lastMaintenanceDate ? formatDate(moldData.lastMaintenanceDate) : '-'}
+          </div>
+          <div>
+            <strong>{t('production:molds.nextMaintenance')}:</strong>{' '}
+            {moldData?.nextMaintenanceDate ? formatDate(moldData.nextMaintenanceDate) : '-'}
+          </div>
         </Space>
-      }
-      extra={
-        <Space>
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
-            Thêm bảo trì
-          </Button>
-          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/production/molds')}>
-            Quay lại
-          </Button>
-        </Space>
-      }
-    >
-      <Table
-        size={isMobile ? 'small' : 'middle'}
-        scroll={{ x: 'max-content' }}
+      </Card>
+
+      <StandardListPage
+        title={t('production:molds.maintenanceHistory')}
+        createButtonText={t('production:molds.recordMaintenance')}
+        onCreateClick={() => setModalVisible(true)}
         columns={columns}
-        dataSource={data?.data || []}
-        rowKey="id"
-        loading={isLoading}
+        dataSource={maintenanceData || []}
+        loading={isLoading || createMutation.isPending}
         pagination={{
-          total: data?.meta?.total,
-          pageSize: data?.meta?.limit,
-          current: data?.meta?.page,
-          showSizeChanger: true,
-          showTotal: (total) => `Tổng ${total} lần bảo trì`,
+          current: 1,
+          pageSize: 20,
+          total: maintenanceData?.length || 0,
+          showTotal: (total: number) => t('production:messages.total', { total }),
+          onChange: () => {},
         }}
       />
 
+      {/* Create Maintenance Modal */}
       <Modal
-        title="Thêm bản ghi bảo trì"
+        title={t('production:molds.recordMaintenance')}
         open={modalVisible}
         onCancel={() => {
           setModalVisible(false);
@@ -190,50 +208,48 @@ const MoldMaintenancePage = () => {
           onFinish={onFinish}
           initialValues={{
             date: dayjs(),
-            type: 'routine',
           }}
         >
           <Form.Item
-            label="Ngày bảo trì"
+            label={t('production:molds.maintenanceDate')}
             name="date"
-            rules={[{ required: true, message: 'Vui lòng chọn ngày' }]}
+            rules={[{ required: true, message: t('production:validation.required') }]}
           >
             <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" />
           </Form.Item>
 
           <Form.Item
-            label="Loại bảo trì"
+            label={t('production:molds.maintenanceType')}
             name="type"
-            rules={[{ required: true, message: 'Vui lòng chọn loại' }]}
+            rules={[{ required: true, message: t('production:validation.required') }]}
           >
-            <Select>
-              <Option value="routine">Bảo trì định kỳ</Option>
-              <Option value="repair">Sửa chữa</Option>
+            <Select placeholder={t('production:molds.maintenanceType')}>
+              <Option value="routine">{t('production:molds.maintenanceTypes.routine')}</Option>
+              <Option value="repair">{t('production:molds.maintenanceTypes.repair')}</Option>
             </Select>
           </Form.Item>
 
-          <Form.Item label="Mô tả" name="description">
-            <TextArea rows={3} placeholder="Mô tả công việc bảo trì" />
+          <Form.Item label={t('production:molds.description')} name="description">
+            <TextArea rows={3} placeholder={t('production:molds.description')} />
           </Form.Item>
 
-          <Form.Item label="Chi phí (đ)" name="cost">
+          <Form.Item label={t('production:molds.cost')} name="cost">
             <InputNumber
               style={{ width: '100%' }}
+              min={0}
               formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
               parser={(value) => value!.replace(/\$\s?|(,*)/g, '')}
-              placeholder="Nhập chi phí"
-              min={0}
             />
           </Form.Item>
 
-          <Form.Item label="Người thực hiện" name="performedBy">
-            <Input placeholder="Tên người thực hiện" />
+          <Form.Item label={t('production:molds.performedBy')} name="performedBy">
+            <Input placeholder={t('production:molds.performedBy')} />
           </Form.Item>
 
           <Form.Item>
             <Space>
               <Button type="primary" htmlType="submit" loading={createMutation.isPending}>
-                Thêm bảo trì
+                {t('production:actions.save')}
               </Button>
               <Button
                 onClick={() => {
@@ -241,14 +257,12 @@ const MoldMaintenancePage = () => {
                   form.resetFields();
                 }}
               >
-                Hủy
+                {t('production:actions.cancel')}
               </Button>
             </Space>
           </Form.Item>
         </Form>
       </Modal>
-    </Card>
+    </div>
   );
-};
-
-export default MoldMaintenancePage;
+}

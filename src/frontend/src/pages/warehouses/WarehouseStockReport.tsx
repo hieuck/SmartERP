@@ -13,8 +13,8 @@ import {
   InboxOutlined,
   WarningOutlined,
 } from '@ant-design/icons';
-import warehouseService from '../../services/inventory/warehouseService';
-import { useResponsive } from '../../hooks/useResponsive';
+import warehouseService from '@/services/inventory/warehouseService';
+import { useResponsive } from '@/hooks/useResponsive';
 
 const { Option } = Select;
 

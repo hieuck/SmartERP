@@ -14,7 +14,7 @@ import {
 } from 'antd';
 import { CheckOutlined, DeleteOutlined, SettingOutlined, BellOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import notificationService, { Notification } from '../../services/notification/notificationService';
+import notificationService, { Notification } from '@/services/notification/notificationService';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 

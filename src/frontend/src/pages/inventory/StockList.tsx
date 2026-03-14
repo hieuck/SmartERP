@@ -10,9 +10,9 @@ import { Tag, Select, Space, Button } from 'antd';
 import { InboxOutlined, WarningOutlined } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import inventoryServiceNew from '../../services/inventory/inventoryService';
-import StandardListPage from '../../components/common/StandardListPage';
-import { formatNumber } from '../../utils/responsive';
+import inventoryServiceNew from '@/services/inventory/inventoryService';
+import StandardListPage from '@/components/common/StandardListPage';
+import { formatNumber } from '@/utils/responsive';
 import type { ColumnsType } from 'antd/es/table';
 
 const { Option } = Select;

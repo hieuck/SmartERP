@@ -1,6 +1,6 @@
 {
   "actions": {
-    "create": "Create",
+    "create": "Create New",
     "edit": "Edit",
     "delete": "Delete",
     "save": "Save",
@@ -8,14 +8,108 @@
     "back": "Back",
     "search": "Search",
     "filter": "Filter",
-    "export": "Export",
-    "import": "Import",
+    "export": "Export Excel",
+    "import": "Import Excel",
     "refresh": "Refresh",
     "view": "View",
     "more": "More",
     "confirm": "Confirm",
     "close": "Close",
-    "tryAgain": "Try Again"
+    "tryAgain": "Try Again",
+    "print": "Print",
+    "approve": "Approve",
+    "reject": "Reject",
+    "submit": "Submit",
+    "next": "Next",
+    "finish": "Finish"
+  },
+  "status": {
+    "active": "Active",
+    "inactive": "Inactive",
+    "pending": "Pending",
+    "completed": "Completed",
+    "cancelled": "Cancelled",
+    "draft": "Draft",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "in_progress": "In Progress",
+    "paused": "Paused"
+  },
+  "types": {
+    "individual": "Individual",
+    "business": "Business",
+    "reseller": "Reseller",
+    "vip": "VIP"
+  },
+  "specialty": {
+    "casting": "Casting",
+    "painting": "Painting",
+    "finishing": "Finishing",
+    "packaging": "Packaging",
+    "general": "General"
+  },
+  "skillLevel": {
+    "apprentice": "Apprentice",
+    "skilled": "Skilled",
+    "master": "Master",
+    "junior": "Junior",
+    "intermediate": "Intermediate",
+    "senior": "Senior"
+  },
+  "priority": {
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High",
+    "urgent": "Urgent"
+  },
+  "confirm": {
+    "delete": "Are you sure you want to delete?",
+    "deleteMultiple": "Are you sure you want to delete {{count}} selected records?",
+    "cancel": "Are you sure you want to cancel?",
+    "submit": "Are you sure you want to save?",
+    "approve": "Are you sure you want to approve?",
+    "reject": "Are you sure you want to reject?"
+  },
+  "success": {
+    "create": "Created successfully!",
+    "update": "Updated successfully!",
+    "delete": "Deleted successfully!",
+    "deleteMultiple": "Successfully deleted {{count}} records!",
+    "save": "Saved successfully!",
+    "approve": "Approved successfully!",
+    "reject": "Rejected successfully!",
+    "import": "Data imported successfully!",
+    "export": "Data exported successfully!"
+  },
+  "error": {
+    "create": "Failed to create!",
+    "update": "Failed to update!",
+    "delete": "Failed to delete!",
+    "save": "Failed to save!",
+    "approve": "Failed to approve!",
+    "reject": "Failed to reject!",
+    "network": "Network error!",
+    "notFound": "Data not found!",
+    "unauthorized": "You are not authorized to perform this action!",
+    "validation": "Invalid data!",
+    "import": "Failed to import data!",
+    "export": "Failed to export data!"
+  },
+  "warning": {
+    "unsavedChanges": "You have unsaved changes. Are you sure you want to leave?",
+    "selectItems": "Please select at least one record!",
+    "fillRequired": "Please fill in all required fields!"
+  },
+  "validation": {
+    "required": "This field is required!",
+    "email": "Invalid email!",
+    "phone": "Invalid phone number!",
+    "minLength": "Minimum {{min}} characters!",
+    "maxLength": "Maximum {{max}} characters!",
+    "min": "Minimum value is {{min}}!",
+    "max": "Maximum value is {{max}}!",
+    "pattern": "Invalid format!",
+    "unique": "Value already exists!"
   },
   "messages": {
     "deleteConfirm": "Are you sure you want to delete?",

@@ -19,8 +19,8 @@ import {
   useDeleteSetting,
   useSettingsByCategory,
   useUpdateSetting,
-} from '../../hooks/useSettings';
-import { Setting, SettingCategory } from '../../services/utils/settingsService';
+} from '@/hooks/useSettings';
+import { Setting, SettingCategory } from '@/services/utils/settingsService';
 
 const { TabPane } = Tabs;
 const { TextArea } = Input;

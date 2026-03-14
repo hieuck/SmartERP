@@ -26,9 +26,9 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { useTranslation } from 'react-i18next';
-import { dashboardService } from '../services/dashboard/dashboardService';
+import { dashboardService } from '@/services/dashboard/dashboardService';
 import dayjs from 'dayjs';
-import { useResponsive } from '../hooks/useResponsive';
+import { useResponsive } from '@/hooks/useResponsive';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
 

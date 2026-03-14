@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { invoiceService, Invoice, InvoiceStatus } from '../services/accounting/invoiceService';
+import { invoiceService, Invoice, InvoiceStatus } from '@/services/accounting/invoiceService';
 
 interface InvoiceFilters {
   page?: number;

@@ -14,7 +14,7 @@ import {
   List,
 } from 'antd';
 import { FilterOutlined, SaveOutlined, DeleteOutlined } from '@ant-design/icons';
-import searchService, { SavedFilter } from '../../services/utils/searchService';
+import searchService, { SavedFilter } from '@/services/utils/searchService';
 import dayjs from 'dayjs';
 
 const { RangePicker } = DatePicker;

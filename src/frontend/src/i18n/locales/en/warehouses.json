@@ -8,14 +8,27 @@
     "address": "Address",
     "phone": "Phone",
     "status": "Status",
-    "isDefault": "Default"
+    "isDefault": "Default",
+    "fromWarehouse": "From Warehouse",
+    "toWarehouse": "To Warehouse",
+    "transferDate": "Transfer Date",
+    "items": "Items",
+    "createdBy": "Created By",
+    "sku": "SKU",
+    "product": "Product",
+    "warehouse": "Warehouse",
+    "quantity": "Stock",
+    "minQuantity": "Min Quantity",
+    "stockStatus": "Status"
   },
   "status": {
     "active": "Active",
     "inactive": "Inactive",
     "pending": "Pending",
+    "in_transit": "In Transit",
     "completed": "Completed",
-    "cancelled": "Cancelled"
+    "cancelled": "Cancelled",
+    "draft": "Draft"
   },
   "labels": {
     "default": "Default"
@@ -23,7 +36,14 @@
   "messages": {
     "deleteSuccess": "Warehouse deleted successfully",
     "deleteError": "Cannot delete warehouse",
-    "total": "Total {{total}} warehouses"
+    "total": "Total {{total}} warehouses",
+    "totalTransfers": "Total {{total}} transfers",
+    "createSuccess": "Transfer created successfully",
+    "createError": "Failed to create transfer",
+    "updateSuccess": "Warehouse updated successfully",
+    "updateError": "Failed to update warehouse",
+    "warehouseCreateSuccess": "Warehouse created successfully",
+    "warehouseCreateError": "Failed to create warehouse"
   },
   "list": {
     "title": "Warehouse List",
@@ -36,22 +56,86 @@
     "name": "Warehouse Name",
     "code": "Warehouse Code",
     "address": "Address",
+    "ward": "Ward",
+    "district": "District",
+    "city": "City/Province",
+    "phone": "Phone",
+    "email": "Email",
     "manager": "Manager",
-    "capacity": "Capacity"
+    "capacity": "Capacity",
+    "status": "Status",
+    "statusActive": "Active",
+    "statusInactive": "Inactive",
+    "isDefault": "Set as Default Warehouse",
+    "save": "Save",
+    "cancel": "Cancel",
+    "back": "Back",
+    "required": {
+      "code": "Please enter warehouse code",
+      "name": "Please enter warehouse name",
+      "address": "Please enter address",
+      "city": "Please enter city/province"
+    }
   },
   "transfer": {
-    "title": "Stock Transfer",
+    "title": "Stock Transfers",
     "list": "Transfer List",
     "create": "Create Transfer",
+    "createTitle": "Create Stock Transfer",
+    "viewTitle": "Transfer Details",
     "from": "From Warehouse",
     "to": "To Warehouse",
     "product": "Product",
-    "quantity": "Quantity"
+    "quantity": "Quantity",
+    "transferDate": "Transfer Date",
+    "notes": "Notes",
+    "notesPlaceholder": "Enter notes",
+    "productList": "Products to Transfer",
+    "addProduct": "Add",
+    "productId": "Product Code",
+    "productIdPlaceholder": "Product code",
+    "quantityPlaceholder": "Quantity",
+    "back": "Back",
+    "save": "Create Transfer",
+    "cancel": "Cancel",
+    "status": "Status",
+    "code": "Transfer Code",
+    "fromWarehouse": "From Warehouse",
+    "toWarehouse": "To Warehouse",
+    "required": {
+      "fromWarehouse": "Please select source warehouse",
+      "toWarehouse": "Please select destination warehouse",
+      "transferDate": "Please select date"
+    },
+    "filters": {
+      "status": "Filter by Status",
+      "draft": "Draft",
+      "pending": "Pending",
+      "in_transit": "In Transit",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    }
   },
   "report": {
     "title": "Stock Report",
     "byWarehouse": "By Warehouse",
     "byProduct": "By Product",
-    "totalValue": "Total Value"
+    "totalValue": "Total Value",
+    "totalItems": "Total Items",
+    "lowStock": "Low Stock",
+    "viewingWarehouse": "Viewing Warehouse",
+    "allWarehouses": "All",
+    "selectWarehouse": "Select Warehouse",
+    "searchProduct": "Search product...",
+    "stock": "Stock",
+    "minStock": "Min Stock",
+    "status": {
+      "lowStock": "Low Stock",
+      "inStock": "In Stock"
+    }
+  },
+  "actions": {
+    "view": "View",
+    "viewDetail": "View Details"
   }
 }

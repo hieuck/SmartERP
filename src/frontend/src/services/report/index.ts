@@ -1,3 +1,3 @@
 export * from './reportService';
 export * from './reportingService';
-export * from '../dashboard/dashboardService';
+export * from '@/services/dashboard/dashboardService';

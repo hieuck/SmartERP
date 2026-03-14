@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Input, AutoComplete, Spin, Tag, Empty } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import searchService, { SearchResult } from '../../services/utils/searchService';
+import searchService, { SearchResult } from '@/services/utils/searchService';
 import { debounce } from 'lodash';
 
 const { Search } = Input;

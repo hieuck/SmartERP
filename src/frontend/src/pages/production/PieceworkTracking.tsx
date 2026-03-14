@@ -5,7 +5,7 @@
  */
 
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tantml:parameter>
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Card,
   Row,
@@ -29,10 +29,10 @@ import {
   BarChartOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import StandardListPage from '../../components/common/StandardListPage';
-import productionService, { Worker } from '../../services/production/productionService';
-import { productService } from '../../services/inventory/productService';
-import { formatCurrency, formatDate } from '../../utils/responsive';
+import StandardListPage from '@/components/common/StandardListPage';
+import productionService, { Worker } from '@/services/production/productionService';
+import { productService } from '@/services/inventory/productService';
+import { formatCurrency, formatDate } from '@/utils/responsive';
 import dayjs, { Dayjs } from 'dayjs';
 import type { ColumnsType } from 'antd/es/table';
 

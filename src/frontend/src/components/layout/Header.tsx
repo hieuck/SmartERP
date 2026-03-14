@@ -8,9 +8,9 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
-import { logout } from '../../store/slices/authSlice';
-import { RootState } from '../../store';
-import LanguageSwitcher from '../common/LanguageSwitcher';
+import { logout } from '@/store/slices/authSlice';
+import { RootState } from '@/store';
+import LanguageSwitcher from '@/components/common/LanguageSwitcher';
 import type { MenuProps } from 'antd';
 
 const { Header: AntHeader } = Layout;

@@ -28,9 +28,9 @@ import {
   CloseCircleOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import StandardListPage from '../../components/common/StandardListPage';
-import productionService, { Attendance, Worker } from '../../services/production/productionService';
-import { formatDate } from '../../utils/responsive';
+import StandardListPage from '@/components/common/StandardListPage';
+import productionService, { Attendance, Worker } from '@/services/production/productionService';
+import { formatDate } from '@/utils/responsive';
 import dayjs, { Dayjs } from 'dayjs';
 import type { ColumnsType } from 'antd/es/table';
 

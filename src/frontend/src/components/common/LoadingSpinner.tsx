@@ -16,9 +16,9 @@
 import { Spin } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { useResponsive } from '../../hooks/useResponsive';
-import { Z_INDEX } from '../../constants/design-tokens';
-import { getSpacing } from '../../utils/responsive';
+import { useResponsive } from '@/hooks/useResponsive';
+import { Z_INDEX } from '@/constants/design-tokens';
+import { getSpacing } from '@/utils/responsive';
 
 interface LoadingSpinnerProps {
   size?: 'small' | 'default' | 'large';

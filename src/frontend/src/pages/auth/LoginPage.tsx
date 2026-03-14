@@ -18,12 +18,12 @@ import { LockOutlined, MailOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { useMutation } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { authService, LoginRequest } from '../../services/auth/authService';
-import { setCredentials } from '../../store/slices/authSlice';
-import { RootState } from '../../store';
-import { sanitizeEmail } from '../../utils/sanitize';
-import { useRateLimit } from '../../hooks/useRateLimit';
-import LanguageSwitcher from '../../components/common/LanguageSwitcher';
+import { authService, LoginRequest } from '@/services/auth/authService';
+import { setCredentials } from '@/store/slices/authSlice';
+import { RootState } from '@/store';
+import { sanitizeEmail } from '@/utils/sanitize';
+import { useRateLimit } from '@/hooks/useRateLimit';
+import LanguageSwitcher from '@/components/common/LanguageSwitcher';
 
 const { Header, Content } = Layout;
 const { Title, Text, Paragraph } = Typography;

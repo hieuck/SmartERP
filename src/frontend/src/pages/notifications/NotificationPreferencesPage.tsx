@@ -3,7 +3,7 @@ import { Card, Form, Switch, Button, Space, Typography, Divider, message, Spin, 
 import { SaveOutlined, BellOutlined, MailOutlined } from '@ant-design/icons';
 import notificationService, {
   NotificationPreferences,
-} from '../../services/notification/notificationService';
+} from '@/services/notification/notificationService';
 
 const { Title, Text, Paragraph } = Typography;
 

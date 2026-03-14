@@ -7,34 +7,24 @@
 import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  Form,
-  Input,
-  InputNumber,
-  Select,
-  DatePicker,
-  Button,
-  Card,
-  message,
-  Space,
-  Row,
-  Col,
-} from 'antd';
+import { Card, Form, Input, InputNumber, Button, Space, message, Spin } from 'antd';
 import { SaveOutlined, ArrowLeftOutlined } from '@ant-design/icons';
-import productionService from '../../services/production/productionService';
-import dayjs from 'dayjs';
+import { useTranslation } from 'react-i18next';
+import productionService, { CreateMoldDto } from '@/services/production/productionService';
+import { useResponsive } from '@/hooks/useResponsive';
+import { getCardSize } from '@/utils/responsive';
 
-const { Option } = Select;
-
-const MoldForm = () => {
+export default function MoldForm() {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { id } = useParams();
+  const { t } = useTranslation(['production', 'common']);
   const queryClient = useQueryClient();
+  const responsive = useResponsive();
   const [form] = Form.useForm();
   const isEdit = !!id;
 
-  // Fetch mold data if editing
-  const { data: moldData } = useQuery({
+  // Fetch mold data for editing
+  const { data: moldData, isLoading } = useQuery({
     queryKey: ['mold', id],
     queryFn: async () => {
       const response = await productionService.mold.getMold(id!);
@@ -43,155 +33,100 @@ const MoldForm = () => {
     enabled: isEdit,
   });
 
-  // Create mutation
-  const createMutation = useMutation({
-    mutationFn: async (data: any) => {
-      const response = await productionService.mold.createMold(data);
-      return response.data;
-    },
-    onSuccess: () => {
-      message.success('Tạo khuôn thành công');
-      queryClient.invalidateQueries({ queryKey: ['molds'] });
-      navigate('/production/molds');
-    },
-    onError: () => {
-      message.error('Tạo khuôn thất bại');
-    },
-  });
-
-  // Update mutation
-  const updateMutation = useMutation({
-    mutationFn: async (data: any) => {
-      const response = await productionService.mold.updateMold(id!, data);
-      return response.data;
-    },
-    onSuccess: () => {
-      message.success('Cập nhật khuôn thành công');
-      queryClient.invalidateQueries({ queryKey: ['molds'] });
-      queryClient.invalidateQueries({ queryKey: ['mold', id] });
-      navigate('/production/molds');
-    },
-    onError: () => {
-      message.error('Cập nhật khuôn thất bại');
-    },
-  });
-
-  // Populate form when editing
   useEffect(() => {
     if (moldData) {
-      form.setFieldsValue({
-        ...moldData,
-        lastMaintenanceDate: moldData.lastMaintenanceDate
-          ? dayjs(moldData.lastMaintenanceDate)
-          : null,
-        nextMaintenanceDate: moldData.nextMaintenanceDate
-          ? dayjs(moldData.nextMaintenanceDate)
-          : null,
-      });
+      form.setFieldsValue(moldData);
     }
   }, [moldData, form]);
 
-  const onFinish = (values: any) => {
-    const data = {
-      ...values,
-      lastMaintenanceDate: values.lastMaintenanceDate?.toDate(),
-      nextMaintenanceDate: values.nextMaintenanceDate?.toDate(),
-    };
+  const createMutation = useMutation({
+    mutationFn: (data: CreateMoldDto) => productionService.mold.createMold(data),
+    onSuccess: () => {
+      message.success(t('production:messages.saveSuccess'));
+      queryClient.invalidateQueries({ queryKey: ['molds'] });
+      navigate('/production/molds');
+    },
+    onError: () => {
+      message.error(t('production:messages.saveError'));
+    },
+  });
 
+  const updateMutation = useMutation({
+    mutationFn: (data: Partial<CreateMoldDto>) =>
+      productionService.mold.updateMold(id!, data),
+    onSuccess: () => {
+      message.success(t('production:messages.saveSuccess'));
+      queryClient.invalidateQueries({ queryKey: ['molds'] });
+      navigate('/production/molds');
+    },
+    onError: () => {
+      message.error(t('production:messages.saveError'));
+    },
+  });
+
+  const onFinish = (values: any) => {
     if (isEdit) {
-      updateMutation.mutate(data);
+      updateMutation.mutate(values);
     } else {
-      createMutation.mutate(data);
+      createMutation.mutate(values);
     }
   };
 
+  if (isEdit && isLoading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', padding: 50 }}>
+        <Spin size="large" />
+      </div>
+    );
+  }
+
   return (
     <Card
-      title={isEdit ? 'Sửa thông tin khuôn' : 'Thêm khuôn mới'}
+      title={isEdit ? t('production:molds.edit') : t('production:molds.create')}
+      size={getCardSize(responsive)}
       extra={
-        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/production/molds')}>
-          Quay lại
+        <Button
+          icon={<ArrowLeftOutlined />}
+          onClick={() => navigate('/production/molds')}
+        >
+          {t('common:actions.back')}
         </Button>
       }
     >
-      <Form
-        form={form}
-        layout="vertical"
-        onFinish={onFinish}
-        initialValues={{
-          status: 'available',
-          usageCount: 0,
-        }}
-      >
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item
-              label="Tên khuôn"
-              name="name"
-              rules={[{ required: true, message: 'Vui lòng nhập tên khuôn' }]}
-            >
-              <Input placeholder="Nhập tên khuôn" />
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item label="Kích thước" name="size">
-              <Input placeholder="Ví dụ: 30x20x15 cm" />
-            </Form.Item>
-          </Col>
-        </Row>
+      <Form form={form} layout="vertical" onFinish={onFinish} style={{ maxWidth: 600 }}>
+        <Form.Item
+          label={t('production:molds.code')}
+          name="code"
+          rules={[{ required: true, message: t('production:validation.required') }]}
+        >
+          <Input placeholder={t('production:molds.code')} />
+        </Form.Item>
 
-        <Row gutter={16}>
-          <Col span={8}>
-            <Form.Item label="Trọng lượng sản phẩm (kg)" name="productWeight">
-              <InputNumber
-                style={{ width: '100%' }}
-                placeholder="Nhập trọng lượng"
-                min={0}
-                step={0.1}
-              />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item label="Số lần sử dụng" name="usageCount">
-              <InputNumber style={{ width: '100%' }} placeholder="Số lần đã sử dụng" min={0} />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item
-              label="Trạng thái"
-              name="status"
-              rules={[{ required: true, message: 'Vui lòng chọn trạng thái' }]}
-            >
-              <Select>
-                <Option value="available">Sẵn sàng</Option>
-                <Option value="in_use">Đang sử dụng</Option>
-                <Option value="maintenance">Bảo trì</Option>
-                <Option value="broken">Hỏng</Option>
-              </Select>
-            </Form.Item>
-          </Col>
-        </Row>
+        <Form.Item
+          label={t('production:molds.name')}
+          name="name"
+          rules={[{ required: true, message: t('production:validation.required') }]}
+        >
+          <Input placeholder={t('production:molds.name')} />
+        </Form.Item>
 
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item label="Bảo trì lần cuối" name="lastMaintenanceDate">
-              <DatePicker
-                style={{ width: '100%' }}
-                format="DD/MM/YYYY"
-                placeholder="Chọn ngày bảo trì lần cuối"
-              />
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item label="Bảo trì tiếp theo" name="nextMaintenanceDate">
-              <DatePicker
-                style={{ width: '100%' }}
-                format="DD/MM/YYYY"
-                placeholder="Chọn ngày bảo trì tiếp theo"
-              />
-            </Form.Item>
-          </Col>
-        </Row>
+        <Form.Item
+          label={t('production:molds.size')}
+          name="size"
+        >
+          <Input placeholder={t('production:molds.size')} />
+        </Form.Item>
+
+        <Form.Item
+          label={t('production:molds.productWeight')}
+          name="productWeight"
+        >
+          <InputNumber
+            style={{ width: '100%' }}
+            min={0}
+            placeholder={t('production:molds.productWeight')}
+          />
+        </Form.Item>
 
         <Form.Item>
           <Space>
@@ -201,14 +136,14 @@ const MoldForm = () => {
               icon={<SaveOutlined />}
               loading={createMutation.isPending || updateMutation.isPending}
             >
-              {isEdit ? 'Cập nhật' : 'Tạo mới'}
+              {t('production:actions.save')}
             </Button>
-            <Button onClick={() => navigate('/production/molds')}>Hủy</Button>
+            <Button onClick={() => navigate('/production/molds')}>
+              {t('production:actions.cancel')}
+            </Button>
           </Space>
         </Form.Item>
       </Form>
     </Card>
   );
-};
-
-export default MoldForm;
+}

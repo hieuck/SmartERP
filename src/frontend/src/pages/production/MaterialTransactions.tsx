@@ -1,45 +1,40 @@
 /**
  * Material Transactions Page
- * View and manage material transactions
- * Requirements: 35.4
+ * View and manage material inventory transactions
+ * Requirements: 35.2
  */
 
 import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  Table,
   Button,
   Space,
   Tag,
   message,
-  Card,
   Modal,
   Form,
-  InputNumber,
   Select,
+  InputNumber,
   Input,
-  DatePicker,
+  Card,
+  Statistic,
+  Row,
+  Col,
 } from 'antd';
-import {
-  PlusOutlined,
-  ArrowLeftOutlined,
-  ArrowUpOutlined,
-  ArrowDownOutlined,
-} from '@ant-design/icons';
-import productionService, {
-  MaterialTransaction,
-} from '../../services/production/productionService';
-import dayjs from 'dayjs';
-import { useResponsive } from '../../hooks/useResponsive';
+import { PlusOutlined, ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
+import StandardListPage from '@/components/common/StandardListPage';
+import productionService, { MaterialTransaction } from '@/services/production/productionService';
+import { formatDate } from '@/utils/responsive';
+import type { ColumnsType } from 'antd/es/table';
 
 const { Option } = Select;
 const { TextArea } = Input;
 
-const MaterialTransactions = () => {
-  const { isMobile } = useResponsive();
-  const { id } = useParams();
-  const navigate = useNavigate();
+export default function MaterialTransactions() {
+  const { id } = useParams<{ id: string }>();
+  const { t } = useTranslation(['production', 'common']);
   const queryClient = useQueryClient();
   const [modalVisible, setModalVisible] = useState(false);
   const [form] = Form.useForm();
@@ -51,15 +46,19 @@ const MaterialTransactions = () => {
       const response = await productionService.material.getMaterial(id!);
       return response.data;
     },
+    enabled: !!id,
   });
 
   // Fetch transactions
-  const { data, isLoading } = useQuery({
+  const { data: transactionsData, isLoading } = useQuery({
     queryKey: ['material-transactions', id],
     queryFn: async () => {
-      const response = await productionService.material.getMaterialTransactions({ materialId: id });
+      const response = await productionService.material.getMaterialTransactions({
+        materialId: id,
+      });
       return response.data;
     },
+    enabled: !!id,
   });
 
   // Create transaction mutation
@@ -69,7 +68,7 @@ const MaterialTransactions = () => {
       return response.data;
     },
     onSuccess: () => {
-      message.success('Tạo giao dịch thành công');
+      message.success(t('production:messages.saveSuccess'));
       queryClient.invalidateQueries({ queryKey: ['material-transactions'] });
       queryClient.invalidateQueries({ queryKey: ['material', id] });
       queryClient.invalidateQueries({ queryKey: ['materials'] });
@@ -77,13 +76,9 @@ const MaterialTransactions = () => {
       form.resetFields();
     },
     onError: () => {
-      message.error('Tạo giao dịch thất bại');
+      message.error(t('production:messages.saveError'));
     },
   });
-
-  const handleCreate = () => {
-    setModalVisible(true);
-  };
 
   const onFinish = (values: any) => {
     createMutation.mutate({
@@ -97,106 +92,118 @@ const MaterialTransactions = () => {
   const typeColors: Record<string, string> = {
     in: 'green',
     out: 'red',
-    adjustment: 'orange',
+    adjustment: 'blue',
   };
 
-  const typeLabels: Record<string, string> = {
-    in: 'Nhập kho',
-    out: 'Xuất kho',
-    adjustment: 'Điều chỉnh',
+  const typeIcons: Record<string, React.ReactNode> = {
+    in: <ArrowUpOutlined />,
+    out: <ArrowDownOutlined />,
+    adjustment: null,
   };
 
-  const typeIcons: Record<string, any> = {
-    in: <ArrowDownOutlined />,
-    out: <ArrowUpOutlined />,
-    adjustment: <PlusOutlined />,
-  };
-
-  const columns = [
+  const columns: ColumnsType<MaterialTransaction> = [
     {
-      title: 'Ngày',
-      dataIndex: 'createdAt',
-      key: 'createdAt',
-      width: 150,
-      render: (date: Date) => dayjs(date).format('DD/MM/YYYY HH:mm'),
-    },
-    {
-      title: 'Loại giao dịch',
+      title: t('production:materials.transactions'),
       dataIndex: 'type',
       key: 'type',
-      width: 150,
+      width: 120,
       render: (type: string) => (
         <Tag color={typeColors[type]} icon={typeIcons[type]}>
-          {typeLabels[type]}
+          {t(`production:materials.transactionTypes.${type}`)}
         </Tag>
       ),
     },
     {
-      title: 'Số lượng',
+      title: t('production:piecework.quantity'),
       dataIndex: 'quantity',
       key: 'quantity',
       width: 120,
       align: 'right' as const,
-      render: (quantity: number, record: MaterialTransaction) => {
-        const color =
-          record.type === 'in' ? '#52c41a' : record.type === 'out' ? '#ff4d4f' : '#faad14';
-        const sign = record.type === 'in' ? '+' : record.type === 'out' ? '-' : '';
+      render: (value: number, record: MaterialTransaction) => {
+        const color = record.type === 'in' ? '#52c41a' : record.type === 'out' ? '#ff4d4f' : undefined;
         return (
-          <strong style={{ color }}>
-            {sign}
-            {quantity.toLocaleString()} {materialData?.unit}
-          </strong>
+          <span style={{ color, fontWeight: 'bold' }}>
+            {record.type === 'in' ? '+' : record.type === 'out' ? '-' : ''}
+            {value.toLocaleString()}
+          </span>
         );
       },
     },
     {
-      title: 'Tham chiếu',
-      key: 'reference',
-      render: (_: any, record: MaterialTransaction) =>
-        record.referenceType && record.referenceId
-          ? `${record.referenceType} #${record.referenceId}`
-          : '-',
+      title: t('production:piecework.date'),
+      dataIndex: 'createdAt',
+      key: 'createdAt',
+      width: 150,
+      render: (date: string) => formatDate(date),
     },
     {
-      title: 'Ghi chú',
+      title: t('production:piecework.notes'),
       dataIndex: 'notes',
       key: 'notes',
+      ellipsis: true,
     },
   ];
 
+  const totalIn = transactionsData?.filter((t: MaterialTransaction) => t.type === 'in')
+    .reduce((sum: number, t: MaterialTransaction) => sum + t.quantity, 0) || 0;
+  const totalOut = transactionsData?.filter((t: MaterialTransaction) => t.type === 'out')
+    .reduce((sum: number, t: MaterialTransaction) => sum + t.quantity, 0) || 0;
+
   return (
-    <Card
-      title={
-        <Space>
-          <span>Lịch sử giao dịch - {materialData?.name}</span>
-          <Tag color="blue">
-            Tồn kho: {materialData?.quantity} {materialData?.unit}
-          </Tag>
-        </Space>
-      }
-      extra={
-        <Space>
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
-            Tạo giao dịch
-          </Button>
-          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/production/materials')}>
-            Quay lại
-          </Button>
-        </Space>
-      }
-    >
-      <Table
-        size={isMobile ? 'small' : 'middle'}
-        scroll={{ x: 'max-content' }}
+    <div>
+      <Row gutter={16} style={{ marginBottom: 16 }}>
+        <Col xs={24} sm={8}>
+          <Card>
+            <Statistic
+              title={t('production:materials.quantity')}
+              value={materialData?.quantity || 0}
+              suffix={materialData?.unit}
+            />
+          </Card>
+        </Col>
+        <Col xs={12} sm={8}>
+          <Card>
+            <Statistic
+              title={t('production:materials.transactionTypes.in')}
+              value={totalIn}
+              suffix={materialData?.unit}
+              valueStyle={{ color: '#3f8600' }}
+              prefix={<ArrowUpOutlined />}
+            />
+          </Card>
+        </Col>
+        <Col xs={12} sm={8}>
+          <Card>
+            <Statistic
+              title={t('production:materials.transactionTypes.out')}
+              value={totalOut}
+              suffix={materialData?.unit}
+              valueStyle={{ color: '#cf1322' }}
+              prefix={<ArrowDownOutlined />}
+            />
+          </Card>
+        </Col>
+      </Row>
+
+      <StandardListPage
+        title={`${t('production:materials.transactions')} - ${materialData?.name || ''}`}
+        createButtonText={t('production:actions.save')}
+        onCreateClick={() => setModalVisible(true)}
         columns={columns}
-        dataSource={data?.data || []}
-        rowKey="id"
-        loading={isLoading}
-        pagination={false}
+        dataSource={transactionsData || []}
+        loading={isLoading || createMutation.isPending}
+        pagination={{
+          current: 1,
+          pageSize: 20,
+          total: transactionsData?.length || 0,
+          showTotal: (total: number) => t('production:messages.total', { total }),
+          onChange: () => {},
+        }}
       />
 
+      {/* Create Transaction Modal */}
       <Modal
-        title="Tạo giao dịch nguyên vật liệu"
+        title={t('production:materials.transactions')}
         open={modalVisible}
         onCancel={() => {
           setModalVisible(false);
@@ -204,45 +211,38 @@ const MaterialTransactions = () => {
         }}
         footer={null}
       >
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={onFinish}
-          initialValues={{
-            type: 'in',
-          }}
-        >
+        <Form form={form} layout="vertical" onFinish={onFinish}>
           <Form.Item
-            label="Loại giao dịch"
+            label={t('production:materials.type')}
             name="type"
-            rules={[{ required: true, message: 'Vui lòng chọn loại giao dịch' }]}
+            rules={[{ required: true, message: t('production:validation.required') }]}
           >
-            <Select>
-              <Option value="in">Nhập kho</Option>
-              <Option value="out">Xuất kho</Option>
-              <Option value="adjustment">Điều chỉnh</Option>
+            <Select placeholder={t('production:materials.type')}>
+              <Option value="in">{t('production:materials.transactionTypes.in')}</Option>
+              <Option value="out">{t('production:materials.transactionTypes.out')}</Option>
+              <Option value="adjustment">{t('production:materials.transactionTypes.adjustment')}</Option>
             </Select>
           </Form.Item>
 
           <Form.Item
-            label={`Số lượng (${materialData?.unit})`}
+            label={t('production:piecework.quantity')}
             name="quantity"
             rules={[
-              { required: true, message: 'Vui lòng nhập số lượng' },
-              { type: 'number', min: 1, message: 'Số lượng phải lớn hơn 0' },
+              { required: true, message: t('production:validation.required') },
+              { type: 'number', min: 1, message: t('production:validation.minQuantity') },
             ]}
           >
-            <InputNumber style={{ width: '100%' }} placeholder="Nhập số lượng" />
+            <InputNumber style={{ width: '100%' }} min={1} />
           </Form.Item>
 
-          <Form.Item label="Ghi chú" name="notes">
-            <TextArea rows={3} placeholder="Nhập ghi chú" />
+          <Form.Item label={t('production:piecework.notes')} name="notes">
+            <TextArea rows={3} placeholder={t('production:piecework.notes')} />
           </Form.Item>
 
           <Form.Item>
             <Space>
               <Button type="primary" htmlType="submit" loading={createMutation.isPending}>
-                Tạo giao dịch
+                {t('production:actions.save')}
               </Button>
               <Button
                 onClick={() => {
@@ -250,14 +250,12 @@ const MaterialTransactions = () => {
                   form.resetFields();
                 }}
               >
-                Hủy
+                {t('production:actions.cancel')}
               </Button>
             </Space>
           </Form.Item>
         </Form>
       </Modal>
-    </Card>
+    </div>
   );
-};
-
-export default MaterialTransactions;
+}

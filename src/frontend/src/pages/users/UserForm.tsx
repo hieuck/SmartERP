@@ -3,7 +3,7 @@ import { Form, Input, Button, Card, message, Select, Switch, Space, Typography }
 import { SaveOutlined, ArrowLeftOutlined, UserOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import authService from '../../services/auth/authService';
+import authService from '@/services/auth/authService';
 
 const { Title } = Typography;
 const { Option } = Select;

@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Card, Table, Button, Space, Modal, Form, Input, message, Popconfirm } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { productService } from '../../services/inventory/productService';
-import { useResponsive } from '../../hooks/useResponsive';
+import { productService } from '@/services/inventory/productService';
+import { useResponsive } from '@/hooks/useResponsive';
 
 export default function CategoryManagement() {
   const { isMobile } = useResponsive();

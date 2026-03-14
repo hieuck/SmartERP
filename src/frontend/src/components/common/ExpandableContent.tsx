@@ -6,7 +6,7 @@
 
 import { Descriptions } from 'antd';
 import type { DescriptionsProps } from 'antd';
-import { useResponsive } from '../../hooks/useResponsive';
+import { useResponsive } from '@/hooks/useResponsive';
 
 interface ExpandableField {
   label: string;

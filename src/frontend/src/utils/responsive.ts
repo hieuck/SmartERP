@@ -3,8 +3,8 @@
  * Helper functions for responsive design
  */
 
-import { SPACING_PATTERNS, TYPOGRAPHY } from '../constants/design-tokens';
-import { ResponsiveInfo } from '../hooks/useResponsive';
+import { SPACING_PATTERNS, TYPOGRAPHY } from '@/constants/design-tokens';
+import { ResponsiveInfo } from '@/hooks/useResponsive';
 
 /**
  * Get responsive value based on device type

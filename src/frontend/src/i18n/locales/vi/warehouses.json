@@ -8,14 +8,27 @@
     "address": "Địa Chỉ",
     "phone": "Điện Thoại",
     "status": "Trạng Thái",
-    "isDefault": "Mặc Định"
+    "isDefault": "Mặc Định",
+    "fromWarehouse": "Từ Kho",
+    "toWarehouse": "Đến Kho",
+    "transferDate": "Ngày Chuyển",
+    "items": "Số Mặt Hàng",
+    "createdBy": "Người Tạo",
+    "sku": "SKU",
+    "product": "Sản Phẩm",
+    "warehouse": "Kho",
+    "quantity": "Tồn Kho",
+    "minQuantity": "Tối Thiểu",
+    "stockStatus": "Trạng Thái"
   },
   "status": {
     "active": "Hoạt Động",
     "inactive": "Ngừng",
     "pending": "Chờ Xử Lý",
+    "in_transit": "Đang Chuyển",
     "completed": "Hoàn Thành",
-    "cancelled": "Đã Hủy"
+    "cancelled": "Đã Hủy",
+    "draft": "Nháp"
   },
   "labels": {
     "default": "Mặc định"
@@ -23,7 +36,14 @@
   "messages": {
     "deleteSuccess": "Xóa kho thành công",
     "deleteError": "Không thể xóa kho",
-    "total": "Tổng {{total}} kho"
+    "total": "Tổng {{total}} kho",
+    "totalTransfers": "Tổng {{total}} phiếu chuyển",
+    "createSuccess": "Tạo phiếu chuyển kho thành công",
+    "createError": "Tạo phiếu chuyển kho thất bại",
+    "updateSuccess": "Cập nhật kho thành công",
+    "updateError": "Cập nhật kho thất bại",
+    "warehouseCreateSuccess": "Tạo kho thành công",
+    "warehouseCreateError": "Không thể tạo kho"
   },
   "list": {
     "title": "Danh Sách Kho",
@@ -36,22 +56,86 @@
     "name": "Tên Kho",
     "code": "Mã Kho",
     "address": "Địa Chỉ",
+    "ward": "Phường/Xã",
+    "district": "Quận/Huyện",
+    "city": "Tỉnh/Thành Phố",
+    "phone": "Điện Thoại",
+    "email": "Email",
     "manager": "Quản Lý",
-    "capacity": "Sức Chứa"
+    "capacity": "Sức Chứa",
+    "status": "Trạng Thái",
+    "statusActive": "Hoạt Động",
+    "statusInactive": "Ngừng",
+    "isDefault": "Đặt Làm Kho Mặc Định",
+    "save": "Lưu",
+    "cancel": "Hủy",
+    "back": "Quay Lại",
+    "required": {
+      "code": "Vui lòng nhập mã kho",
+      "name": "Vui lòng nhập tên kho",
+      "address": "Vui lòng nhập địa chỉ",
+      "city": "Vui lòng nhập tỉnh/thành phố"
+    }
   },
   "transfer": {
-    "title": "Chuyển Kho",
+    "title": "Phiếu Chuyển Kho",
     "list": "Danh Sách Chuyển Kho",
     "create": "Tạo Phiếu Chuyển",
+    "createTitle": "Tạo Phiếu Chuyển Kho",
+    "viewTitle": "Chi Tiết Phiếu Chuyển Kho",
     "from": "Từ Kho",
     "to": "Đến Kho",
     "product": "Sản Phẩm",
-    "quantity": "Số Lượng"
+    "quantity": "Số Lượng",
+    "transferDate": "Ngày Chuyển",
+    "notes": "Ghi Chú",
+    "notesPlaceholder": "Nhập ghi chú",
+    "productList": "Sản Phẩm Chuyển",
+    "addProduct": "Thêm",
+    "productId": "Mã Sản Phẩm",
+    "productIdPlaceholder": "Mã sản phẩm",
+    "quantityPlaceholder": "Số lượng",
+    "back": "Quay Lại",
+    "save": "Tạo Phiếu",
+    "cancel": "Hủy",
+    "status": "Trạng Thái",
+    "code": "Mã Phiếu",
+    "fromWarehouse": "Kho Nguồn",
+    "toWarehouse": "Kho Đích",
+    "required": {
+      "fromWarehouse": "Vui lòng chọn kho nguồn",
+      "toWarehouse": "Vui lòng chọn kho đích",
+      "transferDate": "Vui lòng chọn ngày"
+    },
+    "filters": {
+      "status": "Lọc Theo Trạng Thái",
+      "draft": "Nháp",
+      "pending": "Chờ Xử Lý",
+      "in_transit": "Đang Chuyển",
+      "completed": "Hoàn Thành",
+      "cancelled": "Đã Hủy"
+    }
   },
   "report": {
     "title": "Báo Cáo Tồn Kho",
     "byWarehouse": "Theo Kho",
     "byProduct": "Theo Sản Phẩm",
-    "totalValue": "Tổng Giá Trị"
+    "totalValue": "Tổng Giá Trị",
+    "totalItems": "Tổng Mặt Hàng",
+    "lowStock": "Sắp Hết Hàng",
+    "viewingWarehouse": "Kho Đang Xem",
+    "allWarehouses": "Tất Cả",
+    "selectWarehouse": "Chọn Kho",
+    "searchProduct": "Tìm sản phẩm...",
+    "stock": "Tồn Kho",
+    "minStock": "Tối Thiểu",
+    "status": {
+      "lowStock": "Sắp Hết",
+      "inStock": "Đủ Hàng"
+    }
+  },
+  "actions": {
+    "view": "Xem",
+    "viewDetail": "Xem Chi Tiết"
   }
 }

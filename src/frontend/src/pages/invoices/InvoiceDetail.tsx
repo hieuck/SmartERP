@@ -25,7 +25,7 @@ import {
   invoiceService,
   InvoiceStatus,
   InvoiceItem,
-} from '../../services/accounting/invoiceService';
+} from '@/services/accounting/invoiceService';
 import dayjs from 'dayjs';
 import type { ColumnsType } from 'antd/es/table';
 

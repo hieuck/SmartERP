@@ -9,8 +9,8 @@ import { useNavigate } from 'react-router-dom';
 import { Card, Button, Space, Flex } from 'antd';
 import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { useResponsive } from '../../hooks/useResponsive';
-import { getCardSize, getButtonSize } from '../../utils/responsive';
+import { useResponsive } from '@/hooks/useResponsive';
+import { getCardSize, getButtonSize } from '@/utils/responsive';
 
 export interface StandardFormPageProps {
   // Header

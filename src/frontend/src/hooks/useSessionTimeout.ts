@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { clearCredentials } from '../store/slices/authSlice';
-import { RootState } from '../store';
+import { clearCredentials } from '@/store/slices/authSlice';
+import { RootState } from '@/store';
 
 interface UseSessionTimeoutConfig {
   timeoutMs?: number; // Default: 30 minutes

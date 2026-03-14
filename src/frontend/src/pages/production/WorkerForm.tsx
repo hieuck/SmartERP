@@ -10,9 +10,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, Form, Input, Select, DatePicker, Button, Space, message, Spin } from 'antd';
 import { SaveOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import productionService, { CreateWorkerDto } from '../../services/production/productionService';
-import { useResponsive } from '../../hooks/useResponsive';
-import { getCardSize } from '../../utils/responsive';
+import productionService, { CreateWorkerDto } from '@/services/production/productionService';
+import { useResponsive } from '@/hooks/useResponsive';
+import { getCardSize } from '@/utils/responsive';
 import dayjs from 'dayjs';
 
 const { Option } = Select;

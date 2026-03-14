@@ -18,7 +18,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import supplierService, {
   CreateSupplierDto,
   UpdateSupplierDto,
-} from '../../services/logistics/supplierService';
+} from '@/services/logistics/supplierService';
 
 const { Title } = Typography;
 const { TextArea } = Input;

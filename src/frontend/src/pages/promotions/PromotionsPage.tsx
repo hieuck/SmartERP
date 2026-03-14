@@ -17,9 +17,9 @@ import {
   Tabs,
 } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, GiftOutlined } from '@ant-design/icons';
-import promotionService, { Promotion, Coupon } from '../../services/crm/promotionService';
+import promotionService, { Promotion, Coupon } from '@/services/crm/promotionService';
 import dayjs from 'dayjs';
-import { useResponsive } from '../../hooks/useResponsive';
+import { useResponsive } from '@/hooks/useResponsive';
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;

@@ -1,32 +1,16 @@
-import React, { useState } from 'react';
-import {
-  Table,
-  Button,
-  Space,
-  Tag,
-  Input,
-  Select,
-  Card,
-  message,
-  Typography,
-  DatePicker,
-} from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import {
-  SearchOutlined,
-  SwapOutlined,
-  ArrowUpOutlined,
-  ArrowDownOutlined,
-  SyncOutlined,
-  ToolOutlined,
-} from '@ant-design/icons';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Button, Tag, Space, Select, DatePicker, Card } from 'antd';
+import { SyncOutlined, ArrowUpOutlined, ArrowDownOutlined, SwapOutlined, ToolOutlined } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
-import inventoryServiceNew, { StockMovementType } from '../../services/inventory/inventoryService';
+import { useTranslation } from 'react-i18next';
+import StandardListPage from '@/components/common/StandardListPage';
+import { formatDate } from '@/utils/responsive';
+import inventoryServiceNew, { StockMovementType } from '@/services/inventory/inventoryService';
+import { useResponsive } from '@/hooks/useResponsive';
+import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 
-const { Title } = Typography;
-const { Option } = Select;
 const { RangePicker } = DatePicker;
 
 interface StockMovement {
@@ -43,18 +27,10 @@ interface StockMovement {
   createdBy?: { id: number; name: string };
 }
 
-const movementTypeConfig: Record<
-  StockMovementType,
-  { color: string; label: string; icon: React.ReactNode }
-> = {
-  [StockMovementType.IN]: { color: 'green', label: 'Nhập kho', icon: <ArrowDownOutlined /> },
-  [StockMovementType.OUT]: { color: 'red', label: 'Xuất kho', icon: <ArrowUpOutlined /> },
-  [StockMovementType.TRANSFER]: { color: 'blue', label: 'Chuyển kho', icon: <SwapOutlined /> },
-  [StockMovementType.ADJUSTMENT]: { color: 'orange', label: 'Điều chỉnh', icon: <ToolOutlined /> },
-};
-
-const StockMovementList: React.FC = () => {
+export default function StockMovementList() {
   const navigate = useNavigate();
+  const { isMobile } = useResponsive();
+  const { t } = useTranslation(['inventory', 'common']);
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<StockMovementType | undefined>();
   const [dateRange, setDateRange] = useState<[string, string] | undefined>();
@@ -74,16 +50,26 @@ const StockMovementList: React.FC = () => {
       }),
   });
 
+  const movementTypeConfig: Record<
+    StockMovementType,
+    { color: string; icon: React.ReactNode }
+  > = {
+    [StockMovementType.IN]: { color: 'green', icon: <ArrowDownOutlined /> },
+    [StockMovementType.OUT]: { color: 'red', icon: <ArrowUpOutlined /> },
+    [StockMovementType.TRANSFER]: { color: 'blue', icon: <SwapOutlined /> },
+    [StockMovementType.ADJUSTMENT]: { color: 'orange', icon: <ToolOutlined /> },
+  };
+
   const columns: ColumnsType<StockMovement> = [
     {
-      title: 'Ngày',
+      title: t('inventory:columns.date'),
       dataIndex: 'createdAt',
       key: 'createdAt',
       width: 120,
-      render: (date: string) => dayjs(date).format('DD/MM/YYYY'),
+      render: (date: string) => formatDate(date),
     },
     {
-      title: 'Loại',
+      title: t('inventory:columns.type'),
       dataIndex: 'type',
       key: 'type',
       width: 130,
@@ -91,38 +77,38 @@ const StockMovementList: React.FC = () => {
         const config = movementTypeConfig[type];
         return (
           <Tag color={config.color} icon={config.icon}>
-            {config.label}
+            {t(`inventory:movements.type.${type}`)}
           </Tag>
         );
       },
     },
     {
-      title: 'SKU',
+      title: t('inventory:columns.sku'),
       dataIndex: ['product', 'sku'],
       key: 'sku',
       width: 120,
       render: (sku: string) => sku || '-',
     },
     {
-      title: 'Sản phẩm',
+      title: t('inventory:columns.product'),
       dataIndex: ['product', 'name'],
       key: 'product',
       ellipsis: true,
       render: (name: string) => name || '-',
     },
     {
-      title: 'Kho',
+      title: t('inventory:columns.warehouse'),
       dataIndex: ['warehouse', 'name'],
       key: 'warehouse',
       width: 150,
       render: (name: string) => name || '-',
     },
     {
-      title: 'Số lượng',
+      title: t('inventory:form.quantity'),
       dataIndex: 'quantity',
       key: 'quantity',
       width: 100,
-      align: 'right',
+      align: 'right' as const,
       render: (value: number, record: StockMovement) => {
         const isPositive = record.type === StockMovementType.IN;
         return (
@@ -134,21 +120,21 @@ const StockMovementList: React.FC = () => {
       },
     },
     {
-      title: 'Tham chiếu',
+      title: t('inventory:columns.reference'),
       dataIndex: 'reference',
       key: 'reference',
       width: 150,
       render: (ref: string) => ref || '-',
     },
     {
-      title: 'Người thực hiện',
+      title: t('inventory:columns.performer'),
       dataIndex: ['createdBy', 'name'],
       key: 'createdBy',
       width: 150,
       render: (name: string) => name || '-',
     },
     {
-      title: 'Ghi chú',
+      title: t('inventory:columns.notes'),
       dataIndex: 'notes',
       key: 'notes',
       ellipsis: true,
@@ -156,72 +142,101 @@ const StockMovementList: React.FC = () => {
     },
   ];
 
+  const renderMobileItem = (record: StockMovement) => {
+    const config = movementTypeConfig[record.type];
+    const isPositive = record.type === StockMovementType.IN;
+    
+    return {
+      title: record.product?.name || '-',
+      subtitle: formatDate(record.createdAt),
+      tags: [{ label: t(`inventory:movements.type.${record.type}`), color: config.color }],
+      fields: [
+        { label: t('inventory:columns.sku'), value: record.product?.sku || '-' },
+        { 
+          label: t('inventory:form.quantity'), 
+          value: `${isPositive ? '+' : '-'}${Math.abs(record.quantity).toLocaleString('vi-VN')}` 
+        },
+        { label: t('inventory:columns.warehouse'), value: record.warehouse?.name || '-' },
+        { label: t('inventory:columns.reference'), value: record.reference || '-' },
+      ],
+    };
+  };
+
+  const filterComponents = (
+    <Space wrap>
+      <Select
+        placeholder={t('inventory:filters.type')}
+        style={{ width: isMobile ? '100%' : 150 }}
+        value={typeFilter}
+        onChange={setTypeFilter}
+        allowClear
+      >
+        <Select.Option value={StockMovementType.IN}>
+          {t('inventory:movements.type.in')}
+        </Select.Option>
+        <Select.Option value={StockMovementType.OUT}>
+          {t('inventory:movements.type.out')}
+        </Select.Option>
+        <Select.Option value={StockMovementType.TRANSFER}>
+          {t('inventory:movements.type.transfer')}
+        </Select.Option>
+        <Select.Option value={StockMovementType.ADJUSTMENT}>
+          {t('inventory:movements.type.adjustment')}
+        </Select.Option>
+      </Select>
+      <RangePicker
+        format="DD/MM/YYYY"
+        style={{ width: isMobile ? '100%' : 'auto' }}
+        onChange={(dates) => {
+          if (dates) {
+            setDateRange([dates[0]!.format('YYYY-MM-DD'), dates[1]!.format('YYYY-MM-DD')]);
+          } else {
+            setDateRange(undefined);
+          }
+        }}
+      />
+    </Space>
+  );
+
   return (
-    <div style={{ padding: '24px' }}>
-      <Card>
-        <Space direction="vertical" style={{ width: '100%' }} size="large">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Title level={3}>
-              <SyncOutlined /> Lịch sử xuất nhập kho
-            </Title>
-            <Button onClick={() => navigate('/dashboard/inventory/stock')}>Quay lại tồn kho</Button>
-          </div>
-
-          <Space wrap>
-            <Input
-              placeholder="Tìm kiếm sản phẩm..."
-              prefix={<SearchOutlined />}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              style={{ width: 300 }}
-              allowClear
-            />
-            <Select
-              placeholder="Loại giao dịch"
-              style={{ width: 150 }}
-              value={typeFilter}
-              onChange={setTypeFilter}
-              allowClear
-            >
-              <Option value={StockMovementType.IN}>Nhập kho</Option>
-              <Option value={StockMovementType.OUT}>Xuất kho</Option>
-              <Option value={StockMovementType.TRANSFER}>Chuyển kho</Option>
-              <Option value={StockMovementType.ADJUSTMENT}>Điều chỉnh</Option>
-            </Select>
-            <RangePicker
-              format="DD/MM/YYYY"
-              onChange={(dates) => {
-                if (dates) {
-                  setDateRange([dates[0]!.format('YYYY-MM-DD'), dates[1]!.format('YYYY-MM-DD')]);
-                } else {
-                  setDateRange(undefined);
-                }
-              }}
-            />
-          </Space>
-
-          <Table
-            columns={columns}
-            dataSource={data?.data || []}
-            loading={isLoading}
-            rowKey="id"
-            pagination={{
-              current: page,
-              pageSize,
-              total: data?.meta?.total || 0,
-              showSizeChanger: true,
-              showTotal: (total) => `Tổng ${total} giao dịch`,
-              onChange: (newPage, newPageSize) => {
-                setPage(newPage);
-                setPageSize(newPageSize);
-              },
-            }}
-            scroll={{ x: 1400 }}
-          />
+    <div>
+      <Card 
+        size="small" 
+        style={{ marginBottom: 16 }}
+        extra={
+          <Button onClick={() => navigate('/dashboard/inventory/stock')}>
+            {t('inventory:movements.backToStock')}
+          </Button>
+        }
+      >
+        <Space>
+          <SyncOutlined style={{ fontSize: 20, color: '#1890ff' }} />
+          <span style={{ fontSize: 16, fontWeight: 500 }}>{t('inventory:movements.title')}</span>
         </Space>
       </Card>
+
+      <StandardListPage
+        title=""
+        searchPlaceholder={t('inventory:searchPlaceholder')}
+        searchValue={search}
+        onSearchChange={setSearch}
+        filters={filterComponents}
+        columns={columns}
+        dataSource={data?.data || []}
+        loading={isLoading}
+        mobileRenderItem={renderMobileItem}
+        pagination={{
+          current: page,
+          pageSize,
+          total: data?.meta?.total || 0,
+          showSizeChanger: true,
+          showTotal: (total) => t('inventory:messages.totalTransactions', { total }),
+          onChange: (newPage, newPageSize) => {
+            setPage(newPage);
+            setPageSize(newPageSize);
+          },
+        }}
+      />
     </div>
   );
-};
-
-export default StockMovementList;
+}

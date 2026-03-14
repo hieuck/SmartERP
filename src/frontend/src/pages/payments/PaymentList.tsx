@@ -20,15 +20,15 @@ import {
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Payment, PaymentMethod, PaymentStatus } from '../../services/accounting/paymentService';
-import StandardListPage from '../../components/common/StandardListPage';
-import { formatCurrency, formatDate } from '../../utils/responsive';
+import { Payment, PaymentMethod, PaymentStatus } from '@/services/accounting/paymentService';
+import StandardListPage from '@/components/common/StandardListPage';
+import { formatCurrency, formatDate } from '@/utils/responsive';
 import {
   usePayments,
   useDeletePayment,
   useCompletePayment,
   useProcessRefund,
-} from '../../hooks/usePayments';
+} from '@/hooks/usePayments';
 
 const { RangePicker } = DatePicker;
 const { TextArea } = Input;

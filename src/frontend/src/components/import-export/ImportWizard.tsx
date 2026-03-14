@@ -23,7 +23,7 @@ import {
 import type { UploadFile } from 'antd/es/upload/interface';
 import importExportService, {
   ImportResult,
-} from '../../services/import-export/importExportService';
+} from '@/services/import-export/importExportService';
 
 const { Step } = Steps;
 const { Text, Title, Paragraph } = Typography;

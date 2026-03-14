@@ -22,9 +22,9 @@ import invoiceService, {
   InvoiceStatus,
   CreateInvoiceDto,
   UpdateInvoiceDto,
-} from '../../services/accounting/invoiceService';
-import customerService from '../../services/crm/customerService';
-import orderService from '../../services/order/orderService';
+} from '@/services/accounting/invoiceService';
+import customerService from '@/services/crm/customerService';
+import orderService from '@/services/order/orderService';
 
 const { Title, Text } = Typography;
 const { Option } = Select;

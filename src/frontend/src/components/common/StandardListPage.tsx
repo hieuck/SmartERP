@@ -26,8 +26,8 @@ import {
 } from '@ant-design/icons';
 import type { ColumnsType, TableProps } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
-import { useResponsive } from '../../hooks/useResponsive';
-import { getCardSize, getTableSize, getPaginationConfig } from '../../utils/responsive';
+import { useResponsive } from '@/hooks/useResponsive';
+import { getCardSize, getTableSize, getPaginationConfig } from '@/utils/responsive';
 import type { MenuProps } from 'antd';
 
 export interface StandardListPageProps<T> {

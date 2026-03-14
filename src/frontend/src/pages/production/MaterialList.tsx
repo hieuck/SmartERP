@@ -10,9 +10,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button, Space, Tag, message, Select, Badge, Alert } from 'antd';
 import { WarningOutlined, InboxOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import StandardListPage from '../../components/common/StandardListPage';
-import productionService, { Material } from '../../services/production/productionService';
-import { formatCurrency } from '../../utils/responsive';
+import StandardListPage from '@/components/common/StandardListPage';
+import productionService, { Material } from '@/services/production/productionService';
+import { formatCurrency } from '@/utils/responsive';
 import type { ColumnsType } from 'antd/es/table';
 
 const { Option } = Select;

@@ -13,11 +13,11 @@ import {
   DatePicker,
 } from 'antd';
 import { PlusOutlined, DeleteOutlined, ArrowLeftOutlined } from '@ant-design/icons';
-import orderService from '../../services/order/orderService';
-import { productService } from '../../services/inventory/productService';
-import { supplierService } from '../../services/logistics/supplierService';
-import { useResponsive } from '../../hooks/useResponsive';
-import MobileFormItemCard from '../../components/common/MobileFormItemCard';
+import orderService from '@/services/order/orderService';
+import { productService } from '@/services/inventory/productService';
+import { supplierService } from '@/services/logistics/supplierService';
+import { useResponsive } from '@/hooks/useResponsive';
+import MobileFormItemCard from '@/components/common/MobileFormItemCard';
 import dayjs from 'dayjs';
 
 const { Option } = Select;
@@ -70,7 +70,6 @@ export default function PurchaseOrderForm() {
       const data = await supplierService.getSuppliers({ page: 1, limit: 1000 });
       setSuppliers(data.data || []);
     } catch (error) {
-      console.error('Error loading suppliers:', error);
       setSuppliers([]);
       message.error('Không thể tải danh sách nhà cung cấp');
     }
@@ -79,13 +78,10 @@ export default function PurchaseOrderForm() {
   const loadOrder = async () => {
     try {
       setLoading(true);
-      console.log('[PurchaseOrderForm] Loading order:', id);
 
       const response = await orderService.getPurchaseOrder(id!);
-      console.log('[PurchaseOrderForm] Raw response:', response);
 
       const order = response.data || response; // Handle both {data: ...} and direct response
-      console.log('[PurchaseOrderForm] Parsed order:', order);
 
       if (!order) {
         throw new Error('Order data is null or undefined');
@@ -101,11 +97,9 @@ export default function PurchaseOrderForm() {
         paymentTerms: order.paymentTerms,
         notes: order.notes,
       };
-      console.log('[PurchaseOrderForm] Form values:', formValues);
       form.setFieldsValue(formValues);
 
       if (!order.items || !Array.isArray(order.items)) {
-        console.error('[PurchaseOrderForm] Invalid items:', order.items);
         throw new Error('Order items is not an array');
       }
 
@@ -114,7 +108,7 @@ export default function PurchaseOrderForm() {
         const unitPrice = Number(item.unitCost || item.unitPrice) || 0;
         const discount = Number(item.discountAmount || item.discount) || 0;
 
-        const mappedItem = {
+        return {
           key: `${index}`,
           productId: item.productId,
           productName: item.product?.name || item.productName || 'Unknown',
@@ -123,16 +117,10 @@ export default function PurchaseOrderForm() {
           discount,
           subtotal: quantity * unitPrice - discount,
         };
-        console.log('[PurchaseOrderForm] Mapped item:', mappedItem);
-        return mappedItem;
       });
 
-      console.log('[PurchaseOrderForm] All mapped items:', mappedItems);
       setItems(mappedItems);
-      console.log('[PurchaseOrderForm] Order loaded successfully');
     } catch (error: any) {
-      console.error('[PurchaseOrderForm] Error loading purchase order:', error);
-      console.error('[PurchaseOrderForm] Error stack:', error.stack);
       message.error(`Không thể tải đơn mua hàng: ${error.message || 'Unknown error'}`);
     } finally {
       setLoading(false);

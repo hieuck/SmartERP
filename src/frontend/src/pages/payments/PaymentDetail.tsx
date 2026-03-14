@@ -25,7 +25,7 @@ import {
   paymentService,
   PaymentStatus,
   PaymentMethod,
-} from '../../services/accounting/paymentService';
+} from '@/services/accounting/paymentService';
 import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;

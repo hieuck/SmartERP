@@ -22,8 +22,8 @@ import {
   TeamOutlined,
   ShoppingCartOutlined,
 } from '@ant-design/icons';
-import searchService, { SearchResult } from '../../services/utils/searchService';
-import AdvancedFilterPanel from '../../components/search/AdvancedFilterPanel';
+import searchService, { SearchResult } from '@/services/utils/searchService';
+import AdvancedFilterPanel from '@/components/search/AdvancedFilterPanel';
 
 const { Search } = Input;
 const { Title, Text } = Typography;

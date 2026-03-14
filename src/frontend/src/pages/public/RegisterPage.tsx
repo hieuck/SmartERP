@@ -23,9 +23,9 @@ import {
 import { useDispatch } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { authService } from '../../services/auth/authService';
-import { setCredentials } from '../../store/slices/authSlice';
-import LanguageSwitcher from '../../components/common/LanguageSwitcher';
+import { authService } from '@/services/auth/authService';
+import { setCredentials } from '@/store/slices/authSlice';
+import LanguageSwitcher from '@/components/common/LanguageSwitcher';
 
 const { Header, Content } = Layout;
 const { Title, Text, Paragraph } = Typography;

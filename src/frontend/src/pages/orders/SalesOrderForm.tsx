@@ -13,11 +13,11 @@ import {
   DatePicker,
 } from 'antd';
 import { PlusOutlined, DeleteOutlined, ArrowLeftOutlined } from '@ant-design/icons';
-import orderService from '../../services/order/orderService';
-import { productService } from '../../services/inventory/productService';
-import { customerService } from '../../services/crm/customerService';
-import { useResponsive } from '../../hooks/useResponsive';
-import MobileFormItemCard from '../../components/common/MobileFormItemCard';
+import orderService from '@/services/order/orderService';
+import { productService } from '@/services/inventory/productService';
+import { customerService } from '@/services/crm/customerService';
+import { useResponsive } from '@/hooks/useResponsive';
+import MobileFormItemCard from '@/components/common/MobileFormItemCard';
 import dayjs from 'dayjs';
 
 const { Option } = Select;

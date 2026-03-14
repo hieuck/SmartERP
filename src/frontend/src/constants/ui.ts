@@ -1,12 +1,13 @@
 /**
  * UI Constants
- * Chuẩn hóa colors, labels, messages cho toàn bộ hệ thống
+ * Standardized colors, dimensions, and formats for the entire system
+ * Note: All text labels/messages have been moved to i18n (common-ui namespace)
  */
 
 import dayjs from 'dayjs';
 
 // ============================================
-// COLORS
+// COLORS (Ant Design semantic colors)
 // ============================================
 
 export const STATUS_COLORS = {
@@ -18,6 +19,8 @@ export const STATUS_COLORS = {
   draft: 'default',
   approved: 'green',
   rejected: 'red',
+  in_progress: 'blue',
+  paused: 'orange',
 } as const;
 
 export const TYPE_COLORS = {
@@ -40,120 +43,6 @@ export const PRIORITY_COLORS = {
   medium: 'blue',
   high: 'orange',
   urgent: 'red',
-} as const;
-
-// ============================================
-// LABELS
-// ============================================
-
-export const BUTTON_LABELS = {
-  create: 'Thêm Mới',
-  edit: 'Sửa',
-  delete: 'Xóa',
-  save: 'Lưu',
-  cancel: 'Hủy',
-  search: 'Tìm kiếm',
-  filter: 'Lọc',
-  export: 'Xuất Excel',
-  import: 'Nhập Excel',
-  print: 'In',
-  view: 'Xem',
-  approve: 'Duyệt',
-  reject: 'Từ chối',
-  submit: 'Gửi',
-  back: 'Quay lại',
-  next: 'Tiếp theo',
-  finish: 'Hoàn thành',
-} as const;
-
-export const STATUS_LABELS = {
-  active: 'Hoạt động',
-  inactive: 'Ngừng',
-  pending: 'Chờ xử lý',
-  completed: 'Hoàn thành',
-  cancelled: 'Đã hủy',
-  draft: 'Nháp',
-  approved: 'Đã duyệt',
-  rejected: 'Từ chối',
-  in_progress: 'Đang xử lý',
-  paused: 'Tạm dừng',
-} as const;
-
-export const TYPE_LABELS = {
-  individual: 'Cá Nhân',
-  business: 'Doanh Nghiệp',
-  reseller: 'Đại Lý',
-  vip: 'VIP',
-} as const;
-
-export const SPECIALTY_LABELS = {
-  casting: 'Đúc tượng',
-  painting: 'Sơn màu',
-  finishing: 'Hoàn thiện',
-  packaging: 'Đóng gói',
-  general: 'Tổng hợp',
-} as const;
-
-export const SKILL_LEVEL_LABELS = {
-  apprentice: 'Thợ phụ',
-  skilled: 'Thợ chính',
-  master: 'Thợ bậc cao',
-  junior: 'Sơ cấp',
-  intermediate: 'Trung cấp',
-  senior: 'Cao cấp',
-} as const;
-
-export const PRIORITY_LABELS = {
-  low: 'Thấp',
-  medium: 'Trung bình',
-  high: 'Cao',
-  urgent: 'Khẩn cấp',
-} as const;
-
-// ============================================
-// MESSAGES
-// ============================================
-
-export const CONFIRM_MESSAGES = {
-  delete: 'Bạn có chắc muốn xóa?',
-  deleteMultiple: (count: number) => `Bạn có chắc muốn xóa ${count} bản ghi đã chọn?`,
-  cancel: 'Bạn có chắc muốn hủy?',
-  submit: 'Bạn có chắc muốn lưu?',
-  approve: 'Bạn có chắc muốn duyệt?',
-  reject: 'Bạn có chắc muốn từ chối?',
-} as const;
-
-export const SUCCESS_MESSAGES = {
-  create: 'Thêm mới thành công!',
-  update: 'Cập nhật thành công!',
-  delete: 'Xóa thành công!',
-  deleteMultiple: (count: number) => `Đã xóa ${count} bản ghi thành công!`,
-  save: 'Lưu thành công!',
-  approve: 'Duyệt thành công!',
-  reject: 'Từ chối thành công!',
-  import: 'Nhập dữ liệu thành công!',
-  export: 'Xuất dữ liệu thành công!',
-} as const;
-
-export const ERROR_MESSAGES = {
-  create: 'Thêm mới thất bại!',
-  update: 'Cập nhật thất bại!',
-  delete: 'Xóa thất bại!',
-  save: 'Lưu thất bại!',
-  approve: 'Duyệt thất bại!',
-  reject: 'Từ chối thất bại!',
-  network: 'Lỗi kết nối mạng!',
-  notFound: 'Không tìm thấy dữ liệu!',
-  unauthorized: 'Bạn không có quyền thực hiện thao tác này!',
-  validation: 'Dữ liệu không hợp lệ!',
-  import: 'Nhập dữ liệu thất bại!',
-  export: 'Xuất dữ liệu thất bại!',
-} as const;
-
-export const WARNING_MESSAGES = {
-  unsavedChanges: 'Bạn có thay đổi chưa lưu. Bạn có chắc muốn rời khỏi trang?',
-  selectItems: 'Vui lòng chọn ít nhất một bản ghi!',
-  fillRequired: 'Vui lòng điền đầy đủ thông tin bắt buộc!',
 } as const;
 
 // ============================================
@@ -203,7 +92,6 @@ export const PAGINATION_CONFIG = {
   defaultPageSize: 10,
   pageSizeOptions: ['10', '20', '50', '100'],
   showSizeChanger: true,
-  showTotal: (total: number) => `Tổng ${total} bản ghi`,
 } as const;
 
 // ============================================
@@ -219,57 +107,84 @@ export const DATE_FORMATS = {
 } as const;
 
 export const NUMBER_FORMATS = {
-  currency: (value: number) => Math.round(value).toLocaleString('vi-VN') + ' đ',
-  number: (value: number) => value.toLocaleString('vi-VN'),
-  percent: (value: number) => value.toFixed(2) + '%',
-} as const;
-
-// ============================================
-// VALIDATION
-// ============================================
-
-export const VALIDATION_MESSAGES = {
-  required: 'Trường này là bắt buộc!',
-  email: 'Email không hợp lệ!',
-  phone: 'Số điện thoại không hợp lệ!',
-  minLength: (min: number) => `Tối thiểu ${min} ký tự!`,
-  maxLength: (max: number) => `Tối đa ${max} ký tự!`,
-  min: (min: number) => `Giá trị tối thiểu là ${min}!`,
-  max: (max: number) => `Giá trị tối đa là ${max}!`,
-  pattern: 'Định dạng không hợp lệ!',
-  unique: 'Giá trị đã tồn tại!',
+  currency: (value: number, locale = 'vi-VN', currency = 'VND') => {
+    return new Intl.NumberFormat(locale, {
+      style: 'currency',
+      currency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(Math.round(value));
+  },
+  number: (value: number, locale = 'vi-VN') => {
+    return new Intl.NumberFormat(locale).format(value);
+  },
+  percent: (value: number, decimals = 2) => {
+    return value.toFixed(decimals) + '%';
+  },
 } as const;
 
 // ============================================
 // HELPER FUNCTIONS
 // ============================================
 
+/**
+ * Get status color based on status key
+ */
 export const getStatusColor = (status: string): string => {
   return STATUS_COLORS[status as keyof typeof STATUS_COLORS] || 'default';
 };
 
-export const getStatusLabel = (status: string): string => {
-  return STATUS_LABELS[status as keyof typeof STATUS_LABELS] || status;
-};
-
+/**
+ * Get type color based on type key
+ */
 export const getTypeColor = (type: string): string => {
   return TYPE_COLORS[type as keyof typeof TYPE_COLORS] || 'default';
 };
 
-export const getTypeLabel = (type: string): string => {
-  return TYPE_LABELS[type as keyof typeof TYPE_LABELS] || type;
+/**
+ * Get specialty color based on specialty key
+ */
+export const getSpecialtyColor = (specialty: string): string => {
+  return SPECIALTY_COLORS[specialty as keyof typeof SPECIALTY_COLORS] || 'default';
 };
 
-export const formatCurrency = (value: number | null | undefined): string => {
-  if (value === null || value === undefined) return '0 đ';
-  return NUMBER_FORMATS.currency(value);
+/**
+ * Get priority color based on priority key
+ */
+export const getPriorityColor = (priority: string): string => {
+  return PRIORITY_COLORS[priority as keyof typeof PRIORITY_COLORS] || 'default';
 };
 
-export const formatNumber = (value: number | null | undefined): string => {
+/**
+ * Format currency value
+ * @param value - Number to format
+ * @param locale - Locale string (default: vi-VN)
+ * @param currency - Currency code (default: VND)
+ */
+export const formatCurrency = (
+  value: number | null | undefined,
+  locale = 'vi-VN',
+  currency = 'VND',
+): string => {
   if (value === null || value === undefined) return '0';
-  return NUMBER_FORMATS.number(value);
+  return NUMBER_FORMATS.currency(value, locale, currency);
 };
 
+/**
+ * Format number value
+ * @param value - Number to format
+ * @param locale - Locale string (default: vi-VN)
+ */
+export const formatNumber = (value: number | null | undefined, locale = 'vi-VN'): string => {
+  if (value === null || value === undefined) return '0';
+  return NUMBER_FORMATS.number(value, locale);
+};
+
+/**
+ * Format date value
+ * @param date - Date to format
+ * @param format - Format key from DATE_FORMATS
+ */
 export const formatDate = (
   date: Date | string | null | undefined,
   format: keyof typeof DATE_FORMATS = 'date',
@@ -277,3 +192,5 @@ export const formatDate = (
   if (!date) return '-';
   return dayjs(date).format(DATE_FORMATS[format]);
 };
+
+// Note: VALIDATION_MESSAGES moved to i18n (common-ui.validation namespace)

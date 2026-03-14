@@ -18,13 +18,13 @@ import {
 } from 'antd';
 import { PlusOutlined, CalendarOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import StandardListPage from '../../components/common/StandardListPage';
+import StandardListPage from '@/components/common/StandardListPage';
 import productionService, {
   Worker,
   Shift,
   ShiftAssignment,
-} from '../../services/production/productionService';
-import { formatDate } from '../../utils/responsive';
+} from '@/services/production/productionService';
+import { formatDate } from '@/utils/responsive';
 import dayjs, { Dayjs } from 'dayjs';
 import type { ColumnsType } from 'antd/es/table';
 

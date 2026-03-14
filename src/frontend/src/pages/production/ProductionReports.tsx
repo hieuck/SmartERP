@@ -1,302 +1,347 @@
 /**
  * Production Reports Page
- * Displays production, material consumption, and cost analysis reports
- * Requirements: 42.1
+ * View production analytics and reports
+ * Requirements: 38.1
  */
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Card, Row, Col, Statistic, Table, DatePicker, Space, Tabs, Spin } from 'antd';
 import {
-  BarChartOutlined,
-  DollarOutlined,
-  ExperimentOutlined,
+  Card,
+  Row,
+  Col,
+  Statistic,
+  DatePicker,
+  Space,
+  Table,
+  Tag,
+  Tabs,
+} from 'antd';
+import {
   CheckCircleOutlined,
-  WarningOutlined,
+  CloseCircleOutlined,
+  DollarOutlined,
+  BarChartOutlined,
 } from '@ant-design/icons';
-import productionService from '../../services/production/productionService';
+import { useTranslation } from 'react-i18next';
+import productionService from '@/services/production/productionService';
+import { formatCurrency } from '@/utils/responsive';
 import dayjs, { Dayjs } from 'dayjs';
-import { useResponsive } from '../../hooks/useResponsive';
+import type { ColumnsType } from 'antd/es/table';
 
 const { RangePicker } = DatePicker;
+const { TabPane } = Tabs;
 
-const ProductionReports = () => {
-  const { isMobile } = useResponsive();
+export default function ProductionReports() {
+  const { t } = useTranslation(['production', 'common']);
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs]>([
     dayjs().startOf('month'),
     dayjs().endOf('month'),
   ]);
 
-  const reportParams = {
-    startDate: dateRange[0].toDate(),
-    endDate: dateRange[1].toDate(),
-  };
-
   // Fetch production report
   const { data: productionReport, isLoading: loadingProduction } = useQuery({
-    queryKey: ['productionReport', reportParams],
-    queryFn: () => productionService.report.getProductionReport(reportParams),
+    queryKey: [
+      'production-report',
+      {
+        startDate: dateRange[0].toDate(),
+        endDate: dateRange[1].toDate(),
+      },
+    ],
+    queryFn: async () => {
+      const response = await productionService.report.getProductionReport({
+        startDate: dateRange[0].toDate(),
+        endDate: dateRange[1].toDate(),
+      });
+      return response.data;
+    },
   });
 
   // Fetch material consumption report
   const { data: materialReport, isLoading: loadingMaterial } = useQuery({
-    queryKey: ['materialConsumptionReport', reportParams],
-    queryFn: () => productionService.report.getMaterialConsumptionReport(reportParams),
+    queryKey: [
+      'material-consumption-report',
+      {
+        startDate: dateRange[0].toDate(),
+        endDate: dateRange[1].toDate(),
+      },
+    ],
+    queryFn: async () => {
+      const response = await productionService.report.getMaterialConsumptionReport({
+        startDate: dateRange[0].toDate(),
+        endDate: dateRange[1].toDate(),
+      });
+      return response.data;
+    },
   });
 
   // Fetch cost analysis report
   const { data: costReport, isLoading: loadingCost } = useQuery({
-    queryKey: ['costAnalysisReport', reportParams],
-    queryFn: () => productionService.report.getCostAnalysisReport(reportParams),
+    queryKey: [
+      'cost-analysis-report',
+      {
+        startDate: dateRange[0].toDate(),
+        endDate: dateRange[1].toDate(),
+      },
+    ],
+    queryFn: async () => {
+      const response = await productionService.report.getCostAnalysisReport({
+        startDate: dateRange[0].toDate(),
+        endDate: dateRange[1].toDate(),
+      });
+      return response.data;
+    },
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const prodData: any = productionReport?.data?.data || productionReport?.data;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const matData: any = materialReport?.data?.data || materialReport?.data;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const costData: any = costReport?.data?.data || costReport?.data;
-
-  const productColumns = [
-    { title: 'Sản phẩm', dataIndex: 'productName', key: 'productName' },
+  const productColumns: ColumnsType<any> = [
     {
-      title: 'Số lượng',
+      title: t('production:orders.product'),
+      dataIndex: 'productName',
+      key: 'productName',
+    },
+    {
+      title: t('production:orders.quantity'),
       dataIndex: 'quantity',
       key: 'quantity',
       align: 'right' as const,
-      render: (v: number) => v?.toLocaleString('vi-VN') || 0,
+      render: (value: number) => value.toLocaleString(),
     },
     {
-      title: 'Lỗi',
-      dataIndex: 'defects',
-      key: 'defects',
+      title: t('production:reports.defectRate'),
+      key: 'defectRate',
       align: 'right' as const,
-      render: (v: number) => v?.toLocaleString('vi-VN') || 0,
+      render: (_: any, record: any) => {
+        const rate = record.quantity > 0 ? ((record.defects / record.quantity) * 100).toFixed(1) : 0;
+        return (
+          <Tag color={Number(rate) > 5 ? 'red' : 'green'}>
+            {rate}%
+          </Tag>
+        );
+      },
     },
   ];
 
-  const workerColumns = [
-    { title: 'Nhân viên', dataIndex: 'workerName', key: 'workerName' },
+  const workerColumns: ColumnsType<any> = [
     {
-      title: 'Năng suất',
+      title: t('production:workers.name'),
+      dataIndex: 'workerName',
+      key: 'workerName',
+    },
+    {
+      title: t('production:reports.productivity'),
       dataIndex: 'productivity',
       key: 'productivity',
       align: 'right' as const,
-      render: (v: number) => v?.toLocaleString('vi-VN') || 0,
+      render: (value: number) => value.toLocaleString(),
     },
     {
-      title: 'Tỷ lệ lỗi',
+      title: t('production:reports.defectRate'),
       dataIndex: 'defectRate',
       key: 'defectRate',
       align: 'right' as const,
-      render: (v: number) => `${(v * 100)?.toFixed(1) || 0}%`,
+      render: (value: number) => (
+        <Tag color={value > 5 ? 'red' : 'green'}>
+          {value.toFixed(1)}%
+        </Tag>
+      ),
     },
   ];
 
-  const materialColumns = [
-    { title: 'Nguyên liệu', dataIndex: 'materialName', key: 'materialName' },
+  const materialColumns: ColumnsType<any> = [
     {
-      title: 'Số lượng',
+      title: t('production:materials.name'),
+      dataIndex: 'materialName',
+      key: 'materialName',
+    },
+    {
+      title: t('production:piecework.quantity'),
       dataIndex: 'quantity',
       key: 'quantity',
       align: 'right' as const,
-      render: (v: number) => v?.toLocaleString('vi-VN') || 0,
+      render: (value: number) => value.toLocaleString(),
     },
     {
-      title: 'Chi phí',
+      title: t('production:molds.cost'),
       dataIndex: 'cost',
       key: 'cost',
       align: 'right' as const,
-      render: (v: number) => `${v?.toLocaleString('vi-VN') || 0} đ`,
+      render: (value: number) => formatCurrency(value),
     },
   ];
 
-  const costProductColumns = [
-    { title: 'Sản phẩm', dataIndex: 'productName', key: 'productName' },
+  const costColumns: ColumnsType<any> = [
     {
-      title: 'Chi phí',
+      title: t('production:orders.product'),
+      dataIndex: 'productName',
+      key: 'productName',
+    },
+    {
+      title: t('production:molds.cost'),
       dataIndex: 'cost',
       key: 'cost',
       align: 'right' as const,
-      render: (v: number) => `${v?.toLocaleString('vi-VN') || 0} đ`,
-    },
-  ];
-
-  const tabItems = [
-    {
-      key: 'production',
-      label: (
-        <span>
-          <BarChartOutlined /> Sản xuất
-        </span>
-      ),
-      children: (
-        <Spin spinning={loadingProduction}>
-          <Row gutter={16} style={{ marginBottom: 16 }}>
-            <Col span={isMobile ? 12 : 6}>
-              <Card>
-                <Statistic
-                  title="Tổng sản xuất"
-                  value={prodData?.totalProduction || 0}
-                  prefix={<CheckCircleOutlined />}
-                />
-              </Card>
-            </Col>
-            <Col span={isMobile ? 12 : 6}>
-              <Card>
-                <Statistic
-                  title="Tổng lỗi"
-                  value={prodData?.totalDefects || 0}
-                  valueStyle={{ color: '#cf1322' }}
-                  prefix={<WarningOutlined />}
-                />
-              </Card>
-            </Col>
-            <Col span={isMobile ? 12 : 6}>
-              <Card>
-                <Statistic
-                  title="Tỷ lệ lỗi"
-                  value={((prodData?.defectRate || 0) * 100).toFixed(1)}
-                  suffix="%"
-                />
-              </Card>
-            </Col>
-            <Col span={isMobile ? 12 : 6}>
-              <Card>
-                <Statistic
-                  title="Tỷ lệ hoàn thành"
-                  value={((prodData?.completionRate || 0) * 100).toFixed(1)}
-                  suffix="%"
-                  valueStyle={{ color: '#3f8600' }}
-                />
-              </Card>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col span={isMobile ? 24 : 12}>
-              <Card title="Theo sản phẩm" size="small">
-                <Table
-                  columns={productColumns}
-                  dataSource={prodData?.byProduct || []}
-                  rowKey="productId"
-                  pagination={false}
-                  size="small"
-                />
-              </Card>
-            </Col>
-            <Col span={isMobile ? 24 : 12}>
-              <Card title="Theo nhân viên" size="small" style={{ marginTop: isMobile ? 16 : 0 }}>
-                <Table
-                  columns={workerColumns}
-                  dataSource={prodData?.byWorker || []}
-                  rowKey="workerId"
-                  pagination={false}
-                  size="small"
-                />
-              </Card>
-            </Col>
-          </Row>
-        </Spin>
-      ),
-    },
-    {
-      key: 'materials',
-      label: (
-        <span>
-          <ExperimentOutlined /> Nguyên liệu
-        </span>
-      ),
-      children: (
-        <Spin spinning={loadingMaterial}>
-          <Row gutter={16} style={{ marginBottom: 16 }}>
-            <Col span={24}>
-              <Card>
-                <Statistic
-                  title="Tổng tiêu thụ"
-                  value={matData?.totalConsumption || 0}
-                  prefix={<ExperimentOutlined />}
-                />
-              </Card>
-            </Col>
-          </Row>
-
-          <Card title="Chi tiết nguyên liệu" size="small">
-            <Table
-              columns={materialColumns}
-              dataSource={matData?.byMaterial || []}
-              rowKey="materialId"
-              pagination={false}
-              size="small"
-            />
-          </Card>
-        </Spin>
-      ),
-    },
-    {
-      key: 'costs',
-      label: (
-        <span>
-          <DollarOutlined /> Chi phí
-        </span>
-      ),
-      children: (
-        <Spin spinning={loadingCost}>
-          <Row gutter={16} style={{ marginBottom: 16 }}>
-            <Col span={isMobile ? 12 : 6}>
-              <Card>
-                <Statistic
-                  title="Tổng chi phí"
-                  value={costData?.totalCost || 0}
-                  suffix="đ"
-                  valueStyle={{ color: '#1890ff' }}
-                />
-              </Card>
-            </Col>
-            <Col span={isMobile ? 12 : 6}>
-              <Card>
-                <Statistic title="Nhân công" value={costData?.laborCost || 0} suffix="đ" />
-              </Card>
-            </Col>
-            <Col span={isMobile ? 12 : 6}>
-              <Card>
-                <Statistic title="Nguyên liệu" value={costData?.materialCost || 0} suffix="đ" />
-              </Card>
-            </Col>
-            <Col span={isMobile ? 12 : 6}>
-              <Card>
-                <Statistic title="Chi phí khác" value={costData?.overheadCost || 0} suffix="đ" />
-              </Card>
-            </Col>
-          </Row>
-
-          <Card title="Chi phí theo sản phẩm" size="small">
-            <Table
-              columns={costProductColumns}
-              dataSource={costData?.byProduct || []}
-              rowKey="productId"
-              pagination={false}
-              size="small"
-            />
-          </Card>
-        </Spin>
-      ),
+      render: (value: number) => formatCurrency(value),
     },
   ];
 
   return (
-    <Card title="Báo cáo sản xuất">
-      <Space style={{ marginBottom: 16 }}>
-        <RangePicker
-          value={dateRange}
-          onChange={(dates) => dates && setDateRange(dates as [Dayjs, Dayjs])}
-          format="DD/MM/YYYY"
-        />
-      </Space>
+    <div>
+      <Card
+        title={t('production:reports.title')}
+        extra={
+          <RangePicker
+            value={dateRange}
+            onChange={(dates) => dates && setDateRange(dates as [Dayjs, Dayjs])}
+            format="DD/MM/YYYY"
+          />
+        }
+      >
+        <Tabs defaultActiveKey="production">
+          <TabPane tab={t('production:reports.productionReport')} key="production">
+            <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+              <Col xs={12} sm={6}>
+                <Card>
+                  <Statistic
+                    title={t('production:reports.totalProduction')}
+                    value={productionReport?.totalProduction || 0}
+                    prefix={<CheckCircleOutlined />}
+                    valueStyle={{ color: '#3f8600' }}
+                  />
+                </Card>
+              </Col>
+              <Col xs={12} sm={6}>
+                <Card>
+                  <Statistic
+                    title={t('production:reports.totalDefects')}
+                    value={productionReport?.totalDefects || 0}
+                    prefix={<CloseCircleOutlined />}
+                    valueStyle={{ color: '#cf1322' }}
+                  />
+                </Card>
+              </Col>
+              <Col xs={12} sm={6}>
+                <Card>
+                  <Statistic
+                    title={t('production:reports.defectRate')}
+                    value={productionReport?.defectRate || 0}
+                    suffix="%"
+                    valueStyle={{
+                      color: (productionReport?.defectRate || 0) > 5 ? '#cf1322' : '#3f8600',
+                    }}
+                  />
+                </Card>
+              </Col>
+              <Col xs={12} sm={6}>
+                <Card>
+                  <Statistic
+                    title={t('production:reports.completionRate')}
+                    value={productionReport?.completionRate || 0}
+                    suffix="%"
+                    prefix={<BarChartOutlined />}
+                  />
+                </Card>
+              </Col>
+            </Row>
 
-      <Tabs items={tabItems} defaultActiveKey="production" />
-    </Card>
+            <Card title={t('production:reports.byProduct')} style={{ marginBottom: 16 }}>
+              <Table
+                columns={productColumns}
+                dataSource={productionReport?.byProduct || []}
+                loading={loadingProduction}
+                pagination={false}
+                size="small"
+              />
+            </Card>
+
+            <Card title={t('production:reports.byWorker')}>
+              <Table
+                columns={workerColumns}
+                dataSource={productionReport?.byWorker || []}
+                loading={loadingProduction}
+                pagination={false}
+                size="small"
+              />
+            </Card>
+          </TabPane>
+
+          <TabPane tab={t('production:reports.materialConsumption')} key="material">
+            <Row gutter={16} style={{ marginBottom: 24 }}>
+              <Col span={24}>
+                <Card>
+                  <Statistic
+                    title={t('production:reports.totalConsumption')}
+                    value={materialReport?.totalConsumption || 0}
+                    prefix={<DollarOutlined />}
+                    formatter={(value) => formatCurrency(Number(value))}
+                  />
+                </Card>
+              </Col>
+            </Row>
+
+            <Card title={t('production:reports.byMaterial')}>
+              <Table
+                columns={materialColumns}
+                dataSource={materialReport?.byMaterial || []}
+                loading={loadingMaterial}
+                pagination={false}
+                size="small"
+              />
+            </Card>
+          </TabPane>
+
+          <TabPane tab={t('production:reports.costAnalysis')} key="cost">
+            <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+              <Col xs={12} sm={6}>
+                <Card>
+                  <Statistic
+                    title={t('production:reports.totalCost')}
+                    value={costReport?.totalCost || 0}
+                    formatter={(value) => formatCurrency(Number(value))}
+                    valueStyle={{ color: '#1890ff' }}
+                  />
+                </Card>
+              </Col>
+              <Col xs={12} sm={6}>
+                <Card>
+                  <Statistic
+                    title={t('production:reports.laborCost')}
+                    value={costReport?.laborCost || 0}
+                    formatter={(value) => formatCurrency(Number(value))}
+                  />
+                </Card>
+              </Col>
+              <Col xs={12} sm={6}>
+                <Card>
+                  <Statistic
+                    title={t('production:reports.materialCost')}
+                    value={costReport?.materialCost || 0}
+                    formatter={(value) => formatCurrency(Number(value))}
+                  />
+                </Card>
+              </Col>
+              <Col xs={12} sm={6}>
+                <Card>
+                  <Statistic
+                    title={t('production:reports.overheadCost')}
+                    value={costReport?.overheadCost || 0}
+                    formatter={(value) => formatCurrency(Number(value))}
+                  />
+                </Card>
+              </Col>
+            </Row>
+
+            <Card title={t('production:reports.byProduct')}>
+              <Table
+                columns={costColumns}
+                dataSource={costReport?.byProduct || []}
+                loading={loadingCost}
+                pagination={false}
+                size="small"
+              />
+            </Card>
+          </TabPane>
+        </Tabs>
+      </Card>
+    </div>
   );
-};
-
-export default ProductionReports;
+}

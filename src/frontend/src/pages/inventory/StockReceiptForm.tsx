@@ -14,10 +14,12 @@ import {
 } from 'antd';
 import { SaveOutlined, ArrowLeftOutlined, PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { inventoryService, StockReceiptItem } from '../../services/inventory/inventoryService';
-import { productService } from '../../services/inventory/productService';
-import { useResponsive } from '../../hooks/useResponsive';
-import MobileFormItemCard from '../../components/common/MobileFormItemCard';
+import { useTranslation } from 'react-i18next';
+import { inventoryService, StockReceiptItem } from '@/services/inventory/inventoryService';
+import { productService } from '@/services/inventory/productService';
+import { useResponsive } from '@/hooks/useResponsive';
+import { formatCurrency } from '@/utils/responsive';
+import MobileFormItemCard from '@/components/common/MobileFormItemCard';
 import dayjs from 'dayjs';
 
 export default function StockReceiptForm() {
@@ -25,6 +27,7 @@ export default function StockReceiptForm() {
   const navigate = useNavigate();
   const { id } = useParams();
   const queryClient = useQueryClient();
+  const { t } = useTranslation(['inventory', 'common']);
   const [form] = Form.useForm();
   const isEdit = !!id;
   const [items, setItems] = useState<StockReceiptItem[]>([]);
@@ -63,12 +66,12 @@ export default function StockReceiptForm() {
         : inventoryService.createStockReceipt(data);
     },
     onSuccess: () => {
-      message.success(isEdit ? 'Cập nhật phiếu nhập thành công!' : 'Tạo phiếu nhập thành công!');
+      message.success(isEdit ? t('inventory:messages.updateSuccess') : t('inventory:messages.createSuccess'));
       queryClient.invalidateQueries({ queryKey: ['stockReceipts'] });
       navigate('/inventory/receipts');
     },
     onError: () => {
-      message.error(isEdit ? 'Cập nhật phiếu nhập thất bại!' : 'Tạo phiếu nhập thất bại!');
+      message.error(isEdit ? t('inventory:messages.updateError') : t('inventory:messages.createError'));
     },
   });
 
@@ -103,7 +106,7 @@ export default function StockReceiptForm() {
 
   const columns = [
     {
-      title: 'Sản Phẩm',
+      title: t('inventory:form.selectProduct'),
       dataIndex: 'productId',
       key: 'productId',
       width: 300,
@@ -114,7 +117,7 @@ export default function StockReceiptForm() {
           style={{ width: '100%' }}
           showSearch
           optionFilterProp="children"
-          placeholder="Chọn sản phẩm"
+          placeholder={t('inventory:form.selectProduct')}
         >
           {products?.data?.map((product: any) => (
             <Select.Option key={product.id} value={product.id}>
@@ -125,7 +128,7 @@ export default function StockReceiptForm() {
       ),
     },
     {
-      title: 'Số Lượng',
+      title: t('inventory:form.quantity'),
       dataIndex: 'quantity',
       key: 'quantity',
       width: 120,
@@ -139,7 +142,7 @@ export default function StockReceiptForm() {
       ),
     },
     {
-      title: 'Đơn Giá',
+      title: t('inventory:form.unitCost'),
       dataIndex: 'unitCost',
       key: 'unitCost',
       width: 150,
@@ -155,11 +158,11 @@ export default function StockReceiptForm() {
       ),
     },
     {
-      title: 'Thành Tiền',
+      title: t('inventory:form.totalCost'),
       dataIndex: 'totalCost',
       key: 'totalCost',
       width: 150,
-      render: (value: number) => (value || 0).toLocaleString('vi-VN') + ' đ',
+      render: (value: number) => formatCurrency(value || 0),
     },
     {
       title: '',
@@ -173,7 +176,7 @@ export default function StockReceiptForm() {
 
   const onFinish = (values: any) => {
     if (items.length === 0) {
-      message.error('Vui lòng thêm ít nhất một sản phẩm!');
+      message.error(t('inventory:messages.addProductError'));
       return;
     }
     saveMutation.mutate(values);
@@ -185,11 +188,11 @@ export default function StockReceiptForm() {
     <div>
       <div style={{ marginBottom: 16 }}>
         <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/inventory/receipts')}>
-          Quay Lại
+          {t('inventory:form.back')}
         </Button>
       </div>
 
-      <Card title={isEdit ? 'Chỉnh Sửa Phiếu Nhập' : 'Tạo Phiếu Nhập Mới'}>
+      <Card title={isEdit ? t('inventory:receipts.editTitle') : t('inventory:receipts.createTitle')}>
         <Form
           form={form}
           layout="vertical"
@@ -201,38 +204,39 @@ export default function StockReceiptForm() {
         >
           <Form.Item
             name="receiptDate"
-            label="Ngày Nhập"
-            rules={[{ required: true, message: 'Vui lòng chọn ngày nhập!' }]}
+            label={t('inventory:receipts.receiptDate')}
+            rules={[{ required: true, message: t('inventory:messages.addProductError') }]}
           >
             <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" />
           </Form.Item>
 
-          <Form.Item name="notes" label="Ghi Chú">
-            <Input.TextArea rows={3} placeholder="Nhập ghi chú" />
+          <Form.Item name="notes" label={t('inventory:form.notes')}>
+            <Input.TextArea rows={3} placeholder={t('inventory:form.notesPlaceholder')} />
           </Form.Item>
 
           <div style={{ marginBottom: 16 }}>
             <Space style={{ marginBottom: 8 }}>
-              <h3>Danh Sách Sản Phẩm</h3>
+              <h3>{t('inventory:receipts.productList')}</h3>
               <Button type="dashed" icon={<PlusOutlined />} onClick={addItem}>
-                Thêm Sản Phẩm
+                {t('inventory:actions.addProduct')}
               </Button>
             </Space>
 
             {isMobile ? (
-              /* Mobile: Card View */
               <div>
                 {items.map((item, index) => (
                   <MobileFormItemCard key={index} index={index} onRemove={() => removeItem(index)}>
                     <div>
-                      <div style={{ marginBottom: 4, fontSize: 12, color: '#666' }}>Sản phẩm</div>
+                      <div style={{ marginBottom: 4, fontSize: 12, color: '#666' }}>
+                        {t('inventory:form.selectProduct')}
+                      </div>
                       <Select
                         value={item.productId}
                         onChange={(val) => updateItem(index, 'productId', val)}
                         style={{ width: '100%' }}
                         showSearch
                         optionFilterProp="children"
-                        placeholder="Chọn sản phẩm"
+                        placeholder={t('inventory:form.selectProduct')}
                       >
                         {products?.data?.map((product: any) => (
                           <Select.Option key={product.id} value={product.id}>
@@ -244,7 +248,9 @@ export default function StockReceiptForm() {
 
                     <div style={{ display: 'flex', gap: 8 }}>
                       <div style={{ flex: 1 }}>
-                        <div style={{ marginBottom: 4, fontSize: 12, color: '#666' }}>Số lượng</div>
+                        <div style={{ marginBottom: 4, fontSize: 12, color: '#666' }}>
+                          {t('inventory:form.quantity')}
+                        </div>
                         <InputNumber
                           min={1}
                           value={item.quantity}
@@ -253,7 +259,9 @@ export default function StockReceiptForm() {
                         />
                       </div>
                       <div style={{ flex: 1 }}>
-                        <div style={{ marginBottom: 4, fontSize: 12, color: '#666' }}>Đơn giá</div>
+                        <div style={{ marginBottom: 4, fontSize: 12, color: '#666' }}>
+                          {t('inventory:form.unitCost')}
+                        </div>
                         <InputNumber
                           min={0}
                           value={item.unitCost}
@@ -265,7 +273,9 @@ export default function StockReceiptForm() {
                     </div>
 
                     <div>
-                      <div style={{ marginBottom: 4, fontSize: 12, color: '#666' }}>Thành tiền</div>
+                      <div style={{ marginBottom: 4, fontSize: 12, color: '#666' }}>
+                        {t('inventory:form.totalCost')}
+                      </div>
                       <div
                         style={{
                           padding: '4px 11px',
@@ -276,7 +286,7 @@ export default function StockReceiptForm() {
                           fontWeight: 500,
                         }}
                       >
-                        {(item.totalCost || 0).toLocaleString('vi-VN')} đ
+                        {formatCurrency(item.totalCost || 0)}
                       </div>
                     </div>
                   </MobileFormItemCard>
@@ -291,15 +301,12 @@ export default function StockReceiptForm() {
                       fontWeight: 600,
                     }}
                   >
-                    <span>Tổng Cộng:</span>
-                    <span style={{ color: '#1890ff' }}>
-                      {totalAmount.toLocaleString('vi-VN')} đ
-                    </span>
+                    <span>{t('inventory:receipts.totalAmount')}:</span>
+                    <span style={{ color: '#1890ff' }}>{formatCurrency(totalAmount)}</span>
                   </div>
                 </Card>
               </div>
             ) : (
-              /* Desktop: Table View */
               <Table
                 columns={columns}
                 dataSource={items}
@@ -311,10 +318,10 @@ export default function StockReceiptForm() {
                   <Table.Summary>
                     <Table.Summary.Row>
                       <Table.Summary.Cell index={0} colSpan={3}>
-                        <strong>Tổng Cộng</strong>
+                        <strong>{t('inventory:receipts.totalAmount')}</strong>
                       </Table.Summary.Cell>
                       <Table.Summary.Cell index={1}>
-                        <strong>{totalAmount.toLocaleString('vi-VN')} đ</strong>
+                        <strong>{formatCurrency(totalAmount)}</strong>
                       </Table.Summary.Cell>
                       <Table.Summary.Cell index={2} />
                     </Table.Summary.Row>
@@ -331,7 +338,7 @@ export default function StockReceiptForm() {
               icon={<SaveOutlined />}
               loading={saveMutation.isPending}
             >
-              {isEdit ? 'Cập Nhật' : 'Tạo Mới'}
+              {isEdit ? t('common:actions.save') : t('common:actions.create')}
             </Button>
           </Form.Item>
         </Form>

@@ -13,9 +13,9 @@
 import React, { ReactNode } from 'react';
 import { Result, Button } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { useResponsive } from '../../hooks/useResponsive';
-import { SPACING } from '../../constants/design-tokens';
-import { getButtonSize } from '../../utils/responsive';
+import { useResponsive } from '@/hooks/useResponsive';
+import { SPACING } from '@/constants/design-tokens';
+import { getButtonSize } from '@/utils/responsive';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -140,4 +140,5 @@ class ErrorBoundaryClass extends React.Component<
 }
 
 export const ErrorBoundary = withHooks(ErrorBoundaryClass);
+ErrorBoundary.displayName = 'ErrorBoundary';
 export default ErrorBoundary;

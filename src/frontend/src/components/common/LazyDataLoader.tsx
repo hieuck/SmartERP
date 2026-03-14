@@ -1,6 +1,6 @@
 import React from 'react';
 import { Spin, Alert } from 'antd';
-import { useLazyData, useInfiniteScroll } from '../../hooks/useLazyData';
+import { useLazyData, useInfiniteScroll } from '@/hooks/useLazyData';
 
 interface LazyDataLoaderProps<T> {
   fetchData: () => Promise<T>;

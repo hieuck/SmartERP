@@ -9,22 +9,127 @@
     "reservedQuantity": "Đã Đặt",
     "availableQuantity": "Khả Dụng",
     "minMax": "Min/Max",
-    "status": "Trạng Thái"
+    "status": "Trạng Thái",
+    "code": "Mã Phiếu",
+    "receiptDate": "Ngày Nhập",
+    "issueDate": "Ngày Xuất",
+    "totalAmount": "Tổng Tiền",
+    "notes": "Ghi Chú",
+    "createdBy": "Người Tạo",
+    "date": "Ngày",
+    "type": "Loại",
+    "reference": "Tham Chiếu",
+    "performer": "Người Thực Hiện",
+    "level": "Mức Độ",
+    "reserved": "Đã Đặt",
+    "available": "Khả Dụng",
+    "minQuantity": "Tồn Tối Thiểu",
+    "needed": "Cần Nhập",
+    "items": "Số Mặt Hàng"
   },
   "status": {
     "low": "Thấp",
     "high": "Cao",
-    "normal": "Bình Thường"
+    "normal": "Bình Thường",
+    "draft": "Nháp",
+    "pending": "Chờ Duyệt",
+    "approved": "Đã Duyệt",
+    "cancelled": "Đã Hủy"
   },
   "actions": {
     "movements": "Lịch Sử Xuất Nhập",
-    "lowStock": "Cảnh Báo Tồn Thấp"
+    "lowStock": "Cảnh Báo Tồn Thấp",
+    "view": "Xem",
+    "print": "In Phiếu",
+    "approve": "Duyệt Phiếu",
+    "cancel": "Hủy Phiếu",
+    "addProduct": "Thêm Sản Phẩm"
   },
   "filters": {
     "warehouse": "Kho",
-    "allWarehouses": "Tất Cả Kho"
+    "allWarehouses": "Tất Cả Kho",
+    "type": "Loại Giao Dịch",
+    "dateRange": "Khoảng Thời Gian"
   },
   "messages": {
-    "total": "Tổng {{total}} mặt hàng"
+    "total": "Tổng {{total}} mặt hàng",
+    "totalReceipts": "Tổng {{total}} phiếu",
+    "totalIssues": "Tổng {{total}} phiếu",
+    "totalTransactions": "Tổng {{total}} giao dịch",
+    "totalProducts": "Tổng {{total}} sản phẩm cần chú ý",
+    "approveSuccess": "Duyệt phiếu nhập thành công!",
+    "approveError": "Duyệt phiếu nhập thất bại!",
+    "cancelSuccess": "Hủy phiếu nhập thành công!",
+    "cancelError": "Hủy phiếu nhập thất bại!",
+    "createSuccess": "Tạo phiếu nhập thành công!",
+    "createError": "Tạo phiếu nhập thất bại!",
+    "updateSuccess": "Cập nhật phiếu nhập thành công!",
+    "updateError": "Cập nhật phiếu nhập thất bại!",
+    "deleteSuccess": "Xóa thành công!",
+    "deleteError": "Xóa thất bại!",
+    "approveConfirm": "Bạn có chắc muốn duyệt phiếu nhập này?",
+    "cancelConfirm": "Bạn có chắc muốn hủy phiếu nhập này?",
+    "addProductError": "Vui lòng thêm ít nhất một sản phẩm!",
+    "issueApproveSuccess": "Duyệt phiếu xuất thành công!",
+    "issueApproveError": "Duyệt phiếu xuất thất bại!",
+    "issueCancelSuccess": "Hủy phiếu xuất thành công!",
+    "issueCancelError": "Hủy phiếu xuất thất bại!",
+    "issueCreateSuccess": "Tạo phiếu xuất thành công!",
+    "issueCreateError": "Tạo phiếu xuất thất bại!",
+    "issueUpdateSuccess": "Cập nhật phiếu xuất thành công!",
+    "issueUpdateError": "Cập nhật phiếu xuất thất bại!",
+    "issueApproveConfirm": "Bạn có chắc muốn duyệt phiếu xuất này?",
+    "issueCancelConfirm": "Bạn có chắc muốn hủy phiếu xuất này?"
+  },
+  "receipts": {
+    "title": "Phiếu Nhập Kho",
+    "createButton": "Tạo Phiếu Nhập",
+    "createTitle": "Tạo Phiếu Nhập Mới",
+    "editTitle": "Chỉnh Sửa Phiếu Nhập",
+    "receiptDate": "Ngày Nhập",
+    "productList": "Danh Sách Sản Phẩm",
+    "totalAmount": "Tổng Cộng"
+  },
+  "issues": {
+    "title": "Phiếu Xuất Kho",
+    "createButton": "Tạo Phiếu Xuất",
+    "createTitle": "Tạo Phiếu Xuất Mới",
+    "editTitle": "Chỉnh Sửa Phiếu Xuất",
+    "issueDate": "Ngày Xuất",
+    "productList": "Danh Sách Sản Phẩm",
+    "totalAmount": "Tổng Cộng"
+  },
+  "movements": {
+    "title": "Lịch Sử Xuất Nhập Kho",
+    "backToStock": "Quay Lại Tồn Kho",
+    "type": {
+      "in": "Nhập Kho",
+      "out": "Xuất Kho",
+      "transfer": "Chuyển Kho",
+      "adjustment": "Điều Chỉnh"
+    }
+  },
+  "lowStock": {
+    "title": "Cảnh Báo Tồn Kho Thấp",
+    "backToStock": "Quay Lại Tồn Kho",
+    "alertMessage": "Cảnh Báo Tồn Kho",
+    "criticalAlert": "{{count}} sản phẩm cần nhập hàng gấp",
+    "warningAlert": "{{count}} sản phẩm sắp hết hàng",
+    "level": {
+      "critical": "Rất Thấp",
+      "warning": "Thấp",
+      "info": "Gần Hết"
+    }
+  },
+  "form": {
+    "selectProduct": "Chọn Sản Phẩm",
+    "quantity": "Số Lượng",
+    "unitCost": "Đơn Giá",
+    "unitPrice": "Đơn Giá",
+    "totalCost": "Thành Tiền",
+    "totalPrice": "Thành Tiền",
+    "notes": "Ghi Chú",
+    "notesPlaceholder": "Nhập ghi chú",
+    "back": "Quay Lại"
   }
 }

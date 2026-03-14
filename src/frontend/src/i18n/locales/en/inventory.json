@@ -9,22 +9,127 @@
     "reservedQuantity": "Reserved",
     "availableQuantity": "Available",
     "minMax": "Min/Max",
-    "status": "Status"
+    "status": "Status",
+    "code": "Code",
+    "receiptDate": "Receipt Date",
+    "issueDate": "Issue Date",
+    "totalAmount": "Total Amount",
+    "notes": "Notes",
+    "createdBy": "Created By",
+    "date": "Date",
+    "type": "Type",
+    "reference": "Reference",
+    "performer": "Performer",
+    "level": "Level",
+    "reserved": "Reserved",
+    "available": "Available",
+    "minQuantity": "Min Quantity",
+    "needed": "Needed",
+    "items": "Items"
   },
   "status": {
     "low": "Low",
     "high": "High",
-    "normal": "Normal"
+    "normal": "Normal",
+    "draft": "Draft",
+    "pending": "Pending",
+    "approved": "Approved",
+    "cancelled": "Cancelled"
   },
   "actions": {
     "movements": "Movement History",
-    "lowStock": "Low Stock Alert"
+    "lowStock": "Low Stock Alert",
+    "view": "View",
+    "print": "Print",
+    "approve": "Approve",
+    "cancel": "Cancel",
+    "addProduct": "Add Product"
   },
   "filters": {
     "warehouse": "Warehouse",
-    "allWarehouses": "All Warehouses"
+    "allWarehouses": "All Warehouses",
+    "type": "Transaction Type",
+    "dateRange": "Date Range"
   },
   "messages": {
-    "total": "Total {{total}} items"
+    "total": "Total {{total}} items",
+    "totalReceipts": "Total {{total}} receipts",
+    "totalIssues": "Total {{total}} issues",
+    "totalTransactions": "Total {{total}} transactions",
+    "totalProducts": "Total {{total}} products to watch",
+    "approveSuccess": "Receipt approved successfully",
+    "approveError": "Failed to approve receipt",
+    "cancelSuccess": "Receipt cancelled successfully",
+    "cancelError": "Failed to cancel receipt",
+    "createSuccess": "Receipt created successfully",
+    "createError": "Failed to create receipt",
+    "updateSuccess": "Receipt updated successfully",
+    "updateError": "Failed to update receipt",
+    "deleteSuccess": "Deleted successfully",
+    "deleteError": "Failed to delete",
+    "approveConfirm": "Are you sure you want to approve this receipt?",
+    "cancelConfirm": "Are you sure you want to cancel this receipt?",
+    "addProductError": "Please add at least one product!",
+    "issueApproveSuccess": "Issue approved successfully",
+    "issueApproveError": "Failed to approve issue",
+    "issueCancelSuccess": "Issue cancelled successfully",
+    "issueCancelError": "Failed to cancel issue",
+    "issueCreateSuccess": "Issue created successfully",
+    "issueCreateError": "Failed to create issue",
+    "issueUpdateSuccess": "Issue updated successfully",
+    "issueUpdateError": "Failed to update issue",
+    "issueApproveConfirm": "Are you sure you want to approve this issue?",
+    "issueCancelConfirm": "Are you sure you want to cancel this issue?"
+  },
+  "receipts": {
+    "title": "Stock Receipts",
+    "createButton": "Create Receipt",
+    "createTitle": "Create New Receipt",
+    "editTitle": "Edit Receipt",
+    "receiptDate": "Receipt Date",
+    "productList": "Product List",
+    "totalAmount": "Total Amount"
+  },
+  "issues": {
+    "title": "Stock Issues",
+    "createButton": "Create Issue",
+    "createTitle": "Create New Issue",
+    "editTitle": "Edit Issue",
+    "issueDate": "Issue Date",
+    "productList": "Product List",
+    "totalAmount": "Total Amount"
+  },
+  "movements": {
+    "title": "Stock Movement History",
+    "backToStock": "Back to Stock",
+    "type": {
+      "in": "Stock In",
+      "out": "Stock Out",
+      "transfer": "Transfer",
+      "adjustment": "Adjustment"
+    }
+  },
+  "lowStock": {
+    "title": "Low Stock Alert",
+    "backToStock": "Back to Stock",
+    "alertMessage": "Stock Alert",
+    "criticalAlert": "{{count}} products need urgent restocking",
+    "warningAlert": "{{count}} products running low",
+    "level": {
+      "critical": "Critical",
+      "warning": "Low",
+      "info": "Running Low"
+    }
+  },
+  "form": {
+    "selectProduct": "Select Product",
+    "quantity": "Quantity",
+    "unitCost": "Unit Cost",
+    "unitPrice": "Unit Price",
+    "totalCost": "Total Cost",
+    "totalPrice": "Total Price",
+    "notes": "Notes",
+    "notesPlaceholder": "Enter notes",
+    "back": "Back"
   }
 }

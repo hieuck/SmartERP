@@ -1,5 +1,5 @@
 import { useQuery, useMutation, UseQueryResult, UseMutationResult } from '@tanstack/react-query';
-import { settingsService, Setting, SettingCategory } from '../services/utils/settingsService';
+import { settingsService, Setting, SettingCategory } from '@/services/utils/settingsService';
 import { useQueryClient } from '@tanstack/react-query';
 
 /**

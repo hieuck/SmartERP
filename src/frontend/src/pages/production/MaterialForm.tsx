@@ -10,9 +10,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, Form, Input, Select, InputNumber, Button, Space, message, Spin } from 'antd';
 import { SaveOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import productionService, { CreateMaterialDto } from '../../services/production/productionService';
-import { useResponsive } from '../../hooks/useResponsive';
-import { getCardSize } from '../../utils/responsive';
+import productionService, { CreateMaterialDto } from '@/services/production/productionService';
+import { useResponsive } from '@/hooks/useResponsive';
+import { getCardSize } from '@/utils/responsive';
 
 const { Option } = Select;
 

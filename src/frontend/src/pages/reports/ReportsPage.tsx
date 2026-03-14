@@ -28,7 +28,7 @@ import {
   useCashFlowReport,
   useExportReportPDF,
   useExportReportExcel,
-} from '../../hooks/useReports';
+} from '@/hooks/useReports';
 
 const { RangePicker } = DatePicker;
 const { Title } = Typography;

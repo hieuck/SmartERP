@@ -5,13 +5,11 @@
  */
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button, Space, Tag, message, Select } from 'antd';
 import { useTranslation } from 'react-i18next';
-import StandardListPage from '../../components/common/StandardListPage';
-import productionService, { Worker } from '../../services/production/productionService';
-import { formatDate } from '../../utils/responsive';
+import StandardListPage from '@/components/common/StandardListPage';
+import productionService, { Worker } from '@/services/production/productionService';
+import { formatDate } from '@/utils/responsive';
 import type { ColumnsType } from 'antd/es/table';
 
 const { Option } = Select;

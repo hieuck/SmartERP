@@ -10,8 +10,8 @@ import { Rate, message } from 'antd';
 import { ShopOutlined } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import supplierService from '../../services/logistics/supplierService';
-import StandardListPage from '../../components/common/StandardListPage';
+import supplierService from '@/services/logistics/supplierService';
+import StandardListPage from '@/components/common/StandardListPage';
 import type { ColumnsType } from 'antd/es/table';
 
 interface Supplier {

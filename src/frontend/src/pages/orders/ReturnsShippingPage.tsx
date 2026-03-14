@@ -24,10 +24,10 @@ import {
   CheckCircleOutlined,
   CloseCircleOutlined,
 } from '@ant-design/icons';
-import returnService, { Return } from '../../services/order/returnService';
-import shippingService, { Shipment } from '../../services/logistics/shippingService';
+import returnService, { Return } from '@/services/order/returnService';
+import shippingService, { Shipment } from '@/services/logistics/shippingService';
 import dayjs from 'dayjs';
-import { useResponsive } from '../../hooks/useResponsive';
+import { useResponsive } from '@/hooks/useResponsive';
 
 const { TabPane } = Tabs;
 const { Option } = Select;

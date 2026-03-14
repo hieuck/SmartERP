@@ -9,7 +9,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Form, Input, Button, Card, Space, Switch, message, Spin } from 'antd';
 import { SaveOutlined, ArrowLeftOutlined } from '@ant-design/icons';
-import warehouseService, { Warehouse } from '../../services/inventory/warehouseService';
+import warehouseService, { Warehouse } from '@/services/inventory/warehouseService';
 
 const WarehouseForm = () => {
   const navigate = useNavigate();

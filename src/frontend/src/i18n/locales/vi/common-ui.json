@@ -8,14 +8,108 @@
     "back": "Quay Lại",
     "search": "Tìm kiếm",
     "filter": "Lọc",
-    "export": "Xuất",
-    "import": "Nhập",
+    "export": "Xuất Excel",
+    "import": "Nhập Excel",
     "refresh": "Làm Mới",
     "view": "Xem",
     "more": "Thêm",
     "confirm": "Xác Nhận",
     "close": "Đóng",
-    "tryAgain": "Thử Lại"
+    "tryAgain": "Thử Lại",
+    "print": "In",
+    "approve": "Duyệt",
+    "reject": "Từ chối",
+    "submit": "Gửi",
+    "next": "Tiếp theo",
+    "finish": "Hoàn thành"
+  },
+  "status": {
+    "active": "Hoạt động",
+    "inactive": "Ngừng",
+    "pending": "Chờ xử lý",
+    "completed": "Hoàn thành",
+    "cancelled": "Đã hủy",
+    "draft": "Nháp",
+    "approved": "Đã duyệt",
+    "rejected": "Từ chối",
+    "in_progress": "Đang xử lý",
+    "paused": "Tạm dừng"
+  },
+  "types": {
+    "individual": "Cá Nhân",
+    "business": "Doanh Nghiệp",
+    "reseller": "Đại Lý",
+    "vip": "VIP"
+  },
+  "specialty": {
+    "casting": "Đúc tượng",
+    "painting": "Sơn màu",
+    "finishing": "Hoàn thiện",
+    "packaging": "Đóng gói",
+    "general": "Tổng hợp"
+  },
+  "skillLevel": {
+    "apprentice": "Thợ phụ",
+    "skilled": "Thợ chính",
+    "master": "Thợ bậc cao",
+    "junior": "Sơ cấp",
+    "intermediate": "Trung cấp",
+    "senior": "Cao cấp"
+  },
+  "priority": {
+    "low": "Thấp",
+    "medium": "Trung bình",
+    "high": "Cao",
+    "urgent": "Khẩn cấp"
+  },
+  "confirm": {
+    "delete": "Bạn có chắc muốn xóa?",
+    "deleteMultiple": "Bạn có chắc muốn xóa {{count}} bản ghi đã chọn?",
+    "cancel": "Bạn có chắc muốn hủy?",
+    "submit": "Bạn có chắc muốn lưu?",
+    "approve": "Bạn có chắc muốn duyệt?",
+    "reject": "Bạn có chắc muốn từ chối?"
+  },
+  "success": {
+    "create": "Thêm mới thành công!",
+    "update": "Cập nhật thành công!",
+    "delete": "Xóa thành công!",
+    "deleteMultiple": "Đã xóa {{count}} bản ghi thành công!",
+    "save": "Lưu thành công!",
+    "approve": "Duyệt thành công!",
+    "reject": "Từ chối thành công!",
+    "import": "Nhập dữ liệu thành công!",
+    "export": "Xuất dữ liệu thành công!"
+  },
+  "error": {
+    "create": "Thêm mới thất bại!",
+    "update": "Cập nhật thất bại!",
+    "delete": "Xóa thất bại!",
+    "save": "Lưu thất bại!",
+    "approve": "Duyệt thất bại!",
+    "reject": "Từ chối thất bại!",
+    "network": "Lỗi kết nối mạng!",
+    "notFound": "Không tìm thấy dữ liệu!",
+    "unauthorized": "Bạn không có quyền thực hiện thao tác này!",
+    "validation": "Dữ liệu không hợp lệ!",
+    "import": "Nhập dữ liệu thất bại!",
+    "export": "Xuất dữ liệu thất bại!"
+  },
+  "warning": {
+    "unsavedChanges": "Bạn có thay đổi chưa lưu. Bạn có chắc muốn rời khỏi trang?",
+    "selectItems": "Vui lòng chọn ít nhất một bản ghi!",
+    "fillRequired": "Vui lòng điền đầy đủ thông tin bắt buộc!"
+  },
+  "validation": {
+    "required": "Trường này là bắt buộc!",
+    "email": "Email không hợp lệ!",
+    "phone": "Số điện thoại không hợp lệ!",
+    "minLength": "Tối thiểu {{min}} ký tự!",
+    "maxLength": "Tối đa {{max}} ký tự!",
+    "min": "Giá trị tối thiểu là {{min}}!",
+    "max": "Giá trị tối đa là {{max}}!",
+    "pattern": "Định dạng không hợp lệ!",
+    "unique": "Giá trị đã tồn tại!"
   },
   "messages": {
     "deleteConfirm": "Bạn có chắc muốn xóa?",

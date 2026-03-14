@@ -10,9 +10,9 @@ import { Tag, message } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import customerService from '../../services/crm/customerService';
-import StandardListPage from '../../components/common/StandardListPage';
-import { formatCurrency } from '../../utils/responsive';
+import customerService from '@/services/crm/customerService';
+import StandardListPage from '@/components/common/StandardListPage';
+import { formatCurrency } from '@/utils/responsive';
 import type { ColumnsType } from 'antd/es/table';
 
 interface Customer {

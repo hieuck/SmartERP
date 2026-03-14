@@ -20,7 +20,7 @@ import {
   productService,
   CreateProductDto,
   UpdateProductDto,
-} from '../../services/inventory/productService';
+} from '@/services/inventory/productService';
 
 const { Title } = Typography;
 const { TextArea } = Input;

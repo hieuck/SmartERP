@@ -1,5 +1,5 @@
 import { useQuery, UseQueryResult } from '@tanstack/react-query';
-import reportingService from '../services/report/reportingService';
+import reportingService from '@/services/report/reportingService';
 
 interface ReportParams {
   startDate: string;

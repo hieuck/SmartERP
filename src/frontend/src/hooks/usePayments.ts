@@ -1,6 +1,6 @@
 import { useQuery, useMutation, UseQueryResult, UseMutationResult } from '@tanstack/react-query';
 import { useQueryClient } from '@tanstack/react-query';
-import paymentService from '../services/payment-gateway/paymentGatewayService';
+import paymentService from '@/services/payment-gateway/paymentGatewayService';
 
 interface PaymentFilters {
   search?: string;

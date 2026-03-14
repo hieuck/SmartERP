@@ -8,20 +8,19 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button, Space, Tag, message, Select, Badge } from 'antd';
-import { PlusOutlined, ToolOutlined, WarningOutlined } from '@ant-design/icons';
-import StandardListPage from '../../components/common/StandardListPage';
-import { createExpandableRender } from '../../components/common/ExpandableContent';
-import { formatDate, COLUMN_WIDTHS, SUCCESS_MESSAGES, ERROR_MESSAGES } from '../../constants/ui';
-import productionService, { Mold } from '../../services/production/productionService';
+import { ToolOutlined, WarningOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
+import StandardListPage from '@/components/common/StandardListPage';
+import productionService, { Mold } from '@/services/production/productionService';
+import { formatDate } from '@/utils/responsive';
 import dayjs from 'dayjs';
 import type { ColumnsType } from 'antd/es/table';
-import { useResponsive } from '../../hooks/useResponsive';
 
 const { Option } = Select;
 
-const MoldList = () => {
-  const { isMobile } = useResponsive();
+export default function MoldList() {
   const navigate = useNavigate();
+  const { t } = useTranslation(['production', 'common']);
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<string>();
@@ -42,11 +41,11 @@ const MoldList = () => {
       return response.data;
     },
     onSuccess: () => {
-      message.success('Xóa khuôn thành công');
+      message.success(t('production:messages.deleteSuccess'));
       queryClient.invalidateQueries({ queryKey: ['molds'] });
     },
     onError: () => {
-      message.error('Xóa khuôn thất bại');
+      message.error(t('production:messages.deleteError'));
     },
   });
 
@@ -57,13 +56,6 @@ const MoldList = () => {
     broken: 'red',
   };
 
-  const statusLabels: Record<string, string> = {
-    available: 'Sẵn sàng',
-    in_use: 'Đang sử dụng',
-    maintenance: 'Bảo trì',
-    broken: 'Hỏng',
-  };
-
   const needsMaintenance = (mold: Mold) => {
     if (!mold.nextMaintenanceDate) return false;
     return dayjs(mold.nextMaintenanceDate).isBefore(dayjs().add(7, 'day'));
@@ -71,13 +63,13 @@ const MoldList = () => {
 
   const columns: ColumnsType<Mold> = [
     {
-      title: 'Mã khuôn',
+      title: t('production:molds.code'),
       dataIndex: 'code',
       key: 'code',
-      width: isMobile ? 80 : COLUMN_WIDTHS.code,
+      width: 120,
     },
     {
-      title: 'Tên khuôn',
+      title: t('production:molds.name'),
       dataIndex: 'name',
       key: 'name',
       render: (name: string, record: Mold) => (
@@ -88,32 +80,32 @@ const MoldList = () => {
       ),
     },
     {
-      title: 'Kích thước',
+      title: t('production:molds.size'),
       dataIndex: 'size',
       key: 'size',
-      width: isMobile ? 90 : 120,
+      width: 120,
     },
     {
-      title: 'Trọng lượng SP',
+      title: t('production:molds.productWeight'),
       dataIndex: 'productWeight',
       key: 'productWeight',
-      width: isMobile ? 90 : 120,
+      width: 150,
       align: 'right' as const,
       render: (value: number) => (value ? `${value} kg` : '-'),
     },
     {
-      title: 'Số lần sử dụng',
+      title: t('production:molds.usageCount'),
       dataIndex: 'usageCount',
       key: 'usageCount',
-      width: isMobile ? 90 : 120,
+      width: 130,
       align: 'right' as const,
       render: (value: number) => value.toLocaleString(),
     },
     {
-      title: 'Bảo trì tiếp theo',
+      title: t('production:molds.nextMaintenance'),
       dataIndex: 'nextMaintenanceDate',
       key: 'nextMaintenanceDate',
-      width: isMobile ? 90 : 130,
+      width: 150,
       render: (date: Date, record: Mold) => {
         if (!date) return '-';
         const isNear = needsMaintenance(record);
@@ -131,23 +123,25 @@ const MoldList = () => {
       },
     },
     {
-      title: 'Trạng thái',
+      title: t('production:molds.status'),
       dataIndex: 'status',
       key: 'status',
-      width: isMobile ? 90 : COLUMN_WIDTHS.status,
-      render: (status: string) => <Tag color={statusColors[status]}>{statusLabels[status]}</Tag>,
+      width: 130,
+      render: (status: string) => (
+        <Tag color={statusColors[status]}>{t(`production:molds.statuses.${status}`)}</Tag>
+      ),
     },
     {
-      title: 'Bảo trì',
+      title: t('production:molds.maintenance'),
       key: 'maintenance',
-      width: isMobile ? 80 : 100,
+      width: 120,
       render: (_: any, record: Mold) => (
         <Button
           type="link"
           icon={<ToolOutlined />}
           onClick={() => navigate(`/production/molds/${record.id}/maintenance`)}
         >
-          Bảo trì
+          {t('production:molds.maintenance')}
         </Button>
       ),
     },
@@ -155,55 +149,46 @@ const MoldList = () => {
 
   const maintenanceNeeded = data?.filter((mold: Mold) => needsMaintenance(mold)).length || 0;
 
+  const filterComponents = (
+    <Select
+      placeholder={t('production:filters.status')}
+      style={{ width: 150 }}
+      allowClear
+      value={status}
+      onChange={setStatus}
+    >
+      <Option value="available">{t('production:molds.statuses.available')}</Option>
+      <Option value="in_use">{t('production:molds.statuses.in_use')}</Option>
+      <Option value="maintenance">{t('production:molds.statuses.maintenance')}</Option>
+      <Option value="broken">{t('production:molds.statuses.broken')}</Option>
+    </Select>
+  );
+
   return (
     <StandardListPage
       title={
         <Space>
-          <span>Quản lý khuôn mẫu</span>
+          <span>{t('production:molds.list')}</span>
           {maintenanceNeeded > 0 && (
             <Tag color="warning" icon={<WarningOutlined />}>
-              {maintenanceNeeded} khuôn cần bảo trì
+              {maintenanceNeeded} {t('production:molds.maintenance')}
             </Tag>
           )}
         </Space>
       }
-      createButtonText="Thêm khuôn"
+      createButtonText={t('production:molds.create')}
       onCreateClick={() => navigate('/production/molds/new')}
-      searchPlaceholder="Tìm kiếm khuôn..."
+      searchPlaceholder={t('production:molds.searchPlaceholder')}
       searchValue={search}
       onSearchChange={setSearch}
-      filters={
-        <Select
-          placeholder="Trạng thái"
-          style={{ width: 150 }}
-          allowClear
-          value={status}
-          onChange={setStatus}
-        >
-          <Option value="available">Sẵn sàng</Option>
-          <Option value="in_use">Đang sử dụng</Option>
-          <Option value="maintenance">Bảo trì</Option>
-          <Option value="broken">Hỏng</Option>
-        </Select>
-      }
+      filters={filterComponents}
       columns={columns}
-      dataSource={data?.data || []}
-      loading={isLoading}
-      expandable={{
-        expandedRowRender: createExpandableRender<Mold>(
-          (record) => [
-            { label: 'Bảo trì lần cuối', value: formatDate(record.lastMaintenanceDate) },
-            { label: 'Ghi chú', value: record.notes, span: 3 },
-          ],
-          { column: 3, bordered: true },
-        ),
-      }}
+      dataSource={data || []}
+      loading={isLoading || deleteMutation.isPending}
       onEdit={(record) => navigate(`/production/molds/${record.id}`)}
       onDelete={(record) => deleteMutation.mutate(record.id)}
-      deleteConfirmTitle="Bạn có chắc muốn xóa khuôn này?"
+      deleteConfirmTitle={t('production:messages.deleteConfirm')}
       pagination={false}
     />
   );
-};
-
-export default MoldList;
+}
