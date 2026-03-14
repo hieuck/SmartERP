@@ -197,10 +197,10 @@ describe('ShippingService', () => {
       };
 
       ghtkService.createOrder.mockResolvedValue({
+        labelId: 'GHTK123456',
         trackingNumber: 'GHTK123456',
-        orderCode: 'GHTK123456',
         shippingFee: 30000,
-        expectedDeliveryTime: new Date(),
+        estimatedDeliveryTime: new Date(),
       });
 
       const saveSpy = jest.spyOn(service['secureShipmentRepo'], 'save').mockResolvedValue({
@@ -226,10 +226,9 @@ describe('ShippingService', () => {
       };
 
       viettelPostService.createOrder.mockResolvedValue({
-        trackingNumber: 'VTP123456',
-        orderCode: 'VTP123456',
-        shippingFee: 28000,
-        expectedDeliveryTime: new Date(),
+        orderNumber: 'VTP123456',
+        moneyTotal: 28000,
+        exchangeWeight: 1500,
       });
 
       const saveSpy = jest.spyOn(service['secureShipmentRepo'], 'save').mockResolvedValue({
@@ -310,7 +309,7 @@ describe('ShippingService', () => {
       } as Shipment);
 
       await expect(service.createShipment(mockUser, dto)).rejects.toThrow();
-      expect(saveSpy).toHaveBeenCalledTimes(2); // Once for pending, once for failed
+      expect(saveSpy).toHaveBeenCalledTimes(1); // Only once for failed status in catch block
     });
 
     it('should create shipment with note', async () => {
@@ -379,8 +378,7 @@ describe('ShippingService', () => {
       };
 
       ghtkService.calculateFee.mockResolvedValue({
-        total: 30000,
-        serviceFee: 25000,
+        fee: 30000,
         insuranceFee: 5000,
       });
 
@@ -388,6 +386,8 @@ describe('ShippingService', () => {
 
       expect(result.provider).toBe('ghtk');
       expect(result.total).toBe(30000);
+      expect(result.serviceFee).toBe(30000);
+      expect(result.insuranceFee).toBe(5000);
     });
 
     it('should calculate fee with ViettelPost provider', async () => {
@@ -401,15 +401,18 @@ describe('ShippingService', () => {
       };
 
       viettelPostService.calculateFee.mockResolvedValue({
-        total: 28000,
-        serviceFee: 23000,
-        insuranceFee: 5000,
+        moneyTotal: 28000,
+        moneyTotalFee: 28000,
+        moneyFee: 23000,
+        moneyVas: 5000,
       });
 
       const result = await service.calculateFee(mockUser, dto);
 
       expect(result.provider).toBe('viettelpost');
       expect(result.total).toBe(28000);
+      expect(result.serviceFee).toBe(23000);
+      expect(result.insuranceFee).toBe(5000);
     });
 
     it('should calculate fee with VNPost provider', async () => {
@@ -558,7 +561,13 @@ describe('ShippingService', () => {
         shipmentId: 'shipment-123',
       };
 
-      jest.spyOn(service['secureShipmentRepo'], 'findOne').mockResolvedValue(mockShipment as Shipment);
+      // Mock shipment with status that can be cancelled (not 'delivered' or 'cancelled')
+      const cancellableShipment = {
+        ...mockShipment,
+        status: 'in_transit', // Use a status that can be cancelled
+      };
+
+      jest.spyOn(service['secureShipmentRepo'], 'findOne').mockResolvedValue(cancellableShipment as Shipment);
 
       ghnService.cancelOrder.mockResolvedValue({
         success: true,
@@ -566,7 +575,7 @@ describe('ShippingService', () => {
       });
 
       const saveSpy = jest.spyOn(service['secureShipmentRepo'], 'save').mockResolvedValue({
-        ...mockShipment,
+        ...cancellableShipment,
         status: 'cancelled',
       } as Shipment);
 

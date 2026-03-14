@@ -220,11 +220,11 @@ export class SystemAdminService {
 
     queryBuilder.orderBy('error_log.createdAt', 'DESC');
 
-    if (filters.limit) {
+    if (filters.limit !== undefined) {
       queryBuilder.take(filters.limit);
     }
 
-    if (filters.offset) {
+    if (filters.offset !== undefined) {
       queryBuilder.skip(filters.offset);
     }
 

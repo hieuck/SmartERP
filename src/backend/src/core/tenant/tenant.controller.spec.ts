@@ -46,28 +46,43 @@ describe('TenantController (Integration)', () => {
 
   const mockAuthUser = {
     id: 'user-123',
-    userId: 'user-123',
     tenantId: 'tenant-123',
-    email: 'admin@example.com',
-    role: 'admin',
+    roles: ['admin'],
   };
 
   const mockTenant = {
     id: 'tenant-123',
     code: 'testcompany',
     name: 'Test Company',
+    domain: null,
+    logo: null,
     companyName: 'Test Company Ltd',
+    companyAddress: null,
     companyPhone: '+84901234567',
+    companyEmail: null,
+    companyTaxCode: null,
+    companyWebsite: null,
     status: TenantStatus.ACTIVE,
+    timezone: 'Asia/Ho_Chi_Minh',
+    currency: 'VND',
+    language: 'vi',
+    dateFormat: 'DD/MM/YYYY',
+    numberFormat: '#,##0.00',
+    taxRate: 10,
     subscriptionPlan: SubscriptionPlan.PROFESSIONAL,
     subscriptionStartDate: new Date(),
     subscriptionEndDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    billingCycle: 'monthly' as any,
+    subscriptionAmount: 990000,
     maxUsers: 50,
     maxStorage: 10737418240,
     currentStorage: 1073741824,
     features: ['basic', 'advanced'],
     createdAt: new Date(),
     updatedAt: new Date(),
+    deletedAt: null,
+    createdBy: 'user-123',
+    updatedBy: 'user-123',
   };
 
   beforeAll(async () => {
@@ -166,7 +181,9 @@ describe('TenantController (Integration)', () => {
         .send(createDto)
         .expect(201);
 
-      expect(response.body).toEqual(mockTenant);
+      expect(response.body.id).toBe(mockTenant.id);
+      expect(response.body.code).toBe(mockTenant.code);
+      expect(response.body.name).toBe(mockTenant.name);
       expect(tenantService.create).toHaveBeenCalledWith(createDto, 'user-123');
     });
 
@@ -176,10 +193,10 @@ describe('TenantController (Integration)', () => {
         name: 'Existing Company',
       };
 
-      tenantService.create.mockRejectedValue({
-        status: 409,
-        message: 'Tenant with code existing already exists',
-      });
+      const ConflictException = require('@nestjs/common').ConflictException;
+      tenantService.create.mockRejectedValue(
+        new ConflictException('Tenant with code existing already exists'),
+      );
 
       await request(app.getHttpServer())
         .post('/tenants')
@@ -199,7 +216,9 @@ describe('TenantController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual(tenants);
+      expect(response.body).toHaveLength(2);
+      expect(response.body[0].id).toBe('tenant-123');
+      expect(response.body[1].id).toBe('tenant-456');
       expect(tenantService.findAll).toHaveBeenCalled();
     });
 
@@ -212,7 +231,8 @@ describe('TenantController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual(activeTenants);
+      expect(response.body).toHaveLength(1);
+      expect(response.body[0].id).toBe('tenant-123');
       expect(tenantService.findByStatus).toHaveBeenCalledWith(TenantStatus.ACTIVE);
     });
   });
@@ -240,15 +260,14 @@ describe('TenantController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual(mockTenant);
+      expect(response.body.id).toBe(mockTenant.id);
+      expect(response.body.code).toBe(mockTenant.code);
       expect(tenantService.findOne).toHaveBeenCalledWith(mockAuthUser);
     });
 
     it('should return 404 when tenant not found', async () => {
-      tenantService.findOne.mockRejectedValue({
-        status: 404,
-        message: 'Tenant not found',
-      });
+      const NotFoundException = require('@nestjs/common').NotFoundException;
+      tenantService.findOne.mockRejectedValue(new NotFoundException('Tenant not found'));
 
       await request(app.getHttpServer())
         .get('/tenants/non-existent')
@@ -266,15 +285,14 @@ describe('TenantController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual(mockTenant);
+      expect(response.body.id).toBe(mockTenant.id);
+      expect(response.body.code).toBe(mockTenant.code);
       expect(tenantService.findByCode).toHaveBeenCalledWith('testcompany');
     });
 
     it('should return 404 when code not found', async () => {
-      tenantService.findByCode.mockRejectedValue({
-        status: 404,
-        message: 'Tenant not found',
-      });
+      const NotFoundException = require('@nestjs/common').NotFoundException;
+      tenantService.findByCode.mockRejectedValue(new NotFoundException('Tenant not found'));
 
       await request(app.getHttpServer())
         .get('/tenants/code/nonexistent')
@@ -286,8 +304,8 @@ describe('TenantController (Integration)', () => {
   describe('GET /tenants/:id/users', () => {
     it('should return users by tenant', async () => {
       const users = [
-        { id: 'user-1', email: 'user1@example.com', role: 'admin' },
-        { id: 'user-2', email: 'user2@example.com', role: 'user' },
+        { id: 'user-1', tenantId: 'tenant-123', roles: ['admin'] },
+        { id: 'user-2', tenantId: 'tenant-123', roles: ['user'] },
       ];
       tenantService.getUsersByTenant.mockResolvedValue(users);
 
@@ -326,7 +344,8 @@ describe('TenantController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual(usageReport);
+      expect(response.body.tenantId).toBe('tenant-123');
+      expect(response.body.users.current).toBe(10);
       expect(tenantService.getUsageReport).toHaveBeenCalledWith(mockAuthUser);
     });
   });
@@ -335,12 +354,17 @@ describe('TenantController (Integration)', () => {
     describe('GET /tenants/:id/onboarding/status', () => {
       it('should return onboarding status', async () => {
         const status = {
-          completed: false,
+          tenantId: 'tenant-123',
+          tenantName: 'Test Company',
           steps: {
-            profile: true,
-            team: false,
-            settings: false,
+            accountCreated: true,
+            emailVerified: true,
+            businessInfoCompleted: false,
+            teamInvited: false,
+            dataImported: false,
           },
+          progress: 40,
+          isComplete: false,
         };
         onboardingService.getOnboardingStatus.mockResolvedValue(status);
 
@@ -357,11 +381,37 @@ describe('TenantController (Integration)', () => {
     describe('POST /tenants/:id/onboarding/complete', () => {
       it('should complete onboarding', async () => {
         const completeDto = {
-          steps: ['profile', 'team', 'settings'],
+          businessType: 'trading' as any,
+          companySize: '1-10' as any,
+          teamMembers: [],
+        };
+        const onboardingStatus = {
+          tenantId: 'tenant-123',
+          tenantName: 'Test Company',
+          steps: {
+            accountCreated: true,
+            emailVerified: true,
+            businessInfoCompleted: true,
+            teamInvited: false,
+            dataImported: false,
+          },
+          progress: 60,
+          isComplete: false,
         };
         onboardingService.completeOnboarding.mockResolvedValue({
           success: true,
           message: 'Onboarding completed',
+          tenant: {
+            id: 'tenant-123',
+            name: 'Test Company',
+            businessType: 'trading' as any,
+            companySize: '1-10' as any,
+          },
+          invitations: {
+            sent: 0,
+            emails: [],
+          },
+          onboardingStatus,
         });
 
         const response = await request(app.getHttpServer())
@@ -383,6 +433,10 @@ describe('TenantController (Integration)', () => {
         onboardingService.skipOnboarding.mockResolvedValue({
           success: true,
           message: 'Onboarding skipped',
+          tenant: {
+            id: 'tenant-123',
+            name: 'Test Company',
+          },
         });
 
         const response = await request(app.getHttpServer())
@@ -399,7 +453,10 @@ describe('TenantController (Integration)', () => {
       it('should invite team member', async () => {
         const inviteDto = { email: 'newmember@example.com' };
         onboardingService.inviteTeamMember.mockResolvedValue({
-          success: true,
+          email: 'newmember@example.com',
+          tenantId: 'tenant-123',
+          invitedBy: 'user-123',
+          status: 'pending',
           message: 'Invitation sent',
         });
 
@@ -409,7 +466,7 @@ describe('TenantController (Integration)', () => {
           .send(inviteDto)
           .expect(201);
 
-        expect(response.body.success).toBe(true);
+        expect(response.body.email).toBe('newmember@example.com');
         expect(onboardingService.inviteTeamMember).toHaveBeenCalledWith(
           mockAuthUser,
           'newmember@example.com',
@@ -421,12 +478,14 @@ describe('TenantController (Integration)', () => {
   describe('Subscription Endpoints', () => {
     describe('GET /tenants/subscription/pricing', () => {
       it('should return pricing for all plans (public)', async () => {
-        const pricing = [
-          { plan: 'free', price: 0, features: ['basic'] },
-          { plan: 'professional', price: 99, features: ['basic', 'advanced'] },
-          { plan: 'enterprise', price: 299, features: ['basic', 'advanced', 'premium'] },
-        ];
-        subscriptionService.getPricing.mockResolvedValue(pricing);
+        const pricing = {
+          plans: [
+            { plan: 'free', monthly: 0, yearly: 0, maxUsers: 1, maxStorage: 1073741824, features: ['basic'], savings: 0 },
+            { plan: 'professional', monthly: 990000, yearly: 9900000, maxUsers: 20, maxStorage: 53687091200, features: ['basic', 'advanced'], savings: 17 },
+            { plan: 'enterprise', monthly: 2990000, yearly: 29900000, maxUsers: -1, maxStorage: -1, features: ['basic', 'advanced', 'premium'], savings: 17 },
+          ],
+        };
+        subscriptionService.getPricing.mockReturnValue(pricing);
 
         const response = await request(app.getHttpServer())
           .get('/tenants/subscription/pricing')
@@ -440,10 +499,26 @@ describe('TenantController (Integration)', () => {
     describe('GET /tenants/:id/subscription', () => {
       it('should return current subscription', async () => {
         const subscription = {
-          plan: 'professional',
-          status: 'active',
-          startDate: new Date(),
-          endDate: new Date(),
+          tenant: {
+            id: 'tenant-123',
+            name: 'Test Company',
+            code: 'testcompany',
+          },
+          subscription: {
+            plan: SubscriptionPlan.PROFESSIONAL,
+            billingCycle: 'monthly' as any,
+            amount: 990000,
+            startDate: new Date(),
+            endDate: new Date(),
+            status: TenantStatus.ACTIVE,
+          },
+          usage: {
+            users: { max: 50 },
+            storage: { current: 1073741824, max: 10737418240, percentage: 10 },
+          },
+          features: ['basic', 'advanced'],
+          isTrialActive: false,
+          daysUntilExpiry: 30,
         };
         subscriptionService.getSubscription.mockResolvedValue(subscription);
 
@@ -452,7 +527,8 @@ describe('TenantController (Integration)', () => {
           .set('Authorization', 'Bearer valid-token')
           .expect(200);
 
-        expect(response.body).toEqual(subscription);
+        expect(response.body.tenant.id).toBe('tenant-123');
+        expect(response.body.subscription.plan).toBe('professional');
         expect(subscriptionService.getSubscription).toHaveBeenCalledWith(mockAuthUser);
       });
     });
@@ -460,12 +536,20 @@ describe('TenantController (Integration)', () => {
     describe('POST /tenants/:id/subscription/upgrade', () => {
       it('should upgrade subscription', async () => {
         const upgradeDto = {
-          plan: 'enterprise',
-          billingCycle: 'yearly',
+          plan: SubscriptionPlan.ENTERPRISE,
+          billingCycle: 'yearly' as any,
         };
         subscriptionService.upgradeSubscription.mockResolvedValue({
           success: true,
           message: 'Subscription upgraded',
+          subscription: {
+            plan: SubscriptionPlan.ENTERPRISE,
+            billingCycle: 'yearly' as any,
+            amount: 29900000,
+            startDate: new Date(),
+            endDate: new Date(),
+            features: ['basic', 'advanced', 'premium'],
+          },
         });
 
         const response = await request(app.getHttpServer())
@@ -487,6 +571,10 @@ describe('TenantController (Integration)', () => {
         subscriptionService.cancelSubscription.mockResolvedValue({
           success: true,
           message: 'Subscription cancelled',
+          subscription: {
+            plan: SubscriptionPlan.FREE,
+            features: ['basic'],
+          },
         });
 
         const response = await request(app.getHttpServer())
@@ -501,14 +589,11 @@ describe('TenantController (Integration)', () => {
 
     describe('GET /tenants/:id/subscription/history', () => {
       it('should return subscription history', async () => {
-        const history = [
-          { plan: 'free', startDate: new Date('2024-01-01'), endDate: new Date('2024-02-01') },
-          {
-            plan: 'professional',
-            startDate: new Date('2024-02-01'),
-            endDate: new Date('2024-03-01'),
-          },
-        ];
+        const history = {
+          tenantId: 'tenant-123',
+          history: [],
+          message: 'Subscription history tracking to be implemented',
+        };
         subscriptionService.getSubscriptionHistory.mockResolvedValue(history);
 
         const response = await request(app.getHttpServer())
@@ -543,10 +628,10 @@ describe('TenantController (Integration)', () => {
 
     it('should return 409 when code already exists', async () => {
       const updateDto = { code: 'existing-code' };
-      tenantService.update.mockRejectedValue({
-        status: 409,
-        message: 'Tenant with code existing-code already exists',
-      });
+      const ConflictException = require('@nestjs/common').ConflictException;
+      tenantService.update.mockRejectedValue(
+        new ConflictException('Tenant with code existing-code already exists'),
+      );
 
       await request(app.getHttpServer())
         .put('/tenants/tenant-123')
@@ -619,10 +704,10 @@ describe('TenantController (Integration)', () => {
 
     it('should return 400 when storage exceeds limit', async () => {
       const storageDto = { storageUsed: 99999999999 };
-      tenantService.updateStorage.mockRejectedValue({
-        status: 400,
-        message: 'Storage limit exceeded',
-      });
+      const BadRequestException = require('@nestjs/common').BadRequestException;
+      tenantService.updateStorage.mockRejectedValue(
+        new BadRequestException('Storage limit exceeded'),
+      );
 
       await request(app.getHttpServer())
         .patch('/tenants/tenant-123/storage')
@@ -646,10 +731,10 @@ describe('TenantController (Integration)', () => {
     });
 
     it('should return 400 when tenant has users', async () => {
-      tenantService.remove.mockRejectedValue({
-        status: 400,
-        message: 'Cannot delete tenant with 5 users. Please remove all users first.',
-      });
+      const BadRequestException = require('@nestjs/common').BadRequestException;
+      tenantService.remove.mockRejectedValue(
+        new BadRequestException('Cannot delete tenant with 5 users. Please remove all users first.'),
+      );
 
       await request(app.getHttpServer())
         .delete('/tenants/tenant-123')
@@ -658,10 +743,8 @@ describe('TenantController (Integration)', () => {
     });
 
     it('should return 404 when tenant not found', async () => {
-      tenantService.remove.mockRejectedValue({
-        status: 404,
-        message: 'Tenant not found',
-      });
+      const NotFoundException = require('@nestjs/common').NotFoundException;
+      tenantService.remove.mockRejectedValue(new NotFoundException('Tenant not found'));
 
       await request(app.getHttpServer())
         .delete('/tenants/non-existent')

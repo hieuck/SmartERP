@@ -326,7 +326,9 @@ describe('SupportService', () => {
     it('should update SLA when slaId changed', async () => {
       const updateDto = { slaId: 'sla-2' };
       const ticketWithOldSla = { ...mockTicket, slaId: 'sla-1' };
-      ticketRepository.findOne.mockResolvedValue(ticketWithOldSla as Ticket);
+      
+      // Mock findOneTicket to return ticket without mutation
+      ticketRepository.findOne.mockResolvedValue({ ...ticketWithOldSla } as Ticket);
       slaRepository.findOne.mockResolvedValue(mockSLA as SLA);
       ticketRepository.save.mockResolvedValue({ ...ticketWithOldSla, slaId: 'sla-2' } as Ticket);
 

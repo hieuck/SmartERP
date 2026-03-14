@@ -305,7 +305,11 @@ describe('NotificationService', () => {
   describe('delete', () => {
     it('should delete notification', async () => {
       cacheService.getOrSet.mockResolvedValue(mockNotification);
+      notificationRepository.findOne.mockResolvedValue(mockNotification); // SecureRepository needs this
       notificationRepository.remove = jest.fn().mockResolvedValue(mockNotification);
+      
+      // Mock canDelete to return true (SecureRepository checks canDelete, not canWrite)
+      permissionService.canDelete = jest.fn().mockReturnValue(true);
 
       await service.delete(mockUser, 'notification-1');
 

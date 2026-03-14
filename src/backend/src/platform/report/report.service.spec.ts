@@ -6,7 +6,8 @@ import { ReportService } from './report.service';
 import { Report } from './entities/report.entity';
 import { ReportColumn } from './entities/report-column.entity';
 import { ReportExecution } from './entities/report-execution.entity';
-import { ReportType, AggregationType } from '../enums/platform.enum';
+import { ReportType } from './enums/report-type.enum';
+import { AggregationType } from '../enums/platform.enum';
 import { ExecutionStatus } from './enums/execution-status.enum';
 import { User } from '@/common/security/permission.service';
 
@@ -34,7 +35,9 @@ describe('ReportService', () => {
     createdBy: 'user-1',
     columns: [],
     createdAt: new Date(),
-  } as Report;
+    generateReference: jest.fn(),
+    validate: jest.fn(),
+  } as any;
 
   const mockColumn: ReportColumn = {
     id: 'column-1',
@@ -44,7 +47,8 @@ describe('ReportService', () => {
     label: 'Name',
     isVisible: true,
     sequence: 1,
-  } as ReportColumn;
+    validate: jest.fn(),
+  } as any;
 
   const mockExecution: ReportExecution = {
     id: 'execution-1',
@@ -198,9 +202,9 @@ describe('ReportService', () => {
 
   describe('update', () => {
     it('should update report successfully', async () => {
-      const updatedReport = { ...mockReport, name: 'Updated Report' };
+      const updatedReport = { ...mockReport, name: 'Updated Report', generateReference: jest.fn(), validate: jest.fn() };
       reportRepository.findOne.mockResolvedValue(mockReport);
-      reportRepository.save.mockResolvedValue(updatedReport);
+      reportRepository.save.mockResolvedValue(updatedReport as any);
 
       const result = await service.update('report-1', { name: 'Updated Report' }, 'tenant-1', mockUser);
 
@@ -300,8 +304,8 @@ describe('ReportService', () => {
 
       reportRepository.findOne.mockResolvedValue({
         ...mockReport,
-        columns: [{ ...mockColumn, isVisible: true }],
-      });
+        columns: [{ ...mockColumn, isVisible: true, validate: jest.fn() }],
+      } as any);
       executionRepository.create.mockReturnValue(mockExecution as any);
       executionRepository.save.mockResolvedValue({
         ...mockExecution,
@@ -348,15 +352,27 @@ describe('ReportService', () => {
       const reportWithFilters = {
         ...mockReport,
         filters: [{ field: 'invalidField', operator: '=', value: 'test' }],
+        generateReference: jest.fn(),
+        validate: jest.fn(),
       };
       const mockMetadata = {
         columns: [{ propertyName: 'name' }],
       };
+      const mockQueryBuilder = {
+        createQueryBuilder: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        addGroupBy: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        getRawMany: jest.fn().mockResolvedValue([]),
+      };
 
-      reportRepository.findOne.mockResolvedValue(reportWithFilters);
+      reportRepository.findOne.mockResolvedValue(reportWithFilters as any);
       executionRepository.create.mockReturnValue(mockExecution as any);
       executionRepository.save.mockResolvedValue(mockExecution);
       dataSource.getMetadata.mockReturnValue(mockMetadata as any);
+      dataSource.getRepository.mockReturnValue(mockQueryBuilder as any);
 
       await expect(service.execute('report-1', {}, 'tenant-1', mockUser)).rejects.toThrow(
         BadRequestException,
@@ -367,15 +383,27 @@ describe('ReportService', () => {
       const reportWithInvalidOperator = {
         ...mockReport,
         filters: [{ field: 'name', operator: 'DROP TABLE', value: 'test' }],
+        generateReference: jest.fn(),
+        validate: jest.fn(),
       };
       const mockMetadata = {
         columns: [{ propertyName: 'name' }],
       };
+      const mockQueryBuilder = {
+        createQueryBuilder: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        addGroupBy: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        getRawMany: jest.fn().mockResolvedValue([]),
+      };
 
-      reportRepository.findOne.mockResolvedValue(reportWithInvalidOperator);
+      reportRepository.findOne.mockResolvedValue(reportWithInvalidOperator as any);
       executionRepository.create.mockReturnValue(mockExecution as any);
       executionRepository.save.mockResolvedValue(mockExecution);
       dataSource.getMetadata.mockReturnValue(mockMetadata as any);
+      dataSource.getRepository.mockReturnValue(mockQueryBuilder as any);
 
       await expect(service.execute('report-1', {}, 'tenant-1', mockUser)).rejects.toThrow(
         BadRequestException,

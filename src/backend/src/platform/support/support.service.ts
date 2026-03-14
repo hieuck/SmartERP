@@ -103,10 +103,13 @@ export class SupportService {
   async updateTicket(user: User, id: string, updateDto: UpdateTicketDto): Promise<Ticket> {
     const ticket = await this.findOneTicket(user, id);
 
+    // Store old slaId before updating
+    const oldSlaId = ticket.slaId;
+
     Object.assign(ticket, updateDto);
 
     // Update SLA due dates if SLA changed
-    if (updateDto.slaId && updateDto.slaId !== ticket.slaId) {
+    if (updateDto.slaId && updateDto.slaId !== oldSlaId) {
       await this.applySLA(ticket, updateDto.slaId);
     }
 

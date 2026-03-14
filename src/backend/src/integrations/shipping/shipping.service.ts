@@ -267,7 +267,7 @@ export class ShippingService {
           };
 
         case 'ghtk':
-          result = await this.ghtkService.calculateFee({
+          const ghtkResult = await this.ghtkService.calculateFee({
             pickProvince: dto.fromProvince,
             pickDistrict: dto.fromDistrict,
             province: dto.toProvince,
@@ -276,19 +276,19 @@ export class ShippingService {
             value: dto.codAmount || 0,
           });
 
-          if (result.error) {
-            throw new Error(result.error);
+          if (ghtkResult.error) {
+            throw new Error(ghtkResult.error);
           }
 
           return {
             provider: dto.provider,
-            total: result.total,
-            serviceFee: result.serviceFee,
-            insuranceFee: result.insuranceFee || 0,
+            total: ghtkResult.fee || 0,
+            serviceFee: ghtkResult.fee || 0,
+            insuranceFee: ghtkResult.insuranceFee || 0,
           };
 
         case 'viettelpost':
-          result = await this.viettelPostService.calculateFee({
+          const viettelResult = await this.viettelPostService.calculateFee({
             senderProvince: parseInt(dto.fromProvince) || 0,
             senderDistrict: parseInt(dto.fromDistrict) || 0,
             receiverProvince: parseInt(dto.toProvince) || 0,
@@ -300,15 +300,15 @@ export class ShippingService {
             nationalType: 3,
           });
 
-          if (result.error) {
-            throw new Error(result.error);
+          if (viettelResult.error) {
+            throw new Error(viettelResult.error);
           }
 
           return {
             provider: dto.provider,
-            total: result.total,
-            serviceFee: result.serviceFee,
-            insuranceFee: result.insuranceFee || 0,
+            total: viettelResult.moneyTotal || 0,
+            serviceFee: viettelResult.moneyFee || 0,
+            insuranceFee: viettelResult.moneyVas || 0,
           };
 
         case 'vnpost':

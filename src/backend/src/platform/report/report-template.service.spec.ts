@@ -231,8 +231,13 @@ describe('ReportTemplateService', () => {
       reportRepository.create.mockReturnValue(mockReport as any);
       reportRepository.save.mockResolvedValue(mockReport);
       columnRepository.create.mockReturnValue(mockColumn as any);
-      columnRepository.save.mockResolvedValue([mockColumn]);
-      reportRepository.findOne.mockResolvedValue({ ...mockReport, columns: [mockColumn] });
+      columnRepository.save.mockResolvedValue(mockColumn as any);
+      reportRepository.findOne.mockResolvedValue({ 
+        ...mockReport, 
+        columns: [mockColumn],
+        generateReference: jest.fn(),
+        validate: jest.fn(),
+      } as any);
 
       const result = await service.createFromTemplate('Balance Sheet', 'tenant-1', mockUser);
 
@@ -265,7 +270,7 @@ describe('ReportTemplateService', () => {
       reportRepository.create.mockReturnValue(mockReport as any);
       reportRepository.save.mockResolvedValue(mockReport);
       columnRepository.create.mockReturnValue({} as any);
-      columnRepository.save.mockResolvedValue([]);
+      columnRepository.save.mockResolvedValue({} as any);
       reportRepository.findOne.mockResolvedValue(mockReport);
 
       await service.createFromTemplate('Sales by Month', 'tenant-1', mockUser);
@@ -284,7 +289,7 @@ describe('ReportTemplateService', () => {
       reportRepository.create.mockReturnValue(mockReport as any);
       reportRepository.save.mockResolvedValue(mockReport);
       columnRepository.create.mockImplementation((data) => data as any);
-      columnRepository.save.mockResolvedValue([]);
+      columnRepository.save.mockResolvedValue({} as any);
       reportRepository.findOne.mockResolvedValue(mockReport);
 
       await service.createFromTemplate('Balance Sheet', 'tenant-1', mockUser);

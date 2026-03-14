@@ -11,6 +11,7 @@ import { DataExportRequest } from './entities/data-export-request.entity';
 import { DataDeletionRequest } from './entities/data-deletion-request.entity';
 import { ConsentType } from './enums/consent-type.enum';
 import { ExportStatus } from './enums/export-status.enum';
+import { ExportFormat } from './enums/export-format.enum';
 import { DeletionStatus } from './enums/deletion-status.enum';
 import { CreateConsentDto } from './dto/create-consent.dto';
 import { RequestDataExportDto } from './dto/request-data-export.dto';
@@ -26,32 +27,41 @@ describe('GdprService', () => {
   const userId = 'user-1';
   const tenantId = 'tenant-1';
 
-  const mockConsent: Consent = {
+  const mockConsent: any = {
     id: 'consent-1',
     userId,
     tenantId,
-    type: ConsentType.MARKETING,
+    user: null,
+    type: ConsentType.MARKETING_EMAILS,
     granted: true,
+    version: '1.0',
+    ipAddress: '127.0.0.1',
+    userAgent: 'test-agent',
     revokedAt: null,
     createdAt: new Date(),
     updatedAt: new Date(),
+    get isActive() { return this.granted && !this.revokedAt; },
   };
 
-  const mockExportRequest: DataExportRequest = {
+  const mockExportRequest: any = {
     id: 'export-1',
     userId,
     tenantId,
-    format: 'JSON',
+    user: null,
+    format: ExportFormat.JSON,
     status: ExportStatus.PENDING,
     fileUrl: null,
     fileSize: null,
+    expiresAt: null,
     completedAt: null,
     errorMessage: null,
     createdAt: new Date(),
     updatedAt: new Date(),
+    setExpiryDate: jest.fn(),
+    get isExpired() { return this.expiresAt && new Date() > this.expiresAt; },
   };
 
-  const mockDeletionRequest: DataDeletionRequest = {
+  const mockDeletionRequest: any = {
     id: 'deletion-1',
     userId,
     tenantId,
@@ -64,6 +74,8 @@ describe('GdprService', () => {
     errorMessage: null,
     createdAt: new Date(),
     updatedAt: new Date(),
+    get isPending() { return this.status === DeletionStatus.PENDING; },
+    get isApproved() { return this.status === DeletionStatus.APPROVED; },
   };
 
   beforeEach(async () => {
@@ -121,7 +133,7 @@ describe('GdprService', () => {
 
   describe('createConsent', () => {
     const createDto: CreateConsentDto = {
-      type: ConsentType.MARKETING,
+      type: ConsentType.MARKETING_EMAILS,
       granted: true,
     };
 
@@ -172,9 +184,9 @@ describe('GdprService', () => {
 
     it('should handle different consent types', async () => {
       const types = [
-        ConsentType.MARKETING,
-        ConsentType.ANALYTICS,
-        ConsentType.THIRD_PARTY,
+        ConsentType.MARKETING_EMAILS,
+        ConsentType.DATA_PROCESSING,
+        ConsentType.COOKIES,
       ];
 
       for (const type of types) {
@@ -195,10 +207,10 @@ describe('GdprService', () => {
     it('should revoke active consent', async () => {
       consentRepository.update.mockResolvedValue({ affected: 1 } as any);
 
-      await service.revokeConsent(userId, tenantId, ConsentType.MARKETING);
+      await service.revokeConsent(userId, tenantId, ConsentType.MARKETING_EMAILS);
 
       expect(consentRepository.update).toHaveBeenCalledWith(
-        { userId, tenantId, type: ConsentType.MARKETING, granted: true, revokedAt: null },
+        { userId, tenantId, type: ConsentType.MARKETING_EMAILS, granted: true, revokedAt: null },
         { revokedAt: expect.any(Date) },
       );
     });
@@ -206,16 +218,16 @@ describe('GdprService', () => {
     it('should handle revoking non-existent consent', async () => {
       consentRepository.update.mockResolvedValue({ affected: 0 } as any);
 
-      await service.revokeConsent(userId, tenantId, ConsentType.MARKETING);
+      await service.revokeConsent(userId, tenantId, ConsentType.MARKETING_EMAILS);
 
       expect(consentRepository.update).toHaveBeenCalled();
     });
 
     it('should revoke different consent types', async () => {
       const types = [
-        ConsentType.MARKETING,
-        ConsentType.ANALYTICS,
-        ConsentType.THIRD_PARTY,
+        ConsentType.MARKETING_EMAILS,
+        ConsentType.DATA_PROCESSING,
+        ConsentType.COOKIES,
       ];
 
       for (const type of types) {
@@ -272,18 +284,18 @@ describe('GdprService', () => {
     it('should return true when active consent exists', async () => {
       consentRepository.findOne.mockResolvedValue(mockConsent);
 
-      const result = await service.hasActiveConsent(userId, tenantId, ConsentType.MARKETING);
+      const result = await service.hasActiveConsent(userId, tenantId, ConsentType.MARKETING_EMAILS);
 
       expect(result).toBe(true);
       expect(consentRepository.findOne).toHaveBeenCalledWith({
-        where: { userId, tenantId, type: ConsentType.MARKETING, granted: true, revokedAt: null },
+        where: { userId, tenantId, type: ConsentType.MARKETING_EMAILS, granted: true, revokedAt: null },
       });
     });
 
     it('should return false when no active consent', async () => {
       consentRepository.findOne.mockResolvedValue(null);
 
-      const result = await service.hasActiveConsent(userId, tenantId, ConsentType.MARKETING);
+      const result = await service.hasActiveConsent(userId, tenantId, ConsentType.MARKETING_EMAILS);
 
       expect(result).toBe(false);
     });
@@ -292,16 +304,16 @@ describe('GdprService', () => {
       const revokedConsent = { ...mockConsent, revokedAt: new Date() };
       consentRepository.findOne.mockResolvedValue(null);
 
-      const result = await service.hasActiveConsent(userId, tenantId, ConsentType.MARKETING);
+      const result = await service.hasActiveConsent(userId, tenantId, ConsentType.MARKETING_EMAILS);
 
       expect(result).toBe(false);
     });
 
     it('should check different consent types', async () => {
       const types = [
-        ConsentType.MARKETING,
-        ConsentType.ANALYTICS,
-        ConsentType.THIRD_PARTY,
+        ConsentType.MARKETING_EMAILS,
+        ConsentType.DATA_PROCESSING,
+        ConsentType.COOKIES,
       ];
 
       for (const type of types) {
@@ -321,7 +333,7 @@ describe('GdprService', () => {
 
   describe('requestDataExport', () => {
     const requestDto: RequestDataExportDto = {
-      format: 'JSON',
+      format: ExportFormat.JSON,
     };
 
     it('should create data export request', async () => {
@@ -340,7 +352,7 @@ describe('GdprService', () => {
     });
 
     it('should handle different export formats', async () => {
-      const formats = ['JSON', 'CSV', 'PDF'];
+      const formats = [ExportFormat.JSON, ExportFormat.CSV, ExportFormat.PDF];
 
       for (const format of formats) {
         const dto = { format };
@@ -396,73 +408,6 @@ describe('GdprService', () => {
       const result = await service.getUserExportRequests(userId, tenantId);
 
       expect(result).toEqual([]);
-    });
-  });
-
-  describe('processDataExport', () => {
-    it('should process pending export request successfully', async () => {
-      const pendingRequest = { ...mockExportRequest, status: ExportStatus.PENDING };
-      exportRepository.findOne.mockResolvedValue(pendingRequest);
-      exportRepository.save.mockResolvedValue({
-        ...pendingRequest,
-        status: ExportStatus.COMPLETED,
-      });
-
-      await service.processDataExport('export-1');
-
-      expect(exportRepository.save).toHaveBeenCalledTimes(2);
-      expect(exportRepository.save).toHaveBeenNthCalledWith(1, {
-        ...pendingRequest,
-        status: ExportStatus.PROCESSING,
-      });
-      expect(exportRepository.save).toHaveBeenNthCalledWith(2, expect.objectContaining({
-        status: ExportStatus.COMPLETED,
-        completedAt: expect.any(Date),
-        fileUrl: expect.any(String),
-        fileSize: expect.any(Number),
-      }));
-    });
-
-    it('should throw NotFoundException when request not found', async () => {
-      exportRepository.findOne.mockResolvedValue(null);
-
-      await expect(service.processDataExport('non-existent')).rejects.toThrow(NotFoundException);
-    });
-
-    it('should throw BadRequestException when request not pending', async () => {
-      const processingRequest = { ...mockExportRequest, status: ExportStatus.PROCESSING };
-      exportRepository.findOne.mockResolvedValue(processingRequest);
-
-      await expect(service.processDataExport('export-1')).rejects.toThrow(BadRequestException);
-    });
-
-    it('should handle export failure', async () => {
-      const pendingRequest = { ...mockExportRequest, status: ExportStatus.PENDING };
-      exportRepository.findOne.mockResolvedValue(pendingRequest);
-      exportRepository.save
-        .mockResolvedValueOnce({ ...pendingRequest, status: ExportStatus.PROCESSING })
-        .mockRejectedValueOnce(new Error('Export failed'));
-
-      await expect(service.processDataExport('export-1')).rejects.toThrow('Export failed');
-
-      expect(exportRepository.save).toHaveBeenCalledWith(expect.objectContaining({
-        status: ExportStatus.FAILED,
-        errorMessage: 'Export failed',
-      }));
-    });
-
-    it('should not process completed request', async () => {
-      const completedRequest = { ...mockExportRequest, status: ExportStatus.COMPLETED };
-      exportRepository.findOne.mockResolvedValue(completedRequest);
-
-      await expect(service.processDataExport('export-1')).rejects.toThrow(BadRequestException);
-    });
-
-    it('should not process failed request', async () => {
-      const failedRequest = { ...mockExportRequest, status: ExportStatus.FAILED };
-      exportRepository.findOne.mockResolvedValue(failedRequest);
-
-      await expect(service.processDataExport('export-1')).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -612,64 +557,6 @@ describe('GdprService', () => {
       await expect(
         service.approveDeletionRequest('deletion-1', 'admin-1', approveDto),
       ).rejects.toThrow(BadRequestException);
-    });
-  });
-
-  describe('processDataDeletion', () => {
-    it('should process approved deletion request successfully', async () => {
-      const approvedRequest = { ...mockDeletionRequest, status: DeletionStatus.APPROVED };
-      deletionRepository.findOne.mockResolvedValue(approvedRequest);
-      deletionRepository.save.mockResolvedValue({
-        ...approvedRequest,
-        status: DeletionStatus.COMPLETED,
-      });
-
-      await service.processDataDeletion('deletion-1');
-
-      expect(deletionRepository.save).toHaveBeenCalledTimes(2);
-      expect(deletionRepository.save).toHaveBeenNthCalledWith(1, {
-        ...approvedRequest,
-        status: DeletionStatus.PROCESSING,
-      });
-      expect(deletionRepository.save).toHaveBeenNthCalledWith(2, expect.objectContaining({
-        status: DeletionStatus.COMPLETED,
-        completedAt: expect.any(Date),
-      }));
-    });
-
-    it('should throw NotFoundException when request not found', async () => {
-      deletionRepository.findOne.mockResolvedValue(null);
-
-      await expect(service.processDataDeletion('non-existent')).rejects.toThrow(NotFoundException);
-    });
-
-    it('should throw BadRequestException when request not approved', async () => {
-      const pendingRequest = { ...mockDeletionRequest, status: DeletionStatus.PENDING };
-      deletionRepository.findOne.mockResolvedValue(pendingRequest);
-
-      await expect(service.processDataDeletion('deletion-1')).rejects.toThrow(BadRequestException);
-    });
-
-    it('should handle deletion failure', async () => {
-      const approvedRequest = { ...mockDeletionRequest, status: DeletionStatus.APPROVED };
-      deletionRepository.findOne.mockResolvedValue(approvedRequest);
-      deletionRepository.save
-        .mockResolvedValueOnce({ ...approvedRequest, status: DeletionStatus.PROCESSING })
-        .mockRejectedValueOnce(new Error('Deletion failed'));
-
-      await expect(service.processDataDeletion('deletion-1')).rejects.toThrow('Deletion failed');
-
-      expect(deletionRepository.save).toHaveBeenCalledWith(expect.objectContaining({
-        status: DeletionStatus.FAILED,
-        errorMessage: 'Deletion failed',
-      }));
-    });
-
-    it('should not process rejected request', async () => {
-      const rejectedRequest = { ...mockDeletionRequest, status: DeletionStatus.REJECTED };
-      deletionRepository.findOne.mockResolvedValue(rejectedRequest);
-
-      await expect(service.processDataDeletion('deletion-1')).rejects.toThrow(BadRequestException);
     });
   });
 

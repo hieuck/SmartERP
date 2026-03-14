@@ -35,10 +35,9 @@ describe('UserController (Integration)', () => {
   };
 
   const mockAuthUser = {
-    userId: 'user-123',
+    id: 'user-123',
     tenantId: 'tenant-123',
-    email: 'test@example.com',
-    role: 'user',
+    roles: ['user'],
   };
 
   beforeAll(async () => {

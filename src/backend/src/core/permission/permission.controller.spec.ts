@@ -20,26 +20,28 @@ import { PermissionService } from './permission.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { TenantGuard } from '../../common/guards/tenant.guard';
 
+import { PermissionAction } from './enums/permission-action.enum';
+
 describe('PermissionController (Integration)', () => {
   let app: INestApplication;
   let permissionService: jest.Mocked<PermissionService>;
 
   const mockAuthUser = {
     id: 'user-123',
-    userId: 'user-123',
     tenantId: 'tenant-123',
-    email: 'admin@example.com',
-    role: 'admin',
+    roles: ['admin'],
   };
 
   const mockPermission = {
     id: 'permission-123',
     resource: 'users',
-    action: 'read',
+    actions: [PermissionAction.READ],
     description: 'Read users',
+    roles: [],
     tenantId: 'tenant-123',
     createdAt: new Date(),
     updatedAt: new Date(),
+    deletedAt: null,
   };
 
   beforeAll(async () => {
@@ -153,7 +155,7 @@ describe('PermissionController (Integration)', () => {
     it('should return all permissions', async () => {
       const permissions = [
         mockPermission,
-        { ...mockPermission, id: 'permission-456', resource: 'products' },
+        { ...mockPermission, id: 'permission-456', resource: 'products', actions: [PermissionAction.READ, PermissionAction.UPDATE] },
       ];
       permissionService.findAll.mockResolvedValue(permissions);
 

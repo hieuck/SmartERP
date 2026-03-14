@@ -50,6 +50,7 @@ describe('AuditService', () => {
     };
 
     const mockPermissionService = {
+      buildSecureQuery: jest.fn((user, where) => ({ ...where, tenantId: user.tenantId })),
       checkPermission: jest.fn().mockResolvedValue(true),
     };
 

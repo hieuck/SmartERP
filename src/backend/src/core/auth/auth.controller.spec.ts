@@ -442,8 +442,10 @@ describe('AuthController (Integration)', () => {
   describe('POST /auth/logout', () => {
     it('should logout successfully and revoke token', async () => {
       const token = 'valid-jwt-token';
-      const decodedToken = {
+      const decodedToken: JwtPayload = {
         sub: 'user-123',
+        email: 'test@example.com',
+        tenantId: 'tenant-123',
         exp: Math.floor(Date.now() / 1000) + 3600,
       };
 
@@ -480,8 +482,10 @@ describe('AuthController (Integration)', () => {
 
     it('should not revoke expired token', async () => {
       const token = 'expired-jwt-token';
-      const decodedToken = {
+      const decodedToken: JwtPayload = {
         sub: 'user-123',
+        email: 'test@example.com',
+        tenantId: 'tenant-123',
         exp: Math.floor(Date.now() / 1000) - 3600, // Expired 1 hour ago
       };
 

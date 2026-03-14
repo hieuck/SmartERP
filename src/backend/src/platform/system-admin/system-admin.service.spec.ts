@@ -6,8 +6,9 @@ import { SystemAdminService } from './system-admin.service';
 import { SystemSetting } from './entities/system-setting.entity';
 import { BackgroundJob } from './entities/background-job.entity';
 import { ErrorLog } from './entities/error-log.entity';
-import { PermissionService, User } from '@common/security/permission.service';
-import { JobStatus } from './enums';
+import { PermissionService } from '@common/security/permission.service';
+import { User } from '@core/user/entities/user.entity';
+import { JobStatus, ErrorSeverity, SettingCategory } from './enums';
 
 describe('SystemAdminService', () => {
   let service: SystemAdminService;
@@ -20,22 +21,28 @@ describe('SystemAdminService', () => {
     id: 'user-1',
     tenantId: 'tenant-1',
     email: 'admin@test.com',
+    password: 'hashed',
     role: 'admin',
-  };
+    roles: ['admin'],
+    status: 'active',
+    isActive: true,
+    emailVerified: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  } as User;
 
   const mockSetting: Partial<SystemSetting> = {
     id: 'setting-1',
     key: 'app.name',
     value: 'Smart ERP',
-    category: 'general',
+    category: SettingCategory.GENERAL,
     updatedBy: 'user-1',
   };
 
   const mockJob: Partial<BackgroundJob> = {
     id: 'job-1',
     tenantId: 'tenant-1',
-    name: 'Backup Job',
-    type: 'backup',
+    jobType: 'backup',
     status: JobStatus.PENDING,
     createdBy: 'user-1',
   };
@@ -44,7 +51,7 @@ describe('SystemAdminService', () => {
     id: 'error-1',
     tenantId: 'tenant-1',
     userId: 'user-1',
-    severity: 'error',
+    severity: ErrorSeverity.HIGH,
     errorType: 'DatabaseError',
     message: 'Connection failed',
     resolved: false,
@@ -86,6 +93,10 @@ describe('SystemAdminService', () => {
     const mockPermissionService = {
       checkPermission: jest.fn().mockResolvedValue(true),
       filterByTenant: jest.fn((user, entities) => entities),
+      canRead: jest.fn().mockReturnValue(true),
+      canWrite: jest.fn().mockReturnValue(true),
+      canDelete: jest.fn().mockReturnValue(true),
+      buildSecureQuery: jest.fn((user, query) => query),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -157,7 +168,7 @@ describe('SystemAdminService', () => {
       it('should filter by category', async () => {
         settingRepository.find.mockResolvedValue([mockSetting as SystemSetting]);
 
-        const result = await service.getAllSettings(mockUser, 'general');
+        const result = await service.getAllSettings(mockUser, SettingCategory.GENERAL);
 
         expect(result).toEqual([mockSetting]);
       });
@@ -191,7 +202,7 @@ describe('SystemAdminService', () => {
       it('should create job successfully', async () => {
         jobRepository.save.mockResolvedValue(mockJob as BackgroundJob);
 
-        const result = await service.createJob(mockUser, { name: 'Backup', type: 'backup' } as any);
+        const result = await service.createJob(mockUser, { jobType: 'backup' } as any);
 
         expect(jobRepository.save).toHaveBeenCalled();
         expect(result).toEqual(mockJob);
@@ -201,7 +212,7 @@ describe('SystemAdminService', () => {
         const scheduledAt = '2024-12-31T00:00:00Z';
         jobRepository.save.mockResolvedValue({ ...mockJob, scheduledAt: new Date(scheduledAt) } as BackgroundJob);
 
-        const result = await service.createJob(mockUser, { name: 'Backup', type: 'backup', scheduledAt } as any);
+        const result = await service.createJob(mockUser, { jobType: 'backup', scheduledAt } as any);
 
         expect(result.scheduledAt).toBeDefined();
       });
@@ -299,7 +310,7 @@ describe('SystemAdminService', () => {
         errorLogRepository.save.mockResolvedValue(mockErrorLog as ErrorLog);
 
         const result = await service.createErrorLog(mockUser, { 
-          severity: 'error', 
+          severity: ErrorSeverity.HIGH, 
           errorType: 'DatabaseError', 
           message: 'Connection failed' 
         } as any);
@@ -312,7 +323,7 @@ describe('SystemAdminService', () => {
         errorLogRepository.save.mockResolvedValue([mockErrorLog] as any);
 
         const result = await service.createErrorLog(mockUser, { 
-          severity: 'error', 
+          severity: ErrorSeverity.HIGH, 
           errorType: 'DatabaseError', 
           message: 'Test' 
         } as any);
@@ -333,7 +344,7 @@ describe('SystemAdminService', () => {
       it('should filter by severity', async () => {
         errorLogRepository.find.mockResolvedValue([mockErrorLog as ErrorLog]);
 
-        const result = await service.getErrorLogs(mockUser, { severity: 'error' });
+        const result = await service.getErrorLogs(mockUser, { severity: ErrorSeverity.HIGH });
 
         expect(result).toEqual([mockErrorLog]);
       });
@@ -384,7 +395,7 @@ describe('SystemAdminService', () => {
         errorLogRepository.createQueryBuilder.mockReturnValue(queryBuilder as any);
 
         await service.getErrorLogs(mockUser, { 
-          severity: 'error', 
+          severity: ErrorSeverity.HIGH, 
           errorType: 'DatabaseError', 
           resolved: false,
           limit: 10,

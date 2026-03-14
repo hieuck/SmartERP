@@ -18,8 +18,7 @@ describe('OnboardingService', () => {
   const mockUser: User = {
     id: 'user-1',
     tenantId: 'tenant-1',
-    email: 'admin@test.com',
-    role: 'admin',
+    roles: ['admin'],
   };
 
   const mockTenant: Tenant = {
@@ -74,6 +73,10 @@ describe('OnboardingService', () => {
     const mockPermissionService = {
       checkPermission: jest.fn().mockResolvedValue(true),
       filterByPermission: jest.fn(),
+      canRead: jest.fn().mockReturnValue(true),
+      canWrite: jest.fn().mockReturnValue(true),
+      canDelete: jest.fn().mockReturnValue(true),
+      buildSecureQuery: jest.fn((user, baseWhere) => ({ ...baseWhere, tenantId: user.tenantId })),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -272,7 +275,17 @@ describe('OnboardingService', () => {
     it('should handle invitation errors gracefully', async () => {
       tenantRepository.findOne.mockResolvedValue(mockTenant);
       tenantRepository.save.mockResolvedValue(mockTenant);
-      userRepository.findOne.mockRejectedValue(new Error('Database error'));
+      // Mock to reject only when checking for team member existence
+      userRepository.findOne.mockImplementation((options: any) => {
+        if (options?.where?.email) {
+          return Promise.reject(new Error('Database error'));
+        }
+        // For admin user check in getOnboardingStatus
+        return Promise.resolve({
+          emailVerified: true,
+          role: 'admin',
+        } as any);
+      });
       userRepository.count.mockResolvedValue(1);
 
       const result = await service.completeOnboarding(mockUser, completeDto);

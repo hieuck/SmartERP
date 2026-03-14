@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { VNPayService } from './vnpay.service';
 import * as crypto from 'crypto';
+import * as querystring from 'querystring';
 
 describe('VNPayService', () => {
   let service: VNPayService;
@@ -149,8 +150,8 @@ describe('VNPayService', () => {
         sortedParams[key] = paramsWithoutHash[key];
       });
 
-      // Create signature using sorted params
-      const signData = new URLSearchParams(sortedParams as any).toString();
+      // Create signature using querystring.stringify like the service
+      const signData = querystring.stringify(sortedParams as querystring.ParsedUrlQueryInput);
       const hmac = crypto.createHmac('sha512', 'TEST_SECRET_KEY');
       const signature = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
 
@@ -197,7 +198,7 @@ describe('VNPayService', () => {
         sortedParams[key] = paramsWithoutHash[key];
       });
 
-      const signData = new URLSearchParams(sortedParams as any).toString();
+      const signData = querystring.stringify(sortedParams as querystring.ParsedUrlQueryInput);
       const hmac = crypto.createHmac('sha512', 'TEST_SECRET_KEY');
       const signature = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
 
@@ -224,7 +225,7 @@ describe('VNPayService', () => {
         sortedParams[key] = paramsWithoutHash[key];
       });
 
-      const signData = new URLSearchParams(sortedParams as any).toString();
+      const signData = querystring.stringify(sortedParams as querystring.ParsedUrlQueryInput);
       const hmac = crypto.createHmac('sha512', 'TEST_SECRET_KEY');
       const signature = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
 
@@ -250,7 +251,7 @@ describe('VNPayService', () => {
         sortedParams[key] = paramsWithoutHash[key];
       });
 
-      const signData = new URLSearchParams(sortedParams as any).toString();
+      const signData = querystring.stringify(sortedParams as querystring.ParsedUrlQueryInput);
       const hmac = crypto.createHmac('sha512', 'TEST_SECRET_KEY');
       const signature = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
 

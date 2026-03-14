@@ -5,28 +5,42 @@ import { BadRequestException, ForbiddenException, NotFoundException } from '@nes
 import { ApprovalService } from './approval.service';
 import { ApprovalRequest } from './entities/approval-request.entity';
 import { Workflow } from './entities/workflow.entity';
-import { PermissionService, User } from '@/common/security/permission.service';
+import { PermissionService } from '@/common/security/permission.service';
+import { User } from '@core/user/entities/user.entity';
 import { ApprovalStatus } from './enums';
 
 describe('ApprovalService', () => {
   let service: ApprovalService;
   let approvalRepository: jest.Mocked<Repository<ApprovalRequest>>;
   let workflowRepository: jest.Mocked<Repository<Workflow>>;
-  let permissionService: jest.Mocked<PermissionService>;
 
   const mockUser: User = {
     id: 'user-1',
     tenantId: 'tenant-1',
     email: 'user@test.com',
+    password: 'hashed',
+    role: 'user',
     roles: ['manager'],
-  };
+    status: 'active',
+    isActive: true,
+    emailVerified: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  } as User;
 
   const mockApprover: User = {
     id: 'approver-1',
     tenantId: 'tenant-1',
     email: 'approver@test.com',
+    password: 'hashed',
+    role: 'approver',
     roles: ['approver'],
-  };
+    status: 'active',
+    isActive: true,
+    emailVerified: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  } as User;
 
   const mockWorkflow: Partial<Workflow> = {
     id: 'workflow-1',
@@ -66,6 +80,10 @@ describe('ApprovalService', () => {
     const mockPermissionService = {
       checkPermission: jest.fn().mockResolvedValue(true),
       filterByTenant: jest.fn((user, entities) => entities),
+      canRead: jest.fn().mockReturnValue(true),
+      canWrite: jest.fn().mockReturnValue(true),
+      canDelete: jest.fn().mockReturnValue(true),
+      buildSecureQuery: jest.fn((user, query) => query),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -80,7 +98,6 @@ describe('ApprovalService', () => {
     service = module.get<ApprovalService>(ApprovalService);
     approvalRepository = module.get(getRepositoryToken(ApprovalRequest));
     workflowRepository = module.get(getRepositoryToken(Workflow));
-    permissionService = module.get(PermissionService);
   });
 
   afterEach(() => {
@@ -121,10 +138,11 @@ describe('ApprovalService', () => {
 
   describe('approve', () => {
     it('should approve request successfully', async () => {
-      approvalRepository.findOne.mockResolvedValue(mockApprovalRequest as ApprovalRequest);
+      const pendingRequest = { ...mockApprovalRequest, status: ApprovalStatus.PENDING };
+      approvalRepository.findOne.mockResolvedValue(pendingRequest as ApprovalRequest);
       workflowRepository.findOne.mockResolvedValue(mockWorkflow as Workflow);
       approvalRepository.save.mockResolvedValue({
-        ...mockApprovalRequest,
+        ...pendingRequest,
         status: ApprovalStatus.APPROVED,
         approvedBy: mockApprover.id,
         approvedAt: new Date(),
@@ -138,10 +156,8 @@ describe('ApprovalService', () => {
     });
 
     it('should throw BadRequestException when request is not pending', async () => {
-      approvalRepository.findOne.mockResolvedValue({
-        ...mockApprovalRequest,
-        status: ApprovalStatus.APPROVED,
-      } as ApprovalRequest);
+      const approvedRequest = { ...mockApprovalRequest, status: ApprovalStatus.APPROVED };
+      approvalRepository.findOne.mockResolvedValue(approvedRequest as ApprovalRequest);
 
       await expect(service.approve('request-1', mockApprover))
         .rejects.toThrow(BadRequestException);
@@ -149,7 +165,8 @@ describe('ApprovalService', () => {
 
     it('should throw ForbiddenException when user cannot approve', async () => {
       const unauthorizedUser = { ...mockUser, roles: ['user'] };
-      approvalRepository.findOne.mockResolvedValue(mockApprovalRequest as ApprovalRequest);
+      const pendingRequest = { ...mockApprovalRequest, status: ApprovalStatus.PENDING };
+      approvalRepository.findOne.mockResolvedValue(pendingRequest as ApprovalRequest);
       workflowRepository.findOne.mockResolvedValue(mockWorkflow as Workflow);
 
       await expect(service.approve('request-1', unauthorizedUser))
@@ -159,10 +176,11 @@ describe('ApprovalService', () => {
 
   describe('reject', () => {
     it('should reject request successfully with reason', async () => {
-      approvalRepository.findOne.mockResolvedValue(mockApprovalRequest as ApprovalRequest);
+      const pendingRequest = { ...mockApprovalRequest, status: ApprovalStatus.PENDING };
+      approvalRepository.findOne.mockResolvedValue(pendingRequest as ApprovalRequest);
       workflowRepository.findOne.mockResolvedValue(mockWorkflow as Workflow);
       approvalRepository.save.mockResolvedValue({
-        ...mockApprovalRequest,
+        ...pendingRequest,
         status: ApprovalStatus.REJECTED,
         approvedBy: mockApprover.id,
         approvedAt: new Date(),
@@ -177,10 +195,8 @@ describe('ApprovalService', () => {
     });
 
     it('should throw BadRequestException when request is not pending', async () => {
-      approvalRepository.findOne.mockResolvedValue({
-        ...mockApprovalRequest,
-        status: ApprovalStatus.REJECTED,
-      } as ApprovalRequest);
+      const rejectedRequest = { ...mockApprovalRequest, status: ApprovalStatus.REJECTED };
+      approvalRepository.findOne.mockResolvedValue(rejectedRequest as ApprovalRequest);
 
       await expect(service.reject('request-1', mockApprover, 'Reason'))
         .rejects.toThrow(BadRequestException);
@@ -188,7 +204,8 @@ describe('ApprovalService', () => {
 
     it('should throw ForbiddenException when user cannot reject', async () => {
       const unauthorizedUser = { ...mockUser, roles: ['user'] };
-      approvalRepository.findOne.mockResolvedValue(mockApprovalRequest as ApprovalRequest);
+      const pendingRequest = { ...mockApprovalRequest, status: ApprovalStatus.PENDING };
+      approvalRepository.findOne.mockResolvedValue(pendingRequest as ApprovalRequest);
       workflowRepository.findOne.mockResolvedValue(mockWorkflow as Workflow);
 
       await expect(service.reject('request-1', unauthorizedUser, 'Reason'))
@@ -198,9 +215,10 @@ describe('ApprovalService', () => {
 
   describe('cancel', () => {
     it('should cancel request successfully by requester', async () => {
-      approvalRepository.findOne.mockResolvedValue(mockApprovalRequest as ApprovalRequest);
+      const pendingRequest = { ...mockApprovalRequest, status: ApprovalStatus.PENDING };
+      approvalRepository.findOne.mockResolvedValue(pendingRequest as ApprovalRequest);
       approvalRepository.save.mockResolvedValue({
-        ...mockApprovalRequest,
+        ...pendingRequest,
         status: ApprovalStatus.CANCELLED,
       } as ApprovalRequest);
 
@@ -210,10 +228,8 @@ describe('ApprovalService', () => {
     });
 
     it('should throw BadRequestException when request is not pending', async () => {
-      approvalRepository.findOne.mockResolvedValue({
-        ...mockApprovalRequest,
-        status: ApprovalStatus.APPROVED,
-      } as ApprovalRequest);
+      const approvedRequest = { ...mockApprovalRequest, status: ApprovalStatus.APPROVED };
+      approvalRepository.findOne.mockResolvedValue(approvedRequest as ApprovalRequest);
 
       await expect(service.cancel(mockUser, 'request-1'))
         .rejects.toThrow(BadRequestException);
@@ -221,7 +237,8 @@ describe('ApprovalService', () => {
 
     it('should throw ForbiddenException when non-requester tries to cancel', async () => {
       const otherUser = { ...mockUser, id: 'other-user' };
-      approvalRepository.findOne.mockResolvedValue(mockApprovalRequest as ApprovalRequest);
+      const pendingRequest = { ...mockApprovalRequest, status: ApprovalStatus.PENDING };
+      approvalRepository.findOne.mockResolvedValue(pendingRequest as ApprovalRequest);
 
       await expect(service.cancel(otherUser, 'request-1'))
         .rejects.toThrow(ForbiddenException);

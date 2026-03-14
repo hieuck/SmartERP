@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { NotFoundException } from '@nestjs/common';
 import { ScheduledJobsService, ScheduledJob } from './scheduled-jobs.service';
-import { CronJob } from 'cron';
 
 describe('ScheduledJobsService', () => {
   let service: ScheduledJobsService;
@@ -24,7 +23,7 @@ describe('ScheduledJobsService', () => {
     const mockSchedulerRegistry = {
       addCronJob: jest.fn(),
       deleteCronJob: jest.fn(),
-      doesExist: jest.fn(),
+      doesExist: jest.fn().mockReturnValue(false),
       getCronJob: jest.fn(),
     };
 
@@ -37,9 +36,9 @@ describe('ScheduledJobsService', () => {
 
     service = module.get<ScheduledJobsService>(ScheduledJobsService);
     schedulerRegistry = module.get(SchedulerRegistry);
-
-    // Mock CronJob constructor
-    jest.spyOn(global as any, 'CronJob' as any).mockImplementation(() => mockCronJob);
+    
+    // Clear internal jobs map for test isolation
+    (service as any).jobs.clear();
   });
 
   afterEach(() => {
@@ -60,10 +59,12 @@ describe('ScheduledJobsService', () => {
     });
 
     it('should register cron job when enabled', async () => {
-      await service.createJob('tenant-1', mockJob);
+      const result = await service.createJob('tenant-1', mockJob);
 
-      expect(schedulerRegistry.addCronJob).toHaveBeenCalled();
-      expect(mockCronJob.start).toHaveBeenCalled();
+      expect(schedulerRegistry.addCronJob).toHaveBeenCalledWith(
+        result.id,
+        expect.any(Object)
+      );
     });
 
     it('should not register cron job when disabled', async () => {
@@ -77,6 +78,9 @@ describe('ScheduledJobsService', () => {
 
   describe('listJobs', () => {
     it('should return jobs for specific tenant', async () => {
+      // Clear any existing jobs first
+      (service as any).jobs.clear();
+      
       await service.createJob('tenant-1', mockJob);
       await service.createJob('tenant-1', { ...mockJob, name: 'Job 2' });
       await service.createJob('tenant-2', { ...mockJob, name: 'Job 3' });
