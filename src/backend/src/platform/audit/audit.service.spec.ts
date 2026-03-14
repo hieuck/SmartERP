@@ -124,7 +124,6 @@ describe('AuditService', () => {
     it('should return audit logs', async () => {
       const logs = [mockAuditLog];
       auditRepository.find = jest.fn().mockResolvedValue(logs);
-      permissionService.buildSecureQuery = jest.fn((user, where) => ({ ...where, tenantId: user.tenantId }));
 
       const result = await service.findAll(mockUser);
 
@@ -135,7 +134,6 @@ describe('AuditService', () => {
       const startDate = new Date('2024-01-01');
       const endDate = new Date('2024-12-31');
       auditRepository.find = jest.fn().mockResolvedValue([mockAuditLog]);
-      permissionService.buildSecureQuery = jest.fn((user, where) => ({ ...where, tenantId: user.tenantId }));
 
       await service.findAll(mockUser, startDate, endDate);
 
@@ -144,7 +142,6 @@ describe('AuditService', () => {
 
     it('should filter by userId', async () => {
       auditRepository.find = jest.fn().mockResolvedValue([mockAuditLog]);
-      permissionService.buildSecureQuery = jest.fn((user, where) => ({ ...where, tenantId: user.tenantId }));
 
       await service.findAll(mockUser, undefined, undefined, 'user-1');
 
@@ -153,7 +150,6 @@ describe('AuditService', () => {
 
     it('should filter by entityType', async () => {
       auditRepository.find = jest.fn().mockResolvedValue([mockAuditLog]);
-      permissionService.buildSecureQuery = jest.fn((user, where) => ({ ...where, tenantId: user.tenantId }));
 
       await service.findAll(mockUser, undefined, undefined, undefined, 'Product');
 
@@ -164,9 +160,8 @@ describe('AuditService', () => {
   describe('findByEntity', () => {
     it('should return logs for specific entity', async () => {
       const logs = [mockAuditLog];
-      cacheService.getOrSet = jest.fn().mockImplementation(async (key, fn) => fn());
+      cacheService.getOrSet = jest.fn().mockImplementation(async (_key, fn) => fn());
       auditRepository.find = jest.fn().mockResolvedValue(logs);
-      permissionService.buildSecureQuery = jest.fn((user, where) => ({ ...where, tenantId: user.tenantId }));
 
       const result = await service.findByEntity(mockUser, 'Product', 'product-1');
 
@@ -178,9 +173,8 @@ describe('AuditService', () => {
   describe('findByUser', () => {
     it('should return logs for specific user', async () => {
       const logs = [mockAuditLog];
-      cacheService.getOrSet = jest.fn().mockImplementation(async (key, fn) => fn());
+      cacheService.getOrSet = jest.fn().mockImplementation(async (_key, fn) => fn());
       auditRepository.find = jest.fn().mockResolvedValue(logs);
-      permissionService.buildSecureQuery = jest.fn((user, where) => ({ ...where, tenantId: user.tenantId }));
 
       const result = await service.findByUser(mockUser, 'user-1');
 
@@ -196,9 +190,8 @@ describe('AuditService', () => {
         { ...mockAuditLog, id: 'audit-2', action: AuditAction.UPDATE },
         { ...mockAuditLog, id: 'audit-3', action: AuditAction.DELETE },
       ];
-      cacheService.getOrSet = jest.fn().mockImplementation(async (key, fn) => fn());
+      cacheService.getOrSet = jest.fn().mockImplementation(async (_key, fn) => fn());
       auditRepository.find = jest.fn().mockResolvedValue(logs);
-      permissionService.buildSecureQuery = jest.fn((user, where) => ({ ...where, tenantId: user.tenantId }));
 
       const startDate = new Date('2024-01-01');
       const endDate = new Date('2024-12-31');
@@ -214,9 +207,8 @@ describe('AuditService', () => {
     });
 
     it('should return empty summary when no logs', async () => {
-      cacheService.getOrSet = jest.fn().mockImplementation(async (key, fn) => fn());
+      cacheService.getOrSet = jest.fn().mockImplementation(async (_key, fn) => fn());
       auditRepository.find = jest.fn().mockResolvedValue([]);
-      permissionService.buildSecureQuery = jest.fn((user, where) => ({ ...where, tenantId: user.tenantId }));
 
       const startDate = new Date('2024-01-01');
       const endDate = new Date('2024-12-31');

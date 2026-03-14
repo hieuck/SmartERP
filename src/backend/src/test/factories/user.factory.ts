@@ -1,37 +1,41 @@
 /**
- * User Factory
- * Generate test user data
+ * User Test Factory
+ * Creates mock user objects for testing
  */
 
-import { User } from '@core/user/entities/user.entity';
+import { User as UserEntity } from '@/core/user/entities/user.entity';
 
-let userIdCounter = 1;
-
-export const createMockUser = (overrides?: Partial<User>): User => {
-  const id = `user-${userIdCounter++}`;
-  
-  return {
-    id,
-    email: `user${userIdCounter}@example.com`,
-    password: '$2b$10$hashedpassword', // bcrypt hash of 'password123'
+export const createMockUser = (overrides?: Partial<UserEntity>): UserEntity => {
+  const defaultUser: UserEntity = {
+    id: 'test-user-id',
+    email: 'test@example.com',
+    password: '$2b$12$hashedpassword',
     firstName: 'Test',
     lastName: 'User',
     phone: '+84901234567',
-    status: 'active',
-    role: 'user',
+    avatar: null,
     tenantId: 'test-tenant-id',
+    role: 'user',
+    status: 'active',
     emailVerified: true,
+    emailVerificationToken: null,
+    resetPasswordToken: null,
+    resetPasswordExpires: null,
+    lastLoginAt: new Date(),
     createdAt: new Date(),
     updatedAt: new Date(),
-    lastLoginAt: null,
+    deletedAt: null,
+    tenant: null,
     ...overrides,
-  } as User;
+  } as UserEntity;
+
+  return defaultUser;
 };
 
-export const createMockUsers = (count: number, overrides?: Partial<User>): User[] => {
-  return Array.from({ length: count }, () => createMockUser(overrides));
-};
-
-export const resetUserFactory = () => {
-  userIdCounter = 1;
+export const createMockAdminUser = (overrides?: Partial<UserEntity>): UserEntity => {
+  return createMockUser({
+    role: 'admin',
+    email: 'admin@example.com',
+    ...overrides,
+  });
 };
