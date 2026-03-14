@@ -5,7 +5,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { ApprovalStatus } from '../enums';
+import { ApprovalStatus } from '../enums/approval-status.enum';
 
 @Entity('approval_requests')
 export class ApprovalRequest {
