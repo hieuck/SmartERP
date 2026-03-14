@@ -189,7 +189,7 @@ describe('UserService', () => {
     it('should change password successfully', async () => {
       const mockUser = createMockUser({
         id: 'user-123',
-        password: await bcrypt.hash('oldPassword123', 12),
+        password: '$2b$12$oldHashedPassword',
       });
 
       const changePasswordDto: ChangePasswordDto = {
@@ -202,15 +202,13 @@ describe('UserService', () => {
       secureUserRepo.save.mockResolvedValue(mockUser);
 
       jest.spyOn(bcrypt, 'compare').mockResolvedValue(true as never);
-      const hashSpy = jest.spyOn(bcrypt, 'hash').mockImplementation((password: string, rounds: number) => {
-        return Promise.resolve('$2b$12$newHashedPassword') as any;
-      });
+      const hashSpy = jest.spyOn(bcrypt, 'hash').mockResolvedValue('$2b$12$newHashedPassword' as never);
 
       const result = await service.changePassword(mockCurrentUser, 'user-123', changePasswordDto);
 
       expect(result.success).toBe(true);
       expect(result.message).toBe('Password changed successfully');
-      expect(bcrypt.compare).toHaveBeenCalledWith('oldPassword123', mockUser.password);
+      expect(bcrypt.compare).toHaveBeenCalledWith('oldPassword123', '$2b$12$oldHashedPassword');
       expect(hashSpy).toHaveBeenCalledWith('newPassword456', 12);
     });
 
@@ -246,7 +244,7 @@ describe('UserService', () => {
     it('should throw BadRequestException when current password is incorrect', async () => {
       const mockUser = createMockUser({
         id: 'user-123',
-        password: await bcrypt.hash('oldPassword123', 12),
+        password: '$2b$12$oldHashedPassword',
       });
 
       const changePasswordDto: ChangePasswordDto = {
@@ -269,7 +267,7 @@ describe('UserService', () => {
     it('should use 12 salt rounds for password hashing', async () => {
       const mockUser = createMockUser({
         id: 'user-123',
-        password: await bcrypt.hash('oldPassword123', 12),
+        password: '$2b$12$oldHashedPassword',
       });
 
       const changePasswordDto: ChangePasswordDto = {
