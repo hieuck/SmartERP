@@ -53,19 +53,19 @@ describe('TokenBlacklistService', () => {
 
       // Assert
       expect(result).toBe(false);
-      expect(cacheService.get).toHaveBeenCalledWith('blacklist:valid-token');
+      expect(cacheService.get).toHaveBeenCalledWith('revoked-token:valid-token');
     });
 
     it('should return true when token is revoked', async () => {
       // Arrange
-      cacheService.get.mockResolvedValue('revoked');
+      cacheService.get.mockResolvedValue(true);
 
       // Act
       const result = await service.isTokenRevoked('revoked-token');
 
       // Assert
       expect(result).toBe(true);
-      expect(cacheService.get).toHaveBeenCalledWith('blacklist:revoked-token');
+      expect(cacheService.get).toHaveBeenCalledWith('revoked-token:revoked-token');
     });
 
     it('should handle empty token', async () => {
@@ -87,12 +87,12 @@ describe('TokenBlacklistService', () => {
       cacheService.set.mockResolvedValue(undefined);
 
       // Act
-      await service.revokeToken(token);
+      await service.revokeToken(token, TOKEN_EXPIRY_MS / 1000); // Convert ms to seconds
 
       // Assert
       expect(cacheService.set).toHaveBeenCalledWith(
-        `blacklist:${token}`,
-        'revoked',
+        `revoked-token:${token}`,
+        true,
         TOKEN_EXPIRY_MS,
       );
     });
@@ -103,13 +103,13 @@ describe('TokenBlacklistService', () => {
       cacheService.set.mockResolvedValue(undefined);
 
       // Act
-      await service.revokeToken(token, 3600000); // 1 hour
+      await service.revokeToken(token, 3600); // 1 hour in seconds
 
       // Assert
       expect(cacheService.set).toHaveBeenCalledWith(
-        `blacklist:${token}`,
-        'revoked',
-        3600000,
+        `revoked-token:${token}`,
+        true,
+        3600000, // 1 hour in ms
       );
     });
 
@@ -119,8 +119,8 @@ describe('TokenBlacklistService', () => {
       cacheService.set.mockResolvedValue(undefined);
 
       // Act
-      await service.revokeToken(token);
-      await service.revokeToken(token);
+      await service.revokeToken(token, TOKEN_EXPIRY_MS / 1000);
+      await service.revokeToken(token, TOKEN_EXPIRY_MS / 1000);
 
       // Assert
       expect(cacheService.set).toHaveBeenCalledTimes(2);
@@ -138,8 +138,8 @@ describe('TokenBlacklistService', () => {
 
       // Assert
       expect(cacheService.set).toHaveBeenCalledWith(
-        `user-tokens-revoked:${userId}`,
-        Date.now().toString(),
+        `revoked-user:${userId}`,
+        true,
         TOKEN_EXPIRY_MS,
       );
     });
@@ -154,8 +154,8 @@ describe('TokenBlacklistService', () => {
 
       // Assert
       expect(cacheService.set).toHaveBeenCalledWith(
-        `user-tokens-revoked:${userId}`,
-        expect.any(String),
+        `revoked-user:${userId}`,
+        true,
         TOKEN_EXPIRY_MS,
       );
     });
@@ -169,8 +169,8 @@ describe('TokenBlacklistService', () => {
 
       // Assert
       expect(cacheService.set).toHaveBeenCalledWith(
-        'user-tokens-revoked:',
-        expect.any(String),
+        'revoked-user:',
+        true,
         TOKEN_EXPIRY_MS,
       );
     });
@@ -190,7 +190,7 @@ describe('TokenBlacklistService', () => {
       cacheService.set.mockRejectedValue(new Error('Cache error'));
 
       // Act & Assert
-      await expect(service.revokeToken('token')).rejects.toThrow('Cache error');
+      await expect(service.revokeToken('token', 3600)).rejects.toThrow('Cache error');
     });
 
     it('should handle cache service errors in revokeUserTokens', async () => {

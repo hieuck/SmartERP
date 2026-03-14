@@ -18,14 +18,13 @@ describe('AccountLockoutService', () => {
   let cacheService: jest.Mocked<CacheService>;
 
   const MAX_ATTEMPTS = 5;
-  const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
+  const LOCKOUT_DURATION_MS = 60 * 60 * 1000; // 1 hour (ATTEMPT_WINDOW_MS from service)
 
   beforeEach(async () => {
     const mockCacheService = {
       get: jest.fn(),
       set: jest.fn(),
       del: jest.fn(),
-      incr: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -56,12 +55,12 @@ describe('AccountLockoutService', () => {
 
       // Assert
       expect(result).toBe(false);
-      expect(cacheService.get).toHaveBeenCalledWith('lockout:test@example.com');
+      expect(cacheService.get).toHaveBeenCalledWith('account-locked:test@example.com');
     });
 
-    it('should return false when attempts below threshold', async () => {
+    it('should return false when account is not locked', async () => {
       // Arrange
-      cacheService.get.mockResolvedValue('3'); // 3 attempts
+      cacheService.get.mockResolvedValue(null);
 
       // Act
       const result = await service.isAccountLocked('test@example.com');
@@ -70,9 +69,9 @@ describe('AccountLockoutService', () => {
       expect(result).toBe(false);
     });
 
-    it('should return true when attempts exceed threshold', async () => {
+    it('should return true when account is locked', async () => {
       // Arrange
-      cacheService.get.mockResolvedValue('5'); // 5 attempts (threshold)
+      cacheService.get.mockResolvedValue(true);
 
       // Act
       const result = await service.isAccountLocked('test@example.com');
@@ -81,9 +80,9 @@ describe('AccountLockoutService', () => {
       expect(result).toBe(true);
     });
 
-    it('should return true when attempts far exceed threshold', async () => {
+    it('should return true when account is explicitly locked', async () => {
       // Arrange
-      cacheService.get.mockResolvedValue('10'); // 10 attempts
+      cacheService.get.mockResolvedValue(true);
 
       // Act
       const result = await service.isAccountLocked('test@example.com');
@@ -96,30 +95,32 @@ describe('AccountLockoutService', () => {
   describe('recordFailedAttempt', () => {
     it('should increment failed attempts counter', async () => {
       // Arrange
-      cacheService.incr.mockResolvedValue(1);
+      cacheService.get.mockResolvedValue(0);
+      cacheService.set.mockResolvedValue(undefined);
 
       // Act
       await service.recordFailedAttempt('test@example.com');
 
       // Assert
-      expect(cacheService.incr).toHaveBeenCalledWith('lockout:test@example.com');
+      expect(cacheService.get).toHaveBeenCalledWith('login-attempts:test@example.com');
       expect(cacheService.set).toHaveBeenCalledWith(
-        'lockout:test@example.com',
-        expect.any(Number),
+        'login-attempts:test@example.com',
+        1,
         LOCKOUT_DURATION_MS,
       );
     });
 
     it('should set expiration on first failed attempt', async () => {
       // Arrange
-      cacheService.incr.mockResolvedValue(1);
+      cacheService.get.mockResolvedValue(null);
+      cacheService.set.mockResolvedValue(undefined);
 
       // Act
       await service.recordFailedAttempt('test@example.com');
 
       // Assert
       expect(cacheService.set).toHaveBeenCalledWith(
-        'lockout:test@example.com',
+        'login-attempts:test@example.com',
         1,
         LOCKOUT_DURATION_MS,
       );
@@ -127,10 +128,11 @@ describe('AccountLockoutService', () => {
 
     it('should handle multiple failed attempts', async () => {
       // Arrange
-      cacheService.incr
+      cacheService.get
+        .mockResolvedValueOnce(0)
         .mockResolvedValueOnce(1)
-        .mockResolvedValueOnce(2)
-        .mockResolvedValueOnce(3);
+        .mockResolvedValueOnce(2);
+      cacheService.set.mockResolvedValue(undefined);
 
       // Act
       await service.recordFailedAttempt('test@example.com');
@@ -138,7 +140,7 @@ describe('AccountLockoutService', () => {
       await service.recordFailedAttempt('test@example.com');
 
       // Assert
-      expect(cacheService.incr).toHaveBeenCalledTimes(3);
+      expect(cacheService.set).toHaveBeenCalledTimes(3);
     });
   });
 
@@ -151,7 +153,7 @@ describe('AccountLockoutService', () => {
       await service.resetAttempts('test@example.com');
 
       // Assert
-      expect(cacheService.del).toHaveBeenCalledWith('lockout:test@example.com');
+      expect(cacheService.del).toHaveBeenCalledWith('login-attempts:test@example.com');
     });
 
     it('should handle reset for non-existent counter', async () => {
@@ -162,7 +164,7 @@ describe('AccountLockoutService', () => {
       await service.resetAttempts('nonexistent@example.com');
 
       // Assert
-      expect(cacheService.del).toHaveBeenCalledWith('lockout:nonexistent@example.com');
+      expect(cacheService.del).toHaveBeenCalledWith('login-attempts:nonexistent@example.com');
     });
   });
 
@@ -180,21 +182,19 @@ describe('AccountLockoutService', () => {
 
     it('should return remaining time when account is locked', async () => {
       // Arrange
-      const lockoutTime = Date.now() + 10 * 60 * 1000; // 10 minutes from now
-      cacheService.get.mockResolvedValue(lockoutTime.toString());
+      cacheService.get.mockResolvedValue(true);
 
       // Act
       const result = await service.getRemainingLockoutTime('test@example.com');
 
       // Assert
       expect(result).toBeGreaterThan(0);
-      expect(result).toBeLessThanOrEqual(10 * 60 * 1000);
+      expect(result).toBeLessThanOrEqual(LOCKOUT_DURATION_MS / 1000);
     });
 
     it('should return 0 when lockout time has expired', async () => {
       // Arrange
-      const lockoutTime = Date.now() - 1000; // 1 second ago
-      cacheService.get.mockResolvedValue(lockoutTime.toString());
+      cacheService.get.mockResolvedValue(null);
 
       // Act
       const result = await service.getRemainingLockoutTime('test@example.com');
@@ -214,7 +214,7 @@ describe('AccountLockoutService', () => {
 
       // Assert
       expect(result).toBe(false);
-      expect(cacheService.get).toHaveBeenCalledWith('lockout:');
+      expect(cacheService.get).toHaveBeenCalledWith('account-locked:');
     });
 
     it('should handle email with special characters', async () => {
@@ -226,7 +226,7 @@ describe('AccountLockoutService', () => {
 
       // Assert
       expect(result).toBe(false);
-      expect(cacheService.get).toHaveBeenCalledWith('lockout:test+tag@example.com');
+      expect(cacheService.get).toHaveBeenCalledWith('account-locked:test+tag@example.com');
     });
 
     it('should handle cache service errors gracefully', async () => {
