@@ -1,0 +1,50 @@
+{
+  "actions": {
+    "create": "Thêm Mới",
+    "edit": "Sửa",
+    "delete": "Xóa",
+    "save": "Lưu",
+    "cancel": "Hủy",
+    "back": "Quay Lại",
+    "search": "Tìm kiếm",
+    "filter": "Lọc",
+    "export": "Xuất",
+    "import": "Nhập",
+    "refresh": "Làm Mới",
+    "view": "Xem",
+    "more": "Thêm",
+    "confirm": "Xác Nhận",
+    "close": "Đóng",
+    "tryAgain": "Thử Lại"
+  },
+  "messages": {
+    "deleteConfirm": "Bạn có chắc muốn xóa?",
+    "deleteDescription": "Hành động này không thể hoàn tác",
+    "noData": "Không có dữ liệu",
+    "loading": "Đang tải...",
+    "total": "Tổng {{total}} bản ghi",
+    "selected": "Đã chọn {{count}} bản ghi",
+    "viewMore": "Xem thêm thông tin"
+  },
+  "pagination": {
+    "total": "Tổng {{total}} bản ghi",
+    "simple": "{{current}}/{{total}}"
+  },
+  "table": {
+    "actions": "Thao Tác"
+  },
+  "emptyState": {
+    "noData": "Không có dữ liệu",
+    "createNew": "Tạo Mới"
+  },
+  "loadingState": {
+    "loading": "Đang tải...",
+    "processing": "Đang xử lý...",
+    "pleaseWait": "Vui lòng đợi..."
+  },
+  "errorState": {
+    "title": "Rất tiếc! Đã có lỗi xảy ra",
+    "subtitle": "Đã xảy ra lỗi không mong muốn. Vui lòng thử lại.",
+    "subtitleDev": "Chi tiết lỗi hiển thị bên dưới (chỉ ở chế độ phát triển)"
+  }
+}

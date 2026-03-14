@@ -1,0 +1,42 @@
+{
+  "title": "Invoice List",
+  "createButton": "Create Invoice",
+  "searchPlaceholder": "Search invoices...",
+  "columns": {
+    "invoiceNumber": "Invoice No.",
+    "customer": "Customer",
+    "issueDate": "Issue Date",
+    "dueDate": "Due Date",
+    "total": "Total Amount",
+    "paidAmount": "Paid Amount",
+    "status": "Status"
+  },
+  "status": {
+    "draft": "Draft",
+    "sent": "Sent",
+    "paid": "Paid",
+    "overdue": "Overdue",
+    "cancelled": "Cancelled"
+  },
+  "actions": {
+    "view": "View",
+    "send": "Send",
+    "edit": "Edit",
+    "delete": "Delete"
+  },
+  "messages": {
+    "loadError": "Cannot load invoice list",
+    "deleteSuccess": "Invoice deleted successfully",
+    "deleteError": "Cannot delete invoice",
+    "sendSuccess": "Invoice sent successfully",
+    "sendError": "Cannot send invoice",
+    "deleteConfirm": "Are you sure you want to delete this invoice?",
+    "total": "Total {{total}} invoices"
+  },
+  "filters": {
+    "status": "Status",
+    "dateRange": "Date Range",
+    "fromDate": "From date",
+    "toDate": "To date"
+  }
+}

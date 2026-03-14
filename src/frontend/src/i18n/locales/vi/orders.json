@@ -1,0 +1,36 @@
+{
+  "title": "Đơn Hàng Bán",
+  "createButton": "Tạo Đơn Hàng",
+  "searchPlaceholder": "Tìm kiếm đơn hàng...",
+  "columns": {
+    "orderNumber": "Mã Đơn Hàng",
+    "customer": "Khách Hàng",
+    "orderDate": "Ngày Đặt",
+    "totalAmount": "Tổng Tiền",
+    "paidAmount": "Đã Thanh Toán",
+    "status": "Trạng Thái"
+  },
+  "status": {
+    "draft": "Nháp",
+    "pending": "Chờ Xử Lý",
+    "confirmed": "Đã Xác Nhận",
+    "processing": "Đang Xử Lý",
+    "shipped": "Đã Gửi Hàng",
+    "delivered": "Đã Giao Hàng",
+    "cancelled": "Đã Hủy"
+  },
+  "actions": {
+    "viewDetail": "Xem Chi Tiết",
+    "edit": "Chỉnh Sửa",
+    "delete": "Xóa"
+  },
+  "messages": {
+    "deleteSuccess": "Xóa đơn hàng thành công",
+    "deleteError": "Không thể xóa đơn hàng",
+    "total": "Tổng {{total}} đơn hàng"
+  },
+  "filters": {
+    "status": "Trạng Thái",
+    "allStatus": "Tất Cả Trạng Thái"
+  }
+}

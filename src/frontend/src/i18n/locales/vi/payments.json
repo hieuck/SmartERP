@@ -1,0 +1,51 @@
+{
+  "title": "Danh Sách Thanh Toán",
+  "createButton": "Tạo Thanh Toán",
+  "searchPlaceholder": "Tìm kiếm thanh toán...",
+  "columns": {
+    "paymentNumber": "Mã TT",
+    "customer": "Khách Hàng",
+    "paymentDate": "Ngày Thanh Toán",
+    "amount": "Số Tiền",
+    "method": "Phương Thức",
+    "status": "Trạng Thái",
+    "reference": "Tham Chiếu"
+  },
+  "status": {
+    "pending": "Chờ Xử Lý",
+    "completed": "Hoàn Thành",
+    "failed": "Thất Bại",
+    "refunded": "Đã Hoàn Tiền"
+  },
+  "methods": {
+    "cash": "Tiền Mặt",
+    "card": "Thẻ",
+    "bankTransfer": "Chuyển Khoản",
+    "cheque": "Séc",
+    "eWallet": "Ví Điện Tử"
+  },
+  "actions": {
+    "view": "Xem",
+    "confirm": "Xác Nhận",
+    "refund": "Hoàn Tiền",
+    "delete": "Xóa"
+  },
+  "messages": {
+    "loadError": "Không thể tải danh sách thanh toán",
+    "deleteSuccess": "Xóa thanh toán thành công",
+    "deleteError": "Không thể xóa thanh toán",
+    "completeSuccess": "Xác nhận thanh toán thành công",
+    "completeError": "Không thể xác nhận thanh toán",
+    "refundSuccess": "Hoàn tiền thành công",
+    "refundError": "Không thể hoàn tiền",
+    "deleteConfirm": "Bạn có chắc muốn xóa thanh toán này?",
+    "total": "Tổng {{total}} thanh toán"
+  },
+  "filters": {
+    "status": "Trạng Thái",
+    "method": "Phương Thức",
+    "dateRange": "Khoảng Thời Gian",
+    "fromDate": "Từ ngày",
+    "toDate": "Đến ngày"
+  }
+}

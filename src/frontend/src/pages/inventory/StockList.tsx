@@ -1,12 +1,20 @@
-import React, { useState } from 'react';
-import { Table, Button, Space, Tag, Input, Select, Card, message, Typography } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import { SearchOutlined, WarningOutlined, InboxOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import inventoryServiceNew from '../../services/inventory/inventoryService';
+/**
+ * Stock List Page
+ * Displays inventory stock levels with warehouse filtering
+ * Uses StandardListPage for consistent UI
+ */
 
-const { Title } = Typography;
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Tag, Select, Space, Button } from 'antd';
+import { InboxOutlined, WarningOutlined } from '@ant-design/icons';
+import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
+import inventoryServiceNew from '../../services/inventory/inventoryService';
+import StandardListPage from '../../components/common/StandardListPage';
+import { formatNumber } from '../../utils/responsive';
+import type { ColumnsType } from 'antd/es/table';
+
 const { Option } = Select;
 
 interface Stock {
@@ -23,8 +31,9 @@ interface Stock {
   lastUpdated: string;
 }
 
-const StockList: React.FC = () => {
+export default function StockList() {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation(['inventory', 'commonUi']);
   const [search, setSearch] = useState('');
   const [warehouseFilter, setWarehouseFilter] = useState<number | undefined>();
   const [page, setPage] = useState(1);
@@ -43,54 +52,54 @@ const StockList: React.FC = () => {
 
   const getStockStatus = (stock: Stock) => {
     if (stock.availableQuantity <= stock.minQuantity) {
-      return { color: 'red', text: 'Thấp' };
+      return { color: 'red', text: t('inventory:status.low') };
     }
     if (stock.availableQuantity >= stock.maxQuantity) {
-      return { color: 'orange', text: 'Cao' };
+      return { color: 'orange', text: t('inventory:status.high') };
     }
-    return { color: 'green', text: 'Bình thường' };
+    return { color: 'green', text: t('inventory:status.normal') };
   };
 
   const columns: ColumnsType<Stock> = [
     {
-      title: 'SKU',
+      title: t('inventory:columns.sku'),
       dataIndex: ['product', 'sku'],
       key: 'sku',
       width: 120,
       render: (sku: string) => sku || '-',
     },
     {
-      title: 'Sản phẩm',
+      title: t('inventory:columns.product'),
       dataIndex: ['product', 'name'],
       key: 'product',
       ellipsis: true,
       render: (name: string) => name || '-',
     },
     {
-      title: 'Kho',
+      title: t('inventory:columns.warehouse'),
       dataIndex: ['warehouse', 'name'],
       key: 'warehouse',
       width: 150,
       render: (name: string) => name || '-',
     },
     {
-      title: 'Tồn kho',
+      title: t('inventory:columns.quantity'),
       dataIndex: 'quantity',
       key: 'quantity',
       width: 100,
       align: 'right',
-      render: (value: number) => value.toLocaleString('vi-VN'),
+      render: (value: number) => formatNumber(value, i18n.language),
     },
     {
-      title: 'Đã đặt',
+      title: t('inventory:columns.reservedQuantity'),
       dataIndex: 'reservedQuantity',
       key: 'reservedQuantity',
       width: 100,
       align: 'right',
-      render: (value: number) => value.toLocaleString('vi-VN'),
+      render: (value: number) => formatNumber(value, i18n.language),
     },
     {
-      title: 'Khả dụng',
+      title: t('inventory:columns.availableQuantity'),
       dataIndex: 'availableQuantity',
       key: 'availableQuantity',
       width: 100,
@@ -99,13 +108,13 @@ const StockList: React.FC = () => {
         const status = getStockStatus(record);
         return (
           <span style={{ color: status.color === 'red' ? '#ff4d4f' : undefined }}>
-            {value.toLocaleString('vi-VN')}
+            {formatNumber(value, i18n.language)}
           </span>
         );
       },
     },
     {
-      title: 'Min/Max',
+      title: t('inventory:columns.minMax'),
       key: 'minMax',
       width: 120,
       align: 'center',
@@ -116,7 +125,7 @@ const StockList: React.FC = () => {
       ),
     },
     {
-      title: 'Trạng thái',
+      title: t('inventory:columns.status'),
       key: 'status',
       width: 120,
       render: (_: any, record: Stock) => {
@@ -127,73 +136,58 @@ const StockList: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: '24px' }}>
-      <Card>
-        <Space direction="vertical" style={{ width: '100%' }} size="large">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Title level={3}>
-              <InboxOutlined /> Tồn kho
-            </Title>
-            <Space>
-              <Button onClick={() => navigate('/dashboard/inventory/movements')}>
-                Lịch sử xuất nhập
-              </Button>
-              <Button
-                danger
-                icon={<WarningOutlined />}
-                onClick={() => navigate('/dashboard/inventory/low-stock')}
-              >
-                Cảnh báo tồn thấp
-              </Button>
-            </Space>
-          </div>
-
-          <Space wrap>
-            <Input
-              placeholder="Tìm kiếm sản phẩm..."
-              prefix={<SearchOutlined />}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              style={{ width: 300 }}
-              allowClear
-            />
-            <Select
-              placeholder="Kho"
-              style={{ width: 200 }}
-              value={warehouseFilter}
-              onChange={setWarehouseFilter}
-              allowClear
-            >
-              {warehouses?.data?.map((w: any) => (
-                <Option key={w.id} value={w.id}>
-                  {w.warehouse?.name || `Kho ${w.id}`}
-                </Option>
-              ))}
-            </Select>
-          </Space>
-
-          <Table
-            columns={columns}
-            dataSource={data?.data || []}
-            loading={isLoading}
-            rowKey="id"
-            pagination={{
-              current: page,
-              pageSize,
-              total: data?.meta?.total || 0,
-              showSizeChanger: true,
-              showTotal: (total) => `Tổng ${total} mặt hàng`,
-              onChange: (newPage, newPageSize) => {
-                setPage(newPage);
-                setPageSize(newPageSize);
-              },
-            }}
-            scroll={{ x: 1200 }}
-          />
+    <StandardListPage
+      title={
+        <>
+          <InboxOutlined /> {t('inventory:title')}
+        </>
+      }
+      extraActions={
+        <Space>
+          <Button onClick={() => navigate('/dashboard/inventory/movements')}>
+            {t('inventory:actions.movements')}
+          </Button>
+          <Button
+            danger
+            icon={<WarningOutlined />}
+            onClick={() => navigate('/dashboard/inventory/low-stock')}
+          >
+            {t('inventory:actions.lowStock')}
+          </Button>
         </Space>
-      </Card>
-    </div>
+      }
+      searchPlaceholder={t('inventory:searchPlaceholder')}
+      searchValue={search}
+      onSearchChange={setSearch}
+      filters={
+        <Select
+          placeholder={t('inventory:filters.warehouse')}
+          style={{ width: 200 }}
+          value={warehouseFilter}
+          onChange={setWarehouseFilter}
+          allowClear
+        >
+          {warehouses?.data?.map((w: any) => (
+            <Option key={w.id} value={w.id}>
+              {w.warehouse?.name || `${t('inventory:filters.warehouse')} ${w.id}`}
+            </Option>
+          ))}
+        </Select>
+      }
+      columns={columns}
+      dataSource={data?.data || []}
+      loading={isLoading}
+      rowKey="id"
+      pagination={{
+        current: page,
+        pageSize,
+        total: data?.meta?.total || 0,
+        showTotal: (total) => t('inventory:messages.total', { total }),
+        onChange: (newPage, newPageSize) => {
+          setPage(newPage);
+          setPageSize(newPageSize);
+        },
+      }}
+    />
   );
-};
-
-export default StockList;
+}

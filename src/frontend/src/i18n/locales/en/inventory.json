@@ -1,0 +1,30 @@
+{
+  "title": "Inventory",
+  "searchPlaceholder": "Search products...",
+  "columns": {
+    "sku": "SKU",
+    "product": "Product",
+    "warehouse": "Warehouse",
+    "quantity": "Stock",
+    "reservedQuantity": "Reserved",
+    "availableQuantity": "Available",
+    "minMax": "Min/Max",
+    "status": "Status"
+  },
+  "status": {
+    "low": "Low",
+    "high": "High",
+    "normal": "Normal"
+  },
+  "actions": {
+    "movements": "Movement History",
+    "lowStock": "Low Stock Alert"
+  },
+  "filters": {
+    "warehouse": "Warehouse",
+    "allWarehouses": "All Warehouses"
+  },
+  "messages": {
+    "total": "Total {{total}} items"
+  }
+}

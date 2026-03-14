@@ -1,0 +1,59 @@
+{
+  "title": "Sản phẩm",
+  "product": "Sản phẩm",
+  "createProduct": "Tạo sản phẩm mới",
+  "editProduct": "Chỉnh sửa sản phẩm",
+  "productDetails": "Chi tiết sản phẩm",
+  "fields": {
+    "name": "Tên sản phẩm",
+    "code": "Mã sản phẩm",
+    "sku": "SKU",
+    "barcode": "Mã vạch",
+    "category": "Danh mục",
+    "description": "Mô tả",
+    "price": "Giá bán",
+    "costPrice": "Giá vốn",
+    "stock": "Tồn kho",
+    "minStock": "Tồn kho tối thiểu",
+    "unit": "Đơn vị",
+    "status": "Trạng thái",
+    "image": "Hình ảnh",
+    "weight": "Trọng lượng",
+    "dimensions": "Kích thước"
+  },
+  "status": {
+    "active": "Hoạt động",
+    "inactive": "Không hoạt động",
+    "outOfStock": "Hết hàng",
+    "lowStock": "Sắp hết hàng"
+  },
+  "messages": {
+    "createSuccess": "Tạo sản phẩm thành công",
+    "updateSuccess": "Cập nhật sản phẩm thành công",
+    "deleteSuccess": "Xóa sản phẩm thành công",
+    "deleteConfirm": "Xóa sản phẩm",
+    "deleteDescription": "Bạn có chắc muốn xóa sản phẩm này?",
+    "deleteError": "Không thể xóa sản phẩm",
+    "lowStockAlert": "Sản phẩm này sắp hết hàng"
+  },
+  "filters": {
+    "all": "Tất cả sản phẩm",
+    "active": "Đang hoạt động",
+    "inactive": "Không hoạt động",
+    "lowStock": "Sắp hết hàng",
+    "outOfStock": "Hết hàng"
+  },
+  "list": {
+    "title": "Danh Sách Sản Phẩm",
+    "empty": "Không tìm thấy sản phẩm nào",
+    "search": "Tìm kiếm sản phẩm...",
+    "total": "Tổng {{total}} sản phẩm"
+  },
+  "form": {
+    "create": "Thêm Sản Phẩm",
+    "edit": "Chỉnh Sửa Sản Phẩm"
+  },
+  "categories": {
+    "manage": "Quản Lý Danh Mục"
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "title": "Quản Lý Người Dùng",
+  "createButton": "Thêm Người Dùng",
+  "searchPlaceholder": "Tìm kiếm người dùng...",
+  "columns": {
+    "email": "Email",
+    "fullName": "Họ Tên",
+    "role": "Vai Trò",
+    "status": "Trạng Thái",
+    "lastLogin": "Đăng Nhập Cuối",
+    "createdAt": "Ngày Tạo"
+  },
+  "roles": {
+    "admin": "Quản Trị Viên",
+    "manager": "Quản Lý",
+    "user": "Người Dùng",
+    "staff": "Nhân Viên",
+    "viewer": "Người Xem"
+  },
+  "status": {
+    "active": "Hoạt Động",
+    "inactive": "Vô Hiệu",
+    "suspended": "Tạm Khóa"
+  },
+  "actions": {
+    "viewDetail": "Xem Chi Tiết",
+    "edit": "Chỉnh Sửa",
+    "resetPassword": "Đặt Lại Mật Khẩu",
+    "toggleActive": "Kích Hoạt/Vô Hiệu Hóa",
+    "activate": "Kích Hoạt",
+    "deactivate": "Vô Hiệu Hóa",
+    "delete": "Xóa"
+  },
+  "messages": {
+    "deleteSuccess": "Xóa người dùng thành công",
+    "deleteError": "Không thể xóa người dùng",
+    "updateStatusSuccess": "Cập nhật trạng thái thành công",
+    "updateStatusError": "Không thể cập nhật trạng thái",
+    "resetPasswordSuccess": "Đã gửi email đặt lại mật khẩu",
+    "resetPasswordError": "Không thể đặt lại mật khẩu",
+    "total": "Tổng {{total}} người dùng",
+    "deleteConfirm": "Xác nhận xóa",
+    "deleteDescription": "Bạn có chắc chắn muốn xóa người dùng này?",
+    "resetPasswordConfirm": "Đặt lại mật khẩu",
+    "resetPasswordDescription": "Bạn có chắc chắn muốn đặt lại mật khẩu cho người dùng này?"
+  },
+  "list": {
+    "title": "Danh Sách Người Dùng",
+    "empty": "Không tìm thấy người dùng nào",
+    "search": "Tìm kiếm người dùng..."
+  },
+  "form": {
+    "create": "Tạo Người Dùng",
+    "edit": "Chỉnh Sửa Người Dùng",
+    "firstName": "Tên",
+    "lastName": "Họ",
+    "email": "Email",
+    "phone": "Số Điện Thoại",
+    "role": "Vai Trò",
+    "department": "Phòng Ban",
+    "password": "Mật Khẩu",
+    "confirmPassword": "Xác Nhận Mật Khẩu"
+  }
+}

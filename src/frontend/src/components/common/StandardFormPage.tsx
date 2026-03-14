@@ -8,7 +8,9 @@ import { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, Button, Space, Flex } from 'antd';
 import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import { useResponsive } from '../../hooks/useResponsive';
+import { getCardSize, getButtonSize } from '../../utils/responsive';
 
 export interface StandardFormPageProps {
   // Header
@@ -40,16 +42,18 @@ export default function StandardFormPage({
   backPath,
   onSave,
   onCancel,
-  saveButtonText = 'Lưu',
-  cancelButtonText = 'Hủy',
+  saveButtonText,
+  cancelButtonText,
   saveButtonLoading = false,
   saveButtonDisabled = false,
   extraActions,
   children,
   bordered = true,
 }: StandardFormPageProps) {
+  const { t } = useTranslation('commonUi');
   const navigate = useNavigate();
-  const { isMobile } = useResponsive();
+  const responsive = useResponsive();
+  const { isMobile } = responsive;
 
   const handleBack = () => {
     if (onBack) {
@@ -82,16 +86,16 @@ export default function StandardFormPage({
         <Button
           icon={<ArrowLeftOutlined />}
           onClick={handleBack}
-          size={isMobile ? 'middle' : 'middle'}
+          size={getButtonSize(responsive)}
         >
-          {isMobile ? '' : 'Quay Lại'}
+          {isMobile ? '' : t('actions.back')}
         </Button>
 
         <Space size={isMobile ? 'small' : 'middle'}>
           {extraActions}
           {onCancel !== undefined && (
-            <Button onClick={handleCancel} size={isMobile ? 'middle' : 'middle'}>
-              {isMobile ? 'Hủy' : cancelButtonText}
+            <Button onClick={handleCancel} size={getButtonSize(responsive)}>
+              {cancelButtonText || t('actions.cancel')}
             </Button>
           )}
           {onSave && (
@@ -101,9 +105,9 @@ export default function StandardFormPage({
               onClick={onSave}
               loading={saveButtonLoading}
               disabled={saveButtonDisabled}
-              size={isMobile ? 'middle' : 'middle'}
+              size={getButtonSize(responsive)}
             >
-              {isMobile ? '' : saveButtonText}
+              {isMobile ? '' : (saveButtonText || t('actions.save'))}
             </Button>
           )}
         </Space>
@@ -112,6 +116,7 @@ export default function StandardFormPage({
       <Card
         title={isMobile ? <div style={{ fontSize: 16 }}>{title}</div> : title}
         bordered={bordered}
+        size={getCardSize(responsive)}
         styles={{
           body: { padding: isMobile ? 12 : 24 },
           header: { paddingLeft: isMobile ? 12 : 24, paddingRight: isMobile ? 12 : 24 },

@@ -1,0 +1,97 @@
+{
+  "buttons": {
+    "create": "Tạo mới",
+    "edit": "Chỉnh sửa",
+    "delete": "Xóa",
+    "save": "Lưu",
+    "cancel": "Hủy",
+    "submit": "Gửi",
+    "search": "Tìm kiếm",
+    "filter": "Lọc",
+    "export": "Xuất",
+    "import": "Nhập",
+    "refresh": "Làm mới",
+    "back": "Quay lại",
+    "next": "Tiếp theo",
+    "previous": "Trước",
+    "confirm": "Xác nhận",
+    "close": "Đóng",
+    "view": "Xem",
+    "download": "Tải xuống",
+    "upload": "Tải lên",
+    "reset": "Đặt lại",
+    "clear": "Xóa"
+  },
+  "labels": {
+    "name": "Tên",
+    "code": "Mã",
+    "description": "Mô tả",
+    "status": "Trạng thái",
+    "type": "Loại",
+    "category": "Danh mục",
+    "price": "Giá",
+    "quantity": "Số lượng",
+    "total": "Tổng",
+    "date": "Ngày",
+    "createdAt": "Ngày tạo",
+    "updatedAt": "Ngày cập nhật",
+    "actions": "Thao tác",
+    "search": "Tìm kiếm",
+    "filter": "Lọc",
+    "from": "Từ",
+    "to": "Đến",
+    "all": "Tất cả",
+    "active": "Hoạt động",
+    "inactive": "Không hoạt động",
+    "yes": "Có",
+    "no": "Không"
+  },
+  "messages": {
+    "loading": "Đang tải...",
+    "noData": "Không có dữ liệu",
+    "error": "Đã xảy ra lỗi",
+    "success": "Thao tác thành công",
+    "confirmDelete": "Bạn có chắc chắn muốn xóa mục này?",
+    "deleteSuccess": "Xóa thành công",
+    "createSuccess": "Tạo mới thành công",
+    "updateSuccess": "Cập nhật thành công",
+    "saveSuccess": "Lưu thay đổi thành công",
+    "validationError": "Vui lòng kiểm tra lại form",
+    "networkError": "Lỗi kết nối. Vui lòng thử lại.",
+    "unauthorized": "Bạn không có quyền thực hiện thao tác này",
+    "sessionExpired": "Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại."
+  },
+  "validation": {
+    "required": "Trường này là bắt buộc",
+    "email": "Vui lòng nhập email hợp lệ",
+    "phone": "Vui lòng nhập số điện thoại hợp lệ",
+    "minLength": "Độ dài tối thiểu là {{min}} ký tự",
+    "maxLength": "Độ dài tối đa là {{max}} ký tự",
+    "min": "Giá trị tối thiểu là {{min}}",
+    "max": "Giá trị tối đa là {{max}}",
+    "positive": "Giá trị phải là số dương",
+    "integer": "Giá trị phải là số nguyên",
+    "url": "Vui lòng nhập URL hợp lệ",
+    "invalidAmount": "Số tiền không hợp lệ"
+  },
+  "fields": {
+    "reason": "Lý do"
+  },
+  "actions": {
+    "title": "Thao Tác",
+    "delete": "Xóa",
+    "cancel": "Hủy",
+    "confirm": "Xác Nhận"
+  },
+  "pagination": {
+    "showing": "Hiển thị {{from}} đến {{to}} trong tổng số {{total}} mục",
+    "page": "Trang",
+    "of": "của",
+    "itemsPerPage": "Số mục mỗi trang"
+  },
+  "language": {
+    "en": "English",
+    "vi": "Tiếng Việt",
+    "switchLanguage": "Chuyển ngôn ngữ"
+  }
+}

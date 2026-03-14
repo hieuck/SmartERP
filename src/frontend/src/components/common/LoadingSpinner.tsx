@@ -1,5 +1,24 @@
+/**
+ * LoadingSpinner Component
+ *
+ * Standardized loading indicator following Ant Design guidelines
+ * Can be used inline or as full-screen overlay
+ * Supports i18n and responsive design
+ *
+ * @example
+ * // Inline loading
+ * <LoadingSpinner tip={t('commonUi:loadingState.loading')} />
+ *
+ * // Full screen loading
+ * <LoadingSpinner fullScreen tip={t('commonUi:loadingState.processing')} />
+ */
+
 import { Spin } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
+import { useResponsive } from '../../hooks/useResponsive';
+import { Z_INDEX } from '../../constants/design-tokens';
+import { getSpacing } from '../../utils/responsive';
 
 interface LoadingSpinnerProps {
   size?: 'small' | 'default' | 'large';
@@ -7,30 +26,25 @@ interface LoadingSpinnerProps {
   fullScreen?: boolean;
 }
 
-/**
- * LoadingSpinner Component
- *
- * Standardized loading indicator following Ant Design guidelines
- * Can be used inline or as full-screen overlay
- *
- * @example
- * // Inline loading
- * <LoadingSpinner tip="Loading data..." />
- *
- * // Full screen loading
- * <LoadingSpinner fullScreen tip="Processing..." />
- */
 export default function LoadingSpinner({
   size = 'default',
   tip,
   fullScreen = false,
 }: LoadingSpinnerProps) {
-  const antIcon = (
-    <LoadingOutlined
-      style={{ fontSize: size === 'large' ? 48 : size === 'small' ? 16 : 24 }}
-      spin
-    />
-  );
+  const { t } = useTranslation('commonUi');
+  const responsive = useResponsive();
+  const { isMobile } = responsive;
+
+  const padding = getSpacing(responsive, 'sectionSpacing');
+
+  // Responsive icon size
+  const getIconSize = () => {
+    if (size === 'large') return isMobile ? 40 : 48;
+    if (size === 'small') return 16;
+    return isMobile ? 20 : 24;
+  };
+
+  const antIcon = <LoadingOutlined style={{ fontSize: getIconSize() }} spin />;
 
   if (fullScreen) {
     return (
@@ -45,10 +59,14 @@ export default function LoadingSpinner({
           alignItems: 'center',
           justifyContent: 'center',
           background: 'rgba(255, 255, 255, 0.9)',
-          zIndex: 9999,
+          zIndex: Z_INDEX.modal,
         }}
       >
-        <Spin indicator={antIcon} size={size} tip={tip} />
+        <Spin
+          indicator={antIcon}
+          size={size}
+          tip={tip || t('loadingState.loading')}
+        />
       </div>
     );
   }
@@ -59,10 +77,14 @@ export default function LoadingSpinner({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '48px 0',
+        padding: `${padding * 2}px 0`,
       }}
     >
-      <Spin indicator={antIcon} size={size} tip={tip} />
+      <Spin
+        indicator={antIcon}
+        size={size}
+        tip={tip || t('loadingState.loading')}
+      />
     </div>
   );
 }

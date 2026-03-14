@@ -9,31 +9,38 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, Form, Input, Select, DatePicker, Button, Space, message, Spin } from 'antd';
 import { SaveOutlined, ArrowLeftOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import productionService, { CreateWorkerDto } from '../../services/production/productionService';
+import { useResponsive } from '../../hooks/useResponsive';
+import { getCardSize } from '../../utils/responsive';
 import dayjs from 'dayjs';
 
 const { Option } = Select;
 
-const WorkerForm = () => {
+export default function WorkerForm() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { t } = useTranslation(['production', 'common']);
   const queryClient = useQueryClient();
+  const responsive = useResponsive();
   const [form] = Form.useForm();
   const isEdit = !!id;
 
   // Fetch worker data for editing
   const { data: workerData, isLoading } = useQuery({
     queryKey: ['worker', id],
-    queryFn: () => productionService.worker.getWorker(id!),
+    queryFn: async () => {
+      const response = await productionService.worker.getWorker(id!);
+      return response.data;
+    },
     enabled: isEdit,
   });
 
   useEffect(() => {
-    if (workerData?.data) {
-      const worker = workerData.data;
+    if (workerData) {
       form.setFieldsValue({
-        ...worker,
-        hireDate: worker.hireDate ? dayjs(worker.hireDate) : undefined,
+        ...workerData,
+        hireDate: workerData.hireDate ? dayjs(workerData.hireDate) : undefined,
       });
     }
   }, [workerData, form]);
@@ -41,12 +48,12 @@ const WorkerForm = () => {
   const createMutation = useMutation({
     mutationFn: (data: CreateWorkerDto) => productionService.worker.createWorker(data),
     onSuccess: () => {
-      message.success('Thêm nhân viên thành công');
+      message.success(t('production:messages.saveSuccess'));
       queryClient.invalidateQueries({ queryKey: ['workers'] });
       navigate('/dashboard/production/workers');
     },
     onError: () => {
-      message.error('Thêm nhân viên thất bại');
+      message.error(t('production:messages.saveError'));
     },
   });
 
@@ -54,12 +61,12 @@ const WorkerForm = () => {
     mutationFn: (data: Partial<CreateWorkerDto>) =>
       productionService.worker.updateWorker(id!, data),
     onSuccess: () => {
-      message.success('Cập nhật nhân viên thành công');
+      message.success(t('production:messages.saveSuccess'));
       queryClient.invalidateQueries({ queryKey: ['workers'] });
       navigate('/dashboard/production/workers');
     },
     onError: () => {
-      message.error('Cập nhật nhân viên thất bại');
+      message.error(t('production:messages.saveError'));
     },
   });
 
@@ -86,63 +93,64 @@ const WorkerForm = () => {
 
   return (
     <Card
-      title={isEdit ? 'Sửa nhân viên' : 'Thêm nhân viên mới'}
+      title={isEdit ? t('production:workers.edit') : t('production:workers.create')}
+      size={getCardSize(responsive)}
       extra={
         <Button
           icon={<ArrowLeftOutlined />}
           onClick={() => navigate('/dashboard/production/workers')}
         >
-          Quay lại
+          {t('common:actions.back')}
         </Button>
       }
     >
       <Form form={form} layout="vertical" onFinish={onFinish} style={{ maxWidth: 600 }}>
         <Form.Item
-          label="Họ tên"
+          label={t('production:workers.fullName')}
           name="fullName"
-          rules={[{ required: true, message: 'Vui lòng nhập họ tên' }]}
+          rules={[{ required: true, message: t('production:validation.required') }]}
         >
-          <Input placeholder="Nhập họ tên nhân viên" />
+          <Input placeholder={t('production:workers.fullName')} />
         </Form.Item>
 
-        <Form.Item label="Số điện thoại" name="phone">
-          <Input placeholder="Nhập số điện thoại" />
+        <Form.Item label={t('production:workers.phone')} name="phone">
+          <Input placeholder={t('production:workers.phone')} />
         </Form.Item>
 
-        <Form.Item label="Địa chỉ" name="address">
-          <Input.TextArea placeholder="Nhập địa chỉ" rows={2} />
+        <Form.Item label={t('production:workers.address')} name="address">
+          <Input.TextArea placeholder={t('production:workers.address')} rows={2} />
         </Form.Item>
 
         <Form.Item
-          label="Ngày vào làm"
+          label={t('production:workers.hireDate')}
           name="hireDate"
-          rules={[{ required: true, message: 'Vui lòng chọn ngày vào làm' }]}
+          rules={[{ required: true, message: t('production:validation.required') }]}
         >
           <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" />
         </Form.Item>
 
         <Form.Item
-          label="Chuyên môn"
+          label={t('production:workers.specialty')}
           name="specialty"
-          rules={[{ required: true, message: 'Vui lòng chọn chuyên môn' }]}
+          rules={[{ required: true, message: t('production:validation.required') }]}
         >
-          <Select placeholder="Chọn chuyên môn">
-            <Option value="molding">Đúc khuôn</Option>
-            <Option value="painting">Sơn</Option>
-            <Option value="finishing">Hoàn thiện</Option>
-            <Option value="packaging">Đóng gói</Option>
+          <Select placeholder={t('production:workers.specialty')}>
+            <Option value="molding">{t('production:workers.specialties.molding')}</Option>
+            <Option value="painting">{t('production:workers.specialties.painting')}</Option>
+            <Option value="finishing">{t('production:workers.specialties.finishing')}</Option>
+            <Option value="packaging">{t('production:workers.specialties.packaging')}</Option>
           </Select>
         </Form.Item>
 
         <Form.Item
-          label="Trình độ"
+          label={t('production:workers.skillLevel')}
           name="skillLevel"
-          rules={[{ required: true, message: 'Vui lòng chọn trình độ' }]}
+          rules={[{ required: true, message: t('production:validation.required') }]}
         >
-          <Select placeholder="Chọn trình độ">
-            <Option value="apprentice">Học việc</Option>
-            <Option value="skilled">Lành nghề</Option>
-            <Option value="master">Bậc thợ cao</Option>
+          <Select placeholder={t('production:workers.skillLevel')}>
+            <Option value="apprentice">{t('production:workers.skillLevels.apprentice')}</Option>
+            <Option value="skilled">{t('production:workers.skillLevels.skilled')}</Option>
+            <Option value="master">{t('production:workers.skillLevels.master')}</Option>
           </Select>
         </Form.Item>
 
@@ -154,14 +162,14 @@ const WorkerForm = () => {
               icon={<SaveOutlined />}
               loading={createMutation.isPending || updateMutation.isPending}
             >
-              {isEdit ? 'Cập nhật' : 'Thêm mới'}
+              {isEdit ? t('production:actions.save') : t('production:actions.save')}
             </Button>
-            <Button onClick={() => navigate('/dashboard/production/workers')}>Hủy</Button>
+            <Button onClick={() => navigate('/dashboard/production/workers')}>
+              {t('production:actions.cancel')}
+            </Button>
           </Space>
         </Form.Item>
       </Form>
     </Card>
   );
-};
-
-export default WorkerForm;
+}

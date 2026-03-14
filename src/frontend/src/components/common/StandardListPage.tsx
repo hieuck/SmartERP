@@ -4,7 +4,7 @@
  * Đảm bảo UI đồng nhất giữa các modules
  */
 
-import { ReactNode, useState } from 'react';
+import { ReactNode } from 'react';
 import {
   Table,
   Button,
@@ -23,10 +23,11 @@ import {
   DeleteOutlined,
   SearchOutlined,
   MoreOutlined,
-  DownOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType, TableProps } from 'antd/es/table';
+import { useTranslation } from 'react-i18next';
 import { useResponsive } from '../../hooks/useResponsive';
+import { getCardSize, getTableSize, getPaginationConfig } from '../../utils/responsive';
 import type { MenuProps } from 'antd';
 
 export interface StandardListPageProps<T> {
@@ -85,10 +86,10 @@ export interface StandardListPageProps<T> {
 
 export default function StandardListPage<T extends Record<string, any>>({
   title,
-  createButtonText = 'Thêm Mới',
+  createButtonText,
   onCreateClick,
   extraActions,
-  searchPlaceholder = 'Tìm kiếm...',
+  searchPlaceholder,
   searchValue,
   onSearchChange,
   filters,
@@ -105,19 +106,21 @@ export default function StandardListPage<T extends Record<string, any>>({
   pagination,
   onEdit,
   onDelete,
-  deleteConfirmTitle = 'Bạn có chắc muốn xóa?',
+  deleteConfirmTitle,
   customContent,
   mobileRenderItem,
   onMobileItemClick,
 }: StandardListPageProps<T>) {
-  const { isMobile } = useResponsive();
+  const { t } = useTranslation('commonUi');
+  const responsive = useResponsive();
+  const { isMobile } = responsive;
 
   // Thêm cột actions cho desktop table (mobile dùng card không cần)
   const finalColumns: ColumnsType<T> = [...columns];
 
   if ((onEdit || onDelete) && !isMobile) {
     finalColumns.push({
-      title: 'Thao Tác',
+      title: t('table.actions'),
       key: 'action',
       width: 150,
       fixed: 'right',
@@ -126,18 +129,19 @@ export default function StandardListPage<T extends Record<string, any>>({
         <Space>
           {onEdit && (
             <Button type="link" icon={<EditOutlined />} onClick={() => onEdit(record)}>
-              Sửa
+              {t('actions.edit')}
             </Button>
           )}
           {onDelete && (
             <Popconfirm
-              title={deleteConfirmTitle}
+              title={deleteConfirmTitle || t('messages.deleteConfirm')}
+              description={t('messages.deleteDescription')}
               onConfirm={() => onDelete(record)}
-              okText="Xóa"
-              cancelText="Hủy"
+              okText={t('actions.delete')}
+              cancelText={t('actions.cancel')}
             >
               <Button type="link" danger icon={<DeleteOutlined />}>
-                Xóa
+                {t('actions.delete')}
               </Button>
             </Popconfirm>
           )}
@@ -152,6 +156,7 @@ export default function StandardListPage<T extends Record<string, any>>({
         title={isMobile ? <div style={{ fontSize: 16 }}>{title}</div> : title}
         bordered={true}
         style={{ margin: 0 }}
+        size={getCardSize(responsive)}
         styles={{
           body: { padding: isMobile ? 8 : 0 },
           header: { paddingLeft: isMobile ? 12 : 24, paddingRight: isMobile ? 12 : 24 },
@@ -166,7 +171,7 @@ export default function StandardListPage<T extends Record<string, any>>({
                 onClick={onCreateClick}
                 size={isMobile ? 'middle' : 'middle'}
               >
-                {isMobile ? '' : createButtonText}
+                {isMobile ? '' : (createButtonText || t('actions.create'))}
               </Button>
             )}
           </Space>
@@ -178,7 +183,7 @@ export default function StandardListPage<T extends Record<string, any>>({
             <Space wrap size={isMobile ? 'small' : 'middle'} style={{ width: '100%' }}>
               {onSearchChange && (
                 <Input
-                  placeholder={searchPlaceholder}
+                  placeholder={searchPlaceholder || t('actions.search')}
                   prefix={<SearchOutlined />}
                   value={searchValue}
                   onChange={(e) => onSearchChange(e.target.value)}
@@ -215,7 +220,7 @@ export default function StandardListPage<T extends Record<string, any>>({
                   }
                 : false
             }
-            locale={{ emptyText: <Empty description="Không có dữ liệu" /> }}
+            locale={{ emptyText: <Empty description={t('messages.noData')} /> }}
           />
         ) : isMobile ? (
           /* Mobile: Auto Card View from columns */
@@ -228,7 +233,7 @@ export default function StandardListPage<T extends Record<string, any>>({
               if (onEdit) {
                 menuItems.push({
                   key: 'edit',
-                  label: 'Sửa',
+                  label: t('actions.edit'),
                   icon: <EditOutlined />,
                   onClick: () => onEdit(item),
                 });
@@ -236,11 +241,11 @@ export default function StandardListPage<T extends Record<string, any>>({
               if (onDelete) {
                 menuItems.push({
                   key: 'delete',
-                  label: 'Xóa',
+                  label: t('actions.delete'),
                   icon: <DeleteOutlined />,
                   danger: true,
                   onClick: () => {
-                    const confirmed = window.confirm(deleteConfirmTitle);
+                    const confirmed = window.confirm(deleteConfirmTitle || t('messages.deleteConfirm'));
                     if (confirmed) {
                       onDelete(item);
                     }
@@ -303,7 +308,7 @@ export default function StandardListPage<T extends Record<string, any>>({
                           key: '1',
                           label: (
                             <span style={{ fontSize: 13, color: '#1890ff' }}>
-                              Xem thêm thông tin
+                              {t('messages.viewMore')}
                             </span>
                           ),
                           children: expandable.expandedRowRender(item, 0, 0, false),
@@ -326,7 +331,7 @@ export default function StandardListPage<T extends Record<string, any>>({
                   }
                 : false
             }
-            locale={{ emptyText: <Empty description="Không có dữ liệu" /> }}
+            locale={{ emptyText: <Empty description={t('messages.noData')} /> }}
           />
         ) : (
           /* Desktop Table View */
@@ -336,7 +341,7 @@ export default function StandardListPage<T extends Record<string, any>>({
             rowKey={rowKey}
             loading={loading}
             scroll={isMobile ? { x: 'max-content', y: undefined } : scroll || { x: 'max-content' }}
-            size={isMobile ? 'small' : 'middle'}
+            size={getTableSize(responsive)}
             rowSelection={
               enableSelection && !isMobile
                 ? {
@@ -357,7 +362,7 @@ export default function StandardListPage<T extends Record<string, any>>({
                     simple: isMobile,
                     showTotal: isMobile
                       ? undefined
-                      : (pagination.showTotal ?? ((total) => `Tổng ${total} bản ghi`)),
+                      : (pagination.showTotal ?? ((total) => t('messages.total', { total }))),
                     onChange: pagination.onChange,
                     size: isMobile ? 'small' : 'default',
                   }

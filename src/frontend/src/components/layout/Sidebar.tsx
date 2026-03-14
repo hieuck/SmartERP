@@ -1,5 +1,6 @@
 import { Layout, Menu } from 'antd';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   DashboardOutlined,
   ShoppingOutlined,
@@ -30,114 +31,115 @@ type MenuItem = Required<MenuProps>['items'][number];
 export default function Sidebar({ collapsed }: SidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation('layout');
 
   const items: MenuItem[] = [
     {
       key: '/dashboard',
       icon: <DashboardOutlined />,
-      label: 'Dashboard',
+      label: t('sidebar.dashboard'),
     },
     {
       key: '/dashboard/products',
       icon: <ShoppingOutlined />,
-      label: 'Sản Phẩm',
+      label: t('sidebar.products'),
     },
     {
       key: '/dashboard/inventory',
       icon: <InboxOutlined />,
-      label: 'Kho Hàng',
+      label: t('sidebar.inventory'),
       children: [
-        { key: '/dashboard/inventory/stock', label: 'Tồn Kho' },
-        { key: '/dashboard/inventory/receipts', label: 'Phiếu Nhập' },
-        { key: '/dashboard/inventory/issues', label: 'Phiếu Xuất' },
+        { key: '/dashboard/inventory/stock', label: t('sidebar.stock') },
+        { key: '/dashboard/inventory/receipts', label: t('sidebar.receipts') },
+        { key: '/dashboard/inventory/issues', label: t('sidebar.issues') },
       ],
     },
     {
       key: '/dashboard/warehouses',
       icon: <HomeOutlined />,
-      label: 'Quản Lý Kho',
+      label: t('sidebar.warehouses'),
       children: [
-        { key: '/dashboard/warehouses', label: 'Danh Sách Kho' },
-        { key: '/dashboard/warehouses/transfers', label: 'Chuyển Kho' },
-        { key: '/dashboard/warehouses/stock-report', label: 'Báo Cáo Tồn Kho' },
+        { key: '/dashboard/warehouses', label: t('sidebar.warehouseList') },
+        { key: '/dashboard/warehouses/transfers', label: t('sidebar.transfers') },
+        { key: '/dashboard/warehouses/stock-report', label: t('sidebar.stockReport') },
       ],
     },
     {
       key: '/dashboard/orders',
       icon: <ShoppingCartOutlined />,
-      label: 'Đơn Hàng',
+      label: t('sidebar.orders'),
       children: [
-        { key: '/dashboard/orders/sales', label: 'Đơn Bán Hàng' },
-        { key: '/dashboard/orders/purchase', label: 'Đơn Mua Hàng' },
-        { key: '/dashboard/orders/payments', label: 'Thanh Toán' },
+        { key: '/dashboard/orders/sales', label: t('sidebar.salesOrders') },
+        { key: '/dashboard/orders/purchase', label: t('sidebar.purchaseOrders') },
+        { key: '/dashboard/orders/payments', label: t('sidebar.payments') },
       ],
     },
     {
       key: '/dashboard/customers',
       icon: <UserOutlined />,
-      label: 'Khách Hàng',
+      label: t('sidebar.customers'),
     },
     {
       key: '/dashboard/suppliers',
       icon: <TeamOutlined />,
-      label: 'Nhà Cung Cấp',
+      label: t('sidebar.suppliers'),
     },
     {
       key: '/dashboard/production',
       icon: <ToolOutlined />,
-      label: 'Sản Xuất',
+      label: t('sidebar.production'),
       children: [
-        { key: '/dashboard/production/workers', label: 'Nhân Viên SX' },
-        { key: '/dashboard/production/attendance', label: 'Chấm Công' },
-        { key: '/dashboard/production/piecework', label: 'Chấm Công Khoán' },
-        { key: '/dashboard/production/shifts', label: 'Ca Làm Việc' },
-        { key: '/dashboard/production/payroll', label: 'Tính Lương' },
-        { key: '/dashboard/production/advances', label: 'Tạm Ứng' },
-        { key: '/dashboard/production/materials', label: 'Nguyên Vật Liệu' },
-        { key: '/dashboard/production/molds', label: 'Khuôn Mẫu' },
-        { key: '/dashboard/production/orders', label: 'Lệnh Sản Xuất' },
-        { key: '/dashboard/production/reports', label: 'Báo Cáo SX' },
+        { key: '/dashboard/production/workers', label: t('sidebar.workers') },
+        { key: '/dashboard/production/attendance', label: t('sidebar.attendance') },
+        { key: '/dashboard/production/piecework', label: t('sidebar.piecework') },
+        { key: '/dashboard/production/shifts', label: t('sidebar.shifts') },
+        { key: '/dashboard/production/payroll', label: t('sidebar.payroll') },
+        { key: '/dashboard/production/advances', label: t('sidebar.advances') },
+        { key: '/dashboard/production/materials', label: t('sidebar.materials') },
+        { key: '/dashboard/production/molds', label: t('sidebar.molds') },
+        { key: '/dashboard/production/orders', label: t('sidebar.productionOrders') },
+        { key: '/dashboard/production/reports', label: t('sidebar.productionReports') },
       ],
     },
     {
       key: '/dashboard/promotions',
       icon: <GiftOutlined />,
-      label: 'Khuyến Mãi',
+      label: t('sidebar.promotions'),
     },
     {
       key: '/dashboard/reports',
       icon: <BarChartOutlined />,
-      label: 'Báo Cáo',
+      label: t('sidebar.reports'),
     },
     {
       key: '/dashboard/notifications',
       icon: <BellOutlined />,
-      label: 'Thông Báo',
+      label: t('sidebar.notifications'),
       children: [
-        { key: '/dashboard/notifications', label: 'Danh Sách' },
-        { key: '/dashboard/notifications/preferences', label: 'Cài Đặt' },
+        { key: '/dashboard/notifications', label: t('sidebar.notificationList') },
+        { key: '/dashboard/notifications/preferences', label: t('sidebar.notificationPreferences') },
       ],
     },
     {
       key: '/dashboard/search',
       icon: <SearchOutlined />,
-      label: 'Tìm Kiếm',
+      label: t('sidebar.search'),
     },
     {
       key: '/dashboard/users',
       icon: <TeamOutlined />,
-      label: 'Nhân Viên',
+      label: t('sidebar.users'),
     },
     {
       key: '/dashboard/tenancy',
       icon: <ApartmentOutlined />,
-      label: 'Quản Lý Tenant',
+      label: t('sidebar.tenancy'),
     },
     {
       key: '/dashboard/settings',
       icon: <SettingOutlined />,
-      label: 'Cài Đặt',
-      children: [{ key: '/dashboard/settings/print', label: 'Mẫu In' }],
+      label: t('sidebar.settings'),
+      children: [{ key: '/dashboard/settings/print', label: t('sidebar.printTemplates') }],
     },
   ];
 

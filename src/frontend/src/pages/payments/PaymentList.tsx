@@ -1,27 +1,28 @@
 import { useState } from 'react';
 import {
-  Table,
   Button,
   Space,
   Tag,
   Select,
   DatePicker,
-  Card,
   message,
   Popconfirm,
   Modal,
+  Form,
+  InputNumber,
+  Input,
 } from 'antd';
 import {
-  PlusOutlined,
   DeleteOutlined,
   EyeOutlined,
   CheckOutlined,
   RollbackOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Payment, PaymentMethod, PaymentStatus } from '../../services/accounting/paymentService';
-import dayjs from 'dayjs';
-import { useResponsive } from '../../hooks/useResponsive';
+import StandardListPage from '../../components/common/StandardListPage';
+import { formatCurrency, formatDate } from '../../utils/responsive';
 import {
   usePayments,
   useDeletePayment,
@@ -30,6 +31,7 @@ import {
 } from '../../hooks/usePayments';
 
 const { RangePicker } = DatePicker;
+const { TextArea } = Input;
 
 const statusColors: Record<PaymentStatus, string> = {
   [PaymentStatus.PENDING]: 'warning',
@@ -38,32 +40,21 @@ const statusColors: Record<PaymentStatus, string> = {
   [PaymentStatus.REFUNDED]: 'default',
 };
 
-const statusLabels: Record<PaymentStatus, string> = {
-  [PaymentStatus.PENDING]: 'Chờ xử lý',
-  [PaymentStatus.COMPLETED]: 'Hoàn thành',
-  [PaymentStatus.FAILED]: 'Thất bại',
-  [PaymentStatus.REFUNDED]: 'Đã hoàn tiền',
-};
-
-const methodLabels: Record<PaymentMethod, string> = {
-  [PaymentMethod.CASH]: 'Tiền mặt',
-  [PaymentMethod.CARD]: 'Thẻ',
-  [PaymentMethod.BANK_TRANSFER]: 'Chuyển khoản',
-  [PaymentMethod.CHEQUE]: 'Séc',
-  [PaymentMethod.E_WALLET]: 'Ví điện tử',
-};
-
 export default function PaymentList() {
   const navigate = useNavigate();
-  const { isMobile } = useResponsive();
+  const { t } = useTranslation(['payments', 'common']);
+  const [form] = Form.useForm();
   const [refundModalVisible, setRefundModalVisible] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [filters, setFilters] = useState({
-    search: '',
+    page: 1,
+    limit: 10,
     status: undefined as PaymentStatus | undefined,
+    method: undefined as PaymentMethod | undefined,
+    startDate: undefined as string | undefined,
+    endDate: undefined as string | undefined,
   });
 
-  // Hooks for payment operations
   const { data: payments = [], isLoading } = usePayments(filters);
   const deletePaymentMutation = useDeletePayment();
   const completePaymentMutation = useCompletePayment();
@@ -72,98 +63,97 @@ export default function PaymentList() {
   const handleDelete = async (id: string) => {
     try {
       await deletePaymentMutation.mutateAsync(id);
-      message.success('Xóa thanh toán thành công');
-    } catch (error: any) {
-      message.error('Không thể xóa thanh toán: ' + (error.message || 'Lỗi không xác định'));
+      message.success(t('payments:messages.deleteSuccess'));
+    } catch (error: unknown) {
+      message.error(t('payments:messages.deleteError'));
     }
   };
 
   const handleComplete = async (id: string) => {
     try {
       await completePaymentMutation.mutateAsync(id);
-      message.success('Xác nhận thanh toán thành công');
-    } catch (error: any) {
-      message.error('Không thể xác nhận thanh toán: ' + (error.message || 'Lỗi không xác định'));
+      message.success(t('payments:messages.completeSuccess'));
+    } catch (error: unknown) {
+      message.error(t('payments:messages.completeError'));
     }
   };
 
-  const handleRefund = async (amount: number, reason: string) => {
+  const handleRefund = async () => {
     if (!selectedPayment) return;
     try {
+      const values = await form.validateFields();
       await refundMutation.mutateAsync({
         id: selectedPayment.id,
-        amount,
-        reason,
+        amount: values.amount,
+        reason: values.reason,
       });
-      message.success('Hoàn tiền thành công');
+      message.success(t('payments:messages.refundSuccess'));
       setRefundModalVisible(false);
       setSelectedPayment(null);
-    } catch (error: any) {
-      message.error('Không thể hoàn tiền: ' + (error.message || 'Lỗi không xác định'));
+      form.resetFields();
+    } catch (error: unknown) {
+      if ((error as { errorFields?: unknown }).errorFields) return;
+      message.error(t('payments:messages.refundError'));
     }
   };
 
   const columns = [
     {
-      title: 'Mã TT',
+      title: t('payments:columns.paymentNumber'),
       dataIndex: 'paymentNumber',
       key: 'paymentNumber',
       width: 150,
     },
     {
-      title: 'Khách hàng',
+      title: t('payments:columns.customer'),
       dataIndex: ['customer', 'name'],
       key: 'customer',
       ellipsis: true,
     },
     {
-      title: 'Ngày thanh toán',
+      title: t('payments:columns.paymentDate'),
       dataIndex: 'paymentDate',
       key: 'paymentDate',
       width: 120,
-      render: (date: string) => dayjs(date).format('DD/MM/YYYY'),
+      render: (date: string) => formatDate(date),
     },
     {
-      title: 'Số tiền',
+      title: t('payments:columns.amount'),
       dataIndex: 'amount',
       key: 'amount',
       width: 150,
       align: 'right' as const,
-      render: (val: number) =>
-        new Intl.NumberFormat('vi-VN', {
-          style: 'currency',
-          currency: 'VND',
-        }).format(val),
+      render: (val: number) => formatCurrency(val),
     },
     {
-      title: 'Phương thức',
+      title: t('payments:columns.method'),
       dataIndex: 'method',
       key: 'method',
       width: 130,
-      render: (method: PaymentMethod) => methodLabels[method],
+      render: (method: PaymentMethod) => t(`payments:methods.${method}`),
     },
     {
-      title: 'Trạng thái',
+      title: t('payments:columns.status'),
       dataIndex: 'status',
       key: 'status',
       width: 120,
       render: (status: PaymentStatus) => (
-        <Tag color={statusColors[status]}>{statusLabels[status]}</Tag>
+        <Tag color={statusColors[status]}>{t(`payments:status.${status}`)}</Tag>
       ),
     },
     {
-      title: 'Tham chiếu',
+      title: t('payments:columns.reference'),
       dataIndex: 'reference',
       key: 'reference',
       width: 150,
       ellipsis: true,
     },
     {
-      title: 'Thao tác',
+      title: t('common:actions.title'),
       key: 'action',
       width: 200,
       fixed: 'right' as const,
-      render: (_: any, record: Payment) => (
+      render: (_: unknown, record: Payment) => (
         <Space size="small">
           <Button
             type="link"
@@ -171,7 +161,7 @@ export default function PaymentList() {
             icon={<EyeOutlined />}
             onClick={() => navigate(`/dashboard/payments/${record.id}`)}
           >
-            Xem
+            {t('payments:actions.view')}
           </Button>
           {record.status === PaymentStatus.PENDING && (
             <Button
@@ -180,7 +170,7 @@ export default function PaymentList() {
               icon={<CheckOutlined />}
               onClick={() => handleComplete(record.id)}
             >
-              Xác nhận
+              {t('payments:actions.confirm')}
             </Button>
           )}
           {record.status === PaymentStatus.COMPLETED && (
@@ -190,20 +180,21 @@ export default function PaymentList() {
               icon={<RollbackOutlined />}
               onClick={() => {
                 setSelectedPayment(record);
+                form.setFieldsValue({ amount: record.amount });
                 setRefundModalVisible(true);
               }}
             >
-              Hoàn tiền
+              {t('payments:actions.refund')}
             </Button>
           )}
           <Popconfirm
-            title="Bạn có chắc muốn xóa thanh toán này?"
+            title={t('payments:messages.deleteConfirm')}
             onConfirm={() => handleDelete(record.id)}
-            okText="Xóa"
-            cancelText="Hủy"
+            okText={t('common:actions.delete')}
+            cancelText={t('common:actions.cancel')}
           >
             <Button type="link" size="small" danger icon={<DeleteOutlined />}>
-              Xóa
+              {t('payments:actions.delete')}
             </Button>
           </Popconfirm>
         </Space>
@@ -211,87 +202,118 @@ export default function PaymentList() {
     },
   ];
 
-  return (
-    <div>
-      <Card
-        title="Danh sách thanh toán"
-        extra={
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => navigate('/dashboard/payments/new')}
-          >
-            Tạo thanh toán
-          </Button>
-        }
+  const filterComponents = (
+    <Space wrap>
+      <Select
+        placeholder={t('payments:filters.status')}
+        style={{ width: 150 }}
+        allowClear
+        value={filters.status}
+        onChange={(value) => setFilters({ ...filters, status: value, page: 1 })}
       >
-        <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-          <Space wrap>
-            <Select
-              placeholder="Trạng thái"
-              style={{ width: 150 }}
-              allowClear
-              value={filters.status}
-              onChange={(value) => setFilters({ ...filters, status: value, page: 1 })}
-            >
-              {Object.entries(statusLabels).map(([key, label]) => (
-                <Select.Option key={key} value={key}>
-                  {label}
-                </Select.Option>
-              ))}
-            </Select>
-            <Select
-              placeholder="Phương thức"
-              style={{ width: 150 }}
-              allowClear
-              value={filters.method}
-              onChange={(value) => setFilters({ ...filters, method: value, page: 1 })}
-            >
-              {Object.entries(methodLabels).map(([key, label]) => (
-                <Select.Option key={key} value={key}>
-                  {label}
-                </Select.Option>
-              ))}
-            </Select>
-            <RangePicker
-              format="DD/MM/YYYY"
-              placeholder={['Từ ngày', 'Đến ngày']}
-              onChange={(dates) => {
-                setFilters({
-                  ...filters,
-                  startDate: dates?.[0]?.format('YYYY-MM-DD'),
-                  endDate: dates?.[1]?.format('YYYY-MM-DD'),
-                  page: 1,
-                });
-              }}
-            />
-          </Space>
+        {Object.values(PaymentStatus).map((status) => (
+          <Select.Option key={status} value={status}>
+            {t(`payments:status.${status}`)}
+          </Select.Option>
+        ))}
+      </Select>
+      <Select
+        placeholder={t('payments:filters.method')}
+        style={{ width: 150 }}
+        allowClear
+        value={filters.method}
+        onChange={(value) => setFilters({ ...filters, method: value, page: 1 })}
+      >
+        {Object.values(PaymentMethod).map((method) => (
+          <Select.Option key={method} value={method}>
+            {t(`payments:methods.${method}`)}
+          </Select.Option>
+        ))}
+      </Select>
+      <RangePicker
+        format="DD/MM/YYYY"
+        placeholder={[t('payments:filters.fromDate'), t('payments:filters.toDate')]}
+        onChange={(dates) => {
+          setFilters({
+            ...filters,
+            startDate: dates?.[0]?.format('YYYY-MM-DD'),
+            endDate: dates?.[1]?.format('YYYY-MM-DD'),
+            page: 1,
+          });
+        }}
+      />
+    </Space>
+  );
 
-          <Table
-            loading={
-              isLoading ||
-              deletePaymentMutation.isPending ||
-              completePaymentMutation.isPending ||
-              refundMutation.isPending
-            }
-            dataSource={payments}
-            columns={columns}
-            rowKey="id"
-            scroll={{ x: 'max-content' }}
-            size={isMobile ? 'small' : 'middle'}
-            pagination={{
-              current: filters.page,
-              pageSize: filters.limit,
-              total,
-              showSizeChanger: true,
-              showTotal: (total) => `Tổng ${total} thanh toán`,
-              onChange: (page, pageSize) => {
-                setFilters({ ...filters, page, limit: pageSize });
+  return (
+    <>
+      <StandardListPage
+        title={t('payments:title')}
+        createButtonText={t('payments:createButton')}
+        onCreateClick={() => navigate('/dashboard/payments/new')}
+        loading={
+          isLoading ||
+          deletePaymentMutation.isPending ||
+          completePaymentMutation.isPending ||
+          refundMutation.isPending
+        }
+        dataSource={payments}
+        columns={columns}
+        filters={filterComponents}
+        pagination={{
+          current: filters.page,
+          pageSize: filters.limit,
+          total: payments.length,
+          showTotal: (total: number) => t('payments:messages.total', { total }),
+          onChange: (page: number, pageSize: number) => {
+            setFilters({ ...filters, page, limit: pageSize });
+          },
+        }}
+      />
+
+      <Modal
+        title={t('payments:actions.refund')}
+        open={refundModalVisible}
+        onOk={handleRefund}
+        onCancel={() => {
+          setRefundModalVisible(false);
+          setSelectedPayment(null);
+          form.resetFields();
+        }}
+        okText={t('common:actions.confirm')}
+        cancelText={t('common:actions.cancel')}
+        confirmLoading={refundMutation.isPending}
+      >
+        <Form form={form} layout="vertical">
+          <Form.Item
+            label={t('payments:columns.amount')}
+            name="amount"
+            rules={[
+              { required: true, message: t('common:validation.required') },
+              {
+                type: 'number',
+                min: 0,
+                max: selectedPayment?.amount || 0,
+                message: t('common:validation.invalidAmount'),
               },
-            }}
-          />
-        </Space>
-      </Card>
-    </div>
+            ]}
+          >
+            <InputNumber
+              style={{ width: '100%' }}
+              formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+              parser={(value) => value!.replace(/\$\s?|(,*)/g, '')}
+              placeholder={t('payments:columns.amount')}
+            />
+          </Form.Item>
+          <Form.Item
+            label={t('common:fields.reason')}
+            name="reason"
+            rules={[{ required: true, message: t('common:validation.required') }]}
+          >
+            <TextArea rows={4} placeholder={t('common:fields.reason')} />
+          </Form.Item>
+        </Form>
+      </Modal>
+    </>
   );
 }

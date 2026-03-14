@@ -8,24 +8,18 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button, Space, Tag, message, Select, Badge, Alert } from 'antd';
-import { PlusOutlined, WarningOutlined, InboxOutlined, EditOutlined } from '@ant-design/icons';
+import { WarningOutlined, InboxOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import StandardListPage from '../../components/common/StandardListPage';
-import { createExpandableRender } from '../../components/common/ExpandableContent';
-import {
-  formatCurrency,
-  COLUMN_WIDTHS,
-  SUCCESS_MESSAGES,
-  ERROR_MESSAGES,
-} from '../../constants/ui';
 import productionService, { Material } from '../../services/production/productionService';
+import { formatCurrency } from '../../utils/responsive';
 import type { ColumnsType } from 'antd/es/table';
-import { useResponsive } from '../../hooks/useResponsive';
 
 const { Option } = Select;
 
-const MaterialList = () => {
-  const { isMobile } = useResponsive();
+export default function MaterialList() {
   const navigate = useNavigate();
+  const { t } = useTranslation(['production', 'common']);
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [type, setType] = useState<string>();
@@ -56,11 +50,11 @@ const MaterialList = () => {
       return response.data;
     },
     onSuccess: () => {
-      message.success('Xóa nguyên vật liệu thành công');
+      message.success(t('production:messages.deleteSuccess'));
       queryClient.invalidateQueries({ queryKey: ['materials'] });
     },
     onError: () => {
-      message.error('Xóa nguyên vật liệu thất bại');
+      message.error(t('production:messages.deleteError'));
     },
   });
 
@@ -72,23 +66,15 @@ const MaterialList = () => {
     packaging: 'cyan',
   };
 
-  const typeLabels: Record<string, string> = {
-    plaster: 'Thạch cao',
-    mold: 'Khuôn mẫu',
-    paint: 'Sơn',
-    accessory: 'Phụ kiện',
-    packaging: 'Bao bì',
-  };
-
   const columns: ColumnsType<Material> = [
     {
-      title: 'Mã NVL',
+      title: t('production:materials.code'),
       dataIndex: 'code',
       key: 'code',
-      width: isMobile ? 80 : COLUMN_WIDTHS.code,
+      width: 120,
     },
     {
-      title: 'Tên nguyên vật liệu',
+      title: t('production:materials.name'),
       dataIndex: 'name',
       key: 'name',
       render: (name: string, record: Material) => (
@@ -99,23 +85,25 @@ const MaterialList = () => {
       ),
     },
     {
-      title: 'Loại',
+      title: t('production:materials.type'),
       dataIndex: 'type',
       key: 'type',
-      width: isMobile ? 90 : 120,
-      render: (type: string) => <Tag color={typeColors[type]}>{typeLabels[type]}</Tag>,
+      width: 120,
+      render: (type: string) => (
+        <Tag color={typeColors[type]}>{t(`production:materials.types.${type}`)}</Tag>
+      ),
     },
     {
-      title: 'Đơn vị',
+      title: t('production:materials.unit'),
       dataIndex: 'unit',
       key: 'unit',
-      width: isMobile ? 60 : 80,
+      width: 80,
     },
     {
-      title: 'Tồn kho',
+      title: t('production:materials.quantity'),
       dataIndex: 'quantity',
       key: 'quantity',
-      width: isMobile ? 80 : COLUMN_WIDTHS.quantity,
+      width: 120,
       align: 'right' as const,
       render: (quantity: number, record: Material) => {
         const isLow = record.minQuantity && quantity <= record.minQuantity;
@@ -129,66 +117,96 @@ const MaterialList = () => {
       },
     },
     {
-      title: 'Tồn tối thiểu',
+      title: t('production:materials.minQuantity'),
       dataIndex: 'minQuantity',
       key: 'minQuantity',
-      width: isMobile ? 90 : 120,
+      width: 120,
       align: 'right' as const,
       render: (value: number) => (value ? value.toLocaleString() : '-'),
     },
     {
-      title: 'Giá nhập',
+      title: t('production:materials.purchasePrice'),
       dataIndex: 'purchasePrice',
       key: 'purchasePrice',
-      width: isMobile ? 90 : COLUMN_WIDTHS.price,
+      width: 130,
       align: 'right' as const,
-      render: formatCurrency,
+      render: (value: number) => formatCurrency(value),
     },
     {
-      title: 'Trạng thái',
+      title: t('production:materials.status'),
       dataIndex: 'status',
       key: 'status',
-      width: isMobile ? 90 : COLUMN_WIDTHS.status,
+      width: 120,
       render: (status: string) => (
         <Tag color={status === 'active' ? 'green' : 'red'}>
-          {status === 'active' ? 'Hoạt động' : 'Ngừng dùng'}
+          {t(`production:materials.statuses.${status}`)}
         </Tag>
       ),
     },
     {
-      title: 'Giao dịch',
+      title: t('production:materials.transactions'),
       key: 'transactions',
-      width: isMobile ? 80 : 100,
+      width: 120,
       render: (_: any, record: Material) => (
         <Button
           type="link"
           icon={<InboxOutlined />}
           onClick={() => navigate(`/production/materials/${record.id}/transactions`)}
         >
-          Xem
+          {t('production:materials.viewTransactions')}
         </Button>
       ),
     },
   ];
 
+  const filterComponents = (
+    <Space wrap>
+      <Select
+        placeholder={t('production:filters.type')}
+        style={{ width: 150 }}
+        allowClear
+        value={type}
+        onChange={setType}
+      >
+        <Option value="plaster">{t('production:materials.types.plaster')}</Option>
+        <Option value="mold">{t('production:materials.types.mold')}</Option>
+        <Option value="paint">{t('production:materials.types.paint')}</Option>
+        <Option value="accessory">{t('production:materials.types.accessory')}</Option>
+        <Option value="packaging">{t('production:materials.types.packaging')}</Option>
+      </Select>
+      <Select
+        placeholder={t('production:filters.status')}
+        style={{ width: 150 }}
+        allowClear
+        value={status}
+        onChange={setStatus}
+      >
+        <Option value="active">{t('production:materials.statuses.active')}</Option>
+        <Option value="inactive">{t('production:materials.statuses.inactive')}</Option>
+      </Select>
+    </Space>
+  );
+
   return (
     <div>
       {alertsData?.data && alertsData.data.length > 0 && (
         <Alert
-          message="Cảnh báo tồn kho"
+          message={t('production:materials.lowStockAlert')}
           description={
             <div>
-              <p>Có {alertsData.data.length} nguyên vật liệu dưới mức tối thiểu:</p>
+              <p>
+                {t('production:messages.total', { total: alertsData.data.length })} {t('production:materials.title')}:
+              </p>
               <ul>
                 {alertsData.data.slice(0, 5).map((material: Material) => (
                   <li key={material.id}>
                     <strong>{material.name}</strong>: {material.quantity} {material.unit}
-                    (Tối thiểu: {material.minQuantity} {material.unit})
+                    ({t('production:materials.minQuantity')}: {material.minQuantity} {material.unit})
                   </li>
                 ))}
               </ul>
               {alertsData.data.length > 5 && (
-                <p>...và {alertsData.data.length - 5} nguyên vật liệu khác</p>
+                <p>...{t('common:and')} {alertsData.data.length - 5} {t('common:more')}</p>
               )}
             </div>
           }
@@ -201,49 +219,21 @@ const MaterialList = () => {
       )}
 
       <StandardListPage
-        title="Quản lý nguyên vật liệu"
-        createButtonText="Thêm nguyên vật liệu"
+        title={t('production:materials.list')}
+        createButtonText={t('production:materials.create')}
         onCreateClick={() => navigate('/production/materials/new')}
-        searchPlaceholder="Tìm kiếm nguyên vật liệu..."
+        searchPlaceholder={t('production:materials.searchPlaceholder')}
         searchValue={search}
         onSearchChange={setSearch}
-        filters={
-          <Space wrap>
-            <Select
-              placeholder="Loại"
-              style={{ width: 150 }}
-              allowClear
-              value={type}
-              onChange={setType}
-            >
-              <Option value="plaster">Thạch cao</Option>
-              <Option value="mold">Khuôn mẫu</Option>
-              <Option value="paint">Sơn</Option>
-              <Option value="accessory">Phụ kiện</Option>
-              <Option value="packaging">Bao bì</Option>
-            </Select>
-            <Select
-              placeholder="Trạng thái"
-              style={{ width: 150 }}
-              allowClear
-              value={status}
-              onChange={setStatus}
-            >
-              <Option value="active">Hoạt động</Option>
-              <Option value="inactive">Ngừng dùng</Option>
-            </Select>
-          </Space>
-        }
+        filters={filterComponents}
         columns={columns}
-        dataSource={data?.data || []}
-        loading={isLoading}
+        dataSource={data || []}
+        loading={isLoading || deleteMutation.isPending}
         onEdit={(record) => navigate(`/production/materials/${record.id}`)}
         onDelete={(record) => deleteMutation.mutate(record.id)}
-        deleteConfirmTitle="Bạn có chắc muốn xóa nguyên vật liệu này?"
+        deleteConfirmTitle={t('production:messages.deleteConfirm')}
         pagination={false}
       />
     </div>
   );
-};
-
-export default MaterialList;
+}

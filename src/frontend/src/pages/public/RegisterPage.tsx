@@ -22,8 +22,10 @@ import {
 } from 'antd';
 import { useDispatch } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { authService } from '../../services/auth/authService';
 import { setCredentials } from '../../store/slices/authSlice';
+import LanguageSwitcher from '../../components/common/LanguageSwitcher';
 
 const { Header, Content } = Layout;
 const { Title, Text, Paragraph } = Typography;
@@ -40,6 +42,7 @@ interface RegisterFormValues {
 }
 
 export default function RegisterPage() {
+  const { t } = useTranslation(['auth', 'common']);
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [form] = Form.useForm<RegisterFormValues>();
@@ -78,11 +81,11 @@ export default function RegisterPage() {
           refreshToken: data.refreshToken || data.token,
         }),
       );
-      message.success('Đăng ký thành công! Chào mừng bạn đến với SmartERP.');
+      message.success(t('auth:register.success'));
       setTimeout(() => navigate('/dashboard', { replace: true }), 1500);
     },
     onError: (error: any) => {
-      const errorMsg = error.message || 'Đăng ký thất bại. Vui lòng thử lại.';
+      const errorMsg = error.message || t('auth:register.error');
       message.error(errorMsg);
     },
   });
@@ -96,26 +99,29 @@ export default function RegisterPage() {
       <Header
         style={{ background: '#fff', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', padding: '0 24px' }}
       >
-        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 8, height: '100%' }}>
-          <div
-            style={{
-              width: 32,
-              height: 32,
-              background: '#1890ff',
-              borderRadius: 8,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Text strong style={{ color: '#fff', fontSize: 20 }}>
-              P
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: '100%' }}>
+          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div
+              style={{
+                width: 32,
+                height: 32,
+                background: '#1890ff',
+                borderRadius: 8,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Text strong style={{ color: '#fff', fontSize: 20 }}>
+                P
+              </Text>
+            </div>
+            <Text strong style={{ fontSize: 20, color: '#000' }}>
+              SmartERP
             </Text>
-          </div>
-          <Text strong style={{ fontSize: 20, color: '#000' }}>
-            SmartERP
-          </Text>
-        </Link>
+          </Link>
+          <LanguageSwitcher />
+        </div>
       </Header>
 
       <Content style={{ padding: '48px 24px' }}>
@@ -124,10 +130,10 @@ export default function RegisterPage() {
             <Card style={{ borderRadius: 16, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
               <div style={{ textAlign: 'center', marginBottom: 32 }}>
                 <Title level={2} style={{ marginBottom: 8 }}>
-                  Đăng ký dùng thử miễn phí
+                  {t('auth:register.title')}
                 </Title>
                 <Paragraph style={{ color: '#595959', fontSize: 16 }}>
-                  14 ngày dùng thử, không cần thẻ tín dụng
+                  {t('auth:register.subtitle')}
                 </Paragraph>
               </div>
 
@@ -144,12 +150,12 @@ export default function RegisterPage() {
 
                 <Form.Item
                   name="companyName"
-                  label="Tên công ty"
-                  rules={[{ required: true, message: 'Vui lòng nhập tên công ty' }]}
+                  label={t('auth:register.companyName')}
+                  rules={[{ required: true, message: t('auth:validation.companyNameRequired') }]}
                 >
                   <Input
                     prefix={<ShopOutlined />}
-                    placeholder="Công ty TNHH ABC"
+                    placeholder={t('auth:register.companyName')}
                     size="large"
                     onChange={handleCompanyNameChange}
                   />
@@ -157,46 +163,46 @@ export default function RegisterPage() {
 
                 <Form.Item
                   name="slug"
-                  label="Tên miền (subdomain)"
+                  label={t('auth:register.companySlug')}
                   rules={[
-                    { required: true, message: 'Vui lòng nhập tên miền' },
+                    { required: true, message: t('auth:validation.companySlugRequired') },
                     {
                       pattern: /^[a-z0-9-]+$/,
-                      message: 'Tên miền chỉ chứa chữ thường, số và dấu gạch ngang',
+                      message: t('auth:validation.companySlugRequired'),
                     },
                   ]}
-                  extra="Đây sẽ là địa chỉ truy cập hệ thống của bạn"
+                  extra={t('auth:register.companySlug')}
                 >
                   <Space.Compact style={{ width: '100%' }}>
                     <Input
                       prefix={<GlobalOutlined />}
-                      placeholder="cong-ty-abc"
+                      placeholder="company-name"
                       size="large"
                       style={{ flex: 1 }}
-                      aria-label="Tên miền"
+                      aria-label={t('auth:register.companySlug')}
                     />
                     <Input value=".smarterp.vn" disabled size="large" style={{ width: 120 }} />
                   </Space.Compact>
                 </Form.Item>
 
                 <Title level={4} style={{ marginTop: 24, marginBottom: 16 }}>
-                  Thông tin cá nhân
+                  {t('auth:register.subtitle')}
                 </Title>
 
                 <Form.Item
                   name="fullName"
-                  label="Họ và tên"
-                  rules={[{ required: true, message: 'Vui lòng nhập họ tên' }]}
+                  label={t('auth:register.firstName')}
+                  rules={[{ required: true, message: t('auth:validation.firstNameRequired') }]}
                 >
-                  <Input prefix={<UserOutlined />} placeholder="Nguyễn Văn A" size="large" />
+                  <Input prefix={<UserOutlined />} placeholder={t('auth:register.firstName')} size="large" />
                 </Form.Item>
 
                 <Form.Item
                   name="email"
-                  label="Email"
+                  label={t('auth:register.email')}
                   rules={[
-                    { required: true, message: 'Vui lòng nhập email' },
-                    { type: 'email', message: 'Email không hợp lệ' },
+                    { required: true, message: t('auth:validation.emailRequired') },
+                    { type: 'email', message: t('auth:validation.emailInvalid') },
                   ]}
                 >
                   <Input prefix={<MailOutlined />} placeholder="email@example.com" size="large" />
@@ -204,10 +210,10 @@ export default function RegisterPage() {
 
                 <Form.Item
                   name="phone"
-                  label="Số điện thoại"
+                  label={t('auth:register.phone')}
                   rules={[
-                    { required: true, message: 'Vui lòng nhập số điện thoại' },
-                    { pattern: /^[0-9]{10,11}$/, message: 'Số điện thoại không hợp lệ' },
+                    { required: true, message: t('common:validation.required') },
+                    { pattern: /^[0-9]{10,11}$/, message: t('common:validation.phone') },
                   ]}
                 >
                   <Input prefix={<PhoneOutlined />} placeholder="0912345678" size="large" />
@@ -215,13 +221,13 @@ export default function RegisterPage() {
 
                 <Form.Item
                   name="password"
-                  label="Mật khẩu"
+                  label={t('auth:register.password')}
                   rules={[
-                    { required: true, message: 'Vui lòng nhập mật khẩu' },
-                    { min: 8, message: 'Mật khẩu phải có ít nhất 8 ký tự' },
+                    { required: true, message: t('auth:validation.passwordRequired') },
+                    { min: 8, message: t('auth:validation.passwordMinLength') },
                     {
                       pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-                      message: 'Mật khẩu phải chứa ít nhất một chữ hoa, một chữ thường và một số',
+                      message: t('auth:validation.passwordMinLength'),
                     },
                   ]}
                 >
@@ -230,16 +236,16 @@ export default function RegisterPage() {
 
                 <Form.Item
                   name="confirmPassword"
-                  label="Xác nhận mật khẩu"
+                  label={t('auth:register.confirmPassword')}
                   dependencies={['password']}
                   rules={[
-                    { required: true, message: 'Vui lòng xác nhận mật khẩu' },
+                    { required: true, message: t('auth:validation.passwordRequired') },
                     ({ getFieldValue }) => ({
                       validator(_, value) {
                         if (!value || getFieldValue('password') === value) {
                           return Promise.resolve();
                         }
-                        return Promise.reject(new Error('Mật khẩu xác nhận không khớp'));
+                        return Promise.reject(new Error(t('auth:register.passwordMismatch')));
                       },
                     }),
                   ]}
@@ -255,18 +261,18 @@ export default function RegisterPage() {
                       validator: (_, value) =>
                         value
                           ? Promise.resolve()
-                          : Promise.reject(new Error('Vui lòng đồng ý với điều khoản')),
+                          : Promise.reject(new Error(t('auth:validation.agreeTermsRequired'))),
                     },
                   ]}
                 >
                   <Checkbox>
-                    Tôi đồng ý với{' '}
+                    {t('auth:register.agreeTerms')}{' '}
                     <a href="#" style={{ color: '#1890ff' }}>
-                      Điều khoản dịch vụ
+                      {t('auth:register.termsOfService')}
                     </a>{' '}
-                    và{' '}
+                    {t('auth:register.and')}{' '}
                     <a href="#" style={{ color: '#1890ff' }}>
-                      Chính sách bảo mật
+                      {t('auth:register.privacyPolicy')}
                     </a>
                   </Checkbox>
                 </Form.Item>
@@ -281,15 +287,15 @@ export default function RegisterPage() {
                     block
                     style={{ height: 48, fontSize: 16, fontWeight: 600 }}
                   >
-                    {registerMutation.isPending ? 'Đang xử lý...' : 'Đăng ký miễn phí'}
+                    {registerMutation.isPending ? t('common:messages.loading') : t('auth:register.registerButton')}
                   </Button>
                 </Form.Item>
 
                 <div style={{ textAlign: 'center' }}>
                   <Text style={{ color: '#595959' }}>
-                    Đã có tài khoản?{' '}
+                    {t('auth:register.haveAccount')}{' '}
                     <Link to="/login" style={{ color: '#1890ff', fontWeight: 600 }}>
-                      Đăng nhập
+                      {t('auth:register.signIn')}
                     </Link>
                   </Text>
                 </div>

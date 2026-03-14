@@ -1,0 +1,30 @@
+{
+  "title": "Tồn Kho",
+  "searchPlaceholder": "Tìm kiếm sản phẩm...",
+  "columns": {
+    "sku": "SKU",
+    "product": "Sản Phẩm",
+    "warehouse": "Kho",
+    "quantity": "Tồn Kho",
+    "reservedQuantity": "Đã Đặt",
+    "availableQuantity": "Khả Dụng",
+    "minMax": "Min/Max",
+    "status": "Trạng Thái"
+  },
+  "status": {
+    "low": "Thấp",
+    "high": "Cao",
+    "normal": "Bình Thường"
+  },
+  "actions": {
+    "movements": "Lịch Sử Xuất Nhập",
+    "lowStock": "Cảnh Báo Tồn Thấp"
+  },
+  "filters": {
+    "warehouse": "Kho",
+    "allWarehouses": "Tất Cả Kho"
+  },
+  "messages": {
+    "total": "Tổng {{total}} mặt hàng"
+  }
+}

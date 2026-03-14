@@ -1,0 +1,23 @@
+{
+  "title": "Reports",
+  "types": {
+    "sales": "Sales Report",
+    "inventory": "Inventory Report",
+    "financial": "Financial Report",
+    "production": "Production Report",
+    "customer": "Customer Report"
+  },
+  "filters": {
+    "dateRange": "Date Range",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "warehouse": "Warehouse",
+    "category": "Category",
+    "product": "Product"
+  },
+  "actions": {
+    "generate": "Generate Report",
+    "export": "Export Report",
+    "print": "Print Report"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "title": "Notifications",
+  "list": {
+    "title": "Notification List",
+    "empty": "No notifications",
+    "markAllRead": "Mark All as Read"
+  },
+  "types": {
+    "order": "Order",
+    "payment": "Payment",
+    "inventory": "Inventory",
+    "system": "System"
+  },
+  "preferences": {
+    "title": "Notification Preferences",
+    "email": "Email",
+    "push": "Push Notifications",
+    "sms": "SMS"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "title": "Báo Cáo",
+  "types": {
+    "sales": "Báo Cáo Bán Hàng",
+    "inventory": "Báo Cáo Tồn Kho",
+    "financial": "Báo Cáo Tài Chính",
+    "production": "Báo Cáo Sản Xuất",
+    "customer": "Báo Cáo Khách Hàng"
+  },
+  "filters": {
+    "dateRange": "Khoảng Thời Gian",
+    "startDate": "Từ Ngày",
+    "endDate": "Đến Ngày",
+    "warehouse": "Kho",
+    "category": "Danh Mục",
+    "product": "Sản Phẩm"
+  },
+  "actions": {
+    "generate": "Tạo Báo Cáo",
+    "export": "Xuất Báo Cáo",
+    "print": "In Báo Cáo"
+  }
+}

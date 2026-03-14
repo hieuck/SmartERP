@@ -1,0 +1,42 @@
+{
+  "title": "Danh Sách Hóa Đơn",
+  "createButton": "Tạo Hóa Đơn",
+  "searchPlaceholder": "Tìm kiếm hóa đơn...",
+  "columns": {
+    "invoiceNumber": "Số HĐ",
+    "customer": "Khách Hàng",
+    "issueDate": "Ngày Phát Hành",
+    "dueDate": "Ngày Đáo Hạn",
+    "total": "Tổng Tiền",
+    "paidAmount": "Đã Thanh Toán",
+    "status": "Trạng Thái"
+  },
+  "status": {
+    "draft": "Nháp",
+    "sent": "Đã Gửi",
+    "paid": "Đã Thanh Toán",
+    "overdue": "Quá Hạn",
+    "cancelled": "Đã Hủy"
+  },
+  "actions": {
+    "view": "Xem",
+    "send": "Gửi",
+    "edit": "Sửa",
+    "delete": "Xóa"
+  },
+  "messages": {
+    "loadError": "Không thể tải danh sách hóa đơn",
+    "deleteSuccess": "Xóa hóa đơn thành công",
+    "deleteError": "Không thể xóa hóa đơn",
+    "sendSuccess": "Gửi hóa đơn thành công",
+    "sendError": "Không thể gửi hóa đơn",
+    "deleteConfirm": "Bạn có chắc muốn xóa hóa đơn này?",
+    "total": "Tổng {{total}} hóa đơn"
+  },
+  "filters": {
+    "status": "Trạng Thái",
+    "dateRange": "Khoảng Thời Gian",
+    "fromDate": "Từ ngày",
+    "toDate": "Đến ngày"
+  }
+}

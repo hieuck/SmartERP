@@ -1,18 +1,19 @@
+/**
+ * Customer List Page
+ * Displays list of customers with search and CRUD operations
+ * Uses StandardListPage for consistent UI
+ */
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Table, Button, Input, Space, Card, Tag, Popconfirm, message, Typography } from 'antd';
-import {
-  PlusOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  SearchOutlined,
-  UserOutlined,
-} from '@ant-design/icons';
+import { Tag, message } from 'antd';
+import { UserOutlined } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import customerService from '../../services/crm/customerService';
+import StandardListPage from '../../components/common/StandardListPage';
+import { formatCurrency } from '../../utils/responsive';
 import type { ColumnsType } from 'antd/es/table';
-
-const { Title } = Typography;
 
 interface Customer {
   id: number;
@@ -28,6 +29,7 @@ interface Customer {
 export default function CustomerList() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { t, i18n } = useTranslation(['customers', 'commonUi']);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -40,131 +42,90 @@ export default function CustomerList() {
   const deleteMutation = useMutation({
     mutationFn: (id: number) => customerService.delete(id),
     onSuccess: () => {
-      message.success('Xóa khách hàng thành công');
+      message.success(t('customers:messages.deleteSuccess'));
       queryClient.invalidateQueries({ queryKey: ['customers'] });
     },
     onError: () => {
-      message.error('Không thể xóa khách hàng');
+      message.error(t('customers:messages.deleteError'));
     },
   });
 
   const columns: ColumnsType<Customer> = [
     {
-      title: 'Tên khách hàng',
+      title: t('customers:columns.name'),
       dataIndex: 'name',
       key: 'name',
       ellipsis: true,
     },
     {
-      title: 'Email',
+      title: t('customers:columns.email'),
       dataIndex: 'email',
       key: 'email',
       ellipsis: true,
     },
     {
-      title: 'Số điện thoại',
+      title: t('customers:columns.phone'),
       dataIndex: 'phone',
       key: 'phone',
       width: 130,
     },
     {
-      title: 'Địa chỉ',
+      title: t('customers:columns.address'),
       dataIndex: 'address',
       key: 'address',
       ellipsis: true,
     },
     {
-      title: 'Hạn mức',
+      title: t('customers:columns.creditLimit'),
       dataIndex: 'creditLimit',
       key: 'creditLimit',
       width: 120,
-      render: (value: number) => `${value.toLocaleString('vi-VN')} ₫`,
+      align: 'right',
+      render: (value: number) => formatCurrency(value, i18n.language),
     },
     {
-      title: 'Công nợ',
+      title: t('customers:columns.balance'),
       dataIndex: 'balance',
       key: 'balance',
       width: 120,
+      align: 'right',
       render: (value: number) => (
-        <Tag color={value > 0 ? 'red' : 'green'}>{value.toLocaleString('vi-VN')} ₫</Tag>
-      ),
-    },
-    {
-      title: 'Thao tác',
-      key: 'action',
-      width: 120,
-      fixed: 'right',
-      render: (_: any, record: Customer) => (
-        <Space size="small">
-          <Button
-            type="link"
-            icon={<EditOutlined />}
-            onClick={() => navigate(`/dashboard/customers/${record.id}`)}
-          >
-            Sửa
-          </Button>
-          <Popconfirm
-            title="Xóa khách hàng"
-            description="Bạn có chắc muốn xóa khách hàng này?"
-            onConfirm={() => deleteMutation.mutate(record.id)}
-            okText="Xóa"
-            cancelText="Hủy"
-          >
-            <Button type="link" danger icon={<DeleteOutlined />}>
-              Xóa
-            </Button>
-          </Popconfirm>
-        </Space>
+        <Tag color={value > 0 ? 'red' : 'green'}>
+          {formatCurrency(value, i18n.language)}
+        </Tag>
       ),
     },
   ];
 
   return (
-    <div style={{ padding: '24px' }}>
-      <Card>
-        <Space direction="vertical" style={{ width: '100%' }} size="large">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Title level={3}>
-              <UserOutlined /> Danh sách khách hàng
-            </Title>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={() => navigate('/dashboard/customers/new')}
-            >
-              Thêm khách hàng
-            </Button>
-          </div>
-
-          <Input
-            placeholder="Tìm kiếm khách hàng..."
-            prefix={<SearchOutlined />}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{ width: 300 }}
-            allowClear
-          />
-
-          <Table
-            columns={columns}
-            dataSource={data?.data || []}
-            loading={isLoading}
-            rowKey="id"
-            pagination={{
-              current: page,
-              pageSize,
-              total: data?.meta?.total || 0,
-              showSizeChanger: true,
-              showTotal: (total) => `Tổng ${total} khách hàng`,
-              onChange: (newPage, newPageSize) => {
-                setPage(newPage);
-                setPageSize(newPageSize);
-              },
-            }}
-            scroll={{ x: 1000 }}
-          />
-        </Space>
-      </Card>
-    </div>
+    <StandardListPage
+      title={
+        <>
+          <UserOutlined /> {t('customers:title')}
+        </>
+      }
+      createButtonText={t('customers:createButton')}
+      onCreateClick={() => navigate('/dashboard/customers/new')}
+      searchPlaceholder={t('customers:searchPlaceholder')}
+      searchValue={search}
+      onSearchChange={setSearch}
+      columns={columns}
+      dataSource={data?.data || []}
+      loading={isLoading}
+      rowKey="id"
+      pagination={{
+        current: page,
+        pageSize,
+        total: data?.meta?.total || 0,
+        showTotal: (total) => t('customers:messages.total', { total }),
+        onChange: (newPage, newPageSize) => {
+          setPage(newPage);
+          setPageSize(newPageSize);
+        },
+      }}
+      onEdit={(record) => navigate(`/dashboard/customers/${record.id}`)}
+      onDelete={(record) => deleteMutation.mutate(record.id)}
+      deleteConfirmTitle={t('commonUi:messages.deleteConfirm')}
+    />
   );
 }

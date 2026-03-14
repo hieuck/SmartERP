@@ -1,5 +1,21 @@
+/**
+ * Error Boundary Component
+ * Catches unhandled errors in child components
+ * Displays fallback UI and allows user to retry
+ * Supports i18n and responsive design
+ *
+ * Usage:
+ * <ErrorBoundary>
+ *   <YourComponent />
+ * </ErrorBoundary>
+ */
+
 import React, { ReactNode } from 'react';
 import { Result, Button } from 'antd';
+import { useTranslation } from 'react-i18next';
+import { useResponsive } from '../../hooks/useResponsive';
+import { SPACING } from '../../constants/design-tokens';
+import { getButtonSize } from '../../utils/responsive';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -11,17 +27,21 @@ interface ErrorBoundaryState {
 }
 
 /**
- * Error Boundary Component
- * Catches unhandled errors in child components
- * Displays fallback UI and allows user to retry
- *
- * Usage:
- * <ErrorBoundary>
- *   <YourComponent />
- * </ErrorBoundary>
+ * HOC wrapper to provide hooks to class component
  */
-export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  constructor(props: ErrorBoundaryProps) {
+function withHooks(Component: React.ComponentType<any>) {
+  return function WrappedComponent(props: any) {
+    const { t } = useTranslation('commonUi');
+    const responsive = useResponsive();
+    return <Component {...props} t={t} responsive={responsive} />;
+  };
+}
+
+class ErrorBoundaryClass extends React.Component<
+  ErrorBoundaryProps & { t: any; responsive: any },
+  ErrorBoundaryState
+> {
+  constructor(props: ErrorBoundaryProps & { t: any; responsive: any }) {
     super(props);
     this.state = {
       hasError: false,
@@ -54,11 +74,14 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   };
 
   render() {
+    const { t, responsive } = this.props;
+    const { isMobile } = responsive;
+
     if (this.state.hasError) {
       return (
         <div
           style={{
-            padding: '48px 24px',
+            padding: isMobile ? SPACING.base : SPACING.xxl,
             minHeight: '100vh',
             display: 'flex',
             alignItems: 'center',
@@ -67,15 +90,44 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
         >
           <Result
             status="error"
-            title="Oops! Something went wrong"
+            title={
+              <span style={{ fontSize: isMobile ? 18 : 24 }}>
+                {t('errorState.title')}
+              </span>
+            }
             subTitle={
-              process.env.NODE_ENV === 'development'
-                ? this.state.error?.message
-                : 'An unexpected error occurred. Please try again.'
+              <div style={{ fontSize: isMobile ? 13 : 14 }}>
+                <div>{t('errorState.subtitle')}</div>
+                {process.env.NODE_ENV === 'development' && this.state.error && (
+                  <div style={{ marginTop: SPACING.md, color: '#ff4d4f' }}>
+                    <div style={{ fontWeight: 500, marginBottom: SPACING.xs }}>
+                      {t('errorState.subtitleDev')}
+                    </div>
+                    <code
+                      style={{
+                        display: 'block',
+                        padding: SPACING.sm,
+                        background: '#f5f5f5',
+                        borderRadius: 4,
+                        fontSize: 12,
+                        textAlign: 'left',
+                        whiteSpace: 'pre-wrap',
+                        wordBreak: 'break-word',
+                      }}
+                    >
+                      {this.state.error.message}
+                    </code>
+                  </div>
+                )}
+              </div>
             }
             extra={
-              <Button type="primary" onClick={this.handleReset}>
-                Try Again
+              <Button
+                type="primary"
+                onClick={this.handleReset}
+                size={getButtonSize(responsive)}
+              >
+                {t('actions.tryAgain')}
               </Button>
             }
           />
@@ -87,4 +139,5 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   }
 }
 
+export const ErrorBoundary = withHooks(ErrorBoundaryClass);
 export default ErrorBoundary;

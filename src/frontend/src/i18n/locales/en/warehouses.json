@@ -1,0 +1,57 @@
+{
+  "title": "Warehouse Management",
+  "createButton": "Add Warehouse",
+  "searchPlaceholder": "Search warehouses...",
+  "columns": {
+    "code": "Code",
+    "name": "Warehouse Name",
+    "address": "Address",
+    "phone": "Phone",
+    "status": "Status",
+    "isDefault": "Default"
+  },
+  "status": {
+    "active": "Active",
+    "inactive": "Inactive",
+    "pending": "Pending",
+    "completed": "Completed",
+    "cancelled": "Cancelled"
+  },
+  "labels": {
+    "default": "Default"
+  },
+  "messages": {
+    "deleteSuccess": "Warehouse deleted successfully",
+    "deleteError": "Cannot delete warehouse",
+    "total": "Total {{total}} warehouses"
+  },
+  "list": {
+    "title": "Warehouse List",
+    "empty": "No warehouses found",
+    "search": "Search warehouses..."
+  },
+  "form": {
+    "create": "Create Warehouse",
+    "edit": "Edit Warehouse",
+    "name": "Warehouse Name",
+    "code": "Warehouse Code",
+    "address": "Address",
+    "manager": "Manager",
+    "capacity": "Capacity"
+  },
+  "transfer": {
+    "title": "Stock Transfer",
+    "list": "Transfer List",
+    "create": "Create Transfer",
+    "from": "From Warehouse",
+    "to": "To Warehouse",
+    "product": "Product",
+    "quantity": "Quantity"
+  },
+  "report": {
+    "title": "Stock Report",
+    "byWarehouse": "By Warehouse",
+    "byProduct": "By Product",
+    "totalValue": "Total Value"
+  }
+}

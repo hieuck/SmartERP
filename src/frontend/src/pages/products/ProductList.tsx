@@ -9,6 +9,8 @@ import {
   AppstoreOutlined,
 } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
+import { useResponsive } from '../../hooks/useResponsive';
 import { productService } from '../../services/inventory/productService';
 import type { ColumnsType } from 'antd/es/table';
 
@@ -31,6 +33,8 @@ interface Product {
 export default function ProductList() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { t, i18n } = useTranslation(['products', 'common']);
+  const { isMobile, isTablet } = useResponsive();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -43,80 +47,96 @@ export default function ProductList() {
   const deleteMutation = useMutation({
     mutationFn: (id: number) => productService.delete(id),
     onSuccess: () => {
-      message.success('Xóa sản phẩm thành công');
+      message.success(t('common:messages.deleteSuccess'));
       queryClient.invalidateQueries({ queryKey: ['products'] });
     },
     onError: () => {
-      message.error('Không thể xóa sản phẩm');
+      message.error(t('products:messages.deleteError'));
     },
   });
 
+  // Format currency based on locale
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat(i18n.language === 'vi' ? 'vi-VN' : 'en-US', {
+      style: 'currency',
+      currency: i18n.language === 'vi' ? 'VND' : 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
+  };
+
   const columns: ColumnsType<Product> = [
     {
-      title: 'Mã SKU',
+      title: t('products:form.sku'),
       dataIndex: 'sku',
       key: 'sku',
-      width: 120,
+      width: isMobile ? 100 : 120,
     },
     {
-      title: 'Tên sản phẩm',
+      title: t('products:form.name'),
       dataIndex: 'name',
       key: 'name',
       ellipsis: true,
     },
     {
-      title: 'Danh mục',
+      title: t('products:form.category'),
       dataIndex: ['category', 'name'],
       key: 'category',
-      width: 150,
+      width: isMobile ? 100 : 150,
       render: (name: string) => name || '-',
     },
     {
-      title: 'Giá bán',
+      title: t('products:form.price'),
       dataIndex: 'price',
       key: 'price',
-      width: 120,
-      render: (value: number) => `${value.toLocaleString('vi-VN')} ₫`,
+      width: isMobile ? 100 : 120,
+      render: (value: number) => formatCurrency(value),
     },
     {
-      title: 'Giá vốn',
+      title: t('products:form.cost'),
       dataIndex: 'cost',
       key: 'cost',
-      width: 120,
-      render: (value: number) => `${value.toLocaleString('vi-VN')} ₫`,
+      width: isMobile ? 100 : 120,
+      render: (value: number) => formatCurrency(value),
     },
     {
-      title: 'Tồn kho',
+      title: t('products:form.stock'),
       dataIndex: 'stock',
       key: 'stock',
-      width: 100,
+      width: isMobile ? 80 : 100,
       render: (stock: number, record: Product) => (
         <Tag color={stock <= record.lowStockThreshold ? 'red' : 'green'}>{stock}</Tag>
       ),
     },
     {
-      title: 'Thao tác',
+      title: t('common:labels.actions'),
       key: 'action',
-      width: 120,
-      fixed: 'right',
+      width: isMobile ? 100 : 120,
+      fixed: isMobile ? undefined : 'right',
       render: (_: any, record: Product) => (
-        <Space size="small">
+        <Space size="small" direction={isMobile ? 'vertical' : 'horizontal'}>
           <Button
             type="link"
+            size={isMobile ? 'small' : 'middle'}
             icon={<EditOutlined />}
             onClick={() => navigate(`/dashboard/products/${record.id}`)}
           >
-            Sửa
+            {!isMobile && t('common:buttons.edit')}
           </Button>
           <Popconfirm
-            title="Xóa sản phẩm"
-            description="Bạn có chắc muốn xóa sản phẩm này?"
+            title={t('products:messages.deleteConfirm')}
+            description={t('products:messages.deleteDescription')}
             onConfirm={() => deleteMutation.mutate(record.id)}
-            okText="Xóa"
-            cancelText="Hủy"
+            okText={t('common:buttons.delete')}
+            cancelText={t('common:buttons.cancel')}
           >
-            <Button type="link" danger icon={<DeleteOutlined />}>
-              Xóa
+            <Button
+              type="link"
+              danger
+              size={isMobile ? 'small' : 'middle'}
+              icon={<DeleteOutlined />}
+            >
+              {!isMobile && t('common:buttons.delete')}
             </Button>
           </Popconfirm>
         </Space>
@@ -125,34 +145,47 @@ export default function ProductList() {
   ];
 
   return (
-    <div style={{ padding: '24px' }}>
-      <Card>
-        <Space direction="vertical" style={{ width: '100%' }} size="large">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Title level={3}>
-              <AppstoreOutlined /> Danh sách sản phẩm
+    <div style={{ padding: isMobile ? 12 : isTablet ? 16 : 24 }}>
+      <Card size={isMobile ? 'small' : 'default'}>
+        <Space direction="vertical" style={{ width: '100%' }} size={isMobile ? 'small' : 'large'}>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: isMobile ? 'column' : 'row',
+              justifyContent: 'space-between',
+              alignItems: isMobile ? 'flex-start' : 'center',
+              gap: isMobile ? 12 : 0,
+            }}
+          >
+            <Title level={isMobile ? 4 : 3} style={{ margin: 0 }}>
+              <AppstoreOutlined /> {t('products:list.title')}
             </Title>
-            <Space>
-              <Button onClick={() => navigate('/dashboard/products/categories')}>
-                Quản lý danh mục
+            <Space direction={isMobile ? 'vertical' : 'horizontal'} style={{ width: isMobile ? '100%' : 'auto' }}>
+              <Button
+                style={{ width: isMobile ? '100%' : 'auto' }}
+                onClick={() => navigate('/dashboard/products/categories')}
+              >
+                {t('products:categories.manage')}
               </Button>
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
+                style={{ width: isMobile ? '100%' : 'auto' }}
                 onClick={() => navigate('/dashboard/products/new')}
               >
-                Thêm sản phẩm
+                {t('products:form.create')}
               </Button>
             </Space>
           </div>
 
           <Input
-            placeholder="Tìm kiếm sản phẩm..."
+            placeholder={t('products:list.search')}
             prefix={<SearchOutlined />}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            style={{ width: 300 }}
+            style={{ width: isMobile ? '100%' : 300 }}
             allowClear
+            size={isMobile ? 'middle' : 'large'}
           />
 
           <Table
@@ -160,18 +193,20 @@ export default function ProductList() {
             dataSource={data?.data || []}
             loading={isLoading}
             rowKey="id"
+            size={isMobile ? 'small' : 'middle'}
             pagination={{
               current: page,
               pageSize,
               total: data?.meta?.total || 0,
-              showSizeChanger: true,
-              showTotal: (total) => `Tổng ${total} sản phẩm`,
+              showSizeChanger: !isMobile,
+              showTotal: (total) => t('products:list.total', { total }),
               onChange: (newPage, newPageSize) => {
                 setPage(newPage);
                 setPageSize(newPageSize);
               },
+              simple: isMobile,
             }}
-            scroll={{ x: 1000 }}
+            scroll={{ x: isMobile ? 800 : 1000 }}
           />
         </Space>
       </Card>

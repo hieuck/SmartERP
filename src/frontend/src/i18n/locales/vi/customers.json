@@ -1,0 +1,18 @@
+{
+  "title": "Danh Sách Khách Hàng",
+  "createButton": "Thêm Khách Hàng",
+  "searchPlaceholder": "Tìm kiếm khách hàng...",
+  "columns": {
+    "name": "Tên Khách Hàng",
+    "email": "Email",
+    "phone": "Số Điện Thoại",
+    "address": "Địa Chỉ",
+    "creditLimit": "Hạn Mức",
+    "balance": "Công Nợ"
+  },
+  "messages": {
+    "deleteSuccess": "Xóa khách hàng thành công",
+    "deleteError": "Không thể xóa khách hàng",
+    "total": "Tổng {{total}} khách hàng"
+  }
+}

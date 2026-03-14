@@ -5,14 +5,12 @@
  */
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tantml:parameter>
 import {
   Card,
   Row,
   Col,
   Statistic,
-  Table,
   Button,
   Space,
   DatePicker,
@@ -30,11 +28,12 @@ import {
   CheckCircleOutlined,
   BarChartOutlined,
 } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
+import StandardListPage from '../../components/common/StandardListPage';
 import productionService, { Worker } from '../../services/production/productionService';
 import { productService } from '../../services/inventory/productService';
+import { formatCurrency, formatDate } from '../../utils/responsive';
 import dayjs, { Dayjs } from 'dayjs';
-import { useResponsive } from '../../hooks/useResponsive';
-import { formatCurrency, formatDate } from '../../constants/ui';
 import type { ColumnsType } from 'antd/es/table';
 
 const { RangePicker } = DatePicker;
@@ -53,9 +52,8 @@ interface PieceworkRecord {
   notes?: string;
 }
 
-const PieceworkTracking = () => {
-  const { isMobile } = useResponsive();
-  const navigate = useNavigate();
+export default function PieceworkTracking() {
+  const { t } = useTranslation(['production', 'common']);
   const queryClient = useQueryClient();
 
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs]>([
@@ -140,14 +138,14 @@ const PieceworkTracking = () => {
       return response.data;
     },
     onSuccess: () => {
-      message.success('Ghi nhận công khoán thành công');
+      message.success(t('production:messages.saveSuccess'));
       setModalVisible(false);
       form.resetFields();
       queryClient.invalidateQueries({ queryKey: ['piecework'] });
       queryClient.invalidateQueries({ queryKey: ['piecework-stats'] });
     },
     onError: () => {
-      message.error('Ghi nhận công khoán thất bại');
+      message.error(t('production:messages.saveError'));
     },
   });
 
@@ -157,19 +155,18 @@ const PieceworkTracking = () => {
       await productionService.piecework.deletePieceworkRecord(id);
     },
     onSuccess: () => {
-      message.success('Xóa bản ghi thành công');
+      message.success(t('production:messages.deleteSuccess'));
       queryClient.invalidateQueries({ queryKey: ['piecework'] });
       queryClient.invalidateQueries({ queryKey: ['piecework-stats'] });
     },
     onError: () => {
-      message.error('Xóa bản ghi thất bại');
+      message.error(t('production:messages.deleteError'));
     },
   });
 
   const handleAdd = () => {
     form.validateFields().then((values) => {
-      const product = productsData?.find((p) => p.id === values.productId);
-      const worker = workersData?.find((w) => w.id === values.workerId);
+      const product = productsData?.find((p: any) => p.id === values.productId);
 
       addMutation.mutate({
         workerId: values.workerId,
@@ -185,88 +182,65 @@ const PieceworkTracking = () => {
 
   const columns: ColumnsType<PieceworkRecord> = [
     {
-      title: 'Ngày',
+      title: t('production:piecework.date'),
       dataIndex: 'date',
       key: 'date',
-      width: isMobile ? 80 : 100,
+      width: 120,
       render: (date: Date) => formatDate(date),
     },
     {
-      title: 'Công nhân',
+      title: t('production:piecework.worker'),
       dataIndex: ['worker', 'fullName'],
       key: 'workerName',
-      width: isMobile ? 100 : 150,
+      ellipsis: true,
     },
     {
-      title: 'Sản phẩm',
+      title: t('production:piecework.product'),
       dataIndex: 'productName',
       key: 'productName',
+      ellipsis: true,
     },
     {
-      title: 'Số lượng',
+      title: t('production:piecework.quantity'),
       dataIndex: 'quantity',
       key: 'quantity',
-      width: isMobile ? 70 : 100,
+      width: 100,
       align: 'right' as const,
       render: (value: number) => value.toLocaleString(),
     },
     {
-      title: 'Đơn giá',
+      title: t('production:piecework.pieceRate'),
       dataIndex: 'pieceRate',
       key: 'pieceRate',
-      width: isMobile ? 80 : 120,
+      width: 120,
       align: 'right' as const,
       render: (value: number) => formatCurrency(value),
     },
     {
-      title: 'Thành tiền',
+      title: t('production:piecework.totalPay'),
       dataIndex: 'totalPay',
       key: 'totalPay',
-      width: isMobile ? 90 : 130,
+      width: 130,
       align: 'right' as const,
       render: (value: number) => <Tag color="green">{formatCurrency(value)}</Tag>,
     },
-    {
-      title: 'Thao tác',
-      key: 'action',
-      width: 80,
-      render: (_: any, record: PieceworkRecord) => (
-        <Button
-          type="link"
-          danger
-          size="small"
-          onClick={() => {
-            Modal.confirm({
-              title: 'Xác nhận xóa',
-              content: 'Bạn có chắc muốn xóa bản ghi này?',
-              onOk: () => deleteMutation.mutate(record.id),
-            });
-          }}
-        >
-          Xóa
-        </Button>
-      ),
-    },
   ];
-
-  // Group by worker for summary
-  const workerSummary = stats.workerSummary || [];
 
   const summaryColumns: ColumnsType<any> = [
     {
-      title: 'Công nhân',
+      title: t('production:piecework.worker'),
       dataIndex: 'workerName',
       key: 'workerName',
     },
     {
-      title: 'Tổng sản lượng',
+      title: t('production:piecework.totalQuantity'),
       dataIndex: 'totalQuantity',
       key: 'totalQuantity',
       align: 'right' as const,
       render: (value: number) => value.toLocaleString(),
     },
     {
-      title: 'Tổng tiền',
+      title: t('production:piecework.totalPay'),
       dataIndex: 'totalPay',
       key: 'totalPay',
       align: 'right' as const,
@@ -278,28 +252,37 @@ const PieceworkTracking = () => {
     },
   ];
 
-  return (
-    <div style={{ padding: isMobile ? 16 : 24 }}>
-      <div
-        style={{
-          marginBottom: 24,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
+  const filterComponents = (
+    <Space wrap>
+      <RangePicker
+        value={dateRange}
+        onChange={(dates) => dates && setDateRange(dates as [Dayjs, Dayjs])}
+        format="DD/MM/YYYY"
+      />
+      <Select
+        placeholder={t('production:piecework.selectWorker')}
+        style={{ width: 200 }}
+        allowClear
+        value={selectedWorker}
+        onChange={setSelectedWorker}
       >
-        <h2 style={{ margin: 0 }}>Chấm công khoán</h2>
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => setModalVisible(true)}>
-          Ghi nhận sản lượng
-        </Button>
-      </div>
+        {workersData?.map((worker: Worker) => (
+          <Option key={worker.id} value={worker.id}>
+            {worker.fullName}
+          </Option>
+        ))}
+      </Select>
+    </Space>
+  );
 
+  return (
+    <div>
       {/* Statistics */}
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
         <Col xs={12} sm={6}>
           <Card>
             <Statistic
-              title="Tổng sản lượng"
+              title={t('production:piecework.totalQuantity')}
               value={stats.totalQuantity}
               prefix={<CheckCircleOutlined />}
               valueStyle={{ color: '#3f8600' }}
@@ -309,7 +292,7 @@ const PieceworkTracking = () => {
         <Col xs={12} sm={6}>
           <Card>
             <Statistic
-              title="Tổng tiền công"
+              title={t('production:piecework.totalAmount')}
               value={stats.totalPay}
               prefix={<DollarOutlined />}
               formatter={(value) => formatCurrency(Number(value))}
@@ -320,7 +303,7 @@ const PieceworkTracking = () => {
         <Col xs={12} sm={6}>
           <Card>
             <Statistic
-              title="Số công nhân"
+              title={t('production:piecework.totalWorkers')}
               value={stats.totalWorkers}
               prefix={<BarChartOutlined />}
             />
@@ -329,7 +312,7 @@ const PieceworkTracking = () => {
         <Col xs={12} sm={6}>
           <Card>
             <Statistic
-              title="TB/công nhân"
+              title={t('production:piecework.avgPerWorker')}
               value={stats.avgPayPerWorker}
               formatter={(value) => formatCurrency(Number(value))}
             />
@@ -337,70 +320,53 @@ const PieceworkTracking = () => {
         </Col>
       </Row>
 
-      {/* Filters */}
-      <Card style={{ marginBottom: 16 }}>
-        <Space wrap>
-          <RangePicker
-            value={dateRange}
-            onChange={(dates) => dates && setDateRange(dates as [Dayjs, Dayjs])}
-            format="DD/MM/YYYY"
-          />
-          <Select
-            placeholder="Chọn công nhân"
-            style={{ width: 200 }}
-            allowClear
-            value={selectedWorker}
-            onChange={setSelectedWorker}
-          >
-            {workersData?.map((worker) => (
-              <Option key={worker.id} value={worker.id}>
-                {worker.fullName}
-              </Option>
-            ))}
-          </Select>
-        </Space>
-      </Card>
-
       {/* Worker Summary */}
-      <Card title="Tổng hợp theo công nhân" style={{ marginBottom: 16 }}>
-        <Table
+      <Card title={t('production:piecework.workerSummary')} style={{ marginBottom: 16 }}>
+        <StandardListPage
           columns={summaryColumns}
-          dataSource={workerSummary}
-          rowKey="workerId"
+          dataSource={stats.workerSummary || []}
           pagination={false}
-          size="small"
         />
       </Card>
 
       {/* Detailed Records */}
-      <Card title="Chi tiết sản lượng">
-        <Table
-          columns={columns}
-          dataSource={records}
-          rowKey="id"
-          loading={isLoading}
-          pagination={{ pageSize: 20 }}
-          scroll={{ x: 800 }}
-        />
-      </Card>
+      <StandardListPage
+        title={t('production:piecework.detailedRecords')}
+        createButtonText={t('production:piecework.recordOutput')}
+        onCreateClick={() => setModalVisible(true)}
+        filters={filterComponents}
+        columns={columns}
+        dataSource={records}
+        loading={isLoading || addMutation.isPending || deleteMutation.isPending}
+        onDelete={(record) => deleteMutation.mutate(record.id)}
+        deleteConfirmTitle={t('production:messages.deleteConfirm')}
+        pagination={{
+          current: 1,
+          pageSize: 20,
+          total: records.length,
+          showTotal: (total: number) => t('production:messages.total', { total }),
+          onChange: () => {},
+        }}
+      />
 
       {/* Add Modal */}
       <Modal
-        title="Ghi nhận sản lượng"
+        title={t('production:piecework.recordOutput')}
         open={modalVisible}
         onOk={handleAdd}
         onCancel={() => {
           setModalVisible(false);
           form.resetFields();
         }}
-        okText="Lưu"
-        cancelText="Hủy"
+        okText={t('production:actions.save')}
+        cancelText={t('production:actions.cancel')}
+        confirmLoading={addMutation.isPending}
       >
         <Form form={form} layout="vertical">
           <Form.Item
             name="date"
-            label="Ngày"
-            rules={[{ required: true, message: 'Vui lòng chọn ngày' }]}
+            label={t('production:piecework.date')}
+            rules={[{ required: true, message: t('production:validation.required') }]}
             initialValue={dayjs()}
           >
             <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" />
@@ -408,11 +374,15 @@ const PieceworkTracking = () => {
 
           <Form.Item
             name="workerId"
-            label="Công nhân"
-            rules={[{ required: true, message: 'Vui lòng chọn công nhân' }]}
+            label={t('production:piecework.worker')}
+            rules={[{ required: true, message: t('production:validation.required') }]}
           >
-            <Select placeholder="Chọn công nhân" showSearch optionFilterProp="children">
-              {workersData?.map((worker) => (
+            <Select
+              placeholder={t('production:piecework.selectWorker')}
+              showSearch
+              optionFilterProp="children"
+            >
+              {workersData?.map((worker: Worker) => (
                 <Option key={worker.id} value={worker.id}>
                   {worker.fullName} - {worker.code}
                 </Option>
@@ -422,11 +392,15 @@ const PieceworkTracking = () => {
 
           <Form.Item
             name="productId"
-            label="Sản phẩm"
-            rules={[{ required: true, message: 'Vui lòng chọn sản phẩm' }]}
+            label={t('production:piecework.product')}
+            rules={[{ required: true, message: t('production:validation.required') }]}
           >
-            <Select placeholder="Chọn sản phẩm" showSearch optionFilterProp="children">
-              {productsData?.map((product) => (
+            <Select
+              placeholder={t('production:piecework.selectProduct')}
+              showSearch
+              optionFilterProp="children"
+            >
+              {productsData?.map((product: any) => (
                 <Option key={product.id} value={product.id}>
                   {product.name} - {product.code}
                 </Option>
@@ -436,10 +410,10 @@ const PieceworkTracking = () => {
 
           <Form.Item
             name="quantity"
-            label="Số lượng"
+            label={t('production:piecework.quantity')}
             rules={[
-              { required: true, message: 'Vui lòng nhập số lượng' },
-              { type: 'number', min: 1, message: 'Số lượng phải lớn hơn 0' },
+              { required: true, message: t('production:validation.required') },
+              { type: 'number', min: 1, message: t('production:validation.minQuantity') },
             ]}
           >
             <InputNumber style={{ width: '100%' }} min={1} />
@@ -447,10 +421,10 @@ const PieceworkTracking = () => {
 
           <Form.Item
             name="pieceRate"
-            label="Đơn giá (VNĐ/sản phẩm)"
+            label={t('production:piecework.ratePerUnit')}
             rules={[
-              { required: true, message: 'Vui lòng nhập đơn giá' },
-              { type: 'number', min: 0, message: 'Đơn giá phải lớn hơn hoặc bằng 0' },
+              { required: true, message: t('production:validation.required') },
+              { type: 'number', min: 0, message: t('production:validation.invalidAmount') },
             ]}
           >
             <InputNumber
@@ -461,13 +435,11 @@ const PieceworkTracking = () => {
             />
           </Form.Item>
 
-          <Form.Item name="notes" label="Ghi chú">
-            <Input.TextArea rows={3} placeholder="Ghi chú (nếu có)" />
+          <Form.Item name="notes" label={t('production:piecework.notes')}>
+            <Input.TextArea rows={3} placeholder={t('production:piecework.notes')} />
           </Form.Item>
         </Form>
       </Modal>
     </div>
   );
-};
-
-export default PieceworkTracking;
+}

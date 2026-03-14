@@ -1,0 +1,36 @@
+{
+  "title": "Danh Sách Nhà Cung Cấp",
+  "createButton": "Thêm Nhà Cung Cấp",
+  "searchPlaceholder": "Tìm kiếm nhà cung cấp...",
+  "columns": {
+    "name": "Tên Nhà Cung Cấp",
+    "email": "Email",
+    "phone": "Số Điện Thoại",
+    "rating": "Đánh Giá",
+    "paymentTerms": "Điều Khoản Thanh Toán",
+    "leadTime": "Thời Gian Giao Hàng",
+    "leadTimeDays": "{{days}} ngày"
+  },
+  "messages": {
+    "deleteSuccess": "Xóa nhà cung cấp thành công",
+    "deleteError": "Không thể xóa nhà cung cấp",
+    "total": "Tổng {{total}} nhà cung cấp"
+  },
+  "form": {
+    "create": "Thêm Nhà Cung Cấp",
+    "edit": "Chỉnh Sửa Nhà Cung Cấp",
+    "name": "Tên Nhà Cung Cấp",
+    "code": "Mã NCC",
+    "contact": "Người Liên Hệ",
+    "phone": "Số Điện Thoại",
+    "email": "Email",
+    "address": "Địa Chỉ",
+    "taxCode": "Mã Số Thuế",
+    "bankAccount": "Tài Khoản Ngân Hàng",
+    "notes": "Ghi Chú"
+  },
+  "status": {
+    "active": "Hoạt Động",
+    "inactive": "Không Hoạt Động"
+  }
+}

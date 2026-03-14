@@ -1,0 +1,41 @@
+{
+  "title": "Supplier List",
+  "createButton": "Add Supplier",
+  "searchPlaceholder": "Search suppliers...",
+  "columns": {
+    "name": "Supplier Name",
+    "email": "Email",
+    "phone": "Phone Number",
+    "rating": "Rating",
+    "paymentTerms": "Payment Terms",
+    "leadTime": "Lead Time",
+    "leadTimeDays": "{{days}} days"
+  },
+  "messages": {
+    "deleteSuccess": "Supplier deleted successfully",
+    "deleteError": "Cannot delete supplier",
+    "total": "Total {{total}} suppliers"
+  },
+  "list": {
+    "title": "Supplier List",
+    "empty": "No suppliers found",
+    "search": "Search suppliers..."
+  },
+  "form": {
+    "create": "Add Supplier",
+    "edit": "Edit Supplier",
+    "name": "Supplier Name",
+    "code": "Supplier Code",
+    "contact": "Contact Person",
+    "phone": "Phone",
+    "email": "Email",
+    "address": "Address",
+    "taxCode": "Tax Code",
+    "bankAccount": "Bank Account",
+    "notes": "Notes"
+  },
+  "status": {
+    "active": "Active",
+    "inactive": "Inactive"
+  }
+}

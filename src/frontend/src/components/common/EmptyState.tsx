@@ -1,6 +1,26 @@
+/**
+ * EmptyState Component
+ *
+ * Standardized empty state component following Ant Design guidelines
+ * Used when lists or tables have no data
+ * Supports i18n and responsive design
+ *
+ * @example
+ * <EmptyState
+ *   description={t('products:messages.noProducts')}
+ *   actionText={t('products:actions.createProduct')}
+ *   onAction={() => navigate('/products/new')}
+ *   showAction
+ * />
+ */
+
+import { ReactNode } from 'react';
 import { Empty, Button } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
-import { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useResponsive } from '../../hooks/useResponsive';
+import { SPACING, BORDER_RADIUS } from '../../constants/design-tokens';
+import { getSpacing, getButtonSize } from '../../utils/responsive';
 
 interface EmptyStateProps {
   description?: string;
@@ -10,42 +30,41 @@ interface EmptyStateProps {
   showAction?: boolean;
 }
 
-/**
- * EmptyState Component
- *
- * Standardized empty state component following Ant Design guidelines
- * Used when lists or tables have no data
- *
- * @example
- * <EmptyState
- *   description="Chưa có sản phẩm nào"
- *   actionText="Tạo Sản Phẩm Mới"
- *   onAction={() => navigate('/products/new')}
- *   showAction
- * />
- */
 export default function EmptyState({
-  description = 'Không có dữ liệu',
+  description,
   image,
-  actionText = 'Tạo Mới',
+  actionText,
   onAction,
   showAction = false,
 }: EmptyStateProps) {
+  const { t } = useTranslation('commonUi');
+  const responsive = useResponsive();
+  const { isMobile } = responsive;
+
+  const padding = getSpacing(responsive, 'sectionSpacing');
+
   return (
     <div
       style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '48px 0',
+        padding: `${padding * 2}px 0`,
         background: '#fff',
-        borderRadius: 8,
+        borderRadius: BORDER_RADIUS.lg,
       }}
     >
       <Empty
         image={image || Empty.PRESENTED_IMAGE_SIMPLE}
         description={
-          <span style={{ color: 'rgba(0, 0, 0, 0.45)', fontSize: 14 }}>{description}</span>
+          <span
+            style={{
+              color: 'rgba(0, 0, 0, 0.45)',
+              fontSize: isMobile ? 13 : 14,
+            }}
+          >
+            {description || t('emptyState.noData')}
+          </span>
         }
       >
         {showAction && onAction && (
@@ -53,9 +72,10 @@ export default function EmptyState({
             type="primary"
             icon={<PlusOutlined />}
             onClick={onAction}
-            style={{ marginTop: 16 }}
+            size={getButtonSize(responsive)}
+            style={{ marginTop: SPACING.base }}
           >
-            {actionText}
+            {actionText || t('emptyState.createNew')}
           </Button>
         )}
       </Empty>

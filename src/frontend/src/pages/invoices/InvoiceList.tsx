@@ -1,27 +1,12 @@
-import { useState, useEffect } from 'react';
-import {
-  Table,
-  Button,
-  Space,
-  Tag,
-  Input,
-  Select,
-  DatePicker,
-  Card,
-  message,
-  Popconfirm,
-} from 'antd';
-import {
-  PlusOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  EyeOutlined,
-  SendOutlined,
-} from '@ant-design/icons';
+import { useState } from 'react';
+import { Button, Space, Tag, Select, DatePicker, message, Popconfirm } from 'antd';
+import { EditOutlined, DeleteOutlined, EyeOutlined, SendOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { invoiceService, Invoice, InvoiceStatus } from '../../services/accounting/invoiceService';
-import dayjs from 'dayjs';
-import { useResponsive } from '../../hooks/useResponsive';
+import { useTranslation } from 'react-i18next';
+import { Invoice, InvoiceStatus } from '../../services/accounting/invoiceService';
+import StandardListPage from '../../components/common/StandardListPage';
+import { formatCurrency, formatDate } from '../../utils/responsive';
+import { useInvoices, useDeleteInvoice, useSendInvoice } from '../../hooks/useInvoices';
 
 const { RangePicker } = DatePicker;
 
@@ -33,132 +18,97 @@ const statusColors: Record<InvoiceStatus, string> = {
   [InvoiceStatus.CANCELLED]: 'default',
 };
 
-const statusLabels: Record<InvoiceStatus, string> = {
-  [InvoiceStatus.DRAFT]: 'Nháp',
-  [InvoiceStatus.SENT]: 'Đã gửi',
-  [InvoiceStatus.PAID]: 'Đã thanh toán',
-  [InvoiceStatus.OVERDUE]: 'Quá hạn',
-  [InvoiceStatus.CANCELLED]: 'Đã hủy',
-};
-
 export default function InvoiceList() {
   const navigate = useNavigate();
-  const { isMobile } = useResponsive();
-  const [loading, setLoading] = useState(false);
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [total, setTotal] = useState(0);
+  const { t } = useTranslation(['invoices', 'common']);
   const [filters, setFilters] = useState({
     page: 1,
     limit: 10,
     status: undefined as InvoiceStatus | undefined,
-    customerId: undefined as string | undefined,
     startDate: undefined as string | undefined,
     endDate: undefined as string | undefined,
   });
 
-  useEffect(() => {
-    fetchInvoices();
-  }, [filters]);
-
-  const fetchInvoices = async () => {
-    setLoading(true);
-    try {
-      const response = await invoiceService.getAll(filters);
-      setInvoices(response.data || []);
-      setTotal(response.total || 0);
-    } catch (error: any) {
-      message.error('Không thể tải danh sách hóa đơn: ' + (error.message || 'Lỗi không xác định'));
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: invoices = [], isLoading } = useInvoices(filters);
+  const deleteInvoiceMutation = useDeleteInvoice();
+  const sendInvoiceMutation = useSendInvoice();
 
   const handleDelete = async (id: string) => {
     try {
-      await invoiceService.delete(id);
-      message.success('Xóa hóa đơn thành công');
-      fetchInvoices();
-    } catch (error: any) {
-      message.error('Không thể xóa hóa đơn: ' + (error.message || 'Lỗi không xác định'));
+      await deleteInvoiceMutation.mutateAsync(id);
+      message.success(t('invoices:messages.deleteSuccess'));
+    } catch (error: unknown) {
+      message.error(t('invoices:messages.deleteError'));
     }
   };
 
   const handleSend = async (id: string) => {
     try {
-      await invoiceService.send(id);
-      message.success('Gửi hóa đơn thành công');
-      fetchInvoices();
-    } catch (error: any) {
-      message.error('Không thể gửi hóa đơn: ' + (error.message || 'Lỗi không xác định'));
+      await sendInvoiceMutation.mutateAsync(id);
+      message.success(t('invoices:messages.sendSuccess'));
+    } catch (error: unknown) {
+      message.error(t('invoices:messages.sendError'));
     }
   };
 
   const columns = [
     {
-      title: 'Số HĐ',
+      title: t('invoices:columns.invoiceNumber'),
       dataIndex: 'invoiceNumber',
       key: 'invoiceNumber',
       width: 150,
     },
     {
-      title: 'Khách hàng',
+      title: t('invoices:columns.customer'),
       dataIndex: ['customer', 'name'],
       key: 'customer',
       ellipsis: true,
     },
     {
-      title: 'Ngày phát hành',
+      title: t('invoices:columns.issueDate'),
       dataIndex: 'issueDate',
       key: 'issueDate',
       width: 120,
-      render: (date: string) => dayjs(date).format('DD/MM/YYYY'),
+      render: (date: string) => formatDate(date),
     },
     {
-      title: 'Ngày đáo hạn',
+      title: t('invoices:columns.dueDate'),
       dataIndex: 'dueDate',
       key: 'dueDate',
       width: 120,
-      render: (date: string) => dayjs(date).format('DD/MM/YYYY'),
+      render: (date: string) => formatDate(date),
     },
     {
-      title: 'Tổng tiền',
+      title: t('invoices:columns.total'),
       dataIndex: 'total',
       key: 'total',
       width: 150,
       align: 'right' as const,
-      render: (val: number) =>
-        new Intl.NumberFormat('vi-VN', {
-          style: 'currency',
-          currency: 'VND',
-        }).format(val),
+      render: (val: number) => formatCurrency(val),
     },
     {
-      title: 'Đã thanh toán',
+      title: t('invoices:columns.paidAmount'),
       dataIndex: 'paidAmount',
       key: 'paidAmount',
       width: 150,
       align: 'right' as const,
-      render: (val: number) =>
-        new Intl.NumberFormat('vi-VN', {
-          style: 'currency',
-          currency: 'VND',
-        }).format(val),
+      render: (val: number) => formatCurrency(val),
     },
     {
-      title: 'Trạng thái',
+      title: t('invoices:columns.status'),
       dataIndex: 'status',
       key: 'status',
       width: 120,
       render: (status: InvoiceStatus) => (
-        <Tag color={statusColors[status]}>{statusLabels[status]}</Tag>
+        <Tag color={statusColors[status]}>{t(`invoices:status.${status}`)}</Tag>
       ),
     },
     {
-      title: 'Thao tác',
+      title: t('common:actions.title'),
       key: 'action',
       width: 200,
       fixed: 'right' as const,
-      render: (_: any, record: Invoice) => (
+      render: (_: unknown, record: Invoice) => (
         <Space size="small">
           <Button
             type="link"
@@ -166,7 +116,7 @@ export default function InvoiceList() {
             icon={<EyeOutlined />}
             onClick={() => navigate(`/dashboard/invoices/${record.id}`)}
           >
-            Xem
+            {t('invoices:actions.view')}
           </Button>
           {record.status === InvoiceStatus.DRAFT && (
             <>
@@ -176,7 +126,7 @@ export default function InvoiceList() {
                 icon={<SendOutlined />}
                 onClick={() => handleSend(record.id)}
               >
-                Gửi
+                {t('invoices:actions.send')}
               </Button>
               <Button
                 type="link"
@@ -184,18 +134,18 @@ export default function InvoiceList() {
                 icon={<EditOutlined />}
                 onClick={() => navigate(`/dashboard/invoices/${record.id}/edit`)}
               >
-                Sửa
+                {t('invoices:actions.edit')}
               </Button>
             </>
           )}
           <Popconfirm
-            title="Bạn có chắc muốn xóa hóa đơn này?"
+            title={t('invoices:messages.deleteConfirm')}
             onConfirm={() => handleDelete(record.id)}
-            okText="Xóa"
-            cancelText="Hủy"
+            okText={t('common:actions.delete')}
+            cancelText={t('common:actions.cancel')}
           >
             <Button type="link" size="small" danger icon={<DeleteOutlined />}>
-              Xóa
+              {t('invoices:actions.delete')}
             </Button>
           </Popconfirm>
         </Space>
@@ -203,69 +153,54 @@ export default function InvoiceList() {
     },
   ];
 
-  return (
-    <div>
-      <Card
-        title="Danh sách hóa đơn"
-        extra={
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => navigate('/dashboard/invoices/new')}
-          >
-            Tạo hóa đơn
-          </Button>
-        }
+  const filterComponents = (
+    <Space wrap>
+      <Select
+        placeholder={t('invoices:filters.status')}
+        style={{ width: 150 }}
+        allowClear
+        value={filters.status}
+        onChange={(value) => setFilters({ ...filters, status: value, page: 1 })}
       >
-        <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-          <Space wrap>
-            <Select
-              placeholder="Trạng thái"
-              style={{ width: 150 }}
-              allowClear
-              value={filters.status}
-              onChange={(value) => setFilters({ ...filters, status: value, page: 1 })}
-            >
-              {Object.entries(statusLabels).map(([key, label]) => (
-                <Select.Option key={key} value={key}>
-                  {label}
-                </Select.Option>
-              ))}
-            </Select>
-            <RangePicker
-              format="DD/MM/YYYY"
-              placeholder={['Từ ngày', 'Đến ngày']}
-              onChange={(dates) => {
-                setFilters({
-                  ...filters,
-                  startDate: dates?.[0]?.format('YYYY-MM-DD'),
-                  endDate: dates?.[1]?.format('YYYY-MM-DD'),
-                  page: 1,
-                });
-              }}
-            />
-          </Space>
+        {Object.values(InvoiceStatus).map((status) => (
+          <Select.Option key={status} value={status}>
+            {t(`invoices:status.${status}`)}
+          </Select.Option>
+        ))}
+      </Select>
+      <RangePicker
+        format="DD/MM/YYYY"
+        placeholder={[t('invoices:filters.fromDate'), t('invoices:filters.toDate')]}
+        onChange={(dates) => {
+          setFilters({
+            ...filters,
+            startDate: dates?.[0]?.format('YYYY-MM-DD'),
+            endDate: dates?.[1]?.format('YYYY-MM-DD'),
+            page: 1,
+          });
+        }}
+      />
+    </Space>
+  );
 
-          <Table
-            loading={loading}
-            dataSource={invoices}
-            columns={columns}
-            rowKey="id"
-            scroll={{ x: 'max-content' }}
-            size={isMobile ? 'small' : 'middle'}
-            pagination={{
-              current: filters.page,
-              pageSize: filters.limit,
-              total,
-              showSizeChanger: true,
-              showTotal: (total) => `Tổng ${total} hóa đơn`,
-              onChange: (page, pageSize) => {
-                setFilters({ ...filters, page, limit: pageSize });
-              },
-            }}
-          />
-        </Space>
-      </Card>
-    </div>
+  return (
+    <StandardListPage
+      title={t('invoices:title')}
+      createButtonText={t('invoices:createButton')}
+      onCreateClick={() => navigate('/dashboard/invoices/new')}
+      loading={isLoading || deleteInvoiceMutation.isPending || sendInvoiceMutation.isPending}
+      dataSource={invoices}
+      columns={columns}
+      filters={filterComponents}
+      pagination={{
+        current: filters.page,
+        pageSize: filters.limit,
+        total: invoices.length,
+        showTotal: (total: number) => t('invoices:messages.total', { total }),
+        onChange: (page: number, pageSize: number) => {
+          setFilters({ ...filters, page, limit: pageSize });
+        },
+      }}
+    />
   );
 }

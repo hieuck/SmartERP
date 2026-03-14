@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - 2026-03-14
+
+- **Frontend i18n (Internationalization) + Refactoring** (Phase 1-3 Complete)
+  - ✅ **Infrastructure Setup** (Phase 1)
+    - Installed i18next, react-i18next, i18next-browser-languagedetector
+    - Created i18n configuration with language detection
+    - Translation files structure: `src/frontend/src/i18n/locales/{en,vi}/`
+    - 7 namespaces: common, auth, dashboard, products, orders, customers, inventory
+    - LanguageSwitcher component with Ant Design locale sync
+    - I18N_GUIDE.md documentation
+  - ✅ **Core Components Refactored** (Phase 2)
+    - LoginPage: Full i18n support, removed hardcoded text
+    - Dashboard: Full i18n support, KPI cards, charts, tables translated
+    - Header: Full i18n support, LanguageSwitcher integrated
+  - ✅ **Auth Pages Refactored** (Phase 3)
+    - RegisterPage: Full i18n support, all form fields translated
+    - LanguageSwitcher added to RegisterPage header
+  - **Features:**
+    - Languages: English (en), Vietnamese (vi)
+    - Auto-detect user language from browser/localStorage
+    - Ant Design locale synced with i18n language
+    - Translation keys: 200+ keys across 7 namespaces
+    - Code quality: Removed all hardcoded text, improved maintainability
+  - **Build Status:** ✅ All builds successful, no errors
+  - **Next Steps:** Refactor business modules (Products, Orders, Customers, Inventory pages)
+
 ### Added - 2026-03-09
 
 - **45-Day Sprint Plan Approved** (Tech Lead Decision)

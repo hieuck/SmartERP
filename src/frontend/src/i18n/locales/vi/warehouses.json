@@ -1,0 +1,57 @@
+{
+  "title": "Quản Lý Kho",
+  "createButton": "Thêm Kho",
+  "searchPlaceholder": "Tìm kiếm kho...",
+  "columns": {
+    "code": "Mã",
+    "name": "Tên Kho",
+    "address": "Địa Chỉ",
+    "phone": "Điện Thoại",
+    "status": "Trạng Thái",
+    "isDefault": "Mặc Định"
+  },
+  "status": {
+    "active": "Hoạt Động",
+    "inactive": "Ngừng",
+    "pending": "Chờ Xử Lý",
+    "completed": "Hoàn Thành",
+    "cancelled": "Đã Hủy"
+  },
+  "labels": {
+    "default": "Mặc định"
+  },
+  "messages": {
+    "deleteSuccess": "Xóa kho thành công",
+    "deleteError": "Không thể xóa kho",
+    "total": "Tổng {{total}} kho"
+  },
+  "list": {
+    "title": "Danh Sách Kho",
+    "empty": "Không tìm thấy kho nào",
+    "search": "Tìm kiếm kho..."
+  },
+  "form": {
+    "create": "Tạo Kho Mới",
+    "edit": "Chỉnh Sửa Kho",
+    "name": "Tên Kho",
+    "code": "Mã Kho",
+    "address": "Địa Chỉ",
+    "manager": "Quản Lý",
+    "capacity": "Sức Chứa"
+  },
+  "transfer": {
+    "title": "Chuyển Kho",
+    "list": "Danh Sách Chuyển Kho",
+    "create": "Tạo Phiếu Chuyển",
+    "from": "Từ Kho",
+    "to": "Đến Kho",
+    "product": "Sản Phẩm",
+    "quantity": "Số Lượng"
+  },
+  "report": {
+    "title": "Báo Cáo Tồn Kho",
+    "byWarehouse": "Theo Kho",
+    "byProduct": "Theo Sản Phẩm",
+    "totalValue": "Tổng Giá Trị"
+  }
+}

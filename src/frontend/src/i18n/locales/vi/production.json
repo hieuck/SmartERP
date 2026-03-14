@@ -1,0 +1,92 @@
+{
+  "title": "Quản Lý Sản Xuất",
+  "workers": {
+    "title": "Nhân Viên",
+    "list": "Danh Sách Nhân Viên",
+    "create": "Thêm Nhân Viên",
+    "edit": "Chỉnh Sửa Nhân Viên",
+    "name": "Tên Nhân Viên",
+    "code": "Mã Nhân Viên",
+    "department": "Phòng Ban",
+    "position": "Chức Vụ",
+    "salary": "Lương Cơ Bản"
+  },
+  "attendance": {
+    "title": "Chấm Công",
+    "checkIn": "Vào Ca",
+    "checkOut": "Tan Ca",
+    "date": "Ngày",
+    "shift": "Ca Làm",
+    "status": "Trạng Thái",
+    "hours": "Số Giờ Làm"
+  },
+  "piecework": {
+    "title": "Chấm Công Khoán",
+    "product": "Sản Phẩm",
+    "quantity": "Số Lượng Hoàn Thành",
+    "rate": "Đơn Giá",
+    "amount": "Thành Tiền"
+  },
+  "shifts": {
+    "title": "Ca Làm Việc",
+    "morning": "Ca Sáng",
+    "afternoon": "Ca Chiều",
+    "night": "Ca Đêm",
+    "assign": "Phân Ca"
+  },
+  "payroll": {
+    "title": "Tính Lương",
+    "period": "Kỳ Lương",
+    "baseSalary": "Lương Cơ Bản",
+    "overtime": "Làm Thêm Giờ",
+    "bonus": "Thưởng",
+    "deduction": "Khấu Trừ",
+    "netPay": "Lương Thực Nhận"
+  },
+  "advances": {
+    "title": "Tạm Ứng",
+    "request": "Yêu Cầu Tạm Ứng",
+    "amount": "Số Tiền",
+    "reason": "Lý Do",
+    "status": "Trạng Thái",
+    "approved": "Đã Duyệt",
+    "pending": "Chờ Duyệt"
+  },
+  "materials": {
+    "title": "Nguyên Vật Liệu",
+    "list": "Danh Sách NVL",
+    "name": "Tên NVL",
+    "code": "Mã NVL",
+    "unit": "Đơn Vị",
+    "stock": "Tồn Kho",
+    "transactions": "Giao Dịch"
+  },
+  "molds": {
+    "title": "Khuôn Mẫu",
+    "list": "Danh Sách Khuôn",
+    "code": "Mã Khuôn",
+    "name": "Tên Khuôn",
+    "status": "Trạng Thái",
+    "maintenance": "Bảo Trì",
+    "lastMaintenance": "Bảo Trì Lần Cuối",
+    "nextMaintenance": "Bảo Trì Tiếp Theo"
+  },
+  "orders": {
+    "title": "Lệnh Sản Xuất",
+    "list": "Danh Sách Lệnh",
+    "create": "Tạo Lệnh SX",
+    "orderNumber": "Số Lệnh",
+    "product": "Sản Phẩm",
+    "quantity": "Số Lượng",
+    "startDate": "Ngày Bắt Đầu",
+    "endDate": "Ngày Kết Thúc",
+    "status": "Trạng Thái"
+  },
+  "reports": {
+    "title": "Báo Cáo Sản Xuất",
+    "efficiency": "Hiệu Suất SX",
+    "output": "Báo Cáo Sản Lượng",
+    "quality": "Báo Cáo Chất Lượng",
+    "cost": "Phân Tích Chi Phí"
+  }
+}

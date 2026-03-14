@@ -8,7 +8,6 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Card,
-  Table,
   Button,
   Space,
   DatePicker,
@@ -28,15 +27,18 @@ import {
   CheckCircleOutlined,
   CloseCircleOutlined,
 } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
+import StandardListPage from '../../components/common/StandardListPage';
 import productionService, { Attendance, Worker } from '../../services/production/productionService';
+import { formatDate } from '../../utils/responsive';
 import dayjs, { Dayjs } from 'dayjs';
-import { useResponsive } from '../../hooks/useResponsive';
+import type { ColumnsType } from 'antd/es/table';
 
 const { Option } = Select;
 const { RangePicker } = DatePicker;
 
-const AttendanceTracking = () => {
-  const { isMobile } = useResponsive();
+export default function AttendanceTracking() {
+  const { t } = useTranslation(['production', 'common']);
   const queryClient = useQueryClient();
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs]>([
@@ -105,14 +107,14 @@ const AttendanceTracking = () => {
       return response.data;
     },
     onSuccess: () => {
-      message.success('Chấm công vào thành công');
+      message.success(t('production:messages.checkInSuccess'));
       queryClient.invalidateQueries({ queryKey: ['attendances'] });
       queryClient.invalidateQueries({ queryKey: ['attendance-report'] });
       setCheckInModalVisible(false);
       form.resetFields();
     },
     onError: () => {
-      message.error('Chấm công vào thất bại');
+      message.error(t('production:messages.checkInError'));
     },
   });
 
@@ -123,19 +125,15 @@ const AttendanceTracking = () => {
       return response.data;
     },
     onSuccess: () => {
-      message.success('Chấm công ra thành công');
+      message.success(t('production:messages.checkOutSuccess'));
       queryClient.invalidateQueries({ queryKey: ['attendances'] });
       queryClient.invalidateQueries({ queryKey: ['attendance-report'] });
       setCheckOutModalVisible(false);
     },
     onError: () => {
-      message.error('Chấm công ra thất bại');
+      message.error(t('production:messages.checkOutError'));
     },
   });
-
-  const handleCheckIn = () => {
-    setCheckInModalVisible(true);
-  };
 
   const handleCheckOut = (record: Attendance) => {
     setSelectedAttendance(record);
@@ -165,40 +163,39 @@ const AttendanceTracking = () => {
     early_leave: 'yellow',
   };
 
-  const statusLabels: Record<string, string> = {
-    present: 'Có mặt',
-    absent: 'Vắng',
-    late: 'Đi muộn',
-    early_leave: 'Về sớm',
-  };
-
-  const columns = [
+  const columns: ColumnsType<Attendance> = [
     {
-      title: 'Nhân viên',
+      title: t('production:attendance.worker'),
       dataIndex: ['worker', 'fullName'],
       key: 'worker',
+      ellipsis: true,
     },
     {
-      title: 'Ngày',
+      title: t('production:attendance.date'),
       dataIndex: 'date',
       key: 'date',
-      render: (date: Date) => dayjs(date).format('DD/MM/YYYY'),
+      width: 120,
+      render: (date: Date) => formatDate(date),
     },
     {
-      title: 'Giờ vào',
+      title: t('production:attendance.checkInTime'),
       dataIndex: 'checkIn',
       key: 'checkIn',
+      width: 100,
       render: (time: Date) => (time ? dayjs(time).format('HH:mm') : '-'),
     },
     {
-      title: 'Giờ ra',
+      title: t('production:attendance.checkOutTime'),
       dataIndex: 'checkOut',
       key: 'checkOut',
+      width: 100,
       render: (time: Date) => (time ? dayjs(time).format('HH:mm') : '-'),
     },
     {
-      title: 'Số giờ',
+      title: t('production:attendance.hours'),
       key: 'hours',
+      width: 100,
+      align: 'right' as const,
       render: (_: any, record: Attendance) => {
         if (record.checkIn && record.checkOut) {
           const hours = dayjs(record.checkOut).diff(dayjs(record.checkIn), 'hour', true);
@@ -208,118 +205,118 @@ const AttendanceTracking = () => {
       },
     },
     {
-      title: 'Trạng thái',
+      title: t('production:attendance.status'),
       dataIndex: 'status',
       key: 'status',
-      render: (status: string) => <Tag color={statusColors[status]}>{statusLabels[status]}</Tag>,
+      width: 120,
+      render: (status: string) => (
+        <Tag color={statusColors[status]}>{t(`production:attendance.statuses.${status}`)}</Tag>
+      ),
     },
     {
-      title: 'Ghi chú',
+      title: t('production:attendance.notes'),
       dataIndex: 'notes',
       key: 'notes',
-    },
-    {
-      title: 'Thao tác',
-      key: 'actions',
-      render: (_: any, record: Attendance) =>
-        !record.checkOut && (
-          <Button type="link" icon={<LogoutOutlined />} onClick={() => handleCheckOut(record)}>
-            Chấm công ra
-          </Button>
-        ),
+      ellipsis: true,
     },
   ];
+
+  const filterComponents = (
+    <Space wrap>
+      <RangePicker
+        value={dateRange}
+        onChange={(dates) => dates && setDateRange(dates as [Dayjs, Dayjs])}
+        format="DD/MM/YYYY"
+      />
+      <Select
+        placeholder={t('production:attendance.selectWorker')}
+        style={{ width: 200 }}
+        allowClear
+        value={selectedWorker}
+        onChange={setSelectedWorker}
+        showSearch
+        optionFilterProp="children"
+      >
+        {workersData?.map((worker: Worker) => (
+          <Option key={worker.id} value={worker.id}>
+            {worker.fullName} ({worker.code})
+          </Option>
+        ))}
+      </Select>
+    </Space>
+  );
 
   return (
     <div>
       <Row gutter={16} style={{ marginBottom: 16 }}>
-        <Col span={6}>
+        <Col xs={12} sm={6}>
           <Card>
             <Statistic
-              title="Tổng số ngày công"
-              value={reportData?.data?.totalDays || 0}
+              title={t('production:attendance.totalDays')}
+              value={reportData?.totalDays || 0}
               prefix={<CalendarOutlined />}
             />
           </Card>
         </Col>
-        <Col span={6}>
+        <Col xs={12} sm={6}>
           <Card>
             <Statistic
-              title="Có mặt"
-              value={reportData?.data?.presentDays || 0}
+              title={t('production:attendance.presentDays')}
+              value={reportData?.presentDays || 0}
               valueStyle={{ color: '#3f8600' }}
               prefix={<CheckCircleOutlined />}
             />
           </Card>
         </Col>
-        <Col span={6}>
+        <Col xs={12} sm={6}>
           <Card>
             <Statistic
-              title="Vắng mặt"
-              value={reportData?.data?.absentDays || 0}
+              title={t('production:attendance.absentDays')}
+              value={reportData?.absentDays || 0}
               valueStyle={{ color: '#cf1322' }}
               prefix={<CloseCircleOutlined />}
             />
           </Card>
         </Col>
-        <Col span={6}>
+        <Col xs={12} sm={6}>
           <Card>
             <Statistic
-              title="Đi muộn"
-              value={reportData?.data?.lateDays || 0}
+              title={t('production:attendance.lateDays')}
+              value={reportData?.lateDays || 0}
               valueStyle={{ color: '#fa8c16' }}
             />
           </Card>
         </Col>
       </Row>
 
-      <Card
-        title="Bảng chấm công"
-        extra={
-          <Button type="primary" icon={<LoginOutlined />} onClick={handleCheckIn}>
-            Chấm công vào
-          </Button>
-        }
-      >
-        <Space direction="vertical" style={{ width: '100%', marginBottom: 16 }}>
-          <Space wrap>
-            <RangePicker
-              value={dateRange}
-              onChange={(dates) => dates && setDateRange(dates as [Dayjs, Dayjs])}
-              format="DD/MM/YYYY"
-            />
-            <Select
-              placeholder="Chọn nhân viên"
-              style={{ width: 200 }}
-              allowClear
-              value={selectedWorker}
-              onChange={setSelectedWorker}
-              showSearch
-              optionFilterProp="children"
-            >
-              {workersData?.data?.map((worker: Worker) => (
-                <Option key={worker.id} value={worker.id}>
-                  {worker.fullName} ({worker.code})
-                </Option>
-              ))}
-            </Select>
+      <StandardListPage
+        title={t('production:attendance.title')}
+        createButtonText={t('production:attendance.checkIn')}
+        onCreateClick={() => setCheckInModalVisible(true)}
+        filters={filterComponents}
+        columns={columns}
+        dataSource={attendancesData || []}
+        loading={isLoading || checkInMutation.isPending || checkOutMutation.isPending}
+        pagination={false}
+        customContent={
+          <Space style={{ marginBottom: 16 }}>
+            {attendancesData?.filter((a: Attendance) => !a.checkOut).map((attendance: Attendance) => (
+              <Button
+                key={attendance.id}
+                type="link"
+                icon={<LogoutOutlined />}
+                onClick={() => handleCheckOut(attendance)}
+              >
+                {t('production:attendance.checkOut')} - {attendance.worker?.fullName}
+              </Button>
+            ))}
           </Space>
-        </Space>
-
-        <Table
-          size={isMobile ? 'small' : 'middle'}
-          scroll={{ x: 'max-content' }}
-          columns={columns}
-          dataSource={attendancesData?.data || []}
-          rowKey="id"
-          loading={isLoading}
-          pagination={false}
-        />
-      </Card>
+        }
+      />
 
       {/* Check-in Modal */}
       <Modal
-        title="Chấm công vào"
+        title={t('production:attendance.checkIn')}
         open={checkInModalVisible}
         onCancel={() => {
           setCheckInModalVisible(false);
@@ -329,12 +326,16 @@ const AttendanceTracking = () => {
       >
         <Form form={form} layout="vertical" onFinish={onCheckInFinish}>
           <Form.Item
-            label="Nhân viên"
+            label={t('production:attendance.worker')}
             name="workerId"
-            rules={[{ required: true, message: 'Vui lòng chọn nhân viên' }]}
+            rules={[{ required: true, message: t('production:validation.required') }]}
           >
-            <Select placeholder="Chọn nhân viên" showSearch optionFilterProp="children">
-              {workersData?.data?.map((worker: Worker) => (
+            <Select
+              placeholder={t('production:attendance.selectWorker')}
+              showSearch
+              optionFilterProp="children"
+            >
+              {workersData?.map((worker: Worker) => (
                 <Option key={worker.id} value={worker.id}>
                   {worker.fullName} ({worker.code})
                 </Option>
@@ -342,7 +343,7 @@ const AttendanceTracking = () => {
             </Select>
           </Form.Item>
 
-          <Form.Item label="Ngày" name="date" initialValue={selectedDate}>
+          <Form.Item label={t('production:attendance.date')} name="date" initialValue={selectedDate}>
             <DatePicker
               style={{ width: '100%' }}
               format="DD/MM/YYYY"
@@ -354,7 +355,7 @@ const AttendanceTracking = () => {
           <Form.Item>
             <Space>
               <Button type="primary" htmlType="submit" loading={checkInMutation.isPending}>
-                Xác nhận
+                {t('production:actions.confirm')}
               </Button>
               <Button
                 onClick={() => {
@@ -362,7 +363,7 @@ const AttendanceTracking = () => {
                   form.resetFields();
                 }}
               >
-                Hủy
+                {t('production:actions.cancel')}
               </Button>
             </Space>
           </Form.Item>
@@ -371,28 +372,28 @@ const AttendanceTracking = () => {
 
       {/* Check-out Modal */}
       <Modal
-        title="Chấm công ra"
+        title={t('production:attendance.checkOut')}
         open={checkOutModalVisible}
         onOk={onCheckOutConfirm}
         onCancel={() => setCheckOutModalVisible(false)}
         confirmLoading={checkOutMutation.isPending}
+        okText={t('production:actions.confirm')}
+        cancelText={t('production:actions.cancel')}
       >
         <p>
-          Xác nhận chấm công ra cho nhân viên{' '}
+          {t('production:attendance.confirmCheckOut')}{' '}
           <strong>{selectedAttendance?.worker?.fullName}</strong>?
         </p>
         <p>
-          Giờ vào:{' '}
+          {t('production:attendance.checkInTime')}:{' '}
           <strong>
             {selectedAttendance?.checkIn && dayjs(selectedAttendance.checkIn).format('HH:mm')}
           </strong>
         </p>
         <p>
-          Giờ ra: <strong>{dayjs().format('HH:mm')}</strong>
+          {t('production:attendance.checkOutTime')}: <strong>{dayjs().format('HH:mm')}</strong>
         </p>
       </Modal>
     </div>
   );
-};
-
-export default AttendanceTracking;
+}

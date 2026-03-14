@@ -7,59 +7,64 @@
 import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Form, Input, Select, InputNumber, Button, Card, message, Space, Row, Col } from 'antd';
+import { Card, Form, Input, Select, InputNumber, Button, Space, message, Spin } from 'antd';
 import { SaveOutlined, ArrowLeftOutlined } from '@ant-design/icons';
-import productionService from '../../services/production/productionService';
+import { useTranslation } from 'react-i18next';
+import productionService, { CreateMaterialDto } from '../../services/production/productionService';
+import { useResponsive } from '../../hooks/useResponsive';
+import { getCardSize } from '../../utils/responsive';
 
 const { Option } = Select;
 
-const MaterialForm = () => {
+export default function MaterialForm() {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { id } = useParams();
+  const { t } = useTranslation(['production', 'common']);
   const queryClient = useQueryClient();
+  const responsive = useResponsive();
   const [form] = Form.useForm();
   const isEdit = !!id;
 
-  // Fetch material data if editing
-  const { data: materialData } = useQuery({
+  // Fetch material data for editing
+  const { data: materialData, isLoading } = useQuery({
     queryKey: ['material', id],
-    queryFn: () => productionService.material.getMaterial(id!),
+    queryFn: async () => {
+      const response = await productionService.material.getMaterial(id!);
+      return response.data;
+    },
     enabled: isEdit,
   });
 
-  // Create mutation
-  const createMutation = useMutation({
-    mutationFn: (data: any) => productionService.material.createMaterial(data),
-    onSuccess: () => {
-      message.success('Tạo nguyên vật liệu thành công');
-      queryClient.invalidateQueries({ queryKey: ['materials'] });
-      navigate('/production/materials');
-    },
-    onError: () => {
-      message.error('Tạo nguyên vật liệu thất bại');
-    },
-  });
-
-  // Update mutation
-  const updateMutation = useMutation({
-    mutationFn: (data: any) => productionService.material.updateMaterial(id!, data),
-    onSuccess: () => {
-      message.success('Cập nhật nguyên vật liệu thành công');
-      queryClient.invalidateQueries({ queryKey: ['materials'] });
-      queryClient.invalidateQueries({ queryKey: ['material', id] });
-      navigate('/production/materials');
-    },
-    onError: () => {
-      message.error('Cập nhật nguyên vật liệu thất bại');
-    },
-  });
-
-  // Populate form when editing
   useEffect(() => {
-    if (materialData?.data) {
-      form.setFieldsValue(materialData.data);
+    if (materialData) {
+      form.setFieldsValue(materialData);
     }
   }, [materialData, form]);
+
+  const createMutation = useMutation({
+    mutationFn: (data: CreateMaterialDto) => productionService.material.createMaterial(data),
+    onSuccess: () => {
+      message.success(t('production:messages.saveSuccess'));
+      queryClient.invalidateQueries({ queryKey: ['materials'] });
+      navigate('/production/materials');
+    },
+    onError: () => {
+      message.error(t('production:messages.saveError'));
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (data: Partial<CreateMaterialDto>) =>
+      productionService.material.updateMaterial(id!, data),
+    onSuccess: () => {
+      message.success(t('production:messages.saveSuccess'));
+      queryClient.invalidateQueries({ queryKey: ['materials'] });
+      navigate('/production/materials');
+    },
+    onError: () => {
+      message.error(t('production:messages.saveError'));
+    },
+  });
 
   const onFinish = (values: any) => {
     if (isEdit) {
@@ -69,113 +74,99 @@ const MaterialForm = () => {
     }
   };
 
+  if (isEdit && isLoading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', padding: 50 }}>
+        <Spin size="large" />
+      </div>
+    );
+  }
+
   return (
     <Card
-      title={isEdit ? 'Sửa nguyên vật liệu' : 'Thêm nguyên vật liệu mới'}
+      title={isEdit ? t('production:materials.edit') : t('production:materials.create')}
+      size={getCardSize(responsive)}
       extra={
-        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/production/materials')}>
-          Quay lại
+        <Button
+          icon={<ArrowLeftOutlined />}
+          onClick={() => navigate('/production/materials')}
+        >
+          {t('common:actions.back')}
         </Button>
       }
     >
-      <Form
-        form={form}
-        layout="vertical"
-        onFinish={onFinish}
-        initialValues={{
-          type: 'plaster',
-          status: 'active',
-          quantity: 0,
-        }}
-      >
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item
-              label="Tên nguyên vật liệu"
-              name="name"
-              rules={[{ required: true, message: 'Vui lòng nhập tên' }]}
-            >
-              <Input placeholder="Nhập tên nguyên vật liệu" />
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item
-              label="Loại"
-              name="type"
-              rules={[{ required: true, message: 'Vui lòng chọn loại' }]}
-            >
-              <Select placeholder="Chọn loại">
-                <Option value="plaster">Thạch cao</Option>
-                <Option value="mold">Khuôn mẫu</Option>
-                <Option value="paint">Sơn</Option>
-                <Option value="accessory">Phụ kiện</Option>
-                <Option value="packaging">Bao bì</Option>
-              </Select>
-            </Form.Item>
-          </Col>
-        </Row>
+      <Form form={form} layout="vertical" onFinish={onFinish} style={{ maxWidth: 600 }}>
+        <Form.Item
+          label={t('production:materials.code')}
+          name="code"
+          rules={[{ required: true, message: t('production:validation.required') }]}
+        >
+          <Input placeholder={t('production:materials.code')} />
+        </Form.Item>
 
-        <Row gutter={16}>
-          <Col span={8}>
-            <Form.Item
-              label="Đơn vị tính"
-              name="unit"
-              rules={[{ required: true, message: 'Vui lòng nhập đơn vị' }]}
-            >
-              <Input placeholder="kg, lít, cái..." />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item
-              label="Giá nhập"
-              name="purchasePrice"
-              rules={[
-                { required: true, message: 'Vui lòng nhập giá nhập' },
-                { type: 'number', min: 0, message: 'Giá phải lớn hơn 0' },
-              ]}
-            >
-              <InputNumber
-                style={{ width: '100%' }}
-                formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                parser={(value) => value!.replace(/\$\s?|(,*)/g, '')}
-                addonAfter="đ"
-                placeholder="Nhập giá nhập"
-              />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item
-              label="Trạng thái"
-              name="status"
-              rules={[{ required: true, message: 'Vui lòng chọn trạng thái' }]}
-            >
-              <Select>
-                <Option value="active">Hoạt động</Option>
-                <Option value="inactive">Ngừng dùng</Option>
-              </Select>
-            </Form.Item>
-          </Col>
-        </Row>
+        <Form.Item
+          label={t('production:materials.name')}
+          name="name"
+          rules={[{ required: true, message: t('production:validation.required') }]}
+        >
+          <Input placeholder={t('production:materials.name')} />
+        </Form.Item>
 
-        <Row gutter={16}>
-          <Col span={8}>
-            <Form.Item
-              label="Số lượng tồn kho"
-              name="quantity"
-              rules={[
-                { required: true, message: 'Vui lòng nhập số lượng' },
-                { type: 'number', min: 0, message: 'Số lượng phải >= 0' },
-              ]}
-            >
-              <InputNumber style={{ width: '100%' }} placeholder="Nhập số lượng" />
-            </Form.Item>
-          </Col>
-          <Col span={8}>
-            <Form.Item label="Tồn kho tối thiểu" name="minQuantity">
-              <InputNumber style={{ width: '100%' }} placeholder="Nhập tồn tối thiểu" />
-            </Form.Item>
-          </Col>
-        </Row>
+        <Form.Item
+          label={t('production:materials.type')}
+          name="type"
+          rules={[{ required: true, message: t('production:validation.required') }]}
+        >
+          <Select placeholder={t('production:materials.type')}>
+            <Option value="plaster">{t('production:materials.types.plaster')}</Option>
+            <Option value="mold">{t('production:materials.types.mold')}</Option>
+            <Option value="paint">{t('production:materials.types.paint')}</Option>
+            <Option value="accessory">{t('production:materials.types.accessory')}</Option>
+            <Option value="packaging">{t('production:materials.types.packaging')}</Option>
+          </Select>
+        </Form.Item>
+
+        <Form.Item
+          label={t('production:materials.unit')}
+          name="unit"
+          rules={[{ required: true, message: t('production:validation.required') }]}
+        >
+          <Input placeholder={t('production:materials.unit')} />
+        </Form.Item>
+
+        <Form.Item
+          label={t('production:materials.quantity')}
+          name="quantity"
+          rules={[
+            { required: true, message: t('production:validation.required') },
+            { type: 'number', min: 0, message: t('production:validation.invalidQuantity') },
+          ]}
+        >
+          <InputNumber style={{ width: '100%' }} min={0} />
+        </Form.Item>
+
+        <Form.Item
+          label={t('production:materials.minQuantity')}
+          name="minQuantity"
+        >
+          <InputNumber style={{ width: '100%' }} min={0} />
+        </Form.Item>
+
+        <Form.Item
+          label={t('production:materials.purchasePrice')}
+          name="purchasePrice"
+          rules={[
+            { required: true, message: t('production:validation.required') },
+            { type: 'number', min: 0, message: t('production:validation.invalidAmount') },
+          ]}
+        >
+          <InputNumber
+            style={{ width: '100%' }}
+            min={0}
+            formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+            parser={(value) => value!.replace(/\$\s?|(,*)/g, '')}
+          />
+        </Form.Item>
 
         <Form.Item>
           <Space>
@@ -185,14 +176,14 @@ const MaterialForm = () => {
               icon={<SaveOutlined />}
               loading={createMutation.isPending || updateMutation.isPending}
             >
-              {isEdit ? 'Cập nhật' : 'Tạo mới'}
+              {t('production:actions.save')}
             </Button>
-            <Button onClick={() => navigate('/production/materials')}>Hủy</Button>
+            <Button onClick={() => navigate('/production/materials')}>
+              {t('production:actions.cancel')}
+            </Button>
           </Space>
         </Form.Item>
       </Form>
     </Card>
   );
-};
-
-export default MaterialForm;
+}

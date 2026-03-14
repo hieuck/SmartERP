@@ -7,8 +7,10 @@ import {
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 import { logout } from '../../store/slices/authSlice';
 import { RootState } from '../../store';
+import LanguageSwitcher from '../common/LanguageSwitcher';
 import type { MenuProps } from 'antd';
 
 const { Header: AntHeader } = Layout;
@@ -19,6 +21,7 @@ interface HeaderProps {
 }
 
 export default function Header({ collapsed, onToggle }: HeaderProps) {
+  const { t } = useTranslation(['layout', 'common']);
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const location = useLocation();
@@ -33,7 +36,7 @@ export default function Header({ collapsed, onToggle }: HeaderProps) {
     {
       key: 'profile',
       icon: <UserOutlined />,
-      label: 'Thông Tin Cá Nhân',
+      label: t('layout:header.profile'),
     },
     {
       type: 'divider',
@@ -41,7 +44,7 @@ export default function Header({ collapsed, onToggle }: HeaderProps) {
     {
       key: 'logout',
       icon: <LogoutOutlined />,
-      label: 'Đăng Xuất',
+      label: t('layout:header.logout'),
       onClick: handleLogout,
     },
   ];
@@ -51,19 +54,20 @@ export default function Header({ collapsed, onToggle }: HeaderProps) {
     const pathSnippets = location.pathname.split('/').filter((i) => i);
 
     const breadcrumbNameMap: Record<string, string> = {
-      products: 'Sản Phẩm',
-      inventory: 'Kho Hàng',
-      stock: 'Tồn Kho',
-      receipts: 'Phiếu Nhập',
-      issues: 'Phiếu Xuất',
-      customers: 'Khách Hàng',
-      suppliers: 'Nhà Cung Cấp',
-      new: 'Tạo Mới',
+      products: t('layout:breadcrumb.products'),
+      inventory: t('layout:breadcrumb.inventory'),
+      stock: t('layout:breadcrumb.stock'),
+      receipts: t('layout:breadcrumb.receipts'),
+      issues: t('layout:breadcrumb.issues'),
+      customers: t('layout:breadcrumb.customers'),
+      suppliers: t('layout:breadcrumb.suppliers'),
+      new: t('layout:breadcrumb.new'),
+      edit: t('layout:breadcrumb.edit'),
     };
 
     const items = [
       {
-        title: 'Trang Chủ',
+        title: t('layout:breadcrumb.home'),
         href: '/',
       },
     ];
@@ -104,14 +108,17 @@ export default function Header({ collapsed, onToggle }: HeaderProps) {
         <Breadcrumb items={getBreadcrumbItems()} />
       </Space>
 
-      <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
-        <Space style={{ cursor: 'pointer' }}>
-          <Avatar icon={<UserOutlined />} />
-          <span>
-            {user?.firstName} {user?.lastName}
-          </span>
-        </Space>
-      </Dropdown>
+      <Space>
+        <LanguageSwitcher />
+        <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
+          <Space style={{ cursor: 'pointer' }}>
+            <Avatar icon={<UserOutlined />} />
+            <span>
+              {user?.firstName} {user?.lastName}
+            </span>
+          </Space>
+        </Dropdown>
+      </Space>
     </AntHeader>
   );
 }

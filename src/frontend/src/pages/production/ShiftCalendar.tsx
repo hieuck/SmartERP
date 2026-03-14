@@ -7,8 +7,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  Card,
-  Table,
   Button,
   Space,
   Tag,
@@ -18,20 +16,23 @@ import {
   Select,
   DatePicker,
 } from 'antd';
-import { PlusOutlined, DeleteOutlined, CalendarOutlined } from '@ant-design/icons';
+import { PlusOutlined, CalendarOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
+import StandardListPage from '../../components/common/StandardListPage';
 import productionService, {
   Worker,
   Shift,
   ShiftAssignment,
 } from '../../services/production/productionService';
+import { formatDate } from '../../utils/responsive';
 import dayjs, { Dayjs } from 'dayjs';
-import { useResponsive } from '../../hooks/useResponsive';
+import type { ColumnsType } from 'antd/es/table';
 
 const { Option } = Select;
 const { RangePicker } = DatePicker;
 
-const ShiftCalendar = () => {
-  const { isMobile } = useResponsive();
+export default function ShiftCalendar() {
+  const { t } = useTranslation(['production', 'common']);
   const queryClient = useQueryClient();
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs]>([
     dayjs().startOf('week'),
@@ -43,13 +44,19 @@ const ShiftCalendar = () => {
   // Fetch workers
   const { data: workersData } = useQuery({
     queryKey: ['workers', { status: 'active' }],
-    queryFn: () => productionService.worker.getWorkers({ status: 'active' }),
+    queryFn: async () => {
+      const response = await productionService.worker.getWorkers({ status: 'active' });
+      return response.data;
+    },
   });
 
   // Fetch shifts
   const { data: shiftsResponse } = useQuery({
     queryKey: ['shifts'],
-    queryFn: () => productionService.shift.getShifts(),
+    queryFn: async () => {
+      const response = await productionService.shift.getShifts();
+      return response.data;
+    },
   });
 
   // Fetch shift assignments
@@ -61,24 +68,26 @@ const ShiftCalendar = () => {
         endDate: dateRange[1].toDate(),
       },
     ],
-    queryFn: () =>
-      productionService.shift.getShiftAssignments({
+    queryFn: async () => {
+      const response = await productionService.shift.getShiftAssignments({
         startDate: dateRange[0].toDate(),
         endDate: dateRange[1].toDate(),
-      }),
+      });
+      return response.data;
+    },
   });
 
   // Create assignment mutation
   const createMutation = useMutation({
     mutationFn: (data: any) => productionService.shift.createShiftAssignment(data),
     onSuccess: () => {
-      message.success('Phân ca thành công');
+      message.success(t('production:messages.saveSuccess'));
       queryClient.invalidateQueries({ queryKey: ['shiftAssignments'] });
       setAssignModalVisible(false);
       form.resetFields();
     },
     onError: () => {
-      message.error('Phân ca thất bại');
+      message.error(t('production:messages.saveError'));
     },
   });
 
@@ -86,11 +95,11 @@ const ShiftCalendar = () => {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => productionService.shift.deleteShiftAssignment(id),
     onSuccess: () => {
-      message.success('Xóa lịch phân ca thành công');
+      message.success(t('production:messages.deleteSuccess'));
       queryClient.invalidateQueries({ queryKey: ['shiftAssignments'] });
     },
     onError: () => {
-      message.error('Xóa lịch phân ca thất bại');
+      message.error(t('production:messages.deleteError'));
     },
   });
 
@@ -102,118 +111,84 @@ const ShiftCalendar = () => {
     });
   };
 
-  const handleDelete = (id: string) => {
-    Modal.confirm({
-      title: 'Xác nhận xóa',
-      content: 'Bạn có chắc chắn muốn xóa lịch phân ca này?',
-      okText: 'Xóa',
-      cancelText: 'Hủy',
-      okType: 'danger',
-      onOk: () => deleteMutation.mutate(id),
-    });
-  };
-
   const statusColors: Record<string, string> = {
     assigned: 'blue',
     completed: 'green',
     cancelled: 'red',
   };
 
-  const statusLabels: Record<string, string> = {
-    assigned: 'Đã phân ca',
-    completed: 'Hoàn thành',
-    cancelled: 'Đã hủy',
-  };
+  const shifts: Shift[] = shiftsResponse?.data || (Array.isArray(shiftsResponse) ? shiftsResponse : []);
+  const assignments: ShiftAssignment[] = assignmentsData?.data || (Array.isArray(assignmentsData) ? assignmentsData : []);
 
-  const shifts: Shift[] = shiftsResponse?.data?.data || (Array.isArray(shiftsResponse?.data) ? shiftsResponse?.data : []);
-  const assignments: ShiftAssignment[] = assignmentsData?.data?.data || (Array.isArray(assignmentsData?.data) ? assignmentsData?.data : []);
-
-  const columns = [
+  const columns: ColumnsType<ShiftAssignment> = [
     {
-      title: 'Nhân viên',
+      title: t('production:shifts.worker'),
       dataIndex: ['worker', 'fullName'],
       key: 'worker',
+      ellipsis: true,
     },
     {
-      title: 'Ca làm',
+      title: t('production:shifts.shift'),
       dataIndex: ['shift', 'name'],
       key: 'shift',
+      width: 150,
     },
     {
-      title: 'Ngày',
+      title: t('production:shifts.date'),
       dataIndex: 'date',
       key: 'date',
-      render: (date: Date) => dayjs(date).format('DD/MM/YYYY'),
+      width: 120,
+      render: (date: Date) => formatDate(date),
     },
     {
-      title: 'Giờ',
+      title: t('production:shifts.time'),
       key: 'time',
+      width: 150,
       render: (_: any, record: ShiftAssignment) =>
         record.shift ? `${record.shift.startTime} - ${record.shift.endTime}` : '-',
     },
     {
-      title: 'Trạng thái',
+      title: t('production:shifts.status'),
       dataIndex: 'status',
       key: 'status',
-      render: (status: string) => <Tag color={statusColors[status]}>{statusLabels[status]}</Tag>,
-    },
-    {
-      title: 'Thao tác',
-      key: 'actions',
-      render: (_: any, record: ShiftAssignment) => (
-        <Button
-          type="link"
-          danger
-          icon={<DeleteOutlined />}
-          onClick={() => handleDelete(record.id)}
-        >
-          Xóa
-        </Button>
+      width: 120,
+      render: (status: string) => (
+        <Tag color={statusColors[status]}>{t(`production:shifts.statuses.${status}`)}</Tag>
       ),
     },
   ];
 
+  const filterComponents = (
+    <RangePicker
+      value={dateRange}
+      onChange={(dates) => dates && setDateRange(dates as [Dayjs, Dayjs])}
+      format="DD/MM/YYYY"
+    />
+  );
+
   return (
-    <div>
-      <Card
+    <>
+      <StandardListPage
         title={
           <Space>
             <CalendarOutlined />
-            <span>Lịch phân ca</span>
+            <span>{t('production:shifts.shiftSchedule')}</span>
           </Space>
         }
-        extra={
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => setAssignModalVisible(true)}
-          >
-            {isMobile ? '' : 'Phân ca'}
-          </Button>
-        }
-      >
-        <Space direction="vertical" style={{ width: '100%', marginBottom: 16 }}>
-          <RangePicker
-            value={dateRange}
-            onChange={(dates) => dates && setDateRange(dates as [Dayjs, Dayjs])}
-            format="DD/MM/YYYY"
-          />
-        </Space>
-
-        <Table
-          size={isMobile ? 'small' : 'middle'}
-          scroll={{ x: 'max-content' }}
-          columns={columns}
-          dataSource={assignments}
-          rowKey="id"
-          loading={isLoading}
-          pagination={false}
-        />
-      </Card>
+        createButtonText={t('production:shifts.assignShift')}
+        onCreateClick={() => setAssignModalVisible(true)}
+        filters={filterComponents}
+        columns={columns}
+        dataSource={assignments}
+        loading={isLoading || createMutation.isPending || deleteMutation.isPending}
+        onDelete={(record) => deleteMutation.mutate(record.id)}
+        deleteConfirmTitle={t('production:messages.deleteConfirm')}
+        pagination={false}
+      />
 
       {/* Assign Shift Modal */}
       <Modal
-        title="Phân ca làm việc"
+        title={t('production:shifts.assignShift')}
         open={assignModalVisible}
         onCancel={() => {
           setAssignModalVisible(false);
@@ -223,12 +198,16 @@ const ShiftCalendar = () => {
       >
         <Form form={form} layout="vertical" onFinish={onAssignFinish}>
           <Form.Item
-            label="Nhân viên"
+            label={t('production:shifts.worker')}
             name="workerId"
-            rules={[{ required: true, message: 'Vui lòng chọn nhân viên' }]}
+            rules={[{ required: true, message: t('production:validation.required') }]}
           >
-            <Select placeholder="Chọn nhân viên" showSearch optionFilterProp="children">
-              {(workersData?.data || []).map((worker: Worker) => (
+            <Select
+              placeholder={t('production:shifts.selectWorker')}
+              showSearch
+              optionFilterProp="children"
+            >
+              {(workersData || []).map((worker: Worker) => (
                 <Option key={worker.id} value={worker.id}>
                   {worker.fullName} ({worker.code})
                 </Option>
@@ -237,11 +216,11 @@ const ShiftCalendar = () => {
           </Form.Item>
 
           <Form.Item
-            label="Ca làm"
+            label={t('production:shifts.shift')}
             name="shiftId"
-            rules={[{ required: true, message: 'Vui lòng chọn ca làm' }]}
+            rules={[{ required: true, message: t('production:validation.required') }]}
           >
-            <Select placeholder="Chọn ca làm">
+            <Select placeholder={t('production:shifts.selectShift')}>
               {shifts.map((shift: Shift) => (
                 <Option key={shift.id} value={shift.id}>
                   {shift.name} ({shift.startTime} - {shift.endTime})
@@ -251,9 +230,9 @@ const ShiftCalendar = () => {
           </Form.Item>
 
           <Form.Item
-            label="Ngày"
+            label={t('production:shifts.date')}
             name="date"
-            rules={[{ required: true, message: 'Vui lòng chọn ngày' }]}
+            rules={[{ required: true, message: t('production:validation.required') }]}
           >
             <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" />
           </Form.Item>
@@ -261,7 +240,7 @@ const ShiftCalendar = () => {
           <Form.Item>
             <Space>
               <Button type="primary" htmlType="submit" loading={createMutation.isPending}>
-                Xác nhận
+                {t('production:actions.confirm')}
               </Button>
               <Button
                 onClick={() => {
@@ -269,14 +248,12 @@ const ShiftCalendar = () => {
                   form.resetFields();
                 }}
               >
-                Hủy
+                {t('production:actions.cancel')}
               </Button>
             </Space>
           </Form.Item>
         </Form>
       </Modal>
-    </div>
+    </>
   );
-};
-
-export default ShiftCalendar;
+}

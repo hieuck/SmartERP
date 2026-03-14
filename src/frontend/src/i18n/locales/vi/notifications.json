@@ -1,0 +1,20 @@
+{
+  "title": "Thông Báo",
+  "list": {
+    "title": "Danh Sách Thông Báo",
+    "empty": "Không có thông báo nào",
+    "markAllRead": "Đánh Dấu Tất Cả Đã Đọc"
+  },
+  "types": {
+    "order": "Đơn Hàng",
+    "payment": "Thanh Toán",
+    "inventory": "Kho Hàng",
+    "system": "Hệ Thống"
+  },
+  "preferences": {
+    "title": "Cài Đặt Thông Báo",
+    "email": "Email",
+    "push": "Thông Báo Đẩy",
+    "sms": "SMS"
+  }
+}

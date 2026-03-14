@@ -1,0 +1,34 @@
+{
+  "title": "Cài Đặt",
+  "general": {
+    "title": "Cài Đặt Chung",
+    "companyName": "Tên Công Ty",
+    "companyAddress": "Địa Chỉ Công Ty",
+    "companyPhone": "Số Điện Thoại",
+    "companyEmail": "Email Công Ty",
+    "timezone": "Múi Giờ",
+    "currency": "Tiền Tệ",
+    "language": "Ngôn Ngữ"
+  },
+  "print": {
+    "title": "Mẫu In",
+    "invoice": "Mẫu Hóa Đơn",
+    "receipt": "Mẫu Phiếu Thu",
+    "order": "Mẫu Đơn Hàng",
+    "header": "Đầu Trang",
+    "footer": "Chân Trang",
+    "logo": "Logo Công Ty"
+  },
+  "notifications": {
+    "title": "Cài Đặt Thông Báo",
+    "email": "Thông Báo Email",
+    "sms": "Thông Báo SMS",
+    "push": "Thông Báo Đẩy"
+  },
+  "security": {
+    "title": "Cài Đặt Bảo Mật",
+    "changePassword": "Đổi Mật Khẩu",
+    "twoFactor": "Xác Thực Hai Yếu Tố",
+    "sessionTimeout": "Thời Gian Hết Phiên"
+  }
+}

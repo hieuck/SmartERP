@@ -1,0 +1,36 @@
+{
+  "title": "Sales Orders",
+  "createButton": "Create Order",
+  "searchPlaceholder": "Search orders...",
+  "columns": {
+    "orderNumber": "Order Number",
+    "customer": "Customer",
+    "orderDate": "Order Date",
+    "totalAmount": "Total Amount",
+    "paidAmount": "Paid Amount",
+    "status": "Status"
+  },
+  "status": {
+    "draft": "Draft",
+    "pending": "Pending",
+    "confirmed": "Confirmed",
+    "processing": "Processing",
+    "shipped": "Shipped",
+    "delivered": "Delivered",
+    "cancelled": "Cancelled"
+  },
+  "actions": {
+    "viewDetail": "View Details",
+    "edit": "Edit",
+    "delete": "Delete"
+  },
+  "messages": {
+    "deleteSuccess": "Order deleted successfully",
+    "deleteError": "Cannot delete order",
+    "total": "Total {{total}} orders"
+  },
+  "filters": {
+    "status": "Status",
+    "allStatus": "All Status"
+  }
+}

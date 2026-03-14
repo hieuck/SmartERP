@@ -1,0 +1,51 @@
+{
+  "title": "Payment List",
+  "createButton": "Create Payment",
+  "searchPlaceholder": "Search payments...",
+  "columns": {
+    "paymentNumber": "Payment No.",
+    "customer": "Customer",
+    "paymentDate": "Payment Date",
+    "amount": "Amount",
+    "method": "Method",
+    "status": "Status",
+    "reference": "Reference"
+  },
+  "status": {
+    "pending": "Pending",
+    "completed": "Completed",
+    "failed": "Failed",
+    "refunded": "Refunded"
+  },
+  "methods": {
+    "cash": "Cash",
+    "card": "Card",
+    "bankTransfer": "Bank Transfer",
+    "cheque": "Cheque",
+    "eWallet": "E-Wallet"
+  },
+  "actions": {
+    "view": "View",
+    "confirm": "Confirm",
+    "refund": "Refund",
+    "delete": "Delete"
+  },
+  "messages": {
+    "loadError": "Cannot load payment list",
+    "deleteSuccess": "Payment deleted successfully",
+    "deleteError": "Cannot delete payment",
+    "completeSuccess": "Payment confirmed successfully",
+    "completeError": "Cannot confirm payment",
+    "refundSuccess": "Refund processed successfully",
+    "refundError": "Cannot process refund",
+    "deleteConfirm": "Are you sure you want to delete this payment?",
+    "total": "Total {{total}} payments"
+  },
+  "filters": {
+    "status": "Status",
+    "method": "Method",
+    "dateRange": "Date Range",
+    "fromDate": "From date",
+    "toDate": "To date"
+  }
+}

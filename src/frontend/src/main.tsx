@@ -9,6 +9,7 @@ import App from './App';
 import { store } from './store';
 import { register as registerServiceWorker } from './utils/serviceWorkerRegistration';
 import { theme } from './theme';
+import './i18n/config'; // Initialize i18n
 import './index.css';
 
 const queryClient = new QueryClient({

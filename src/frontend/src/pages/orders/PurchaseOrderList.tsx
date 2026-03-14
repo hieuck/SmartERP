@@ -1,20 +1,14 @@
-import React, { useState } from 'react';
+/**
+ * Purchase Order List Page
+ * Displays list of purchase orders with status filtering and approval workflow
+ * Uses StandardListPage for consistent UI
+ */
+
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Tag, Select, message, Dropdown, Button } from 'antd';
+import type { MenuProps } from 'antd/es/menu';
 import {
-  Table,
-  Button,
-  Space,
-  Tag,
-  Input,
-  Select,
-  Card,
-  message,
-  Typography,
-  Dropdown,
-} from 'antd';
-import type { ColumnsType, MenuProps } from 'antd/es/table';
-import {
-  PlusOutlined,
-  SearchOutlined,
   ShoppingOutlined,
   EyeOutlined,
   EditOutlined,
@@ -23,14 +17,16 @@ import {
   CheckOutlined,
   CloseOutlined,
 } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import purchaseOrderService, {
   PurchaseOrderStatus,
 } from '../../services/logistics/purchaseOrderService';
+import StandardListPage from '../../components/common/StandardListPage';
+import { formatCurrency } from '../../utils/responsive';
 import dayjs from 'dayjs';
+import type { ColumnsType } from 'antd/es/table';
 
-const { Title } = Typography;
 const { Option } = Select;
 
 interface PurchaseOrder {
@@ -56,18 +52,10 @@ const statusColors: Record<PurchaseOrderStatus, string> = {
   [PurchaseOrderStatus.CANCELLED]: 'red',
 };
 
-const statusLabels: Record<PurchaseOrderStatus, string> = {
-  [PurchaseOrderStatus.DRAFT]: 'Nháp',
-  [PurchaseOrderStatus.PENDING]: 'Chờ duyệt',
-  [PurchaseOrderStatus.APPROVED]: 'Đã duyệt',
-  [PurchaseOrderStatus.ORDERED]: 'Đã đặt hàng',
-  [PurchaseOrderStatus.RECEIVED]: 'Đã nhận hàng',
-  [PurchaseOrderStatus.CANCELLED]: 'Đã hủy',
-};
-
-const PurchaseOrderList: React.FC = () => {
+export default function PurchaseOrderList() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { t, i18n } = useTranslation(['purchaseOrders', 'commonUi']);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<PurchaseOrderStatus | undefined>();
   const [page, setPage] = useState(1);
@@ -82,33 +70,33 @@ const PurchaseOrderList: React.FC = () => {
   const approveMutation = useMutation({
     mutationFn: (id: number) => purchaseOrderService.approve(id),
     onSuccess: () => {
-      message.success('Duyệt đơn mua hàng thành công');
+      message.success(t('purchaseOrders:messages.approveSuccess'));
       queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
     },
     onError: () => {
-      message.error('Không thể duyệt đơn mua hàng');
+      message.error(t('purchaseOrders:messages.approveError'));
     },
   });
 
   const cancelMutation = useMutation({
     mutationFn: (id: number) => purchaseOrderService.cancel(id),
     onSuccess: () => {
-      message.success('Hủy đơn mua hàng thành công');
+      message.success(t('purchaseOrders:messages.cancelSuccess'));
       queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
     },
     onError: () => {
-      message.error('Không thể hủy đơn mua hàng');
+      message.error(t('purchaseOrders:messages.cancelError'));
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => purchaseOrderService.delete(id),
     onSuccess: () => {
-      message.success('Xóa đơn mua hàng thành công');
+      message.success(t('purchaseOrders:messages.deleteSuccess'));
       queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
     },
     onError: () => {
-      message.error('Không thể xóa đơn mua hàng');
+      message.error(t('purchaseOrders:messages.deleteError'));
     },
   });
 
@@ -116,7 +104,7 @@ const PurchaseOrderList: React.FC = () => {
     {
       key: 'view',
       icon: <EyeOutlined />,
-      label: 'Xem chi tiết',
+      label: t('purchaseOrders:actions.viewDetail'),
       onClick: () => navigate(`/dashboard/orders/purchase/${record.id}`),
     },
     ...(record.status === PurchaseOrderStatus.PENDING
@@ -124,7 +112,7 @@ const PurchaseOrderList: React.FC = () => {
           {
             key: 'approve',
             icon: <CheckOutlined />,
-            label: 'Duyệt đơn',
+            label: t('purchaseOrders:actions.approve'),
             onClick: () => approveMutation.mutate(record.id),
           },
         ]
@@ -135,7 +123,7 @@ const PurchaseOrderList: React.FC = () => {
           {
             key: 'edit',
             icon: <EditOutlined />,
-            label: 'Chỉnh sửa',
+            label: t('purchaseOrders:actions.edit'),
             onClick: () => navigate(`/dashboard/orders/purchase/${record.id}/edit`),
           },
         ]
@@ -146,7 +134,7 @@ const PurchaseOrderList: React.FC = () => {
           {
             key: 'cancel',
             icon: <CloseOutlined />,
-            label: 'Hủy đơn',
+            label: t('purchaseOrders:actions.cancel'),
             danger: true,
             onClick: () => cancelMutation.mutate(record.id),
           },
@@ -157,7 +145,7 @@ const PurchaseOrderList: React.FC = () => {
           {
             key: 'delete',
             icon: <DeleteOutlined />,
-            label: 'Xóa',
+            label: t('purchaseOrders:actions.delete'),
             danger: true,
             onClick: () => deleteMutation.mutate(record.id),
           },
@@ -167,7 +155,7 @@ const PurchaseOrderList: React.FC = () => {
 
   const columns: ColumnsType<PurchaseOrder> = [
     {
-      title: 'Mã đơn',
+      title: t('purchaseOrders:columns.poNumber'),
       dataIndex: 'poNumber',
       key: 'poNumber',
       width: 150,
@@ -182,45 +170,45 @@ const PurchaseOrderList: React.FC = () => {
       ),
     },
     {
-      title: 'Nhà cung cấp',
+      title: t('purchaseOrders:columns.supplier'),
       dataIndex: ['supplier', 'name'],
       key: 'supplier',
       ellipsis: true,
       render: (name: string) => name || '-',
     },
     {
-      title: 'Ngày đặt',
+      title: t('purchaseOrders:columns.orderDate'),
       dataIndex: 'orderDate',
       key: 'orderDate',
       width: 120,
       render: (date: string) => dayjs(date).format('DD/MM/YYYY'),
     },
     {
-      title: 'Ngày dự kiến',
+      title: t('purchaseOrders:columns.expectedDate'),
       dataIndex: 'expectedDate',
       key: 'expectedDate',
       width: 120,
       render: (date: string) => (date ? dayjs(date).format('DD/MM/YYYY') : '-'),
     },
     {
-      title: 'Tổng tiền',
+      title: t('purchaseOrders:columns.totalAmount'),
       dataIndex: 'totalAmount',
       key: 'totalAmount',
       width: 130,
       align: 'right',
-      render: (value: number) => `${value.toLocaleString('vi-VN')} ₫`,
+      render: (value: number) => formatCurrency(value, i18n.language),
     },
     {
-      title: 'Trạng thái',
+      title: t('purchaseOrders:columns.status'),
       dataIndex: 'status',
       key: 'status',
       width: 140,
       render: (status: PurchaseOrderStatus) => (
-        <Tag color={statusColors[status]}>{statusLabels[status]}</Tag>
+        <Tag color={statusColors[status]}>{t(`purchaseOrders:status.${status}`)}</Tag>
       ),
     },
     {
-      title: 'Thao tác',
+      title: t('commonUi:table.actions'),
       key: 'action',
       width: 80,
       fixed: 'right',
@@ -234,81 +222,59 @@ const PurchaseOrderList: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: '24px' }}>
-      <Card>
-        <Space direction="vertical" style={{ width: '100%' }} size="large">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Title level={3}>
-              <ShoppingOutlined /> Đơn mua hàng
-            </Title>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={() => navigate('/dashboard/orders/purchase/new')}
-            >
-              Tạo đơn mua hàng
-            </Button>
-          </div>
-
-          <Space wrap>
-            <Input
-              placeholder="Tìm kiếm đơn mua hàng..."
-              prefix={<SearchOutlined />}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              style={{ width: 300 }}
-              allowClear
-            />
-            <Select
-              placeholder="Trạng thái"
-              style={{ width: 150 }}
-              value={statusFilter}
-              onChange={setStatusFilter}
-              allowClear
-            >
-              <Option value={PurchaseOrderStatus.DRAFT}>
-                {statusLabels[PurchaseOrderStatus.DRAFT]}
-              </Option>
-              <Option value={PurchaseOrderStatus.PENDING}>
-                {statusLabels[PurchaseOrderStatus.PENDING]}
-              </Option>
-              <Option value={PurchaseOrderStatus.APPROVED}>
-                {statusLabels[PurchaseOrderStatus.APPROVED]}
-              </Option>
-              <Option value={PurchaseOrderStatus.ORDERED}>
-                {statusLabels[PurchaseOrderStatus.ORDERED]}
-              </Option>
-              <Option value={PurchaseOrderStatus.RECEIVED}>
-                {statusLabels[PurchaseOrderStatus.RECEIVED]}
-              </Option>
-              <Option value={PurchaseOrderStatus.CANCELLED}>
-                {statusLabels[PurchaseOrderStatus.CANCELLED]}
-              </Option>
-            </Select>
-          </Space>
-
-          <Table
-            columns={columns}
-            dataSource={data?.data || []}
-            loading={isLoading}
-            rowKey="id"
-            pagination={{
-              current: page,
-              pageSize,
-              total: data?.meta?.total || 0,
-              showSizeChanger: true,
-              showTotal: (total) => `Tổng ${total} đơn mua hàng`,
-              onChange: (newPage, newPageSize) => {
-                setPage(newPage);
-                setPageSize(newPageSize);
-              },
-            }}
-            scroll={{ x: 1200 }}
-          />
-        </Space>
-      </Card>
-    </div>
+    <StandardListPage
+      title={
+        <>
+          <ShoppingOutlined /> {t('purchaseOrders:title')}
+        </>
+      }
+      createButtonText={t('purchaseOrders:createButton')}
+      onCreateClick={() => navigate('/dashboard/orders/purchase/new')}
+      searchPlaceholder={t('purchaseOrders:searchPlaceholder')}
+      searchValue={search}
+      onSearchChange={setSearch}
+      filters={
+        <Select
+          placeholder={t('purchaseOrders:filters.status')}
+          style={{ width: 150 }}
+          value={statusFilter}
+          onChange={setStatusFilter}
+          allowClear
+        >
+          <Option value={PurchaseOrderStatus.DRAFT}>
+            {t('purchaseOrders:status.draft')}
+          </Option>
+          <Option value={PurchaseOrderStatus.PENDING}>
+            {t('purchaseOrders:status.pending')}
+          </Option>
+          <Option value={PurchaseOrderStatus.APPROVED}>
+            {t('purchaseOrders:status.approved')}
+          </Option>
+          <Option value={PurchaseOrderStatus.ORDERED}>
+            {t('purchaseOrders:status.ordered')}
+          </Option>
+          <Option value={PurchaseOrderStatus.RECEIVED}>
+            {t('purchaseOrders:status.received')}
+          </Option>
+          <Option value={PurchaseOrderStatus.CANCELLED}>
+            {t('purchaseOrders:status.cancelled')}
+          </Option>
+        </Select>
+      }
+      columns={columns}
+      dataSource={data?.data || []}
+      loading={isLoading}
+      rowKey="id"
+      pagination={{
+        current: page,
+        pageSize,
+        total: data?.meta?.total || 0,
+        showTotal: (total) => t('purchaseOrders:messages.total', { total }),
+        onChange: (newPage, newPageSize) => {
+          setPage(newPage);
+          setPageSize(newPageSize);
+        },
+      }}
+    />
   );
-};
-
-export default PurchaseOrderList;
+}

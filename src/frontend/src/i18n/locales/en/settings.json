@@ -1,0 +1,34 @@
+{
+  "title": "Settings",
+  "general": {
+    "title": "General Settings",
+    "companyName": "Company Name",
+    "companyAddress": "Company Address",
+    "companyPhone": "Company Phone",
+    "companyEmail": "Company Email",
+    "timezone": "Timezone",
+    "currency": "Currency",
+    "language": "Language"
+  },
+  "print": {
+    "title": "Print Templates",
+    "invoice": "Invoice Template",
+    "receipt": "Receipt Template",
+    "order": "Order Template",
+    "header": "Header",
+    "footer": "Footer",
+    "logo": "Company Logo"
+  },
+  "notifications": {
+    "title": "Notification Settings",
+    "email": "Email Notifications",
+    "sms": "SMS Notifications",
+    "push": "Push Notifications"
+  },
+  "security": {
+    "title": "Security Settings",
+    "changePassword": "Change Password",
+    "twoFactor": "Two-Factor Authentication",
+    "sessionTimeout": "Session Timeout"
+  }
+}
