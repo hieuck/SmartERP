@@ -26,35 +26,7 @@ export class AccountController {
     return this.accountingService.findAllAccounts(user, type);
   }
 
-  @Get('accounts/:id')
-  @ApiOperation({ summary: 'Get account by ID' })
-  findAccountById(@CurrentUser() user: User, @Param('id') id: string) {
-    return this.accountingService.findAccountById(user, id);
-  }
-
-  @Post('accounts')
-  @ApiOperation({ summary: 'Create account' })
-  createAccount(@CurrentUser() user: User, @Body() data: CreateAccountDto) {
-    return this.accountingService.createAccount(user, data);
-  }
-
-  @Put('accounts/:id')
-  @ApiOperation({ summary: 'Update account' })
-  updateAccount(
-    @CurrentUser() user: User,
-    @Param('id') id: string,
-    @Body() data: UpdateAccountDto,
-  ) {
-    return this.accountingService.updateAccount(user, id, data);
-  }
-
-  @Delete('accounts/:id')
-  @ApiOperation({ summary: 'Delete account' })
-  deleteAccount(@CurrentUser() user: User, @Param('id') id: string) {
-    return this.accountingService.deleteAccount(user, id);
-  }
-
-  // Chart of Accounts - Advanced
+  // Chart of Accounts - Advanced (must be before :id route)
   @Post('accounts/coa/default')
   @ApiOperation({ summary: 'Create default chart of accounts' })
   createDefaultCOA(@CurrentUser() user: User) {
@@ -83,6 +55,34 @@ export class AccountController {
   @ApiOperation({ summary: 'Get leaf accounts (non-group)' })
   getLeafAccounts(@CurrentUser() user: User) {
     return this.accountingService.getLeafAccounts(user);
+  }
+
+  @Get('accounts/:id')
+  @ApiOperation({ summary: 'Get account by ID' })
+  findAccountById(@CurrentUser() user: User, @Param('id') id: string) {
+    return this.accountingService.findAccountById(user, id);
+  }
+
+  @Post('accounts')
+  @ApiOperation({ summary: 'Create account' })
+  createAccount(@CurrentUser() user: User, @Body() data: CreateAccountDto) {
+    return this.accountingService.createAccount(user, data);
+  }
+
+  @Put('accounts/:id')
+  @ApiOperation({ summary: 'Update account' })
+  updateAccount(
+    @CurrentUser() user: User,
+    @Param('id') id: string,
+    @Body() data: UpdateAccountDto,
+  ) {
+    return this.accountingService.updateAccount(user, id, data);
+  }
+
+  @Delete('accounts/:id')
+  @ApiOperation({ summary: 'Delete account' })
+  deleteAccount(@CurrentUser() user: User, @Param('id') id: string) {
+    return this.accountingService.deleteAccount(user, id);
   }
 
   // Journal Entries

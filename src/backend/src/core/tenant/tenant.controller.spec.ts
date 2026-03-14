@@ -246,7 +246,7 @@ describe('TenantController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toBe(42);
+      expect(response.body.count).toBe(42);
       expect(tenantService.count).toHaveBeenCalled();
     });
   });

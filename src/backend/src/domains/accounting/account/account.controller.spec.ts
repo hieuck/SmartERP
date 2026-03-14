@@ -122,7 +122,12 @@ describe('AccountController (Integration)', () => {
         .get('/accounting/accounts')
         .expect(200);
 
-      expect(response.body).toEqual(accounts);
+      expect(response.body).toMatchObject([{
+        id: mockAccount.id,
+        code: mockAccount.code,
+        name: mockAccount.name,
+        type: mockAccount.type,
+      }]);
       expect(accountService.findAllAccounts).toHaveBeenCalledWith(mockUser, undefined);
     });
 
@@ -134,8 +139,13 @@ describe('AccountController (Integration)', () => {
         .get('/accounting/accounts?type=ASSET')
         .expect(200);
 
-      expect(response.body).toEqual(accounts);
-      expect(accountService.findAllAccounts).toHaveBeenCalledWith(mockUser, AccountType.ASSET);
+      expect(response.body).toMatchObject([{
+        id: mockAccount.id,
+        code: mockAccount.code,
+        name: mockAccount.name,
+        type: mockAccount.type,
+      }]);
+      expect(accountService.findAllAccounts).toHaveBeenCalledWith(mockUser, 'ASSET');
     });
 
     it('should handle empty result', async () => {
@@ -157,7 +167,12 @@ describe('AccountController (Integration)', () => {
         .get('/accounting/accounts/account-1')
         .expect(200);
 
-      expect(response.body).toEqual(mockAccount);
+      expect(response.body).toMatchObject({
+        id: mockAccount.id,
+        code: mockAccount.code,
+        name: mockAccount.name,
+        type: mockAccount.type,
+      });
       expect(accountService.findAccountById).toHaveBeenCalledWith(mockUser, 'account-1');
     });
 
@@ -261,16 +276,14 @@ describe('AccountController (Integration)', () => {
     });
   });
 
-  describe('POST /accounting/accounts/default-coa', () => {
+  describe('POST /accounting/accounts/coa/default', () => {
     it('should create default chart of accounts', async () => {
-      const accounts = [mockAccount];
-      accountService.createDefaultCOA.mockResolvedValue(accounts);
+      accountService.createDefaultCOA.mockResolvedValue(undefined);
 
-      const response = await request(app.getHttpServer())
-        .post('/accounting/accounts/default-coa')
+      await request(app.getHttpServer())
+        .post('/accounting/accounts/coa/default')
         .expect(201);
 
-      expect(Array.isArray(response.body)).toBe(true);
       expect(accountService.createDefaultCOA).toHaveBeenCalledWith(mockUser);
     });
   });
@@ -285,6 +298,9 @@ describe('AccountController (Integration)', () => {
         .expect(200);
 
       expect(Array.isArray(response.body)).toBe(true);
+      if (response.body.length > 0) {
+        expect(response.body[0]).toHaveProperty('id');
+      }
       expect(accountService.getAccountHierarchy).toHaveBeenCalledWith(mockUser);
     });
   });

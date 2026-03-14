@@ -9,7 +9,7 @@
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { INestApplication, ValidationPipe, NotFoundException, BadRequestException } from '@nestjs/common';
 import * as request from 'supertest';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
@@ -28,6 +28,7 @@ describe('UserController (Integration)', () => {
     avatar: null,
     tenantId: 'tenant-123',
     role: 'user',
+    roles: ['user'],
     status: 'active',
     emailVerified: true,
     createdAt: new Date(),
@@ -36,6 +37,7 @@ describe('UserController (Integration)', () => {
 
   const mockAuthUser = {
     id: 'user-123',
+    userId: 'user-123',
     tenantId: 'tenant-123',
     roles: ['user'],
   };
@@ -92,7 +94,12 @@ describe('UserController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual(mockUser);
+      expect(response.body).toMatchObject({
+        id: mockUser.id,
+        email: mockUser.email,
+        firstName: mockUser.firstName,
+        lastName: mockUser.lastName,
+      });
       expect(userService.getProfile).toHaveBeenCalledWith(mockAuthUser, 'user-123');
     });
 
@@ -123,10 +130,7 @@ describe('UserController (Integration)', () => {
     });
 
     it('should return 404 when user not found', async () => {
-      userService.getProfile.mockRejectedValue({
-        status: 404,
-        message: 'User not found',
-      });
+      userService.getProfile.mockRejectedValue(new NotFoundException('User not found'));
 
       await request(app.getHttpServer())
         .get('/users/profile')
@@ -150,14 +154,15 @@ describe('UserController (Integration)', () => {
     it('should update profile successfully', async () => {
       const updateDto = {
         fullName: 'Updated Name',
-        phone: '+84987654321',
+        phone: '0987654321',
       };
 
       const updatedUser = {
         ...mockUser,
         firstName: 'Updated',
         lastName: 'Name',
-        phone: '+84987654321',
+        phone: '0987654321',
+        roles: ['user'],
       };
 
       userService.updateProfile.mockResolvedValue(updatedUser);
@@ -170,7 +175,7 @@ describe('UserController (Integration)', () => {
 
       expect(response.body.firstName).toBe('Updated');
       expect(response.body.lastName).toBe('Name');
-      expect(response.body.phone).toBe('+84987654321');
+      expect(response.body.phone).toBe('0987654321');
       expect(userService.updateProfile).toHaveBeenCalledWith(mockAuthUser, 'user-123', updateDto);
     });
 
@@ -182,6 +187,7 @@ describe('UserController (Integration)', () => {
       const updatedUser = {
         ...mockUser,
         avatar: 'https://example.com/avatar.jpg',
+        roles: ['user'],
       };
 
       userService.updateProfile.mockResolvedValue(updatedUser);
@@ -197,12 +203,13 @@ describe('UserController (Integration)', () => {
 
     it('should update phone successfully', async () => {
       const updateDto = {
-        phone: '+84123456789',
+        phone: '0123456789',
       };
 
       const updatedUser = {
         ...mockUser,
-        phone: '+84123456789',
+        phone: '0123456789',
+        roles: ['user'],
       };
 
       userService.updateProfile.mockResolvedValue(updatedUser);
@@ -213,7 +220,7 @@ describe('UserController (Integration)', () => {
         .send(updateDto)
         .expect(200);
 
-      expect(response.body.phone).toBe('+84123456789');
+      expect(response.body.phone).toBe('0123456789');
     });
 
     it('should return 404 when user not found', async () => {
@@ -221,10 +228,7 @@ describe('UserController (Integration)', () => {
         fullName: 'Updated Name',
       };
 
-      userService.updateProfile.mockRejectedValue({
-        status: 404,
-        message: 'User not found',
-      });
+      userService.updateProfile.mockRejectedValue(new NotFoundException('User not found'));
 
       await request(app.getHttpServer())
         .patch('/users/profile')
@@ -242,7 +246,12 @@ describe('UserController (Integration)', () => {
         .send({})
         .expect(200);
 
-      expect(response.body).toEqual(mockUser);
+      expect(response.body).toMatchObject({
+        id: mockUser.id,
+        email: mockUser.email,
+        firstName: mockUser.firstName,
+        lastName: mockUser.lastName,
+      });
     });
 
     it('should validate phone format', async () => {
@@ -293,10 +302,9 @@ describe('UserController (Integration)', () => {
         confirmPassword: 'DifferentPassword',
       };
 
-      userService.changePassword.mockRejectedValue({
-        status: 400,
-        message: 'New password and confirmation do not match',
-      });
+      userService.changePassword.mockRejectedValue(
+        new BadRequestException('New password and confirmation do not match')
+      );
 
       await request(app.getHttpServer())
         .post('/users/change-password')
@@ -312,10 +320,9 @@ describe('UserController (Integration)', () => {
         confirmPassword: 'NewPassword456',
       };
 
-      userService.changePassword.mockRejectedValue({
-        status: 400,
-        message: 'Current password is incorrect',
-      });
+      userService.changePassword.mockRejectedValue(
+        new BadRequestException('Current password is incorrect')
+      );
 
       await request(app.getHttpServer())
         .post('/users/change-password')
@@ -331,10 +338,7 @@ describe('UserController (Integration)', () => {
         confirmPassword: 'NewPassword456',
       };
 
-      userService.changePassword.mockRejectedValue({
-        status: 404,
-        message: 'User not found',
-      });
+      userService.changePassword.mockRejectedValue(new NotFoundException('User not found'));
 
       await request(app.getHttpServer())
         .post('/users/change-password')

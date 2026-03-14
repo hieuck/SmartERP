@@ -57,8 +57,9 @@ export class TenantController {
 
   @Get('count')
   @ApiOperation({ summary: 'Get tenant count' })
-  count() {
-    return this.tenantService.count();
+  async count() {
+    const count = await this.tenantService.count();
+    return { count };
   }
 
   @Get(':id')

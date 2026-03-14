@@ -137,10 +137,10 @@ describe('SettingsController (Integration)', () => {
         dataType: 'STRING',
       };
 
-      settingsService.create.mockRejectedValue({
-        status: 409,
-        message: "Setting with key 'app.name' already exists",
-      });
+      const ConflictException = require('@nestjs/common').ConflictException;
+      settingsService.create.mockRejectedValue(
+        new ConflictException("Setting with key 'app.name' already exists"),
+      );
 
       await request(app.getHttpServer())
         .post('/settings')
@@ -238,10 +238,10 @@ describe('SettingsController (Integration)', () => {
     });
 
     it('should return 404 when setting not found', async () => {
-      settingsService.findOne.mockRejectedValue({
-        status: 404,
-        message: "Setting with key 'nonexistent' not found",
-      });
+      const NotFoundException = require('@nestjs/common').NotFoundException;
+      settingsService.findOne.mockRejectedValue(
+        new NotFoundException("Setting with key 'nonexistent' not found"),
+      );
 
       await request(app.getHttpServer())
         .get('/settings/nonexistent')
@@ -273,10 +273,10 @@ describe('SettingsController (Integration)', () => {
     });
 
     it('should return 404 when setting not found', async () => {
-      settingsService.update.mockRejectedValue({
-        status: 404,
-        message: 'Setting not found',
-      });
+      const NotFoundException = require('@nestjs/common').NotFoundException;
+      settingsService.update.mockRejectedValue(
+        new NotFoundException('Setting not found'),
+      );
 
       await request(app.getHttpServer())
         .patch('/settings/nonexistent')
@@ -299,10 +299,10 @@ describe('SettingsController (Integration)', () => {
     });
 
     it('should return 404 when setting not found', async () => {
-      settingsService.remove.mockRejectedValue({
-        status: 404,
-        message: 'Setting not found',
-      });
+      const NotFoundException = require('@nestjs/common').NotFoundException;
+      settingsService.remove.mockRejectedValue(
+        new NotFoundException('Setting not found'),
+      );
 
       await request(app.getHttpServer())
         .delete('/settings/nonexistent')

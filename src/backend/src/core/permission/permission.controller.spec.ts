@@ -13,7 +13,7 @@
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { INestApplication, ValidationPipe, HttpException, HttpStatus } from '@nestjs/common';
 import * as request from 'supertest';
 import { PermissionController } from './permission.controller';
 import { PermissionService } from './permission.service';
@@ -58,13 +58,28 @@ describe('PermissionController (Integration)', () => {
     const mockJwtAuthGuard = {
       canActivate: jest.fn().mockImplementation((context) => {
         const request = context.switchToHttp().getRequest();
-        request.user = mockAuthUser;
-        return true;
+        const authHeader = request.headers.authorization;
+        
+        // Check if Authorization header exists and is valid
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+          request.user = mockAuthUser;
+          return true;
+        }
+        
+        // No token - throw UnauthorizedException
+        throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }),
     };
 
     const mockTenantGuard = {
-      canActivate: jest.fn().mockReturnValue(true),
+      canActivate: jest.fn().mockImplementation((context) => {
+        const request = context.switchToHttp().getRequest();
+        // TenantGuard checks if user has tenantId
+        if (request.user && request.user.tenantId) {
+          return true;
+        }
+        throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
+      }),
     };
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -101,13 +116,15 @@ describe('PermissionController (Integration)', () => {
     it('should create permission successfully', async () => {
       const createDto = {
         resource: 'products',
-        action: 'create',
+        actions: [PermissionAction.CREATE],
         description: 'Create products',
       };
 
       permissionService.create.mockResolvedValue({
         ...mockPermission,
-        ...createDto,
+        resource: 'products',
+        actions: [PermissionAction.CREATE],
+        description: 'Create products',
       });
 
       const response = await request(app.getHttpServer())
@@ -117,21 +134,20 @@ describe('PermissionController (Integration)', () => {
         .expect(201);
 
       expect(response.body.resource).toBe('products');
-      expect(response.body.action).toBe('create');
+      expect(response.body.actions).toContain(PermissionAction.CREATE);
       expect(permissionService.create).toHaveBeenCalledWith(mockAuthUser, createDto);
     });
 
     it('should return 409 when permission already exists', async () => {
       const createDto = {
         resource: 'users',
-        action: 'read',
+        actions: [PermissionAction.READ],
         description: 'Read users',
       };
 
-      permissionService.create.mockRejectedValue({
-        status: 409,
-        message: "Permission for resource 'users' already exists",
-      });
+      permissionService.create.mockRejectedValue(
+        new HttpException("Permission for resource 'users' already exists", HttpStatus.CONFLICT),
+      );
 
       await request(app.getHttpServer())
         .post('/permissions')
@@ -154,10 +170,17 @@ describe('PermissionController (Integration)', () => {
   describe('GET /permissions', () => {
     it('should return all permissions', async () => {
       const permissions = [
-        mockPermission,
-        { ...mockPermission, id: 'permission-456', resource: 'products', actions: [PermissionAction.READ, PermissionAction.UPDATE] },
+        { ...mockPermission, createdAt: mockPermission.createdAt.toISOString(), updatedAt: mockPermission.updatedAt.toISOString() },
+        { 
+          ...mockPermission, 
+          id: 'permission-456', 
+          resource: 'products', 
+          actions: [PermissionAction.READ, PermissionAction.UPDATE],
+          createdAt: mockPermission.createdAt.toISOString(),
+          updatedAt: mockPermission.updatedAt.toISOString()
+        },
       ];
-      permissionService.findAll.mockResolvedValue(permissions);
+      permissionService.findAll.mockResolvedValue(permissions as any);
 
       const response = await request(app.getHttpServer())
         .get('/permissions')
@@ -189,7 +212,7 @@ describe('PermissionController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toBe(15);
+      expect(response.body).toEqual({ count: 15 });
       expect(permissionService.count).toHaveBeenCalledWith(mockAuthUser);
     });
 
@@ -201,28 +224,32 @@ describe('PermissionController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toBe(0);
+      expect(response.body).toEqual({ count: 0 });
     });
   });
 
   describe('GET /permissions/resource/:resource', () => {
     it('should return permission by resource', async () => {
-      permissionService.findByResource.mockResolvedValue(mockPermission);
+      const permission = {
+        ...mockPermission,
+        createdAt: mockPermission.createdAt.toISOString(),
+        updatedAt: mockPermission.updatedAt.toISOString()
+      };
+      permissionService.findByResource.mockResolvedValue(permission as any);
 
       const response = await request(app.getHttpServer())
         .get('/permissions/resource/users')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual(mockPermission);
+      expect(response.body).toEqual(permission);
       expect(permissionService.findByResource).toHaveBeenCalledWith(mockAuthUser, 'users');
     });
 
     it('should return 404 when resource not found', async () => {
-      permissionService.findByResource.mockRejectedValue({
-        status: 404,
-        message: "Permission for resource 'nonexistent' not found",
-      });
+      permissionService.findByResource.mockRejectedValue(
+        new HttpException("Permission for resource 'nonexistent' not found", HttpStatus.NOT_FOUND),
+      );
 
       await request(app.getHttpServer())
         .get('/permissions/resource/nonexistent')
@@ -233,22 +260,26 @@ describe('PermissionController (Integration)', () => {
 
   describe('GET /permissions/:id', () => {
     it('should return permission by ID', async () => {
-      permissionService.findOne.mockResolvedValue(mockPermission);
+      const permission = {
+        ...mockPermission,
+        createdAt: mockPermission.createdAt.toISOString(),
+        updatedAt: mockPermission.updatedAt.toISOString()
+      };
+      permissionService.findOne.mockResolvedValue(permission as any);
 
       const response = await request(app.getHttpServer())
         .get('/permissions/permission-123')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual(mockPermission);
+      expect(response.body).toEqual(permission);
       expect(permissionService.findOne).toHaveBeenCalledWith(mockAuthUser, 'permission-123');
     });
 
     it('should return 404 when permission not found', async () => {
-      permissionService.findOne.mockRejectedValue({
-        status: 404,
-        message: 'Permission with ID non-existent not found',
-      });
+      permissionService.findOne.mockRejectedValue(
+        new HttpException('Permission with ID non-existent not found', HttpStatus.NOT_FOUND),
+      );
 
       await request(app.getHttpServer())
         .get('/permissions/non-existent')
@@ -289,10 +320,9 @@ describe('PermissionController (Integration)', () => {
         resource: 'existing-resource',
       };
 
-      permissionService.update.mockRejectedValue({
-        status: 409,
-        message: "Permission for resource 'existing-resource' already exists",
-      });
+      permissionService.update.mockRejectedValue(
+        new HttpException("Permission for resource 'existing-resource' already exists", HttpStatus.CONFLICT),
+      );
 
       await request(app.getHttpServer())
         .put('/permissions/permission-123')
@@ -306,10 +336,9 @@ describe('PermissionController (Integration)', () => {
         description: 'Updated description',
       };
 
-      permissionService.update.mockRejectedValue({
-        status: 404,
-        message: 'Permission not found',
-      });
+      permissionService.update.mockRejectedValue(
+        new HttpException('Permission not found', HttpStatus.NOT_FOUND),
+      );
 
       await request(app.getHttpServer())
         .put('/permissions/non-existent')
@@ -333,10 +362,9 @@ describe('PermissionController (Integration)', () => {
     });
 
     it('should return 404 when permission not found', async () => {
-      permissionService.remove.mockRejectedValue({
-        status: 404,
-        message: 'Permission not found',
-      });
+      permissionService.remove.mockRejectedValue(
+        new HttpException('Permission not found', HttpStatus.NOT_FOUND),
+      );
 
       await request(app.getHttpServer())
         .delete('/permissions/non-existent')
@@ -348,7 +376,9 @@ describe('PermissionController (Integration)', () => {
   describe('Authentication & Authorization', () => {
     it('should require authentication', async () => {
       const mockJwtAuthGuard = {
-        canActivate: jest.fn().mockReturnValue(false),
+        canActivate: jest.fn().mockImplementation(() => {
+          throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+        }),
       };
 
       const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -369,14 +399,16 @@ describe('PermissionController (Integration)', () => {
       const testApp = moduleFixture.createNestApplication();
       await testApp.init();
 
-      await request(testApp.getHttpServer()).get('/permissions').expect(403);
+      await request(testApp.getHttpServer()).get('/permissions').expect(401);
 
       await testApp.close();
     });
 
     it('should require tenant context', async () => {
       const mockTenantGuard = {
-        canActivate: jest.fn().mockReturnValue(false),
+        canActivate: jest.fn().mockImplementation(() => {
+          throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
+        }),
       };
 
       const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -389,7 +421,13 @@ describe('PermissionController (Integration)', () => {
         ],
       })
         .overrideGuard(JwtAuthGuard)
-        .useValue({ canActivate: jest.fn().mockReturnValue(true) })
+        .useValue({ 
+          canActivate: jest.fn().mockImplementation((context) => {
+            const request = context.switchToHttp().getRequest();
+            request.user = mockAuthUser;
+            return true;
+          })
+        })
         .overrideGuard(TenantGuard)
         .useValue(mockTenantGuard)
         .compile();

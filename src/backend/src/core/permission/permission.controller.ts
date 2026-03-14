@@ -28,8 +28,9 @@ export class PermissionController {
 
   @Get('count')
   @ApiOperation({ summary: 'Get permission count' })
-  count(@CurrentUser() user: User) {
-    return this.permissionService.count(user);
+  async count(@CurrentUser() user: User) {
+    const count = await this.permissionService.count(user);
+    return { count };
   }
 
   @Get('resource/:resource')
