@@ -202,14 +202,16 @@ describe('UserService', () => {
       secureUserRepo.save.mockResolvedValue(mockUser);
 
       jest.spyOn(bcrypt, 'compare').mockResolvedValue(true as never);
-      jest.spyOn(bcrypt, 'hash').mockResolvedValue('$2b$12$newHashedPassword' as never);
+      const hashSpy = jest.spyOn(bcrypt, 'hash').mockImplementation((password: string, rounds: number) => {
+        return Promise.resolve('$2b$12$newHashedPassword') as any;
+      });
 
       const result = await service.changePassword(mockCurrentUser, 'user-123', changePasswordDto);
 
       expect(result.success).toBe(true);
       expect(result.message).toBe('Password changed successfully');
       expect(bcrypt.compare).toHaveBeenCalledWith('oldPassword123', mockUser.password);
-      expect(bcrypt.hash).toHaveBeenCalledWith('newPassword456', 12);
+      expect(hashSpy).toHaveBeenCalledWith('newPassword456', 12);
     });
 
     it('should throw BadRequestException when passwords do not match', async () => {

@@ -9,6 +9,7 @@ import { PermissionService } from './permission.service';
 import { Permission } from './entities/permission.entity';
 import { CreatePermissionDto } from './dto/create-permission.dto';
 import { UpdatePermissionDto } from './dto/update-permission.dto';
+import { PermissionAction } from './enums/permission-action.enum';
 
 describe('PermissionService', () => {
   let service: PermissionService;
@@ -25,7 +26,7 @@ describe('PermissionService', () => {
     return {
       id: 'permission-1',
       resource: 'users',
-      action: 'read',
+      actions: [PermissionAction.READ],
       description: 'Read users',
       tenantId: 'test-tenant-id',
       createdAt: new Date(),
@@ -83,7 +84,7 @@ describe('PermissionService', () => {
     it('should create permission successfully', async () => {
       const createDto: CreatePermissionDto = {
         resource: 'products',
-        action: 'create',
+        actions: [PermissionAction.CREATE, PermissionAction.READ],
         description: 'Create products',
       };
 
@@ -98,7 +99,7 @@ describe('PermissionService', () => {
       const result = await service.create(mockCurrentUser, createDto);
 
       expect(result.resource).toBe('products');
-      expect(result.action).toBe('create');
+      expect(result.actions).toEqual([PermissionAction.CREATE, PermissionAction.READ]);
       expect(result.tenantId).toBe('test-tenant-id');
       expect(permissionRepository.findOne).toHaveBeenCalledWith({
         where: { resource: 'products', tenantId: 'test-tenant-id' },
@@ -108,7 +109,7 @@ describe('PermissionService', () => {
     it('should throw ConflictException when permission already exists', async () => {
       const createDto: CreatePermissionDto = {
         resource: 'products',
-        action: 'create',
+        actions: [PermissionAction.CREATE],
         description: 'Create products',
       };
 
@@ -125,7 +126,7 @@ describe('PermissionService', () => {
     it('should include tenantId from current user', async () => {
       const createDto: CreatePermissionDto = {
         resource: 'orders',
-        action: 'read',
+        actions: [PermissionAction.READ],
         description: 'Read orders',
       };
 
@@ -169,8 +170,13 @@ describe('PermissionService', () => {
       ];
 
       cacheManager.get.mockResolvedValue(null);
-      const queryBuilder = permissionRepository.createQueryBuilder();
-      (queryBuilder.getMany as jest.Mock).mockResolvedValue(mockPermissions);
+      const queryBuilder = {
+        select: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue(mockPermissions),
+      };
+      permissionRepository.createQueryBuilder.mockReturnValue(queryBuilder as any);
 
       const result = await service.findAll(mockCurrentUser);
 
@@ -187,8 +193,13 @@ describe('PermissionService', () => {
 
     it('should order permissions by resource', async () => {
       cacheManager.get.mockResolvedValue(null);
-      const queryBuilder = permissionRepository.createQueryBuilder();
-      (queryBuilder.getMany as jest.Mock).mockResolvedValue([]);
+      const queryBuilder = {
+        select: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue([]),
+      };
+      permissionRepository.createQueryBuilder.mockReturnValue(queryBuilder as any);
 
       await service.findAll(mockCurrentUser);
 
@@ -197,8 +208,13 @@ describe('PermissionService', () => {
 
     it('should return empty array when no permissions exist', async () => {
       cacheManager.get.mockResolvedValue(null);
-      const queryBuilder = permissionRepository.createQueryBuilder();
-      (queryBuilder.getMany as jest.Mock).mockResolvedValue([]);
+      const queryBuilder = {
+        select: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue([]),
+      };
+      permissionRepository.createQueryBuilder.mockReturnValue(queryBuilder as any);
 
       const result = await service.findAll(mockCurrentUser);
 
@@ -365,9 +381,7 @@ describe('PermissionService', () => {
       };
 
       cacheManager.get.mockResolvedValue(mockPermission);
-      permissionRepository.findOne
-        .mockResolvedValueOnce(mockPermission) // First call for existing permission
-        .mockResolvedValueOnce(null); // Second call for conflict check
+      permissionRepository.findOne.mockResolvedValue(null); // No conflict
       permissionRepository.save.mockResolvedValue({ ...mockPermission, ...updateDto });
 
       await service.update(mockCurrentUser, 'permission-1', updateDto);
@@ -425,7 +439,7 @@ describe('PermissionService', () => {
       await service.update(mockCurrentUser, 'permission-1', updateDto);
 
       // Should not check for conflicts when resource name unchanged
-      expect(permissionRepository.findOne).toHaveBeenCalledTimes(1); // Only for findOne
+      expect(permissionRepository.findOne).toHaveBeenCalledTimes(0);
     });
   });
 

@@ -182,8 +182,13 @@ describe('TenantService', () => {
         createMockTenant({ id: 'tenant-2' }),
       ];
 
-      const queryBuilder = tenantRepository.createQueryBuilder();
-      (queryBuilder.getMany as jest.Mock).mockResolvedValue(mockTenants);
+      const queryBuilder = {
+        select: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue(mockTenants),
+      };
+      tenantRepository.createQueryBuilder.mockReturnValue(queryBuilder as any);
 
       const result = await service.findAll();
 
@@ -193,8 +198,13 @@ describe('TenantService', () => {
     });
 
     it('should return empty array when no tenants exist', async () => {
-      const queryBuilder = tenantRepository.createQueryBuilder();
-      (queryBuilder.getMany as jest.Mock).mockResolvedValue([]);
+      const queryBuilder = {
+        select: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue([]),
+      };
+      tenantRepository.createQueryBuilder.mockReturnValue(queryBuilder as any);
 
       const result = await service.findAll();
 
@@ -519,8 +529,13 @@ describe('TenantService', () => {
         createMockTenant({ status: TenantStatus.ACTIVE }),
       ];
 
-      const queryBuilder = tenantRepository.createQueryBuilder();
-      (queryBuilder.getMany as jest.Mock).mockResolvedValue(mockTenants);
+      const queryBuilder = {
+        select: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue(mockTenants),
+      };
+      tenantRepository.createQueryBuilder.mockReturnValue(queryBuilder as any);
 
       const result = await service.findByStatus(TenantStatus.ACTIVE);
 
