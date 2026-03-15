@@ -44,8 +44,12 @@ describe('PaymentController (Integration)', () => {
     orderId: 'order-123',
     amount: 50000,
     status: 'pending',
-    method: 'bank_transfer',
+    paymentMethod: 'bank_transfer',
+    paymentDate: new Date(),
     transactionId: null,
+    currency: 'VND',
+    notes: null,
+    metadata: null,
     tenantId: 'tenant-123',
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -210,11 +214,14 @@ describe('PaymentController (Integration)', () => {
   describe('GET /payments/statistics', () => {
     it('should return payment statistics', async () => {
       const stats = {
-        totalPayments: 100,
+        total: 100,
+        completed: 85,
+        pending: 10,
+        failed: 5,
+        refunded: 0,
         totalAmount: 5000000,
-        pendingCount: 10,
-        completedCount: 85,
-        failedCount: 5,
+        completedAmount: 4500000,
+        successRate: 85,
       };
       paymentService.getPaymentStatistics.mockResolvedValue(stats);
 
