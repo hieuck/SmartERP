@@ -1,54 +1,196 @@
 /**
- * Supplier List Page
- * Displays list of suppliers with search and CRUD operations
- * Uses StandardListPage for consistent UI
+ * Supplier List Page - Offline-First
+ * Displays list of suppliers with offline-first support
+ * Features: auto-sync, manual sync, network status, sync queue
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Rate, message } from 'antd';
-import { ShopOutlined } from '@ant-design/icons';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  Table,
+  Button,
+  Input,
+  Space,
+  Card,
+  Tag,
+  Popconfirm,
+  message,
+  Typography,
+  Badge,
+  Rate,
+} from 'antd';
+import {
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  SearchOutlined,
+  ShopOutlined,
+  SyncOutlined,
+  CloudOutlined,
+  DisconnectOutlined,
+} from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import supplierService from '@/services/logistics/supplierService';
-import StandardListPage from '@/components/common/StandardListPage';
+import { useResponsive } from '@/hooks/useResponsive';
+import { offlineServices } from '@/services/offline-services';
+import { syncManager } from '@/lib/offline/sync-manager';
+import { logger } from '@/lib/logger/logger.service';
+import { Supplier, SyncStatus } from '@/lib/offline/db';
 import type { ColumnsType } from 'antd/es/table';
 
-interface Supplier {
-  id: number;
-  name: string;
-  email: string;
-  phone: string;
-  address: string;
-  rating: number;
-  paymentTerms: string;
-  leadTime: number;
-  createdAt: string;
-}
+const { Title } = Typography;
 
 export default function SupplierList() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const { t } = useTranslation(['suppliers', 'commonUi']);
+  const { isMobile, isTablet } = useResponsive();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [queueSize, setQueueSize] = useState(0);
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['suppliers', { page, pageSize, search }],
-    queryFn: () => supplierService.getAll({ page, limit: pageSize, search }),
-  });
+  // Monitor network status
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      logger.info('SupplierList', 'Network connection restored');
+      message.success(t('commonUi:messages.networkRestored'));
+    };
 
-  const deleteMutation = useMutation({
-    mutationFn: (id: number) => supplierService.delete(id),
-    onSuccess: () => {
+    const handleOffline = () => {
+      setIsOnline(false);
+      logger.warn('SupplierList', 'Network connection lost');
+      message.warning(t('commonUi:messages.networkLost'));
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [t]);
+
+  // Load suppliers from offline storage
+  const loadSuppliers = async () => {
+    setLoading(true);
+    try {
+      logger.debug('SupplierList', 'Loading suppliers from offline storage');
+      const allSuppliers = await offlineServices.suppliers.getAll();
+      
+      // Filter by search term
+      let filtered = allSuppliers;
+      if (search) {
+        const searchLower = search.toLowerCase();
+        filtered = allSuppliers.filter(
+          (s) =>
+            s.name.toLowerCase().includes(searchLower) ||
+            s.email?.toLowerCase().includes(searchLower) ||
+            s.phone?.toLowerCase().includes(searchLower) ||
+            s.address?.toLowerCase().includes(searchLower)
+        );
+      }
+
+      setSuppliers(filtered);
+      logger.info('SupplierList', `Loaded ${filtered.length} suppliers`);
+    } catch (error) {
+      logger.error('SupplierList', 'Failed to load suppliers', error as Error);
+      message.error(t('suppliers:messages.loadError'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Update queue size
+  const updateQueueSize = async () => {
+    try {
+      const size = await syncManager.getQueueSize();
+      setQueueSize(size);
+    } catch (error) {
+      logger.error('SupplierList', 'Failed to get queue size', error as Error);
+    }
+  };
+
+  // Auto-sync on mount if online
+  useEffect(() => {
+    const initializeData = async () => {
+      await loadSuppliers();
+      await updateQueueSize();
+
+      if (isOnline) {
+        const token = localStorage.getItem('token');
+        if (token && !syncManager.isSyncing()) {
+          handleSync();
+        }
+      }
+    };
+
+    initializeData();
+  }, []);
+
+  // Reload suppliers when search changes
+  useEffect(() => {
+    loadSuppliers();
+  }, [search]);
+
+  // Handle sync
+  const handleSync = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      message.error(t('commonUi:messages.loginRequired'));
+      return;
+    }
+
+    if (!isOnline) {
+      message.warning(t('commonUi:messages.offlineMode'));
+      return;
+    }
+
+    setSyncing(true);
+    try {
+      logger.info('SupplierList', 'Starting manual sync');
+      const result = await syncManager.sync(token);
+      
+      if (result.success) {
+        message.success(
+          t('commonUi:messages.syncSuccess', {
+            pulled: result.pulled,
+            pushed: result.pushed,
+          })
+        );
+        await loadSuppliers();
+        await updateQueueSize();
+      } else {
+        message.error(t('commonUi:messages.syncError', { errors: result.errors.join(', ') }));
+      }
+    } catch (error) {
+      logger.error('SupplierList', 'Sync failed', error as Error);
+      message.error(t('commonUi:messages.syncError', { errors: (error as Error).message }));
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  // Handle delete
+  const handleDelete = async (supplier: Supplier) => {
+    try {
+      logger.info('SupplierList', `Deleting supplier: ${supplier.id}`);
+      await offlineServices.suppliers.delete(supplier.id);
       message.success(t('suppliers:messages.deleteSuccess'));
-      queryClient.invalidateQueries({ queryKey: ['suppliers'] });
-    },
-    onError: () => {
+      await loadSuppliers();
+      await updateQueueSize();
+    } catch (error) {
+      logger.error('SupplierList', 'Failed to delete supplier', error as Error);
       message.error(t('suppliers:messages.deleteError'));
-    },
-  });
+    }
+  };
+
+  // Get paginated data
+  const paginatedSuppliers = suppliers.slice((page - 1) * pageSize, page * pageSize);
 
   const columns: ColumnsType<Supplier> = [
     {
@@ -74,7 +216,7 @@ export default function SupplierList() {
       dataIndex: 'rating',
       key: 'rating',
       width: 150,
-      render: (rating: number) => <Rate disabled value={rating} />,
+      render: (rating: number) => <Rate disabled value={rating || 0} />,
     },
     {
       title: t('suppliers:columns.paymentTerms'),
@@ -88,39 +230,153 @@ export default function SupplierList() {
       dataIndex: 'leadTime',
       key: 'leadTime',
       width: 120,
-      render: (days: number) => t('suppliers:columns.leadTimeDays', { days }),
+      render: (days: number) => (days ? t('suppliers:columns.leadTimeDays', { days }) : '-'),
+    },
+    {
+      title: 'Sync',
+      dataIndex: 'syncStatus',
+      key: 'syncStatus',
+      width: isMobile ? 80 : 100,
+      render: (syncStatus: SyncStatus) => {
+        const colors = {
+          [SyncStatus.SYNCED]: 'success',
+          [SyncStatus.PENDING]: 'warning',
+          [SyncStatus.CONFLICT]: 'error',
+        };
+        const labels = {
+          [SyncStatus.SYNCED]: 'Synced',
+          [SyncStatus.PENDING]: 'Pending',
+          [SyncStatus.CONFLICT]: 'Conflict',
+        };
+        return (
+          <Tag color={colors[syncStatus] || 'default'}>
+            {labels[syncStatus] || 'Unknown'}
+          </Tag>
+        );
+      },
+    },
+    {
+      title: t('commonUi:labels.actions'),
+      key: 'action',
+      width: isMobile ? 100 : 120,
+      fixed: isMobile ? undefined : 'right',
+      render: (_: any, record: Supplier) => (
+        <Space size="small" direction={isMobile ? 'vertical' : 'horizontal'}>
+          <Button
+            type="link"
+            size={isMobile ? 'small' : 'middle'}
+            icon={<EditOutlined />}
+            onClick={() => navigate(`/dashboard/suppliers/${record.id}`)}
+          >
+            {!isMobile && t('commonUi:buttons.edit')}
+          </Button>
+          <Popconfirm
+            title={t('commonUi:messages.deleteConfirm')}
+            description={t('suppliers:messages.deleteDescription')}
+            onConfirm={() => handleDelete(record)}
+            okText={t('commonUi:buttons.delete')}
+            cancelText={t('commonUi:buttons.cancel')}
+          >
+            <Button
+              type="link"
+              danger
+              size={isMobile ? 'small' : 'middle'}
+              icon={<DeleteOutlined />}
+            >
+              {!isMobile && t('commonUi:buttons.delete')}
+            </Button>
+          </Popconfirm>
+        </Space>
+      ),
     },
   ];
 
   return (
-    <StandardListPage
-      title={
-        <>
-          <ShopOutlined /> {t('suppliers:title')}
-        </>
-      }
-      createButtonText={t('suppliers:createButton')}
-      onCreateClick={() => navigate('/dashboard/suppliers/new')}
-      searchPlaceholder={t('suppliers:searchPlaceholder')}
-      searchValue={search}
-      onSearchChange={setSearch}
-      columns={columns}
-      dataSource={data?.data || []}
-      loading={isLoading}
-      rowKey="id"
-      pagination={{
-        current: page,
-        pageSize,
-        total: data?.meta?.total || 0,
-        showTotal: (total) => t('suppliers:messages.total', { total }),
-        onChange: (newPage, newPageSize) => {
-          setPage(newPage);
-          setPageSize(newPageSize);
-        },
-      }}
-      onEdit={(record) => navigate(`/dashboard/suppliers/${record.id}`)}
-      onDelete={(record) => deleteMutation.mutate(record.id)}
-      deleteConfirmTitle={t('commonUi:messages.deleteConfirm')}
-    />
+    <div style={{ padding: isMobile ? 12 : isTablet ? 16 : 24 }}>
+      <Card size={isMobile ? 'small' : 'default'}>
+        <Space direction="vertical" style={{ width: '100%' }} size={isMobile ? 'small' : 'large'}>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: isMobile ? 'column' : 'row',
+              justifyContent: 'space-between',
+              alignItems: isMobile ? 'flex-start' : 'center',
+              gap: isMobile ? 12 : 0,
+            }}
+          >
+            <Title level={isMobile ? 4 : 3} style={{ margin: 0 }}>
+              <ShopOutlined /> {t('suppliers:title')}
+            </Title>
+            <Space direction={isMobile ? 'vertical' : 'horizontal'} style={{ width: isMobile ? '100%' : 'auto' }}>
+              <Badge
+                status={isOnline ? 'success' : 'error'}
+                text={
+                  <Space size="small">
+                    {isOnline ? <CloudOutlined /> : <DisconnectOutlined />}
+                    {isOnline ? 'Online' : 'Offline'}
+                  </Space>
+                }
+              />
+              
+              {queueSize > 0 && (
+                <Badge count={queueSize} showZero={false}>
+                  <Tag color="warning">Pending Sync</Tag>
+                </Badge>
+              )}
+
+              <Button
+                icon={<SyncOutlined spin={syncing} />}
+                onClick={handleSync}
+                loading={syncing}
+                disabled={!isOnline}
+                style={{ width: isMobile ? '100%' : 'auto' }}
+              >
+                {syncing ? 'Syncing...' : 'Sync Now'}
+              </Button>
+
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                style={{ width: isMobile ? '100%' : 'auto' }}
+                onClick={() => navigate('/dashboard/suppliers/new')}
+              >
+                {t('suppliers:createButton')}
+              </Button>
+            </Space>
+          </div>
+
+          <Input
+            placeholder={t('suppliers:searchPlaceholder')}
+            prefix={<SearchOutlined />}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ width: isMobile ? '100%' : 300 }}
+            allowClear
+            size={isMobile ? 'middle' : 'large'}
+          />
+
+          <Table
+            columns={columns}
+            dataSource={paginatedSuppliers}
+            loading={loading}
+            rowKey="id"
+            size={isMobile ? 'small' : 'middle'}
+            pagination={{
+              current: page,
+              pageSize,
+              total: suppliers.length,
+              showSizeChanger: !isMobile,
+              showTotal: (total) => t('suppliers:messages.total', { total }),
+              onChange: (newPage, newPageSize) => {
+                setPage(newPage);
+                setPageSize(newPageSize);
+              },
+              simple: isMobile,
+            }}
+            scroll={{ x: isMobile ? 1000 : 1200 }}
+          />
+        </Space>
+      </Card>
+    </div>
   );
 }
