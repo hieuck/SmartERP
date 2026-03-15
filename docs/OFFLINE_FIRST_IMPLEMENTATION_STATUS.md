@@ -180,8 +180,33 @@
 | Phase 3: Generic Offline Service | ✅ Complete | 100% |
 | Phase 4: Backend Entities & Migrations | ✅ Complete | 100% |
 | Phase 5: Frontend Integration (deprecated) | ⏭️ Merged to Phase C | - |
-| Phase 6: Remaining Entities | ❌ Not Started | 0% |
-| **TOTAL** | **Phase C Complete** | **83%** |
+| Phase 6: Remaining Entities | 🔄 In Progress | 4% (1/24) |
+| **TOTAL** | **Phase 6 Started** | **84%** |
+
+---
+
+## 🚀 Phase 6: Batch 1 Progress (In Progress)
+
+### ✅ Infrastructure Complete (100%)
+- ✅ Extended IndexedDB schema (version 3) with 6 new entities
+- ✅ Created offline services for 6 entities
+- ✅ Updated SyncManager to sync 11 entities (was 6)
+
+### 🔄 List Pages Integration (17% - 1/6)
+1. ✅ UserList.tsx - COMPLETE
+2. ❌ PaymentList.tsx - Pending
+3. ❌ PurchaseOrderList.tsx - Pending
+4. ❌ WarehouseList.tsx - Pending
+5. ❌ StockList.tsx - Pending
+6. ❌ StockReceiptList.tsx - Pending
+
+**Batch 1 Entities Added:**
+- Payment (accounting)
+- PurchaseOrder (purchasing)
+- Warehouse (inventory)
+- Stock (inventory)
+- StockReceipt (inventory)
+- User (core - now with offline support)
 
 ---
 
