@@ -9,13 +9,15 @@ import App from './App';
 import { store } from './store';
 import { registerServiceWorker } from './lib/offline/register-sw';
 import { initSentry } from './lib/monitoring/sentry';
+import { initGA4 } from './lib/monitoring/analytics';
 import ErrorBoundary from './components/error/ErrorBoundary';
 import { theme } from './theme';
 import './i18n/config'; // Initialize i18n
 import './index.css';
 
-// Initialize Sentry for error tracking (Day 4-7: Add Monitoring)
+// Initialize monitoring (Day 4-7: Add Monitoring)
 initSentry();
+initGA4();
 
 const queryClient = new QueryClient({
   defaultOptions: {
