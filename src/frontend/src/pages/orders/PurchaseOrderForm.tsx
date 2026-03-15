@@ -11,11 +11,12 @@ import {
   Card,
   Space,
   DatePicker,
+  Badge,
 } from 'antd';
-import { PlusOutlined, DeleteOutlined, ArrowLeftOutlined } from '@ant-design/icons';
-import orderService from '@/services/order/orderService';
-import { productService } from '@/services/inventory/productService';
-import { supplierService } from '@/services/logistics/supplierService';
+import { PlusOutlined, DeleteOutlined, ArrowLeftOutlined, SyncOutlined, WifiOutlined, DisconnectOutlined } from '@ant-design/icons';
+import { logger } from '@/lib/logger/logger.service';
+import { offlineServices } from '@/services/offline-services';
+import { syncManager } from '@/lib/offline/sync-manager';
 import { useResponsive } from '@/hooks/useResponsive';
 import MobileFormItemCard from '@/components/common/MobileFormItemCard';
 import dayjs from 'dayjs';
@@ -43,6 +44,55 @@ export default function PurchaseOrderForm() {
   const [products, setProducts] = useState<any[]>([]);
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [totals, setTotals] = useState({ subtotal: 0, tax: 0, shipping: 0, discount: 0, total: 0 });
+  const [syncing, setSyncing] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [queueSize, setQueueSize] = useState(0);
+
+  // Monitor network status
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  // Auto-sync on mount when online
+  useEffect(() => {
+    const initSync = async () => {
+      if (navigator.onLine) {
+        const token = localStorage.getItem('token');
+        if (token) {
+          try {
+            await syncManager.sync(token);
+            logger.info('PurchaseOrderForm', 'Auto-sync completed');
+          } catch (error) {
+            logger.error('PurchaseOrderForm', 'Auto-sync failed', error as Error);
+          }
+        }
+      }
+    };
+
+    initSync();
+  }, []);
+
+  // Update sync queue size
+  useEffect(() => {
+    const updateQueueSize = async () => {
+      const size = await syncManager.getQueueSize();
+      setQueueSize(size);
+    };
+
+    updateQueueSize();
+    const interval = setInterval(updateQueueSize, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     loadProducts();
@@ -58,19 +108,22 @@ export default function PurchaseOrderForm() {
 
   const loadProducts = async () => {
     try {
-      const response = await productService.getProducts({ page: 1, limit: 1000 });
-      setProducts(response.data);
+      const allProducts = await offlineServices.products.getAll();
+      setProducts(allProducts);
+      logger.info('PurchaseOrderForm', 'Loaded products from IndexedDB', { count: allProducts.length });
     } catch (error) {
+      logger.error('PurchaseOrderForm', 'Failed to load products', error as Error);
       message.error('Không thể tải danh sách sản phẩm');
     }
   };
 
   const loadSuppliers = async () => {
     try {
-      const data = await supplierService.getSuppliers({ page: 1, limit: 1000 });
-      setSuppliers(data.data || []);
+      const allSuppliers = await offlineServices.suppliers.getAll();
+      setSuppliers(allSuppliers);
+      logger.info('PurchaseOrderForm', 'Loaded suppliers from IndexedDB', { count: allSuppliers.length });
     } catch (error) {
-      setSuppliers([]);
+      logger.error('PurchaseOrderForm', 'Failed to load suppliers', error as Error);
       message.error('Không thể tải danh sách nhà cung cấp');
     }
   };
@@ -78,49 +131,45 @@ export default function PurchaseOrderForm() {
   const loadOrder = async () => {
     try {
       setLoading(true);
+      const order = await offlineServices.purchaseOrders.getById(id!);
 
-      const response = await orderService.getPurchaseOrder(id!);
-
-      const order = response.data || response; // Handle both {data: ...} and direct response
-
-      if (!order) {
-        throw new Error('Order data is null or undefined');
-      }
-
-      const formValues = {
-        supplierId: order.supplierId,
-        orderDate: dayjs(order.orderDate),
-        expectedDate: order.expectedDeliveryDate ? dayjs(order.expectedDeliveryDate) : null,
-        shippingFee: Number(order.shippingFee) || 0,
-        discount: Number(order.discountAmount) || 0,
-        deliveryAddress: order.deliveryAddress,
-        paymentTerms: order.paymentTerms,
-        notes: order.notes,
-      };
-      form.setFieldsValue(formValues);
-
-      if (!order.items || !Array.isArray(order.items)) {
-        throw new Error('Order items is not an array');
-      }
-
-      const mappedItems = order.items.map((item: any, index: number) => {
-        const quantity = Number(item.quantity) || 0;
-        const unitPrice = Number(item.unitCost || item.unitPrice) || 0;
-        const discount = Number(item.discountAmount || item.discount) || 0;
-
-        return {
-          key: `${index}`,
-          productId: item.productId,
-          productName: item.product?.name || item.productName || 'Unknown',
-          quantity,
-          unitPrice,
-          discount,
-          subtotal: quantity * unitPrice - discount,
+      if (order) {
+        const formValues = {
+          supplierId: order.supplierId,
+          orderDate: dayjs(order.orderDate),
+          expectedDate: order.expectedDeliveryDate ? dayjs(order.expectedDeliveryDate) : null,
+          shippingFee: Number(order.shippingFee) || 0,
+          discount: Number(order.discountAmount) || 0,
+          deliveryAddress: order.deliveryAddress,
+          paymentTerms: order.paymentTerms,
+          notes: order.notes,
         };
-      });
+        form.setFieldsValue(formValues);
 
-      setItems(mappedItems);
+        if (order.items && Array.isArray(order.items)) {
+          const mappedItems = order.items.map((item: any, index: number) => {
+            const quantity = Number(item.quantity) || 0;
+            const unitPrice = Number(item.unitCost || item.unitPrice) || 0;
+            const discount = Number(item.discountAmount || item.discount) || 0;
+
+            return {
+              key: `${index}`,
+              productId: item.productId,
+              productName: item.productName || 'Unknown',
+              quantity,
+              unitPrice,
+              discount,
+              subtotal: quantity * unitPrice - discount,
+            };
+          });
+
+          setItems(mappedItems);
+        }
+
+        logger.info('PurchaseOrderForm', 'Loaded order from IndexedDB', { id });
+      }
     } catch (error: any) {
+      logger.error('PurchaseOrderForm', 'Failed to load order', error);
       message.error(`Không thể tải đơn mua hàng: ${error.message || 'Unknown error'}`);
     } finally {
       setLoading(false);
@@ -199,31 +248,79 @@ export default function PurchaseOrderForm() {
         expectedDeliveryDate: values.expectedDate ? values.expectedDate.format('YYYY-MM-DD') : null,
         discountAmount: values.discount || 0,
         shippingFee: values.shippingFee || 0,
+        taxAmount: values.tax || 0,
+        totalAmount: totals.total,
         deliveryAddress: values.deliveryAddress,
         paymentTerms: values.paymentTerms,
         notes: values.notes,
+        status: 'pending',
         items: items.map((item) => ({
           productId: item.productId,
+          productName: item.productName,
           quantity: item.quantity,
           unitCost: item.unitPrice,
-          discountPercent: 0,
-          taxPercent: 0,
+          discountAmount: item.discount,
+          subtotal: item.subtotal,
         })),
       };
 
       if (id) {
-        await orderService.updatePurchaseOrder(id, orderData);
+        await offlineServices.purchaseOrders.update(id, orderData);
         message.success('Cập nhật đơn mua hàng thành công');
-        navigate('/orders/purchase');
+        logger.info('PurchaseOrderForm', 'Updated purchase order', { id });
       } else {
-        await orderService.createPurchaseOrder(orderData);
+        await offlineServices.purchaseOrders.create(orderData);
         message.success('Tạo đơn mua hàng thành công');
-        navigate('/orders/purchase');
+        logger.info('PurchaseOrderForm', 'Created purchase order');
       }
+
+      // Trigger sync if online
+      if (navigator.onLine) {
+        const token = localStorage.getItem('token');
+        if (token) {
+          syncManager.sync(token).catch(err => 
+            logger.error('PurchaseOrderForm', 'Sync after save failed', err)
+          );
+        }
+      }
+
+      navigate('/orders/purchase');
     } catch (error: any) {
-      message.error(error.response?.data?.message || 'Có lỗi xảy ra');
+      logger.error('PurchaseOrderForm', 'Failed to save order', error);
+      message.error(error.message || 'Có lỗi xảy ra');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Manual sync
+  const handleSync = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      message.error('Vui lòng đăng nhập');
+      return;
+    }
+
+    try {
+      setSyncing(true);
+      const result = await syncManager.sync(token);
+      
+      if (result.success) {
+        message.success(`Đồng bộ thành công: ${result.pulled} pulled, ${result.pushed} pushed`);
+        // Reload data after sync
+        await loadProducts();
+        await loadSuppliers();
+        if (id) {
+          await loadOrder();
+        }
+      } else {
+        message.error(`Đồng bộ thất bại: ${result.errors.join(', ')}`);
+      }
+    } catch (error) {
+      logger.error('PurchaseOrderForm', 'Sync failed', error as Error);
+      message.error('Đồng bộ thất bại');
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -316,9 +413,29 @@ export default function PurchaseOrderForm() {
   return (
     <div style={{ padding: '24px' }}>
       <div style={{ marginBottom: 16 }}>
-        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/orders/purchase')}>
-          Quay Lại
-        </Button>
+        <Space>
+          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/orders/purchase')}>
+            Quay Lại
+          </Button>
+          <Badge status={isOnline ? 'success' : 'error'} />
+          <span>{isOnline ? <WifiOutlined /> : <DisconnectOutlined />}</span>
+          <span>{isOnline ? 'Online' : 'Offline'}</span>
+          {queueSize > 0 && (
+            <>
+              <span>|</span>
+              <span style={{ color: '#faad14' }}>{queueSize} thay đổi chưa đồng bộ</span>
+            </>
+          )}
+          <Button
+            icon={<SyncOutlined spin={syncing} />}
+            onClick={handleSync}
+            loading={syncing}
+            disabled={!isOnline}
+            size="small"
+          >
+            Đồng bộ
+          </Button>
+        </Space>
       </div>
       <Card title={id ? 'Sửa đơn mua hàng' : 'Tạo đơn mua hàng mới'}>
         <Form

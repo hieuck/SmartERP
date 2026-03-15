@@ -11,12 +11,12 @@ import {
   Card,
   Space,
   DatePicker,
+  Badge,
 } from 'antd';
-import { PlusOutlined, DeleteOutlined, ArrowLeftOutlined } from '@ant-design/icons';
+import { PlusOutlined, DeleteOutlined, ArrowLeftOutlined, SyncOutlined, WifiOutlined, DisconnectOutlined } from '@ant-design/icons';
 import { logger } from '@/lib/logger/logger.service';
-import orderService from '@/services/order/orderService';
-import { productService } from '@/services/inventory/productService';
-import { customerService } from '@/services/crm/customerService';
+import { offlineServices } from '@/services/offline-services';
+import { syncManager } from '@/lib/offline/sync-manager';
 import { useResponsive } from '@/hooks/useResponsive';
 import MobileFormItemCard from '@/components/common/MobileFormItemCard';
 import dayjs from 'dayjs';
@@ -44,6 +44,55 @@ export default function SalesOrderForm() {
   const [products, setProducts] = useState<any[]>([]);
   const [customers, setCustomers] = useState<any[]>([]);
   const [totals, setTotals] = useState({ subtotal: 0, tax: 0, shipping: 0, discount: 0, total: 0 });
+  const [syncing, setSyncing] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [queueSize, setQueueSize] = useState(0);
+
+  // Monitor network status
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  // Auto-sync on mount when online
+  useEffect(() => {
+    const initSync = async () => {
+      if (navigator.onLine) {
+        const token = localStorage.getItem('token');
+        if (token) {
+          try {
+            await syncManager.sync(token);
+            logger.info('SalesOrderForm', 'Auto-sync completed');
+          } catch (error) {
+            logger.error('SalesOrderForm', 'Auto-sync failed', error as Error);
+          }
+        }
+      }
+    };
+
+    initSync();
+  }, []);
+
+  // Update sync queue size
+  useEffect(() => {
+    const updateQueueSize = async () => {
+      const size = await syncManager.getQueueSize();
+      setQueueSize(size);
+    };
+
+    updateQueueSize();
+    const interval = setInterval(updateQueueSize, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     loadProducts();
@@ -59,18 +108,22 @@ export default function SalesOrderForm() {
 
   const loadProducts = async () => {
     try {
-      const response = await productService.getProducts({ page: 1, limit: 1000 });
-      setProducts(response.data);
+      const allProducts = await offlineServices.products.getAll();
+      setProducts(allProducts);
+      logger.info('SalesOrderForm', 'Loaded products from IndexedDB', { count: allProducts.length });
     } catch (error) {
+      logger.error('SalesOrderForm', 'Failed to load products', error as Error);
       message.error('Không thể tải danh sách sản phẩm');
     }
   };
 
   const loadCustomers = async () => {
     try {
-      const response = await customerService.getCustomers({ page: 1, limit: 1000 });
-      setCustomers(response.data);
+      const allCustomers = await offlineServices.customers.getAll();
+      setCustomers(allCustomers);
+      logger.info('SalesOrderForm', 'Loaded customers from IndexedDB', { count: allCustomers.length });
     } catch (error) {
+      logger.error('SalesOrderForm', 'Failed to load customers', error as Error);
       message.error('Không thể tải danh sách khách hàng');
     }
   };
@@ -78,36 +131,41 @@ export default function SalesOrderForm() {
   const loadOrder = async () => {
     try {
       setLoading(true);
-      const response = await orderService.getSalesOrder(id!);
-      const order = response.data || response; // Handle both {data: ...} and direct response
+      const order = await offlineServices.salesOrders.getById(id!);
 
-      form.setFieldsValue({
-        customerId: order.customerId,
-        orderDate: dayjs(order.orderDate),
-        deliveryDate: order.deliveryDate ? dayjs(order.deliveryDate) : null,
-        tax: Number(order.taxAmount || order.tax) || 0,
-        shippingFee: Number(order.shippingFee) || 0,
-        discount: Number(order.discountAmount || order.discount) || 0,
-        notes: order.notes,
-      });
+      if (order) {
+        form.setFieldsValue({
+          customerId: order.customerId,
+          orderDate: dayjs(order.orderDate),
+          deliveryDate: order.deliveryDate ? dayjs(order.deliveryDate) : null,
+          tax: Number(order.taxAmount || order.tax) || 0,
+          shippingFee: Number(order.shippingFee) || 0,
+          discount: Number(order.discountAmount || order.discount) || 0,
+          notes: order.notes,
+        });
 
-      setItems(
-        order.items.map((item: any, index: number) => {
-          const quantity = Number(item.quantity) || 0;
-          const unitPrice = Number(item.unitPrice) || 0;
-          const discount = Number(item.discountAmount || item.discount) || 0;
+        if (order.items && Array.isArray(order.items)) {
+          setItems(
+            order.items.map((item: any, index: number) => {
+              const quantity = Number(item.quantity) || 0;
+              const unitPrice = Number(item.unitPrice) || 0;
+              const discount = Number(item.discountAmount || item.discount) || 0;
 
-          return {
-            key: `${index}`,
-            productId: item.productId,
-            productName: item.product?.name || item.productName,
-            quantity,
-            unitPrice,
-            discount,
-            subtotal: quantity * unitPrice - discount,
-          };
-        }),
-      );
+              return {
+                key: `${index}`,
+                productId: item.productId,
+                productName: item.productName,
+                quantity,
+                unitPrice,
+                discount,
+                subtotal: quantity * unitPrice - discount,
+              };
+            }),
+          );
+        }
+
+        logger.info('SalesOrderForm', 'Loaded order from IndexedDB', { id });
+      }
     } catch (error) {
       logger.error('SalesOrderForm', 'Error loading sales order', error as Error);
       message.error('Không thể tải đơn hàng');
@@ -188,32 +246,80 @@ export default function SalesOrderForm() {
         expectedDeliveryDate: values.deliveryDate ? values.deliveryDate.format('YYYY-MM-DD') : null,
         discountAmount: values.discount || 0,
         shippingFee: values.shippingFee || 0,
+        taxAmount: values.tax || 0,
+        totalAmount: totals.total,
         shippingAddress: values.shippingAddress,
         billingAddress: values.billingAddress,
         paymentMethod: values.paymentMethod,
         notes: values.notes,
+        status: 'pending',
         items: items.map((item) => ({
           productId: item.productId,
+          productName: item.productName,
           quantity: item.quantity,
           unitPrice: item.unitPrice,
-          discountPercent: 0,
-          taxPercent: 0,
+          discountAmount: item.discount,
+          subtotal: item.subtotal,
         })),
       };
 
       if (id) {
-        await orderService.updateSalesOrder(id, orderData);
+        await offlineServices.salesOrders.update(id, orderData);
         message.success('Cập nhật đơn hàng thành công');
-        navigate('/orders/sales');
+        logger.info('SalesOrderForm', 'Updated sales order', { id });
       } else {
-        await orderService.createSalesOrder(orderData);
+        await offlineServices.salesOrders.create(orderData);
         message.success('Tạo đơn hàng thành công');
-        navigate('/orders/sales');
+        logger.info('SalesOrderForm', 'Created sales order');
       }
+
+      // Trigger sync if online
+      if (navigator.onLine) {
+        const token = localStorage.getItem('token');
+        if (token) {
+          syncManager.sync(token).catch(err => 
+            logger.error('SalesOrderForm', 'Sync after save failed', err)
+          );
+        }
+      }
+
+      navigate('/orders/sales');
     } catch (error: any) {
-      message.error(error.response?.data?.message || 'Có lỗi xảy ra');
+      logger.error('SalesOrderForm', 'Failed to save order', error);
+      message.error(error.message || 'Có lỗi xảy ra');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Manual sync
+  const handleSync = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      message.error('Vui lòng đăng nhập');
+      return;
+    }
+
+    try {
+      setSyncing(true);
+      const result = await syncManager.sync(token);
+      
+      if (result.success) {
+        message.success(`Đồng bộ thành công: ${result.pulled} pulled, ${result.pushed} pushed`);
+        // Reload data after sync
+        await loadProducts();
+        await loadCustomers();
+        if (id) {
+          await loadOrder();
+        }
+      } else {
+        message.error(`Đồng bộ thất bại: ${result.errors.join(', ')}`);
+      }
+    } catch (error) {
+      logger.error('SalesOrderForm', 'Sync failed', error as Error);
+      message.error('Đồng bộ thất bại');
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -306,9 +412,29 @@ export default function SalesOrderForm() {
   return (
     <div style={{ padding: '24px' }}>
       <div style={{ marginBottom: 16 }}>
-        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/orders/sales')}>
-          Quay Lại
-        </Button>
+        <Space>
+          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/orders/sales')}>
+            Quay Lại
+          </Button>
+          <Badge status={isOnline ? 'success' : 'error'} />
+          <span>{isOnline ? <WifiOutlined /> : <DisconnectOutlined />}</span>
+          <span>{isOnline ? 'Online' : 'Offline'}</span>
+          {queueSize > 0 && (
+            <>
+              <span>|</span>
+              <span style={{ color: '#faad14' }}>{queueSize} thay đổi chưa đồng bộ</span>
+            </>
+          )}
+          <Button
+            icon={<SyncOutlined spin={syncing} />}
+            onClick={handleSync}
+            loading={syncing}
+            disabled={!isOnline}
+            size="small"
+          >
+            Đồng bộ
+          </Button>
+        </Space>
       </div>
       <Card title={id ? 'Sửa đơn hàng' : 'Tạo đơn hàng mới'}>
         <Form
