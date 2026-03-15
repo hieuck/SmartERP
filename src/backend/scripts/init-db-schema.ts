@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { DataSource } from 'typeorm';
-import { AppModule } from '../app.module';
+import { AppModule } from '../src/app.module';
 
 /**
  * Initialize database schema by starting NestJS app
@@ -30,10 +30,12 @@ async function initSchema() {
     const tableCount = parseInt(tables[0].count);
 
     if (tableCount === 0) {
-      console.log('✨ No tables found. Initializing schema...');
+      console.log('✨ No tables found. Running migrations...');
 
-      // Synchronize schema (only for initial setup)
-      await dataSource.synchronize();
+      // Run migrations instead of synchronize
+      const migrations = await dataSource.runMigrations();
+      
+      console.log(`✅ Ran ${migrations.length} migration(s)`);
 
       // Count tables again
       const newTables = await dataSource.query(`

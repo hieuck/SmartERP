@@ -4,6 +4,9 @@ export class InitialSchema1710385200000 implements MigrationInterface {
   name = 'InitialSchema1710385200000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
+    // Enable UUID extension
+    await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
+
     // Create tenants table
     await queryRunner.query(`
       CREATE TABLE "tenants" (

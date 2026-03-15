@@ -1,11 +1,9 @@
 import { DataSource } from 'typeorm';
 import { config } from 'dotenv';
-import { join } from 'path';
 
 config();
 
 const isProduction = process.env.NODE_ENV === 'production';
-const baseDir = isProduction ? __dirname : join(__dirname, '..', '..');
 
 /**
  * TypeORM CLI DataSource
@@ -19,15 +17,15 @@ export default new DataSource({
   password: process.env.DB_PASSWORD || 'postgres',
   database: process.env.DB_NAME || 'erp_production',
   
-  // Entities
+  // Entities - relative to backend root
   entities: isProduction
-    ? [join(baseDir, 'dist/**/*.entity.js')]
-    : [join(baseDir, 'src/**/*.entity.ts')],
+    ? ['dist/**/*.entity.js']
+    : ['src/**/*.entity.ts'],
   
-  // Migrations
+  // Migrations - relative to backend root
   migrations: isProduction
-    ? [join(baseDir, 'dist/migrations/*.js')]
-    : [join(baseDir, 'src/migrations/*.ts')],
+    ? ['dist/migrations/*.js']
+    : ['src/migrations/*.ts'],
   
   // Disable synchronize - use migrations
   synchronize: false,
