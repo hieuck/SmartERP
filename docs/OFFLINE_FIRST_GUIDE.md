@@ -1,309 +1,437 @@
 # Offline-First Architecture Guide
 
+**Version:** 1.0  
+**Last Updated:** 2026-03-15
+
+---
+
 ## Overview
 
-SmartERP implements offline-first architecture to ensure business continuity regardless of internet connectivity.
+SmartERP implements offline-first architecture for uninterrupted business operations.
 
-## Architecture Components
+**Current Coverage:** 17% (14/82 entities)
 
-### 1. Frontend Layer
+**Implemented Entities:**
+- Products, Customers, Suppliers, Users
+- Orders, Payments, Invoices, Warehouses
+- Stock, Stock Receipts, Notifications, Attendance
 
-**IndexedDB (Dexie.js)**
-- Local database storing all business data
-- Fast read/write operations
-- Structured data with indexes
-- Supports complex queries
+---
 
-**Sync Manager**
-- Orchestrates bidirectional synchronization
-- Handles conflict detection and resolution
-- Implements retry logic with exponential backoff
-- Manages sync queue for offline operations
+## Architecture
 
-**Service Worker (Workbox)**
-- Intercepts network requests
-- Implements caching strategies
-- Enables background sync
-- Handles push notifications
-
-### 2. Backend Layer
-
-**Sync API Endpoints**
-- `POST /api/sync/pull` - Download changes since last sync
-- `POST /api/sync/push` - Upload local changes
-- `POST /api/sync/resolve` - Resolve conflicts
-
-**Database Schema**
-- `version` field for optimistic locking
-- `lastSyncedAt` timestamp
-- `syncStatus` enum (synced, pending, conflict)
-- `offlineId` for temporary records
-
-## Sync Strategies
-
-### Version-Based Conflict Resolution (Recommended)
-
-**How it works:**
-1. Each record has a version number
-2. Version increments on every update
-3. Client sends version with update
-4. Server checks if version matches
-5. If mismatch → conflict detected
-6. User resolves conflict manually
-
-**Pros:**
-- No data loss
-- User has full control
-- Audit trail preserved
-
-**Cons:**
-- Requires user intervention
-- More complex implementation
-
-### Last-Write-Wins (LWW)
-
-**How it works:**
-1. Server timestamp is source of truth
-2. Latest update always wins
-3. No conflict resolution needed
-
-**Pros:**
-- Simple implementation
-- No user intervention
-
-**Cons:**
-- May lose data
-- No audit trail
-
-## Implementation Guide
-
-### Phase 1: Database Schema Enhancement
-
-Add sync metadata to BaseEntity:
-
-```typescript
-@Entity()
-export class BaseEntity {
-  @Column({ type: 'int', default: 1 })
-  version: number;
-  
-  @Column({ type: 'timestamp' })
-  lastSyncedAt: Date;
-  
-  @Column({ type: 'enum', enum: SyncStatus })
-  syncStatus: SyncStatus;
-  
-  @Column({ type: 'uuid', nullable: true })
-  offlineId?: string;
-}
+```
+User Interface (React/React Native)
+    ↓
+Local Database (IndexedDB/SQLite)
+    ↓
+Sync Manager (Conflict Resolution)
+    ↓
+Backend API (NestJS)
+    ↓
+PostgreSQL Database
 ```
 
-### Phase 2: Frontend Offline Storage
+---
 
-Setup IndexedDB with Dexie.js:
+## Frontend Implementation
+
+### 1. Database Schema (IndexedDB + Dexie.js)
+
+Location: `src/frontend/src/lib/offline/db.ts`
 
 ```typescript
-import Dexie from 'dexie';
+import Dexie, { Table } from 'dexie';
 
-class OfflineDB extends Dexie {
+export class OfflineDatabase extends Dexie {
+  products!: Table<Product>;
+  customers!: Table<Customer>;
+  orders!: Table<Order>;
+
   constructor() {
-    super('SmartERP');
+    super('SmartERPOffline');
+    
     this.version(1).stores({
-      products: 'id, tenantId, sku, lastSyncedAt',
-      orders: 'id, tenantId, status, lastSyncedAt',
-      syncQueue: '++id, operation, entity, data'
+      products: 'id, code, name, tenantId, lastSyncedAt, syncStatus',
+      customers: 'id, code, name, tenantId, lastSyncedAt, syncStatus',
+      orders: 'id, orderNumber, tenantId, lastSyncedAt, syncStatus',
     });
   }
 }
+
+export const db = new OfflineDatabase();
 ```
 
-### Phase 3: Sync Manager
+### 2. Sync Manager
 
-Implement bidirectional sync:
+Location: `src/frontend/src/lib/offline/sync-manager.ts`
 
 ```typescript
-class SyncManager {
-  async sync() {
-    await this.pull(); // Download server changes
-    await this.push(); // Upload local changes
-  }
-  
-  async pull() {
-    const lastSync = await this.getLastSyncTime();
-    const response = await api.sync.pull({ since: lastSync });
-    await this.applyChanges(response.changes);
-  }
-  
-  async push() {
-    const queue = await db.syncQueue.toArray();
-    for (const item of queue) {
-      const result = await api.sync.push(item);
-      if (result.conflict) {
-        await this.handleConflict(result.conflict);
-      } else {
-        await db.syncQueue.delete(item.id);
+export class SyncManager {
+  async syncEntity(entityName: string): Promise<void> {
+    // 1. Get pending changes from local DB
+    const pendingChanges = await this.getPendingChanges(entityName);
+    
+    // 2. Push changes to backend
+    for (const change of pendingChanges) {
+      try {
+        await this.pushChange(entityName, change);
+        await this.markAsSynced(entityName, change.id);
+      } catch (error) {
+        await this.handleSyncError(entityName, change, error);
       }
+    }
+    
+    // 3. Pull latest data from backend
+    const latestData = await this.pullLatestData(entityName);
+    
+    // 4. Merge with local data (conflict resolution)
+    await this.mergeData(entityName, latestData);
+  }
+}
+```
+
+### 3. Conflict Resolution
+
+Location: `src/frontend/src/lib/offline/conflict-resolver.ts`
+
+```typescript
+export class ConflictResolver {
+  resolve(local: Entity, remote: Entity): Entity {
+    // Strategy: Last-write-wins based on updatedAt
+    if (local.updatedAt > remote.updatedAt) {
+      return local;
+    }
+    return remote;
+  }
+}
+```
+
+---
+
+## Mobile Implementation
+
+### 1. Database (SQLite + TypeORM)
+
+Location: `src/mobile/src/lib/offline/db.ts`
+
+```typescript
+import { DataSource } from 'typeorm';
+
+export const mobileDataSource = new DataSource({
+  type: 'react-native',
+  database: 'smarterp.db',
+  location: 'default',
+  entities: [Product, Customer, Order],
+  synchronize: true,
+});
+```
+
+### 2. Sync Service
+
+Location: `src/mobile/src/lib/offline/sync-service.ts`
+
+```typescript
+export class MobileSyncService {
+  async syncAll(): Promise<void> {
+    const entities = ['products', 'customers', 'orders'];
+    
+    for (const entity of entities) {
+      await this.syncEntity(entity);
     }
   }
 }
 ```
 
-### Phase 4: Service Worker
+---
 
-Register service worker with Workbox:
+## Backend Support
 
-```javascript
-import { registerRoute } from 'workbox-routing';
-import { NetworkFirst } from 'workbox-strategies';
-import { BackgroundSyncPlugin } from 'workbox-background-sync';
+### 1. Sync Metadata
 
-registerRoute(
-  /\/api\//,
-  new NetworkFirst({
-    plugins: [
-      new BackgroundSyncPlugin('api-queue', {
-        maxRetentionTime: 24 * 60
-      })
-    ]
-  })
-);
+All entities include sync metadata:
+
+```typescript
+@Column({ type: 'timestamp', nullable: true })
+lastSyncedAt: Date;
+
+@Column({ type: 'enum', enum: SyncStatus, default: SyncStatus.SYNCED })
+syncStatus: SyncStatus;
+
+@Column({ type: 'int', default: 1 })
+version: number;
 ```
 
-## Conflict Resolution
+### 2. Sync Endpoints
 
-### Conflict Detection
+```typescript
+// GET /api/products/sync?since=2024-01-01T00:00:00Z
+async getChanges(@Query('since') since: string) {
+  return this.productService.getChangesSince(new Date(since));
+}
 
-Conflict occurs when:
-- Version mismatch (version-based)
-- Concurrent updates to same record
-- Delete vs Update conflict
-
-### Resolution Strategies
-
-**1. Manual Resolution**
-- Show both versions to user
-- User chooses: keep local, keep server, or merge
-- Best for critical data
-
-**2. Automatic Resolution**
-- Apply predefined rules
-- Example: Server always wins for prices
-- Best for non-critical data
-
-**3. Merge Strategy**
-- Combine changes from both versions
-- Field-level merging
-- Best for independent fields
-
-## Testing Strategy
-
-### Unit Tests
-- Sync manager logic
-- Conflict detection
-- Queue management
-
-### Integration Tests
-- API sync endpoints
-- Database operations
-- Service worker caching
-
-### E2E Tests
-- Complete offline workflow
-- Sync after reconnection
-- Conflict resolution UI
-
-## Performance Optimization
-
-### Indexing
-- Index frequently queried fields
-- Composite indexes for multi-field queries
-
-### Batch Operations
-- Batch sync operations
-- Reduce API calls
-
-### Incremental Sync
-- Only sync changed records
-- Use lastSyncedAt timestamp
-
-### Compression
-- Compress sync payloads
-- Reduce bandwidth usage
-
-## Security Considerations
-
-### Data Encryption
-- Encrypt sensitive data in IndexedDB
-- Use Web Crypto API
-
-### Authentication
-- JWT tokens stored securely
-- Refresh tokens for long sessions
-
-### Authorization
-- Tenant isolation in sync
-- Row-level security
-
-## Monitoring & Debugging
-
-### Metrics
-- Sync success rate
-- Conflict frequency
-- Sync duration
-- Queue size
-
-### Logging
-- Sync operations
-- Conflicts detected
-- Errors and retries
-
-### Debug Tools
-- IndexedDB inspector
-- Service Worker inspector
-- Network tab for sync API
-
-## Best Practices
-
-1. **Always sync on app start**
-2. **Show sync status to user**
-3. **Handle conflicts gracefully**
-4. **Test offline scenarios thoroughly**
-5. **Monitor sync performance**
-6. **Implement retry logic**
-7. **Use optimistic UI updates**
-8. **Cache static assets**
-9. **Validate data before sync**
-10. **Document sync behavior**
-
-## Troubleshooting
-
-### Sync Not Working
-- Check network connectivity
-- Verify JWT token validity
-- Check sync queue for errors
-- Review server logs
-
-### Conflicts Not Resolving
-- Check version numbers
-- Verify conflict resolution logic
-- Review user permissions
-
-### Performance Issues
-- Check IndexedDB size
-- Review sync batch size
-- Optimize queries
-- Add indexes
-
-## Future Enhancements
-
-- Real-time sync with WebSocket
-- Collaborative editing
-- Offline file uploads
-- Progressive sync (priority-based)
-- Conflict prediction
-- Auto-merge strategies
+// POST /api/products/sync
+async pushChanges(@Body() changes: Product[]) {
+  return this.productService.applyChanges(changes);
+}
+```
 
 ---
 
-**Last Updated:** 2026-03-15
-**Version:** 1.0.0
+## Adding Offline Support to New Entity
+
+### Step 1: Update Frontend Database
+
+```typescript
+// src/frontend/src/lib/offline/db.ts
+this.version(2).stores({
+  // ... existing stores
+  invoices: 'id, invoiceNumber, tenantId, lastSyncedAt, syncStatus',
+});
+```
+
+### Step 2: Create Offline Service
+
+```typescript
+// src/frontend/src/services/invoice-offline.service.ts
+export class InvoiceOfflineService {
+  async getAll(): Promise<Invoice[]> {
+    return db.invoices.toArray();
+  }
+
+  async create(invoice: Invoice): Promise<Invoice> {
+    invoice.syncStatus = SyncStatus.PENDING;
+    await db.invoices.add(invoice);
+    return invoice;
+  }
+}
+```
+
+### Step 3: Update Sync Manager
+
+```typescript
+// src/frontend/src/lib/offline/sync-manager.ts
+async syncAll(): Promise<void> {
+  await this.syncEntity('products');
+  await this.syncEntity('customers');
+  await this.syncEntity('invoices'); // ← Add new entity
+}
+```
+
+### Step 4: Add Backend Sync Support
+
+```typescript
+// src/backend/src/domains/accounting/invoice/invoice.service.ts
+async getChangesSince(since: Date): Promise<Invoice[]> {
+  return this.repository.find({
+    where: {
+      updatedAt: MoreThan(since),
+    },
+  });
+}
+```
+
+---
+
+## Conflict Resolution Strategies
+
+### 1. Last-Write-Wins (Default)
+
+```typescript
+if (local.updatedAt > remote.updatedAt) {
+  return local;
+}
+return remote;
+```
+
+### 2. Manual Resolution
+
+```typescript
+if (hasConflict(local, remote)) {
+  // Show conflict UI to user
+  return await showConflictDialog(local, remote);
+}
+```
+
+### 3. Field-Level Merge
+
+```typescript
+return {
+  ...remote,
+  // Keep local changes for specific fields
+  notes: local.notes,
+  customFields: local.customFields,
+};
+```
+
+---
+
+## Network Detection
+
+```typescript
+// Frontend
+export const useNetworkStatus = () => {
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  return isOnline;
+};
+
+// Mobile
+import NetInfo from '@react-native-community/netinfo';
+
+export const useNetworkStatus = () => {
+  const [isOnline, setIsOnline] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener(state => {
+      setIsOnline(state.isConnected);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  return isOnline;
+};
+```
+
+---
+
+## Background Sync
+
+### Frontend (Service Worker)
+
+```typescript
+// src/frontend/public/sw.js
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'sync-data') {
+    event.waitUntil(syncAllData());
+  }
+});
+
+async function syncAllData() {
+  const syncManager = new SyncManager();
+  await syncManager.syncAll();
+}
+```
+
+### Mobile (Background Task)
+
+```typescript
+// src/mobile/src/lib/background-sync.ts
+import BackgroundFetch from 'react-native-background-fetch';
+
+BackgroundFetch.configure({
+  minimumFetchInterval: 15, // minutes
+}, async (taskId) => {
+  const syncService = new MobileSyncService();
+  await syncService.syncAll();
+  BackgroundFetch.finish(taskId);
+});
+```
+
+---
+
+## Testing Offline Functionality
+
+### 1. Simulate Offline Mode
+
+```typescript
+// Frontend
+window.dispatchEvent(new Event('offline'));
+
+// Mobile
+import NetInfo from '@react-native-community/netinfo';
+NetInfo.fetch().then(state => {
+  state.isConnected = false;
+});
+```
+
+### 2. Test Sync
+
+```typescript
+describe('Offline Sync', () => {
+  it('should sync pending changes when online', async () => {
+    // Create offline change
+    await offlineService.create({ name: 'Test Product' });
+
+    // Go online
+    window.dispatchEvent(new Event('online'));
+
+    // Wait for sync
+    await waitFor(() => {
+      expect(syncManager.isSyncing).toBe(false);
+    });
+
+    // Verify synced
+    const product = await db.products.get(1);
+    expect(product.syncStatus).toBe(SyncStatus.SYNCED);
+  });
+});
+```
+
+---
+
+## Troubleshooting
+
+### Issue: Data not syncing
+
+**Solution:**
+1. Check network connection
+2. Check sync status in local DB
+3. Check backend logs for errors
+4. Verify sync endpoints are accessible
+
+### Issue: Conflicts not resolving
+
+**Solution:**
+1. Check conflict resolution strategy
+2. Verify `updatedAt` timestamps
+3. Check version numbers
+4. Review conflict logs
+
+### Issue: Local DB full
+
+**Solution:**
+1. Implement data cleanup policy
+2. Remove old synced data
+3. Increase storage quota
+4. Implement pagination
+
+---
+
+## Best Practices
+
+1. **Always check network status** before API calls
+2. **Store data locally first** then sync
+3. **Handle conflicts gracefully** with user feedback
+4. **Implement retry logic** for failed syncs
+5. **Clean up old data** regularly
+6. **Test offline scenarios** thoroughly
+7. **Monitor sync performance** and errors
+8. **Provide sync status** to users
+
+---
+
+## References
+
+- [Dexie.js Documentation](https://dexie.org/)
+- [Offline-First Design](https://offlinefirst.org/)
+- [Service Workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API)
+
+---
+
+**Last Updated:** 2026-03-15  
+**Maintained By:** Engineering Team

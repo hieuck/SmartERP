@@ -8,6 +8,14 @@
 
 ## 📋 Pre-Deployment Checklist
 
+### 0. CI/CD Pipeline
+
+- [ ] CI pipeline passed (all tests, linting, type-check)
+- [ ] Coverage ≥80% (backend and frontend)
+- [ ] Security audit passed (no high/critical vulnerabilities)
+- [ ] Build artifacts generated successfully
+- [ ] Docker images built and pushed to registry
+
 ### 1. Configuration Validation
 
 - [ ] All environment variables set
@@ -91,7 +99,70 @@
 
 ## 🚀 Deployment Steps
 
-### Staging Deployment
+### Automated Deployment (Recommended)
+
+#### Staging Deployment
+
+**Trigger:** Push to `develop` branch
+
+```bash
+# 1. Merge feature to develop
+git checkout develop
+git merge feature/your-feature
+git push origin develop
+
+# 2. GitHub Actions automatically:
+#    - Runs CI pipeline (quality gates)
+#    - Builds Docker images
+#    - Deploys to staging
+#    - Runs health checks
+#    - Notifies team
+
+# 3. Monitor deployment
+# Go to: https://github.com/your-org/smart-erp/actions
+# Watch "Deploy to Staging" workflow
+
+# 4. Verify deployment
+curl https://api-staging.smarterp.com/api/health
+```
+
+**Time:** ~5-7 minutes
+
+#### Production Deployment
+
+**Trigger:** Manual approval required
+
+```bash
+# 1. Ensure staging is stable (24+ hours)
+
+# 2. Via GitHub UI:
+# Go to: https://github.com/your-org/smart-erp/actions
+# Select "Deploy to Production"
+# Click "Run workflow"
+# Type "deploy" to confirm
+# Click "Run workflow"
+
+# 3. Monitor deployment
+# Watch workflow progress
+# Pipeline will:
+#    - Verify quality gates
+#    - Check staging health
+#    - Build Docker images
+#    - Create backup
+#    - Deploy to production
+#    - Run smoke tests
+#    - Monitor for 5 minutes
+#    - Create GitHub release
+
+# 4. Verify deployment
+curl https://api.smarterp.com/api/health
+```
+
+**Time:** ~10-15 minutes
+
+### Manual Deployment (Fallback)
+
+#### Staging Deployment
 
 #### 1. Pre-Deployment
 
@@ -355,6 +426,8 @@ kubectl logs -f deployment/smarterp-backend -n production
 
 ## 📚 Related Documents
 
+- **CI/CD Pipeline Guide:** `docs/CI_CD_GUIDE.md`
+- **Deployment Guide:** `docs/deployment/DEPLOYMENT_GUIDE.md`
 - **Config Management:** `docs/deployment/config-management.md`
 - **Security Guidelines:** `TECH-LEAD-FINAL-DECISION-2026-03-09-SECURITY-FIRST.md`
 - **Infrastructure Requirements:** `DEVOPS-INFRASTRUCTURE-REQUIREMENTS-2026-03-09.md`
