@@ -108,13 +108,23 @@
 - ✅ Version increment
 - ✅ Soft delete
 - ✅ Search và count utilities
-- ✅ Pre-configured services cho 6 entities:
+- ✅ Pre-configured services cho 16 entities:
   - users
   - products
   - customers
   - suppliers
   - salesOrders
   - invoices
+  - payments
+  - purchaseOrders
+  - warehouses
+  - stocks
+  - stockReceipts
+  - materials
+  - molds
+  - productionOrders
+  - attendances
+  - notifications
 
 ### Phase 4: Backend Entities & Migrations (100%)
 
@@ -500,8 +510,8 @@ const handleSync = async () => {
 ---
 
 **Last Updated:** 2026-03-15
-**Version:** 7.1.0
-**Status:** ✅ COMPLETE - All 16 entities with offline-first support (100%) + Codebase cleanup
+**Version:** 7.2.0
+**Status:** ✅ COMPLETE - All 16 entities with offline-first support (100%) + Documentation updated
 
 **Key Achievements:**
 - ✅ Refactored core infrastructure (Logger, TenantContext)
