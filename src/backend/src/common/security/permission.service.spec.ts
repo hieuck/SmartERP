@@ -201,7 +201,7 @@ describe('PermissionService', () => {
   });
 
   describe('buildSecureQuery', () => {
-    it('should add tenantId to query for all users', () => {
+    it('should add tenantId and createdBy to query for regular users', () => {
       const baseWhere = { status: 'active' };
 
       const result = service.buildSecureQuery(mockUser, baseWhere, 'TestEntity');
@@ -209,6 +209,7 @@ describe('PermissionService', () => {
       expect(result).toEqual({
         status: 'active',
         tenantId: 'tenant-1',
+        createdBy: 'user-1',
       });
     });
 
@@ -310,7 +311,8 @@ describe('PermissionService', () => {
 
       const result = service.canRead(userWithNullRoles, mockRecord, 'TestEntity');
 
-      expect(result).toBe(false);
+      // User with null roles can still read own record (mockRecord.createdBy === mockUser.id)
+      expect(result).toBe(true);
     });
 
     it('should handle user with undefined roles', () => {
@@ -318,7 +320,8 @@ describe('PermissionService', () => {
 
       const result = service.canRead(userWithUndefinedRoles, mockRecord, 'TestEntity');
 
-      expect(result).toBe(false);
+      // User with undefined roles can still read own record (mockRecord.createdBy === mockUser.id)
+      expect(result).toBe(true);
     });
 
     it('should handle user with multiple roles including admin', () => {

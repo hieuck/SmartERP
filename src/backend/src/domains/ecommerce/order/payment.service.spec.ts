@@ -21,17 +21,61 @@ describe('PaymentService', () => {
     roles: ['user'],
   };
 
-  const mockOrder = {
+  // Helper function to create fresh mock order
+  const createMockOrder = (overrides = {}): Order => ({
     id: 'order-1',
     orderNumber: 'ORD-001',
-    total: 100,
+    customerId: 'customer-1',
+    customer: null,
+    cartId: 'cart-1',
+    status: 'pending' as any,
     paymentStatus: PaymentStatus.PENDING,
+    shippingStatus: 'pending' as any,
+    items: [],
+    subtotal: 100,
+    tax: 0,
+    shipping: 0,
+    discount: 0,
+    total: 100,
+    couponCode: null,
+    customerEmail: 'customer@example.com',
+    customerPhone: '0123456789',
+    shippingAddress: {
+      street: '123 Main St',
+      city: 'Hanoi',
+      country: 'Vietnam',
+      postalCode: '100000',
+    },
+    billingAddress: {
+      street: '123 Main St',
+      city: 'Hanoi',
+      country: 'Vietnam',
+      postalCode: '100000',
+    },
     paymentMethod: null,
     paymentTransactionId: null,
     paidAt: null,
+    shippingMethod: null,
+    trackingNumber: null,
+    shippedAt: null,
+    deliveredAt: null,
+    customerNotes: null,
+    internalNotes: null,
+    cancelledBy: null,
+    cancellationReason: null,
+    cancelledAt: null,
     tenantId: 'tenant-1',
-    createdBy: 'user-1',
-  } as any;
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    generateOrderNumber: jest.fn(),
+    calculateTotals: jest.fn(),
+    validate: jest.fn(),
+    itemCount: 0,
+    isPaid: false,
+    canBeCancelled: true,
+    isCompleted: false,
+    ...overrides,
+  } as Order);
 
   beforeEach(async () => {
     const mockOrderRepo = {
@@ -88,7 +132,7 @@ describe('PaymentService', () => {
     });
 
     it('should process COD payment successfully', async () => {
-      const freshOrder = { ...mockOrder, paymentStatus: PaymentStatus.PENDING };
+      const freshOrder = createMockOrder({ paymentStatus: PaymentStatus.PENDING });
       orderRepository.findOne.mockResolvedValue(freshOrder);
       orderRepository.save.mockResolvedValue({
         ...freshOrder,
@@ -115,10 +159,8 @@ describe('PaymentService', () => {
     });
 
     it('should throw BadRequestException when order already paid', async () => {
-      orderRepository.findOne.mockResolvedValue({
-        ...mockOrder,
-        paymentStatus: PaymentStatus.PAID,
-      } as any);
+      const paidOrder = createMockOrder({ paymentStatus: PaymentStatus.PAID });
+      orderRepository.findOne.mockResolvedValue(paidOrder);
 
       await expect(service.processPayment(processDto, mockUser)).rejects.toThrow(
         'Order is already paid',
@@ -126,7 +168,7 @@ describe('PaymentService', () => {
     });
 
     it('should throw BadRequestException when amount mismatch', async () => {
-      const freshOrder = { ...mockOrder, paymentStatus: PaymentStatus.PENDING };
+      const freshOrder = createMockOrder({ paymentStatus: PaymentStatus.PENDING });
       orderRepository.findOne.mockResolvedValue(freshOrder);
 
       const wrongAmountDto = { ...processDto, amount: 200 };
@@ -137,7 +179,7 @@ describe('PaymentService', () => {
     });
 
     it('should process Stripe payment successfully', async () => {
-      const freshOrder = { ...mockOrder, paymentStatus: PaymentStatus.PENDING };
+      const freshOrder = createMockOrder({ paymentStatus: PaymentStatus.PENDING });
       orderRepository.findOne.mockResolvedValue(freshOrder);
       orderRepository.save.mockResolvedValue({
         ...freshOrder,
@@ -152,7 +194,7 @@ describe('PaymentService', () => {
     });
 
     it('should process PayPal payment successfully', async () => {
-      const freshOrder = { ...mockOrder, paymentStatus: PaymentStatus.PENDING };
+      const freshOrder = createMockOrder({ paymentStatus: PaymentStatus.PENDING });
       orderRepository.findOne.mockResolvedValue(freshOrder);
       orderRepository.save.mockResolvedValue({
         ...freshOrder,
@@ -167,7 +209,7 @@ describe('PaymentService', () => {
     });
 
     it('should process VNPay payment successfully', async () => {
-      const freshOrder = { ...mockOrder, paymentStatus: PaymentStatus.PENDING };
+      const freshOrder = createMockOrder({ paymentStatus: PaymentStatus.PENDING });
       orderRepository.findOne.mockResolvedValue(freshOrder);
       orderRepository.save.mockResolvedValue({
         ...freshOrder,
@@ -182,7 +224,7 @@ describe('PaymentService', () => {
     });
 
     it('should process Momo payment successfully', async () => {
-      const freshOrder = { ...mockOrder, paymentStatus: PaymentStatus.PENDING };
+      const freshOrder = createMockOrder({ paymentStatus: PaymentStatus.PENDING });
       orderRepository.findOne.mockResolvedValue(freshOrder);
       orderRepository.save.mockResolvedValue({
         ...freshOrder,
@@ -197,7 +239,7 @@ describe('PaymentService', () => {
     });
 
     it('should throw BadRequestException for unsupported payment method', async () => {
-      const freshOrder = { ...mockOrder, paymentStatus: PaymentStatus.PENDING };
+      const freshOrder = createMockOrder({ paymentStatus: PaymentStatus.PENDING });
       orderRepository.findOne.mockResolvedValue(freshOrder);
 
       const unsupportedDto = { ...processDto, paymentMethod: 'bitcoin' };
@@ -208,7 +250,7 @@ describe('PaymentService', () => {
     });
 
     it('should mark payment as failed when payment fails', async () => {
-      const freshOrder = { ...mockOrder, paymentStatus: PaymentStatus.PENDING };
+      const freshOrder = createMockOrder({ paymentStatus: PaymentStatus.PENDING });
       orderRepository.findOne.mockResolvedValue(freshOrder);
       orderRepository.save.mockResolvedValue({
         ...freshOrder,
@@ -241,7 +283,8 @@ describe('PaymentService', () => {
     };
 
     it('should verify COD payment successfully', async () => {
-      orderRepository.findOne.mockResolvedValue(mockOrder);
+      const mockOrder = createMockOrder({ paymentStatus: PaymentStatus.PENDING });
+      orderRepository.findOne.mockResolvedValue(mockOrder as any);
       orderRepository.save.mockResolvedValue({
         ...mockOrder,
         paymentStatus: PaymentStatus.PAID,
@@ -263,7 +306,8 @@ describe('PaymentService', () => {
     });
 
     it('should verify Stripe payment successfully', async () => {
-      orderRepository.findOne.mockResolvedValue(mockOrder);
+      const mockOrder = createMockOrder({ paymentStatus: PaymentStatus.PENDING });
+      orderRepository.findOne.mockResolvedValue(mockOrder as any);
       orderRepository.save.mockResolvedValue({
         ...mockOrder,
         paymentStatus: PaymentStatus.PAID,
@@ -276,7 +320,8 @@ describe('PaymentService', () => {
     });
 
     it('should verify PayPal payment successfully', async () => {
-      orderRepository.findOne.mockResolvedValue(mockOrder);
+      const mockOrder = createMockOrder({ paymentStatus: PaymentStatus.PENDING });
+      orderRepository.findOne.mockResolvedValue(mockOrder as any);
       orderRepository.save.mockResolvedValue({
         ...mockOrder,
         paymentStatus: PaymentStatus.PAID,
@@ -289,7 +334,8 @@ describe('PaymentService', () => {
     });
 
     it('should verify VNPay payment successfully', async () => {
-      orderRepository.findOne.mockResolvedValue(mockOrder);
+      const mockOrder = createMockOrder({ paymentStatus: PaymentStatus.PENDING });
+      orderRepository.findOne.mockResolvedValue(mockOrder as any);
       orderRepository.save.mockResolvedValue({
         ...mockOrder,
         paymentStatus: PaymentStatus.PAID,
@@ -302,7 +348,8 @@ describe('PaymentService', () => {
     });
 
     it('should verify Momo payment successfully', async () => {
-      orderRepository.findOne.mockResolvedValue(mockOrder);
+      const mockOrder = createMockOrder({ paymentStatus: PaymentStatus.PENDING });
+      orderRepository.findOne.mockResolvedValue(mockOrder as any);
       orderRepository.save.mockResolvedValue({
         ...mockOrder,
         paymentStatus: PaymentStatus.PAID,
@@ -315,7 +362,8 @@ describe('PaymentService', () => {
     });
 
     it('should throw BadRequestException for unsupported payment method', async () => {
-      orderRepository.findOne.mockResolvedValue(mockOrder);
+      const mockOrder = createMockOrder({ paymentStatus: PaymentStatus.PENDING });
+      orderRepository.findOne.mockResolvedValue(mockOrder as any);
 
       const unsupportedDto = { ...verifyDto, paymentMethod: 'bitcoin' };
 
@@ -325,10 +373,8 @@ describe('PaymentService', () => {
     });
 
     it('should not update status if already paid', async () => {
-      orderRepository.findOne.mockResolvedValue({
-        ...mockOrder,
-        paymentStatus: PaymentStatus.PAID,
-      } as any);
+      const paidOrder = createMockOrder({ paymentStatus: PaymentStatus.PAID });
+      orderRepository.findOne.mockResolvedValue(paidOrder as any);
 
       const result = await service.verifyPayment(verifyDto, mockUser);
 
@@ -345,14 +391,12 @@ describe('PaymentService', () => {
       reason: 'Customer request',
     };
 
-    const paidOrder = {
-      ...mockOrder,
-      paymentStatus: PaymentStatus.PAID,
-      paymentMethod: 'cod',
-    };
-
     it('should refund COD payment successfully', async () => {
-      orderRepository.findOne.mockResolvedValue(paidOrder);
+      const paidOrder = createMockOrder({
+        paymentStatus: PaymentStatus.PAID,
+        paymentMethod: 'cod',
+      });
+      orderRepository.findOne.mockResolvedValue(paidOrder as any);
       orderRepository.save.mockResolvedValue({
         ...paidOrder,
         paymentStatus: PaymentStatus.REFUNDED,
@@ -378,7 +422,8 @@ describe('PaymentService', () => {
     });
 
     it('should throw BadRequestException when order not paid', async () => {
-      orderRepository.findOne.mockResolvedValue(mockOrder);
+      const unpaidOrder = createMockOrder({ paymentStatus: PaymentStatus.PENDING });
+      orderRepository.findOne.mockResolvedValue(unpaidOrder as any);
 
       await expect(service.refundPayment(refundDto, mockUser)).rejects.toThrow(
         'Order must be paid before refunding',
@@ -386,10 +431,11 @@ describe('PaymentService', () => {
     });
 
     it('should refund Stripe payment successfully', async () => {
-      orderRepository.findOne.mockResolvedValue({
-        ...paidOrder,
+      const paidOrder = createMockOrder({
+        paymentStatus: PaymentStatus.PAID,
         paymentMethod: 'stripe',
-      } as any);
+      });
+      orderRepository.findOne.mockResolvedValue(paidOrder as any);
       orderRepository.save.mockResolvedValue({
         ...paidOrder,
         paymentStatus: PaymentStatus.REFUNDED,
@@ -402,10 +448,11 @@ describe('PaymentService', () => {
     });
 
     it('should refund PayPal payment successfully', async () => {
-      orderRepository.findOne.mockResolvedValue({
-        ...paidOrder,
+      const paidOrder = createMockOrder({
+        paymentStatus: PaymentStatus.PAID,
         paymentMethod: 'paypal',
-      } as any);
+      });
+      orderRepository.findOne.mockResolvedValue(paidOrder as any);
       orderRepository.save.mockResolvedValue({
         ...paidOrder,
         paymentStatus: PaymentStatus.REFUNDED,
@@ -418,10 +465,11 @@ describe('PaymentService', () => {
     });
 
     it('should refund VNPay payment successfully', async () => {
-      orderRepository.findOne.mockResolvedValue({
-        ...paidOrder,
+      const paidOrder = createMockOrder({
+        paymentStatus: PaymentStatus.PAID,
         paymentMethod: 'vnpay',
-      } as any);
+      });
+      orderRepository.findOne.mockResolvedValue(paidOrder as any);
       orderRepository.save.mockResolvedValue({
         ...paidOrder,
         paymentStatus: PaymentStatus.REFUNDED,
@@ -434,10 +482,11 @@ describe('PaymentService', () => {
     });
 
     it('should refund Momo payment successfully', async () => {
-      orderRepository.findOne.mockResolvedValue({
-        ...paidOrder,
+      const paidOrder = createMockOrder({
+        paymentStatus: PaymentStatus.PAID,
         paymentMethod: 'momo',
-      } as any);
+      });
+      orderRepository.findOne.mockResolvedValue(paidOrder as any);
       orderRepository.save.mockResolvedValue({
         ...paidOrder,
         paymentStatus: PaymentStatus.REFUNDED,
@@ -450,10 +499,11 @@ describe('PaymentService', () => {
     });
 
     it('should throw BadRequestException for unsupported payment method', async () => {
-      orderRepository.findOne.mockResolvedValue({
-        ...paidOrder,
+      const paidOrder = createMockOrder({
+        paymentStatus: PaymentStatus.PAID,
         paymentMethod: 'bitcoin',
-      } as any);
+      });
+      orderRepository.findOne.mockResolvedValue(paidOrder as any);
 
       await expect(service.refundPayment(refundDto, mockUser)).rejects.toThrow(
         'Unsupported payment method: bitcoin',
@@ -461,11 +511,15 @@ describe('PaymentService', () => {
     });
 
     it('should use full order total when amount not specified', async () => {
-      orderRepository.findOne.mockResolvedValue(paidOrder);
+      const paidOrder = createMockOrder({
+        paymentStatus: PaymentStatus.PAID,
+        paymentMethod: 'cod',
+      });
+      orderRepository.findOne.mockResolvedValue(paidOrder as any);
       orderRepository.save.mockResolvedValue({
         ...paidOrder,
         paymentStatus: PaymentStatus.REFUNDED,
-      });
+      } as any);
 
       const partialDto = { orderId: 'order-1', reason: 'Customer request' };
       const result = await service.refundPayment(partialDto as RefundDto, mockUser);
@@ -474,10 +528,11 @@ describe('PaymentService', () => {
     });
 
     it('should handle null paymentMethod gracefully', async () => {
-      orderRepository.findOne.mockResolvedValue({
-        ...paidOrder,
+      const paidOrder = createMockOrder({
+        paymentStatus: PaymentStatus.PAID,
         paymentMethod: null,
-      } as any);
+      });
+      orderRepository.findOne.mockResolvedValue(paidOrder as any);
 
       await expect(service.refundPayment(refundDto, mockUser)).rejects.toThrow(
         BadRequestException,
@@ -485,10 +540,11 @@ describe('PaymentService', () => {
     });
 
     it('should handle undefined paymentMethod gracefully', async () => {
-      orderRepository.findOne.mockResolvedValue({
-        ...paidOrder,
+      const paidOrder = createMockOrder({
+        paymentStatus: PaymentStatus.PAID,
         paymentMethod: undefined,
-      } as any);
+      });
+      orderRepository.findOne.mockResolvedValue(paidOrder as any);
 
       await expect(service.refundPayment(refundDto, mockUser)).rejects.toThrow(
         BadRequestException,
@@ -520,7 +576,8 @@ describe('PaymentService', () => {
     });
 
     it('should handle zero amount', async () => {
-      orderRepository.findOne.mockResolvedValue({ ...mockOrder, total: 0 } as any);
+      const zeroAmountOrder = createMockOrder({ total: 0, paymentStatus: PaymentStatus.PENDING });
+      orderRepository.findOne.mockResolvedValue(zeroAmountOrder as any);
 
       const dto: ProcessPaymentDto = {
         orderId: 'order-1',
@@ -529,7 +586,7 @@ describe('PaymentService', () => {
       };
 
       orderRepository.save.mockResolvedValue({
-        ...mockOrder,
+        ...zeroAmountOrder,
         paymentStatus: PaymentStatus.PAID,
       } as any);
 
@@ -538,7 +595,8 @@ describe('PaymentService', () => {
     });
 
     it('should handle negative amount', async () => {
-      orderRepository.findOne.mockResolvedValue(mockOrder);
+      const mockOrder = createMockOrder({ paymentStatus: PaymentStatus.PENDING });
+      orderRepository.findOne.mockResolvedValue(mockOrder as any);
 
       const dto: ProcessPaymentDto = {
         orderId: 'order-1',
@@ -553,9 +611,13 @@ describe('PaymentService', () => {
 
     it('should handle very large amount', async () => {
       const largeAmount = 999999999;
-      orderRepository.findOne.mockResolvedValue({ ...mockOrder, total: largeAmount } as any);
+      const largeAmountOrder = createMockOrder({ 
+        total: largeAmount, 
+        paymentStatus: PaymentStatus.PENDING 
+      });
+      orderRepository.findOne.mockResolvedValue(largeAmountOrder as any);
       orderRepository.save.mockResolvedValue({
-        ...mockOrder,
+        ...largeAmountOrder,
         paymentStatus: PaymentStatus.PAID,
       } as any);
 

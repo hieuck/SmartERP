@@ -51,6 +51,10 @@ describe('SubscriptionService', () => {
           provide: PermissionService,
           useValue: {
             checkPermission: jest.fn(),
+            canRead: jest.fn().mockReturnValue(true),
+            canWrite: jest.fn().mockReturnValue(true),
+            canDelete: jest.fn().mockReturnValue(true),
+            buildSecureQuery: jest.fn((user, where) => where),
           },
         },
       ],

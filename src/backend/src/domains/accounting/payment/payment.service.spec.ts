@@ -341,13 +341,19 @@ describe('PaymentService', () => {
   });
 
   describe('fail', () => {
+    beforeEach(() => {
+      // Reset all mocks before each test in this describe block
+      jest.clearAllMocks();
+    });
+
     it('should fail payment successfully', async () => {
+      const pendingPayment = { ...mockPayment, status: 'pending' };
       cacheService.getOrSet.mockImplementation(async (_key, fn) => {
-        paymentRepository.findOne.mockResolvedValue(mockPayment); // status: 'pending'
+        paymentRepository.findOne.mockResolvedValue(pendingPayment);
         return fn();
       });
       paymentRepository.save.mockResolvedValue({
-        ...mockPayment,
+        ...pendingPayment,
         status: 'failed',
         notes: '\nFailed: Insufficient funds',
       });
@@ -360,8 +366,9 @@ describe('PaymentService', () => {
     });
 
     it('should throw BadRequestException when payment already completed', async () => {
+      const completedPayment = { ...mockPayment, status: 'completed' };
       cacheService.getOrSet.mockImplementation(async (_key, fn) => {
-        paymentRepository.findOne.mockResolvedValue({ ...mockPayment, status: 'completed' });
+        paymentRepository.findOne.mockResolvedValue(completedPayment);
         return fn();
       });
 
@@ -374,8 +381,9 @@ describe('PaymentService', () => {
     });
 
     it('should append to existing notes', async () => {
+      const paymentWithNotes = { ...mockPayment, status: 'pending', notes: 'Existing notes' };
       cacheService.getOrSet.mockImplementation(async (_key, fn) => {
-        paymentRepository.findOne.mockResolvedValue({ ...mockPayment, notes: 'Existing notes' });
+        paymentRepository.findOne.mockResolvedValue(paymentWithNotes);
         return fn();
       });
       paymentRepository.save.mockResolvedValue({
@@ -392,13 +400,19 @@ describe('PaymentService', () => {
   });
 
   describe('refund', () => {
+    beforeEach(() => {
+      // Reset all mocks before each test in this describe block
+      jest.clearAllMocks();
+    });
+
     it('should refund payment successfully', async () => {
+      const completedPayment = { ...mockPayment, status: 'completed' };
       cacheService.getOrSet.mockImplementation(async (_key, fn) => {
-        paymentRepository.findOne.mockResolvedValue({ ...mockPayment, status: 'completed' });
+        paymentRepository.findOne.mockResolvedValue(completedPayment);
         return fn();
       });
       paymentRepository.save.mockResolvedValue({
-        ...mockPayment,
+        ...completedPayment,
         status: 'refunded',
       });
       cacheService.del.mockResolvedValue(undefined);
@@ -409,8 +423,9 @@ describe('PaymentService', () => {
     });
 
     it('should throw BadRequestException when payment not completed', async () => {
+      const pendingPayment = { ...mockPayment, status: 'pending' };
       cacheService.getOrSet.mockImplementation(async (_key, fn) => {
-        paymentRepository.findOne.mockResolvedValue(mockPayment); // status: 'pending'
+        paymentRepository.findOne.mockResolvedValue(pendingPayment);
         return fn();
       });
 
