@@ -312,7 +312,6 @@ describe('GdprService', () => {
     });
 
     it('should return false when consent is revoked', async () => {
-      const __revokedConsent = { ...mockConsent, revokedAt: new Date() };
       consentRepository.findOne.mockResolvedValue(null);
 
       const result = await service.hasActiveConsent(userId, tenantId, ConsentType.MARKETING_EMAILS);

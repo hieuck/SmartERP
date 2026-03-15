@@ -6,7 +6,6 @@ import { CacheTTL } from './cache.config';
 
 describe('CacheService', () => {
   let service: CacheService;
-  let _cacheManager: jest.Mocked<Cache>;
 
   const mockCacheManager = {
     get: jest.fn(),
@@ -27,7 +26,6 @@ describe('CacheService', () => {
     }).compile();
 
     service = module.get<CacheService>(CacheService);
-    cacheManager = module.get(CACHE_MANAGER);
 
     jest.clearAllMocks();
   });

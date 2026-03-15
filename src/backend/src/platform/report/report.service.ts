@@ -189,7 +189,11 @@ export class ReportService {
    * SECURITY: Uses QueryBuilder to prevent SQL injection
    * SECURITY: Validates all field names and operators
    */
-  private async executeQuery(report: Report, parameters: unknown, tenantId: string): Promise<unknown[]> {
+  private async executeQuery(
+    report: Report,
+    parameters: unknown,
+    tenantId: string,
+  ): Promise<unknown[]> {
     // Validate source entity exists
     let entityMetadata;
     try {

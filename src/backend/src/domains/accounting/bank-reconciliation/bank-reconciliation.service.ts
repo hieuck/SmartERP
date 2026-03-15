@@ -206,7 +206,10 @@ export class BankReconciliationService {
     return `BS-${year}-${String(count + 1).padStart(4, '0')}`;
   }
 
-  private async getUnreconciledEntries(bankAccountId: string, tenantId: string): Promise<unknown[]> {
+  private async getUnreconciledEntries(
+    bankAccountId: string,
+    tenantId: string,
+  ): Promise<unknown[]> {
     // Get journal entries for this bank account that are not yet reconciled
     const query = this.journalEntryRepository
       .createQueryBuilder('je')

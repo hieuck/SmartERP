@@ -111,7 +111,11 @@ export class OrderController {
   @ApiOperation({ summary: 'Update order status' })
   @ApiResponse({ status: 200, description: 'Order status updated successfully' })
   @ApiResponse({ status: 404, description: 'Order not found' })
-  async updateStatus(@Param('id') id: string, @Body() dto: UpdateOrderStatusDto, @Req() req: unknown) {
+  async updateStatus(
+    @Param('id') id: string,
+    @Body() dto: UpdateOrderStatusDto,
+    @Req() req: unknown,
+  ) {
     const __tenantId = req.user?.tenantId || 'default';
     const user = req.user;
     return this.orderService.updateStatus(id, dto, user, user);
