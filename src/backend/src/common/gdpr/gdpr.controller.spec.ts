@@ -25,7 +25,7 @@ import { GdprController } from './gdpr.controller';
 import { GdprService } from './gdpr.service';
 import { JwtAuthGuard } from '../../core/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../guards/roles.guard';
-import { ConsentType } from './enums';
+import { ConsentType } from './enums/consent-type.enum';
 import { ExportStatus } from './enums/export-status.enum';
 import { ExportFormat } from './enums/export-format.enum';
 import { DeletionStatus } from './enums/deletion-status.enum';
@@ -57,13 +57,11 @@ describe('GdprController (Integration)', () => {
     version: '1.0',
     ipAddress: '127.0.0.1',
     userAgent: 'Mozilla/5.0',
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: '2026-03-15T02:05:39.192Z',
+    updatedAt: '2026-03-15T02:05:39.192Z',
     revokedAt: null,
     user: null,
-    get isActive() {
-      return this.granted && !this.revokedAt;
-    },
+    isActive: true,
   } as any;
 
   const mockExportRequest = {
@@ -74,20 +72,13 @@ describe('GdprController (Integration)', () => {
     format: ExportFormat.JSON,
     fileUrl: null,
     fileSize: null,
-    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    expiresAt: '2026-03-22T02:05:39.192Z',
     errorMessage: null,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: '2026-03-15T02:05:39.192Z',
+    updatedAt: '2026-03-15T02:05:39.192Z',
     completedAt: null,
     user: null,
-    setExpiryDate() {
-      const expiryDate = new Date();
-      expiryDate.setDate(expiryDate.getDate() + 7);
-      this.expiresAt = expiryDate;
-    },
-    get isExpired() {
-      return this.expiresAt && new Date() > this.expiresAt;
-    },
+    isExpired: false,
   } as any;
 
   const mockDeletionRequest = {
@@ -100,16 +91,12 @@ describe('GdprController (Integration)', () => {
     approvedAt: null,
     rejectionReason: null,
     errorMessage: null,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: '2026-03-15T02:05:39.192Z',
+    updatedAt: '2026-03-15T02:05:39.192Z',
     completedAt: null,
     user: null,
-    get isPending() {
-      return this.status === DeletionStatus.PENDING;
-    },
-    get isApproved() {
-      return this.status === DeletionStatus.APPROVED;
-    },
+    isPending: true,
+    isApproved: false,
   } as any;
 
   beforeAll(async () => {
@@ -129,42 +116,6 @@ describe('GdprController (Integration)', () => {
       approveDeletionRequest: jest.fn(),
     };
 
-    const mockJwtAuthGuard = {
-      canActivate: jest.fn().mockImplementation((context) => {
-        const request = context.switchToHttp().getRequest();
-        const authHeader = request.headers.authorization;
-        
-        if (authHeader && authHeader.startsWith('Bearer ')) {
-          // Check if admin token
-          if (authHeader.includes('admin-token')) {
-            request.user = mockAdminUser;
-          } else {
-            request.user = mockUser;
-          }
-          return true;
-        }
-        
-        throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-      }),
-    };
-
-    const mockRolesGuard = {
-      canActivate: jest.fn().mockImplementation((context) => {
-        const request = context.switchToHttp().getRequest();
-        const user = request.user;
-        
-        // Check if route requires admin role
-        if (request.url.includes('/admin/')) {
-          if (user && user.roles.includes('admin')) {
-            return true;
-          }
-          throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
-        }
-        
-        return true;
-      }),
-    };
-
     const moduleFixture: TestingModule = await Test.createTestingModule({
       controllers: [GdprController],
       providers: [
@@ -172,12 +123,66 @@ describe('GdprController (Integration)', () => {
           provide: GdprService,
           useValue: mockGdprService,
         },
+        {
+          provide: 'APP_GUARD',
+          useValue: {
+            canActivate: (context) => {
+              const request = context.switchToHttp().getRequest();
+              const authHeader = request.headers.authorization;
+              
+              if (!authHeader || !authHeader.startsWith('Bearer ')) {
+                throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+              }
+              
+              // Set user based on token
+              if (authHeader.includes('admin-token')) {
+                request.user = mockAdminUser;
+              } else {
+                request.user = mockUser;
+              }
+              
+              return true;
+            },
+          },
+        },
       ],
     })
       .overrideGuard(JwtAuthGuard)
-      .useValue(mockJwtAuthGuard)
+      .useValue({
+        canActivate: (context) => {
+          const request = context.switchToHttp().getRequest();
+          const authHeader = request.headers.authorization;
+          
+          if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+          }
+          
+          // Set user based on token
+          if (authHeader.includes('admin-token')) {
+            request.user = mockAdminUser;
+          } else {
+            request.user = mockUser;
+          }
+          
+          return true;
+        },
+      })
       .overrideGuard(RolesGuard)
-      .useValue(mockRolesGuard)
+      .useValue({
+        canActivate: (context) => {
+          const request = context.switchToHttp().getRequest();
+          const user = request.user;
+          
+          // Check if route requires admin role
+          if (request.url.includes('/admin/')) {
+            if (!user || !user.roles.includes('admin')) {
+              throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
+            }
+          }
+          
+          return true;
+        },
+      })
       .compile();
 
     app = moduleFixture.createNestApplication();

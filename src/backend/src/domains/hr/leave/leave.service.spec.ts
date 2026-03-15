@@ -16,18 +16,19 @@ describe('LeaveService', () => {
   let leaveBalanceRepository: jest.Mocked<Repository<LeaveBalance>>;
   let employeeRepository: jest.Mocked<Repository<Employee>>;
 
-  const mockUser: User = {
+  // Factory functions to create fresh mock objects for each test
+  const createMockUser = (): User => ({
     id: 'user-1',
     tenantId: 'tenant-1',
     roles: ['manager'],
-  };
+  });
 
-  const mockEmployee = {
+  const createMockEmployee = (): Employee => ({
     id: 'emp-1',
     tenantId: 'tenant-1',
-  } as Employee;
+  } as Employee);
 
-  const mockLeave: Leave = {
+  const createMockLeave = (): Leave => ({
     id: 'leave-1',
     employeeId: 'emp-1',
     leaveType: LeaveType.ANNUAL,
@@ -37,9 +38,9 @@ describe('LeaveService', () => {
     reason: 'Vacation',
     status: LeaveStatus.PENDING,
     tenantId: 'tenant-1',
-  } as Leave;
+  } as Leave);
 
-  const mockLeaveBalance: LeaveBalance = {
+  const createMockLeaveBalance = (): LeaveBalance => ({
     id: 'balance-1',
     employeeId: 'emp-1',
     leaveType: LeaveType.ANNUAL,
@@ -48,9 +49,20 @@ describe('LeaveService', () => {
     used: 5,
     remaining: 15,
     tenantId: 'tenant-1',
-  } as LeaveBalance;
+  } as LeaveBalance);
+
+  let mockUser: User;
+  let mockEmployee: Employee;
+  let mockLeave: Leave;
+  let mockLeaveBalance: LeaveBalance;
 
   beforeEach(async () => {
+    // Create fresh mock objects for each test
+    mockUser = createMockUser();
+    mockEmployee = createMockEmployee();
+    mockLeave = createMockLeave();
+    mockLeaveBalance = createMockLeaveBalance();
+
     const mockLeaveRepo = {
       create: jest.fn(),
       save: jest.fn(),
@@ -145,11 +157,11 @@ describe('LeaveService', () => {
     });
 
     it('should throw BadRequestException when insufficient leave balance', async () => {
+      const insufficientBalance = createMockLeaveBalance();
+      insufficientBalance.remaining = 2;
+      
       employeeRepository.findOne.mockResolvedValue(mockEmployee);
-      leaveBalanceRepository.findOne.mockResolvedValue({
-        ...mockLeaveBalance,
-        remaining: 2,
-      });
+      leaveBalanceRepository.findOne.mockResolvedValue(insufficientBalance);
 
       await expect(
         service.requestLeave(
@@ -251,10 +263,13 @@ describe('LeaveService', () => {
   describe('approveLeave', () => {
     it('should approve leave successfully', async () => {
       leaveRepository.findOne.mockResolvedValue(mockLeave);
-      leaveRepository.save.mockResolvedValue({
+      const approvedLeave = {
         ...mockLeave,
         status: LeaveStatus.APPROVED,
-      } as any);
+        approvedBy: 'user-1',
+        approvedAt: expect.any(Date),
+      };
+      leaveRepository.save.mockResolvedValue(approvedLeave as any);
       leaveBalanceRepository.increment.mockResolvedValue(undefined as any);
       leaveBalanceRepository.decrement.mockResolvedValue(undefined as any);
 
@@ -332,10 +347,12 @@ describe('LeaveService', () => {
   describe('rejectLeave', () => {
     it('should reject leave successfully', async () => {
       leaveRepository.findOne.mockResolvedValue(mockLeave);
-      leaveRepository.save.mockResolvedValue({
+      const rejectedLeave = {
         ...mockLeave,
         status: LeaveStatus.REJECTED,
-      } as any);
+        rejectionReason: 'Not enough staff',
+      };
+      leaveRepository.save.mockResolvedValue(rejectedLeave as any);
 
       const result = await service.rejectLeave('leave-1', 'Not enough staff', mockUser);
 
@@ -455,10 +472,11 @@ describe('LeaveService', () => {
       expect(result.remaining).toBe(20);
     });
 
-    it('should create balance if not exists before allocating', async () => {
+    it('should create leave balance if not exists before allocating', async () => {
+      const newBalance = createMockLeaveBalance();
       leaveBalanceRepository.findOne.mockResolvedValue(null);
-      leaveBalanceRepository.create.mockReturnValue(mockLeaveBalance as any);
-      leaveBalanceRepository.save.mockResolvedValue(mockLeaveBalance);
+      leaveBalanceRepository.create.mockReturnValue(newBalance as any);
+      leaveBalanceRepository.save.mockResolvedValue(newBalance);
 
       const result = await service.allocateLeave('emp-1', LeaveType.ANNUAL, 2024, 10, 'tenant-1');
 
@@ -630,11 +648,11 @@ describe('LeaveService', () => {
     });
 
     it('should handle very long leave period', async () => {
+      const longBalance = createMockLeaveBalance();
+      longBalance.remaining = 366; // Enough for 366 days
+      
       employeeRepository.findOne.mockResolvedValue(mockEmployee);
-      leaveBalanceRepository.findOne.mockResolvedValue({
-        ...mockLeaveBalance,
-        remaining: 365,
-      });
+      leaveBalanceRepository.findOne.mockResolvedValue(longBalance);
       leaveRepository.create.mockReturnValue(mockLeave as any);
       leaveRepository.save.mockResolvedValue(mockLeave);
 

@@ -1,5 +1,7 @@
-import { Body, Controller, Get, Param, Patch, Post, Request } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Request, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../../core/auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../guards/roles.guard';
 import { Roles } from '../decorators/roles.decorator';
 import { ApproveDeletionDto } from './dto/approve-deletion.dto';
 import { CreateConsentDto } from './dto/create-consent.dto';
@@ -11,6 +13,7 @@ import { GdprService } from './gdpr.service';
 @ApiTags('GDPR')
 @ApiBearerAuth()
 @Controller('gdpr')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class GdprController {
   constructor(private readonly gdprService: GdprService) {}
 

@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { PaymentService } from './payment.service';
 import { Order } from './entities/order.entity';
-import { PermissionService, User } from '@common/security/permission.service';
+import { PermissionService, User } from '@/common/security/permission.service';
 import { PaymentStatus } from '../enums/ecommerce.enum';
 import { ProcessPaymentDto } from './dto/payment.dto';
 import { VerifyPaymentDto } from './dto/payment.dto';
@@ -38,6 +38,9 @@ describe('PaymentService', () => {
       findOne: jest.fn(),
       save: jest.fn(),
       create: jest.fn(),
+      find: jest.fn(),
+      remove: jest.fn(),
+      createQueryBuilder: jest.fn(),
     };
 
     const mockPermissionService = {
@@ -79,10 +82,16 @@ describe('PaymentService', () => {
       paymentDetails: undefined,
     };
 
+    beforeEach(() => {
+      // Reset mock order to PENDING status before each test
+      orderRepository.findOne.mockReset();
+    });
+
     it('should process COD payment successfully', async () => {
-      orderRepository.findOne.mockResolvedValue(mockOrder);
+      const freshOrder = { ...mockOrder, paymentStatus: PaymentStatus.PENDING };
+      orderRepository.findOne.mockResolvedValue(freshOrder);
       orderRepository.save.mockResolvedValue({
-        ...mockOrder,
+        ...freshOrder,
         paymentStatus: PaymentStatus.PAID,
         paymentMethod: 'cod',
       } as any);
@@ -117,7 +126,8 @@ describe('PaymentService', () => {
     });
 
     it('should throw BadRequestException when amount mismatch', async () => {
-      orderRepository.findOne.mockResolvedValue(mockOrder);
+      const freshOrder = { ...mockOrder, paymentStatus: PaymentStatus.PENDING };
+      orderRepository.findOne.mockResolvedValue(freshOrder);
 
       const wrongAmountDto = { ...processDto, amount: 200 };
 
@@ -127,9 +137,10 @@ describe('PaymentService', () => {
     });
 
     it('should process Stripe payment successfully', async () => {
-      orderRepository.findOne.mockResolvedValue(mockOrder);
+      const freshOrder = { ...mockOrder, paymentStatus: PaymentStatus.PENDING };
+      orderRepository.findOne.mockResolvedValue(freshOrder);
       orderRepository.save.mockResolvedValue({
-        ...mockOrder,
+        ...freshOrder,
         paymentStatus: PaymentStatus.PAID,
       } as any);
 
@@ -141,9 +152,10 @@ describe('PaymentService', () => {
     });
 
     it('should process PayPal payment successfully', async () => {
-      orderRepository.findOne.mockResolvedValue(mockOrder);
+      const freshOrder = { ...mockOrder, paymentStatus: PaymentStatus.PENDING };
+      orderRepository.findOne.mockResolvedValue(freshOrder);
       orderRepository.save.mockResolvedValue({
-        ...mockOrder,
+        ...freshOrder,
         paymentStatus: PaymentStatus.PAID,
       } as any);
 
@@ -155,9 +167,10 @@ describe('PaymentService', () => {
     });
 
     it('should process VNPay payment successfully', async () => {
-      orderRepository.findOne.mockResolvedValue(mockOrder);
+      const freshOrder = { ...mockOrder, paymentStatus: PaymentStatus.PENDING };
+      orderRepository.findOne.mockResolvedValue(freshOrder);
       orderRepository.save.mockResolvedValue({
-        ...mockOrder,
+        ...freshOrder,
         paymentStatus: PaymentStatus.PAID,
       } as any);
 
@@ -169,9 +182,10 @@ describe('PaymentService', () => {
     });
 
     it('should process Momo payment successfully', async () => {
-      orderRepository.findOne.mockResolvedValue(mockOrder);
+      const freshOrder = { ...mockOrder, paymentStatus: PaymentStatus.PENDING };
+      orderRepository.findOne.mockResolvedValue(freshOrder);
       orderRepository.save.mockResolvedValue({
-        ...mockOrder,
+        ...freshOrder,
         paymentStatus: PaymentStatus.PAID,
       } as any);
 
@@ -183,7 +197,8 @@ describe('PaymentService', () => {
     });
 
     it('should throw BadRequestException for unsupported payment method', async () => {
-      orderRepository.findOne.mockResolvedValue(mockOrder);
+      const freshOrder = { ...mockOrder, paymentStatus: PaymentStatus.PENDING };
+      orderRepository.findOne.mockResolvedValue(freshOrder);
 
       const unsupportedDto = { ...processDto, paymentMethod: 'bitcoin' };
 
@@ -193,9 +208,10 @@ describe('PaymentService', () => {
     });
 
     it('should mark payment as failed when payment fails', async () => {
-      orderRepository.findOne.mockResolvedValue(mockOrder);
+      const freshOrder = { ...mockOrder, paymentStatus: PaymentStatus.PENDING };
+      orderRepository.findOne.mockResolvedValue(freshOrder);
       orderRepository.save.mockResolvedValue({
-        ...mockOrder,
+        ...freshOrder,
         paymentStatus: PaymentStatus.FAILED,
       } as any);
 
