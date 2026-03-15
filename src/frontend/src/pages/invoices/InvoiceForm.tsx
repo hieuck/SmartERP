@@ -15,16 +15,14 @@ import {
   Col,
   Divider,
   Typography,
+  Badge,
 } from 'antd';
-import { PlusOutlined, DeleteOutlined, SaveOutlined, ArrowLeftOutlined } from '@ant-design/icons';
+import { PlusOutlined, DeleteOutlined, SaveOutlined, ArrowLeftOutlined, SyncOutlined, WifiOutlined, DisconnectOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import invoiceService, {
-  InvoiceStatus,
-  CreateInvoiceDto,
-  UpdateInvoiceDto,
-} from '@/services/accounting/invoiceService';
-import customerService from '@/services/crm/customerService';
-import orderService from '@/services/order/orderService';
+import { InvoiceStatus } from '@/services/accounting/invoiceService';
+import { offlineServices } from '@/services/offline-services';
+import { syncManager } from '@/lib/offline/sync-manager';
+import { logger } from '@/lib/logger/logger.service';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -50,6 +48,55 @@ const InvoiceForm: React.FC = () => {
   const [tax, setTax] = useState(0);
   const [discount, setDiscount] = useState(0);
   const [total, setTotal] = useState(0);
+  const [syncing, setSyncing] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [queueSize, setQueueSize] = useState(0);
+
+  // Monitor network status
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  // Auto-sync on mount when online
+  useEffect(() => {
+    const initSync = async () => {
+      if (navigator.onLine) {
+        const token = localStorage.getItem('token');
+        if (token) {
+          try {
+            await syncManager.sync(token);
+            logger.info('InvoiceForm', 'Auto-sync completed');
+          } catch (error) {
+            logger.error('InvoiceForm', 'Auto-sync failed', error as Error);
+          }
+        }
+      }
+    };
+
+    initSync();
+  }, []);
+
+  // Update sync queue size
+  useEffect(() => {
+    const updateQueueSize = async () => {
+      const size = await syncManager.getQueueSize();
+      setQueueSize(size);
+    };
+
+    updateQueueSize();
+    const interval = setInterval(updateQueueSize, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     loadCustomers();
@@ -64,18 +111,23 @@ const InvoiceForm: React.FC = () => {
 
   const loadCustomers = async () => {
     try {
-      const response = await customerService.getAll({ page: 1, limit: 1000 });
-      setCustomers(response.data);
+      const allCustomers = await offlineServices.customers.getAll();
+      setCustomers(allCustomers);
+      logger.info('InvoiceForm', 'Loaded customers from IndexedDB', { count: allCustomers.length });
     } catch (error) {
+      logger.error('InvoiceForm', 'Failed to load customers', error as Error);
       message.error('Không thể tải danh sách khách hàng');
     }
   };
 
-  const loadOrders = async (customerId: number) => {
+  const loadOrders = async (customerId: string) => {
     try {
-      const response = await orderService.getAll({ customerId, page: 1, limit: 100 });
-      setOrders(response.data);
+      const allOrders = await offlineServices.salesOrders.getAll();
+      const customerOrders = allOrders.filter(order => order.customerId === customerId);
+      setOrders(customerOrders);
+      logger.info('InvoiceForm', 'Loaded orders from IndexedDB', { count: customerOrders.length });
     } catch (error) {
+      logger.error('InvoiceForm', 'Failed to load orders', error as Error);
       message.error('Không thể tải danh sách đơn hàng');
     }
   };
@@ -83,26 +135,31 @@ const InvoiceForm: React.FC = () => {
   const loadInvoice = async () => {
     try {
       setLoading(true);
-      const invoice = await invoiceService.getById(Number(id));
+      const invoice = await offlineServices.invoices.getById(id!);
 
-      form.setFieldsValue({
-        invoiceNumber: invoice.invoiceNumber,
-        customerId: invoice.customerId,
-        orderId: invoice.orderId,
-        issueDate: dayjs(invoice.issueDate),
-        dueDate: dayjs(invoice.dueDate),
-        status: invoice.status,
-        notes: invoice.notes,
-      });
+      if (invoice) {
+        form.setFieldsValue({
+          invoiceNumber: invoice.invoiceNumber,
+          customerId: invoice.customerId,
+          orderId: invoice.orderId,
+          issueDate: dayjs(invoice.issueDate),
+          dueDate: dayjs(invoice.dueDate),
+          status: invoice.status,
+          notes: invoice.notes,
+        });
 
-      setTax(invoice.taxAmount);
-      setDiscount(invoice.discountAmount);
+        setTax(invoice.taxAmount || 0);
+        setDiscount(invoice.discountAmount || 0);
 
-      // Load items if available
-      if (invoice.orderId) {
-        await loadOrders(invoice.customerId);
+        // Load items if available
+        if (invoice.orderId) {
+          await loadOrders(invoice.customerId);
+        }
+
+        logger.info('InvoiceForm', 'Loaded invoice from IndexedDB', { id });
       }
     } catch (error) {
+      logger.error('InvoiceForm', 'Failed to load invoice', error as Error);
       message.error('Không thể tải thông tin hóa đơn');
     } finally {
       setLoading(false);
@@ -116,24 +173,28 @@ const InvoiceForm: React.FC = () => {
     setTotal(totalAmount);
   };
 
-  const handleCustomerChange = (customerId: number) => {
+  const handleCustomerChange = (customerId: string) => {
     form.setFieldValue('orderId', undefined);
     setOrders([]);
     loadOrders(customerId);
   };
 
-  const handleOrderChange = async (orderId: number) => {
+  const handleOrderChange = async (orderId: string) => {
     try {
-      const order = await orderService.getById(orderId);
-      const orderItems: InvoiceItem[] = order.items.map((item: any, index: number) => ({
-        key: `item-${index}`,
-        description: item.product?.name || item.description || 'Sản phẩm',
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        amount: item.quantity * item.unitPrice,
-      }));
-      setItems(orderItems);
+      const order = await offlineServices.salesOrders.getById(orderId);
+      if (order && order.items) {
+        const orderItems: InvoiceItem[] = order.items.map((item: any, index: number) => ({
+          key: `item-${index}`,
+          description: item.productName || item.description || 'Sản phẩm',
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          amount: item.quantity * item.unitPrice,
+        }));
+        setItems(orderItems);
+        logger.info('InvoiceForm', 'Loaded order items from IndexedDB', { orderId, count: orderItems.length });
+      }
     } catch (error) {
+      logger.error('InvoiceForm', 'Failed to load order', error as Error);
       message.error('Không thể tải thông tin đơn hàng');
     }
   };
@@ -187,21 +248,65 @@ const InvoiceForm: React.FC = () => {
         totalAmount: total,
         status: values.status || InvoiceStatus.DRAFT,
         notes: values.notes,
+        invoiceNumber: values.invoiceNumber || `INV-${Date.now()}`,
       };
 
       if (id) {
-        await invoiceService.update(Number(id), invoiceData as UpdateInvoiceDto);
+        await offlineServices.invoices.update(id, invoiceData);
         message.success('Cập nhật hóa đơn thành công');
+        logger.info('InvoiceForm', 'Updated invoice', { id });
       } else {
-        await invoiceService.create(invoiceData as CreateInvoiceDto);
+        await offlineServices.invoices.create(invoiceData);
         message.success('Tạo hóa đơn thành công');
+        logger.info('InvoiceForm', 'Created invoice', { invoiceNumber: invoiceData.invoiceNumber });
+      }
+
+      // Trigger sync if online
+      if (navigator.onLine) {
+        const token = localStorage.getItem('token');
+        if (token) {
+          syncManager.sync(token).catch(err => 
+            logger.error('InvoiceForm', 'Sync after save failed', err)
+          );
+        }
       }
 
       navigate('/dashboard/invoices');
     } catch (error: any) {
-      message.error(error.response?.data?.message || 'Có lỗi xảy ra');
+      logger.error('InvoiceForm', 'Failed to save invoice', error);
+      message.error(error.message || 'Có lỗi xảy ra');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Manual sync
+  const handleSync = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      message.error('Vui lòng đăng nhập');
+      return;
+    }
+
+    try {
+      setSyncing(true);
+      const result = await syncManager.sync(token);
+      
+      if (result.success) {
+        message.success(`Đồng bộ thành công: ${result.pulled} pulled, ${result.pushed} pushed`);
+        // Reload data after sync
+        await loadCustomers();
+        if (id) {
+          await loadInvoice();
+        }
+      } else {
+        message.error(`Đồng bộ thất bại: ${result.errors.join(', ')}`);
+      }
+    } catch (error) {
+      logger.error('InvoiceForm', 'Sync failed', error as Error);
+      message.error('Đồng bộ thất bại');
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -276,6 +381,24 @@ const InvoiceForm: React.FC = () => {
         <Space style={{ marginBottom: 16 }}>
           <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/dashboard/invoices')}>
             Quay lại
+          </Button>
+          <Badge status={isOnline ? 'success' : 'error'} />
+          <span>{isOnline ? <WifiOutlined /> : <DisconnectOutlined />}</span>
+          <span>{isOnline ? 'Online' : 'Offline'}</span>
+          {queueSize > 0 && (
+            <>
+              <span>|</span>
+              <span style={{ color: '#faad14' }}>{queueSize} thay đổi chưa đồng bộ</span>
+            </>
+          )}
+          <Button
+            icon={<SyncOutlined spin={syncing} />}
+            onClick={handleSync}
+            loading={syncing}
+            disabled={!isOnline}
+            size="small"
+          >
+            Đồng bộ
           </Button>
         </Space>
 

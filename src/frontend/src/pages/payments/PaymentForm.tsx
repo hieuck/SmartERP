@@ -15,17 +15,17 @@ import {
   Typography,
   Divider,
   Alert,
+  Badge,
 } from 'antd';
-import { SaveOutlined, ArrowLeftOutlined, DollarOutlined } from '@ant-design/icons';
+import { SaveOutlined, ArrowLeftOutlined, DollarOutlined, SyncOutlined, WifiOutlined, DisconnectOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import paymentService, {
+import {
   PaymentMethod,
   PaymentStatus,
-  CreatePaymentDto,
-  UpdatePaymentDto,
 } from '@/services/accounting/paymentService';
-import invoiceService from '@/services/accounting/invoiceService';
-import orderService from '@/services/order/orderService';
+import { offlineServices } from '@/services/offline-services';
+import { syncManager } from '@/lib/offline/sync-manager';
+import { logger } from '@/lib/logger/logger.service';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -40,6 +40,55 @@ const PaymentForm: React.FC = () => {
   const [orders, setOrders] = useState<any[]>([]);
   const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [syncing, setSyncing] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [queueSize, setQueueSize] = useState(0);
+
+  // Monitor network status
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  // Auto-sync on mount when online
+  useEffect(() => {
+    const initSync = async () => {
+      if (navigator.onLine) {
+        const token = localStorage.getItem('token');
+        if (token) {
+          try {
+            await syncManager.sync(token);
+            logger.info('PaymentForm', 'Auto-sync completed');
+          } catch (error) {
+            logger.error('PaymentForm', 'Auto-sync failed', error as Error);
+          }
+        }
+      }
+    };
+
+    initSync();
+  }, []);
+
+  // Update sync queue size
+  useEffect(() => {
+    const updateQueueSize = async () => {
+      const size = await syncManager.getQueueSize();
+      setQueueSize(size);
+    };
+
+    updateQueueSize();
+    const interval = setInterval(updateQueueSize, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     loadInvoices();
@@ -51,18 +100,22 @@ const PaymentForm: React.FC = () => {
 
   const loadInvoices = async () => {
     try {
-      const response = await invoiceService.getAll({ page: 1, limit: 1000 });
-      setInvoices(response.data);
+      const allInvoices = await offlineServices.invoices.getAll();
+      setInvoices(allInvoices);
+      logger.info('PaymentForm', 'Loaded invoices from IndexedDB', { count: allInvoices.length });
     } catch (error) {
+      logger.error('PaymentForm', 'Failed to load invoices', error as Error);
       message.error('Không thể tải danh sách hóa đơn');
     }
   };
 
   const loadOrders = async () => {
     try {
-      const response = await orderService.getAll({ page: 1, limit: 1000 });
-      setOrders(response.data);
+      const allOrders = await offlineServices.salesOrders.getAll();
+      setOrders(allOrders);
+      logger.info('PaymentForm', 'Loaded orders from IndexedDB', { count: allOrders.length });
     } catch (error) {
+      logger.error('PaymentForm', 'Failed to load orders', error as Error);
       message.error('Không thể tải danh sách đơn hàng');
     }
   };
@@ -70,51 +123,66 @@ const PaymentForm: React.FC = () => {
   const loadPayment = async () => {
     try {
       setLoading(true);
-      const payment = await paymentService.getById(Number(id));
+      const payment = await offlineServices.payments.getById(id!);
 
-      form.setFieldsValue({
-        invoiceId: payment.invoiceId,
-        orderId: payment.orderId,
-        amount: payment.amount,
-        paymentMethod: payment.paymentMethod,
-        paymentDate: dayjs(payment.paymentDate),
-        status: payment.status,
-        transactionId: payment.transactionId,
-        notes: payment.notes,
-      });
+      if (payment) {
+        form.setFieldsValue({
+          invoiceId: payment.invoiceId,
+          orderId: payment.orderId,
+          amount: payment.amount,
+          paymentMethod: payment.paymentMethod,
+          paymentDate: dayjs(payment.paymentDate),
+          status: payment.status,
+          transactionId: payment.transactionId,
+          notes: payment.notes,
+        });
 
-      if (payment.invoiceId) {
-        const invoice = await invoiceService.getById(payment.invoiceId);
-        setSelectedInvoice(invoice);
-      }
+        if (payment.invoiceId) {
+          const invoice = await offlineServices.invoices.getById(payment.invoiceId);
+          if (invoice) setSelectedInvoice(invoice);
+        }
 
-      if (payment.orderId) {
-        const order = await orderService.getById(payment.orderId);
-        setSelectedOrder(order);
+        if (payment.orderId) {
+          const order = await offlineServices.salesOrders.getById(payment.orderId);
+          if (order) setSelectedOrder(order);
+        }
+
+        logger.info('PaymentForm', 'Loaded payment from IndexedDB', { id });
       }
     } catch (error) {
+      logger.error('PaymentForm', 'Failed to load payment', error as Error);
       message.error('Không thể tải thông tin thanh toán');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleInvoiceChange = async (invoiceId: number) => {
+  const handleInvoiceChange = async (invoiceId: string) => {
     try {
-      const invoice = await invoiceService.getById(invoiceId);
-      setSelectedInvoice(invoice);
-      form.setFieldValue('amount', invoice.totalAmount - invoice.paidAmount);
+      const invoice = await offlineServices.invoices.getById(invoiceId);
+      if (invoice) {
+        setSelectedInvoice(invoice);
+        const remaining = (invoice.totalAmount || 0) - (invoice.paidAmount || 0);
+        form.setFieldValue('amount', remaining);
+        logger.info('PaymentForm', 'Loaded invoice from IndexedDB', { invoiceId });
+      }
     } catch (error) {
+      logger.error('PaymentForm', 'Failed to load invoice', error as Error);
       message.error('Không thể tải thông tin hóa đơn');
     }
   };
 
-  const handleOrderChange = async (orderId: number) => {
+  const handleOrderChange = async (orderId: string) => {
     try {
-      const order = await orderService.getById(orderId);
-      setSelectedOrder(order);
-      form.setFieldValue('amount', order.totalAmount - order.paidAmount);
+      const order = await offlineServices.salesOrders.getById(orderId);
+      if (order) {
+        setSelectedOrder(order);
+        const remaining = (order.totalAmount || 0) - (order.paidAmount || 0);
+        form.setFieldValue('amount', remaining);
+        logger.info('PaymentForm', 'Loaded order from IndexedDB', { orderId });
+      }
     } catch (error) {
+      logger.error('PaymentForm', 'Failed to load order', error as Error);
       message.error('Không thể tải thông tin đơn hàng');
     }
   };
@@ -135,18 +203,62 @@ const PaymentForm: React.FC = () => {
       };
 
       if (id) {
-        await paymentService.update(Number(id), paymentData as UpdatePaymentDto);
+        await offlineServices.payments.update(id, paymentData);
         message.success('Cập nhật thanh toán thành công');
+        logger.info('PaymentForm', 'Updated payment', { id });
       } else {
-        await paymentService.create(paymentData as CreatePaymentDto);
+        await offlineServices.payments.create(paymentData);
         message.success('Tạo thanh toán thành công');
+        logger.info('PaymentForm', 'Created payment');
+      }
+
+      // Trigger sync if online
+      if (navigator.onLine) {
+        const token = localStorage.getItem('token');
+        if (token) {
+          syncManager.sync(token).catch(err => 
+            logger.error('PaymentForm', 'Sync after save failed', err)
+          );
+        }
       }
 
       navigate('/dashboard/payments');
     } catch (error: any) {
-      message.error(error.response?.data?.message || 'Có lỗi xảy ra');
+      logger.error('PaymentForm', 'Failed to save payment', error);
+      message.error(error.message || 'Có lỗi xảy ra');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Manual sync
+  const handleSync = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      message.error('Vui lòng đăng nhập');
+      return;
+    }
+
+    try {
+      setSyncing(true);
+      const result = await syncManager.sync(token);
+      
+      if (result.success) {
+        message.success(`Đồng bộ thành công: ${result.pulled} pulled, ${result.pushed} pushed`);
+        // Reload data after sync
+        await loadInvoices();
+        await loadOrders();
+        if (id) {
+          await loadPayment();
+        }
+      } else {
+        message.error(`Đồng bộ thất bại: ${result.errors.join(', ')}`);
+      }
+    } catch (error) {
+      logger.error('PaymentForm', 'Sync failed', error as Error);
+      message.error('Đồng bộ thất bại');
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -167,6 +279,24 @@ const PaymentForm: React.FC = () => {
         <Space style={{ marginBottom: 16 }}>
           <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/dashboard/payments')}>
             Quay lại
+          </Button>
+          <Badge status={isOnline ? 'success' : 'error'} />
+          <span>{isOnline ? <WifiOutlined /> : <DisconnectOutlined />}</span>
+          <span>{isOnline ? 'Online' : 'Offline'}</span>
+          {queueSize > 0 && (
+            <>
+              <span>|</span>
+              <span style={{ color: '#faad14' }}>{queueSize} thay đổi chưa đồng bộ</span>
+            </>
+          )}
+          <Button
+            icon={<SyncOutlined spin={syncing} />}
+            onClick={handleSync}
+            loading={syncing}
+            disabled={!isOnline}
+            size="small"
+          >
+            Đồng bộ
           </Button>
         </Space>
 
