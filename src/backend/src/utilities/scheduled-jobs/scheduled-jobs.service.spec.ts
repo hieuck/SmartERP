@@ -14,7 +14,7 @@ describe('ScheduledJobsService', () => {
     enabled: true,
   };
 
-  const mockCronJob = {
+  const _mockCronJob = {
     start: jest.fn(),
     stop: jest.fn(),
   };
@@ -36,7 +36,7 @@ describe('ScheduledJobsService', () => {
 
     service = module.get<ScheduledJobsService>(ScheduledJobsService);
     schedulerRegistry = module.get(SchedulerRegistry);
-    
+
     // Clear internal jobs map for test isolation
     (service as any).jobs.clear();
   });
@@ -61,10 +61,7 @@ describe('ScheduledJobsService', () => {
     it('should register cron job when enabled', async () => {
       const result = await service.createJob('tenant-1', mockJob);
 
-      expect(schedulerRegistry.addCronJob).toHaveBeenCalledWith(
-        result.id,
-        expect.any(Object)
-      );
+      expect(schedulerRegistry.addCronJob).toHaveBeenCalledWith(result.id, expect.any(Object));
     });
 
     it('should not register cron job when disabled', async () => {
@@ -80,7 +77,7 @@ describe('ScheduledJobsService', () => {
     it('should return jobs for specific tenant', async () => {
       // Clear any existing jobs first
       (service as any).jobs.clear();
-      
+
       await service.createJob('tenant-1', mockJob);
       await service.createJob('tenant-1', { ...mockJob, name: 'Job 2' });
       await service.createJob('tenant-2', { ...mockJob, name: 'Job 3' });
@@ -88,7 +85,7 @@ describe('ScheduledJobsService', () => {
       const result = await service.listJobs('tenant-1');
 
       expect(result).toHaveLength(2);
-      expect(result.every(job => job.id.startsWith('tenant-1:'))).toBe(true);
+      expect(result.every((job) => job.id.startsWith('tenant-1:'))).toBe(true);
     });
 
     it('should return empty array when no jobs for tenant', async () => {

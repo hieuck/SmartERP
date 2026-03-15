@@ -1,12 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Patch,
-  Body,
-  Param,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { Roles } from '@/common/decorators/roles.decorator';
@@ -26,14 +18,8 @@ export class ApprovalController {
   @Post()
   @Roles('user', 'manager', 'admin')
   @ApiOperation({ summary: 'Submit entity for approval' })
-  submitForApproval(
-    @CurrentUser() user: User, @Body() dto: SubmitApprovalDto,
-  ) {
-    return this.approvalService.submitForApproval(
-      dto.entityType,
-      dto.entityId,
-      user,
-    );
+  submitForApproval(@CurrentUser() user: User, @Body() dto: SubmitApprovalDto) {
+    return this.approvalService.submitForApproval(dto.entityType, dto.entityId, user);
   }
 
   @Get('my-requests')
@@ -60,10 +46,7 @@ export class ApprovalController {
   @Patch(':id/reject')
   @Roles('manager', 'admin')
   @ApiOperation({ summary: 'Reject a request' })
-  reject(
-    @Param('id') id: string,
-    @CurrentUser() user: User, @Body() dto: RejectApprovalDto,
-  ) {
+  reject(@Param('id') id: string, @CurrentUser() user: User, @Body() dto: RejectApprovalDto) {
     return this.approvalService.reject(id, user, dto.reason);
   }
 

@@ -6,19 +6,7 @@ import { SerialBatchModule } from './serial-batch/serial-batch.module';
 import { ValuationModule } from './valuation/valuation.module';
 
 @Module({
-  imports: [
-    CategoryModule,
-    ProductModule,
-    StockModule,
-    SerialBatchModule,
-    ValuationModule,
-  ],
-  exports: [
-    CategoryModule,
-    ProductModule,
-    StockModule,
-    SerialBatchModule,
-    ValuationModule,
-  ],
+  imports: [CategoryModule, ProductModule, StockModule, SerialBatchModule, ValuationModule],
+  exports: [CategoryModule, ProductModule, StockModule, SerialBatchModule, ValuationModule],
 })
 export class InventoryModule {}

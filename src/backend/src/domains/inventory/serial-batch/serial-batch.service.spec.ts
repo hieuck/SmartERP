@@ -237,9 +237,7 @@ describe('SerialBatchService', () => {
 
       mockBatchRepository.findOne.mockResolvedValue(mockBatch);
 
-      await expect(service.createBatch(createDto, mockUser)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.createBatch(createDto, mockUser)).rejects.toThrow(BadRequestException);
       expect(mockBatchRepository.findOne).toHaveBeenCalled();
       expect(mockProductRepository.findOne).not.toHaveBeenCalled();
       expect(mockBatchRepository.save).not.toHaveBeenCalled();
@@ -291,9 +289,9 @@ describe('SerialBatchService', () => {
         .mockResolvedValueOnce({ ...mockSerialNumber, number: 'SN-001' })
         .mockResolvedValueOnce(null);
 
-      await expect(
-        service.validateSerialNumbers(serialNumbers, mockUser.tenantId),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.validateSerialNumbers(serialNumbers, mockUser.tenantId)).rejects.toThrow(
+        BadRequestException,
+      );
       expect(mockSerialRepository.findOne).toHaveBeenCalledTimes(2);
     });
 
@@ -301,12 +299,20 @@ describe('SerialBatchService', () => {
       const serialNumbers = ['SN-001', 'SN-002'];
 
       mockSerialRepository.findOne
-        .mockResolvedValueOnce({ ...mockSerialNumber, number: 'SN-001', status: SerialNumberStatus.AVAILABLE })
-        .mockResolvedValueOnce({ ...mockSerialNumber, number: 'SN-002', status: SerialNumberStatus.SOLD });
+        .mockResolvedValueOnce({
+          ...mockSerialNumber,
+          number: 'SN-001',
+          status: SerialNumberStatus.AVAILABLE,
+        })
+        .mockResolvedValueOnce({
+          ...mockSerialNumber,
+          number: 'SN-002',
+          status: SerialNumberStatus.SOLD,
+        });
 
-      await expect(
-        service.validateSerialNumbers(serialNumbers, mockUser.tenantId),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.validateSerialNumbers(serialNumbers, mockUser.tenantId)).rejects.toThrow(
+        BadRequestException,
+      );
       expect(mockSerialRepository.findOne).toHaveBeenCalledTimes(2);
     });
 

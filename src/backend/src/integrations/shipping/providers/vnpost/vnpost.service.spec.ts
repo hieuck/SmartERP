@@ -17,9 +17,7 @@ describe('VNPostService', () => {
     width: 20,
     height: 10,
     serviceCode: 'EMS',
-    items: [
-      { name: 'Product 1', quantity: 2, price: 250000 },
-    ],
+    items: [{ name: 'Product 1', quantity: 2, price: 250000 }],
     note: 'Handle with care',
   };
 

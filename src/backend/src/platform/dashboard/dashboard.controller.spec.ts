@@ -1,7 +1,7 @@
 /**
  * DashboardController Integration Tests
  * Coverage target: 95%+
- * 
+ *
  * Test cases:
  * 1. GET /dashboard/overview - Get dashboard overview
  * 2. GET /dashboard/sales-chart - Get sales chart data
@@ -100,12 +100,12 @@ describe('DashboardController (Integration)', () => {
       canActivate: jest.fn().mockImplementation((context) => {
         const request = context.switchToHttp().getRequest();
         const authHeader = request.headers.authorization;
-        
+
         if (authHeader && authHeader.startsWith('Bearer ')) {
           request.user = mockUser;
           return true;
         }
-        
+
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }),
     };
@@ -184,9 +184,7 @@ describe('DashboardController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/dashboard/overview')
-        .expect(401);
+      await request(app.getHttpServer()).get('/dashboard/overview').expect(401);
     });
 
     it('should require tenant context', async () => {
@@ -300,9 +298,7 @@ describe('DashboardController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/dashboard/sales-chart')
-        .expect(401);
+      await request(app.getHttpServer()).get('/dashboard/sales-chart').expect(401);
     });
   });
 
@@ -358,9 +354,7 @@ describe('DashboardController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/dashboard/top-products')
-        .expect(401);
+      await request(app.getHttpServer()).get('/dashboard/top-products').expect(401);
     });
   });
 
@@ -416,9 +410,7 @@ describe('DashboardController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/dashboard/top-customers')
-        .expect(401);
+      await request(app.getHttpServer()).get('/dashboard/top-customers').expect(401);
     });
   });
 
@@ -447,9 +439,7 @@ describe('DashboardController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/dashboard/revenue-by-category')
-        .expect(401);
+      await request(app.getHttpServer()).get('/dashboard/revenue-by-category').expect(401);
     });
 
     it('should handle service errors', async () => {

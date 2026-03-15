@@ -115,9 +115,7 @@ describe('PermissionService', () => {
 
       permissionRepository.findOne.mockResolvedValue(createMockPermission());
 
-      await expect(service.create(mockCurrentUser, createDto)).rejects.toThrow(
-        ConflictException,
-      );
+      await expect(service.create(mockCurrentUser, createDto)).rejects.toThrow(ConflictException);
       await expect(service.create(mockCurrentUser, createDto)).rejects.toThrow(
         "Permission for resource 'products' already exists",
       );
@@ -321,9 +319,7 @@ describe('PermissionService', () => {
       const result = await service.findByResource(mockCurrentUser, 'products');
 
       expect(result).toEqual(mockPermission);
-      expect(cacheManager.get).toHaveBeenCalledWith(
-        'permission:test-tenant-id:resource:products',
-      );
+      expect(cacheManager.get).toHaveBeenCalledWith('permission:test-tenant-id:resource:products');
     });
 
     it('should fetch from database and cache when cache miss', async () => {
@@ -400,12 +396,12 @@ describe('PermissionService', () => {
       cacheManager.get.mockResolvedValue(mockPermission);
       permissionRepository.findOne.mockResolvedValue({ id: 'other-permission' } as any);
 
-      await expect(
-        service.update(mockCurrentUser, 'permission-1', updateDto),
-      ).rejects.toThrow(ConflictException);
-      await expect(
-        service.update(mockCurrentUser, 'permission-1', updateDto),
-      ).rejects.toThrow("Permission for resource 'orders' already exists");
+      await expect(service.update(mockCurrentUser, 'permission-1', updateDto)).rejects.toThrow(
+        ConflictException,
+      );
+      await expect(service.update(mockCurrentUser, 'permission-1', updateDto)).rejects.toThrow(
+        "Permission for resource 'orders' already exists",
+      );
     });
 
     it('should invalidate all related caches after update', async () => {
@@ -421,9 +417,7 @@ describe('PermissionService', () => {
 
       expect(cacheManager.del).toHaveBeenCalledWith('permission:test-tenant-id:permission-1');
       expect(cacheManager.del).toHaveBeenCalledWith('permission:all:test-tenant-id');
-      expect(cacheManager.del).toHaveBeenCalledWith(
-        'permission:test-tenant-id:resource:products',
-      );
+      expect(cacheManager.del).toHaveBeenCalledWith('permission:test-tenant-id:resource:products');
     });
 
     it('should allow updating same resource name', async () => {
@@ -468,9 +462,7 @@ describe('PermissionService', () => {
 
       expect(cacheManager.del).toHaveBeenCalledWith('permission:test-tenant-id:permission-1');
       expect(cacheManager.del).toHaveBeenCalledWith('permission:all:test-tenant-id');
-      expect(cacheManager.del).toHaveBeenCalledWith(
-        'permission:test-tenant-id:resource:products',
-      );
+      expect(cacheManager.del).toHaveBeenCalledWith('permission:test-tenant-id:resource:products');
     });
 
     it('should throw NotFoundException when permission not found', async () => {

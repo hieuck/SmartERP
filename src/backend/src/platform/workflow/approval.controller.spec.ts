@@ -6,7 +6,7 @@ import { SubmitApprovalDto, RejectApprovalDto } from './dto/approval.dto';
 
 describe('ApprovalController', () => {
   let controller: ApprovalController;
-  let service: ApprovalService;
+  let _service: ApprovalService;
 
   const mockUser: User = {
     id: 'user-1',
@@ -213,12 +213,7 @@ describe('ApprovalController', () => {
       const result = await controller.getMyRequests(mockUser);
 
       expect(result).toHaveLength(4);
-      expect(result.map((r) => r.status)).toEqual([
-        'pending',
-        'approved',
-        'rejected',
-        'cancelled',
-      ]);
+      expect(result.map((r) => r.status)).toEqual(['pending', 'approved', 'rejected', 'cancelled']);
     });
   });
 
@@ -551,9 +546,7 @@ describe('ApprovalController', () => {
         entityId: undefined,
       } as any;
 
-      mockApprovalService.submitForApproval.mockRejectedValue(
-        new Error('Invalid request data'),
-      );
+      mockApprovalService.submitForApproval.mockRejectedValue(new Error('Invalid request data'));
 
       await expect(controller.submitForApproval(mockUser, submitDto)).rejects.toThrow();
     });

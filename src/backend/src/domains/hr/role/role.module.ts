@@ -8,11 +8,7 @@ import { Permission } from '../permission/entities/permission.entity';
 import { SecurityModule } from '@/common/security/security.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Role, Permission]),
-    CacheModule,
-    SecurityModule,
-  ],
+  imports: [TypeOrmModule.forFeature([Role, Permission]), CacheModule, SecurityModule],
   controllers: [RoleController],
   providers: [RoleService],
   exports: [RoleService],

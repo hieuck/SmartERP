@@ -1,7 +1,7 @@
 /**
  * ProductCatalogController Integration Tests
  * Coverage target: 95%+
- * 
+ *
  * Test cases:
  * 1. POST /ecommerce/products - Create product
  * 2. GET /ecommerce/products - Search products with filters
@@ -96,12 +96,16 @@ describe('ProductCatalogController (Integration)', () => {
       canActivate: jest.fn().mockImplementation((context) => {
         const request = context.switchToHttp().getRequest();
         const authHeader = request.headers.authorization;
-        
-        if (authHeader && authHeader.startsWith('Bearer ') && authHeader !== 'Bearer invalid-token') {
+
+        if (
+          authHeader &&
+          authHeader.startsWith('Bearer ') &&
+          authHeader !== 'Bearer invalid-token'
+        ) {
           request.user = mockUser;
           return true;
         }
-        
+
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }),
     };
@@ -114,12 +118,12 @@ describe('ProductCatalogController (Integration)', () => {
       canActivate: jest.fn().mockImplementation((context) => {
         const request = context.switchToHttp().getRequest();
         const user = request.user;
-        
+
         // Allow admin and manager roles
         if (user && (user.role === 'admin' || user.role === 'manager')) {
           return true;
         }
-        
+
         throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
       }),
     };
@@ -193,7 +197,7 @@ describe('ProductCatalogController (Integration)', () => {
 
     it('should return 403 when user is not admin/manager', async () => {
       const customerUser = { ...mockUser, role: 'customer' };
-      
+
       const mockJwtAuthGuardCustomer = {
         canActivate: jest.fn().mockImplementation((context) => {
           const request = context.switchToHttp().getRequest();
@@ -275,9 +279,7 @@ describe('ProductCatalogController (Integration)', () => {
     });
 
     it('should return 401 when not authenticated', async () => {
-      await request(app.getHttpServer())
-        .get('/ecommerce/products')
-        .expect(401);
+      await request(app.getHttpServer()).get('/ecommerce/products').expect(401);
     });
   });
 
@@ -306,9 +308,7 @@ describe('ProductCatalogController (Integration)', () => {
     });
 
     it('should return 401 when not authenticated', async () => {
-      await request(app.getHttpServer())
-        .get('/ecommerce/products/prod-123')
-        .expect(401);
+      await request(app.getHttpServer()).get('/ecommerce/products/prod-123').expect(401);
     });
   });
 
@@ -337,9 +337,7 @@ describe('ProductCatalogController (Integration)', () => {
     });
 
     it('should return 401 when not authenticated', async () => {
-      await request(app.getHttpServer())
-        .get('/ecommerce/products/sku/PROD-001')
-        .expect(401);
+      await request(app.getHttpServer()).get('/ecommerce/products/sku/PROD-001').expect(401);
     });
   });
 
@@ -368,9 +366,7 @@ describe('ProductCatalogController (Integration)', () => {
     });
 
     it('should return 401 when not authenticated', async () => {
-      await request(app.getHttpServer())
-        .get('/ecommerce/products/slug/test-product')
-        .expect(401);
+      await request(app.getHttpServer()).get('/ecommerce/products/slug/test-product').expect(401);
     });
   });
 
@@ -437,9 +433,7 @@ describe('ProductCatalogController (Integration)', () => {
     });
 
     it('should return 401 when not authenticated', async () => {
-      await request(app.getHttpServer())
-        .delete('/ecommerce/products/prod-123')
-        .expect(401);
+      await request(app.getHttpServer()).delete('/ecommerce/products/prod-123').expect(401);
     });
   });
 
@@ -469,9 +463,7 @@ describe('ProductCatalogController (Integration)', () => {
     });
 
     it('should return 401 when not authenticated', async () => {
-      await request(app.getHttpServer())
-        .patch('/ecommerce/products/prod-123/publish')
-        .expect(401);
+      await request(app.getHttpServer()).patch('/ecommerce/products/prod-123/publish').expect(401);
     });
   });
 
@@ -571,9 +563,7 @@ describe('ProductCatalogController (Integration)', () => {
     });
 
     it('should return 401 when not authenticated', async () => {
-      await request(app.getHttpServer())
-        .get('/ecommerce/products/inventory/low-stock')
-        .expect(401);
+      await request(app.getHttpServer()).get('/ecommerce/products/inventory/low-stock').expect(401);
     });
   });
 

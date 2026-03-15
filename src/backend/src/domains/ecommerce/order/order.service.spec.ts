@@ -16,7 +16,7 @@ describe('OrderService', () => {
   let service: OrderService;
   let orderRepository: jest.Mocked<Repository<Order>>;
   let orderItemRepository: jest.Mocked<Repository<OrderItem>>;
-  let permissionService: jest.Mocked<PermissionService>;
+  let _permissionService: jest.Mocked<PermissionService>;
 
   const mockUser: User = {
     id: 'user-1',
@@ -80,11 +80,15 @@ describe('OrderService', () => {
         enumerable: true,
       },
       canBeCancelled: {
-        get: () => baseOrder.status === OrderStatus.PENDING || baseOrder.status === OrderStatus.CONFIRMED,
+        get: () =>
+          baseOrder.status === OrderStatus.PENDING || baseOrder.status === OrderStatus.CONFIRMED,
         enumerable: true,
       },
       isCompleted: {
-        get: () => baseOrder.status === OrderStatus.DELIVERED || baseOrder.status === OrderStatus.CANCELLED || baseOrder.status === OrderStatus.REFUNDED,
+        get: () =>
+          baseOrder.status === OrderStatus.DELIVERED ||
+          baseOrder.status === OrderStatus.CANCELLED ||
+          baseOrder.status === OrderStatus.REFUNDED,
         enumerable: true,
       },
     });
@@ -410,12 +414,7 @@ describe('OrderService', () => {
       orderRepository.findOne.mockResolvedValue(mockOrder);
       orderRepository.save.mockResolvedValue(mockOrder);
 
-      await service.updateStatus(
-        'order-1',
-        { status: OrderStatus.SHIPPED },
-        'tenant-1',
-        mockUser,
-      );
+      await service.updateStatus('order-1', { status: OrderStatus.SHIPPED }, 'tenant-1', mockUser);
 
       expect(orderRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -482,12 +481,7 @@ describe('OrderService', () => {
       orderRepository.findOne.mockResolvedValue(mockOrder);
       orderRepository.save.mockResolvedValue(mockOrder);
 
-      await service.updateStatus(
-        'order-1',
-        { trackingNumber: 'TRACK-123' },
-        'tenant-1',
-        mockUser,
-      );
+      await service.updateStatus('order-1', { trackingNumber: 'TRACK-123' }, 'tenant-1', mockUser);
 
       expect(orderRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -500,12 +494,7 @@ describe('OrderService', () => {
       orderRepository.findOne.mockResolvedValue(mockOrder);
       orderRepository.save.mockResolvedValue(mockOrder);
 
-      await service.updateStatus(
-        'order-1',
-        { internalNotes: 'Test notes' },
-        'tenant-1',
-        mockUser,
-      );
+      await service.updateStatus('order-1', { internalNotes: 'Test notes' }, 'tenant-1', mockUser);
 
       expect(orderRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({

@@ -1,7 +1,7 @@
 /**
  * SeedController Integration Tests
  * Coverage target: 95%+
- * 
+ *
  * Test cases:
  * 1. POST /seed/demo - Seed demo data
  * 2. Error handling
@@ -62,9 +62,7 @@ describe('SeedController (Integration)', () => {
 
       seedService.seedDemoData.mockResolvedValue(seedResult as any);
 
-      const response = await request(app.getHttpServer())
-        .post('/seed/demo')
-        .expect(201);
+      const response = await request(app.getHttpServer()).post('/seed/demo').expect(201);
 
       expect(response.body).toEqual(seedResult);
       expect(response.body.success).toBe(true);
@@ -89,9 +87,7 @@ describe('SeedController (Integration)', () => {
 
       seedService.seedDemoData.mockResolvedValue(seedResult as any);
 
-      const response = await request(app.getHttpServer())
-        .post('/seed/demo')
-        .expect(201);
+      const response = await request(app.getHttpServer()).post('/seed/demo').expect(201);
 
       expect(response.body.stats).toBeDefined();
       expect(response.body.duration).toBe(5000);
@@ -102,9 +98,7 @@ describe('SeedController (Integration)', () => {
         new HttpException('Database connection failed', HttpStatus.INTERNAL_SERVER_ERROR),
       );
 
-      await request(app.getHttpServer())
-        .post('/seed/demo')
-        .expect(500);
+      await request(app.getHttpServer()).post('/seed/demo').expect(500);
     });
 
     it('should handle duplicate data error', async () => {
@@ -112,9 +106,7 @@ describe('SeedController (Integration)', () => {
         new HttpException('Demo data already exists', HttpStatus.CONFLICT),
       );
 
-      await request(app.getHttpServer())
-        .post('/seed/demo')
-        .expect(409);
+      await request(app.getHttpServer()).post('/seed/demo').expect(409);
     });
 
     it('should handle partial seeding failure', async () => {
@@ -132,9 +124,7 @@ describe('SeedController (Integration)', () => {
 
       seedService.seedDemoData.mockResolvedValue(seedResult as any);
 
-      const response = await request(app.getHttpServer())
-        .post('/seed/demo')
-        .expect(201);
+      const response = await request(app.getHttpServer()).post('/seed/demo').expect(201);
 
       expect(response.body.success).toBe(false);
       expect(response.body.errors).toHaveLength(2);
@@ -153,9 +143,7 @@ describe('SeedController (Integration)', () => {
         });
       });
 
-      const response = await request(app.getHttpServer())
-        .post('/seed/demo')
-        .expect(201);
+      const response = await request(app.getHttpServer()).post('/seed/demo').expect(201);
 
       expect(response.body.success).toBe(true);
     });
@@ -170,14 +158,10 @@ describe('SeedController (Integration)', () => {
       seedService.seedDemoData.mockResolvedValue(seedResult as any);
 
       // First call
-      const response1 = await request(app.getHttpServer())
-        .post('/seed/demo')
-        .expect(201);
+      const response1 = await request(app.getHttpServer()).post('/seed/demo').expect(201);
 
       // Second call
-      const response2 = await request(app.getHttpServer())
-        .post('/seed/demo')
-        .expect(201);
+      const response2 = await request(app.getHttpServer()).post('/seed/demo').expect(201);
 
       expect(response1.body).toEqual(response2.body);
       expect(seedService.seedDemoData).toHaveBeenCalledTimes(2);
@@ -216,9 +200,7 @@ describe('SeedController (Integration)', () => {
 
       seedService.seedDemoData.mockResolvedValue(seedResult as any);
 
-      const response = await request(app.getHttpServer())
-        .post('/seed/demo')
-        .expect(201);
+      const response = await request(app.getHttpServer()).post('/seed/demo').expect(201);
 
       expect(response.body.stats).toEqual({});
     });
@@ -238,9 +220,7 @@ describe('SeedController (Integration)', () => {
 
       seedService.seedDemoData.mockResolvedValue(seedResult as any);
 
-      const response = await request(app.getHttpServer())
-        .post('/seed/demo')
-        .expect(201);
+      const response = await request(app.getHttpServer()).post('/seed/demo').expect(201);
 
       expect(response.body.stats.orders).toBe(500000);
       expect(response.body.duration).toBe(60000);
@@ -251,9 +231,7 @@ describe('SeedController (Integration)', () => {
         new HttpException('Foreign key constraint violation', HttpStatus.BAD_REQUEST),
       );
 
-      await request(app.getHttpServer())
-        .post('/seed/demo')
-        .expect(400);
+      await request(app.getHttpServer()).post('/seed/demo').expect(400);
     });
 
     it('should handle insufficient permissions', async () => {
@@ -261,9 +239,7 @@ describe('SeedController (Integration)', () => {
         new HttpException('Insufficient permissions to seed data', HttpStatus.FORBIDDEN),
       );
 
-      await request(app.getHttpServer())
-        .post('/seed/demo')
-        .expect(403);
+      await request(app.getHttpServer()).post('/seed/demo').expect(403);
     });
 
     it('should handle service unavailable', async () => {
@@ -271,9 +247,7 @@ describe('SeedController (Integration)', () => {
         new HttpException('Service temporarily unavailable', HttpStatus.SERVICE_UNAVAILABLE),
       );
 
-      await request(app.getHttpServer())
-        .post('/seed/demo')
-        .expect(503);
+      await request(app.getHttpServer()).post('/seed/demo').expect(503);
     });
 
     it('should return consistent response format', async () => {
@@ -285,9 +259,7 @@ describe('SeedController (Integration)', () => {
 
       seedService.seedDemoData.mockResolvedValue(seedResult as any);
 
-      const response = await request(app.getHttpServer())
-        .post('/seed/demo')
-        .expect(201);
+      const response = await request(app.getHttpServer()).post('/seed/demo').expect(201);
 
       expect(response.body).toHaveProperty('success');
       expect(response.body).toHaveProperty('message');

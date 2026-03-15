@@ -1,7 +1,7 @@
 /**
  * TenantController Integration Tests
  * Coverage target: 99%
- * 
+ *
  * Test cases:
  * 1. POST /tenants - Create tenant
  * 2. GET /tenants - Get all tenants, filter by status
@@ -480,9 +480,33 @@ describe('TenantController (Integration)', () => {
       it('should return pricing for all plans (public)', async () => {
         const pricing = {
           plans: [
-            { plan: 'free', monthly: 0, yearly: 0, maxUsers: 1, maxStorage: 1073741824, features: ['basic'], savings: 0 },
-            { plan: 'professional', monthly: 990000, yearly: 9900000, maxUsers: 20, maxStorage: 53687091200, features: ['basic', 'advanced'], savings: 17 },
-            { plan: 'enterprise', monthly: 2990000, yearly: 29900000, maxUsers: -1, maxStorage: -1, features: ['basic', 'advanced', 'premium'], savings: 17 },
+            {
+              plan: 'free',
+              monthly: 0,
+              yearly: 0,
+              maxUsers: 1,
+              maxStorage: 1073741824,
+              features: ['basic'],
+              savings: 0,
+            },
+            {
+              plan: 'professional',
+              monthly: 990000,
+              yearly: 9900000,
+              maxUsers: 20,
+              maxStorage: 53687091200,
+              features: ['basic', 'advanced'],
+              savings: 17,
+            },
+            {
+              plan: 'enterprise',
+              monthly: 2990000,
+              yearly: 29900000,
+              maxUsers: -1,
+              maxStorage: -1,
+              features: ['basic', 'advanced', 'premium'],
+              savings: 17,
+            },
           ],
         };
         subscriptionService.getPricing.mockReturnValue(pricing);
@@ -733,7 +757,9 @@ describe('TenantController (Integration)', () => {
     it('should return 400 when tenant has users', async () => {
       const BadRequestException = require('@nestjs/common').BadRequestException;
       tenantService.remove.mockRejectedValue(
-        new BadRequestException('Cannot delete tenant with 5 users. Please remove all users first.'),
+        new BadRequestException(
+          'Cannot delete tenant with 5 users. Please remove all users first.',
+        ),
       );
 
       await request(app.getHttpServer())

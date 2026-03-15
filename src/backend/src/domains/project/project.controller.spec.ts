@@ -1,7 +1,7 @@
 /**
  * ProjectController Integration Tests
  * Coverage target: 95%
- * 
+ *
  * Test cases:
  * 1. POST /projects - Create project
  * 2. GET /projects - Get all projects with filters
@@ -72,12 +72,12 @@ describe('ProjectController (Integration)', () => {
       canActivate: jest.fn().mockImplementation((context) => {
         const request = context.switchToHttp().getRequest();
         const authHeader = request.headers.authorization;
-        
+
         if (authHeader && authHeader.startsWith('Bearer ')) {
           request.user = mockUser;
           return true;
         }
-        
+
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }),
     };
@@ -172,10 +172,7 @@ describe('ProjectController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .post('/projects')
-        .send({ name: 'Test' })
-        .expect(401);
+      await request(app.getHttpServer()).post('/projects').send({ name: 'Test' }).expect(401);
     });
 
     it('should validate required fields', async () => {
@@ -327,9 +324,7 @@ describe('ProjectController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/projects/statistics')
-        .expect(401);
+      await request(app.getHttpServer()).get('/projects/statistics').expect(401);
     });
   });
 
@@ -358,9 +353,7 @@ describe('ProjectController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/projects/proj-123')
-        .expect(401);
+      await request(app.getHttpServer()).get('/projects/proj-123').expect(401);
     });
   });
 
@@ -606,9 +599,7 @@ describe('ProjectController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .delete('/projects/proj-123')
-        .expect(401);
+      await request(app.getHttpServer()).delete('/projects/proj-123').expect(401);
     });
   });
 

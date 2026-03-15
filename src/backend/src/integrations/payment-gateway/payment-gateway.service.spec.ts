@@ -14,12 +14,12 @@ import { BadRequestException } from '@nestjs/common';
 describe('PaymentGatewayService', () => {
   let service: PaymentGatewayService;
   let paymentTransactionRepo: jest.Mocked<Repository<PaymentTransaction>>;
-  let paymentWebhookRepo: jest.Mocked<Repository<PaymentWebhook>>;
+  let _paymentWebhookRepo: jest.Mocked<Repository<PaymentWebhook>>;
   let vnpayService: jest.Mocked<VNPayService>;
   let momoService: jest.Mocked<MomoService>;
   let stripeService: jest.Mocked<StripeService>;
   let paypalService: jest.Mocked<PayPalService>;
-  let permissionService: jest.Mocked<PermissionService>;
+  let _permissionService: jest.Mocked<PermissionService>;
 
   const mockUser: User = {
     id: 'user-123',
@@ -138,7 +138,8 @@ describe('PaymentGatewayService', () => {
 
       vnpayService.createPaymentUrl.mockReturnValue('https://sandbox.vnpayment.vn/...');
 
-      const saveSpy = jest.spyOn(service['secureTransactionRepo'], 'save')
+      const _saveSpy = jest
+        .spyOn(service['secureTransactionRepo'], 'save')
         .mockResolvedValueOnce({ ...mockTransaction, status: 'pending' } as PaymentTransaction)
         .mockResolvedValueOnce({ ...mockTransaction, status: 'processing' } as PaymentTransaction);
 
@@ -147,7 +148,7 @@ describe('PaymentGatewayService', () => {
       expect(result).toBeDefined();
       expect(result.status).toBe('processing');
       expect(vnpayService.createPaymentUrl).toHaveBeenCalled();
-      expect(saveSpy).toHaveBeenCalledTimes(2);
+      expect(_saveSpy).toHaveBeenCalledTimes(2);
     });
 
     it('should create payment with Momo gateway', async () => {
@@ -164,9 +165,14 @@ describe('PaymentGatewayService', () => {
         deeplink: 'momo://...',
       });
 
-      const saveSpy = jest.spyOn(service['secureTransactionRepo'], 'save')
+      const _saveSpy = jest
+        .spyOn(service['secureTransactionRepo'], 'save')
         .mockResolvedValueOnce({ ...mockTransaction, status: 'pending' } as PaymentTransaction)
-        .mockResolvedValueOnce({ ...mockTransaction, status: 'processing', gateway: 'momo' } as PaymentTransaction);
+        .mockResolvedValueOnce({
+          ...mockTransaction,
+          status: 'processing',
+          gateway: 'momo',
+        } as PaymentTransaction);
 
       const result = await service.createPayment(mockUser, dto);
 
@@ -190,9 +196,14 @@ describe('PaymentGatewayService', () => {
         paymentIntentId: 'pi_123',
       });
 
-      const saveSpy = jest.spyOn(service['secureTransactionRepo'], 'save')
+      const _saveSpy = jest
+        .spyOn(service['secureTransactionRepo'], 'save')
         .mockResolvedValueOnce({ ...mockTransaction, status: 'pending' } as PaymentTransaction)
-        .mockResolvedValueOnce({ ...mockTransaction, status: 'processing', gateway: 'stripe' } as PaymentTransaction);
+        .mockResolvedValueOnce({
+          ...mockTransaction,
+          status: 'processing',
+          gateway: 'stripe',
+        } as PaymentTransaction);
 
       const result = await service.createPayment(mockUser, dto);
 
@@ -217,9 +228,14 @@ describe('PaymentGatewayService', () => {
         orderId: 'PAYPAL123',
       });
 
-      const saveSpy = jest.spyOn(service['secureTransactionRepo'], 'save')
+      const _saveSpy = jest
+        .spyOn(service['secureTransactionRepo'], 'save')
         .mockResolvedValueOnce({ ...mockTransaction, status: 'pending' } as PaymentTransaction)
-        .mockResolvedValueOnce({ ...mockTransaction, status: 'processing', gateway: 'paypal' } as PaymentTransaction);
+        .mockResolvedValueOnce({
+          ...mockTransaction,
+          status: 'processing',
+          gateway: 'paypal',
+        } as PaymentTransaction);
 
       const result = await service.createPayment(mockUser, dto);
 
@@ -235,11 +251,12 @@ describe('PaymentGatewayService', () => {
         gateway: 'unsupported' as any,
       };
 
-      const saveSpy = jest.spyOn(service['secureTransactionRepo'], 'save')
+      const _saveSpy = jest
+        .spyOn(service['secureTransactionRepo'], 'save')
         .mockResolvedValue({ ...mockTransaction, status: 'pending' } as PaymentTransaction);
 
       await expect(service.createPayment(mockUser, dto)).rejects.toThrow(BadRequestException);
-      expect(saveSpy).toHaveBeenCalled();
+      expect(_saveSpy).toHaveBeenCalled();
     });
 
     it('should handle payment creation error and update status to failed', async () => {
@@ -253,13 +270,14 @@ describe('PaymentGatewayService', () => {
         throw new Error('Payment creation failed');
       });
 
-      const saveSpy = jest.spyOn(service['secureTransactionRepo'], 'save')
+      const _saveSpy = jest
+        .spyOn(service['secureTransactionRepo'], 'save')
         .mockResolvedValueOnce({ ...mockTransaction, status: 'pending' } as PaymentTransaction)
         .mockResolvedValueOnce({ ...mockTransaction, status: 'failed' } as PaymentTransaction);
 
       await expect(service.createPayment(mockUser, dto)).rejects.toThrow();
-      expect(saveSpy).toHaveBeenCalledTimes(2);
-      expect(saveSpy).toHaveBeenLastCalledWith(
+      expect(_saveSpy).toHaveBeenCalledTimes(2);
+      expect(_saveSpy).toHaveBeenLastCalledWith(
         mockUser,
         expect.objectContaining({ status: 'failed' }),
       );
@@ -274,15 +292,13 @@ describe('PaymentGatewayService', () => {
 
       vnpayService.createPaymentUrl.mockReturnValue('https://sandbox.vnpayment.vn/...');
 
-      const saveSpy = jest.spyOn(service['secureTransactionRepo'], 'save')
+      const _saveSpy = jest
+        .spyOn(service['secureTransactionRepo'], 'save')
         .mockResolvedValue({ ...mockTransaction, currency: 'VND' } as PaymentTransaction);
 
       await service.createPayment(mockUser, dto);
 
-      expect(saveSpy).toHaveBeenCalledWith(
-        mockUser,
-        expect.objectContaining({ currency: 'VND' }),
-      );
+      expect(_saveSpy).toHaveBeenCalledWith(mockUser, expect.objectContaining({ currency: 'VND' }));
     });
   });
 
@@ -297,7 +313,8 @@ describe('PaymentGatewayService', () => {
         },
       };
 
-      jest.spyOn(service['secureTransactionRepo'], 'findOne')
+      jest
+        .spyOn(service['secureTransactionRepo'], 'findOne')
         .mockResolvedValue(mockTransaction as PaymentTransaction);
 
       vnpayService.verifyPaymentCallback.mockReturnValue({
@@ -306,7 +323,8 @@ describe('PaymentGatewayService', () => {
         transactionId: 'VNP123456',
       });
 
-      const saveSpy = jest.spyOn(service['secureTransactionRepo'], 'save')
+      const _saveSpy = jest
+        .spyOn(service['secureTransactionRepo'], 'save')
         .mockResolvedValue({ ...mockTransaction, status: 'success' } as PaymentTransaction);
 
       const result = await service.verifyPayment(mockUser, dto);
@@ -314,7 +332,7 @@ describe('PaymentGatewayService', () => {
       expect(result.success).toBe(true);
       expect(result.transaction.status).toBe('success');
       expect(vnpayService.verifyPaymentCallback).toHaveBeenCalled();
-      expect(saveSpy).toHaveBeenCalled();
+      expect(_saveSpy).toHaveBeenCalled();
     });
 
     it('should verify failed payment', async () => {
@@ -326,7 +344,8 @@ describe('PaymentGatewayService', () => {
         },
       };
 
-      jest.spyOn(service['secureTransactionRepo'], 'findOne')
+      jest
+        .spyOn(service['secureTransactionRepo'], 'findOne')
         .mockResolvedValue(mockTransaction as PaymentTransaction);
 
       vnpayService.verifyPaymentCallback.mockReturnValue({
@@ -334,14 +353,15 @@ describe('PaymentGatewayService', () => {
         message: 'Payment cancelled',
       });
 
-      const saveSpy = jest.spyOn(service['secureTransactionRepo'], 'save')
+      const _saveSpy = jest
+        .spyOn(service['secureTransactionRepo'], 'save')
         .mockResolvedValue({ ...mockTransaction, status: 'failed' } as PaymentTransaction);
 
       const result = await service.verifyPayment(mockUser, dto);
 
       expect(result.success).toBe(false);
       expect(result.transaction.status).toBe('failed');
-      expect(saveSpy).toHaveBeenCalled();
+      expect(_saveSpy).toHaveBeenCalled();
     });
 
     it('should throw error if transaction not found', async () => {
@@ -365,7 +385,8 @@ describe('PaymentGatewayService', () => {
         },
       };
 
-      jest.spyOn(service['secureTransactionRepo'], 'findOne')
+      jest
+        .spyOn(service['secureTransactionRepo'], 'findOne')
         .mockResolvedValue({ ...mockTransaction, gateway: 'momo' } as PaymentTransaction);
 
       momoService.verifyIPN.mockReturnValue({
@@ -374,14 +395,15 @@ describe('PaymentGatewayService', () => {
         transactionId: 'MOMO123',
       });
 
-      const saveSpy = jest.spyOn(service['secureTransactionRepo'], 'save')
+      const _saveSpy = jest
+        .spyOn(service['secureTransactionRepo'], 'save')
         .mockResolvedValue({ ...mockTransaction, status: 'success' } as PaymentTransaction);
 
       const result = await service.verifyPayment(mockUser, dto);
 
       expect(result.success).toBe(true);
       expect(momoService.verifyIPN).toHaveBeenCalled();
-      expect(saveSpy).toHaveBeenCalled();
+      expect(_saveSpy).toHaveBeenCalled();
     });
 
     it('should verify Stripe payment via webhook', async () => {
@@ -391,16 +413,18 @@ describe('PaymentGatewayService', () => {
         params: {},
       };
 
-      jest.spyOn(service['secureTransactionRepo'], 'findOne')
+      jest
+        .spyOn(service['secureTransactionRepo'], 'findOne')
         .mockResolvedValue({ ...mockTransaction, gateway: 'stripe' } as PaymentTransaction);
 
-      const saveSpy = jest.spyOn(service['secureTransactionRepo'], 'save')
+      const _saveSpy = jest
+        .spyOn(service['secureTransactionRepo'], 'save')
         .mockResolvedValue({ ...mockTransaction, status: 'success' } as PaymentTransaction);
 
       const result = await service.verifyPayment(mockUser, dto);
 
       expect(result.success).toBe(true);
-      expect(saveSpy).toHaveBeenCalled();
+      expect(_saveSpy).toHaveBeenCalled();
     });
 
     it('should throw error for unsupported gateway', async () => {
@@ -410,7 +434,8 @@ describe('PaymentGatewayService', () => {
         params: {},
       };
 
-      jest.spyOn(service['secureTransactionRepo'], 'findOne')
+      jest
+        .spyOn(service['secureTransactionRepo'], 'findOne')
         .mockResolvedValue(mockTransaction as PaymentTransaction);
 
       await expect(service.verifyPayment(mockUser, dto)).rejects.toThrow(BadRequestException);
@@ -430,20 +455,23 @@ describe('PaymentGatewayService', () => {
         transactionId: 'VNP123456',
       });
 
-      const saveSpy = jest.spyOn(service['secureWebhookRepo'], 'save')
+      const _saveSpy = jest
+        .spyOn(service['secureWebhookRepo'], 'save')
         .mockResolvedValueOnce({ id: 'webhook-123', processed: false } as any)
         .mockResolvedValueOnce({ id: 'webhook-123', processed: true } as any);
 
-      jest.spyOn(service['secureTransactionRepo'], 'findOne')
+      jest
+        .spyOn(service['secureTransactionRepo'], 'findOne')
         .mockResolvedValue(mockTransaction as PaymentTransaction);
 
-      jest.spyOn(service['secureTransactionRepo'], 'save')
+      jest
+        .spyOn(service['secureTransactionRepo'], 'save')
         .mockResolvedValue({ ...mockTransaction, status: 'success' } as PaymentTransaction);
 
       await service.handleWebhook(mockUser, 'vnpay', payload);
 
       expect(vnpayService.verifyPaymentCallback).toHaveBeenCalled();
-      expect(saveSpy).toHaveBeenCalledTimes(2);
+      expect(_saveSpy).toHaveBeenCalledTimes(2);
     });
 
     it('should handle Momo webhook', async () => {
@@ -458,19 +486,22 @@ describe('PaymentGatewayService', () => {
         transactionId: 'MOMO123',
       });
 
-      const saveSpy = jest.spyOn(service['secureWebhookRepo'], 'save')
+      const _saveSpy = jest
+        .spyOn(service['secureWebhookRepo'], 'save')
         .mockResolvedValue({ id: 'webhook-456', processed: true } as any);
 
-      jest.spyOn(service['secureTransactionRepo'], 'findOne')
+      jest
+        .spyOn(service['secureTransactionRepo'], 'findOne')
         .mockResolvedValue({ ...mockTransaction, gateway: 'momo' } as PaymentTransaction);
 
-      jest.spyOn(service['secureTransactionRepo'], 'save')
+      jest
+        .spyOn(service['secureTransactionRepo'], 'save')
         .mockResolvedValue({ ...mockTransaction, status: 'success' } as PaymentTransaction);
 
       await service.handleWebhook(mockUser, 'momo', payload);
 
       expect(momoService.verifyIPN).toHaveBeenCalled();
-      expect(saveSpy).toHaveBeenCalled();
+      expect(_saveSpy).toHaveBeenCalled();
     });
 
     it('should handle Stripe webhook with valid signature', async () => {
@@ -487,20 +518,23 @@ describe('PaymentGatewayService', () => {
         transactionId: 'pi_123',
       });
 
-      const saveSpy = jest.spyOn(service['secureWebhookRepo'], 'save')
+      const _saveSpy = jest
+        .spyOn(service['secureWebhookRepo'], 'save')
         .mockResolvedValue({ id: 'webhook-789', processed: true } as any);
 
-      jest.spyOn(service['secureTransactionRepo'], 'findOne')
+      jest
+        .spyOn(service['secureTransactionRepo'], 'findOne')
         .mockResolvedValue({ ...mockTransaction, gateway: 'stripe' } as PaymentTransaction);
 
-      jest.spyOn(service['secureTransactionRepo'], 'save')
+      jest
+        .spyOn(service['secureTransactionRepo'], 'save')
         .mockResolvedValue({ ...mockTransaction, status: 'success' } as PaymentTransaction);
 
       await service.handleWebhook(mockUser, 'stripe', payload, signature);
 
       expect(stripeService.verifyWebhookSignature).toHaveBeenCalled();
       expect(stripeService.handleWebhookEvent).toHaveBeenCalled();
-      expect(saveSpy).toHaveBeenCalled();
+      expect(_saveSpy).toHaveBeenCalled();
     });
 
     it('should throw error for invalid Stripe webhook signature', async () => {
@@ -511,21 +545,23 @@ describe('PaymentGatewayService', () => {
 
       stripeService.verifyWebhookSignature.mockReturnValue(false);
 
-      const saveSpy = jest.spyOn(service['secureWebhookRepo'], 'save')
+      const _saveSpy = jest
+        .spyOn(service['secureWebhookRepo'], 'save')
         .mockResolvedValue({ id: 'webhook-999', processed: false } as any);
 
       await expect(service.handleWebhook(mockUser, 'stripe', payload, signature)).rejects.toThrow();
-      expect(saveSpy).toHaveBeenCalled();
+      expect(_saveSpy).toHaveBeenCalled();
     });
 
     it('should throw error for unsupported gateway', async () => {
       const payload = {};
 
-      const saveSpy = jest.spyOn(service['secureWebhookRepo'], 'save')
+      const _saveSpy = jest
+        .spyOn(service['secureWebhookRepo'], 'save')
         .mockResolvedValue({ id: 'webhook-111', processed: false } as any);
 
       await expect(service.handleWebhook(mockUser, 'unsupported', payload)).rejects.toThrow();
-      expect(saveSpy).toHaveBeenCalled();
+      expect(_saveSpy).toHaveBeenCalled();
     });
 
     it('should handle webhook when transaction not found', async () => {
@@ -540,14 +576,15 @@ describe('PaymentGatewayService', () => {
         transactionId: 'VNP999999',
       });
 
-      const saveSpy = jest.spyOn(service['secureWebhookRepo'], 'save')
+      const _saveSpy = jest
+        .spyOn(service['secureWebhookRepo'], 'save')
         .mockResolvedValue({ id: 'webhook-222', processed: true } as any);
 
       jest.spyOn(service['secureTransactionRepo'], 'findOne').mockResolvedValue(null);
 
       await service.handleWebhook(mockUser, 'vnpay', payload);
 
-      expect(saveSpy).toHaveBeenCalled();
+      expect(_saveSpy).toHaveBeenCalled();
     });
   });
 
@@ -557,19 +594,21 @@ describe('PaymentGatewayService', () => {
         transactionId: 'txn-123',
       };
 
-      jest.spyOn(service['secureTransactionRepo'], 'findOne')
+      jest
+        .spyOn(service['secureTransactionRepo'], 'findOne')
         .mockResolvedValue({ ...mockTransaction, status: 'success' } as PaymentTransaction);
 
       vnpayService.refundTransaction.mockResolvedValue({});
 
-      const saveSpy = jest.spyOn(service['secureTransactionRepo'], 'save')
+      const _saveSpy = jest
+        .spyOn(service['secureTransactionRepo'], 'save')
         .mockResolvedValue({ ...mockTransaction, status: 'refunded' } as PaymentTransaction);
 
       const result = await service.refundPayment(mockUser, dto);
 
       expect(result.status).toBe('refunded');
       expect(vnpayService.refundTransaction).toHaveBeenCalled();
-      expect(saveSpy).toHaveBeenCalled();
+      expect(_saveSpy).toHaveBeenCalled();
     });
 
     it('should refund Momo payment', async () => {
@@ -579,12 +618,16 @@ describe('PaymentGatewayService', () => {
         reason: 'Customer request',
       };
 
-      jest.spyOn(service['secureTransactionRepo'], 'findOne')
-        .mockResolvedValue({ ...mockTransaction, gateway: 'momo', status: 'success' } as PaymentTransaction);
+      jest.spyOn(service['secureTransactionRepo'], 'findOne').mockResolvedValue({
+        ...mockTransaction,
+        gateway: 'momo',
+        status: 'success',
+      } as PaymentTransaction);
 
       momoService.refundTransaction.mockResolvedValue({});
 
-      const saveSpy = jest.spyOn(service['secureTransactionRepo'], 'save')
+      const _saveSpy = jest
+        .spyOn(service['secureTransactionRepo'], 'save')
         .mockResolvedValue({ ...mockTransaction, status: 'refunded' } as PaymentTransaction);
 
       const result = await service.refundPayment(mockUser, dto);
@@ -605,12 +648,16 @@ describe('PaymentGatewayService', () => {
         reason: 'Defective product',
       };
 
-      jest.spyOn(service['secureTransactionRepo'], 'findOne')
-        .mockResolvedValue({ ...mockTransaction, gateway: 'stripe', status: 'success' } as PaymentTransaction);
+      jest.spyOn(service['secureTransactionRepo'], 'findOne').mockResolvedValue({
+        ...mockTransaction,
+        gateway: 'stripe',
+        status: 'success',
+      } as PaymentTransaction);
 
       stripeService.refundPayment.mockResolvedValue({});
 
-      const saveSpy = jest.spyOn(service['secureTransactionRepo'], 'save')
+      const _saveSpy = jest
+        .spyOn(service['secureTransactionRepo'], 'save')
         .mockResolvedValue({ ...mockTransaction, status: 'refunded' } as PaymentTransaction);
 
       const result = await service.refundPayment(mockUser, dto);
@@ -638,7 +685,8 @@ describe('PaymentGatewayService', () => {
         transactionId: 'txn-123',
       };
 
-      jest.spyOn(service['secureTransactionRepo'], 'findOne')
+      jest
+        .spyOn(service['secureTransactionRepo'], 'findOne')
         .mockResolvedValue({ ...mockTransaction, status: 'pending' } as PaymentTransaction);
 
       await expect(service.refundPayment(mockUser, dto)).rejects.toThrow(BadRequestException);
@@ -649,8 +697,11 @@ describe('PaymentGatewayService', () => {
         transactionId: 'txn-123',
       };
 
-      jest.spyOn(service['secureTransactionRepo'], 'findOne')
-        .mockResolvedValue({ ...mockTransaction, gateway: 'unsupported', status: 'success' } as PaymentTransaction);
+      jest.spyOn(service['secureTransactionRepo'], 'findOne').mockResolvedValue({
+        ...mockTransaction,
+        gateway: 'unsupported',
+        status: 'success',
+      } as PaymentTransaction);
 
       await expect(service.refundPayment(mockUser, dto)).rejects.toThrow(BadRequestException);
     });
@@ -660,7 +711,8 @@ describe('PaymentGatewayService', () => {
         transactionId: 'txn-123',
       };
 
-      jest.spyOn(service['secureTransactionRepo'], 'findOne')
+      jest
+        .spyOn(service['secureTransactionRepo'], 'findOne')
         .mockResolvedValue({ ...mockTransaction, status: 'success' } as PaymentTransaction);
 
       vnpayService.refundTransaction.mockRejectedValue(new Error('Refund failed'));
@@ -671,7 +723,8 @@ describe('PaymentGatewayService', () => {
 
   describe('getTransaction', () => {
     it('should get transaction by ID', async () => {
-      jest.spyOn(service['secureTransactionRepo'], 'findOne')
+      jest
+        .spyOn(service['secureTransactionRepo'], 'findOne')
         .mockResolvedValue(mockTransaction as PaymentTransaction);
 
       const result = await service.getTransaction(mockUser, 'txn-123');
@@ -683,7 +736,9 @@ describe('PaymentGatewayService', () => {
     it('should throw error if transaction not found', async () => {
       jest.spyOn(service['secureTransactionRepo'], 'findOne').mockResolvedValue(null);
 
-      await expect(service.getTransaction(mockUser, 'notfound')).rejects.toThrow(BadRequestException);
+      await expect(service.getTransaction(mockUser, 'notfound')).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -691,7 +746,8 @@ describe('PaymentGatewayService', () => {
     it('should list all transactions', async () => {
       const mockTransactions = [mockTransaction, { ...mockTransaction, id: 'txn-456' }];
 
-      jest.spyOn(service['secureTransactionRepo'], 'find')
+      jest
+        .spyOn(service['secureTransactionRepo'], 'find')
         .mockResolvedValue(mockTransactions as PaymentTransaction[]);
       paymentTransactionRepo.count.mockResolvedValue(2);
 
@@ -703,7 +759,8 @@ describe('PaymentGatewayService', () => {
     });
 
     it('should filter transactions by orderId', async () => {
-      jest.spyOn(service['secureTransactionRepo'], 'find')
+      jest
+        .spyOn(service['secureTransactionRepo'], 'find')
         .mockResolvedValue([mockTransaction] as PaymentTransaction[]);
       paymentTransactionRepo.count.mockResolvedValue(1);
 
@@ -713,7 +770,8 @@ describe('PaymentGatewayService', () => {
     });
 
     it('should filter transactions by gateway', async () => {
-      jest.spyOn(service['secureTransactionRepo'], 'find')
+      jest
+        .spyOn(service['secureTransactionRepo'], 'find')
         .mockResolvedValue([mockTransaction] as PaymentTransaction[]);
       paymentTransactionRepo.count.mockResolvedValue(1);
 
@@ -723,7 +781,8 @@ describe('PaymentGatewayService', () => {
     });
 
     it('should filter transactions by status', async () => {
-      jest.spyOn(service['secureTransactionRepo'], 'find')
+      jest
+        .spyOn(service['secureTransactionRepo'], 'find')
         .mockResolvedValue([mockTransaction] as PaymentTransaction[]);
       paymentTransactionRepo.count.mockResolvedValue(1);
 
@@ -733,7 +792,8 @@ describe('PaymentGatewayService', () => {
     });
 
     it('should paginate results', async () => {
-      jest.spyOn(service['secureTransactionRepo'], 'find')
+      jest
+        .spyOn(service['secureTransactionRepo'], 'find')
         .mockResolvedValue([mockTransaction] as PaymentTransaction[]);
       paymentTransactionRepo.count.mockResolvedValue(100);
 
@@ -743,7 +803,8 @@ describe('PaymentGatewayService', () => {
     });
 
     it('should use default limit and offset', async () => {
-      jest.spyOn(service['secureTransactionRepo'], 'find')
+      jest
+        .spyOn(service['secureTransactionRepo'], 'find')
         .mockResolvedValue([mockTransaction] as PaymentTransaction[]);
       paymentTransactionRepo.count.mockResolvedValue(1);
 

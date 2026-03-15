@@ -8,7 +8,7 @@ export interface PaymentDetails {
 
 /**
  * Gateway-specific examples:
- * 
+ *
  * Stripe:
  * {
  *   cardNumber: '4242424242424242',
@@ -16,19 +16,19 @@ export interface PaymentDetails {
  *   expYear: 2025,
  *   cvc: '123'
  * }
- * 
+ *
  * PayPal:
  * {
  *   payerId: 'PAYER123',
  *   paymentId: 'PAY-123456'
  * }
- * 
+ *
  * VNPay:
  * {
  *   vnp_TxnRef: 'ORDER123',
  *   vnp_ResponseCode: '00'
  * }
- * 
+ *
  * Momo:
  * {
  *   orderId: 'ORDER123',

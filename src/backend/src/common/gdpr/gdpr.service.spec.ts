@@ -1,10 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import {
-  BadRequestException,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { GdprService } from './gdpr.service';
 import { Consent } from './entities/consent.entity';
 import { DataExportRequest } from './entities/data-export-request.entity';
@@ -40,7 +37,9 @@ describe('GdprService', () => {
     revokedAt: null,
     createdAt: new Date(),
     updatedAt: new Date(),
-    get isActive() { return this.granted && !this.revokedAt; },
+    get isActive() {
+      return this.granted && !this.revokedAt;
+    },
   };
 
   const mockExportRequest: any = {
@@ -58,7 +57,9 @@ describe('GdprService', () => {
     createdAt: new Date(),
     updatedAt: new Date(),
     setExpiryDate: jest.fn(),
-    get isExpired() { return this.expiresAt && new Date() > this.expiresAt; },
+    get isExpired() {
+      return this.expiresAt && new Date() > this.expiresAt;
+    },
   };
 
   const mockDeletionRequest: any = {
@@ -74,8 +75,12 @@ describe('GdprService', () => {
     errorMessage: null,
     createdAt: new Date(),
     updatedAt: new Date(),
-    get isPending() { return this.status === DeletionStatus.PENDING; },
-    get isApproved() { return this.status === DeletionStatus.APPROVED; },
+    get isPending() {
+      return this.status === DeletionStatus.PENDING;
+    },
+    get isApproved() {
+      return this.status === DeletionStatus.APPROVED;
+    },
   };
 
   beforeEach(async () => {
@@ -288,7 +293,13 @@ describe('GdprService', () => {
 
       expect(result).toBe(true);
       expect(consentRepository.findOne).toHaveBeenCalledWith({
-        where: { userId, tenantId, type: ConsentType.MARKETING_EMAILS, granted: true, revokedAt: null },
+        where: {
+          userId,
+          tenantId,
+          type: ConsentType.MARKETING_EMAILS,
+          granted: true,
+          revokedAt: null,
+        },
       });
     });
 
@@ -301,7 +312,7 @@ describe('GdprService', () => {
     });
 
     it('should return false when consent is revoked', async () => {
-      const revokedConsent = { ...mockConsent, revokedAt: new Date() };
+      const _revokedConsent = { ...mockConsent, revokedAt: new Date() };
       consentRepository.findOne.mockResolvedValue(null);
 
       const result = await service.hasActiveConsent(userId, tenantId, ConsentType.MARKETING_EMAILS);
@@ -382,9 +393,9 @@ describe('GdprService', () => {
     it('should throw NotFoundException when request not found', async () => {
       exportRepository.findOne.mockResolvedValue(null);
 
-      await expect(
-        service.getExportRequest('non-existent', userId, tenantId),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.getExportRequest('non-existent', userId, tenantId)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -437,9 +448,9 @@ describe('GdprService', () => {
       const pendingRequest = { ...mockDeletionRequest, status: DeletionStatus.PENDING };
       deletionRepository.findOne.mockResolvedValue(pendingRequest);
 
-      await expect(
-        service.requestDataDeletion(userId, tenantId, requestDto),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.requestDataDeletion(userId, tenantId, requestDto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should allow new request when previous is completed', async () => {
@@ -468,9 +479,9 @@ describe('GdprService', () => {
     it('should throw NotFoundException when request not found', async () => {
       deletionRepository.findOne.mockResolvedValue(null);
 
-      await expect(
-        service.getDeletionRequest('non-existent', userId, tenantId),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.getDeletionRequest('non-existent', userId, tenantId)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -516,11 +527,13 @@ describe('GdprService', () => {
 
       expect(result.status).toBe(DeletionStatus.APPROVED);
       expect(result.approvedBy).toBe('admin-1');
-      expect(deletionRepository.save).toHaveBeenCalledWith(expect.objectContaining({
-        status: DeletionStatus.APPROVED,
-        approvedBy: 'admin-1',
-        approvedAt: expect.any(Date),
-      }));
+      expect(deletionRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: DeletionStatus.APPROVED,
+          approvedBy: 'admin-1',
+          approvedAt: expect.any(Date),
+        }),
+      );
     });
 
     it('should reject deletion request', async () => {
@@ -588,9 +601,7 @@ describe('GdprService', () => {
 
   describe('getPendingDeletionRequests', () => {
     it('should return pending deletion requests for tenant', async () => {
-      const pendingRequests = [
-        { ...mockDeletionRequest, status: DeletionStatus.PENDING },
-      ];
+      const pendingRequests = [{ ...mockDeletionRequest, status: DeletionStatus.PENDING }];
       deletionRepository.find.mockResolvedValue(pendingRequests);
 
       const result = await service.getPendingDeletionRequests(tenantId);

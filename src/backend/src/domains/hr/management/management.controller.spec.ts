@@ -1,7 +1,7 @@
 /**
  * ManagementController Integration Tests
  * Coverage target: 90%+
- * 
+ *
  * Test cases:
  * 1. Employee endpoints: GET, POST, PUT, DELETE
  * 2. Attendance endpoints: GET, POST, PUT
@@ -86,12 +86,12 @@ describe('ManagementController (Integration)', () => {
       canActivate: jest.fn().mockImplementation((context) => {
         const request = context.switchToHttp().getRequest();
         const authHeader = request.headers.authorization;
-        
+
         if (authHeader && authHeader.startsWith('Bearer valid-token')) {
           request.user = mockUser;
           return true;
         }
-        
+
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }),
     };
@@ -139,9 +139,7 @@ describe('ManagementController (Integration)', () => {
     });
 
     it('should return 401 when not authenticated', async () => {
-      await request(app.getHttpServer())
-        .get('/hr/employees')
-        .expect(401);
+      await request(app.getHttpServer()).get('/hr/employees').expect(401);
 
       expect(managementService.findAllEmployees).not.toHaveBeenCalled();
     });

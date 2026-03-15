@@ -12,9 +12,9 @@ import { UpdateProductDto } from './dto/update-product.dto';
 
 describe('ProductService', () => {
   let service: ProductService;
-  let productRepository: Repository<Product>;
-  let cacheService: CacheService;
-  let permissionService: PermissionService;
+  let _productRepository: Repository<Product>;
+  let _cacheService: CacheService;
+  let _permissionService: PermissionService;
   let secureProductRepo: any;
 
   const mockUser: User = {
@@ -372,10 +372,16 @@ describe('ProductService', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       } as Product;
-      
+
       const products = [
         freshProduct,
-        { ...freshProduct, id: 'product-2', name: 'Another Product', sku: 'SKU-002', description: 'Different description' },
+        {
+          ...freshProduct,
+          id: 'product-2',
+          name: 'Another Product',
+          sku: 'SKU-002',
+          description: 'Different description',
+        },
       ];
       secureProductRepo.find = jest.fn().mockResolvedValue(products);
 
@@ -404,10 +410,16 @@ describe('ProductService', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       } as Product;
-      
+
       const products = [
         freshProduct,
-        { ...freshProduct, id: 'product-2', name: 'Another Product', sku: 'SKU-002', description: 'Different description' },
+        {
+          ...freshProduct,
+          id: 'product-2',
+          name: 'Another Product',
+          sku: 'SKU-002',
+          description: 'Different description',
+        },
       ];
       secureProductRepo.find = jest.fn().mockResolvedValue(products);
 
@@ -436,10 +448,16 @@ describe('ProductService', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       } as Product;
-      
+
       const products = [
         freshProduct,
-        { ...freshProduct, id: 'product-2', name: 'Product Two', sku: 'SKU-002', description: 'Different description' },
+        {
+          ...freshProduct,
+          id: 'product-2',
+          name: 'Product Two',
+          sku: 'SKU-002',
+          description: 'Different description',
+        },
       ];
       secureProductRepo.find = jest.fn().mockResolvedValue(products);
 
@@ -468,10 +486,16 @@ describe('ProductService', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       } as Product;
-      
+
       const products = [
         freshProduct,
-        { ...freshProduct, id: 'product-2', name: 'Another Product', sku: 'SKU-002', description: 'Different description' },
+        {
+          ...freshProduct,
+          id: 'product-2',
+          name: 'Another Product',
+          sku: 'SKU-002',
+          description: 'Different description',
+        },
       ];
       secureProductRepo.find = jest.fn().mockResolvedValue(products);
 
@@ -500,7 +524,7 @@ describe('ProductService', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       } as Product;
-      
+
       const products = [freshProduct];
       secureProductRepo.find = jest.fn().mockResolvedValue(products);
 
@@ -618,7 +642,7 @@ describe('ProductService', () => {
 
       // Mock findOne (called by adjustStock)
       mockCacheService.getOrSet.mockResolvedValue(freshProduct);
-      
+
       // Mock save (called by updateStock)
       secureProductRepo.save = jest.fn().mockImplementation((user, product) => {
         return Promise.resolve(product);
@@ -652,7 +676,7 @@ describe('ProductService', () => {
 
       // Mock findOne (called by adjustStock)
       mockCacheService.getOrSet.mockResolvedValue(freshProduct);
-      
+
       // Mock save (called by updateStock)
       secureProductRepo.save = jest.fn().mockImplementation((user, product) => {
         return Promise.resolve(product);

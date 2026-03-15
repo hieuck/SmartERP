@@ -84,11 +84,7 @@ export class ShoppingCartService {
     return cart;
   }
 
-  async addItem(
-    user: User,
-    sessionId: string,
-    dto: AddToCartDto,
-  ): Promise<ShoppingCart> {
+  async addItem(user: User, sessionId: string, dto: AddToCartDto): Promise<ShoppingCart> {
     const cart = await this.getOrCreateCart(user, sessionId);
     const product = await this.secureProductRepo.findOne(user, {
       where: { id: dto.productId },

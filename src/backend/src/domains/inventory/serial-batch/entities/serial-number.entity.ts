@@ -8,8 +8,8 @@ import {
   UpdateDateColumn,
   Index,
 } from 'typeorm';
-import { Product } from '../../product/entities/product.entity';import { SerialNumberStatus } from '../enums/serial-number-status.enum';
-
+import { Product } from '../../product/entities/product.entity';
+import { SerialNumberStatus } from '../enums/serial-number-status.enum';
 
 @Entity('serial_numbers')
 @Index(['tenantId', 'number'], { unique: true })

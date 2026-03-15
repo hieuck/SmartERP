@@ -16,7 +16,7 @@ describe('ShoppingCartService', () => {
   let cartRepository: jest.Mocked<Repository<ShoppingCart>>;
   let cartItemRepository: jest.Mocked<Repository<CartItem>>;
   let productRepository: jest.Mocked<Repository<ProductCatalog>>;
-  let permissionService: jest.Mocked<PermissionService>;
+  let _permissionService: jest.Mocked<PermissionService>;
 
   const mockUser: User = {
     id: 'user-123',
@@ -54,7 +54,9 @@ describe('ShoppingCartService', () => {
     createdAt: new Date(),
     updatedAt: new Date(),
     validate: jest.fn(),
-    get lineTotal() { return this.price * this.quantity; },
+    get lineTotal() {
+      return this.price * this.quantity;
+    },
   } as unknown as CartItem;
 
   const mockCart = {
@@ -81,9 +83,15 @@ describe('ShoppingCartService', () => {
     updatedAt: new Date(),
     calculateTotals: jest.fn(),
     validate: jest.fn(),
-    get itemCount() { return this.items.reduce((sum, item) => sum + item.quantity, 0); },
-    get isEmpty() { return !this.items || this.items.length === 0; },
-    get isExpired() { return this.expiresAt && new Date() > this.expiresAt; },
+    get itemCount() {
+      return this.items.reduce((sum, item) => sum + item.quantity, 0);
+    },
+    get isEmpty() {
+      return !this.items || this.items.length === 0;
+    },
+    get isExpired() {
+      return this.expiresAt && new Date() > this.expiresAt;
+    },
   } as unknown as ShoppingCart;
 
   const mockAddress: Address = {
@@ -217,9 +225,7 @@ describe('ShoppingCartService', () => {
     it('should throw NotFoundException when cart not found', async () => {
       cartRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findOne(mockUser, 'invalid-id')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.findOne(mockUser, 'invalid-id')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -289,9 +295,9 @@ describe('ShoppingCartService', () => {
       cartRepository.findOne.mockResolvedValue(mockCart);
       productRepository.findOne.mockResolvedValue(null);
 
-      await expect(
-        service.addItem(mockUser, 'session-123', addToCartDto),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.addItem(mockUser, 'session-123', addToCartDto)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should throw BadRequestException when product not published', async () => {
@@ -299,9 +305,9 @@ describe('ShoppingCartService', () => {
       cartRepository.findOne.mockResolvedValue(mockCart);
       productRepository.findOne.mockResolvedValue(unpublishedProduct as ProductCatalog);
 
-      await expect(
-        service.addItem(mockUser, 'session-123', addToCartDto),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.addItem(mockUser, 'session-123', addToCartDto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw BadRequestException when insufficient stock', async () => {
@@ -309,9 +315,9 @@ describe('ShoppingCartService', () => {
       cartRepository.findOne.mockResolvedValue(mockCart);
       productRepository.findOne.mockResolvedValue(lowStockProduct as ProductCatalog);
 
-      await expect(
-        service.addItem(mockUser, 'session-123', addToCartDto),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.addItem(mockUser, 'session-123', addToCartDto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -356,9 +362,9 @@ describe('ShoppingCartService', () => {
       cartRepository.findOne.mockResolvedValue(mockCart);
       productRepository.findOne.mockResolvedValue(lowStockProduct as ProductCatalog);
 
-      await expect(
-        service.updateItemQuantity(mockUser, 'cart-123', 'item-123', 5),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.updateItemQuantity(mockUser, 'cart-123', 'item-123', 5)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -378,9 +384,9 @@ describe('ShoppingCartService', () => {
       const emptyCart = { ...mockCart, items: [] } as unknown as ShoppingCart;
       cartRepository.findOne.mockResolvedValue(emptyCart);
 
-      await expect(
-        service.removeItem(mockUser, 'cart-123', 'invalid-item'),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.removeItem(mockUser, 'cart-123', 'invalid-item')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -425,8 +431,16 @@ describe('ShoppingCartService', () => {
 
   describe('removeCoupon', () => {
     it('should remove coupon from cart', async () => {
-      const cartWithCoupon = { ...mockCart, couponCode: 'SAVE10', discount: 10000 } as unknown as ShoppingCart;
-      const cartWithoutCoupon = { ...mockCart, couponCode: null, discount: 0 } as unknown as ShoppingCart;
+      const cartWithCoupon = {
+        ...mockCart,
+        couponCode: 'SAVE10',
+        discount: 10000,
+      } as unknown as ShoppingCart;
+      const cartWithoutCoupon = {
+        ...mockCart,
+        couponCode: null,
+        discount: 0,
+      } as unknown as ShoppingCart;
       // findOne called twice: once in removeCoupon, once at the end to return updated cart
       cartRepository.findOne.mockResolvedValue(cartWithCoupon);
       cartRepository.save.mockResolvedValue(cartWithoutCoupon);
@@ -503,7 +517,10 @@ describe('ShoppingCartService', () => {
   describe('markAsAbandoned', () => {
     it('should mark cart as abandoned', async () => {
       cartRepository.findOne.mockResolvedValue(mockCart);
-      const abandonedCart = { ...mockCart, status: CartStatus.ABANDONED } as unknown as ShoppingCart;
+      const abandonedCart = {
+        ...mockCart,
+        status: CartStatus.ABANDONED,
+      } as unknown as ShoppingCart;
       cartRepository.save.mockResolvedValue(abandonedCart);
 
       const result = await service.markAsAbandoned(mockUser, 'cart-123');

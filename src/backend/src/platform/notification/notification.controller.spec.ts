@@ -1,7 +1,7 @@
 /**
  * NotificationController Integration Tests
  * Coverage target: 95%+
- * 
+ *
  * Test cases:
  * 1. GET /notifications - Get all notifications
  * 2. GET /notifications/unread - Get unread notifications
@@ -64,12 +64,12 @@ describe('NotificationController (Integration)', () => {
       canActivate: jest.fn().mockImplementation((context) => {
         const request = context.switchToHttp().getRequest();
         const authHeader = request.headers.authorization;
-        
+
         if (authHeader && authHeader.startsWith('Bearer ')) {
           request.user = mockUser;
           return true;
         }
-        
+
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }),
     };
@@ -146,9 +146,7 @@ describe('NotificationController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/notifications')
-        .expect(401);
+      await request(app.getHttpServer()).get('/notifications').expect(401);
     });
 
     it('should handle service errors', async () => {
@@ -205,9 +203,7 @@ describe('NotificationController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/notifications/unread')
-        .expect(401);
+      await request(app.getHttpServer()).get('/notifications/unread').expect(401);
     });
   });
 
@@ -247,9 +243,7 @@ describe('NotificationController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/notifications/unread/count')
-        .expect(401);
+      await request(app.getHttpServer()).get('/notifications/unread/count').expect(401);
     });
   });
 
@@ -278,9 +272,7 @@ describe('NotificationController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/notifications/notification-123')
-        .expect(401);
+      await request(app.getHttpServer()).get('/notifications/notification-123').expect(401);
     });
   });
 
@@ -420,9 +412,7 @@ describe('NotificationController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .post('/notifications/notification-123/read')
-        .expect(401);
+      await request(app.getHttpServer()).post('/notifications/notification-123/read').expect(401);
     });
   });
 
@@ -448,9 +438,7 @@ describe('NotificationController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .post('/notifications/read-all')
-        .expect(401);
+      await request(app.getHttpServer()).post('/notifications/read-all').expect(401);
     });
   });
 
@@ -540,9 +528,7 @@ describe('NotificationController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .delete('/notifications/notification-123')
-        .expect(401);
+      await request(app.getHttpServer()).delete('/notifications/notification-123').expect(401);
     });
   });
 
@@ -568,7 +554,10 @@ describe('NotificationController (Integration)', () => {
 
     it('should handle very long notification title', async () => {
       const longTitle = 'a'.repeat(500);
-      notificationService.create.mockResolvedValue({ ...mockNotification, title: longTitle } as any);
+      notificationService.create.mockResolvedValue({
+        ...mockNotification,
+        title: longTitle,
+      } as any);
 
       await request(app.getHttpServer())
         .post('/notifications')
@@ -579,7 +568,10 @@ describe('NotificationController (Integration)', () => {
 
     it('should handle very long notification message', async () => {
       const longMessage = 'a'.repeat(5000);
-      notificationService.create.mockResolvedValue({ ...mockNotification, message: longMessage } as any);
+      notificationService.create.mockResolvedValue({
+        ...mockNotification,
+        message: longMessage,
+      } as any);
 
       await request(app.getHttpServer())
         .post('/notifications')

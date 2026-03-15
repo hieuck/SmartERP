@@ -61,7 +61,7 @@ export class Attendance {
     if (this.checkIn && this.checkOut) {
       const checkInTime = this.parseTime(this.checkIn);
       const checkOutTime = this.parseTime(this.checkOut);
-      
+
       const diffMs = checkOutTime.getTime() - checkInTime.getTime();
       this.hoursWorked = Math.round((diffMs / (1000 * 60 * 60)) * 100) / 100;
     }

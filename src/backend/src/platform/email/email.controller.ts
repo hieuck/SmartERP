@@ -2,10 +2,8 @@ import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards } from '@nes
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { EmailService } from './email.service';
 import { JwtAuthGuard } from '../../core/auth/guards/jwt-auth.guard';
-import { TenantId } from '../../common/decorators/tenant-id.decorator';
 import { EmailTemplate } from './entities/email-template.entity';
 import { EmailLog } from './entities/email-log.entity';
-
 import { User } from '@/common/security/permission.service';
 @Controller('email')
 @UseGuards(JwtAuthGuard)

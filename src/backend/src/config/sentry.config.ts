@@ -2,7 +2,7 @@ import * as Sentry from '@sentry/node';
 
 /**
  * Initialize Sentry for backend error tracking
- * 
+ *
  * Environment variables required:
  * - SENTRY_DSN: Sentry DSN from sentry.io
  * - NODE_ENV: Environment name (development, staging, production)
@@ -25,20 +25,20 @@ export function initSentry() {
     dsn,
     environment,
     release: `smart-erp-backend@${release}`,
-    
+
     // Performance Monitoring
     tracesSampleRate: environment === 'production' ? 0.1 : 1.0,
-    
+
     // Filter out non-error events in production
-    beforeSend(event, hint) {
+    beforeSend(event, _hint) {
       // Don't send events in development unless it's an error
       if (environment === 'development' && event.level !== 'error') {
         return null;
       }
-      
+
       return event;
     },
-    
+
     // Ignore specific errors
     ignoreErrors: [
       // Database connection errors (handled by health checks)

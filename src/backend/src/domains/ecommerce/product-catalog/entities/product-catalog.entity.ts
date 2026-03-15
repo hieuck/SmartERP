@@ -9,7 +9,8 @@ import {
   BeforeInsert,
   BeforeUpdate,
 } from 'typeorm';
-import { User as UserEntity } from '../../../../core/user/entities/user.entity';import { ProductStatus } from '../enums/product-status.enum';
+import { User as UserEntity } from '../../../../core/user/entities/user.entity';
+import { ProductStatus } from '../enums/product-status.enum';
 
 import { User } from '@/common/security/permission.service';
 

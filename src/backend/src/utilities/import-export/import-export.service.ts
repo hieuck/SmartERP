@@ -23,7 +23,9 @@ export class ImportExportService {
     data: Record<string, unknown>[],
   ): Promise<string> {
     // TODO: Implement CSV export
-    this.logger.log(`Exporting ${data.length} ${entityType} records to CSV for tenant ${user.tenantId}`);
+    this.logger.log(
+      `Exporting ${data.length} ${entityType} records to CSV for tenant ${user.tenantId}`,
+    );
 
     if (data.length === 0) return '';
 

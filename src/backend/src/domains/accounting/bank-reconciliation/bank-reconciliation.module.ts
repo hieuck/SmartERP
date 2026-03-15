@@ -10,12 +10,7 @@ import { SecurityModule } from '@/common/security/security.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([
-      BankStatement,
-      BankTransaction,
-      JournalEntry,
-      Account,
-    ]),
+    TypeOrmModule.forFeature([BankStatement, BankTransaction, JournalEntry, Account]),
     SecurityModule,
   ],
   controllers: [BankReconciliationController],

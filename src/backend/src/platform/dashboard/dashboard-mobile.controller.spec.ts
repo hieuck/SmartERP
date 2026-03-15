@@ -1,7 +1,7 @@
 /**
  * DashboardMobileController Integration Tests
  * Coverage target: 95%+
- * 
+ *
  * Test cases:
  * 1. GET /api/v1/dashboard/stats - Get mobile dashboard stats
  * 2. GET /api/v1/dashboard/revenue-chart - Get revenue chart data
@@ -63,7 +63,7 @@ describe('DashboardMobileController (Integration)', () => {
     values: [1000000, 1500000, 2000000, 1800000, 2200000, 2500000, 1900000],
   };
 
-  const mockTopProductsChart = {
+  const _mockTopProductsChart = {
     labels: ['Product A', 'Product B', 'Product C'],
     values: [5000000, 4000000, 3000000],
   };
@@ -117,12 +117,12 @@ describe('DashboardMobileController (Integration)', () => {
       canActivate: jest.fn().mockImplementation((context) => {
         const request = context.switchToHttp().getRequest();
         const authHeader = request.headers.authorization;
-        
+
         if (authHeader && authHeader.startsWith('Bearer ')) {
           request.user = mockUser;
           return true;
         }
-        
+
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }),
     };
@@ -202,9 +202,7 @@ describe('DashboardMobileController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/api/v1/dashboard/stats')
-        .expect(401);
+      await request(app.getHttpServer()).get('/api/v1/dashboard/stats').expect(401);
     });
 
     it('should require tenant context', async () => {
@@ -380,9 +378,7 @@ describe('DashboardMobileController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/api/v1/dashboard/top-products')
-        .expect(401);
+      await request(app.getHttpServer()).get('/api/v1/dashboard/top-products').expect(401);
     });
   });
 
@@ -438,9 +434,7 @@ describe('DashboardMobileController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/api/v1/dashboard/recent-orders')
-        .expect(401);
+      await request(app.getHttpServer()).get('/api/v1/dashboard/recent-orders').expect(401);
     });
 
     it('should handle service errors', async () => {
@@ -507,9 +501,7 @@ describe('DashboardMobileController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/api/v1/dashboard/low-stock')
-        .expect(401);
+      await request(app.getHttpServer()).get('/api/v1/dashboard/low-stock').expect(401);
     });
 
     it('should handle service errors', async () => {

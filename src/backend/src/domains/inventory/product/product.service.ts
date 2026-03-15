@@ -14,8 +14,6 @@ import { Product } from './entities/product.entity';
 import { ProductStatus } from './enums/product-status.enum';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-;
-
 @Injectable()
 export class ProductService {
   private secureProductRepo: SecureRepository<Product>;

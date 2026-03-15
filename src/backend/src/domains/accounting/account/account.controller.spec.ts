@@ -37,7 +37,7 @@ describe('AccountController (Integration)', () => {
     syncStatus: SyncStatus.SYNCED,
   };
 
-  const mockJournalEntry = {
+  const _mockJournalEntry = {
     id: 'je-1',
     tenantId: 'tenant-1',
     number: 'JE-2024-0001',
@@ -48,7 +48,7 @@ describe('AccountController (Integration)', () => {
     updatedAt: new Date(),
   };
 
-  const mockInvoice = {
+  const _mockInvoice = {
     id: 'invoice-1',
     tenantId: 'tenant-1',
     invoiceNumber: 'INV-001',
@@ -121,16 +121,16 @@ describe('AccountController (Integration)', () => {
       const accounts = [mockAccount];
       accountService.findAllAccounts.mockResolvedValue(accounts);
 
-      const response = await request(app.getHttpServer())
-        .get('/accounting/accounts')
-        .expect(200);
+      const response = await request(app.getHttpServer()).get('/accounting/accounts').expect(200);
 
-      expect(response.body).toMatchObject([{
-        id: mockAccount.id,
-        code: mockAccount.code,
-        name: mockAccount.name,
-        type: mockAccount.type,
-      }]);
+      expect(response.body).toMatchObject([
+        {
+          id: mockAccount.id,
+          code: mockAccount.code,
+          name: mockAccount.name,
+          type: mockAccount.type,
+        },
+      ]);
       expect(accountService.findAllAccounts).toHaveBeenCalledWith(mockUser, undefined);
     });
 
@@ -142,21 +142,21 @@ describe('AccountController (Integration)', () => {
         .get('/accounting/accounts?type=ASSET')
         .expect(200);
 
-      expect(response.body).toMatchObject([{
-        id: mockAccount.id,
-        code: mockAccount.code,
-        name: mockAccount.name,
-        type: mockAccount.type,
-      }]);
+      expect(response.body).toMatchObject([
+        {
+          id: mockAccount.id,
+          code: mockAccount.code,
+          name: mockAccount.name,
+          type: mockAccount.type,
+        },
+      ]);
       expect(accountService.findAllAccounts).toHaveBeenCalledWith(mockUser, 'ASSET');
     });
 
     it('should handle empty result', async () => {
       accountService.findAllAccounts.mockResolvedValue([]);
 
-      const response = await request(app.getHttpServer())
-        .get('/accounting/accounts')
-        .expect(200);
+      const response = await request(app.getHttpServer()).get('/accounting/accounts').expect(200);
 
       expect(response.body).toEqual([]);
     });
@@ -180,13 +180,9 @@ describe('AccountController (Integration)', () => {
     });
 
     it('should return 404 when account not found', async () => {
-      accountService.findAccountById.mockRejectedValue(
-        new Error('Account not found'),
-      );
+      accountService.findAccountById.mockRejectedValue(new Error('Account not found'));
 
-      await request(app.getHttpServer())
-        .get('/accounting/accounts/non-existent')
-        .expect(500);
+      await request(app.getHttpServer()).get('/accounting/accounts/non-existent').expect(500);
     });
   });
 
@@ -210,10 +206,7 @@ describe('AccountController (Integration)', () => {
     });
 
     it('should validate required fields', async () => {
-      await request(app.getHttpServer())
-        .post('/accounting/accounts')
-        .send({})
-        .expect(400);
+      await request(app.getHttpServer()).post('/accounting/accounts').send({}).expect(400);
     });
 
     it('should validate account type enum', async () => {
@@ -239,11 +232,7 @@ describe('AccountController (Integration)', () => {
         .expect(200);
 
       expect(response.body.name).toBe(updateDto.name);
-      expect(accountService.updateAccount).toHaveBeenCalledWith(
-        mockUser,
-        'account-1',
-        updateDto,
-      );
+      expect(accountService.updateAccount).toHaveBeenCalledWith(mockUser, 'account-1', updateDto);
     });
 
     it('should handle partial updates', async () => {
@@ -261,21 +250,15 @@ describe('AccountController (Integration)', () => {
     it('should delete account successfully', async () => {
       accountService.deleteAccount.mockResolvedValue(undefined);
 
-      await request(app.getHttpServer())
-        .delete('/accounting/accounts/account-1')
-        .expect(200);
+      await request(app.getHttpServer()).delete('/accounting/accounts/account-1').expect(200);
 
       expect(accountService.deleteAccount).toHaveBeenCalledWith(mockUser, 'account-1');
     });
 
     it('should return 404 when account not found', async () => {
-      accountService.deleteAccount.mockRejectedValue(
-        new Error('Account not found'),
-      );
+      accountService.deleteAccount.mockRejectedValue(new Error('Account not found'));
 
-      await request(app.getHttpServer())
-        .delete('/accounting/accounts/non-existent')
-        .expect(500);
+      await request(app.getHttpServer()).delete('/accounting/accounts/non-existent').expect(500);
     });
   });
 
@@ -283,9 +266,7 @@ describe('AccountController (Integration)', () => {
     it('should create default chart of accounts', async () => {
       accountService.createDefaultCOA.mockResolvedValue(undefined);
 
-      await request(app.getHttpServer())
-        .post('/accounting/accounts/coa/default')
-        .expect(201);
+      await request(app.getHttpServer()).post('/accounting/accounts/coa/default').expect(201);
 
       expect(accountService.createDefaultCOA).toHaveBeenCalledWith(mockUser);
     });

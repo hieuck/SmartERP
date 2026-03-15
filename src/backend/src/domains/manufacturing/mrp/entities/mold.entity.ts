@@ -1,4 +1,5 @@
-import { Entity, Column, Index } from 'typeorm';import { MoldStatus } from '../enums/mold-status.enum';
+import { Entity, Column, Index } from 'typeorm';
+import { MoldStatus } from '../enums/mold-status.enum';
 import { MoldCondition } from '../enums/mold-condition.enum';
 
 import { BaseEntity } from '@/common/entities/base.entity';

@@ -2,9 +2,6 @@ import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards } fro
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { ManagementService } from './management.service';
 import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
-import { Employee } from './entities/employee.entity';
-import { Attendance } from './entities/attendance.entity';
-import { Leave } from './entities/leave.entity';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
 import { CreateAttendanceDto } from './dto/create-attendance.dto';

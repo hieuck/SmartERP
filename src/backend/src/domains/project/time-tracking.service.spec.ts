@@ -344,7 +344,11 @@ describe('TimeTrackingService', () => {
   describe('update', () => {
     it('should update time entry successfully', async () => {
       const freshMockEntry = { ...mockTimeEntry } as unknown as TimeEntry;
-      const updatedEntry = { ...freshMockEntry, hours: 6, description: 'Updated work' } as unknown as TimeEntry;
+      const updatedEntry = {
+        ...freshMockEntry,
+        hours: 6,
+        description: 'Updated work',
+      } as unknown as TimeEntry;
       timeEntryRepository.findOne.mockResolvedValue(freshMockEntry);
       timeEntryRepository.save.mockResolvedValue(updatedEntry);
       taskRepository.update.mockResolvedValue({ affected: 1 } as any);
@@ -386,12 +390,12 @@ describe('TimeTrackingService', () => {
       const otherUserEntry = { ...mockTimeEntry, userId: 'other-user-123' } as unknown as TimeEntry;
       timeEntryRepository.findOne.mockResolvedValue(otherUserEntry);
 
-      await expect(
-        service.update(entryId, 6, 'Updated work', tenantId, mockUser),
-      ).rejects.toThrow(BadRequestException);
-      await expect(
-        service.update(entryId, 6, 'Updated work', tenantId, mockUser),
-      ).rejects.toThrow('You can only update your own time entries');
+      await expect(service.update(entryId, 6, 'Updated work', tenantId, mockUser)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.update(entryId, 6, 'Updated work', tenantId, mockUser)).rejects.toThrow(
+        'You can only update your own time entries',
+      );
     });
 
     it('should recalculate task and project hours after update', async () => {

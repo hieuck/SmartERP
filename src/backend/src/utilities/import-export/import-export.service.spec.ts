@@ -70,9 +70,7 @@ describe('ImportExportService', () => {
     });
 
     it('should handle data with nested objects', async () => {
-      const data = [
-        { id: 1, name: 'Product', details: { color: 'red', size: 'M' } },
-      ];
+      const data = [{ id: 1, name: 'Product', details: { color: 'red', size: 'M' } }];
 
       const result = await service.exportToExcel(mockUser, 'products', data);
 

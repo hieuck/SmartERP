@@ -1,7 +1,7 @@
 /**
  * SupplierController Integration Tests
  * Coverage target: 95%
- * 
+ *
  * Test cases:
  * 1. GET /suppliers - Get all suppliers
  * 2. GET /suppliers/search - Search suppliers
@@ -82,12 +82,12 @@ describe('SupplierController (Integration)', () => {
       canActivate: jest.fn().mockImplementation((context) => {
         const request = context.switchToHttp().getRequest();
         const authHeader = request.headers.authorization;
-        
+
         if (authHeader && authHeader.startsWith('Bearer ')) {
           request.user = mockUser;
           return true;
         }
-        
+
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }),
     };
@@ -147,9 +147,7 @@ describe('SupplierController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/suppliers')
-        .expect(401);
+      await request(app.getHttpServer()).get('/suppliers').expect(401);
     });
 
     it('should return empty array when no suppliers', async () => {
@@ -344,9 +342,7 @@ describe('SupplierController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/suppliers/supplier-123')
-        .expect(401);
+      await request(app.getHttpServer()).get('/suppliers/supplier-123').expect(401);
     });
   });
 
@@ -403,10 +399,7 @@ describe('SupplierController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .post('/suppliers')
-        .send({ name: 'Test' })
-        .expect(401);
+      await request(app.getHttpServer()).post('/suppliers').send({ name: 'Test' }).expect(401);
     });
 
     it('should validate required fields', async () => {
@@ -614,11 +607,7 @@ describe('SupplierController (Integration)', () => {
         .expect(200);
 
       expect(response.body.paymentTerms).toBe(60);
-      expect(supplierService.updatePaymentTerms).toHaveBeenCalledWith(
-        mockUser,
-        'supplier-123',
-        60,
-      );
+      expect(supplierService.updatePaymentTerms).toHaveBeenCalledWith(mockUser, 'supplier-123', 60);
     });
 
     it('should return 400 when payment terms is negative', async () => {
@@ -732,9 +721,7 @@ describe('SupplierController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .delete('/suppliers/supplier-123')
-        .expect(401);
+      await request(app.getHttpServer()).delete('/suppliers/supplier-123').expect(401);
     });
   });
 

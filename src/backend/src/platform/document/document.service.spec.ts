@@ -12,7 +12,7 @@ describe('DocumentService', () => {
   let service: DocumentService;
   let documentRepository: jest.Mocked<Repository<Document>>;
   let cacheService: jest.Mocked<CacheService>;
-  let permissionService: jest.Mocked<PermissionService>;
+  let _permissionService: jest.Mocked<PermissionService>;
 
   const mockUser: User = {
     id: 'user-1',
@@ -92,12 +92,15 @@ describe('DocumentService', () => {
       };
       (service as any).secureDocumentRepo = mockSecureRepo;
 
-      const result = await service.findAll(mockUser);
+      const _result = await service.findAll(mockUser);
 
-      expect(result).toEqual([mockDocument]);
-      expect(mockSecureRepo.find).toHaveBeenCalledWith(mockUser, expect.objectContaining({
-        where: { parentId: IsNull() },
-      }));
+      expect(_result).toEqual([mockDocument]);
+      expect(mockSecureRepo.find).toHaveBeenCalledWith(
+        mockUser,
+        expect.objectContaining({
+          where: { parentId: IsNull() },
+        }),
+      );
     });
 
     it('should return documents by parentId', async () => {
@@ -108,9 +111,12 @@ describe('DocumentService', () => {
 
       await service.findAll(mockUser, 'parent-1');
 
-      expect(mockSecureRepo.find).toHaveBeenCalledWith(mockUser, expect.objectContaining({
-        where: { parentId: 'parent-1' },
-      }));
+      expect(mockSecureRepo.find).toHaveBeenCalledWith(
+        mockUser,
+        expect.objectContaining({
+          where: { parentId: 'parent-1' },
+        }),
+      );
     });
   });
 
@@ -122,9 +128,9 @@ describe('DocumentService', () => {
       (service as any).secureDocumentRepo = mockSecureRepo;
       cacheService.getOrSet.mockImplementation(async (_key, fn) => fn());
 
-      const result = await service.findById(mockUser, 'doc-1');
+      const _result = await service.findById(mockUser, 'doc-1');
 
-      expect(result).toEqual(mockDocument);
+      expect(_result).toEqual(mockDocument);
     });
 
     it('should throw NotFoundException when not found', async () => {
@@ -143,13 +149,15 @@ describe('DocumentService', () => {
       documentRepository.create.mockReturnValue(mockDocument as any);
       documentRepository.save.mockResolvedValue(mockDocument);
 
-      const result = await service.createFolder(mockUser, 'New Folder', null);
+      const _result = await service.createFolder(mockUser, 'New Folder', null);
 
-      expect(result).toEqual(mockDocument);
-      expect(documentRepository.create).toHaveBeenCalledWith(expect.objectContaining({
-        name: 'New Folder',
-        type: DocumentType.FOLDER,
-      }));
+      expect(_result).toEqual(mockDocument);
+      expect(documentRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'New Folder',
+          type: DocumentType.FOLDER,
+        }),
+      );
     });
   });
 
@@ -158,9 +166,12 @@ describe('DocumentService', () => {
       documentRepository.create.mockReturnValue(mockDocument as any);
       documentRepository.save.mockResolvedValue(mockDocument);
 
-      const result = await service.createFile(mockUser, { name: 'test.pdf', filePath: '/uploads/test.pdf' });
+      const _result = await service.createFile(mockUser, {
+        name: 'test.pdf',
+        filePath: '/uploads/test.pdf',
+      });
 
-      expect(result).toEqual(mockDocument);
+      expect(_result).toEqual(mockDocument);
     });
   });
 
@@ -173,7 +184,7 @@ describe('DocumentService', () => {
       cacheService.getOrSet.mockImplementation(async (_key, fn) => fn());
       documentRepository.update.mockResolvedValue({ affected: 1 } as any);
 
-      const result = await service.update(mockUser, 'doc-1', { name: 'Updated' });
+      const _result = await service.update(mockUser, 'doc-1', { name: 'Updated' });
 
       expect(documentRepository.update).toHaveBeenCalled();
       expect(cacheService.del).toHaveBeenCalled();
@@ -205,7 +216,7 @@ describe('DocumentService', () => {
       (service as any).secureDocumentRepo = mockSecureRepo;
       cacheService.getOrSet.mockImplementation(async (_key, fn) => fn());
 
-      const result = await service.createVersion(mockUser, 'doc-1', '/uploads/test-v2.pdf');
+      const _result = await service.createVersion(mockUser, 'doc-1', '/uploads/test-v2.pdf');
 
       expect(result.version).toBe(2);
     });
@@ -221,9 +232,9 @@ describe('DocumentService', () => {
       };
       documentRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
 
-      const result = await service.search(mockUser, 'test');
+      const _result = await service.search(mockUser, 'test');
 
-      expect(result).toEqual([mockDocument]);
+      expect(_result).toEqual([mockDocument]);
     });
   });
 });

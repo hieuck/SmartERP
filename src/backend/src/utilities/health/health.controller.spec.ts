@@ -120,10 +120,7 @@ describe('HealthController', () => {
     it('should check memory RSS health', async () => {
       await controller.check();
 
-      expect(memoryHealthIndicator.checkRSS).toHaveBeenCalledWith(
-        'memory_rss',
-        300 * 1024 * 1024,
-      );
+      expect(memoryHealthIndicator.checkRSS).toHaveBeenCalledWith('memory_rss', 300 * 1024 * 1024);
     });
 
     it('should check disk storage health', async () => {
@@ -170,10 +167,7 @@ describe('HealthController', () => {
         'memory_heap',
         150 * 1024 * 1024,
       );
-      expect(memoryHealthIndicator.checkRSS).toHaveBeenCalledWith(
-        'memory_rss',
-        300 * 1024 * 1024,
-      );
+      expect(memoryHealthIndicator.checkRSS).toHaveBeenCalledWith('memory_rss', 300 * 1024 * 1024);
     });
 
     it('should not check database or disk', async () => {
@@ -332,4 +326,3 @@ describe('HealthController', () => {
     });
   });
 });
-

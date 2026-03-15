@@ -81,10 +81,7 @@ export class BankReconciliationService {
     const statement = await this.findOne(statementId, user);
 
     // Get unreconciled journal entries for this bank account
-    const entries = await this.getUnreconciledEntries(
-      statement.bankAccount.id,
-      user.tenantId,
-    );
+    const entries = await this.getUnreconciledEntries(statement.bankAccount.id, user.tenantId);
 
     const matches: Array<{ transaction: BankTransaction; entry: JournalEntry }> = [];
 
@@ -119,11 +116,7 @@ export class BankReconciliationService {
     };
   }
 
-  async manualMatch(
-    transactionId: string,
-    entryId: string,
-    user: User,
-  ): Promise<BankTransaction> {
+  async manualMatch(transactionId: string, entryId: string, user: User): Promise<BankTransaction> {
     const transaction = await this.transactionRepository.findOne({
       where: { id: transactionId, tenantId: user.tenantId },
     });
@@ -212,10 +205,7 @@ export class BankReconciliationService {
     return `BS-${year}-${String(count + 1).padStart(4, '0')}`;
   }
 
-  private async getUnreconciledEntries(
-    bankAccountId: string,
-    tenantId: string,
-  ): Promise<any[]> {
+  private async getUnreconciledEntries(bankAccountId: string, tenantId: string): Promise<any[]> {
     // Get journal entries for this bank account that are not yet reconciled
     const query = this.journalEntryRepository
       .createQueryBuilder('je')
@@ -225,11 +215,7 @@ export class BankReconciliationService {
       .andWhere('je.tenantId = :tenantId', { tenantId })
       .andWhere('je.status = :status', { status: 'posted' })
       .andWhere('bt.id IS NULL') // Not matched yet
-      .select([
-        'je.id as id',
-        'je.date as date',
-        'SUM(line.debit - line.credit) as amount',
-      ])
+      .select(['je.id as id', 'je.date as date', 'SUM(line.debit - line.credit) as amount'])
       .groupBy('je.id')
       .addGroupBy('je.date');
 

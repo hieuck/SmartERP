@@ -6,7 +6,7 @@ import { Response } from 'express';
 
 describe('ImportExportController', () => {
   let controller: ImportExportController;
-  let service: ImportExportService;
+  let _service: ImportExportService;
 
   const mockUser: User = {
     id: 'user-1',
@@ -59,11 +59,7 @@ describe('ImportExportController', () => {
 
       await controller.exportToCSV(mockUser, entityType, data, mockResponse);
 
-      expect(mockImportExportService.exportToCSV).toHaveBeenCalledWith(
-        mockUser,
-        entityType,
-        data,
-      );
+      expect(mockImportExportService.exportToCSV).toHaveBeenCalledWith(mockUser, entityType, data);
       expect(mockResponse.setHeader).toHaveBeenCalledWith('Content-Type', 'text/csv');
       expect(mockResponse.setHeader).toHaveBeenCalledWith(
         'Content-Disposition',
@@ -81,11 +77,7 @@ describe('ImportExportController', () => {
 
       await controller.exportToCSV(mockUser, entityType, data, mockResponse);
 
-      expect(mockImportExportService.exportToCSV).toHaveBeenCalledWith(
-        mockUser,
-        entityType,
-        data,
-      );
+      expect(mockImportExportService.exportToCSV).toHaveBeenCalledWith(mockUser, entityType, data);
       expect(mockResponse.send).toHaveBeenCalledWith(csvContent);
     });
 
@@ -98,11 +90,7 @@ describe('ImportExportController', () => {
 
       await controller.exportToCSV(mockUser, entityType, data, mockResponse);
 
-      expect(mockImportExportService.exportToCSV).toHaveBeenCalledWith(
-        mockUser,
-        entityType,
-        data,
-      );
+      expect(mockImportExportService.exportToCSV).toHaveBeenCalledWith(mockUser, entityType, data);
       expect(mockResponse.send).toHaveBeenCalledWith(csvContent);
     });
 
@@ -116,17 +104,15 @@ describe('ImportExportController', () => {
           total: (i + 1) * 100,
         }));
 
-      const csvContent = 'id,orderNumber,total\n' + data.map(d => `${d.id},${d.orderNumber},${d.total}`).join('\n');
+      const csvContent =
+        'id,orderNumber,total\n' +
+        data.map((d) => `${d.id},${d.orderNumber},${d.total}`).join('\n');
 
       mockImportExportService.exportToCSV.mockResolvedValue(csvContent);
 
       await controller.exportToCSV(mockUser, entityType, data, mockResponse);
 
-      expect(mockImportExportService.exportToCSV).toHaveBeenCalledWith(
-        mockUser,
-        entityType,
-        data,
-      );
+      expect(mockImportExportService.exportToCSV).toHaveBeenCalledWith(mockUser, entityType, data);
       expect(mockResponse.send).toHaveBeenCalledWith(csvContent);
     });
 
@@ -137,17 +123,14 @@ describe('ImportExportController', () => {
         { id: '2', name: 'Product "quoted"', description: 'Test' },
       ];
 
-      const csvContent = 'id,name,description\n1,"Product, with comma","Line1\nLine2"\n2,"Product ""quoted""",Test';
+      const csvContent =
+        'id,name,description\n1,"Product, with comma","Line1\nLine2"\n2,"Product ""quoted""",Test';
 
       mockImportExportService.exportToCSV.mockResolvedValue(csvContent);
 
       await controller.exportToCSV(mockUser, entityType, data, mockResponse);
 
-      expect(mockImportExportService.exportToCSV).toHaveBeenCalledWith(
-        mockUser,
-        entityType,
-        data,
-      );
+      expect(mockImportExportService.exportToCSV).toHaveBeenCalledWith(mockUser, entityType, data);
       expect(mockResponse.send).toHaveBeenCalledWith(csvContent);
     });
 
@@ -161,17 +144,14 @@ describe('ImportExportController', () => {
         },
       ];
 
-      const csvContent = 'id,customer,items\n1,"{""name"":""John Doe"",""email"":""john@test.com""}","[{""product"":""A"",""qty"":2}]"';
+      const csvContent =
+        'id,customer,items\n1,"{""name"":""John Doe"",""email"":""john@test.com""}","[{""product"":""A"",""qty"":2}]"';
 
       mockImportExportService.exportToCSV.mockResolvedValue(csvContent);
 
       await controller.exportToCSV(mockUser, entityType, data, mockResponse);
 
-      expect(mockImportExportService.exportToCSV).toHaveBeenCalledWith(
-        mockUser,
-        entityType,
-        data,
-      );
+      expect(mockImportExportService.exportToCSV).toHaveBeenCalledWith(mockUser, entityType, data);
     });
 
     it('should set correct filename for different entity types', async () => {
@@ -215,18 +195,12 @@ describe('ImportExportController', () => {
 
       await controller.exportToCSV(mockUser, entityType, data, mockResponse);
 
-      expect(mockImportExportService.exportToCSV).toHaveBeenCalledWith(
-        mockUser,
-        entityType,
-        data,
-      );
+      expect(mockImportExportService.exportToCSV).toHaveBeenCalledWith(mockUser, entityType, data);
     });
 
     it('should handle undefined values in data', async () => {
       const entityType = 'Product';
-      const data = [
-        { id: '1', name: 'Product 1', price: undefined },
-      ];
+      const data = [{ id: '1', name: 'Product 1', price: undefined }];
 
       const csvContent = 'id,name,price\n1,Product 1,';
 
@@ -234,11 +208,7 @@ describe('ImportExportController', () => {
 
       await controller.exportToCSV(mockUser, entityType, data, mockResponse);
 
-      expect(mockImportExportService.exportToCSV).toHaveBeenCalledWith(
-        mockUser,
-        entityType,
-        data,
-      );
+      expect(mockImportExportService.exportToCSV).toHaveBeenCalledWith(mockUser, entityType, data);
     });
 
     it('should handle data with different column sets', async () => {
@@ -254,11 +224,7 @@ describe('ImportExportController', () => {
 
       await controller.exportToCSV(mockUser, entityType, data, mockResponse);
 
-      expect(mockImportExportService.exportToCSV).toHaveBeenCalledWith(
-        mockUser,
-        entityType,
-        data,
-      );
+      expect(mockImportExportService.exportToCSV).toHaveBeenCalledWith(mockUser, entityType, data);
     });
   });
 
@@ -357,7 +323,8 @@ describe('ImportExportController', () => {
 
     it('should handle CSV with special characters', async () => {
       const entityType = 'Product';
-      const csvContent = 'id,name,description\n1,"Product, with comma","Line1\nLine2"\n2,"Product ""quoted""",Test';
+      const csvContent =
+        'id,name,description\n1,"Product, with comma","Line1\nLine2"\n2,"Product ""quoted""",Test';
 
       const expectedData = [
         { id: '1', name: 'Product, with comma', description: 'Line1\nLine2' },
@@ -409,9 +376,9 @@ describe('ImportExportController', () => {
       const error = new Error('Malformed CSV');
       mockImportExportService.importFromCSV.mockRejectedValue(error);
 
-      await expect(
-        controller.importFromCSV(mockUser, entityType, csvContent),
-      ).rejects.toThrow(error);
+      await expect(controller.importFromCSV(mockUser, entityType, csvContent)).rejects.toThrow(
+        error,
+      );
     });
 
     it('should handle invalid entity type', async () => {
@@ -421,9 +388,9 @@ describe('ImportExportController', () => {
       const error = new Error('Invalid entity type');
       mockImportExportService.importFromCSV.mockRejectedValue(error);
 
-      await expect(
-        controller.importFromCSV(mockUser, entityType, csvContent),
-      ).rejects.toThrow(error);
+      await expect(controller.importFromCSV(mockUser, entityType, csvContent)).rejects.toThrow(
+        error,
+      );
     });
 
     it('should handle service errors during import', async () => {
@@ -433,9 +400,9 @@ describe('ImportExportController', () => {
 
       mockImportExportService.importFromCSV.mockRejectedValue(error);
 
-      await expect(
-        controller.importFromCSV(mockUser, entityType, csvContent),
-      ).rejects.toThrow(error);
+      await expect(controller.importFromCSV(mockUser, entityType, csvContent)).rejects.toThrow(
+        error,
+      );
     });
 
     it('should handle CSV with BOM (Byte Order Mark)', async () => {
@@ -531,9 +498,7 @@ describe('ImportExportController', () => {
     it('should handle undefined entity type', async () => {
       const data = [{ id: '1', name: 'Test' }];
 
-      mockImportExportService.exportToCSV.mockRejectedValue(
-        new Error('Entity type is required'),
-      );
+      mockImportExportService.exportToCSV.mockRejectedValue(new Error('Entity type is required'));
 
       await expect(
         controller.exportToCSV(mockUser, undefined as any, data, mockResponse),
@@ -553,9 +518,7 @@ describe('ImportExportController', () => {
     it('should handle undefined CSV content', async () => {
       const entityType = 'Product';
 
-      mockImportExportService.importFromCSV.mockRejectedValue(
-        new Error('CSV content is required'),
-      );
+      mockImportExportService.importFromCSV.mockRejectedValue(new Error('CSV content is required'));
 
       await expect(
         controller.importFromCSV(mockUser, entityType, undefined as any),
@@ -614,9 +577,9 @@ describe('ImportExportController', () => {
 
       mockImportExportService.importFromCSV.mockRejectedValue(error);
 
-      await expect(
-        controller.importFromCSV(mockUser, entityType, csvContent),
-      ).rejects.toThrow('Service timeout');
+      await expect(controller.importFromCSV(mockUser, entityType, csvContent)).rejects.toThrow(
+        'Service timeout',
+      );
     });
 
     it('should handle very large CSV content', async () => {

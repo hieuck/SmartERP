@@ -71,7 +71,8 @@ export class CustomerController {
   @ApiOperation({ summary: 'Update customer' })
   update(
     @Param('id') id: string,
-    @CurrentUser() user: User, @Body() updateCustomerDto: UpdateCustomerDto,
+    @CurrentUser() user: User,
+    @Body() updateCustomerDto: UpdateCustomerDto,
   ) {
     return this.customerService.update(user, id, updateCustomerDto);
   }
@@ -80,7 +81,8 @@ export class CustomerController {
   @ApiOperation({ summary: 'Update customer balance' })
   updateBalance(
     @Param('id') id: string,
-    @CurrentUser() user: User, @Body('amount') amount: number,
+    @CurrentUser() user: User,
+    @Body('amount') amount: number,
   ) {
     return this.customerService.updateBalance(user, id, amount);
   }
@@ -89,7 +91,8 @@ export class CustomerController {
   @ApiOperation({ summary: 'Update customer credit limit' })
   updateCreditLimit(
     @Param('id') id: string,
-    @CurrentUser() user: User, @Body('creditLimit') creditLimit: number,
+    @CurrentUser() user: User,
+    @Body('creditLimit') creditLimit: number,
   ) {
     return this.customerService.updateCreditLimit(user, id, creditLimit);
   }

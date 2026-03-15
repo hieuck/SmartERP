@@ -78,9 +78,7 @@ describe('ReportTemplateService', () => {
 
     it('should return accounting templates', () => {
       const templates = service.getStandardTemplates();
-      const accountingTemplates = templates.filter(
-        (t) => t.category === ReportCategory.ACCOUNTING,
-      );
+      const accountingTemplates = templates.filter((t) => t.category === ReportCategory.ACCOUNTING);
 
       expect(accountingTemplates.length).toBeGreaterThan(0);
       expect(accountingTemplates.some((t) => t.name === 'Balance Sheet')).toBe(true);
@@ -89,9 +87,7 @@ describe('ReportTemplateService', () => {
 
     it('should return inventory templates', () => {
       const templates = service.getStandardTemplates();
-      const inventoryTemplates = templates.filter(
-        (t) => t.category === ReportCategory.INVENTORY,
-      );
+      const inventoryTemplates = templates.filter((t) => t.category === ReportCategory.INVENTORY);
 
       expect(inventoryTemplates.length).toBeGreaterThan(0);
       expect(inventoryTemplates.some((t) => t.name === 'Stock Summary')).toBe(true);
@@ -107,9 +103,7 @@ describe('ReportTemplateService', () => {
 
     it('should return purchasing templates', () => {
       const templates = service.getStandardTemplates();
-      const purchasingTemplates = templates.filter(
-        (t) => t.category === ReportCategory.PURCHASING,
-      );
+      const purchasingTemplates = templates.filter((t) => t.category === ReportCategory.PURCHASING);
 
       expect(purchasingTemplates.length).toBeGreaterThan(0);
       expect(purchasingTemplates.some((t) => t.name === 'Purchase by Supplier')).toBe(true);
@@ -232,8 +226,8 @@ describe('ReportTemplateService', () => {
       reportRepository.save.mockResolvedValue(mockReport);
       columnRepository.create.mockReturnValue(mockColumn as any);
       columnRepository.save.mockResolvedValue(mockColumn as any);
-      reportRepository.findOne.mockResolvedValue({ 
-        ...mockReport, 
+      reportRepository.findOne.mockResolvedValue({
+        ...mockReport,
         columns: [mockColumn],
         generateReference: jest.fn(),
         validate: jest.fn(),

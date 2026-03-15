@@ -1,7 +1,7 @@
 /**
  * IssueTrackingController Integration Tests
  * Coverage target: 95%+
- * 
+ *
  * Test cases:
  * 1. POST /issues - Create issue
  * 2. GET /issues - Get all issues with pagination
@@ -85,7 +85,7 @@ describe('IssueTrackingController (Integration)', () => {
       canActivate: jest.fn().mockImplementation((context) => {
         const request = context.switchToHttp().getRequest();
         const authHeader = request.headers.authorization;
-        
+
         if (authHeader && authHeader.startsWith('Bearer ')) {
           const token = authHeader.substring(7);
           if (token === 'manager-token') {
@@ -95,7 +95,7 @@ describe('IssueTrackingController (Integration)', () => {
           }
           return true;
         }
-        
+
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }),
     };
@@ -301,9 +301,7 @@ describe('IssueTrackingController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/issues')
-        .expect(401);
+      await request(app.getHttpServer()).get('/issues').expect(401);
     });
   });
 
@@ -332,9 +330,7 @@ describe('IssueTrackingController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/issues/issue-123')
-        .expect(401);
+      await request(app.getHttpServer()).get('/issues/issue-123').expect(401);
     });
   });
 
@@ -622,9 +618,7 @@ describe('IssueTrackingController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/issues/issue-123/comments')
-        .expect(401);
+      await request(app.getHttpServer()).get('/issues/issue-123/comments').expect(401);
     });
   });
 
@@ -661,7 +655,10 @@ describe('IssueTrackingController (Integration)', () => {
 
     it('should handle very long issue description', async () => {
       const longDescription = 'a'.repeat(10000);
-      issueTrackingService.create.mockResolvedValue({ ...mockIssue, description: longDescription } as any);
+      issueTrackingService.create.mockResolvedValue({
+        ...mockIssue,
+        description: longDescription,
+      } as any);
 
       await request(app.getHttpServer())
         .post('/issues')
@@ -698,11 +695,7 @@ describe('IssueTrackingController (Integration)', () => {
     });
 
     it('should handle multiple status updates in sequence', async () => {
-      const statuses = [
-        IssueStatus.IN_PROGRESS,
-        IssueStatus.RESOLVED,
-        IssueStatus.CLOSED,
-      ];
+      const statuses = [IssueStatus.IN_PROGRESS, IssueStatus.RESOLVED, IssueStatus.CLOSED];
 
       for (const status of statuses) {
         issueTrackingService.updateStatus.mockResolvedValue({ ...mockIssue, status } as any);

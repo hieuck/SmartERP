@@ -2,9 +2,7 @@ import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards } fro
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { DocumentService } from './document.service';
 import { JwtAuthGuard } from '../../core/auth/guards/jwt-auth.guard';
-import { TenantId } from '../../common/decorators/tenant-id.decorator';
 import { Document } from './entities/document.entity';
-
 import { User } from '@/common/security/permission.service';
 @Controller('documents')
 @UseGuards(JwtAuthGuard)
@@ -40,16 +38,13 @@ export class DocumentController {
     @CurrentUser() user: User,
     @Body('name') name: string,
     @Body('parentId') parentId: string | null,
-    @Body('uploadedBy') uploadedBy: string,
+    @Body('uploadedBy') _uploadedBy: string,
   ): Promise<Document> {
     return this.documentService.createFolder(user, name, parentId);
   }
 
   @Post('files')
-  async createFile(
-    @CurrentUser() user: User,
-    @Body() data: Partial<Document>,
-  ): Promise<Document> {
+  async createFile(@CurrentUser() user: User, @Body() data: Partial<Document>): Promise<Document> {
     return this.documentService.createFile(user, data);
   }
 
@@ -58,7 +53,7 @@ export class DocumentController {
     @CurrentUser() user: User,
     @Param('id') id: string,
     @Body('filePath') filePath: string,
-    @Body('uploadedBy') uploadedBy: string,
+    @Body('uploadedBy') _uploadedBy: string,
   ): Promise<Document> {
     return this.documentService.createVersion(user, id, filePath);
   }

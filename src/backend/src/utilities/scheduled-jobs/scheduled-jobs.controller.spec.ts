@@ -1,7 +1,7 @@
 /**
  * ScheduledJobsController Integration Tests
  * Coverage target: 95%+
- * 
+ *
  * Test cases:
  * 1. GET /scheduled-jobs - List all jobs
  * 2. GET /scheduled-jobs/:id - Get job by ID
@@ -60,12 +60,12 @@ describe('ScheduledJobsController (Integration)', () => {
       canActivate: jest.fn().mockImplementation((context) => {
         const request = context.switchToHttp().getRequest();
         const authHeader = request.headers.authorization;
-        
+
         if (authHeader && authHeader.startsWith('Bearer ')) {
           request.user = mockUser;
           return true;
         }
-        
+
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }),
     };
@@ -124,9 +124,7 @@ describe('ScheduledJobsController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/scheduled-jobs')
-        .expect(401);
+      await request(app.getHttpServer()).get('/scheduled-jobs').expect(401);
     });
 
     it('should handle service errors', async () => {
@@ -166,9 +164,7 @@ describe('ScheduledJobsController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/scheduled-jobs/job-123')
-        .expect(401);
+      await request(app.getHttpServer()).get('/scheduled-jobs/job-123').expect(401);
     });
   });
 
@@ -201,10 +197,10 @@ describe('ScheduledJobsController (Integration)', () => {
 
     it('should create job with different schedules', async () => {
       const schedules = [
-        '0 0 * * *',     // Daily at midnight
-        '0 */6 * * *',   // Every 6 hours
-        '0 9 * * 1-5',   // Weekdays at 9 AM
-        '0 0 1 * *',     // First day of month
+        '0 0 * * *', // Daily at midnight
+        '0 */6 * * *', // Every 6 hours
+        '0 9 * * 1-5', // Weekdays at 9 AM
+        '0 0 1 * *', // First day of month
       ];
 
       for (const schedule of schedules) {
@@ -341,9 +337,7 @@ describe('ScheduledJobsController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .delete('/scheduled-jobs/job-123')
-        .expect(401);
+      await request(app.getHttpServer()).delete('/scheduled-jobs/job-123').expect(401);
     });
   });
 
@@ -382,9 +376,7 @@ describe('ScheduledJobsController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .post('/scheduled-jobs/job-123/run')
-        .expect(401);
+      await request(app.getHttpServer()).post('/scheduled-jobs/job-123/run').expect(401);
     });
   });
 

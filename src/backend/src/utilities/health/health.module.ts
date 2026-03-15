@@ -4,10 +4,10 @@ import { HealthController } from './health.controller';
 
 /**
  * Health Module
- * 
+ *
  * Provides health check endpoints for monitoring
  * Uses @nestjs/terminus for health checks
- * 
+ *
  * Day 4-7: Add Monitoring
  */
 @Module({

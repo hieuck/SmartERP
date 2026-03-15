@@ -1,7 +1,7 @@
 /**
  * TokenBlacklistService Unit Tests
  * Coverage target: >90%
- * 
+ *
  * Test cases:
  * 1. isTokenRevoked - Check if token is revoked
  * 2. revokeToken - Revoke a single token
@@ -168,11 +168,7 @@ describe('TokenBlacklistService', () => {
       await service.revokeUserTokens('');
 
       // Assert
-      expect(cacheService.set).toHaveBeenCalledWith(
-        'revoked-user:',
-        true,
-        TOKEN_EXPIRY_MS,
-      );
+      expect(cacheService.set).toHaveBeenCalledWith('revoked-user:', true, TOKEN_EXPIRY_MS);
     });
   });
 

@@ -1,13 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  UseGuards,
-  Request,
-  Patch,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Request, Patch } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { PayrollService } from './payroll.service';
 import { CreateSalaryStructureDto } from './dto/create-salary-structure.dto';
@@ -15,7 +6,6 @@ import { GeneratePayslipDto } from './dto/generate-payslip.dto';
 import { MarkPaidDto } from './dto/mark-paid.dto';
 import { Roles } from '../../../common/decorators/roles.decorator';
 
-import { User } from '@/common/security/permission.service';
 @ApiTags('payroll')
 @ApiBearerAuth()
 @Controller('payroll')
@@ -26,10 +16,7 @@ export class PayrollController {
   @Roles('hr_manager', 'admin')
   @ApiOperation({ summary: 'Create salary structure for employee' })
   @ApiResponse({ status: 201, description: 'Salary structure created' })
-  async createSalaryStructure(
-    @Body() dto: CreateSalaryStructureDto,
-    @Request() req,
-  ) {
+  async createSalaryStructure(@Body() dto: CreateSalaryStructureDto, @Request() req) {
     return this.payrollService.createSalaryStructure(dto, req.user.tenantId);
   }
 
@@ -45,14 +32,8 @@ export class PayrollController {
   @Roles('hr_manager', 'admin', 'manager')
   @ApiOperation({ summary: 'Get salary structures by employee' })
   @ApiResponse({ status: 200, description: 'Salary structures found' })
-  async getSalaryStructuresByEmployee(
-    @Param('employeeId') employeeId: string,
-    @Request() req,
-  ) {
-    return this.payrollService.getSalaryStructuresByEmployee(
-      employeeId,
-      req.user.tenantId,
-    );
+  async getSalaryStructuresByEmployee(@Param('employeeId') employeeId: string, @Request() req) {
+    return this.payrollService.getSalaryStructuresByEmployee(employeeId, req.user.tenantId);
   }
 
   @Post('payslips/generate')
@@ -80,10 +61,7 @@ export class PayrollController {
   @Roles('hr_manager', 'admin', 'manager', 'employee')
   @ApiOperation({ summary: 'Get payslips by employee' })
   @ApiResponse({ status: 200, description: 'Payslips found' })
-  async getPayslipsByEmployee(
-    @Param('employeeId') employeeId: string,
-    @Request() req,
-  ) {
+  async getPayslipsByEmployee(@Param('employeeId') employeeId: string, @Request() req) {
     return this.payrollService.getPayslipsByEmployee(employeeId, req.user.tenantId);
   }
 
@@ -111,11 +89,7 @@ export class PayrollController {
   @Roles('hr_manager', 'admin')
   @ApiOperation({ summary: 'Mark payslip as paid' })
   @ApiResponse({ status: 200, description: 'Payslip marked as paid' })
-  async markAsPaid(
-    @Param('id') id: string,
-    @Body() dto: MarkPaidDto,
-    @Request() req,
-  ) {
+  async markAsPaid(@Param('id') id: string, @Body() dto: MarkPaidDto, @Request() req) {
     return this.payrollService.markAsPaid(id, dto.paymentDate, req.user.tenantId);
   }
 

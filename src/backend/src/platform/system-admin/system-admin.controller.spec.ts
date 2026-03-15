@@ -10,7 +10,7 @@ import { UpdateErrorLogDto } from './dto/update-error-log.dto';
 
 describe('SystemAdminController', () => {
   let controller: SystemAdminController;
-  let service: SystemAdminService;
+  let _service: SystemAdminService;
 
   const mockUser: User = {
     id: 'user-1',
@@ -369,9 +369,7 @@ describe('SystemAdminController', () => {
 
       it('should get jobs filtered by status', async () => {
         const status = JobStatus.COMPLETED;
-        const expectedJobs = [
-          { id: '1', name: 'job-1', status: JobStatus.COMPLETED },
-        ];
+        const expectedJobs = [{ id: '1', name: 'job-1', status: JobStatus.COMPLETED }];
 
         mockSystemAdminService.getJobsByStatus.mockResolvedValue(expectedJobs);
 
@@ -399,9 +397,7 @@ describe('SystemAdminController', () => {
         ];
 
         for (const status of statuses) {
-          mockSystemAdminService.getJobsByStatus.mockResolvedValue([
-            { id: '1', status },
-          ]);
+          mockSystemAdminService.getJobsByStatus.mockResolvedValue([{ id: '1', status }]);
 
           const result = await controller.getAllJobs(mockUser, status);
 
@@ -466,9 +462,7 @@ describe('SystemAdminController', () => {
 
       it('should get error logs with level filter', async () => {
         const filters = { level: 'critical' };
-        const expectedLogs = [
-          { id: '1', message: 'Critical error', level: 'critical' },
-        ];
+        const expectedLogs = [{ id: '1', message: 'Critical error', level: 'critical' }];
 
         mockSystemAdminService.getErrorLogs.mockResolvedValue(expectedLogs);
 
@@ -503,9 +497,7 @@ describe('SystemAdminController', () => {
           limit: 50,
         };
 
-        const expectedLogs = [
-          { id: '1', level: 'error', resolved: false },
-        ];
+        const expectedLogs = [{ id: '1', level: 'error', resolved: false }];
 
         mockSystemAdminService.getErrorLogs.mockResolvedValue(expectedLogs);
 
@@ -543,7 +535,11 @@ describe('SystemAdminController', () => {
         const result = await controller.resolveErrorLog(mockUser, id, updateDto);
 
         expect(result).toEqual(expectedResult);
-        expect(mockSystemAdminService.resolveErrorLog).toHaveBeenCalledWith(mockUser, id, updateDto);
+        expect(mockSystemAdminService.resolveErrorLog).toHaveBeenCalledWith(
+          mockUser,
+          id,
+          updateDto,
+        );
       });
 
       it('should resolve error log with minimal info', async () => {
@@ -653,17 +649,13 @@ describe('SystemAdminController', () => {
         category: SettingCategory.SYSTEM,
       };
 
-      mockSystemAdminService.createSetting.mockRejectedValue(
-        new Error('User is required'),
-      );
+      mockSystemAdminService.createSetting.mockRejectedValue(new Error('User is required'));
 
       await expect(controller.createSetting(null as any, createDto)).rejects.toThrow();
     });
 
     it('should handle undefined parameters', async () => {
-      mockSystemAdminService.getSetting.mockRejectedValue(
-        new Error('Key is required'),
-      );
+      mockSystemAdminService.getSetting.mockRejectedValue(new Error('Key is required'));
 
       await expect(controller.getSetting(mockUser, undefined as any)).rejects.toThrow();
     });

@@ -66,21 +66,15 @@ describe('DatabaseMonitoringService', () => {
       await (service as any).monitorConnectionPool();
 
       expect(dataSource.query).toHaveBeenCalled();
-      expect(metricsService.recordGauge).toHaveBeenCalledWith(
-        'database_connections_total',
-        10,
-        { state: 'total' },
-      );
-      expect(metricsService.recordGauge).toHaveBeenCalledWith(
-        'database_connections_active',
-        5,
-        { state: 'active' },
-      );
-      expect(metricsService.recordGauge).toHaveBeenCalledWith(
-        'database_connections_idle',
-        5,
-        { state: 'idle' },
-      );
+      expect(metricsService.recordGauge).toHaveBeenCalledWith('database_connections_total', 10, {
+        state: 'total',
+      });
+      expect(metricsService.recordGauge).toHaveBeenCalledWith('database_connections_active', 5, {
+        state: 'active',
+      });
+      expect(metricsService.recordGauge).toHaveBeenCalledWith('database_connections_idle', 5, {
+        state: 'idle',
+      });
     });
 
     it('should handle errors during connection pool monitoring', async () => {
@@ -113,11 +107,9 @@ describe('DatabaseMonitoringService', () => {
       await (service as any).monitorDatabaseSize();
 
       expect(dataSource.query).toHaveBeenCalled();
-      expect(metricsService.recordGauge).toHaveBeenCalledWith(
-        'database_size_bytes',
-        104857600,
-        { database: 'test_db' },
-      );
+      expect(metricsService.recordGauge).toHaveBeenCalledWith('database_size_bytes', 104857600, {
+        database: 'test_db',
+      });
     });
 
     it('should handle errors during database size monitoring', async () => {
@@ -369,11 +361,21 @@ describe('DatabaseMonitoringService', () => {
 
   describe('collectMetrics', () => {
     it('should collect all metrics successfully', async () => {
-      const monitorConnectionPoolSpy = jest.spyOn(service as any, 'monitorConnectionPool').mockResolvedValue(undefined);
-      const monitorDatabaseSizeSpy = jest.spyOn(service as any, 'monitorDatabaseSize').mockResolvedValue(undefined);
-      const monitorTableSizesSpy = jest.spyOn(service as any, 'monitorTableSizes').mockResolvedValue(undefined);
-      const monitorIndexUsageSpy = jest.spyOn(service as any, 'monitorIndexUsage').mockResolvedValue(undefined);
-      const monitorSlowQueriesSpy = jest.spyOn(service as any, 'monitorSlowQueries').mockResolvedValue(undefined);
+      const monitorConnectionPoolSpy = jest
+        .spyOn(service as any, 'monitorConnectionPool')
+        .mockResolvedValue(undefined);
+      const monitorDatabaseSizeSpy = jest
+        .spyOn(service as any, 'monitorDatabaseSize')
+        .mockResolvedValue(undefined);
+      const monitorTableSizesSpy = jest
+        .spyOn(service as any, 'monitorTableSizes')
+        .mockResolvedValue(undefined);
+      const monitorIndexUsageSpy = jest
+        .spyOn(service as any, 'monitorIndexUsage')
+        .mockResolvedValue(undefined);
+      const monitorSlowQueriesSpy = jest
+        .spyOn(service as any, 'monitorSlowQueries')
+        .mockResolvedValue(undefined);
 
       await (service as any).collectMetrics();
 

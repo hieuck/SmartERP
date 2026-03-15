@@ -5,7 +5,6 @@ import { AccountService } from './account.service';
 import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
 import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { AccountType, InvoiceType } from './enums';
-import { JournalEntry } from './entities/journal-entry.entity';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import { CreateJournalEntryDto } from './dto/create-journal-entry.dto';
@@ -175,19 +174,13 @@ export class AccountController {
   // Journal Entries - New Methods
   @Post('journal-entries/create')
   @ApiOperation({ summary: 'Create journal entry with validation' })
-  async createJournalEntryNew(
-    @CurrentUser() user: User,
-    @Body() dto: any,
-  ) {
+  async createJournalEntryNew(@CurrentUser() user: User, @Body() dto: any) {
     return this.accountingService.createJournalEntry(user, dto);
   }
 
   @Post('journal-entries/:id/post')
   @ApiOperation({ summary: 'Post journal entry and update balances' })
-  async postJournalEntryNew(
-    @CurrentUser() user: User,
-    @Param('id') id: string,
-  ) {
+  async postJournalEntryNew(@CurrentUser() user: User, @Param('id') id: string) {
     return this.accountingService.postJournalEntry(user, id);
   }
 }

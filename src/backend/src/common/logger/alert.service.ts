@@ -127,7 +127,11 @@ export class AlertService {
   /**
    * Alert for high error rate
    */
-  async alertHighErrorRate(errorCount: number, totalRequests: number, threshold: number): Promise<void> {
+  async alertHighErrorRate(
+    errorCount: number,
+    totalRequests: number,
+    threshold: number,
+  ): Promise<void> {
     const errorRate = (errorCount / totalRequests) * 100;
 
     await this.sendAlert({

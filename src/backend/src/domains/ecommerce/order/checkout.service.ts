@@ -53,7 +53,8 @@ export class CheckoutService {
     return {
       fullName: addressDto.fullName,
       phone: addressDto.phone,
-      address: addressDto.addressLine1 + (addressDto.addressLine2 ? `, ${addressDto.addressLine2}` : ''),
+      address:
+        addressDto.addressLine1 + (addressDto.addressLine2 ? `, ${addressDto.addressLine2}` : ''),
       city: addressDto.city,
       district: addressDto.state || '',
       ward: '',
@@ -83,13 +84,13 @@ export class CheckoutService {
     await this.validateCart(cart);
 
     // Convert address
-    const shippingAddress = this.convertToAddress(dto.shippingAddress);
+    const _shippingAddress = this.convertToAddress(dto._shippingAddress);
 
     // Calculate tax
-    const tax = await this.calculateTax(cart, shippingAddress);
+    const tax = await this.calculateTax(cart, _shippingAddress);
 
     // Calculate shipping
-    const shipping = await this.calculateShipping(cart, shippingAddress, dto.shippingMethod);
+    const shipping = await this.calculateShipping(cart, _shippingAddress, dto.shippingMethod);
 
     // Calculate total
     const total = cart.subtotal + tax + shipping - (cart.discount || 0);
@@ -105,8 +106,8 @@ export class CheckoutService {
     const { cart, tax, shipping, total } = await this.initiateCheckout(dto, user);
 
     // Convert addresses
-    const shippingAddress = this.convertToAddress(dto.shippingAddress);
-    const billingAddress = dto.billingAddress 
+    const _shippingAddress = this.convertToAddress(dto._shippingAddress);
+    const billingAddress = dto.billingAddress
       ? this.convertToAddress(dto.billingAddress)
       : shippingAddress;
 
@@ -119,7 +120,7 @@ export class CheckoutService {
       shippingStatus: ShippingStatus.PENDING,
       customerEmail: dto.customerEmail,
       customerPhone: dto.customerPhone,
-      shippingAddress,
+      _shippingAddress,
       billingAddress,
       shippingMethod: dto.shippingMethod,
       paymentMethod: dto.paymentMethod,
@@ -134,7 +135,7 @@ export class CheckoutService {
     });
 
     // Create order items from cart items
-    newOrder.items = cart.items.map((cartItem) => 
+    newOrder.items = cart.items.map((cartItem) =>
       this.orderItemRepository.create({
         productId: cartItem.productId,
         productName: cartItem.productName,
@@ -145,7 +146,7 @@ export class CheckoutService {
         selectedVariant: cartItem.selectedVariant,
         notes: cartItem.notes,
         tenantId: user.tenantId,
-      })
+      }),
     );
 
     // Save order (cascade will save items)
@@ -195,7 +196,7 @@ export class CheckoutService {
    * Calculate tax based on cart and shipping address
    * TODO: Implement actual tax calculation logic based on business rules
    */
-  async calculateTax(cart: ShoppingCart, shippingAddress: Address): Promise<number> {
+  async calculateTax(cart: ShoppingCart, _shippingAddress: Address): Promise<number> {
     // Simple tax calculation: 10% of subtotal
     // In production, this should use actual tax rules based on location
     const taxRate = 0.1; // 10%
@@ -208,7 +209,7 @@ export class CheckoutService {
    */
   async calculateShipping(
     cart: ShoppingCart,
-    shippingAddress: Address,
+    _shippingAddress: Address,
     shippingMethod?: string,
   ): Promise<number> {
     // Simple shipping calculation

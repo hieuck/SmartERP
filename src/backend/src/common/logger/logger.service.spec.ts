@@ -56,10 +56,10 @@ describe('LoggerService', () => {
   describe('setContext', () => {
     it('should set context successfully', () => {
       service.setContext('TestContext');
-      
+
       // Verify context is set by checking it's used in log
       service.log('Test message');
-      
+
       expect(mockWinstonLogger.info).toHaveBeenCalledWith('Test message', {
         context: 'TestContext',
       });
@@ -68,9 +68,9 @@ describe('LoggerService', () => {
     it('should update context when called multiple times', () => {
       service.setContext('Context1');
       service.setContext('Context2');
-      
+
       service.log('Test message');
-      
+
       expect(mockWinstonLogger.info).toHaveBeenCalledWith('Test message', {
         context: 'Context2',
       });

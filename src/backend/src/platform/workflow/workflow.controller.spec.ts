@@ -7,7 +7,7 @@ import { WorkflowInstance, WorkflowInstanceStatus } from './entities/workflow-in
 
 describe('WorkflowController', () => {
   let controller: WorkflowController;
-  let service: WorkflowService;
+  let _service: WorkflowService;
 
   const mockUser: User = {
     id: 'user-1',
@@ -142,9 +142,7 @@ describe('WorkflowController', () => {
           name: 'New Workflow',
           description: 'Test workflow',
           entityType: 'PurchaseOrder',
-          steps: [
-            { order: 1, name: 'Step 1', approverRole: 'manager' },
-          ],
+          steps: [{ order: 1, name: 'Step 1', approverRole: 'manager' }],
         };
 
         const expectedWorkflow: Partial<Workflow> = {
@@ -229,9 +227,7 @@ describe('WorkflowController', () => {
       it('should update workflow steps', async () => {
         const workflowId = 'workflow-1';
         const updateData: Partial<Workflow> = {
-          steps: [
-            { order: 1, name: 'New Step', approverRole: 'admin' },
-          ],
+          steps: [{ order: 1, name: 'New Step', approverRole: 'admin' }],
         };
 
         const expectedWorkflow = { id: workflowId, ...updateData };
@@ -403,9 +399,7 @@ describe('WorkflowController', () => {
           entityId: 'po-123',
           status: WorkflowInstanceStatus.PENDING,
           currentStep: 1,
-          stepHistory: [
-            { step: 1, action: 'started', timestamp: new Date() },
-          ],
+          stepHistory: [{ step: 1, action: 'started', timestamp: new Date() }],
         };
 
         mockWorkflowService.findInstanceById.mockResolvedValue(expectedInstance);
@@ -499,9 +493,7 @@ describe('WorkflowController', () => {
           id: instanceId,
           status: WorkflowInstanceStatus.PENDING,
           currentStep: 2,
-          stepHistory: [
-            { step: 1, action: 'approved', approvedBy, notes, timestamp: new Date() },
-          ],
+          stepHistory: [{ step: 1, action: 'approved', approvedBy, notes, timestamp: new Date() }],
         };
 
         mockWorkflowService.approveStep.mockResolvedValue(expectedInstance);
@@ -533,18 +525,18 @@ describe('WorkflowController', () => {
         const error = new Error('Workflow instance not found');
         mockWorkflowService.approveStep.mockRejectedValue(error);
 
-        await expect(
-          controller.approveStep(mockUser, 'non-existent', mockUser.id),
-        ).rejects.toThrow(error);
+        await expect(controller.approveStep(mockUser, 'non-existent', mockUser.id)).rejects.toThrow(
+          error,
+        );
       });
 
       it('should handle unauthorized approval', async () => {
         const error = new Error('User not authorized to approve this step');
         mockWorkflowService.approveStep.mockRejectedValue(error);
 
-        await expect(
-          controller.approveStep(mockUser, 'instance-1', mockUser.id),
-        ).rejects.toThrow(error);
+        await expect(controller.approveStep(mockUser, 'instance-1', mockUser.id)).rejects.toThrow(
+          error,
+        );
       });
 
       it('should complete workflow on final approval', async () => {
@@ -572,9 +564,7 @@ describe('WorkflowController', () => {
         const expectedInstance: Partial<WorkflowInstance> = {
           id: instanceId,
           status: WorkflowInstanceStatus.REJECTED,
-          stepHistory: [
-            { step: 1, action: 'rejected', rejectedBy, notes, timestamp: new Date() },
-          ],
+          stepHistory: [{ step: 1, action: 'rejected', rejectedBy, notes, timestamp: new Date() }],
         };
 
         mockWorkflowService.rejectStep.mockResolvedValue(expectedInstance);
@@ -602,18 +592,18 @@ describe('WorkflowController', () => {
         const error = new Error('Workflow instance not found');
         mockWorkflowService.rejectStep.mockRejectedValue(error);
 
-        await expect(
-          controller.rejectStep(mockUser, 'non-existent', mockUser.id),
-        ).rejects.toThrow(error);
+        await expect(controller.rejectStep(mockUser, 'non-existent', mockUser.id)).rejects.toThrow(
+          error,
+        );
       });
 
       it('should handle unauthorized rejection', async () => {
         const error = new Error('User not authorized to reject this step');
         mockWorkflowService.rejectStep.mockRejectedValue(error);
 
-        await expect(
-          controller.rejectStep(mockUser, 'instance-1', mockUser.id),
-        ).rejects.toThrow(error);
+        await expect(controller.rejectStep(mockUser, 'instance-1', mockUser.id)).rejects.toThrow(
+          error,
+        );
       });
     });
 
@@ -665,9 +655,7 @@ describe('WorkflowController', () => {
     });
 
     it('should handle undefined workflow id', async () => {
-      mockWorkflowService.findWorkflowById.mockRejectedValue(
-        new Error('Workflow ID is required'),
-      );
+      mockWorkflowService.findWorkflowById.mockRejectedValue(new Error('Workflow ID is required'));
 
       await expect(controller.findWorkflowById(mockUser, undefined as any)).rejects.toThrow();
     });

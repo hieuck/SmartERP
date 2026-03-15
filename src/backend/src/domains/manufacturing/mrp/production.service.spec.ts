@@ -24,7 +24,7 @@ describe('ProductionService', () => {
   let workOrderRepository: jest.Mocked<Repository<WorkOrder>>;
   let qualityCheckRepository: jest.Mocked<Repository<QualityCheck>>;
   let cacheService: jest.Mocked<CacheService>;
-  let permissionService: jest.Mocked<PermissionService>;
+  let _permissionService: jest.Mocked<PermissionService>;
 
   const mockUser: User = {
     id: 'user-1',
@@ -133,17 +133,17 @@ describe('ProductionService', () => {
     it('should find all materials', async () => {
       materialRepository.find.mockResolvedValue([mockMaterial]);
 
-      const result = await service.findAllMaterials(mockUser);
+      const _result = await service.findAllMaterials(mockUser);
 
-      expect(result).toEqual([mockMaterial]);
+      expect(_result).toEqual([mockMaterial]);
     });
 
     it('should find material by id', async () => {
       cacheService.getOrSet.mockResolvedValue(mockMaterial);
 
-      const result = await service.findMaterialById('material-1', mockUser);
+      const _result = await service.findMaterialById('material-1', mockUser);
 
-      expect(result).toEqual(mockMaterial);
+      expect(_result).toEqual(mockMaterial);
     });
 
     it('should throw NotFoundException when material not found', async () => {
@@ -158,7 +158,7 @@ describe('ProductionService', () => {
     it('should create material', async () => {
       materialRepository.save.mockResolvedValue(mockMaterial);
 
-      const result = await service.createMaterial({ name: 'New Material' }, mockUser);
+      const _result = await service.createMaterial({ name: 'New Material' }, mockUser);
 
       expect(materialRepository.save).toHaveBeenCalled();
     });
@@ -167,7 +167,7 @@ describe('ProductionService', () => {
       cacheService.getOrSet.mockResolvedValue(mockMaterial);
       materialRepository.save.mockResolvedValue(mockMaterial);
 
-      const result = await service.updateMaterial('material-1', { name: 'Updated' }, mockUser);
+      const _result = await service.updateMaterial('material-1', { name: 'Updated' }, mockUser);
 
       expect(cacheService.del).toHaveBeenCalled();
     });
@@ -193,9 +193,9 @@ describe('ProductionService', () => {
       const lowStockMaterial = { ...mockMaterial, stockQuantity: 50 };
       materialRepository.find.mockResolvedValue([lowStockMaterial]);
 
-      const result = await service.findLowStockMaterials(mockUser);
+      const _result = await service.findLowStockMaterials(mockUser);
 
-      expect(result).toHaveLength(1);
+      expect(_result).toHaveLength(1);
     });
   });
 
@@ -214,23 +214,23 @@ describe('ProductionService', () => {
     it('should find all molds', async () => {
       moldRepository.find.mockResolvedValue([mockMold]);
 
-      const result = await service.findAllMolds(mockUser);
+      const _result = await service.findAllMolds(mockUser);
 
-      expect(result).toEqual([mockMold]);
+      expect(_result).toEqual([mockMold]);
     });
 
     it('should find mold by id', async () => {
       cacheService.getOrSet.mockResolvedValue(mockMold);
 
-      const result = await service.findMoldById('mold-1', mockUser);
+      const _result = await service.findMoldById('mold-1', mockUser);
 
-      expect(result).toEqual(mockMold);
+      expect(_result).toEqual(mockMold);
     });
 
     it('should create mold', async () => {
       moldRepository.save.mockResolvedValue(mockMold);
 
-      const result = await service.createMold({ name: 'New Mold' }, mockUser);
+      const _result = await service.createMold({ name: 'New Mold' }, mockUser);
 
       expect(moldRepository.save).toHaveBeenCalled();
     });
@@ -239,7 +239,7 @@ describe('ProductionService', () => {
       cacheService.getOrSet.mockResolvedValue(mockMold);
       moldRepository.save.mockResolvedValue({ ...mockMold, usageCount: 1 } as any);
 
-      const result = await service.recordMoldUsage('mold-1', mockUser);
+      const _result = await service.recordMoldUsage('mold-1', mockUser);
 
       expect(result.usageCount).toBe(1);
     });
@@ -251,9 +251,9 @@ describe('ProductionService', () => {
       };
       moldRepository.find.mockResolvedValue([moldNeedingMaintenance]);
 
-      const result = await service.findMoldsNeedingMaintenance(mockUser);
+      const _result = await service.findMoldsNeedingMaintenance(mockUser);
 
-      expect(result).toHaveLength(1);
+      expect(_result).toHaveLength(1);
     });
   });
 
@@ -276,17 +276,17 @@ describe('ProductionService', () => {
     it('should find all BOMs', async () => {
       bomRepository.find.mockResolvedValue([mockBom]);
 
-      const result = await service.findAllBoms(mockUser);
+      const _result = await service.findAllBoms(mockUser);
 
-      expect(result).toEqual([mockBom]);
+      expect(_result).toEqual([mockBom]);
     });
 
     it('should find BOM by id', async () => {
       cacheService.getOrSet.mockResolvedValue(mockBom);
 
-      const result = await service.findBomById('bom-1', mockUser);
+      const _result = await service.findBomById('bom-1', mockUser);
 
-      expect(result).toEqual(mockBom);
+      expect(_result).toEqual(mockBom);
     });
 
     it('should create BOM with calculated costs', async () => {
@@ -317,7 +317,7 @@ describe('ProductionService', () => {
       };
       bomRepository.save.mockResolvedValue(mockBom);
 
-      const result = await service.createBom(bomData, mockUser);
+      const _result = await service.createBom(bomData, mockUser);
 
       expect(bomRepository.save).toHaveBeenCalled();
     });
@@ -327,7 +327,7 @@ describe('ProductionService', () => {
       bomRepository.find.mockResolvedValue([mockBom]);
       bomRepository.save.mockResolvedValue({ ...mockBom, isDefault: true } as any);
 
-      const result = await service.setDefaultBom('bom-1', 'product-1', mockUser);
+      const _result = await service.setDefaultBom('bom-1', 'product-1', mockUser);
 
       expect(result.isDefault).toBe(true);
     });
@@ -349,24 +349,24 @@ describe('ProductionService', () => {
     it('should find all work orders', async () => {
       workOrderRepository.find.mockResolvedValue([mockWorkOrder]);
 
-      const result = await service.findAllWorkOrders(mockUser);
+      const _result = await service.findAllWorkOrders(mockUser);
 
-      expect(result).toEqual([mockWorkOrder]);
+      expect(_result).toEqual([mockWorkOrder]);
     });
 
     it('should find work order by id', async () => {
       cacheService.getOrSet.mockResolvedValue(mockWorkOrder);
 
-      const result = await service.findWorkOrderById('wo-1', mockUser);
+      const _result = await service.findWorkOrderById('wo-1', mockUser);
 
-      expect(result).toEqual(mockWorkOrder);
+      expect(_result).toEqual(mockWorkOrder);
     });
 
     it('should create work order with auto-generated number', async () => {
       workOrderRepository.find.mockResolvedValue([]);
       workOrderRepository.save.mockResolvedValue(mockWorkOrder);
 
-      const result = await service.createWorkOrder({}, mockUser);
+      const _result = await service.createWorkOrder({}, mockUser);
 
       expect(result.orderNumber).toContain('WO-');
     });
@@ -378,7 +378,7 @@ describe('ProductionService', () => {
         status: WorkOrderStatus.IN_PROGRESS,
       } as any);
 
-      const result = await service.startWorkOrder('wo-1', mockUser);
+      const _result = await service.startWorkOrder('wo-1', mockUser);
 
       expect(result.status).toBe(WorkOrderStatus.IN_PROGRESS);
     });
@@ -392,7 +392,7 @@ describe('ProductionService', () => {
         completionPercentage: 100,
       } as any);
 
-      const result = await service.completeWorkOrder('wo-1', mockUser);
+      const _result = await service.completeWorkOrder('wo-1', mockUser);
 
       expect(result.status).toBe(WorkOrderStatus.COMPLETED);
       expect(result.completionPercentage).toBe(100);
@@ -406,7 +406,7 @@ describe('ProductionService', () => {
         status: WorkOrderStatus.PAUSED,
       } as any);
 
-      const result = await service.pauseWorkOrder('wo-1', mockUser, 'Break time');
+      const _result = await service.pauseWorkOrder('wo-1', mockUser, 'Break time');
 
       expect(result.status).toBe(WorkOrderStatus.PAUSED);
     });
@@ -419,7 +419,7 @@ describe('ProductionService', () => {
         completionPercentage: 50,
       } as any);
 
-      const result = await service.updateWorkOrderProgress('wo-1', 50, 0, mockUser);
+      const _result = await service.updateWorkOrderProgress('wo-1', 50, 0, mockUser);
 
       expect(result.qtyProduced).toBe(50);
       expect(result.completionPercentage).toBe(50);
@@ -435,32 +435,32 @@ describe('ProductionService', () => {
       quantityChecked: 100,
       quantityPassed: 100,
       quantityFailed: 0,
-      result: QualityCheckResult.PASS,
+      _result: QualityCheckResult.PASS,
       tenantId: 'tenant-1',
     } as QualityCheck;
 
     it('should find all quality checks', async () => {
       qualityCheckRepository.find.mockResolvedValue([mockQualityCheck]);
 
-      const result = await service.findAllQualityChecks(mockUser);
+      const _result = await service.findAllQualityChecks(mockUser);
 
-      expect(result).toEqual([mockQualityCheck]);
+      expect(_result).toEqual([mockQualityCheck]);
     });
 
     it('should find quality check by id', async () => {
       cacheService.getOrSet.mockResolvedValue(mockQualityCheck);
 
-      const result = await service.findQualityCheckById('qc-1', mockUser);
+      const _result = await service.findQualityCheckById('qc-1', mockUser);
 
-      expect(result).toEqual(mockQualityCheck);
+      expect(_result).toEqual(mockQualityCheck);
     });
 
     it('should create quality check with auto-generated number', async () => {
       qualityCheckRepository.find.mockResolvedValue([]);
       qualityCheckRepository.save.mockResolvedValue(mockQualityCheck);
 
-      const result = await service.createQualityCheck(
-        { quantityChecked: 100, result: QualityCheckResult.PASS },
+      const _result = await service.createQualityCheck(
+        { quantityChecked: 100, _result: QualityCheckResult.PASS },
         mockUser,
       );
 
@@ -476,8 +476,8 @@ describe('ProductionService', () => {
       };
       qualityCheckRepository.save.mockResolvedValue(passCheck);
 
-      const result = await service.createQualityCheck(
-        { quantityChecked: 100, result: QualityCheckResult.PASS },
+      const _result = await service.createQualityCheck(
+        { quantityChecked: 100, _result: QualityCheckResult.PASS },
         mockUser,
       );
 
@@ -492,7 +492,7 @@ describe('ProductionService', () => {
         approvedBy: 'user-1',
       } as any);
 
-      const result = await service.approveQualityCheck('qc-1', 'user-1', mockUser);
+      const _result = await service.approveQualityCheck('qc-1', 'user-1', mockUser);
 
       expect(result.approvedBy).toBe('user-1');
     });
@@ -500,11 +500,11 @@ describe('ProductionService', () => {
     it('should get quality statistics', async () => {
       const checks = [
         mockQualityCheck,
-        { ...mockQualityCheck, id: 'qc-2', result: QualityCheckResult.FAILED },
+        { ...mockQualityCheck, id: 'qc-2', _result: QualityCheckResult.FAILED },
       ];
       qualityCheckRepository.find.mockResolvedValue(checks);
 
-      const result = await service.getQualityStatistics(mockUser);
+      const _result = await service.getQualityStatistics(mockUser);
 
       expect(result.totalChecks).toBe(2);
       expect(result.passedChecks).toBe(1);

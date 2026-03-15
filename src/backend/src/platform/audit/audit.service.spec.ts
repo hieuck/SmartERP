@@ -11,7 +11,7 @@ describe('AuditService', () => {
   let service: AuditService;
   let auditRepository: jest.Mocked<Repository<AuditLog>>;
   let cacheService: jest.Mocked<CacheService>;
-  let permissionService: jest.Mocked<PermissionService>;
+  let _permissionService: jest.Mocked<PermissionService>;
 
   const mockUser: User = {
     id: 'user-1',

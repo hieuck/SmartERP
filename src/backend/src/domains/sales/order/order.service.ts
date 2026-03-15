@@ -210,7 +210,7 @@ export class OrderService {
     return updated;
   }
 
-  async ship(user: User, id: string, trackingNumber: string): Promise<Order> {
+  async ship(user: User, id: string, _trackingNumber: string): Promise<Order> {
     const order = await this.findOne(user, id);
 
     if (order.status !== 'draft' && order.status !== 'pending' && order.status !== 'processing') {

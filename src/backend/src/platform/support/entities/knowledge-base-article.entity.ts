@@ -11,7 +11,6 @@ import {
 import { User } from '@core/user/entities/user.entity';
 import { ArticleStatus } from '@platform/support/enums/article-status.enum';
 
-
 @Entity('knowledge_base_articles')
 @Index(['tenantId', 'status'])
 @Index(['tenantId', 'categoryId'])

@@ -30,14 +30,14 @@ export class PaymentService {
     user: User,
   ): Promise<{
     success: boolean;
-    transactionId: string;
+    _transactionId: string;
     message: string;
   }> {
-    const order = await this.secureOrderRepo.findOne(user, {
+    const _order = await this.secureOrderRepo.findOne(user, {
       where: { id: dto.orderId },
     });
 
-    if (!order) {
+    if (!_order) {
       throw new BadRequestException(`Order with ID ${dto.orderId} not found`);
     }
 
@@ -51,23 +51,23 @@ export class PaymentService {
       );
     }
 
-    let result: { success: boolean; transactionId: string; message: string };
+    let result: { success: boolean; _transactionId: string; message: string };
 
     switch (dto.paymentMethod.toLowerCase()) {
       case 'cod':
-        result = await this.processCOD(order);
+        result = await this.processCOD(_order);
         break;
       case 'stripe':
-        result = await this.processStripe(order, dto.paymentToken, dto.paymentDetails);
+        result = await this.processStripe(_order, dto.paymentToken, dto.paymentDetails);
         break;
       case 'paypal':
-        result = await this.processPayPal(order, dto.paymentToken, dto.paymentDetails);
+        result = await this.processPayPal(_order, dto.paymentToken, dto.paymentDetails);
         break;
       case 'vnpay':
-        result = await this.processVNPay(order, dto.paymentDetails);
+        result = await this.processVNPay(_order, dto.paymentDetails);
         break;
       case 'momo':
-        result = await this.processMomo(order, dto.paymentDetails);
+        result = await this.processMomo(_order, dto.paymentDetails);
         break;
       default:
         throw new BadRequestException(`Unsupported payment method: ${dto.paymentMethod}`);
@@ -78,10 +78,10 @@ export class PaymentService {
       order.paymentMethod = dto.paymentMethod;
       order.paymentTransactionId = result.transactionId;
       order.paidAt = new Date();
-      await this.secureOrderRepo.save(user, order);
+      await this.secureOrderRepo.save(user, _order);
     } else {
       order.paymentStatus = PaymentStatus.FAILED;
-      await this.secureOrderRepo.save(user, order);
+      await this.secureOrderRepo.save(user, _order);
     }
 
     return result;
@@ -95,11 +95,11 @@ export class PaymentService {
     status: PaymentStatus;
     message: string;
   }> {
-    const order = await this.secureOrderRepo.findOne(user, {
+    const _order = await this.secureOrderRepo.findOne(user, {
       where: { id: dto.orderId },
     });
 
-    if (!order) {
+    if (!_order) {
       throw new BadRequestException(`Order with ID ${dto.orderId} not found`);
     }
 
@@ -111,16 +111,16 @@ export class PaymentService {
         verified = true;
         break;
       case 'stripe':
-        verified = await this.verifyStripe(dto.transactionId);
+        verified = await this.verifyStripe(dto._transactionId);
         break;
       case 'paypal':
-        verified = await this.verifyPayPal(dto.transactionId);
+        verified = await this.verifyPayPal(dto._transactionId);
         break;
       case 'vnpay':
-        verified = await this.verifyVNPay(dto.transactionId);
+        verified = await this.verifyVNPay(dto._transactionId);
         break;
       case 'momo':
-        verified = await this.verifyMomo(dto.transactionId);
+        verified = await this.verifyMomo(dto._transactionId);
         break;
       default:
         throw new BadRequestException(`Unsupported payment method: ${dto.paymentMethod}`);
@@ -130,7 +130,7 @@ export class PaymentService {
       order.paymentStatus = PaymentStatus.PAID;
       order.paymentTransactionId = dto.transactionId;
       order.paidAt = new Date();
-      await this.secureOrderRepo.save(user, order);
+      await this.secureOrderRepo.save(user, _order);
       status = PaymentStatus.PAID;
     }
 
@@ -149,11 +149,11 @@ export class PaymentService {
     refundId: string;
     message: string;
   }> {
-    const order = await this.secureOrderRepo.findOne(user, {
+    const _order = await this.secureOrderRepo.findOne(user, {
       where: { id: dto.orderId },
     });
 
-    if (!order) {
+    if (!_order) {
       throw new BadRequestException(`Order with ID ${dto.orderId} not found`);
     }
 
@@ -167,19 +167,19 @@ export class PaymentService {
 
     switch (order.paymentMethod?.toLowerCase()) {
       case 'cod':
-        result = await this.refundCOD(order, refundAmount, dto.reason);
+        result = await this.refundCOD(_order, refundAmount, dto._reason);
         break;
       case 'stripe':
-        result = await this.refundStripe(order, refundAmount, dto.reason);
+        result = await this.refundStripe(_order, refundAmount, dto._reason);
         break;
       case 'paypal':
-        result = await this.refundPayPal(order, refundAmount, dto.reason);
+        result = await this.refundPayPal(_order, refundAmount, dto._reason);
         break;
       case 'vnpay':
-        result = await this.refundVNPay(order, refundAmount, dto.reason);
+        result = await this.refundVNPay(_order, refundAmount, dto._reason);
         break;
       case 'momo':
-        result = await this.refundMomo(order, refundAmount, dto.reason);
+        result = await this.refundMomo(_order, refundAmount, dto._reason);
         break;
       default:
         throw new BadRequestException(`Unsupported payment method: ${order.paymentMethod}`);
@@ -187,7 +187,7 @@ export class PaymentService {
 
     if (result.success) {
       order.paymentStatus = PaymentStatus.REFUNDED;
-      await this.secureOrderRepo.save(user, order);
+      await this.secureOrderRepo.save(user, _order);
     }
 
     return result;
@@ -195,92 +195,92 @@ export class PaymentService {
 
   // Gateway stubs - TODO: Implement actual integrations
 
-  private async processCOD(order: Order): Promise<{
+  private async processCOD(_order: Order): Promise<{
     success: boolean;
-    transactionId: string;
+    _transactionId: string;
     message: string;
   }> {
     return {
       success: true,
-      transactionId: `COD-${order.orderNumber}`,
+      _transactionId: `COD-${order.orderNumber}`,
       message: 'Cash on delivery order created',
     };
   }
 
   private async processStripe(
-    order: Order,
+    _order: Order,
     token?: string,
     details?: PaymentDetails,
-  ): Promise<{ success: boolean; transactionId: string; message: string }> {
+  ): Promise<{ success: boolean; _transactionId: string; message: string }> {
     // TODO: Implement Stripe integration
     return {
       success: true,
-      transactionId: `STRIPE-${Date.now()}`,
+      _transactionId: `STRIPE-${Date.now()}`,
       message: 'Stripe payment processed (stub)',
     };
   }
 
   private async processPayPal(
-    order: Order,
+    _order: Order,
     token?: string,
     details?: PaymentDetails,
-  ): Promise<{ success: boolean; transactionId: string; message: string }> {
+  ): Promise<{ success: boolean; _transactionId: string; message: string }> {
     // TODO: Implement PayPal integration
     return {
       success: true,
-      transactionId: `PAYPAL-${Date.now()}`,
+      _transactionId: `PAYPAL-${Date.now()}`,
       message: 'PayPal payment processed (stub)',
     };
   }
 
   private async processVNPay(
-    order: Order,
+    _order: Order,
     details?: PaymentDetails,
-  ): Promise<{ success: boolean; transactionId: string; message: string }> {
+  ): Promise<{ success: boolean; _transactionId: string; message: string }> {
     // TODO: Implement VNPay integration
     return {
       success: true,
-      transactionId: `VNPAY-${Date.now()}`,
+      _transactionId: `VNPAY-${Date.now()}`,
       message: 'VNPay payment processed (stub)',
     };
   }
 
   private async processMomo(
-    order: Order,
+    _order: Order,
     details?: PaymentDetails,
-  ): Promise<{ success: boolean; transactionId: string; message: string }> {
+  ): Promise<{ success: boolean; _transactionId: string; message: string }> {
     // TODO: Implement Momo integration
     return {
       success: true,
-      transactionId: `MOMO-${Date.now()}`,
+      _transactionId: `MOMO-${Date.now()}`,
       message: 'Momo payment processed (stub)',
     };
   }
 
-  private async verifyStripe(transactionId: string): Promise<boolean> {
+  private async verifyStripe(_transactionId: string): Promise<boolean> {
     // TODO: Implement Stripe verification
     return true;
   }
 
-  private async verifyPayPal(transactionId: string): Promise<boolean> {
+  private async verifyPayPal(_transactionId: string): Promise<boolean> {
     // TODO: Implement PayPal verification
     return true;
   }
 
-  private async verifyVNPay(transactionId: string): Promise<boolean> {
+  private async verifyVNPay(_transactionId: string): Promise<boolean> {
     // TODO: Implement VNPay verification
     return true;
   }
 
-  private async verifyMomo(transactionId: string): Promise<boolean> {
+  private async verifyMomo(_transactionId: string): Promise<boolean> {
     // TODO: Implement Momo verification
     return true;
   }
 
   private async refundCOD(
-    order: Order,
-    amount: number,
-    reason: string,
+    _order: Order,
+    _amount: number,
+    _reason: string,
   ): Promise<{ success: boolean; refundId: string; message: string }> {
     return {
       success: true,
@@ -290,9 +290,9 @@ export class PaymentService {
   }
 
   private async refundStripe(
-    order: Order,
-    amount: number,
-    reason: string,
+    _order: Order,
+    _amount: number,
+    _reason: string,
   ): Promise<{ success: boolean; refundId: string; message: string }> {
     // TODO: Implement Stripe refund
     return {
@@ -303,9 +303,9 @@ export class PaymentService {
   }
 
   private async refundPayPal(
-    order: Order,
-    amount: number,
-    reason: string,
+    _order: Order,
+    _amount: number,
+    _reason: string,
   ): Promise<{ success: boolean; refundId: string; message: string }> {
     // TODO: Implement PayPal refund
     return {
@@ -316,9 +316,9 @@ export class PaymentService {
   }
 
   private async refundVNPay(
-    order: Order,
-    amount: number,
-    reason: string,
+    _order: Order,
+    _amount: number,
+    _reason: string,
   ): Promise<{ success: boolean; refundId: string; message: string }> {
     // TODO: Implement VNPay refund
     return {
@@ -329,9 +329,9 @@ export class PaymentService {
   }
 
   private async refundMomo(
-    order: Order,
-    amount: number,
-    reason: string,
+    _order: Order,
+    _amount: number,
+    _reason: string,
   ): Promise<{ success: boolean; refundId: string; message: string }> {
     // TODO: Implement Momo refund
     return {

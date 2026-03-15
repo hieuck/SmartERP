@@ -10,7 +10,7 @@ import { ProductStatus } from './enums/product-status.enum';
 describe('ProductCatalogService', () => {
   let service: ProductCatalogService;
   let repository: jest.Mocked<Repository<ProductCatalog>>;
-  let permissionService: jest.Mocked<PermissionService>;
+  let _permissionService: jest.Mocked<PermissionService>;
 
   const mockUser: User = {
     id: 'user-123',
@@ -62,10 +62,12 @@ describe('ProductCatalogService', () => {
     updatedAt: new Date(),
     generateSlug: jest.fn(),
     validate: jest.fn(),
-    get isOnSale() { return this.compareAtPrice > this.price; },
-    get discountPercentage() { 
-      return this.compareAtPrice > 0 
-        ? ((this.compareAtPrice - this.price) / this.compareAtPrice) * 100 
+    get isOnSale() {
+      return this.compareAtPrice > this.price;
+    },
+    get discountPercentage() {
+      return this.compareAtPrice > 0
+        ? ((this.compareAtPrice - this.price) / this.compareAtPrice) * 100
         : 0;
     },
   } as unknown as ProductCatalog;
@@ -158,9 +160,7 @@ describe('ProductCatalogService', () => {
     it('should throw NotFoundException when product not found', async () => {
       repository.findOne.mockResolvedValue(null);
 
-      await expect(service.findOne('invalid-id', mockUser)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.findOne('invalid-id', mockUser)).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -179,9 +179,7 @@ describe('ProductCatalogService', () => {
     it('should throw NotFoundException when product not found', async () => {
       repository.findOne.mockResolvedValue(null);
 
-      await expect(service.findBySku('INVALID-SKU', mockUser)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.findBySku('INVALID-SKU', mockUser)).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -200,9 +198,7 @@ describe('ProductCatalogService', () => {
     it('should throw NotFoundException when product not found', async () => {
       repository.findOne.mockResolvedValue(null);
 
-      await expect(service.findBySlug('invalid-slug', mockUser)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.findBySlug('invalid-slug', mockUser)).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -376,14 +372,13 @@ describe('ProductCatalogService', () => {
   describe('update', () => {
     it('should update a product successfully', async () => {
       repository.findOne.mockResolvedValue(mockProduct);
-      const updatedProduct = { ...mockProduct, name: 'Updated Product' } as unknown as ProductCatalog;
+      const updatedProduct = {
+        ...mockProduct,
+        name: 'Updated Product',
+      } as unknown as ProductCatalog;
       repository.save.mockResolvedValue(updatedProduct);
 
-      const result = await service.update(
-        'product-123',
-        { name: 'Updated Product' },
-        mockUser,
-      );
+      const result = await service.update('product-123', { name: 'Updated Product' }, mockUser);
 
       expect(repository.findOne).toHaveBeenCalled();
       expect(repository.save).toHaveBeenCalled();
@@ -393,9 +388,9 @@ describe('ProductCatalogService', () => {
     it('should throw NotFoundException when product not found', async () => {
       repository.findOne.mockResolvedValue(null);
 
-      await expect(
-        service.update('invalid-id', { name: 'Updated' }, mockUser),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.update('invalid-id', { name: 'Updated' }, mockUser)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -413,9 +408,7 @@ describe('ProductCatalogService', () => {
     it('should throw NotFoundException when product not found', async () => {
       repository.findOne.mockResolvedValue(null);
 
-      await expect(service.remove('invalid-id', mockUser)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.remove('invalid-id', mockUser)).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -467,7 +460,11 @@ describe('ProductCatalogService', () => {
 
   describe('publish', () => {
     it('should publish a product', async () => {
-      const unpublishedProduct = { ...mockProduct, isPublished: false, publishedAt: null } as unknown as ProductCatalog;
+      const unpublishedProduct = {
+        ...mockProduct,
+        isPublished: false,
+        publishedAt: null,
+      } as unknown as ProductCatalog;
       repository.findOne.mockResolvedValue(unpublishedProduct);
       const publishedProduct = {
         ...unpublishedProduct,
@@ -486,7 +483,10 @@ describe('ProductCatalogService', () => {
   describe('unpublish', () => {
     it('should unpublish a product', async () => {
       repository.findOne.mockResolvedValue(mockProduct);
-      const unpublishedProduct = { ...mockProduct, isPublished: false } as unknown as ProductCatalog;
+      const unpublishedProduct = {
+        ...mockProduct,
+        isPublished: false,
+      } as unknown as ProductCatalog;
       repository.save.mockResolvedValue(unpublishedProduct);
 
       const result = await service.unpublish('product-123', mockUser);
@@ -548,9 +548,7 @@ describe('ProductCatalogService', () => {
         trackInventory: true,
       });
       expect(qb.andWhere).toHaveBeenCalledWith('product.stockQuantity > 0');
-      expect(qb.andWhere).toHaveBeenCalledWith(
-        'product.stockQuantity <= product.minStockLevel',
-      );
+      expect(qb.andWhere).toHaveBeenCalledWith('product.stockQuantity <= product.minStockLevel');
       expect(result).toEqual([lowStockProduct]);
     });
   });

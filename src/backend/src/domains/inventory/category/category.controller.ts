@@ -28,8 +28,9 @@ export class CategoryController {
   @Post()
   @ApiOperation({ summary: 'Create category' })
   create(
-    @CurrentUser() user: User, @Body() createCategoryDto: CreateCategoryDto,
-    @Request() req: Express.Request & { user?: { id: string } },
+    @CurrentUser() user: User,
+    @Body() createCategoryDto: CreateCategoryDto,
+    @Request() _req: Express.Request & { user?: { id: string } },
   ) {
     return this.categoryService.create(user, createCategoryDto);
   }
@@ -80,8 +81,9 @@ export class CategoryController {
   @ApiOperation({ summary: 'Update category' })
   update(
     @Param('id') id: string,
-    @CurrentUser() user: User, @Body() updateCategoryDto: UpdateCategoryDto,
-    @Request() req: Express.Request & { user?: { id: string } },
+    @CurrentUser() user: User,
+    @Body() updateCategoryDto: UpdateCategoryDto,
+    @Request() _req: Express.Request & { user?: { id: string } },
   ) {
     return this.categoryService.update(user, id, updateCategoryDto);
   }
@@ -100,11 +102,7 @@ export class CategoryController {
 
   @Patch(':id/reorder')
   @ApiOperation({ summary: 'Reorder category' })
-  reorder(
-    @Param('id') id: string,
-    @Body() body: { sortOrder: number },
-    @CurrentUser() user: User,
-  ) {
+  reorder(@Param('id') id: string, @Body() body: { sortOrder: number }, @CurrentUser() user: User) {
     return this.categoryService.reorder(user, id, body.sortOrder);
   }
 

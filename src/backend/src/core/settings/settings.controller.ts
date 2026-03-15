@@ -16,7 +16,6 @@ import { BulkSettingsDto } from './dto/bulk-settings.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
-import { TenantId } from '../../common/decorators/tenant-id.decorator';
 
 import { User } from '@/common/security/permission.service';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';

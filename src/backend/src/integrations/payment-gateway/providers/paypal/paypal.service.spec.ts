@@ -6,7 +6,7 @@ describe('PayPalService', () => {
 
   const mockPaymentParams: PayPalPaymentParams = {
     orderId: 'order-123',
-    amount: 100.50,
+    amount: 100.5,
     currency: 'USD',
     description: 'Test payment',
     returnUrl: 'https://example.com/return',
@@ -148,7 +148,7 @@ describe('PayPalService', () => {
       expect(result.success).toBe(true);
       expect(result.message).toBe('Payment completed');
       expect(result.transactionId).toBe('capture-123');
-      expect(result.amount).toBe(100.50);
+      expect(result.amount).toBe(100.5);
     });
 
     it('should handle PAYMENT.CAPTURE.DENIED event', async () => {

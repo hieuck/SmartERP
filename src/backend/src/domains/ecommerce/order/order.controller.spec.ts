@@ -1,7 +1,7 @@
 /**
  * OrderController Integration Tests
  * Coverage target: 95%+
- * 
+ *
  * Test cases:
  * 1. POST /orders - Create order manually
  * 2. GET /orders - Get all orders with filters
@@ -117,12 +117,16 @@ describe('OrderController (Integration)', () => {
       canActivate: jest.fn().mockImplementation((context) => {
         const request = context.switchToHttp().getRequest();
         const authHeader = request.headers.authorization;
-        
-        if (authHeader && authHeader.startsWith('Bearer ') && authHeader !== 'Bearer invalid-token') {
+
+        if (
+          authHeader &&
+          authHeader.startsWith('Bearer ') &&
+          authHeader !== 'Bearer invalid-token'
+        ) {
           request.user = mockUser;
           return true;
         }
-        
+
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }),
     };
@@ -195,10 +199,7 @@ describe('OrderController (Integration)', () => {
     });
 
     it('should return 401 when not authenticated', async () => {
-      await request(app.getHttpServer())
-        .post('/orders')
-        .send(mockCreateOrderDto)
-        .expect(401);
+      await request(app.getHttpServer()).post('/orders').send(mockCreateOrderDto).expect(401);
     });
   });
 
@@ -230,9 +231,12 @@ describe('OrderController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(orderService.findAll).toHaveBeenCalledWith('tenant-123', expect.objectContaining({
-        status: 'pending',
-      }));
+      expect(orderService.findAll).toHaveBeenCalledWith(
+        'tenant-123',
+        expect.objectContaining({
+          status: 'pending',
+        }),
+      );
     });
 
     it('should filter orders by payment status', async () => {
@@ -243,9 +247,12 @@ describe('OrderController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(orderService.findAll).toHaveBeenCalledWith('tenant-123', expect.objectContaining({
-        paymentStatus: 'paid',
-      }));
+      expect(orderService.findAll).toHaveBeenCalledWith(
+        'tenant-123',
+        expect.objectContaining({
+          paymentStatus: 'paid',
+        }),
+      );
     });
 
     it('should filter orders by shipping status', async () => {
@@ -256,9 +263,12 @@ describe('OrderController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(orderService.findAll).toHaveBeenCalledWith('tenant-123', expect.objectContaining({
-        shippingStatus: 'shipped',
-      }));
+      expect(orderService.findAll).toHaveBeenCalledWith(
+        'tenant-123',
+        expect.objectContaining({
+          shippingStatus: 'shipped',
+        }),
+      );
     });
 
     it('should filter orders by customer ID', async () => {
@@ -269,9 +279,12 @@ describe('OrderController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(orderService.findAll).toHaveBeenCalledWith('tenant-123', expect.objectContaining({
-        customerId: 'user-123',
-      }));
+      expect(orderService.findAll).toHaveBeenCalledWith(
+        'tenant-123',
+        expect.objectContaining({
+          customerId: 'user-123',
+        }),
+      );
     });
 
     it('should filter orders by date range', async () => {
@@ -282,16 +295,17 @@ describe('OrderController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(orderService.findAll).toHaveBeenCalledWith('tenant-123', expect.objectContaining({
-        startDate: expect.any(Date),
-        endDate: expect.any(Date),
-      }));
+      expect(orderService.findAll).toHaveBeenCalledWith(
+        'tenant-123',
+        expect.objectContaining({
+          startDate: expect.any(Date),
+          endDate: expect.any(Date),
+        }),
+      );
     });
 
     it('should return 401 when not authenticated', async () => {
-      await request(app.getHttpServer())
-        .get('/orders')
-        .expect(401);
+      await request(app.getHttpServer()).get('/orders').expect(401);
     });
   });
 
@@ -346,9 +360,7 @@ describe('OrderController (Integration)', () => {
     });
 
     it('should return 401 when not authenticated', async () => {
-      await request(app.getHttpServer())
-        .get('/orders/statistics')
-        .expect(401);
+      await request(app.getHttpServer()).get('/orders/statistics').expect(401);
     });
   });
 
@@ -377,9 +389,7 @@ describe('OrderController (Integration)', () => {
     });
 
     it('should return 401 when not authenticated', async () => {
-      await request(app.getHttpServer())
-        .get('/orders/customer/user-123')
-        .expect(401);
+      await request(app.getHttpServer()).get('/orders/customer/user-123').expect(401);
     });
   });
 
@@ -408,9 +418,7 @@ describe('OrderController (Integration)', () => {
     });
 
     it('should return 401 when not authenticated', async () => {
-      await request(app.getHttpServer())
-        .get('/orders/number/ORD-2024-001')
-        .expect(401);
+      await request(app.getHttpServer()).get('/orders/number/ORD-2024-001').expect(401);
     });
   });
 
@@ -439,9 +447,7 @@ describe('OrderController (Integration)', () => {
     });
 
     it('should return 401 when not authenticated', async () => {
-      await request(app.getHttpServer())
-        .get('/orders/order-123')
-        .expect(401);
+      await request(app.getHttpServer()).get('/orders/order-123').expect(401);
     });
   });
 
@@ -540,7 +546,10 @@ describe('OrderController (Integration)', () => {
 
     it('should return 400 when order cannot be cancelled', async () => {
       orderService.cancel.mockRejectedValue(
-        new HttpException('Order cannot be cancelled. Current status: shipped', HttpStatus.BAD_REQUEST),
+        new HttpException(
+          'Order cannot be cancelled. Current status: shipped',
+          HttpStatus.BAD_REQUEST,
+        ),
       );
 
       await request(app.getHttpServer())

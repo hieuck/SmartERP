@@ -26,7 +26,7 @@ export class BOMLine {
   @Column({ name: 'bom_id' })
   bomId: string;
 
-  @ManyToOne(() => BOM, bom => bom.lines, { onDelete: 'CASCADE' })
+  @ManyToOne(() => BOM, (bom) => bom.lines, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'bom_id' })
   bom: BOM;
 

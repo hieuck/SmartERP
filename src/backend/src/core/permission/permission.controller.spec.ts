@@ -1,7 +1,7 @@
 /**
  * PermissionController Integration Tests
  * Coverage target: 99%
- * 
+ *
  * Test cases:
  * 1. POST /permissions - Create permission
  * 2. GET /permissions - Get all permissions
@@ -59,13 +59,13 @@ describe('PermissionController (Integration)', () => {
       canActivate: jest.fn().mockImplementation((context) => {
         const request = context.switchToHttp().getRequest();
         const authHeader = request.headers.authorization;
-        
+
         // Check if Authorization header exists and is valid
         if (authHeader && authHeader.startsWith('Bearer ')) {
           request.user = mockAuthUser;
           return true;
         }
-        
+
         // No token - throw UnauthorizedException
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }),
@@ -170,14 +170,18 @@ describe('PermissionController (Integration)', () => {
   describe('GET /permissions', () => {
     it('should return all permissions', async () => {
       const permissions = [
-        { ...mockPermission, createdAt: mockPermission.createdAt.toISOString(), updatedAt: mockPermission.updatedAt.toISOString() },
-        { 
-          ...mockPermission, 
-          id: 'permission-456', 
-          resource: 'products', 
+        {
+          ...mockPermission,
+          createdAt: mockPermission.createdAt.toISOString(),
+          updatedAt: mockPermission.updatedAt.toISOString(),
+        },
+        {
+          ...mockPermission,
+          id: 'permission-456',
+          resource: 'products',
           actions: [PermissionAction.READ, PermissionAction.UPDATE],
           createdAt: mockPermission.createdAt.toISOString(),
-          updatedAt: mockPermission.updatedAt.toISOString()
+          updatedAt: mockPermission.updatedAt.toISOString(),
         },
       ];
       permissionService.findAll.mockResolvedValue(permissions as any);
@@ -233,7 +237,7 @@ describe('PermissionController (Integration)', () => {
       const permission = {
         ...mockPermission,
         createdAt: mockPermission.createdAt.toISOString(),
-        updatedAt: mockPermission.updatedAt.toISOString()
+        updatedAt: mockPermission.updatedAt.toISOString(),
       };
       permissionService.findByResource.mockResolvedValue(permission as any);
 
@@ -263,7 +267,7 @@ describe('PermissionController (Integration)', () => {
       const permission = {
         ...mockPermission,
         createdAt: mockPermission.createdAt.toISOString(),
-        updatedAt: mockPermission.updatedAt.toISOString()
+        updatedAt: mockPermission.updatedAt.toISOString(),
       };
       permissionService.findOne.mockResolvedValue(permission as any);
 
@@ -321,7 +325,10 @@ describe('PermissionController (Integration)', () => {
       };
 
       permissionService.update.mockRejectedValue(
-        new HttpException("Permission for resource 'existing-resource' already exists", HttpStatus.CONFLICT),
+        new HttpException(
+          "Permission for resource 'existing-resource' already exists",
+          HttpStatus.CONFLICT,
+        ),
       );
 
       await request(app.getHttpServer())
@@ -421,12 +428,12 @@ describe('PermissionController (Integration)', () => {
         ],
       })
         .overrideGuard(JwtAuthGuard)
-        .useValue({ 
+        .useValue({
           canActivate: jest.fn().mockImplementation((context) => {
             const request = context.switchToHttp().getRequest();
             request.user = mockAuthUser;
             return true;
-          })
+          }),
         })
         .overrideGuard(TenantGuard)
         .useValue(mockTenantGuard)

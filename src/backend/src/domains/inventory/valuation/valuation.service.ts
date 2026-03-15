@@ -95,10 +95,7 @@ export class ValuationService {
   /**
    * Calculate average cost for a product in a warehouse
    */
-  async getAverageCost(
-    productId: string,
-    warehouseId: string,
-  ): Promise<number> {
+  async getAverageCost(productId: string, warehouseId: string): Promise<number> {
     const result = await this.valuationRepository
       .createQueryBuilder('v')
       .select('SUM(v.totalCost) / SUM(v.quantity)', 'avgCost')
@@ -131,14 +128,8 @@ export class ValuationService {
       order: { date: 'ASC' },
     });
 
-    const totalQuantity = valuations.reduce(
-      (sum, v) => sum + Number(v.quantity),
-      0,
-    );
-    const totalValue = valuations.reduce(
-      (sum, v) => sum + Number(v.totalCost),
-      0,
-    );
+    const totalQuantity = valuations.reduce((sum, v) => sum + Number(v.quantity), 0);
+    const totalValue = valuations.reduce((sum, v) => sum + Number(v.totalCost), 0);
     const averageCost = totalQuantity > 0 ? totalValue / totalQuantity : 0;
 
     return {

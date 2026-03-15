@@ -38,9 +38,7 @@ describe('GHNService', () => {
         serviceTypeId: 2,
         paymentTypeId: 1,
         requiredNote: 'KHONGCHOXEMHANG',
-        items: [
-          { name: 'Product A', quantity: 1, price: 100000 },
-        ],
+        items: [{ name: 'Product A', quantity: 1, price: 100000 }],
       };
 
       const result = await service.createOrder(params);
@@ -70,9 +68,7 @@ describe('GHNService', () => {
         serviceTypeId: 5,
         paymentTypeId: 1,
         requiredNote: 'CHOTHUHANG',
-        items: [
-          { name: 'Product B', quantity: 2, price: 100000 },
-        ],
+        items: [{ name: 'Product B', quantity: 2, price: 100000 }],
         note: 'Handle with care',
       };
 
@@ -124,9 +120,7 @@ describe('GHNService', () => {
         serviceTypeId: 2,
         paymentTypeId: 1,
         requiredNote: 'KHONGCHOXEMHANG',
-        items: [
-          { name: 'Product C', quantity: 1, price: 0 },
-        ],
+        items: [{ name: 'Product C', quantity: 1, price: 0 }],
       };
 
       const result = await service.createOrder(params);

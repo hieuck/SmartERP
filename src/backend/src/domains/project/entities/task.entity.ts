@@ -11,7 +11,8 @@ import {
   BeforeUpdate,
   Index,
 } from 'typeorm';
-import { User as UserEntity } from '../../../core/user/entities/user.entity';import { TaskStatus } from '../enums/task-status.enum';
+import { User as UserEntity } from '../../../core/user/entities/user.entity';
+import { TaskStatus } from '../enums/task-status.enum';
 import { TaskPriority } from '../enums/task-priority.enum';
 
 import { Project } from './project.entity';

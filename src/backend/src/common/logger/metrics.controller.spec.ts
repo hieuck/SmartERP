@@ -1,7 +1,7 @@
 /**
  * MetricsController (Logger) Integration Tests
  * Coverage target: 95%+
- * 
+ *
  * Test cases:
  * 1. GET /metrics - Get Prometheus-compatible metrics
  * 2. GET /metrics/app - Get application-specific metrics
@@ -33,9 +33,7 @@ describe('MetricsController (Logger) (Integration)', () => {
 
   describe('GET /metrics', () => {
     it('should return Prometheus-compatible metrics', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/metrics')
-        .expect(200);
+      const response = await request(app.getHttpServer()).get('/metrics').expect(200);
 
       expect(response.text).toContain('# HELP nodejs_memory_heap_used_bytes');
       expect(response.text).toContain('# TYPE nodejs_memory_heap_used_bytes gauge');
@@ -47,9 +45,7 @@ describe('MetricsController (Logger) (Integration)', () => {
     });
 
     it('should return valid numeric values', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/metrics')
-        .expect(200);
+      const response = await request(app.getHttpServer()).get('/metrics').expect(200);
 
       const lines = response.text.split('\n');
       const metricLines = lines.filter((line) => !line.startsWith('#') && line.trim());
@@ -63,17 +59,13 @@ describe('MetricsController (Logger) (Integration)', () => {
     });
 
     it('should be publicly accessible (no auth required)', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/metrics')
-        .expect(200);
+      const response = await request(app.getHttpServer()).get('/metrics').expect(200);
 
       expect(response.text).toContain('nodejs_memory');
     });
 
     it('should return consistent format', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/metrics')
-        .expect(200);
+      const response = await request(app.getHttpServer()).get('/metrics').expect(200);
 
       const lines = response.text.split('\n');
       const helpLines = lines.filter((line) => line.startsWith('# HELP'));
@@ -87,9 +79,7 @@ describe('MetricsController (Logger) (Integration)', () => {
 
   describe('GET /metrics/app', () => {
     it('should return application-specific metrics in JSON format', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/metrics/app')
-        .expect(200);
+      const response = await request(app.getHttpServer()).get('/metrics/app').expect(200);
 
       expect(response.body).toHaveProperty('timestamp');
       expect(response.body).toHaveProperty('service');
@@ -101,18 +91,14 @@ describe('MetricsController (Logger) (Integration)', () => {
     });
 
     it('should return correct service information', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/metrics/app')
-        .expect(200);
+      const response = await request(app.getHttpServer()).get('/metrics/app').expect(200);
 
       expect(response.body.service).toBe('smarterp-monolith');
       expect(response.body.version).toBe('1.0.0');
     });
 
     it('should return valid uptime information', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/metrics/app')
-        .expect(200);
+      const response = await request(app.getHttpServer()).get('/metrics/app').expect(200);
 
       expect(response.body.uptime).toHaveProperty('seconds');
       expect(response.body.uptime).toHaveProperty('formatted');
@@ -121,9 +107,7 @@ describe('MetricsController (Logger) (Integration)', () => {
     });
 
     it('should return memory metrics in bytes and MB', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/metrics/app')
-        .expect(200);
+      const response = await request(app.getHttpServer()).get('/metrics/app').expect(200);
 
       expect(response.body.memory).toHaveProperty('heapUsed');
       expect(response.body.memory).toHaveProperty('heapTotal');
@@ -137,9 +121,7 @@ describe('MetricsController (Logger) (Integration)', () => {
     });
 
     it('should return CPU metrics', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/metrics/app')
-        .expect(200);
+      const response = await request(app.getHttpServer()).get('/metrics/app').expect(200);
 
       expect(response.body.cpu).toHaveProperty('user');
       expect(response.body.cpu).toHaveProperty('system');
@@ -149,9 +131,7 @@ describe('MetricsController (Logger) (Integration)', () => {
     });
 
     it('should return process information', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/metrics/app')
-        .expect(200);
+      const response = await request(app.getHttpServer()).get('/metrics/app').expect(200);
 
       expect(response.body.process).toHaveProperty('pid');
       expect(response.body.process).toHaveProperty('platform');
@@ -162,26 +142,20 @@ describe('MetricsController (Logger) (Integration)', () => {
     });
 
     it('should format uptime correctly for seconds', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/metrics/app')
-        .expect(200);
+      const response = await request(app.getHttpServer()).get('/metrics/app').expect(200);
 
       const formatted = response.body.uptime.formatted;
       expect(formatted).toMatch(/\d+[dhms]/);
     });
 
     it('should be publicly accessible (no auth required)', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/metrics/app')
-        .expect(200);
+      const response = await request(app.getHttpServer()).get('/metrics/app').expect(200);
 
       expect(response.body.service).toBe('smarterp-monolith');
     });
 
     it('should return valid timestamp', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/metrics/app')
-        .expect(200);
+      const response = await request(app.getHttpServer()).get('/metrics/app').expect(200);
 
       const timestamp = new Date(response.body.timestamp);
       expect(timestamp.getTime()).toBeGreaterThan(0);
@@ -217,25 +191,19 @@ describe('MetricsController (Logger) (Integration)', () => {
     });
 
     it('should return different values over time', async () => {
-      const response1 = await request(app.getHttpServer())
-        .get('/metrics/app')
-        .expect(200);
+      const response1 = await request(app.getHttpServer()).get('/metrics/app').expect(200);
 
       // Wait a bit
       await new Promise((resolve) => setTimeout(resolve, 100));
 
-      const response2 = await request(app.getHttpServer())
-        .get('/metrics/app')
-        .expect(200);
+      const response2 = await request(app.getHttpServer()).get('/metrics/app').expect(200);
 
       // Timestamps should be different
       expect(response1.body.timestamp).not.toBe(response2.body.timestamp);
     });
 
     it('should handle memory values correctly', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/metrics/app')
-        .expect(200);
+      const response = await request(app.getHttpServer()).get('/metrics/app').expect(200);
 
       // Heap used should be less than heap total
       expect(response.body.memory.heapUsed.bytes).toBeLessThanOrEqual(
@@ -248,15 +216,13 @@ describe('MetricsController (Logger) (Integration)', () => {
     });
 
     it('should format uptime with multiple units', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/metrics/app')
-        .expect(200);
+      const response = await request(app.getHttpServer()).get('/metrics/app').expect(200);
 
       const formatted = response.body.uptime.formatted;
-      
+
       // Should contain at least one time unit
       expect(formatted).toMatch(/[dhms]/);
-      
+
       // Should not have leading/trailing spaces
       expect(formatted.trim()).toBe(formatted);
     });

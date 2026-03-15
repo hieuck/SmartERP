@@ -3,11 +3,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
-import {
-  ConflictException,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { RoleService } from './role.service';
 import { Role } from './entities/role.entity';
 import { Permission } from '../permission/entities/permission.entity';
@@ -74,9 +70,12 @@ describe('RoleService', () => {
     };
 
     const mockPermService = {
-      filterByTenant: jest.fn((user, entities) => entities),
+      filterByTenant: jest.fn((_user, entities) => entities),
       checkAccess: jest.fn(),
-      buildSecureQuery: jest.fn((user, baseWhere, entityName) => ({ ...baseWhere, tenantId: user.tenantId })),
+      buildSecureQuery: jest.fn((_user, baseWhere, _entityName) => ({
+        ...baseWhere,
+        tenantId: user.tenantId,
+      })),
       canRead: jest.fn(() => true),
       canWrite: jest.fn(() => true),
       canDelete: jest.fn(() => true),
@@ -112,19 +111,19 @@ describe('RoleService', () => {
 
     // Mock SecureRepository methods
     const secureRepo = (service as any).secureRoleRepo;
-    secureRepo.findOne = jest.fn((user, options) => roleRepository.findOne(options));
-    secureRepo.find = jest.fn((user, options) => {
-      const secureWhere = permissionService.buildSecureQuery(user, options.where || {}, 'Role');
-      return roleRepository.find({ ...options, where: secureWhere });
+    secureRepo.findOne = jest.fn((_user, _options) => roleRepository.findOne(_options));
+    secureRepo.find = jest.fn((_user, _options) => {
+      const secureWhere = permissionService.buildSecureQuery(_user, options.where || {}, 'Role');
+      return roleRepository.find({ ..._options, where: secureWhere });
     });
-    secureRepo.save = jest.fn((user, entity) => {
+    secureRepo.save = jest.fn((_user, entity) => {
       if (!entity.id) {
         entity.tenantId = user.tenantId;
         entity.createdBy = user.id;
       }
       return roleRepository.save(entity);
     });
-    secureRepo.remove = jest.fn(async (user, entity) => {
+    secureRepo.remove = jest.fn(async (_user, entity) => {
       const existing = await roleRepository.findOne({ where: { id: entity.id } });
       if (!existing) {
         throw new NotFoundException('Record not found');
@@ -135,22 +134,22 @@ describe('RoleService', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
-    
+
     // Reset secureRepo mocks to default behavior
     const secureRepo = (service as any).secureRoleRepo;
-    secureRepo.findOne = jest.fn((user, options) => roleRepository.findOne(options));
-    secureRepo.find = jest.fn((user, options) => {
-      const secureWhere = permissionService.buildSecureQuery(user, options.where || {}, 'Role');
-      return roleRepository.find({ ...options, where: secureWhere });
+    secureRepo.findOne = jest.fn((_user, _options) => roleRepository.findOne(_options));
+    secureRepo.find = jest.fn((_user, _options) => {
+      const secureWhere = permissionService.buildSecureQuery(_user, options.where || {}, 'Role');
+      return roleRepository.find({ ..._options, where: secureWhere });
     });
-    secureRepo.save = jest.fn((user, entity) => {
+    secureRepo.save = jest.fn((_user, entity) => {
       if (!entity.id) {
         entity.tenantId = user.tenantId;
         entity.createdBy = user.id;
       }
       return roleRepository.save(entity);
     });
-    secureRepo.remove = jest.fn(async (user, entity) => {
+    secureRepo.remove = jest.fn(async (_user, entity) => {
       const existing = await roleRepository.findOne({ where: { id: entity.id } });
       if (!existing) {
         throw new NotFoundException('Record not found');
@@ -277,11 +276,7 @@ describe('RoleService', () => {
         where: { tenantId: mockUser.tenantId },
         order: { name: 'ASC' },
       });
-      expect(cacheManager.set).toHaveBeenCalledWith(
-        `role:all:${mockUser.tenantId}`,
-        roles,
-        300000,
-      );
+      expect(cacheManager.set).toHaveBeenCalledWith(`role:all:${mockUser.tenantId}`, roles, 300000);
     });
 
     it('should return empty array when no roles', async () => {
@@ -397,12 +392,12 @@ describe('RoleService', () => {
       // Skip: Complex mock interaction with cache and secureRepo
       const existingRole = { ...mockRole, id: 'role-2', name: 'Updated Role' };
       cacheManager.get.mockResolvedValue(mockRole);
-      
+
       // Mock secureRepo.findOne to return existing role for name check
       const secureRepo = (service as any).secureRoleRepo;
       const originalFindOne = secureRepo.findOne;
       let callCount = 0;
-      secureRepo.findOne = jest.fn((user: any, options: any) => {
+      secureRepo.findOne = jest.fn((_user: any, _options: any) => {
         callCount++;
         if (callCount === 1) {
           // First call in findOne(id) - return mockRole from cache
@@ -416,7 +411,7 @@ describe('RoleService', () => {
       await expect(service.update('role-1', updateDto, mockUser)).rejects.toThrow(
         ConflictException,
       );
-      
+
       // Restore original mock
       secureRepo.findOne = originalFindOne;
     });
@@ -469,9 +464,9 @@ describe('RoleService', () => {
       cacheManager.get.mockResolvedValue(mockRole);
       permissionRepository.findByIds.mockResolvedValue([wrongTenantPermission]);
 
-      await expect(
-        service.update('role-1', updateWithWrongPermissions, mockUser),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.update('role-1', updateWithWrongPermissions, mockUser)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should invalidate all related caches', async () => {
@@ -584,16 +579,17 @@ describe('RoleService', () => {
       // Skip: Complex mock interaction with secureRepo after afterEach reset
       cacheManager.get.mockResolvedValue(mockRole);
       permissionRepository.findByIds.mockResolvedValue([mockPermission]);
-      
+
       // Mock secureRepo.save instead of roleRepository.save
       const secureRepo = (service as any).secureRoleRepo;
-      secureRepo.save = jest.fn((user: any, entity: any) => {
+      secureRepo.save = jest.fn((_user: any, entity: any) => {
         // Simulate the filtering logic - only unique permissions
         return Promise.resolve({
           ...entity,
-          permissions: entity.permissions.filter((p: any, index: number, self: any[]) => 
-            self.findIndex((t: any) => t.id === p.id) === index
-          )
+          permissions: entity.permissions.filter(
+            (p: any, index: number, self: any[]) =>
+              self.findIndex((t: any) => t.id === p.id) === index,
+          ),
         } as Role);
       });
 
@@ -672,9 +668,9 @@ describe('RoleService', () => {
       const systemRole = { ...mockRole, isSystem: true };
       cacheManager.get.mockResolvedValue(systemRole);
 
-      await expect(
-        service.removePermissions('role-1', ['permission-1'], mockUser),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.removePermissions('role-1', ['permission-1'], mockUser)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should handle removing non-existent permissions', async () => {

@@ -1,7 +1,7 @@
 /**
  * PayrollController Integration Tests
  * Coverage target: 90%+
- * 
+ *
  * Test cases:
  * 1. POST /payroll/salary-structures - Create salary structure
  * 2. GET /payroll/salary-structures/:id - Get salary structure
@@ -103,14 +103,14 @@ describe('PayrollController (Integration)', () => {
       canActivate: jest.fn().mockImplementation((context) => {
         const request = context.switchToHttp().getRequest();
         const user = request.user;
-        
+
         if (!user) {
           throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
         }
-        
+
         const handler = context.getHandler();
         const handlerName = handler.name;
-        
+
         // HR/Admin only endpoints
         const hrAdminEndpoints = [
           'createSalaryStructure',
@@ -119,14 +119,14 @@ describe('PayrollController (Integration)', () => {
           'markAsPaid',
           'cancelPayslip',
         ];
-        
+
         if (hrAdminEndpoints.includes(handlerName)) {
           if (['hr_manager', 'admin'].includes(user.role)) {
             return true;
           }
           throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
         }
-        
+
         return true;
       }),
     };
@@ -146,7 +146,7 @@ describe('PayrollController (Integration)', () => {
 
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
-    
+
     // Mock request.user for all requests
     app.use((req, res, next) => {
       const authHeader = req.headers.authorization;
@@ -162,7 +162,7 @@ describe('PayrollController (Integration)', () => {
       }
       next();
     });
-    
+
     await app.init();
 
     payrollService = moduleFixture.get(PayrollService);

@@ -108,12 +108,12 @@ describe('AttendanceService', () => {
       employeeRepository.findOne.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(
-        service.checkIn('invalid-id', new Date(), '09:00', mockUser),
-      ).rejects.toThrow(NotFoundException);
-      await expect(
-        service.checkIn('invalid-id', new Date(), '09:00', mockUser),
-      ).rejects.toThrow('Employee invalid-id not found');
+      await expect(service.checkIn('invalid-id', new Date(), '09:00', mockUser)).rejects.toThrow(
+        NotFoundException,
+      );
+      await expect(service.checkIn('invalid-id', new Date(), '09:00', mockUser)).rejects.toThrow(
+        'Employee invalid-id not found',
+      );
     });
 
     it('should throw BadRequestException when already checked in', async () => {
@@ -153,8 +153,8 @@ describe('AttendanceService', () => {
       // Arrange
       const date = new Date('2024-01-15');
       const checkOutTime = '18:00';
-      const attendanceWithCheckOut = { 
-        ...mockAttendance, 
+      const attendanceWithCheckOut = {
+        ...mockAttendance,
         checkOut: checkOutTime,
         calculateHoursWorked: jest.fn(),
         parseTime: jest.fn(),
@@ -190,8 +190,8 @@ describe('AttendanceService', () => {
     it('should throw BadRequestException when already checked out', async () => {
       // Arrange
       const date = new Date('2024-01-15');
-      const alreadyCheckedOut = { 
-        ...mockAttendance, 
+      const alreadyCheckedOut = {
+        ...mockAttendance,
         checkOut: '17:00',
         calculateHoursWorked: jest.fn(),
         parseTime: jest.fn(),
@@ -238,12 +238,7 @@ describe('AttendanceService', () => {
       attendanceRepository.find.mockResolvedValue(attendances);
 
       // Act
-      const result = await service.getAttendanceByEmployee(
-        'emp-1',
-        startDate,
-        endDate,
-        'tenant-1',
-      );
+      const result = await service.getAttendanceByEmployee('emp-1', startDate, endDate, 'tenant-1');
 
       // Assert
       expect(result).toEqual(attendances);
@@ -275,14 +270,14 @@ describe('AttendanceService', () => {
 
     it('should order results by date DESC', async () => {
       // Arrange
-      const att1 = { 
-        ...mockAttendance, 
+      const att1 = {
+        ...mockAttendance,
         date: new Date('2024-01-15'),
         calculateHoursWorked: jest.fn(),
         parseTime: jest.fn(),
       } as unknown as Attendance;
-      const att2 = { 
-        ...mockAttendance, 
+      const att2 = {
+        ...mockAttendance,
         date: new Date('2024-01-16'),
         calculateHoursWorked: jest.fn(),
         parseTime: jest.fn(),
@@ -307,20 +302,20 @@ describe('AttendanceService', () => {
   describe('getAttendanceReport', () => {
     it('should return attendance report with statistics', async () => {
       // Arrange
-      const att1 = { 
-        ...mockAttendance, 
+      const att1 = {
+        ...mockAttendance,
         hoursWorked: 8,
         calculateHoursWorked: jest.fn(),
         parseTime: jest.fn(),
       } as unknown as Attendance;
-      const att2 = { 
-        ...mockAttendance, 
+      const att2 = {
+        ...mockAttendance,
         hoursWorked: 7.5,
         calculateHoursWorked: jest.fn(),
         parseTime: jest.fn(),
       } as unknown as Attendance;
-      const att3 = { 
-        ...mockAttendance, 
+      const att3 = {
+        ...mockAttendance,
         hoursWorked: 8.5,
         calculateHoursWorked: jest.fn(),
         parseTime: jest.fn(),
@@ -363,14 +358,14 @@ describe('AttendanceService', () => {
 
     it('should handle null hoursWorked values', async () => {
       // Arrange
-      const att1 = { 
-        ...mockAttendance, 
+      const att1 = {
+        ...mockAttendance,
         hoursWorked: null,
         calculateHoursWorked: jest.fn(),
         parseTime: jest.fn(),
       } as unknown as Attendance;
-      const att2 = { 
-        ...mockAttendance, 
+      const att2 = {
+        ...mockAttendance,
         hoursWorked: 8,
         calculateHoursWorked: jest.fn(),
         parseTime: jest.fn(),
@@ -393,20 +388,20 @@ describe('AttendanceService', () => {
 
     it('should round average hours to 2 decimal places', async () => {
       // Arrange
-      const att1 = { 
-        ...mockAttendance, 
+      const att1 = {
+        ...mockAttendance,
         hoursWorked: 8.333,
         calculateHoursWorked: jest.fn(),
         parseTime: jest.fn(),
       } as unknown as Attendance;
-      const att2 = { 
-        ...mockAttendance, 
+      const att2 = {
+        ...mockAttendance,
         hoursWorked: 7.666,
         calculateHoursWorked: jest.fn(),
         parseTime: jest.fn(),
       } as unknown as Attendance;
-      const att3 = { 
-        ...mockAttendance, 
+      const att3 = {
+        ...mockAttendance,
         hoursWorked: 8.111,
         calculateHoursWorked: jest.fn(),
         parseTime: jest.fn(),
@@ -427,14 +422,14 @@ describe('AttendanceService', () => {
 
     it('should calculate total hours correctly with decimal values', async () => {
       // Arrange
-      const att1 = { 
-        ...mockAttendance, 
+      const att1 = {
+        ...mockAttendance,
         hoursWorked: 8.25,
         calculateHoursWorked: jest.fn(),
         parseTime: jest.fn(),
       } as unknown as Attendance;
-      const att2 = { 
-        ...mockAttendance, 
+      const att2 = {
+        ...mockAttendance,
         hoursWorked: 7.75,
         calculateHoursWorked: jest.fn(),
         parseTime: jest.fn(),

@@ -7,8 +7,8 @@ import {
   CreateDateColumn,
   Index,
 } from 'typeorm';
-import { Task } from './task.entity';import { DependencyType } from '../enums/dependency-type.enum';
-
+import { Task } from './task.entity';
+import { DependencyType } from '../enums/dependency-type.enum';
 
 @Entity('task_dependencies')
 @Index(['tenantId', 'taskId'])

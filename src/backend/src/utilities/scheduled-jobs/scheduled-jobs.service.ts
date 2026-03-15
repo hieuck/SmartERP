@@ -14,13 +14,13 @@ export interface ScheduledJob {
 
 /**
  * ScheduledJobsService manages dynamic cron jobs for multi-tenant system.
- * 
+ *
  * Features:
  * - Create/update/delete jobs dynamically
  * - Per-tenant job isolation
  * - Cron-based scheduling
  * - Job execution tracking
- * 
+ *
  * Note: This is an in-memory implementation. For production with multiple instances,
  * consider using a distributed job queue like Bull/BullMQ with Redis.
  */
@@ -92,7 +92,7 @@ export class ScheduledJobsService {
 
     // Unregister cron job from scheduler
     this.unregisterCronJob(jobId);
-    
+
     this.jobs.delete(jobId);
     this.logger.log(`Deleted job ${jobId}`);
   }
@@ -121,7 +121,7 @@ export class ScheduledJobsService {
       const cronJob = new CronJob(job.schedule, async () => {
         this.logger.log(`Executing scheduled job: ${job.name}`);
         await this.executeJobHandler(job);
-        
+
         // Update last run time
         job.lastRun = new Date();
         this.jobs.set(job.id, job);
@@ -153,13 +153,13 @@ export class ScheduledJobsService {
 
   /**
    * Execute job handler based on handler name.
-   * 
+   *
    * Supported handlers:
    * - 'backup': Database backup
    * - 'cleanup': Cleanup old logs/temp files
    * - 'report': Generate scheduled reports
    * - 'sync': Sync data with external systems
-   * 
+   *
    * For custom handlers, extend this method or use a handler registry pattern.
    */
   private async executeJobHandler(job: ScheduledJob): Promise<void> {
@@ -169,22 +169,22 @@ export class ScheduledJobsService {
           this.logger.log('Executing backup handler');
           // Implement backup logic or call backup service
           break;
-        
+
         case 'cleanup':
           this.logger.log('Executing cleanup handler');
           // Implement cleanup logic
           break;
-        
+
         case 'report':
           this.logger.log('Executing report handler');
           // Implement report generation logic
           break;
-        
+
         case 'sync':
           this.logger.log('Executing sync handler');
           // Implement sync logic
           break;
-        
+
         default:
           this.logger.warn(`Unknown handler: ${job.handler}`);
       }

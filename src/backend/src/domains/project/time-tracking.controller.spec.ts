@@ -1,7 +1,7 @@
 /**
  * TimeTrackingController Integration Tests
  * Coverage target: 95%
- * 
+ *
  * Test cases:
  * 1. POST /time-tracking - Log time entry
  * 2. GET /time-tracking - Get all time entries with filters
@@ -68,12 +68,12 @@ describe('TimeTrackingController (Integration)', () => {
       canActivate: jest.fn().mockImplementation((context) => {
         const request = context.switchToHttp().getRequest();
         const authHeader = request.headers.authorization;
-        
+
         if (authHeader && authHeader.startsWith('Bearer ')) {
           request.user = mockUser;
           return true;
         }
-        
+
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }),
     };
@@ -352,9 +352,7 @@ describe('TimeTrackingController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/time-tracking/entry-123')
-        .expect(401);
+      await request(app.getHttpServer()).get('/time-tracking/entry-123').expect(401);
     });
   });
 
@@ -473,9 +471,7 @@ describe('TimeTrackingController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .delete('/time-tracking/entry-123')
-        .expect(401);
+      await request(app.getHttpServer()).delete('/time-tracking/entry-123').expect(401);
     });
   });
 

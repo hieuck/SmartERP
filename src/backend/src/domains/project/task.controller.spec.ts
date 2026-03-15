@@ -1,7 +1,7 @@
 /**
  * TaskController Integration Tests
  * Coverage target: 95%
- * 
+ *
  * Test cases:
  * 1. POST /tasks - Create task
  * 2. GET /tasks - Get all tasks with filters
@@ -89,12 +89,12 @@ describe('TaskController (Integration)', () => {
       canActivate: jest.fn().mockImplementation((context) => {
         const request = context.switchToHttp().getRequest();
         const authHeader = request.headers.authorization;
-        
+
         if (authHeader && authHeader.startsWith('Bearer ')) {
           request.user = mockUser;
           return true;
         }
-        
+
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }),
     };
@@ -212,10 +212,7 @@ describe('TaskController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .post('/tasks')
-        .send({ title: 'Test' })
-        .expect(401);
+      await request(app.getHttpServer()).post('/tasks').send({ title: 'Test' }).expect(401);
     });
 
     it('should validate required fields', async () => {
@@ -359,9 +356,7 @@ describe('TaskController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/tasks/task-123')
-        .expect(401);
+      await request(app.getHttpServer()).get('/tasks/task-123').expect(401);
     });
   });
 
@@ -553,9 +548,7 @@ describe('TaskController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .delete('/tasks/task-123')
-        .expect(401);
+      await request(app.getHttpServer()).delete('/tasks/task-123').expect(401);
     });
   });
 

@@ -3,7 +3,6 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CheckoutService } from './checkout.service';
 import { CheckoutDto } from './dto/checkout.dto';
 
-import { User } from '@/common/security/permission.service';
 @ApiTags('Checkout')
 @Controller('checkout')
 export class CheckoutController {
@@ -15,7 +14,7 @@ export class CheckoutController {
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 404, description: 'Cart not found' })
   async initiateCheckout(@Body() dto: CheckoutDto, @Req() req: any) {
-    const tenantId = req.user?.tenantId || 'default';
+    const _tenantId = req.user?.tenantId || 'default';
     const user = req.user;
     return this.checkoutService.initiateCheckout(dto, user);
   }
@@ -26,7 +25,7 @@ export class CheckoutController {
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 404, description: 'Cart not found' })
   async createOrder(@Body() dto: CheckoutDto, @Req() req: any) {
-    const tenantId = req.user?.tenantId || 'default';
+    const _tenantId = req.user?.tenantId || 'default';
     const user = req.user;
     return this.checkoutService.createOrderFromCart(dto, user);
   }

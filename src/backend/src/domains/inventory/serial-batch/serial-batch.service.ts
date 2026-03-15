@@ -100,7 +100,9 @@ export class SerialBatchService {
       }
 
       if (serial.status !== SerialNumberStatus.AVAILABLE) {
-        throw new BadRequestException(`Serial number ${sn} is not available (status: ${serial.status})`);
+        throw new BadRequestException(
+          `Serial number ${sn} is not available (status: ${serial.status})`,
+        );
       }
     }
   }
@@ -119,7 +121,9 @@ export class SerialBatchService {
     });
 
     if (!batchStock) {
-      throw new NotFoundException(`Batch stock not found for batch ${batchId} in warehouse ${warehouseId}`);
+      throw new NotFoundException(
+        `Batch stock not found for batch ${batchId} in warehouse ${warehouseId}`,
+      );
     }
 
     if (batchStock.quantity < requiredQty) {
@@ -138,10 +142,7 @@ export class SerialBatchService {
     tenantId: string,
   ): Promise<void> {
     for (const sn of serialNumbers) {
-      await this.serialRepository.update(
-        { number: sn, tenantId },
-        { warehouseId },
-      );
+      await this.serialRepository.update({ number: sn, tenantId }, { warehouseId });
     }
   }
 

@@ -57,7 +57,8 @@ export class ProductionController {
   @ApiOperation({ summary: 'Update material' })
   updateMaterial(
     @Param('id') id: string,
-    @CurrentUser() user: User, @Body() updateMaterialDto: UpdateMaterialDto,
+    @CurrentUser() user: User,
+    @Body() updateMaterialDto: UpdateMaterialDto,
   ) {
     return this.productionService.updateMaterial(id, updateMaterialDto, user);
   }
@@ -98,7 +99,8 @@ export class ProductionController {
   @ApiOperation({ summary: 'Update mold' })
   updateMold(
     @Param('id') id: string,
-    @CurrentUser() user: User, @Body() updateMoldDto: UpdateMoldDto,
+    @CurrentUser() user: User,
+    @Body() updateMoldDto: UpdateMoldDto,
   ) {
     return this.productionService.updateMold(id, updateMoldDto, user);
   }
@@ -143,7 +145,8 @@ export class ProductionController {
   @ApiOperation({ summary: 'Update BOM' })
   updateBom(
     @Param('id') id: string,
-    @CurrentUser() user: User, @Body() updateBomDto: UpdateBomDto,
+    @CurrentUser() user: User,
+    @Body() updateBomDto: UpdateBomDto,
   ) {
     return this.productionService.updateBom(id, updateBomDto, user);
   }
@@ -158,7 +161,8 @@ export class ProductionController {
   @ApiOperation({ summary: 'Set BOM as default for product' })
   setDefaultBom(
     @Param('id') id: string,
-    @CurrentUser() user: User, @Body('productId') productId: string,
+    @CurrentUser() user: User,
+    @Body('productId') productId: string,
   ) {
     return this.productionService.setDefaultBom(id, productId, user);
   }
@@ -187,7 +191,8 @@ export class ProductionController {
   @ApiOperation({ summary: 'Update work order' })
   updateWorkOrder(
     @Param('id') id: string,
-    @CurrentUser() user: User, @Body() updateWorkOrderDto: UpdateWorkOrderDto,
+    @CurrentUser() user: User,
+    @Body() updateWorkOrderDto: UpdateWorkOrderDto,
   ) {
     return this.productionService.updateWorkOrder(id, updateWorkOrderDto, user);
   }
@@ -214,7 +219,8 @@ export class ProductionController {
   @ApiOperation({ summary: 'Pause work order' })
   pauseWorkOrder(
     @Param('id') id: string,
-    @CurrentUser() user: User, @Body('reason') reason: string,
+    @CurrentUser() user: User,
+    @Body('reason') reason: string,
   ) {
     return this.productionService.pauseWorkOrder(id, user, reason);
   }
@@ -270,7 +276,8 @@ export class ProductionController {
   @Post('quality-checks')
   @ApiOperation({ summary: 'Create quality check' })
   createQualityCheck(
-    @CurrentUser() user: User, @Body() createQualityCheckDto: CreateQualityCheckDto,
+    @CurrentUser() user: User,
+    @Body() createQualityCheckDto: CreateQualityCheckDto,
   ) {
     return this.productionService.createQualityCheck(createQualityCheckDto, user);
   }
@@ -279,7 +286,8 @@ export class ProductionController {
   @ApiOperation({ summary: 'Update quality check' })
   updateQualityCheck(
     @Param('id') id: string,
-    @CurrentUser() user: User, @Body() updateQualityCheckDto: UpdateQualityCheckDto,
+    @CurrentUser() user: User,
+    @Body() updateQualityCheckDto: UpdateQualityCheckDto,
   ) {
     return this.productionService.updateQualityCheck(id, updateQualityCheckDto, user);
   }
@@ -294,7 +302,8 @@ export class ProductionController {
   @ApiOperation({ summary: 'Approve quality check' })
   async approveQualityCheck(
     @Param('id') id: string,
-    @CurrentUser() user: User, @Body('approvedBy') approvedBy: string,
+    @CurrentUser() user: User,
+    @Body('approvedBy') approvedBy: string,
   ): Promise<unknown> {
     return this.productionService.approveQualityCheck(id, approvedBy, user);
   }

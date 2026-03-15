@@ -1,7 +1,7 @@
 /**
  * ReportController Integration Tests
  * Coverage target: 95%+
- * 
+ *
  * Test cases:
  * 1. POST /reports - Create report
  * 2. GET /reports - Get all reports
@@ -130,7 +130,7 @@ describe('ReportController (Integration)', () => {
       canActivate: jest.fn().mockImplementation((context) => {
         const request = context.switchToHttp().getRequest();
         const authHeader = request.headers.authorization;
-        
+
         if (authHeader && authHeader.startsWith('Bearer ')) {
           const token = authHeader.substring(7);
           if (token === 'manager-token') {
@@ -140,7 +140,7 @@ describe('ReportController (Integration)', () => {
           }
           return true;
         }
-        
+
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }),
     };
@@ -202,11 +202,7 @@ describe('ReportController (Integration)', () => {
         .expect(201);
 
       expect(response.body).toEqual(mockReport);
-      expect(reportService.create).toHaveBeenCalledWith(
-        createDto,
-        'tenant-123',
-        mockManager,
-      );
+      expect(reportService.create).toHaveBeenCalledWith(createDto, 'tenant-123', mockManager);
     });
 
     it('should create public report', async () => {
@@ -264,9 +260,7 @@ describe('ReportController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/reports')
-        .expect(401);
+      await request(app.getHttpServer()).get('/reports').expect(401);
     });
   });
 
@@ -296,9 +290,7 @@ describe('ReportController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/reports/public')
-        .expect(401);
+      await request(app.getHttpServer()).get('/reports/public').expect(401);
     });
   });
 
@@ -327,9 +319,7 @@ describe('ReportController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/reports/report-123')
-        .expect(401);
+      await request(app.getHttpServer()).get('/reports/report-123').expect(401);
     });
   });
 
@@ -403,9 +393,7 @@ describe('ReportController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .delete('/reports/report-123')
-        .expect(401);
+      await request(app.getHttpServer()).delete('/reports/report-123').expect(401);
     });
   });
 
@@ -636,9 +624,7 @@ describe('ReportController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/reports/report-123/executions')
-        .expect(401);
+      await request(app.getHttpServer()).get('/reports/report-123/executions').expect(401);
     });
   });
 
@@ -667,9 +653,7 @@ describe('ReportController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/reports/executions/execution-123')
-        .expect(401);
+      await request(app.getHttpServer()).get('/reports/executions/execution-123').expect(401);
     });
   });
 
@@ -691,9 +675,7 @@ describe('ReportController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/reports/templates')
-        .expect(401);
+      await request(app.getHttpServer()).get('/reports/templates').expect(401);
     });
   });
 
@@ -712,9 +694,7 @@ describe('ReportController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/reports/templates/categories')
-        .expect(401);
+      await request(app.getHttpServer()).get('/reports/templates/categories').expect(401);
     });
   });
 
@@ -748,9 +728,7 @@ describe('ReportController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/reports/templates/category/sales')
-        .expect(401);
+      await request(app.getHttpServer()).get('/reports/templates/category/sales').expect(401);
     });
   });
 
@@ -893,7 +871,7 @@ describe('ReportController (Integration)', () => {
     it('should handle SQL injection attempts in parameters', async () => {
       const maliciousParams = {
         status: "'; DROP TABLE orders; --",
-        amount: "1 OR 1=1",
+        amount: '1 OR 1=1',
       };
 
       reportService.execute.mockRejectedValue(

@@ -332,9 +332,9 @@ describe('StockService', () => {
     it('should throw NotFoundException if not found', async () => {
       mockInventoryRepository.findOne.mockResolvedValue(null);
 
-      await expect(
-        service.findByProductAndWarehouse(mockUser, 'prod-1', 'wh-999'),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.findByProductAndWarehouse(mockUser, 'prod-1', 'wh-999')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -581,9 +581,30 @@ describe('StockService', () => {
   describe('getLowStockItems', () => {
     it('should return items with quantity <= reorderPoint', async () => {
       const inventories = [
-        { ...mockInventory, id: 'inv-1', quantity: 25, reorderPoint: 30, availableQuantity: 25, reservedQuantity: 0 },
-        { ...mockInventory, id: 'inv-2', quantity: 50, reorderPoint: 60, availableQuantity: 50, reservedQuantity: 0 },
-        { ...mockInventory, id: 'inv-3', quantity: 100, reorderPoint: 30, availableQuantity: 100, reservedQuantity: 0 },
+        {
+          ...mockInventory,
+          id: 'inv-1',
+          quantity: 25,
+          reorderPoint: 30,
+          availableQuantity: 25,
+          reservedQuantity: 0,
+        },
+        {
+          ...mockInventory,
+          id: 'inv-2',
+          quantity: 50,
+          reorderPoint: 60,
+          availableQuantity: 50,
+          reservedQuantity: 0,
+        },
+        {
+          ...mockInventory,
+          id: 'inv-3',
+          quantity: 100,
+          reorderPoint: 30,
+          availableQuantity: 100,
+          reservedQuantity: 0,
+        },
       ];
 
       mockInventoryRepository.find.mockResolvedValue(inventories);
@@ -858,4 +879,3 @@ describe('StockService', () => {
     });
   });
 });
-

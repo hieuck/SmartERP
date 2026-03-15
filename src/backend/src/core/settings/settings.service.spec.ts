@@ -167,9 +167,9 @@ describe('SettingsService', () => {
     it('should throw NotFoundException when setting not found', async () => {
       repository.findOne.mockResolvedValue(null);
 
-      await expect(
-        service.update(mockUser, 'nonexistent', { value: 'test' }),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.update(mockUser, 'nonexistent', { value: 'test' })).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -207,8 +207,18 @@ describe('SettingsService', () => {
   describe('bulkUpsert', () => {
     it('should create new settings', async () => {
       const settings: CreateSettingDto[] = [
-        { key: 'new.setting1', value: 'value1', category: SettingCategory.GENERAL, dataType: SettingDataType.STRING },
-        { key: 'new.setting2', value: 'value2', category: SettingCategory.GENERAL, dataType: SettingDataType.STRING },
+        {
+          key: 'new.setting1',
+          value: 'value1',
+          category: SettingCategory.GENERAL,
+          dataType: SettingDataType.STRING,
+        },
+        {
+          key: 'new.setting2',
+          value: 'value2',
+          category: SettingCategory.GENERAL,
+          dataType: SettingDataType.STRING,
+        },
       ];
 
       repository.findOne.mockResolvedValue(null);
@@ -223,7 +233,12 @@ describe('SettingsService', () => {
 
     it('should update existing settings', async () => {
       const settings: CreateSettingDto[] = [
-        { key: 'app.name', value: 'Updated App', category: SettingCategory.GENERAL, dataType: SettingDataType.STRING },
+        {
+          key: 'app.name',
+          value: 'Updated App',
+          category: SettingCategory.GENERAL,
+          dataType: SettingDataType.STRING,
+        },
       ];
 
       repository.findOne.mockResolvedValue(mockSetting);
@@ -237,13 +252,21 @@ describe('SettingsService', () => {
 
     it('should handle mix of new and existing settings', async () => {
       const settings: CreateSettingDto[] = [
-        { key: 'app.name', value: 'Updated', category: SettingCategory.GENERAL, dataType: SettingDataType.STRING },
-        { key: 'new.setting', value: 'New', category: SettingCategory.GENERAL, dataType: SettingDataType.STRING },
+        {
+          key: 'app.name',
+          value: 'Updated',
+          category: SettingCategory.GENERAL,
+          dataType: SettingDataType.STRING,
+        },
+        {
+          key: 'new.setting',
+          value: 'New',
+          category: SettingCategory.GENERAL,
+          dataType: SettingDataType.STRING,
+        },
       ];
 
-      repository.findOne
-        .mockResolvedValueOnce(mockSetting)
-        .mockResolvedValueOnce(null);
+      repository.findOne.mockResolvedValueOnce(mockSetting).mockResolvedValueOnce(null);
       repository.create.mockImplementation((dto) => dto as any);
       repository.save.mockImplementation(async (entity) => entity as any);
 

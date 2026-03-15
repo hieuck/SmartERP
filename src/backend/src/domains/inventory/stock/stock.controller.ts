@@ -30,8 +30,9 @@ export class StockController {
   @Post()
   @ApiOperation({ summary: 'Create stock' })
   create(
-    @CurrentUser() user: User, @Body() createInventoryDto: CreateInventoryDto,
-    @Request() req: Express.Request & { user?: { id: string } },
+    @CurrentUser() user: User,
+    @Body() createInventoryDto: CreateInventoryDto,
+    @Request() _req: Express.Request & { user?: { id: string } },
   ) {
     return this.stockService.create(user, createInventoryDto);
   }
@@ -82,7 +83,8 @@ export class StockController {
   @ApiOperation({ summary: 'Get inventory by product and warehouse' })
   findByProductAndWarehouse(
     @Param('productId') productId: string,
-    @CurrentUser() user: User, @Param('warehouseId') warehouseId: string,
+    @CurrentUser() user: User,
+    @Param('warehouseId') warehouseId: string,
   ) {
     return this.stockService.findByProductAndWarehouse(user, productId, warehouseId);
   }
@@ -97,8 +99,9 @@ export class StockController {
   @ApiOperation({ summary: 'Update inventory' })
   update(
     @Param('id') id: string,
-    @CurrentUser() user: User, @Body() updateInventoryDto: UpdateInventoryDto,
-    @Request() req: Express.Request & { user?: { id: string } },
+    @CurrentUser() user: User,
+    @Body() updateInventoryDto: UpdateInventoryDto,
+    @Request() _req: Express.Request & { user?: { id: string } },
   ) {
     return this.stockService.update(user, id, updateInventoryDto);
   }
@@ -107,39 +110,28 @@ export class StockController {
   @ApiOperation({ summary: 'Adjust inventory quantity' })
   adjust(
     @Param('id') id: string,
-    @CurrentUser() user: User, @Body() adjustInventoryDto: AdjustInventoryDto,
-    @Request() req: Express.Request & { user?: { id: string } },
+    @CurrentUser() user: User,
+    @Body() adjustInventoryDto: AdjustInventoryDto,
+    @Request() _req: Express.Request & { user?: { id: string } },
   ) {
     return this.stockService.adjustQuantity(user, id, adjustInventoryDto);
   }
 
   @Patch(':id/reserve')
   @ApiOperation({ summary: 'Reserve inventory' })
-  reserve(
-    @Param('id') id: string,
-    @Body() body: { quantity: number },
-    @CurrentUser() user: User,
-  ) {
+  reserve(@Param('id') id: string, @Body() body: { quantity: number }, @CurrentUser() user: User) {
     return this.stockService.reserve(user, id, body.quantity);
   }
 
   @Patch(':id/release')
   @ApiOperation({ summary: 'Release reserved inventory' })
-  release(
-    @Param('id') id: string,
-    @Body() body: { quantity: number },
-    @CurrentUser() user: User,
-  ) {
+  release(@Param('id') id: string, @Body() body: { quantity: number }, @CurrentUser() user: User) {
     return this.stockService.release(user, id, body.quantity);
   }
 
   @Patch(':id/fulfill')
   @ApiOperation({ summary: 'Fulfill reservation' })
-  fulfill(
-    @Param('id') id: string,
-    @Body() body: { quantity: number },
-    @CurrentUser() user: User,
-  ) {
+  fulfill(@Param('id') id: string, @Body() body: { quantity: number }, @CurrentUser() user: User) {
     return this.stockService.fulfillReservation(user, id, body.quantity);
   }
 
@@ -149,7 +141,7 @@ export class StockController {
     @Param('id') id: string,
     @Body() body: { countedQuantity: number },
     @CurrentUser() user: User,
-    @Request() req: Express.Request & { user?: { id: string } },
+    @Request() _req: Express.Request & { user?: { id: string } },
   ) {
     return this.stockService.updateStockCount(user, id, body.countedQuantity);
   }

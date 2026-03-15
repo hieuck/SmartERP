@@ -1,7 +1,7 @@
 /**
  * ReportsController Integration Tests
  * Coverage target: 95%
- * 
+ *
  * Test cases:
  * 1. GET /accounting/reports/trial-balance - Get trial balance report
  * 2. GET /accounting/reports/general-ledger - Get general ledger report
@@ -80,12 +80,12 @@ describe('ReportsController (Integration)', () => {
       canActivate: jest.fn().mockImplementation((context) => {
         const request = context.switchToHttp().getRequest();
         const authHeader = request.headers.authorization;
-        
+
         if (authHeader && authHeader.startsWith('Bearer ')) {
           request.user = mockUser;
           return true;
         }
-        
+
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }),
     };
@@ -128,10 +128,7 @@ describe('ReportsController (Integration)', () => {
         .expect(200);
 
       expect(response.body).toEqual(mockTrialBalance);
-      expect(reportsService.getTrialBalance).toHaveBeenCalledWith(
-        mockUser,
-        expect.any(Date),
-      );
+      expect(reportsService.getTrialBalance).toHaveBeenCalledWith(mockUser, expect.any(Date));
     });
 
     it('should accept custom asOfDate parameter', async () => {
@@ -142,16 +139,11 @@ describe('ReportsController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(reportsService.getTrialBalance).toHaveBeenCalledWith(
-        mockUser,
-        new Date('2024-01-31'),
-      );
+      expect(reportsService.getTrialBalance).toHaveBeenCalledWith(mockUser, new Date('2024-01-31'));
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/accounting/reports/trial-balance')
-        .expect(401);
+      await request(app.getHttpServer()).get('/accounting/reports/trial-balance').expect(401);
     });
   });
 
@@ -160,7 +152,9 @@ describe('ReportsController (Integration)', () => {
       reportsService.getGeneralLedger.mockResolvedValue(mockGeneralLedger);
 
       const response = await request(app.getHttpServer())
-        .get('/accounting/reports/general-ledger?accountId=acc-1&startDate=2024-01-01&endDate=2024-01-31')
+        .get(
+          '/accounting/reports/general-ledger?accountId=acc-1&startDate=2024-01-01&endDate=2024-01-31',
+        )
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
@@ -246,7 +240,9 @@ describe('ReportsController (Integration)', () => {
       reportsService.getSalesSummary.mockResolvedValue({} as any);
 
       await request(app.getHttpServer())
-        .get('/accounting/reports/sales-summary?startDate=2024-01-01&endDate=2024-01-31&customerId=cust-123')
+        .get(
+          '/accounting/reports/sales-summary?startDate=2024-01-01&endDate=2024-01-31&customerId=cust-123',
+        )
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
@@ -311,7 +307,9 @@ describe('ReportsController (Integration)', () => {
       reportsService.getInventorySummary.mockResolvedValue(emptyInventorySummary);
 
       await request(app.getHttpServer())
-        .get('/accounting/reports/inventory-summary?productId=prod-1&categoryId=cat-1&lowStockOnly=true')
+        .get(
+          '/accounting/reports/inventory-summary?productId=prod-1&categoryId=cat-1&lowStockOnly=true',
+        )
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
@@ -358,11 +356,7 @@ describe('ReportsController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(reportsService.getInventoryValuation).toHaveBeenCalledWith(
-        mockUser,
-        'prod-1',
-        'wh-1',
-      );
+      expect(reportsService.getInventoryValuation).toHaveBeenCalledWith(mockUser, 'prod-1', 'wh-1');
     });
   });
 
@@ -406,7 +400,9 @@ describe('ReportsController (Integration)', () => {
       reportsService.getInventoryMovement.mockResolvedValue({} as any);
 
       await request(app.getHttpServer())
-        .get('/accounting/reports/inventory-movement?startDate=2024-01-01&endDate=2024-01-31&productId=prod-1&warehouseId=wh-1')
+        .get(
+          '/accounting/reports/inventory-movement?startDate=2024-01-01&endDate=2024-01-31&productId=prod-1&warehouseId=wh-1',
+        )
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 

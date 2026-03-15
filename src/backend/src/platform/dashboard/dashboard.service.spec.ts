@@ -9,7 +9,6 @@ import { Inventory } from '@/domains/inventory/stock/entities/inventory.entity';
 import { Payment } from '@/domains/accounting/payment/entities/payment.entity';
 import { CacheService } from '@/common/cache/cache.service';
 import { User } from '@/common/security/permission.service';
-import { ChartPeriod } from './dto';
 
 describe('DashboardService', () => {
   let service: DashboardService;
@@ -46,11 +45,26 @@ describe('DashboardService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         DashboardService,
-        { provide: getRepositoryToken(Order), useValue: { count: jest.fn(), createQueryBuilder: jest.fn() } },
-        { provide: getRepositoryToken(Product), useValue: { count: jest.fn(), createQueryBuilder: jest.fn() } },
-        { provide: getRepositoryToken(Customer), useValue: { count: jest.fn(), createQueryBuilder: jest.fn() } },
-        { provide: getRepositoryToken(Inventory), useValue: { count: jest.fn(), createQueryBuilder: jest.fn() } },
-        { provide: getRepositoryToken(Payment), useValue: { count: jest.fn(), createQueryBuilder: jest.fn() } },
+        {
+          provide: getRepositoryToken(Order),
+          useValue: { count: jest.fn(), createQueryBuilder: jest.fn() },
+        },
+        {
+          provide: getRepositoryToken(Product),
+          useValue: { count: jest.fn(), createQueryBuilder: jest.fn() },
+        },
+        {
+          provide: getRepositoryToken(Customer),
+          useValue: { count: jest.fn(), createQueryBuilder: jest.fn() },
+        },
+        {
+          provide: getRepositoryToken(Inventory),
+          useValue: { count: jest.fn(), createQueryBuilder: jest.fn() },
+        },
+        {
+          provide: getRepositoryToken(Payment),
+          useValue: { count: jest.fn(), createQueryBuilder: jest.fn() },
+        },
         { provide: CacheService, useValue: { getOrSet: jest.fn() } },
       ],
     }).compile();
@@ -67,13 +81,13 @@ describe('DashboardService', () => {
   describe('getOverview', () => {
     it('should return dashboard overview', async () => {
       cacheService.getOrSet.mockImplementation(async (key, fn) => fn());
-      
+
       const qb = createQueryBuilder();
       qb.getRawOne.mockResolvedValue({ total: '10000' });
       qb.getCount.mockResolvedValue(5);
       orderRepository.createQueryBuilder.mockReturnValue(qb as any);
       orderRepository.count.mockResolvedValue(10);
-      
+
       productRepository.count.mockResolvedValue(50);
       customerRepository.count.mockResolvedValue(20);
       customerRepository.createQueryBuilder.mockReturnValue(qb as any);
@@ -95,7 +109,7 @@ describe('DashboardService', () => {
   describe('getSalesChart', () => {
     it('should return sales chart data', async () => {
       cacheService.getOrSet.mockImplementation(async (key, fn) => fn());
-      
+
       const qb = createQueryBuilder();
       qb.getRawMany.mockResolvedValue([
         { date: '2024-01-01', revenue: '1000', orders: '5' },
@@ -114,7 +128,7 @@ describe('DashboardService', () => {
   describe('getTopProducts', () => {
     it('should return top products', async () => {
       cacheService.getOrSet.mockImplementation(async (key, fn) => fn());
-      
+
       const qb = createQueryBuilder();
       qb.getMany.mockResolvedValue([
         { id: 'prod-1', name: 'Product 1' },
@@ -132,7 +146,7 @@ describe('DashboardService', () => {
   describe('getTopCustomers', () => {
     it('should return top customers', async () => {
       cacheService.getOrSet.mockImplementation(async (key, fn) => fn());
-      
+
       const qb = createQueryBuilder();
       qb.getRawMany.mockResolvedValue([
         { id: 'cust-1', name: 'Customer 1', totalSpent: '5000', orderCount: '10' },
@@ -149,10 +163,17 @@ describe('DashboardService', () => {
   describe('getRecentOrders', () => {
     it('should return recent orders', async () => {
       cacheService.getOrSet.mockImplementation(async (key, fn) => fn());
-      
+
       const qb = createQueryBuilder();
       qb.getMany.mockResolvedValue([
-        { id: 'order-1', orderNumber: 'ORD-001', totalAmount: 1000, status: 'completed', createdAt: new Date(), customer: { name: 'Customer 1' } },
+        {
+          id: 'order-1',
+          orderNumber: 'ORD-001',
+          totalAmount: 1000,
+          status: 'completed',
+          createdAt: new Date(),
+          customer: { name: 'Customer 1' },
+        },
       ]);
       orderRepository.createQueryBuilder.mockReturnValue(qb as any);
 
@@ -166,10 +187,15 @@ describe('DashboardService', () => {
   describe('getLowStockProducts', () => {
     it('should return low stock products', async () => {
       cacheService.getOrSet.mockImplementation(async (key, fn) => fn());
-      
+
       const qb = createQueryBuilder();
       qb.getMany.mockResolvedValue([
-        { id: 'inv-1', quantity: 5, reorderPoint: 10, product: { id: 'prod-1', name: 'Product 1', sku: 'SKU-001' } },
+        {
+          id: 'inv-1',
+          quantity: 5,
+          reorderPoint: 10,
+          product: { id: 'prod-1', name: 'Product 1', sku: 'SKU-001' },
+        },
       ]);
       inventoryRepository.createQueryBuilder.mockReturnValue(qb as any);
 

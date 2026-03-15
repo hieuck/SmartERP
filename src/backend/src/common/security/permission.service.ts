@@ -14,7 +14,7 @@ export interface BaseRecord {
 
 @Injectable()
 export class PermissionService {
-  canRead(user: User, record: BaseRecord, entityName: string): boolean {
+  canRead(user: User, record: BaseRecord, _entityName: string): boolean {
     if (user.tenantId !== record.tenantId) {
       return false;
     }
@@ -30,7 +30,7 @@ export class PermissionService {
     return record.createdBy === user.id;
   }
 
-  canWrite(user: User, record: BaseRecord, entityName: string): boolean {
+  canWrite(user: User, record: BaseRecord, _entityName: string): boolean {
     if (user.tenantId !== record.tenantId) {
       return false;
     }
@@ -46,7 +46,7 @@ export class PermissionService {
     return record.createdBy === user.id;
   }
 
-  canDelete(user: User, record: BaseRecord, entityName: string): boolean {
+  canDelete(user: User, record: BaseRecord, _entityName: string): boolean {
     if (user.tenantId !== record.tenantId) {
       return false;
     }
@@ -57,7 +57,7 @@ export class PermissionService {
   buildSecureQuery(
     user: User,
     baseWhere: { [key: string]: any },
-    entityName: string,
+    _entityName: string,
   ): { [key: string]: any } {
     const secureWhere = { ...baseWhere };
     secureWhere.tenantId = user.tenantId;

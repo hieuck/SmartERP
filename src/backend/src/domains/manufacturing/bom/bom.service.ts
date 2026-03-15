@@ -20,7 +20,7 @@ export class BOMService {
 
   async create(tenantId: string, dto: CreateBOMDto): Promise<BOM> {
     const reference = await this.generateReference(tenantId);
-    
+
     const bom = this.bomRepository.create({
       tenantId,
       reference,
@@ -106,7 +106,7 @@ export class BOMService {
 
   async removeLine(tenantId: string, bomId: string, lineId: string): Promise<void> {
     const bom = await this.findOne(tenantId, bomId);
-    
+
     const line = await this.bomLineRepository.findOne({
       where: { id: lineId, bomId: bom.id, tenantId },
     });

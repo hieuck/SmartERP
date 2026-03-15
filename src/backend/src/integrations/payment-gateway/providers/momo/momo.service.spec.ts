@@ -324,10 +324,10 @@ describe('MomoService', () => {
 
     it('should generate unique requestId for each refund', async () => {
       const result1 = await service.refundTransaction('ORDER-123', 'TRANS-123', 50000, 'Reason 1');
-      
+
       // Wait 1ms to ensure different timestamp
-      await new Promise(resolve => setTimeout(resolve, 1));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1));
+
       const result2 = await service.refundTransaction('ORDER-123', 'TRANS-123', 50000, 'Reason 2');
 
       expect(result1.requestId).not.toBe(result2.requestId);

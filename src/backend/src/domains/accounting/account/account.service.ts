@@ -30,21 +30,13 @@ export class AccountService {
     private readonly permissionService: PermissionService,
   ) {
     // Initialize secure repositories
-    this.secureAccountRepo = new SecureRepository(
-      accountRepository,
-      permissionService,
-      'Account',
-    );
+    this.secureAccountRepo = new SecureRepository(accountRepository, permissionService, 'Account');
     this.secureJournalRepo = new SecureRepository(
       journalEntryRepository,
       permissionService,
       'JournalEntry',
     );
-    this.secureInvoiceRepo = new SecureRepository(
-      invoiceRepository,
-      permissionService,
-      'Invoice',
-    );
+    this.secureInvoiceRepo = new SecureRepository(invoiceRepository, permissionService, 'Invoice');
   }
 
   // ==================== CHART OF ACCOUNTS ====================
@@ -80,7 +72,7 @@ export class AccountService {
   async updateAccount(user: User, id: string, data: Partial<Account>): Promise<Account> {
     const account = await this.findAccountById(user, id);
     Object.assign(account, data);
-    
+
     const updated = await this.secureAccountRepo.save(user, account);
 
     // Invalidate cache
@@ -103,35 +95,125 @@ export class AccountService {
     const coaTemplate = [
       // Assets (1000-1999)
       { code: '1000', name: 'Assets', type: AccountType.ASSET, isGroup: true, parentId: null },
-      { code: '1100', name: 'Current Assets', type: AccountType.ASSET, isGroup: true, parentCode: '1000' },
+      {
+        code: '1100',
+        name: 'Current Assets',
+        type: AccountType.ASSET,
+        isGroup: true,
+        parentCode: '1000',
+      },
       { code: '1110', name: 'Cash', type: AccountType.ASSET, isGroup: false, parentCode: '1100' },
       { code: '1120', name: 'Bank', type: AccountType.ASSET, isGroup: false, parentCode: '1100' },
-      { code: '1130', name: 'Accounts Receivable', type: AccountType.ASSET, isGroup: false, parentCode: '1100' },
-      { code: '1140', name: 'Inventory', type: AccountType.ASSET, isGroup: false, parentCode: '1100' },
+      {
+        code: '1130',
+        name: 'Accounts Receivable',
+        type: AccountType.ASSET,
+        isGroup: false,
+        parentCode: '1100',
+      },
+      {
+        code: '1140',
+        name: 'Inventory',
+        type: AccountType.ASSET,
+        isGroup: false,
+        parentCode: '1100',
+      },
 
       // Liabilities (2000-2999)
-      { code: '2000', name: 'Liabilities', type: AccountType.LIABILITY, isGroup: true, parentId: null },
-      { code: '2100', name: 'Current Liabilities', type: AccountType.LIABILITY, isGroup: true, parentCode: '2000' },
-      { code: '2110', name: 'Accounts Payable', type: AccountType.LIABILITY, isGroup: false, parentCode: '2100' },
-      { code: '2120', name: 'Tax Payable', type: AccountType.LIABILITY, isGroup: false, parentCode: '2100' },
+      {
+        code: '2000',
+        name: 'Liabilities',
+        type: AccountType.LIABILITY,
+        isGroup: true,
+        parentId: null,
+      },
+      {
+        code: '2100',
+        name: 'Current Liabilities',
+        type: AccountType.LIABILITY,
+        isGroup: true,
+        parentCode: '2000',
+      },
+      {
+        code: '2110',
+        name: 'Accounts Payable',
+        type: AccountType.LIABILITY,
+        isGroup: false,
+        parentCode: '2100',
+      },
+      {
+        code: '2120',
+        name: 'Tax Payable',
+        type: AccountType.LIABILITY,
+        isGroup: false,
+        parentCode: '2100',
+      },
 
       // Equity (3000-3999)
       { code: '3000', name: 'Equity', type: AccountType.EQUITY, isGroup: true, parentId: null },
-      { code: '3100', name: 'Capital', type: AccountType.EQUITY, isGroup: false, parentCode: '3000' },
-      { code: '3200', name: 'Retained Earnings', type: AccountType.EQUITY, isGroup: false, parentCode: '3000' },
+      {
+        code: '3100',
+        name: 'Capital',
+        type: AccountType.EQUITY,
+        isGroup: false,
+        parentCode: '3000',
+      },
+      {
+        code: '3200',
+        name: 'Retained Earnings',
+        type: AccountType.EQUITY,
+        isGroup: false,
+        parentCode: '3000',
+      },
 
       // Income (4000-4999)
       { code: '4000', name: 'Income', type: AccountType.INCOME, isGroup: true, parentId: null },
-      { code: '4100', name: 'Sales Revenue', type: AccountType.INCOME, isGroup: false, parentCode: '4000' },
-      { code: '4200', name: 'Service Revenue', type: AccountType.INCOME, isGroup: false, parentCode: '4000' },
+      {
+        code: '4100',
+        name: 'Sales Revenue',
+        type: AccountType.INCOME,
+        isGroup: false,
+        parentCode: '4000',
+      },
+      {
+        code: '4200',
+        name: 'Service Revenue',
+        type: AccountType.INCOME,
+        isGroup: false,
+        parentCode: '4000',
+      },
 
       // Expenses (5000-5999)
       { code: '5000', name: 'Expenses', type: AccountType.EXPENSE, isGroup: true, parentId: null },
-      { code: '5100', name: 'Cost of Goods Sold', type: AccountType.EXPENSE, isGroup: false, parentCode: '5000' },
-      { code: '5200', name: 'Operating Expenses', type: AccountType.EXPENSE, isGroup: true, parentCode: '5000' },
-      { code: '5210', name: 'Salaries', type: AccountType.EXPENSE, isGroup: false, parentCode: '5200' },
+      {
+        code: '5100',
+        name: 'Cost of Goods Sold',
+        type: AccountType.EXPENSE,
+        isGroup: false,
+        parentCode: '5000',
+      },
+      {
+        code: '5200',
+        name: 'Operating Expenses',
+        type: AccountType.EXPENSE,
+        isGroup: true,
+        parentCode: '5000',
+      },
+      {
+        code: '5210',
+        name: 'Salaries',
+        type: AccountType.EXPENSE,
+        isGroup: false,
+        parentCode: '5200',
+      },
       { code: '5220', name: 'Rent', type: AccountType.EXPENSE, isGroup: false, parentCode: '5200' },
-      { code: '5230', name: 'Utilities', type: AccountType.EXPENSE, isGroup: false, parentCode: '5200' },
+      {
+        code: '5230',
+        name: 'Utilities',
+        type: AccountType.EXPENSE,
+        isGroup: false,
+        parentCode: '5200',
+      },
     ];
 
     // Create accounts with parent relationships
@@ -357,7 +439,7 @@ export class AccountService {
   async updateInvoice(user: User, id: string, data: Partial<Invoice>): Promise<Invoice> {
     const invoice = await this.findInvoiceById(user, id);
     Object.assign(invoice, data);
-    
+
     const updated = await this.secureInvoiceRepo.save(user, invoice);
 
     // Invalidate cache

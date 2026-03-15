@@ -1,13 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  Patch,
-  Delete,
-  Request,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Patch, Delete, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { BOMService } from './bom.service';
 import { CreateBOMDto } from './dto/create-bom.dto';
@@ -56,11 +47,7 @@ export class BOMController {
   @Roles('manager', 'admin', 'production_manager')
   @ApiOperation({ summary: 'Update BOM' })
   @ApiResponse({ status: 200, description: 'BOM updated successfully' })
-  async update(
-    @Param('id') id: string,
-    @Body() dto: UpdateBOMDto,
-    @Request() req,
-  ) {
+  async update(@Param('id') id: string, @Body() dto: UpdateBOMDto, @Request() req) {
     return this.bomService.update(req.user.tenantId, id, dto);
   }
 
@@ -68,11 +55,7 @@ export class BOMController {
   @Roles('manager', 'admin', 'production_manager')
   @ApiOperation({ summary: 'Add line to BOM' })
   @ApiResponse({ status: 201, description: 'BOM line added successfully' })
-  async addLine(
-    @Param('id') id: string,
-    @Body() dto: AddBOMLineDto,
-    @Request() req,
-  ) {
+  async addLine(@Param('id') id: string, @Body() dto: AddBOMLineDto, @Request() req) {
     return this.bomService.addLine(req.user.tenantId, id, dto);
   }
 
@@ -80,11 +63,7 @@ export class BOMController {
   @Roles('manager', 'admin', 'production_manager')
   @ApiOperation({ summary: 'Remove line from BOM' })
   @ApiResponse({ status: 200, description: 'BOM line removed successfully' })
-  async removeLine(
-    @Param('bomId') bomId: string,
-    @Param('lineId') lineId: string,
-    @Request() req,
-  ) {
+  async removeLine(@Param('bomId') bomId: string, @Param('lineId') lineId: string, @Request() req) {
     return this.bomService.removeLine(req.user.tenantId, bomId, lineId);
   }
 

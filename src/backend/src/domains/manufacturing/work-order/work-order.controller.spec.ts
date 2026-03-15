@@ -1,7 +1,7 @@
 /**
  * WorkOrderController Integration Tests
  * Coverage target: 95%
- * 
+ *
  * Test cases:
  * 1. POST /manufacturing/work-orders - Create work order
  * 2. GET /manufacturing/work-orders/:id - Get work order by ID
@@ -73,12 +73,12 @@ describe('WorkOrderController (Integration)', () => {
       canActivate: jest.fn().mockImplementation((context) => {
         const request = context.switchToHttp().getRequest();
         const authHeader = request.headers.authorization;
-        
+
         if (authHeader && authHeader.startsWith('Bearer ')) {
           request.user = mockUser;
           return true;
         }
-        
+
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }),
     };
@@ -221,10 +221,12 @@ describe('WorkOrderController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual(expect.objectContaining({
-        id: 'wo-123',
-        code: 'WO-001',
-      }));
+      expect(response.body).toEqual(
+        expect.objectContaining({
+          id: 'wo-123',
+          code: 'WO-001',
+        }),
+      );
       expect(workOrderService.findOne).toHaveBeenCalledWith('tenant-123', 'wo-123');
     });
 
@@ -240,9 +242,7 @@ describe('WorkOrderController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/manufacturing/work-orders/wo-123')
-        .expect(401);
+      await request(app.getHttpServer()).get('/manufacturing/work-orders/wo-123').expect(401);
     });
   });
 
@@ -283,7 +283,10 @@ describe('WorkOrderController (Integration)', () => {
         .expect(200);
 
       expect(response.body).toEqual(workOrders);
-      expect(workOrderService.findByStatus).toHaveBeenCalledWith('tenant-123', WorkOrderStatus.DRAFT);
+      expect(workOrderService.findByStatus).toHaveBeenCalledWith(
+        'tenant-123',
+        WorkOrderStatus.DRAFT,
+      );
     });
 
     it('should return empty array for status with no work orders', async () => {
@@ -451,7 +454,10 @@ describe('WorkOrderController (Integration)', () => {
 
     it('should validate produced quantity does not exceed planned', async () => {
       workOrderService.finish.mockRejectedValue(
-        new HttpException('Produced quantity cannot exceed planned quantity', HttpStatus.BAD_REQUEST),
+        new HttpException(
+          'Produced quantity cannot exceed planned quantity',
+          HttpStatus.BAD_REQUEST,
+        ),
       );
 
       await request(app.getHttpServer())

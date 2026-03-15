@@ -41,7 +41,9 @@ describe('CacheWarmingService', () => {
 
   describe('onModuleInit', () => {
     it('should start cache warming on module init', async () => {
-      const warmAllCachesSpy = jest.spyOn(service as any, 'warmAllCaches').mockResolvedValue(undefined);
+      const warmAllCachesSpy = jest
+        .spyOn(service as any, 'warmAllCaches')
+        .mockResolvedValue(undefined);
 
       await service.onModuleInit();
 
@@ -52,7 +54,9 @@ describe('CacheWarmingService', () => {
 
     it('should schedule periodic warming', async () => {
       jest.useFakeTimers();
-      const warmAllCachesSpy = jest.spyOn(service as any, 'warmAllCaches').mockResolvedValue(undefined);
+      const warmAllCachesSpy = jest
+        .spyOn(service as any, 'warmAllCaches')
+        .mockResolvedValue(undefined);
 
       await service.onModuleInit();
 
@@ -72,15 +76,24 @@ describe('CacheWarmingService', () => {
 
       await service.onModuleInit();
 
-      expect(Logger.prototype.error).toHaveBeenCalledWith('Cache warming failed:', expect.any(Error));
+      expect(Logger.prototype.error).toHaveBeenCalledWith(
+        'Cache warming failed:',
+        expect.any(Error),
+      );
     });
   });
 
   describe('warmAllCaches', () => {
     it('should warm all cache types', async () => {
-      const warmSettingsSpy = jest.spyOn(service as any, 'warmSettingsCache').mockResolvedValue(undefined);
-      const warmCategoriesSpy = jest.spyOn(service as any, 'warmCategoriesCache').mockResolvedValue(undefined);
-      const warmDashboardSpy = jest.spyOn(service as any, 'warmDashboardCache').mockResolvedValue(undefined);
+      const warmSettingsSpy = jest
+        .spyOn(service as any, 'warmSettingsCache')
+        .mockResolvedValue(undefined);
+      const warmCategoriesSpy = jest
+        .spyOn(service as any, 'warmCategoriesCache')
+        .mockResolvedValue(undefined);
+      const warmDashboardSpy = jest
+        .spyOn(service as any, 'warmDashboardCache')
+        .mockResolvedValue(undefined);
 
       await service['warmAllCaches']();
 
@@ -105,13 +118,22 @@ describe('CacheWarmingService', () => {
 
       await service['warmAllCaches']();
 
-      expect(Logger.prototype.error).toHaveBeenCalledWith('Cache warming failed:', expect.any(Error));
+      expect(Logger.prototype.error).toHaveBeenCalledWith(
+        'Cache warming failed:',
+        expect.any(Error),
+      );
     });
 
     it('should continue warming even if one cache fails', async () => {
-      jest.spyOn(service as any, 'warmSettingsCache').mockRejectedValue(new Error('Settings error'));
-      const warmCategoriesSpy = jest.spyOn(service as any, 'warmCategoriesCache').mockResolvedValue(undefined);
-      const warmDashboardSpy = jest.spyOn(service as any, 'warmDashboardCache').mockResolvedValue(undefined);
+      jest
+        .spyOn(service as any, 'warmSettingsCache')
+        .mockRejectedValue(new Error('Settings error'));
+      const warmCategoriesSpy = jest
+        .spyOn(service as any, 'warmCategoriesCache')
+        .mockResolvedValue(undefined);
+      const warmDashboardSpy = jest
+        .spyOn(service as any, 'warmDashboardCache')
+        .mockResolvedValue(undefined);
 
       await service['warmAllCaches']();
 
@@ -131,7 +153,9 @@ describe('CacheWarmingService', () => {
 
     it('should handle errors', async () => {
       jest.spyOn(Logger.prototype, 'error');
-      jest.spyOn(service as any, 'warmSettingsCache').mockRejectedValue(new Error('Settings error'));
+      jest
+        .spyOn(service as any, 'warmSettingsCache')
+        .mockRejectedValue(new Error('Settings error'));
 
       await expect(service['warmSettingsCache']()).rejects.toThrow('Settings error');
     });
@@ -148,7 +172,9 @@ describe('CacheWarmingService', () => {
 
     it('should handle errors', async () => {
       jest.spyOn(Logger.prototype, 'error');
-      jest.spyOn(service as any, 'warmCategoriesCache').mockRejectedValue(new Error('Categories error'));
+      jest
+        .spyOn(service as any, 'warmCategoriesCache')
+        .mockRejectedValue(new Error('Categories error'));
 
       await expect(service['warmCategoriesCache']()).rejects.toThrow('Categories error');
     });
@@ -165,7 +191,9 @@ describe('CacheWarmingService', () => {
 
     it('should handle errors', async () => {
       jest.spyOn(Logger.prototype, 'error');
-      jest.spyOn(service as any, 'warmDashboardCache').mockRejectedValue(new Error('Dashboard error'));
+      jest
+        .spyOn(service as any, 'warmDashboardCache')
+        .mockRejectedValue(new Error('Dashboard error'));
 
       await expect(service['warmDashboardCache']()).rejects.toThrow('Dashboard error');
     });
@@ -173,9 +201,15 @@ describe('CacheWarmingService', () => {
 
   describe('warmTenantCache', () => {
     it('should warm cache for specific tenant', async () => {
-      const warmTenantSettingsSpy = jest.spyOn(service as any, 'warmTenantSettings').mockResolvedValue(undefined);
-      const warmTenantDashboardSpy = jest.spyOn(service as any, 'warmTenantDashboard').mockResolvedValue(undefined);
-      const warmTenantProductsSpy = jest.spyOn(service as any, 'warmTenantProducts').mockResolvedValue(undefined);
+      const warmTenantSettingsSpy = jest
+        .spyOn(service as any, 'warmTenantSettings')
+        .mockResolvedValue(undefined);
+      const warmTenantDashboardSpy = jest
+        .spyOn(service as any, 'warmTenantDashboard')
+        .mockResolvedValue(undefined);
+      const warmTenantProductsSpy = jest
+        .spyOn(service as any, 'warmTenantProducts')
+        .mockResolvedValue(undefined);
 
       await service.warmTenantCache('tenant-1');
 
@@ -273,7 +307,9 @@ describe('CacheWarmingService', () => {
 
   describe('Edge Cases', () => {
     it('should handle multiple onModuleInit calls', async () => {
-      const warmAllCachesSpy = jest.spyOn(service as any, 'warmAllCaches').mockResolvedValue(undefined);
+      const warmAllCachesSpy = jest
+        .spyOn(service as any, 'warmAllCaches')
+        .mockResolvedValue(undefined);
 
       await service.onModuleInit();
       await service.onModuleInit();

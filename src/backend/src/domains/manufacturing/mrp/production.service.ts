@@ -567,9 +567,7 @@ export class ProductionService {
     }
 
     const totalChecks = filteredChecks.length;
-    const passedChecks = filteredChecks.filter(
-      (c) => c.result === QualityCheckResult.PASS,
-    ).length;
+    const passedChecks = filteredChecks.filter((c) => c.result === QualityCheckResult.PASS).length;
     const failedChecks = filteredChecks.filter(
       (c) => c.result === QualityCheckResult.FAILED,
     ).length;

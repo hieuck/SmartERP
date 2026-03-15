@@ -10,13 +10,7 @@ import { CannedResponse } from './entities/canned-response.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([
-      Ticket,
-      SLA,
-      AssignmentRule,
-      KnowledgeBaseArticle,
-      CannedResponse,
-    ]),
+    TypeOrmModule.forFeature([Ticket, SLA, AssignmentRule, KnowledgeBaseArticle, CannedResponse]),
   ],
   controllers: [SupportController],
   providers: [SupportService],

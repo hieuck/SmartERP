@@ -83,9 +83,7 @@ export class AttendanceService {
     }
 
     if (attendance.checkOut) {
-      throw new BadRequestException(
-        `Employee already checked out at ${attendance.checkOut}`,
-      );
+      throw new BadRequestException(`Employee already checked out at ${attendance.checkOut}`);
     }
 
     // Update check-out time (hours will be auto-calculated by entity hook)
@@ -133,10 +131,7 @@ export class AttendanceService {
       tenantId,
     );
 
-    const totalHours = attendances.reduce(
-      (sum, att) => sum + Number(att.hoursWorked || 0),
-      0,
-    );
+    const totalHours = attendances.reduce((sum, att) => sum + Number(att.hoursWorked || 0), 0);
     const totalDays = attendances.length;
     const averageHours = totalDays > 0 ? Math.round((totalHours / totalDays) * 100) / 100 : 0;
 

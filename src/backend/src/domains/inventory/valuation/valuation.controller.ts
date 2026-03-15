@@ -1,19 +1,10 @@
-import {
-  Controller,
-  Post,
-  Get,
-  Body,
-  Param,
-  UseGuards,
-  Request,
-} from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { ValuationService } from './valuation.service';
 import { CalculateFIFODto } from './dto/calculate-fifo.dto';
 import { AddStockValuationDto } from './dto/add-stock-valuation.dto';
 import { Roles } from '../../../common/decorators/roles.decorator';
 
-import { User } from '@/common/security/permission.service';
 @ApiTags('Stock Valuation')
 @ApiBearerAuth()
 @Controller('inventory/valuation')
@@ -24,20 +15,13 @@ export class ValuationController {
   @Roles('manager', 'admin', 'warehouse_manager', 'accountant')
   @ApiOperation({ summary: 'Calculate FIFO cost for a quantity' })
   async calculateFIFO(@Body() dto: CalculateFIFODto) {
-    return this.valuationService.calculateFIFO(
-      dto.productId,
-      dto.warehouseId,
-      dto.quantity,
-    );
+    return this.valuationService.calculateFIFO(dto.productId, dto.warehouseId, dto.quantity);
   }
 
   @Post('add')
   @Roles('manager', 'admin', 'warehouse_manager')
   @ApiOperation({ summary: 'Add stock valuation (when stock is received)' })
-  async addStockValuation(
-    @Body() dto: AddStockValuationDto,
-    @Request() req: any,
-  ) {
+  async addStockValuation(@Body() dto: AddStockValuationDto, @Request() req: any) {
     return this.valuationService.addStockValuation(
       dto.productId,
       dto.warehouseId,
@@ -56,10 +40,7 @@ export class ValuationController {
     @Param('productId') productId: string,
     @Param('warehouseId') warehouseId: string,
   ) {
-    const avgCost = await this.valuationService.getAverageCost(
-      productId,
-      warehouseId,
-    );
+    const avgCost = await this.valuationService.getAverageCost(productId, warehouseId);
     return { productId, warehouseId, averageCost: avgCost };
   }
 

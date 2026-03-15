@@ -5,7 +5,6 @@ import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User as UserEntity } from '../../user/entities/user.entity';
-import { User } from '@/common/security/permission.service';
 
 interface JwtPayload {
   sub: string;

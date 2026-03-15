@@ -1,10 +1,4 @@
-import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
-  Inject,
-} from '@nestjs/common';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Inject } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { Observable, of } from 'rxjs';
@@ -13,15 +7,15 @@ import { Reflector } from '@nestjs/core';
 
 /**
  * Cache Interceptor
- * 
+ *
  * Automatically caches GET requests and returns cached responses
- * 
+ *
  * Features:
  * - Only caches GET requests
  * - Respects custom TTL from @CacheTTL decorator
  * - Generates cache keys from URL + query params + user ID
  * - Skips caching for non-200 responses
- * 
+ *
  * Usage:
  * ```typescript
  * @UseInterceptors(CacheInterceptor)
@@ -39,10 +33,7 @@ export class CacheInterceptor implements NestInterceptor {
     private reflector: Reflector,
   ) {}
 
-  async intercept(
-    context: ExecutionContext,
-    next: CallHandler,
-  ): Promise<Observable<any>> {
+  async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
     const request = context.switchToHttp().getRequest();
     const method = request.method;
 
@@ -77,7 +68,7 @@ export class CacheInterceptor implements NestInterceptor {
 
   /**
    * Generate cache key from request
-   * 
+   *
    * Format: {method}:{path}:{queryString}:{userId}
    * Example: GET:/api/products:category=electronics:user123
    */

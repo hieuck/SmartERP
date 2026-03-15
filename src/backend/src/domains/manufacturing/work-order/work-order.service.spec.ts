@@ -149,9 +149,7 @@ describe('WorkOrderService', () => {
     it('should throw NotFoundException when work order not found', async () => {
       repository.findOne.mockResolvedValue(null);
 
-      await expect(service.findOne(tenantId, 'invalid-id')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.findOne(tenantId, 'invalid-id')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -199,17 +197,13 @@ describe('WorkOrderService', () => {
       const readyWorkOrder = { ...mockWorkOrder, status: WorkOrderStatus.READY };
       repository.findOne.mockResolvedValue(readyWorkOrder as WorkOrder);
 
-      await expect(service.confirm(tenantId, workOrderId)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.confirm(tenantId, workOrderId)).rejects.toThrow(BadRequestException);
     });
 
     it('should throw NotFoundException when work order not found', async () => {
       repository.findOne.mockResolvedValue(null);
 
-      await expect(service.confirm(tenantId, 'invalid-id')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.confirm(tenantId, 'invalid-id')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -239,17 +233,13 @@ describe('WorkOrderService', () => {
       const draftWorkOrder = { ...mockWorkOrder, status: WorkOrderStatus.DRAFT };
       repository.findOne.mockResolvedValue(draftWorkOrder as WorkOrder);
 
-      await expect(service.start(tenantId, workOrderId)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.start(tenantId, workOrderId)).rejects.toThrow(BadRequestException);
     });
 
     it('should throw NotFoundException when work order not found', async () => {
       repository.findOne.mockResolvedValue(null);
 
-      await expect(service.start(tenantId, 'invalid-id')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.start(tenantId, 'invalid-id')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -285,17 +275,13 @@ describe('WorkOrderService', () => {
       const readyWorkOrder = { ...mockWorkOrder, status: WorkOrderStatus.READY };
       repository.findOne.mockResolvedValue(readyWorkOrder as WorkOrder);
 
-      await expect(service.finish(tenantId, workOrderId, 100)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.finish(tenantId, workOrderId, 100)).rejects.toThrow(BadRequestException);
     });
 
     it('should throw NotFoundException when work order not found', async () => {
       repository.findOne.mockResolvedValue(null);
 
-      await expect(service.finish(tenantId, 'invalid-id', 100)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.finish(tenantId, 'invalid-id', 100)).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -331,17 +317,13 @@ describe('WorkOrderService', () => {
       const completedWorkOrder = { ...mockWorkOrder, status: WorkOrderStatus.COMPLETED };
       repository.findOne.mockResolvedValue(completedWorkOrder as WorkOrder);
 
-      await expect(service.cancel(tenantId, workOrderId)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.cancel(tenantId, workOrderId)).rejects.toThrow(BadRequestException);
     });
 
     it('should throw NotFoundException when work order not found', async () => {
       repository.findOne.mockResolvedValue(null);
 
-      await expect(service.cancel(tenantId, 'invalid-id')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.cancel(tenantId, 'invalid-id')).rejects.toThrow(NotFoundException);
     });
   });
 

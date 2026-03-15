@@ -4,7 +4,6 @@ import { Response } from 'express';
 import { randomBytes } from 'crypto';
 import { SkipCsrf } from './skip-csrf.decorator';
 
-import { User } from '@/common/security/permission.service';
 /**
  * CSRF Token Controller
  *

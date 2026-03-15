@@ -6,13 +6,13 @@ import type { RedisClientOptions } from 'redis';
 
 /**
  * Redis Cache Configuration
- * 
+ *
  * Features:
  * - Redis-based caching for high performance
  * - Configurable TTL (Time To Live)
  * - Connection pooling
  * - Error handling with fallback
- * 
+ *
  * Environment Variables:
  * - REDIS_HOST: Redis server host (default: localhost)
  * - REDIS_PORT: Redis server port (default: 6379)
@@ -66,7 +66,7 @@ export const getCacheConfig = async (
 
 /**
  * Cache Key Prefixes
- * 
+ *
  * Use these prefixes to organize cache keys by domain
  */
 export const CacheKeyPrefix = {
@@ -81,7 +81,7 @@ export const CacheKeyPrefix = {
 
 /**
  * Cache TTL Constants (in seconds)
- * 
+ *
  * Different data types have different cache durations
  */
 export const CacheTTL = {

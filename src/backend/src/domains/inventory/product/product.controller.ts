@@ -30,8 +30,9 @@ export class ProductController {
   @Post()
   @ApiOperation({ summary: 'Create product' })
   create(
-    @CurrentUser() user: User, @Body() createProductDto: CreateProductDto,
-    @Request() req: Express.Request & { user?: { id: string } },
+    @CurrentUser() user: User,
+    @Body() createProductDto: CreateProductDto,
+    @Request() _req: Express.Request & { user?: { id: string } },
   ) {
     return this.productService.create(user, createProductDto);
   }
@@ -99,8 +100,9 @@ export class ProductController {
   @ApiOperation({ summary: 'Update product' })
   update(
     @Param('id') id: string,
-    @CurrentUser() user: User, @Body() updateProductDto: UpdateProductDto,
-    @Request() req: Express.Request & { user?: { id: string } },
+    @CurrentUser() user: User,
+    @Body() updateProductDto: UpdateProductDto,
+    @Request() _req: Express.Request & { user?: { id: string } },
   ) {
     return this.productService.update(user, id, updateProductDto);
   }
@@ -109,8 +111,9 @@ export class ProductController {
   @ApiOperation({ summary: 'Partially update product' })
   partialUpdate(
     @Param('id') id: string,
-    @CurrentUser() user: User, @Body() updateProductDto: UpdateProductDto,
-    @Request() req: Express.Request & { user?: { id: string } },
+    @CurrentUser() user: User,
+    @Body() updateProductDto: UpdateProductDto,
+    @Request() _req: Express.Request & { user?: { id: string } },
   ) {
     return this.productService.update(user, id, updateProductDto);
   }

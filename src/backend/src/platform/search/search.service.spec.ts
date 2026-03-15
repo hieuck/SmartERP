@@ -299,10 +299,9 @@ describe('SearchService', () => {
 
       await service.search(mockUser, 'test@#$%');
 
-      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
-        expect.any(String),
-        { query: '%test@#$%%' },
-      );
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(expect.any(String), {
+        query: '%test@#$%%',
+      });
     });
   });
 
@@ -372,9 +371,7 @@ describe('SearchService', () => {
     });
 
     it('should return empty array when no results match type', async () => {
-      const allResults = [
-        { type: 'product', id: 'product-1', title: 'Product', description: '' },
-      ];
+      const allResults = [{ type: 'product', id: 'product-1', title: 'Product', description: '' }];
 
       cacheService.getOrSet.mockImplementation(async (key, fn) => {
         if (key.includes('type:customer')) {

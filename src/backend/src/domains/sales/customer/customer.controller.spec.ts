@@ -1,7 +1,7 @@
 /**
  * CustomerController Integration Tests
  * Coverage target: 95%
- * 
+ *
  * Test cases:
  * 1. GET /customers - Get all customers
  * 2. GET /customers/search - Search customers
@@ -76,12 +76,12 @@ describe('CustomerController (Integration)', () => {
       canActivate: jest.fn().mockImplementation((context) => {
         const request = context.switchToHttp().getRequest();
         const authHeader = request.headers.authorization;
-        
+
         if (authHeader && authHeader.startsWith('Bearer ')) {
           request.user = mockUser;
           return true;
         }
-        
+
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }),
     };
@@ -144,9 +144,7 @@ describe('CustomerController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/customers')
-        .expect(401);
+      await request(app.getHttpServer()).get('/customers').expect(401);
     });
 
     it('should require tenant context', async () => {
@@ -582,7 +580,11 @@ describe('CustomerController (Integration)', () => {
         .expect(200);
 
       expect(response.body.creditLimit).toBe(100000);
-      expect(customerService.updateCreditLimit).toHaveBeenCalledWith(mockUser, 'customer-123', 100000);
+      expect(customerService.updateCreditLimit).toHaveBeenCalledWith(
+        mockUser,
+        'customer-123',
+        100000,
+      );
     });
 
     it('should return 404 when customer not found', async () => {
@@ -683,7 +685,10 @@ describe('CustomerController (Integration)', () => {
 
     it('should return 400 when customer has outstanding balance', async () => {
       customerService.deactivate.mockRejectedValue(
-        new HttpException('Cannot deactivate customer with outstanding balance', HttpStatus.BAD_REQUEST),
+        new HttpException(
+          'Cannot deactivate customer with outstanding balance',
+          HttpStatus.BAD_REQUEST,
+        ),
       );
 
       await request(app.getHttpServer())
@@ -730,7 +735,10 @@ describe('CustomerController (Integration)', () => {
 
     it('should return 400 when customer has outstanding balance', async () => {
       customerService.remove.mockRejectedValue(
-        new HttpException('Cannot delete customer with outstanding balance', HttpStatus.BAD_REQUEST),
+        new HttpException(
+          'Cannot delete customer with outstanding balance',
+          HttpStatus.BAD_REQUEST,
+        ),
       );
 
       await request(app.getHttpServer())
@@ -740,4 +748,3 @@ describe('CustomerController (Integration)', () => {
     });
   });
 });
-

@@ -103,10 +103,7 @@ export class ShoppingCart {
     }
 
     // Calculate subtotal
-    this.subtotal = this.items.reduce(
-      (sum, item) => sum + item.quantity * item.price,
-      0,
-    );
+    this.subtotal = this.items.reduce((sum, item) => sum + item.quantity * item.price, 0);
 
     // Calculate total (subtotal + tax + shipping - discount)
     this.total = this.subtotal + this.tax + this.shipping - this.discount;

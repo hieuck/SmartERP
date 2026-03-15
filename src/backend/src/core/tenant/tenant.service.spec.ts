@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  ConflictException,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -22,7 +18,7 @@ describe('TenantService', () => {
   let tenantRepository: jest.Mocked<Repository<Tenant>>;
   let userRepository: jest.Mocked<Repository<UserEntity>>;
   let cacheService: jest.Mocked<CacheService>;
-  let permissionService: jest.Mocked<PermissionService>;
+  let _permissionService: jest.Mocked<PermissionService>;
   let secureTenantRepo: jest.Mocked<SecureRepository<Tenant>>;
 
   const mockCurrentUser: User = {
@@ -339,9 +335,7 @@ describe('TenantService', () => {
       cacheService.getOrSet.mockResolvedValue(mockTenant);
       tenantRepository.findOne.mockResolvedValue({ id: 'other-tenant' } as any);
 
-      await expect(service.update(mockCurrentUser, updateDto)).rejects.toThrow(
-        ConflictException,
-      );
+      await expect(service.update(mockCurrentUser, updateDto)).rejects.toThrow(ConflictException);
       await expect(service.update(mockCurrentUser, updateDto)).rejects.toThrow(
         'Tenant with code EXISTING-CODE already exists',
       );
@@ -358,9 +352,7 @@ describe('TenantService', () => {
 
       await service.update(mockCurrentUser, updateDto);
 
-      expect(cacheService.del).toHaveBeenCalledWith(
-        expect.stringContaining('test-tenant-id'),
-      );
+      expect(cacheService.del).toHaveBeenCalledWith(expect.stringContaining('test-tenant-id'));
       expect(cacheService.del).toHaveBeenCalledWith(expect.stringContaining('TEST-CODE'));
     });
   });
@@ -467,9 +459,7 @@ describe('TenantService', () => {
     it('should throw NotFoundException when tenant not found', async () => {
       tenantRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.getUsersByTenant('non-existent')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.getUsersByTenant('non-existent')).rejects.toThrow(NotFoundException);
     });
   });
 

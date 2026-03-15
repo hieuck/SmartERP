@@ -14,7 +14,8 @@ export const WorkflowInstanceStatus = {
   CANCELLED: 'cancelled',
 } as const;
 
-export type WorkflowInstanceStatus = typeof WorkflowInstanceStatus[keyof typeof WorkflowInstanceStatus];
+export type WorkflowInstanceStatus =
+  (typeof WorkflowInstanceStatus)[keyof typeof WorkflowInstanceStatus];
 
 @Entity('workflow_instances')
 export class WorkflowInstance {

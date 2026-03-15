@@ -1,7 +1,7 @@
 /**
  * LeaveController Integration Tests
  * Coverage target: 90%+
- * 
+ *
  * Test cases:
  * 1. POST /leave/request - Success, unauthorized, validation errors
  * 2. POST /leave/approve - Success, unauthorized, forbidden (non-manager)
@@ -94,7 +94,7 @@ describe('LeaveController (Integration)', () => {
       canActivate: jest.fn().mockImplementation((context) => {
         const request = context.switchToHttp().getRequest();
         const authHeader = request.headers.authorization;
-        
+
         if (authHeader && authHeader.startsWith('Bearer ')) {
           const token = authHeader.substring(7);
           if (token === 'valid-token') {
@@ -108,7 +108,7 @@ describe('LeaveController (Integration)', () => {
             return true;
           }
         }
-        
+
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }),
     };
@@ -117,14 +117,14 @@ describe('LeaveController (Integration)', () => {
       canActivate: jest.fn().mockImplementation((context) => {
         const request = context.switchToHttp().getRequest();
         const user = request.user;
-        
+
         if (!user) {
           throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
         }
-        
+
         const handler = context.getHandler();
         const handlerName = handler.name;
-        
+
         // Approve/reject/pending require manager/admin/hr_manager
         if (['approveLeave', 'rejectLeave', 'getPendingLeaves'].includes(handlerName)) {
           if (['manager', 'admin', 'hr_manager'].includes(user.role)) {
@@ -132,7 +132,7 @@ describe('LeaveController (Integration)', () => {
           }
           throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
         }
-        
+
         // Allocate requires admin/hr_manager
         if (handlerName === 'allocateLeave') {
           if (['admin', 'hr_manager'].includes(user.role)) {
@@ -140,7 +140,7 @@ describe('LeaveController (Integration)', () => {
           }
           throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
         }
-        
+
         return true;
       }),
     };
@@ -213,10 +213,7 @@ describe('LeaveController (Integration)', () => {
         reason: 'Family vacation',
       };
 
-      await request(app.getHttpServer())
-        .post('/leave/request')
-        .send(requestDto)
-        .expect(401);
+      await request(app.getHttpServer()).post('/leave/request').send(requestDto).expect(401);
 
       expect(leaveService.requestLeave).not.toHaveBeenCalled();
     });
@@ -280,10 +277,7 @@ describe('LeaveController (Integration)', () => {
         leaveId: 'leave-123',
       };
 
-      await request(app.getHttpServer())
-        .post('/leave/approve')
-        .send(approveDto)
-        .expect(401);
+      await request(app.getHttpServer()).post('/leave/approve').send(approveDto).expect(401);
 
       expect(leaveService.approveLeave).not.toHaveBeenCalled();
     });
@@ -354,10 +348,7 @@ describe('LeaveController (Integration)', () => {
         rejectionReason: 'Insufficient staffing',
       };
 
-      await request(app.getHttpServer())
-        .post('/leave/reject')
-        .send(rejectDto)
-        .expect(401);
+      await request(app.getHttpServer()).post('/leave/reject').send(rejectDto).expect(401);
 
       expect(leaveService.rejectLeave).not.toHaveBeenCalled();
     });
@@ -423,10 +414,7 @@ describe('LeaveController (Integration)', () => {
         days: 15,
       };
 
-      await request(app.getHttpServer())
-        .post('/leave/allocate')
-        .send(allocateDto)
-        .expect(401);
+      await request(app.getHttpServer()).post('/leave/allocate').send(allocateDto).expect(401);
 
       expect(leaveService.allocateLeave).not.toHaveBeenCalled();
     });
@@ -474,9 +462,7 @@ describe('LeaveController (Integration)', () => {
     });
 
     it('should return 401 when not authenticated', async () => {
-      await request(app.getHttpServer())
-        .get('/leave/pending')
-        .expect(401);
+      await request(app.getHttpServer()).get('/leave/pending').expect(401);
 
       expect(leaveService.getPendingLeaves).not.toHaveBeenCalled();
     });
@@ -521,9 +507,7 @@ describe('LeaveController (Integration)', () => {
     });
 
     it('should return 401 when not authenticated', async () => {
-      await request(app.getHttpServer())
-        .get('/leave/balance/employee-123/annual/2024')
-        .expect(401);
+      await request(app.getHttpServer()).get('/leave/balance/employee-123/annual/2024').expect(401);
 
       expect(leaveService.getLeaveBalance).not.toHaveBeenCalled();
     });

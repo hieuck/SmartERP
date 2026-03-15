@@ -15,7 +15,7 @@ describe('IssueTrackingService', () => {
   let service: IssueTrackingService;
   let issueRepository: jest.Mocked<Repository<Issue>>;
   let commentRepository: jest.Mocked<Repository<IssueComment>>;
-  let attachmentRepository: jest.Mocked<Repository<IssueAttachment>>;
+  let _attachmentRepository: jest.Mocked<Repository<IssueAttachment>>;
 
   const mockUser: User = {
     id: 'user-1',
@@ -270,9 +270,7 @@ describe('IssueTrackingService', () => {
     it('should throw NotFoundException when issue not found', async () => {
       issueRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.update(mockUser, 'non-existent', {})).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.update(mockUser, 'non-existent', {})).rejects.toThrow(NotFoundException);
     });
   });
 

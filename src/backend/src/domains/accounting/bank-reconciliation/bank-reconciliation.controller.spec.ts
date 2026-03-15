@@ -1,7 +1,7 @@
 /**
  * BankReconciliationController Integration Tests
  * Coverage target: 95%
- * 
+ *
  * Test cases:
  * 1. POST /bank-reconciliation/statements - Create bank statement
  * 2. GET /bank-reconciliation/statements - Get all bank statements
@@ -83,12 +83,12 @@ describe('BankReconciliationController (Integration)', () => {
       canActivate: jest.fn().mockImplementation((context) => {
         const request = context.switchToHttp().getRequest();
         const authHeader = request.headers.authorization;
-        
+
         if (authHeader && authHeader.startsWith('Bearer ')) {
           request.user = mockUser;
           return true;
         }
-        
+
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }),
     };

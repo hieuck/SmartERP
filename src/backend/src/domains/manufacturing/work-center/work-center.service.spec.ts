@@ -117,9 +117,7 @@ describe('WorkCenterService', () => {
     it('should throw NotFoundException when work center not found', async () => {
       repository.findOne.mockResolvedValue(null);
 
-      await expect(service.findOne(tenantId, 'invalid-id')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.findOne(tenantId, 'invalid-id')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -182,9 +180,7 @@ describe('WorkCenterService', () => {
       const result = await service.update(tenantId, workCenterId, updateDto);
 
       expect(repository.findOne).toHaveBeenCalled();
-      expect(repository.save).toHaveBeenCalledWith(
-        expect.objectContaining(updateDto),
-      );
+      expect(repository.save).toHaveBeenCalledWith(expect.objectContaining(updateDto));
       expect(result.name).toBe('Updated Line');
       expect(result.costPerHour).toBe(60);
     });
@@ -192,9 +188,9 @@ describe('WorkCenterService', () => {
     it('should throw NotFoundException when work center not found', async () => {
       repository.findOne.mockResolvedValue(null);
 
-      await expect(
-        service.update(tenantId, 'invalid-id', updateDto),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.update(tenantId, 'invalid-id', updateDto)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -212,9 +208,7 @@ describe('WorkCenterService', () => {
     it('should throw NotFoundException when work center not found', async () => {
       repository.findOne.mockResolvedValue(null);
 
-      await expect(service.remove(tenantId, 'invalid-id')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.remove(tenantId, 'invalid-id')).rejects.toThrow(NotFoundException);
     });
   });
 });

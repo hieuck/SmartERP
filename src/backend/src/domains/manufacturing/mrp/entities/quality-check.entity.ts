@@ -1,4 +1,5 @@
-import { Entity, Column, Index } from 'typeorm';import { QualityCheckType } from '../enums/quality-check-type.enum';
+import { Entity, Column, Index } from 'typeorm';
+import { QualityCheckType } from '../enums/quality-check-type.enum';
 import { QualityCheckResult } from '../enums/quality-check-result.enum';
 
 import { BaseEntity } from '@/common/entities/base.entity';

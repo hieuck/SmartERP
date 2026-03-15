@@ -205,7 +205,10 @@ export class SupportService {
 
   // ==================== ASSIGNMENT RULE OPERATIONS ====================
 
-  async createAssignmentRule(user: User, createDto: CreateAssignmentRuleDto): Promise<AssignmentRule> {
+  async createAssignmentRule(
+    user: User,
+    createDto: CreateAssignmentRuleDto,
+  ): Promise<AssignmentRule> {
     const rule = this.assignmentRuleRepository.create({
       ...createDto,
       tenantId: user.tenantId,
@@ -233,7 +236,11 @@ export class SupportService {
     return rule;
   }
 
-  async updateAssignmentRule(user: User, id: string, updateDto: UpdateAssignmentRuleDto): Promise<AssignmentRule> {
+  async updateAssignmentRule(
+    user: User,
+    id: string,
+    updateDto: UpdateAssignmentRuleDto,
+  ): Promise<AssignmentRule> {
     const rule = await this.findOneAssignmentRule(user, id);
 
     Object.assign(rule, updateDto);
@@ -309,7 +316,10 @@ export class SupportService {
 
   // ==================== KNOWLEDGE BASE OPERATIONS ====================
 
-  async createArticle(user: User, createDto: CreateKnowledgeBaseArticleDto): Promise<KnowledgeBaseArticle> {
+  async createArticle(
+    user: User,
+    createDto: CreateKnowledgeBaseArticleDto,
+  ): Promise<KnowledgeBaseArticle> {
     const article = this.articleRepository.create({
       ...createDto,
       tenantId: user.tenantId,
@@ -339,10 +349,9 @@ export class SupportService {
     }
 
     if (options.search) {
-      queryBuilder.andWhere(
-        '(article.title ILIKE :search OR article.content ILIKE :search)',
-        { search: `%${options.search}%` },
-      );
+      queryBuilder.andWhere('(article.title ILIKE :search OR article.content ILIKE :search)', {
+        search: `%${options.search}%`,
+      });
     }
 
     const [data, total] = await queryBuilder.getManyAndCount();
@@ -367,7 +376,11 @@ export class SupportService {
     return article;
   }
 
-  async updateArticle(user: User, id: string, updateDto: UpdateKnowledgeBaseArticleDto): Promise<KnowledgeBaseArticle> {
+  async updateArticle(
+    user: User,
+    id: string,
+    updateDto: UpdateKnowledgeBaseArticleDto,
+  ): Promise<KnowledgeBaseArticle> {
     const article = await this.findOneArticle(user, id);
 
     Object.assign(article, updateDto);
@@ -385,7 +398,11 @@ export class SupportService {
     await this.articleRepository.remove(article);
   }
 
-  async markArticleHelpful(user: User, id: string, helpful: boolean): Promise<KnowledgeBaseArticle> {
+  async markArticleHelpful(
+    user: User,
+    id: string,
+    helpful: boolean,
+  ): Promise<KnowledgeBaseArticle> {
     const article = await this.findOneArticle(user, id);
 
     if (helpful) {
@@ -399,7 +416,10 @@ export class SupportService {
 
   // ==================== CANNED RESPONSE OPERATIONS ====================
 
-  async createCannedResponse(user: User, createDto: CreateCannedResponseDto): Promise<CannedResponse> {
+  async createCannedResponse(
+    user: User,
+    createDto: CreateCannedResponseDto,
+  ): Promise<CannedResponse> {
     const response = this.cannedResponseRepository.create({
       ...createDto,
       tenantId: user.tenantId,
@@ -409,7 +429,10 @@ export class SupportService {
     return await this.cannedResponseRepository.save(response);
   }
 
-  async findAllCannedResponses(user: User, options: { search?: string }): Promise<CannedResponse[]> {
+  async findAllCannedResponses(
+    user: User,
+    options: { search?: string },
+  ): Promise<CannedResponse[]> {
     const queryBuilder = this.cannedResponseRepository
       .createQueryBuilder('response')
       .where('response.tenantId = :tenantId', { tenantId: user.tenantId })
@@ -439,7 +462,11 @@ export class SupportService {
     return response;
   }
 
-  async updateCannedResponse(user: User, id: string, updateDto: UpdateCannedResponseDto): Promise<CannedResponse> {
+  async updateCannedResponse(
+    user: User,
+    id: string,
+    updateDto: UpdateCannedResponseDto,
+  ): Promise<CannedResponse> {
     const response = await this.findOneCannedResponse(user, id);
 
     Object.assign(response, updateDto);

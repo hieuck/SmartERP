@@ -8,7 +8,8 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { Account } from '../../account/entities/account.entity';import { BankStatementStatus } from '../enums/bank-statement-status.enum';
+import { Account } from '../../account/entities/account.entity';
+import { BankStatementStatus } from '../enums/bank-statement-status.enum';
 
 import { BankTransaction } from './bank-transaction.entity';
 

@@ -180,9 +180,7 @@ describe('BOMService', () => {
     it('should throw NotFoundException when BOM not found', async () => {
       bomRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findOne(tenantId, 'invalid-id')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.findOne(tenantId, 'invalid-id')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -243,9 +241,7 @@ describe('BOMService', () => {
       const result = await service.update(tenantId, bomId, updateDto);
 
       expect(bomRepository.findOne).toHaveBeenCalled();
-      expect(bomRepository.save).toHaveBeenCalledWith(
-        expect.objectContaining(updateDto),
-      );
+      expect(bomRepository.save).toHaveBeenCalledWith(expect.objectContaining(updateDto));
       expect(result.isActive).toBe(false);
     });
 
@@ -360,9 +356,7 @@ describe('BOMService', () => {
     it('should throw NotFoundException when BOM not found', async () => {
       bomRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.remove(tenantId, 'invalid-id')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.remove(tenantId, 'invalid-id')).rejects.toThrow(NotFoundException);
     });
   });
 });

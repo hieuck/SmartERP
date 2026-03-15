@@ -299,7 +299,11 @@ describe('CrmService', () => {
   describe('convertLead', () => {
     it('should convert lead successfully', async () => {
       cacheService.getOrSet.mockResolvedValue(mockLead);
-      const converted = { ...mockLead, status: LeadStatus.CONVERTED, convertedToCustomerId: 'customer-123' };
+      const converted = {
+        ...mockLead,
+        status: LeadStatus.CONVERTED,
+        convertedToCustomerId: 'customer-123',
+      };
       secureLeadRepo.save.mockResolvedValue(converted as Lead);
 
       const result = await service.convertLead(mockUser, 'lead-123', 'customer-123');
@@ -467,7 +471,10 @@ describe('CrmService', () => {
         amount: 75000,
         stage: OpportunityStage.PROSPECTING,
       };
-      secureOpportunityRepo.save.mockResolvedValue({ ...mockOpportunity, ...createDto } as Opportunity);
+      secureOpportunityRepo.save.mockResolvedValue({
+        ...mockOpportunity,
+        ...createDto,
+      } as Opportunity);
 
       const result = await service.createOpportunity(mockUser, createDto);
 
@@ -538,7 +545,11 @@ describe('CrmService', () => {
       const moved = { ...mockOpportunity, stage: OpportunityStage.QUALIFICATION };
       secureOpportunityRepo.save.mockResolvedValue(moved as Opportunity);
 
-      const result = await service.moveOpportunityStage(mockUser, 'opp-123', OpportunityStage.QUALIFICATION);
+      const result = await service.moveOpportunityStage(
+        mockUser,
+        'opp-123',
+        OpportunityStage.QUALIFICATION,
+      );
 
       expect(result.stage).toBe(OpportunityStage.QUALIFICATION);
     });
@@ -622,9 +633,7 @@ describe('CrmService', () => {
     });
 
     it('should handle string amount values', async () => {
-      const opportunities = [
-        { ...mockOpportunity, amount: '50000' as any },
-      ];
+      const opportunities = [{ ...mockOpportunity, amount: '50000' as any }];
       secureOpportunityRepo.find.mockResolvedValue(opportunities as Opportunity[]);
 
       const result = await service.getOpportunityStatistics(mockUser);

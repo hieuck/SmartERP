@@ -1,7 +1,7 @@
 /**
  * UserController Integration Tests
  * Coverage target: 99%
- * 
+ *
  * Test cases:
  * 1. GET /users/profile - Success, unauthorized, user not found
  * 2. PATCH /users/profile - Success, validation errors, user not found
@@ -9,7 +9,12 @@
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  INestApplication,
+  ValidationPipe,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import * as request from 'supertest';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
@@ -306,7 +311,7 @@ describe('UserController (Integration)', () => {
       };
 
       userService.changePassword.mockRejectedValue(
-        new BadRequestException('New password and confirmation do not match')
+        new BadRequestException('New password and confirmation do not match'),
       );
 
       await request(app.getHttpServer())
@@ -324,7 +329,7 @@ describe('UserController (Integration)', () => {
       };
 
       userService.changePassword.mockRejectedValue(
-        new BadRequestException('Current password is incorrect')
+        new BadRequestException('Current password is incorrect'),
       );
 
       await request(app.getHttpServer())

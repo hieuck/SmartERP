@@ -173,35 +173,75 @@ export class CreateCoreEntitiesTables1710385350000 implements MigrationInterface
     `);
 
     // Create indexes for products
-    await queryRunner.query(`CREATE INDEX "IDX_products_tenant_status" ON "products" ("tenant_id", "status")`);
-    await queryRunner.query(`CREATE INDEX "IDX_products_tenant_category" ON "products" ("tenant_id", "category_id")`);
-    await queryRunner.query(`CREATE INDEX "IDX_products_tenant_name" ON "products" ("tenant_id", "name")`);
-    await queryRunner.query(`CREATE INDEX "IDX_products_tenant_stock" ON "products" ("tenant_id", "stock_quantity")`);
-    await queryRunner.query(`CREATE INDEX "IDX_products_sync_status" ON "products" ("sync_status")`);
-    await queryRunner.query(`CREATE INDEX "IDX_products_last_synced_at" ON "products" ("last_synced_at")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_products_tenant_status" ON "products" ("tenant_id", "status")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_products_tenant_category" ON "products" ("tenant_id", "category_id")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_products_tenant_name" ON "products" ("tenant_id", "name")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_products_tenant_stock" ON "products" ("tenant_id", "stock_quantity")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_products_sync_status" ON "products" ("sync_status")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_products_last_synced_at" ON "products" ("last_synced_at")`,
+    );
 
     // Create indexes for customers
-    await queryRunner.query(`CREATE INDEX "IDX_customers_tenant_status" ON "customers" ("tenant_id", "status")`);
-    await queryRunner.query(`CREATE INDEX "IDX_customers_tenant_name" ON "customers" ("tenant_id", "name")`);
-    await queryRunner.query(`CREATE INDEX "IDX_customers_tenant_phone" ON "customers" ("tenant_id", "phone")`);
-    await queryRunner.query(`CREATE INDEX "IDX_customers_sync_status" ON "customers" ("sync_status")`);
-    await queryRunner.query(`CREATE INDEX "IDX_customers_last_synced_at" ON "customers" ("last_synced_at")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_customers_tenant_status" ON "customers" ("tenant_id", "status")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_customers_tenant_name" ON "customers" ("tenant_id", "name")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_customers_tenant_phone" ON "customers" ("tenant_id", "phone")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_customers_sync_status" ON "customers" ("sync_status")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_customers_last_synced_at" ON "customers" ("last_synced_at")`,
+    );
 
     // Create indexes for suppliers
-    await queryRunner.query(`CREATE INDEX "IDX_suppliers_sync_status" ON "suppliers" ("sync_status")`);
-    await queryRunner.query(`CREATE INDEX "IDX_suppliers_last_synced_at" ON "suppliers" ("last_synced_at")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_suppliers_sync_status" ON "suppliers" ("sync_status")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_suppliers_last_synced_at" ON "suppliers" ("last_synced_at")`,
+    );
 
     // Create indexes for orders
-    await queryRunner.query(`CREATE INDEX "IDX_orders_tenant_customer" ON "orders" ("tenant_id", "customer_id")`);
-    await queryRunner.query(`CREATE INDEX "IDX_orders_tenant_status" ON "orders" ("tenant_id", "status")`);
-    await queryRunner.query(`CREATE INDEX "IDX_orders_tenant_created" ON "orders" ("tenant_id", "created_at")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_orders_tenant_customer" ON "orders" ("tenant_id", "customer_id")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_orders_tenant_status" ON "orders" ("tenant_id", "status")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_orders_tenant_created" ON "orders" ("tenant_id", "created_at")`,
+    );
     await queryRunner.query(`CREATE INDEX "IDX_orders_sync_status" ON "orders" ("sync_status")`);
-    await queryRunner.query(`CREATE INDEX "IDX_orders_last_synced_at" ON "orders" ("last_synced_at")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_orders_last_synced_at" ON "orders" ("last_synced_at")`,
+    );
 
     // Create indexes for invoices
-    await queryRunner.query(`CREATE INDEX "IDX_invoices_tenant_date" ON "invoices" ("tenant_id", "invoice_date")`);
-    await queryRunner.query(`CREATE INDEX "IDX_invoices_sync_status" ON "invoices" ("sync_status")`);
-    await queryRunner.query(`CREATE INDEX "IDX_invoices_last_synced_at" ON "invoices" ("last_synced_at")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_invoices_tenant_date" ON "invoices" ("tenant_id", "invoice_date")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_invoices_sync_status" ON "invoices" ("sync_status")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_invoices_last_synced_at" ON "invoices" ("last_synced_at")`,
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

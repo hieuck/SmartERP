@@ -16,7 +16,7 @@ describe('EmailService', () => {
   let templateRepository: jest.Mocked<Repository<EmailTemplate>>;
   let logRepository: jest.Mocked<Repository<EmailLog>>;
   let cacheManager: jest.Mocked<Cache>;
-  let permissionService: jest.Mocked<PermissionService>;
+  let _permissionService: jest.Mocked<PermissionService>;
 
   const mockUser: User = {
     id: 'user-1',
@@ -114,9 +114,9 @@ describe('EmailService', () => {
       (service as any).secureTemplateRepo = mockSecureRepo;
       cacheManager.get.mockResolvedValue([mockTemplate]);
 
-      const result = await service.findAllTemplates(mockUser);
+      const _result = await service.findAllTemplates(mockUser);
 
-      expect(result).toEqual([mockTemplate]);
+      expect(_result).toEqual([mockTemplate]);
       expect(cacheManager.get).toHaveBeenCalledWith(`email-template:all:${mockUser.tenantId}`);
       expect(mockSecureRepo.find).not.toHaveBeenCalled();
     });
@@ -128,9 +128,9 @@ describe('EmailService', () => {
       (service as any).secureTemplateRepo = mockSecureRepo;
       cacheManager.get.mockResolvedValue(null);
 
-      const result = await service.findAllTemplates(mockUser);
+      const _result = await service.findAllTemplates(mockUser);
 
-      expect(result).toEqual([mockTemplate]);
+      expect(_result).toEqual([mockTemplate]);
       expect(mockSecureRepo.find).toHaveBeenCalledWith(mockUser, {
         order: { createdAt: 'DESC' },
       });
@@ -148,9 +148,9 @@ describe('EmailService', () => {
       (service as any).secureTemplateRepo = mockSecureRepo;
       cacheManager.get.mockResolvedValue(null);
 
-      const result = await service.findAllTemplates(mockUser);
+      const _result = await service.findAllTemplates(mockUser);
 
-      expect(result).toEqual([]);
+      expect(_result).toEqual([]);
     });
   });
 
@@ -162,9 +162,9 @@ describe('EmailService', () => {
       (service as any).secureTemplateRepo = mockSecureRepo;
       cacheManager.get.mockResolvedValue(mockTemplate);
 
-      const result = await service.findTemplateById(mockUser, 'template-1');
+      const _result = await service.findTemplateById(mockUser, 'template-1');
 
-      expect(result).toEqual(mockTemplate);
+      expect(_result).toEqual(mockTemplate);
       expect(mockSecureRepo.findOne).not.toHaveBeenCalled();
     });
 
@@ -175,9 +175,9 @@ describe('EmailService', () => {
       (service as any).secureTemplateRepo = mockSecureRepo;
       cacheManager.get.mockResolvedValue(null);
 
-      const result = await service.findTemplateById(mockUser, 'template-1');
+      const _result = await service.findTemplateById(mockUser, 'template-1');
 
-      expect(result).toEqual(mockTemplate);
+      expect(_result).toEqual(mockTemplate);
       expect(mockSecureRepo.findOne).toHaveBeenCalledWith(mockUser, {
         where: { id: 'template-1' },
       });
@@ -208,9 +208,9 @@ describe('EmailService', () => {
       (service as any).secureTemplateRepo = mockSecureRepo;
       cacheManager.get.mockResolvedValue(mockTemplate);
 
-      const result = await service.findTemplateByType(mockUser, TemplateType.WELCOME);
+      const _result = await service.findTemplateByType(mockUser, TemplateType.WELCOME);
 
-      expect(result).toEqual(mockTemplate);
+      expect(_result).toEqual(mockTemplate);
       expect(mockSecureRepo.findOne).not.toHaveBeenCalled();
     });
 
@@ -221,9 +221,9 @@ describe('EmailService', () => {
       (service as any).secureTemplateRepo = mockSecureRepo;
       cacheManager.get.mockResolvedValue(null);
 
-      const result = await service.findTemplateByType(mockUser, TemplateType.WELCOME);
+      const _result = await service.findTemplateByType(mockUser, TemplateType.WELCOME);
 
-      expect(result).toEqual(mockTemplate);
+      expect(_result).toEqual(mockTemplate);
       expect(mockSecureRepo.findOne).toHaveBeenCalledWith(mockUser, {
         where: { type: TemplateType.WELCOME, isActive: true },
       });
@@ -236,9 +236,9 @@ describe('EmailService', () => {
       (service as any).secureTemplateRepo = mockSecureRepo;
       cacheManager.get.mockResolvedValue(null);
 
-      await expect(
-        service.findTemplateByType(mockUser, TemplateType.WELCOME),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.findTemplateByType(mockUser, TemplateType.WELCOME)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -257,9 +257,9 @@ describe('EmailService', () => {
         type: TemplateType.WELCOME,
       };
 
-      const result = await service.createTemplate(mockUser, data);
+      const _result = await service.createTemplate(mockUser, data);
 
-      expect(result).toEqual(mockTemplate);
+      expect(_result).toEqual(mockTemplate);
       expect(templateRepository.create).toHaveBeenCalledWith({
         ...data,
         tenantId: mockUser.tenantId,
@@ -272,7 +272,8 @@ describe('EmailService', () => {
     it('should update template and invalidate cache', async () => {
       const updatedTemplate = { ...mockTemplate, name: 'Updated' };
       const mockSecureRepo = {
-        findOne: jest.fn()
+        findOne: jest
+          .fn()
           .mockResolvedValueOnce(mockTemplate)
           .mockResolvedValueOnce(updatedTemplate),
         save: jest.fn().mockResolvedValue(updatedTemplate),
@@ -280,10 +281,12 @@ describe('EmailService', () => {
       (service as any).secureTemplateRepo = mockSecureRepo;
       cacheManager.get.mockResolvedValue(null);
 
-      const result = await service.updateTemplate(mockUser, 'template-1', { name: 'Updated' });
+      const _result = await service.updateTemplate(mockUser, 'template-1', { name: 'Updated' });
 
       expect(mockSecureRepo.save).toHaveBeenCalled();
-      expect(cacheManager.del).toHaveBeenCalledWith(`email-template:${mockUser.tenantId}:template-1`);
+      expect(cacheManager.del).toHaveBeenCalledWith(
+        `email-template:${mockUser.tenantId}:template-1`,
+      );
       expect(cacheManager.del).toHaveBeenCalledWith(`email-template:all:${mockUser.tenantId}`);
     });
   });
@@ -303,7 +306,9 @@ describe('EmailService', () => {
         tenantId: mockUser.tenantId,
         id: 'template-1',
       });
-      expect(cacheManager.del).toHaveBeenCalledWith(`email-template:${mockUser.tenantId}:template-1`);
+      expect(cacheManager.del).toHaveBeenCalledWith(
+        `email-template:${mockUser.tenantId}:template-1`,
+      );
       expect(cacheManager.del).toHaveBeenCalledWith(`email-template:all:${mockUser.tenantId}`);
       expect(cacheManager.del).toHaveBeenCalledWith(
         `email-template:${mockUser.tenantId}:type:${mockTemplate.type}`,
@@ -328,15 +333,13 @@ describe('EmailService', () => {
     it('should send email successfully', async () => {
       const sentLog = { ...mockLog, status: EmailStatus.SENT, sentAt: expect.any(Date) };
       const mockSecureRepo = {
-        save: jest.fn()
-          .mockResolvedValueOnce(mockLog)
-          .mockResolvedValueOnce(sentLog),
+        save: jest.fn().mockResolvedValueOnce(mockLog).mockResolvedValueOnce(sentLog),
         findOne: jest.fn().mockResolvedValue(sentLog),
       };
       (service as any).secureLogRepo = mockSecureRepo;
       logRepository.create.mockReturnValue(mockLog as any);
 
-      const result = await service.sendEmail(
+      const _result = await service.sendEmail(
         mockUser,
         'test@example.com',
         'Test Subject',
@@ -383,7 +386,8 @@ describe('EmailService', () => {
     it('should handle email sending failure', async () => {
       const failedLog = { ...mockLog, status: EmailStatus.FAILED, error: 'SMTP error' };
       const mockSecureRepo = {
-        save: jest.fn()
+        save: jest
+          .fn()
           .mockResolvedValueOnce(mockLog)
           .mockRejectedValueOnce(new Error('SMTP error'))
           .mockResolvedValueOnce(failedLog),
@@ -392,7 +396,7 @@ describe('EmailService', () => {
       (service as any).secureLogRepo = mockSecureRepo;
       logRepository.create.mockReturnValue(mockLog as any);
 
-      const result = await service.sendEmail(mockUser, 'test@example.com', 'Subject', 'Body');
+      const _result = await service.sendEmail(mockUser, 'test@example.com', 'Subject', 'Body');
 
       expect(result.status).toBe(EmailStatus.FAILED);
     });
@@ -401,7 +405,8 @@ describe('EmailService', () => {
   describe('sendTemplateEmail', () => {
     it('should send email using template with variable replacement', async () => {
       const mockSecureRepo = {
-        findOne: jest.fn()
+        findOne: jest
+          .fn()
           .mockResolvedValueOnce(mockTemplate)
           .mockResolvedValueOnce({ ...mockLog, status: EmailStatus.SENT }),
         save: jest.fn().mockResolvedValue({ ...mockLog, templateId: 'template-1' }),
@@ -411,7 +416,7 @@ describe('EmailService', () => {
       cacheManager.get.mockResolvedValue(null);
       logRepository.create.mockReturnValue(mockLog as any);
 
-      const result = await service.sendTemplateEmail(mockUser, 'test@example.com', 'template-1', {
+      const _result = await service.sendTemplateEmail(mockUser, 'test@example.com', 'template-1', {
         name: 'John',
       });
 
@@ -433,9 +438,7 @@ describe('EmailService', () => {
         body: 'Welcome {{firstName}} {{lastName}} to {{company}}',
       };
       const mockSecureRepo = {
-        findOne: jest.fn()
-          .mockResolvedValueOnce(template)
-          .mockResolvedValueOnce(mockLog),
+        findOne: jest.fn().mockResolvedValueOnce(template).mockResolvedValueOnce(mockLog),
         save: jest.fn().mockResolvedValue(mockLog),
       };
       (service as any).secureTemplateRepo = mockSecureRepo;
@@ -477,9 +480,9 @@ describe('EmailService', () => {
       };
       (service as any).secureLogRepo = mockSecureRepo;
 
-      const result = await service.findAllLogs(mockUser);
+      const _result = await service.findAllLogs(mockUser);
 
-      expect(result).toEqual([mockLog]);
+      expect(_result).toEqual([mockLog]);
       expect(mockSecureRepo.find).toHaveBeenCalledWith(mockUser, {
         order: { createdAt: 'DESC' },
         take: 100,
@@ -492,9 +495,9 @@ describe('EmailService', () => {
       };
       (service as any).secureLogRepo = mockSecureRepo;
 
-      const result = await service.findAllLogs(mockUser);
+      const _result = await service.findAllLogs(mockUser);
 
-      expect(result).toEqual([]);
+      expect(_result).toEqual([]);
     });
   });
 
@@ -505,9 +508,9 @@ describe('EmailService', () => {
       };
       (service as any).secureLogRepo = mockSecureRepo;
 
-      const result = await service.findLogById(mockUser, 'log-1');
+      const _result = await service.findLogById(mockUser, 'log-1');
 
-      expect(result).toEqual(mockLog);
+      expect(_result).toEqual(mockLog);
       expect(mockSecureRepo.findOne).toHaveBeenCalledWith(mockUser, {
         where: { id: 'log-1' },
       });

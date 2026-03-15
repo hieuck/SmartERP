@@ -1,7 +1,7 @@
 /**
  * GdprController Integration Tests
  * Coverage target: 95%
- * 
+ *
  * Test cases:
  * 1. POST /gdpr/consent - Create or update consent
  * 2. POST /gdpr/consent/:type/revoke - Revoke consent
@@ -129,18 +129,18 @@ describe('GdprController (Integration)', () => {
             canActivate: (context) => {
               const request = context.switchToHttp().getRequest();
               const authHeader = request.headers.authorization;
-              
+
               if (!authHeader || !authHeader.startsWith('Bearer ')) {
                 throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
               }
-              
+
               // Set user based on token
               if (authHeader.includes('admin-token')) {
                 request.user = mockAdminUser;
               } else {
                 request.user = mockUser;
               }
-              
+
               return true;
             },
           },
@@ -152,18 +152,18 @@ describe('GdprController (Integration)', () => {
         canActivate: (context) => {
           const request = context.switchToHttp().getRequest();
           const authHeader = request.headers.authorization;
-          
+
           if (!authHeader || !authHeader.startsWith('Bearer ')) {
             throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
           }
-          
+
           // Set user based on token
           if (authHeader.includes('admin-token')) {
             request.user = mockAdminUser;
           } else {
             request.user = mockUser;
           }
-          
+
           return true;
         },
       })
@@ -172,14 +172,14 @@ describe('GdprController (Integration)', () => {
         canActivate: (context) => {
           const request = context.switchToHttp().getRequest();
           const user = request.user;
-          
+
           // Check if route requires admin role
           if (request.url.includes('/admin/')) {
             if (!user || !user.roles.includes('admin')) {
               throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
             }
           }
-          
+
           return true;
         },
       })
@@ -289,10 +289,7 @@ describe('GdprController (Integration)', () => {
         .expect(200);
 
       expect(response.body).toEqual(consents);
-      expect(gdprService.getUserConsents).toHaveBeenCalledWith(
-        mockUser.id,
-        mockUser.tenantId,
-      );
+      expect(gdprService.getUserConsents).toHaveBeenCalledWith(mockUser.id, mockUser.tenantId);
     });
 
     it('should return empty array when no consents', async () => {
@@ -505,9 +502,7 @@ describe('GdprController (Integration)', () => {
         .expect(200);
 
       expect(response.body).toEqual(pendingDeletions);
-      expect(gdprService.getPendingDeletionRequests).toHaveBeenCalledWith(
-        mockAdminUser.tenantId,
-      );
+      expect(gdprService.getPendingDeletionRequests).toHaveBeenCalledWith(mockAdminUser.tenantId);
     });
 
     it('should return 403 for non-admin users', async () => {

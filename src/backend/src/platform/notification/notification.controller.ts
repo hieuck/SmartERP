@@ -2,7 +2,6 @@ import { Controller, Get, Post, Delete, Body, Param, UseGuards, Request } from '
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { NotificationService } from './notification.service';
 import { JwtAuthGuard } from '../../core/auth/guards/jwt-auth.guard';
-import { TenantId } from '../../common/decorators/tenant-id.decorator';
 import { Notification } from './entities/notification.entity';
 import { NotificationType } from './enums';
 import { User } from '@/common/security/permission.service';
@@ -14,7 +13,7 @@ export class NotificationController {
   @Get()
   async findAll(
     @CurrentUser() user: User,
-    @Request() req: Express.Request & { user: { id: string } },
+    @Request() _req: Express.Request & { user: { id: string } },
   ): Promise<Notification[]> {
     return this.notificationService.findAll(user);
   }
@@ -22,7 +21,7 @@ export class NotificationController {
   @Get('unread')
   async findUnread(
     @CurrentUser() user: User,
-    @Request() req: Express.Request & { user: { id: string } },
+    @Request() _req: Express.Request & { user: { id: string } },
   ): Promise<Notification[]> {
     return this.notificationService.findUnread(user);
   }
@@ -30,7 +29,7 @@ export class NotificationController {
   @Get('unread/count')
   async getUnreadCount(
     @CurrentUser() user: User,
-    @Request() req: Express.Request & { user: { id: string } },
+    @Request() _req: Express.Request & { user: { id: string } },
   ): Promise<{ count: number }> {
     const count = await this.notificationService.getUnreadCount(user);
     return { count };
@@ -62,7 +61,7 @@ export class NotificationController {
   @Post('read-all')
   async markAllAsRead(
     @CurrentUser() user: User,
-    @Request() req: Express.Request & { user: { id: string } },
+    @Request() _req: Express.Request & { user: { id: string } },
   ): Promise<void> {
     return this.notificationService.markAllAsRead(user);
   }

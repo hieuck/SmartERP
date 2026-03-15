@@ -85,9 +85,30 @@ describe('ValuationService', () => {
 
     it('should calculate FIFO cost with multiple valuations', async () => {
       const valuations = [
-        { ...mockValuation, id: 'val-1', quantity: 50, unitCost: 10, totalCost: 500, date: new Date('2026-01-01') },
-        { ...mockValuation, id: 'val-2', quantity: 100, unitCost: 12, totalCost: 1200, date: new Date('2026-01-02') },
-        { ...mockValuation, id: 'val-3', quantity: 80, unitCost: 11, totalCost: 880, date: new Date('2026-01-03') },
+        {
+          ...mockValuation,
+          id: 'val-1',
+          quantity: 50,
+          unitCost: 10,
+          totalCost: 500,
+          date: new Date('2026-01-01'),
+        },
+        {
+          ...mockValuation,
+          id: 'val-2',
+          quantity: 100,
+          unitCost: 12,
+          totalCost: 1200,
+          date: new Date('2026-01-02'),
+        },
+        {
+          ...mockValuation,
+          id: 'val-3',
+          quantity: 80,
+          unitCost: 11,
+          totalCost: 880,
+          date: new Date('2026-01-03'),
+        },
       ];
 
       mockValuationRepository.find.mockResolvedValue(valuations);
@@ -260,7 +281,15 @@ describe('ValuationService', () => {
       mockValuationRepository.create.mockReturnValue(mockValuation);
       mockValuationRepository.save.mockResolvedValue(mockValuation);
 
-      await service.addStockValuation('prod-1', 'wh-1', 100, 10, 'production', 'prod-order-1', 'tenant-1');
+      await service.addStockValuation(
+        'prod-1',
+        'wh-1',
+        100,
+        10,
+        'production',
+        'prod-order-1',
+        'tenant-1',
+      );
 
       expect(mockValuationRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -271,8 +300,16 @@ describe('ValuationService', () => {
     });
 
     it('should handle zero quantity', async () => {
-      mockValuationRepository.create.mockReturnValue({ ...mockValuation, quantity: 0, totalCost: 0 });
-      mockValuationRepository.save.mockResolvedValue({ ...mockValuation, quantity: 0, totalCost: 0 });
+      mockValuationRepository.create.mockReturnValue({
+        ...mockValuation,
+        quantity: 0,
+        totalCost: 0,
+      });
+      mockValuationRepository.save.mockResolvedValue({
+        ...mockValuation,
+        quantity: 0,
+        totalCost: 0,
+      });
 
       await service.addStockValuation('prod-1', 'wh-1', 0, 10, 'adjustment', 'adj-1', 'tenant-1');
 

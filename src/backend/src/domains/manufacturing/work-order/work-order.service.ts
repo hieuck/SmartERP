@@ -78,11 +78,7 @@ export class WorkOrderService {
     return this.workOrderRepository.save(workOrder);
   }
 
-  async finish(
-    tenantId: string,
-    id: string,
-    producedQuantity: number,
-  ): Promise<WorkOrder> {
+  async finish(tenantId: string, id: string, producedQuantity: number): Promise<WorkOrder> {
     const workOrder = await this.findOne(tenantId, id);
 
     if (workOrder.status !== WorkOrderStatus.IN_PROGRESS) {

@@ -14,7 +14,6 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 import { CacheTTL } from '@/common/decorators/cache-ttl.decorator';
 import { Roles } from '@/common/decorators/roles.decorator';
 import { CacheInterceptor } from '@/common/interceptors/cache.interceptor';
-import { User } from '@/common/security/permission.service';
 import { CacheTTL as CacheTTLConstant } from '@/config/cache.config';
 import { AddColumnDto } from './dto/add-column.dto';
 import { CreateReportDto } from './dto/create-report.dto';
@@ -70,11 +69,7 @@ export class ReportController {
   @Roles('manager', 'admin', 'analyst')
   @ApiOperation({ summary: 'Update report definition' })
   @ApiResponse({ status: 200, description: 'Report updated successfully' })
-  async update(
-    @Param('id') id: string,
-    @Body() dto: UpdateReportDto,
-    @Request() req,
-  ) {
+  async update(@Param('id') id: string, @Body() dto: UpdateReportDto, @Request() req) {
     return this.reportService.update(id, dto, req.user.tenantId, req.user);
   }
 
@@ -91,11 +86,7 @@ export class ReportController {
   @Roles('manager', 'admin', 'analyst')
   @ApiOperation({ summary: 'Add column to report' })
   @ApiResponse({ status: 201, description: 'Column added successfully' })
-  async addColumn(
-    @Param('id') id: string,
-    @Body() dto: AddColumnDto,
-    @Request() req,
-  ) {
+  async addColumn(@Param('id') id: string, @Body() dto: AddColumnDto, @Request() req) {
     return this.reportService.addColumn(id, dto, req.user.tenantId, req.user);
   }
 
@@ -103,17 +94,8 @@ export class ReportController {
   @Roles('manager', 'admin', 'analyst')
   @ApiOperation({ summary: 'Remove column from report' })
   @ApiResponse({ status: 200, description: 'Column removed successfully' })
-  async removeColumn(
-    @Param('id') id: string,
-    @Param('columnId') columnId: string,
-    @Request() req,
-  ) {
-    await this.reportService.removeColumn(
-      id,
-      columnId,
-      req.user.tenantId,
-      req.user,
-    );
+  async removeColumn(@Param('id') id: string, @Param('columnId') columnId: string, @Request() req) {
+    await this.reportService.removeColumn(id, columnId, req.user.tenantId, req.user);
     return { message: 'Column removed successfully' };
   }
 
@@ -121,17 +103,8 @@ export class ReportController {
   @Roles('manager', 'admin', 'analyst', 'user')
   @ApiOperation({ summary: 'Execute report and get results' })
   @ApiResponse({ status: 200, description: 'Report executed successfully' })
-  async execute(
-    @Param('id') id: string,
-    @Body() dto: ExecuteReportDto,
-    @Request() req,
-  ) {
-    return this.reportService.execute(
-      id,
-      dto.parameters,
-      req.user.tenantId,
-      req.user,
-    );
+  async execute(@Param('id') id: string, @Body() dto: ExecuteReportDto, @Request() req) {
+    return this.reportService.execute(id, dto.parameters, req.user.tenantId, req.user);
   }
 
   @Get(':id/executions')
@@ -143,11 +116,7 @@ export class ReportController {
     @Query('limit') limit: number = 10,
     @Request() req,
   ) {
-    return this.reportService.getExecutionHistory(
-      id,
-      req.user.tenantId,
-      limit,
-    );
+    return this.reportService.getExecutionHistory(id, req.user.tenantId, limit);
   }
 
   @Get('executions/:executionId')
@@ -155,10 +124,7 @@ export class ReportController {
   @ApiOperation({ summary: 'Get execution result by ID' })
   @ApiResponse({ status: 200, description: 'Execution found' })
   @ApiResponse({ status: 404, description: 'Execution not found' })
-  async getExecution(
-    @Param('executionId') executionId: string,
-    @Request() req,
-  ) {
+  async getExecution(@Param('executionId') executionId: string, @Request() req) {
     return this.reportService.getExecution(executionId, req.user.tenantId);
   }
 
@@ -192,14 +158,7 @@ export class ReportController {
   @Roles('manager', 'admin', 'analyst')
   @ApiOperation({ summary: 'Create report from template' })
   @ApiResponse({ status: 201, description: 'Report created from template' })
-  async createFromTemplate(
-    @Param('templateName') templateName: string,
-    @Request() req,
-  ) {
-    return this.templateService.createFromTemplate(
-      templateName,
-      req.user.tenantId,
-      req.user,
-    );
+  async createFromTemplate(@Param('templateName') templateName: string, @Request() req) {
+    return this.templateService.createFromTemplate(templateName, req.user.tenantId, req.user);
   }
 }

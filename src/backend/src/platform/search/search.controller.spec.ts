@@ -1,7 +1,7 @@
 /**
  * SearchController Integration Tests
  * Coverage target: 95%+
- * 
+ *
  * Test cases:
  * 1. GET /search?q=xxx - Global search
  * 2. GET /search/by-type?type=xxx&q=xxx - Search by type
@@ -61,12 +61,12 @@ describe('SearchController (Integration)', () => {
       canActivate: jest.fn().mockImplementation((context) => {
         const request = context.switchToHttp().getRequest();
         const authHeader = request.headers.authorization;
-        
+
         if (authHeader && authHeader.startsWith('Bearer ')) {
           request.user = mockUser;
           return true;
         }
-        
+
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }),
     };
@@ -218,9 +218,7 @@ describe('SearchController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/search?q=test')
-        .expect(401);
+      await request(app.getHttpServer()).get('/search?q=test').expect(401);
     });
 
     it('should handle service errors', async () => {
@@ -324,9 +322,7 @@ describe('SearchController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/search/by-type?type=product&q=test')
-        .expect(401);
+      await request(app.getHttpServer()).get('/search/by-type?type=product&q=test').expect(401);
     });
 
     it('should handle service errors', async () => {

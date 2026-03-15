@@ -12,9 +12,9 @@ import { UpdateCustomerDto } from './dto/update-customer.dto';
 
 describe('CustomerService', () => {
   let service: CustomerService;
-  let customerRepository: jest.Mocked<Repository<Customer>>;
+  let _customerRepository: jest.Mocked<Repository<Customer>>;
   let cacheService: jest.Mocked<CacheService>;
-  let permissionService: jest.Mocked<PermissionService>;
+  let _permissionService: jest.Mocked<PermissionService>;
   let secureCustomerRepo: jest.Mocked<SecureRepository<Customer>>;
 
   const mockUser: User = {
@@ -540,11 +540,7 @@ describe('CustomerService', () => {
 
   describe('count', () => {
     it('should return customer count', async () => {
-      const mockCustomers = [
-        createMockCustomer(),
-        createMockCustomer(),
-        createMockCustomer(),
-      ];
+      const mockCustomers = [createMockCustomer(), createMockCustomer(), createMockCustomer()];
       secureCustomerRepo.find.mockResolvedValue(mockCustomers);
 
       const result = await service.count(mockUser);

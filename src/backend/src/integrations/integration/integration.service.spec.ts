@@ -132,20 +132,13 @@ describe('IntegrationService', () => {
     });
 
     it('should not throw error when removing non-existent integration', async () => {
-      await expect(
-        service.removeIntegration(mockUser, 'non-existent'),
-      ).resolves.not.toThrow();
+      await expect(service.removeIntegration(mockUser, 'non-existent')).resolves.not.toThrow();
     });
   });
 
   describe('processPayment', () => {
     it('should process payment successfully', async () => {
-      const result = await service.processPayment(
-        mockUser,
-        'vnpay',
-        100000,
-        'order-123',
-      );
+      const result = await service.processPayment(mockUser, 'vnpay', 100000, 'order-123');
 
       expect(result).toBeDefined();
       expect(result.success).toBe(true);
@@ -157,22 +150,12 @@ describe('IntegrationService', () => {
     });
 
     it('should generate unique transaction IDs', async () => {
-      const result1 = await service.processPayment(
-        mockUser,
-        'vnpay',
-        50000,
-        'order-1',
-      );
+      const result1 = await service.processPayment(mockUser, 'vnpay', 50000, 'order-1');
 
       // Wait 1ms to ensure different timestamp
       await new Promise((resolve) => setTimeout(resolve, 1));
 
-      const result2 = await service.processPayment(
-        mockUser,
-        'momo',
-        75000,
-        'order-2',
-      );
+      const result2 = await service.processPayment(mockUser, 'momo', 75000, 'order-2');
 
       expect(result1.transactionId).not.toBe(result2.transactionId);
     });
@@ -181,12 +164,7 @@ describe('IntegrationService', () => {
       const gateways = ['vnpay', 'momo', 'zalopay'];
 
       for (const gateway of gateways) {
-        const result = await service.processPayment(
-          mockUser,
-          gateway,
-          100000,
-          `order-${gateway}`,
-        );
+        const result = await service.processPayment(mockUser, gateway, 100000, `order-${gateway}`);
 
         expect(result.gateway).toBe(gateway);
         expect(result.success).toBe(true);
@@ -194,12 +172,7 @@ describe('IntegrationService', () => {
     });
 
     it('should handle zero amount', async () => {
-      const result = await service.processPayment(
-        mockUser,
-        'vnpay',
-        0,
-        'order-free',
-      );
+      const result = await service.processPayment(mockUser, 'vnpay', 0, 'order-free');
 
       expect(result.success).toBe(true);
       expect(result.amount).toBe(0);
@@ -207,12 +180,7 @@ describe('IntegrationService', () => {
 
     it('should handle large amounts', async () => {
       const largeAmount = 999999999;
-      const result = await service.processPayment(
-        mockUser,
-        'vnpay',
-        largeAmount,
-        'order-large',
-      );
+      const result = await service.processPayment(mockUser, 'vnpay', largeAmount, 'order-large');
 
       expect(result.success).toBe(true);
       expect(result.amount).toBe(largeAmount);
@@ -228,11 +196,7 @@ describe('IntegrationService', () => {
         dimensions: { length: 30, width: 20, height: 10 },
       };
 
-      const result = await service.createShipment(
-        mockUser,
-        'ghn',
-        shipmentData,
-      );
+      const result = await service.createShipment(mockUser, 'ghn', shipmentData);
 
       expect(result).toBeDefined();
       expect(result.success).toBe(true);
@@ -246,20 +210,12 @@ describe('IntegrationService', () => {
       const shipmentData1 = { from: 'Hanoi', to: 'Danang' };
       const shipmentData2 = { from: 'Hanoi', to: 'Can Tho' };
 
-      const result1 = await service.createShipment(
-        mockUser,
-        'ghn',
-        shipmentData1,
-      );
+      const result1 = await service.createShipment(mockUser, 'ghn', shipmentData1);
 
       // Wait 1ms to ensure different timestamp
       await new Promise((resolve) => setTimeout(resolve, 1));
 
-      const result2 = await service.createShipment(
-        mockUser,
-        'viettel-post',
-        shipmentData2,
-      );
+      const result2 = await service.createShipment(mockUser, 'viettel-post', shipmentData2);
 
       expect(result1.trackingNumber).not.toBe(result2.trackingNumber);
     });
@@ -269,11 +225,7 @@ describe('IntegrationService', () => {
       const shipmentData = { from: 'Hanoi', to: 'HCMC' };
 
       for (const provider of providers) {
-        const result = await service.createShipment(
-          mockUser,
-          provider,
-          shipmentData,
-        );
+        const result = await service.createShipment(mockUser, provider, shipmentData);
 
         expect(result.provider).toBe(provider);
         expect(result.success).toBe(true);
@@ -299,11 +251,7 @@ describe('IntegrationService', () => {
         cod: 500000,
       };
 
-      const result = await service.createShipment(
-        mockUser,
-        'ghn',
-        complexData,
-      );
+      const result = await service.createShipment(mockUser, 'ghn', complexData);
 
       expect(result.success).toBe(true);
       expect(result.shipmentData).toEqual(complexData);

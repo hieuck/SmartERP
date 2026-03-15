@@ -84,9 +84,7 @@ export class LeaveService {
     }
 
     if (leave.status !== LeaveStatus.PENDING) {
-      throw new BadRequestException(
-        `Leave request already processed with status: ${leave.status}`,
-      );
+      throw new BadRequestException(`Leave request already processed with status: ${leave.status}`);
     }
 
     // Update leave balance
@@ -123,11 +121,7 @@ export class LeaveService {
   /**
    * Reject leave request
    */
-  async rejectLeave(
-    leaveId: string,
-    rejectionReason: string,
-    user: User,
-  ): Promise<Leave> {
+  async rejectLeave(leaveId: string, rejectionReason: string, user: User): Promise<Leave> {
     const leave = await this.leaveRepository.findOne({
       where: { id: leaveId, tenantId: user.tenantId },
     });
@@ -137,9 +131,7 @@ export class LeaveService {
     }
 
     if (leave.status !== LeaveStatus.PENDING) {
-      throw new BadRequestException(
-        `Leave request already processed with status: ${leave.status}`,
-      );
+      throw new BadRequestException(`Leave request already processed with status: ${leave.status}`);
     }
 
     leave.status = LeaveStatus.REJECTED;

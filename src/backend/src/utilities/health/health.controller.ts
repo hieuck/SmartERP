@@ -10,13 +10,13 @@ import { Public } from '../../common/decorators/public.decorator';
 
 /**
  * Health Check Controller
- * 
+ *
  * Provides health check endpoints for monitoring
  * - /health: Overall health status
  * - /health/db: Database health
  * - /health/memory: Memory usage
  * - /health/disk: Disk usage
- * 
+ *
  * Day 4-7: Add Monitoring
  */
 @Controller('health')
@@ -39,13 +39,13 @@ export class HealthController {
     return this.health.check([
       // Database health
       () => this.db.pingCheck('database'),
-      
+
       // Memory health (heap should not exceed 150MB)
       () => this.memory.checkHeap('memory_heap', 150 * 1024 * 1024),
-      
+
       // Memory health (RSS should not exceed 300MB)
       () => this.memory.checkRSS('memory_rss', 300 * 1024 * 1024),
-      
+
       // Disk health (storage should have at least 50% free)
       () =>
         this.disk.checkStorage('storage', {
@@ -118,8 +118,6 @@ export class HealthController {
   @Public()
   @HealthCheck()
   ready() {
-    return this.health.check([
-      () => this.db.pingCheck('database'),
-    ]);
+    return this.health.check([() => this.db.pingCheck('database')]);
   }
 }

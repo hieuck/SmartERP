@@ -103,7 +103,11 @@ export class IssueTrackingService {
     return await this.issueRepository.save(issue);
   }
 
-  async addComment(user: User, issueId: string, commentDto: CreateCommentDto): Promise<IssueComment> {
+  async addComment(
+    user: User,
+    issueId: string,
+    commentDto: CreateCommentDto,
+  ): Promise<IssueComment> {
     await this.findOne(user, issueId);
 
     const comment = this.commentRepository.create({

@@ -1,7 +1,7 @@
 /**
  * CategoryController Integration Tests
  * Coverage target: 95%+
- * 
+ *
  * Test cases:
  * 1. POST /categories - Create category
  * 2. GET /categories - Get all categories
@@ -81,12 +81,16 @@ describe('CategoryController (Integration)', () => {
       canActivate: jest.fn().mockImplementation((context) => {
         const request = context.switchToHttp().getRequest();
         const authHeader = request.headers.authorization;
-        
-        if (authHeader && authHeader.startsWith('Bearer ') && authHeader !== 'Bearer invalid-token') {
+
+        if (
+          authHeader &&
+          authHeader.startsWith('Bearer ') &&
+          authHeader !== 'Bearer invalid-token'
+        ) {
           request.user = mockUser;
           return true;
         }
-        
+
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }),
     };
@@ -141,7 +145,7 @@ describe('CategoryController (Integration)', () => {
 
     it('should return 409 when code already exists', async () => {
       categoryService.create.mockRejectedValue(
-        new HttpException('Category with code \'CAT-002\' already exists', HttpStatus.CONFLICT),
+        new HttpException("Category with code 'CAT-002' already exists", HttpStatus.CONFLICT),
       );
 
       await request(app.getHttpServer())
@@ -182,9 +186,7 @@ describe('CategoryController (Integration)', () => {
     });
 
     it('should return 401 when not authenticated', async () => {
-      await request(app.getHttpServer())
-        .get('/categories')
-        .expect(401);
+      await request(app.getHttpServer()).get('/categories').expect(401);
     });
   });
 
@@ -245,7 +247,7 @@ describe('CategoryController (Integration)', () => {
 
     it('should return 404 when code not found', async () => {
       categoryService.findByCode.mockRejectedValue(
-        new HttpException('Category with code \'CAT-999\' not found', HttpStatus.NOT_FOUND),
+        new HttpException("Category with code 'CAT-999' not found", HttpStatus.NOT_FOUND),
       );
 
       await request(app.getHttpServer())
@@ -325,7 +327,7 @@ describe('CategoryController (Integration)', () => {
 
     it('should return 409 when code conflicts', async () => {
       categoryService.update.mockRejectedValue(
-        new HttpException('Category with code \'CAT-002\' already exists', HttpStatus.CONFLICT),
+        new HttpException("Category with code 'CAT-002' already exists", HttpStatus.CONFLICT),
       );
 
       await request(app.getHttpServer())
@@ -426,9 +428,7 @@ describe('CategoryController (Integration)', () => {
     });
 
     it('should return 401 when not authenticated', async () => {
-      await request(app.getHttpServer())
-        .delete('/categories/cat-123')
-        .expect(401);
+      await request(app.getHttpServer()).delete('/categories/cat-123').expect(401);
     });
   });
 });

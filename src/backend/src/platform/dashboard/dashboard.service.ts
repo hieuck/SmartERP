@@ -108,7 +108,12 @@ export class DashboardService {
 
         return {
           revenue: { today: revenueToday, week: revenueWeek, month: revenueMonth },
-          orders: { today: ordersToday, week: ordersWeek, month: ordersMonth, pending: ordersPending },
+          orders: {
+            today: ordersToday,
+            week: ordersWeek,
+            month: ordersMonth,
+            pending: ordersPending,
+          },
           inventory: { totalValue: inventoryValue, lowStockCount, outOfStockCount },
           customers: { total: totalCustomers, new: newCustomers },
           receivables: 0,
@@ -176,7 +181,20 @@ export class DashboardService {
             break;
           case ChartPeriod.YEAR:
             startDate = new Date(now.getFullYear(), 0, 1);
-            labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            labels = [
+              'Jan',
+              'Feb',
+              'Mar',
+              'Apr',
+              'May',
+              'Jun',
+              'Jul',
+              'Aug',
+              'Sep',
+              'Oct',
+              'Nov',
+              'Dec',
+            ];
             break;
         }
 
@@ -195,7 +213,7 @@ export class DashboardService {
         result.forEach((row) => {
           const date = new Date(row.date);
           let index = 0;
-          
+
           if (period === ChartPeriod.WEEK) {
             index = date.getDay();
           } else if (period === ChartPeriod.MONTH) {
@@ -203,7 +221,7 @@ export class DashboardService {
           } else {
             index = date.getMonth();
           }
-          
+
           if (index >= 0 && index < values.length) {
             values[index] = Number(row.revenue) || 0;
           }
@@ -295,7 +313,14 @@ export class DashboardService {
 
         const orders = await this.orderRepository
           .createQueryBuilder('order')
-          .select(['order.id', 'order.orderNumber', 'order.totalAmount', 'order.status', 'order.createdAt', 'customer.name'])
+          .select([
+            'order.id',
+            'order.orderNumber',
+            'order.totalAmount',
+            'order.status',
+            'order.createdAt',
+            'customer.name',
+          ])
           .leftJoin('order.customer', 'customer')
           .where('order.tenantId = :tenantId', { tenantId: user.tenantId })
           .orderBy('order.createdAt', 'DESC')
@@ -320,11 +345,20 @@ export class DashboardService {
     return this.cacheService.getOrSet(
       cacheKey,
       async () => {
-        this.logger.log(`Fetching low stock products for tenant: ${user.tenantId}, limit: ${limit}`);
+        this.logger.log(
+          `Fetching low stock products for tenant: ${user.tenantId}, limit: ${limit}`,
+        );
 
         const inventory = await this.inventoryRepository
           .createQueryBuilder('inv')
-          .select(['inv.id', 'inv.quantity', 'inv.reorderPoint', 'product.id', 'product.name', 'product.sku'])
+          .select([
+            'inv.id',
+            'inv.quantity',
+            'inv.reorderPoint',
+            'product.id',
+            'product.name',
+            'product.sku',
+          ])
           .leftJoin('inv.product', 'product')
           .where('inv.tenantId = :tenantId', { tenantId: user.tenantId })
           .andWhere('inv.quantity <= inv.reorderPoint')
@@ -377,7 +411,9 @@ export class DashboardService {
   }
 
   private async getInventoryStats(user: User) {
-    const totalProducts = await this.productRepository.count({ where: { tenantId: user.tenantId } as any });
+    const totalProducts = await this.productRepository.count({
+      where: { tenantId: user.tenantId } as any,
+    });
     const lowStock = await this.countLowStock(user);
     const outOfStock = await this.countOutOfStock(user);
     const totalValue = await this.calculateInventoryValue(user);
@@ -390,7 +426,9 @@ export class DashboardService {
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
     const total = await this.customerRepository.count({ where: { tenantId: user.tenantId } });
-    const active = await this.customerRepository.count({ where: { tenantId: user.tenantId, status: 'active' } });
+    const active = await this.customerRepository.count({
+      where: { tenantId: user.tenantId, status: 'active' },
+    });
     const newCustomers = await this.countNewCustomers(user, startOfMonth, now);
 
     return { total, active, new: newCustomers };
@@ -452,7 +490,9 @@ export class DashboardService {
   }
 
   private async countOutOfStock(user: User): Promise<number> {
-    return this.inventoryRepository.count({ where: { tenantId: user.tenantId, quantity: 0 } as any });
+    return this.inventoryRepository.count({
+      where: { tenantId: user.tenantId, quantity: 0 } as any,
+    });
   }
 
   private async countNewCustomers(user: User, startDate: Date, endDate: Date): Promise<number> {

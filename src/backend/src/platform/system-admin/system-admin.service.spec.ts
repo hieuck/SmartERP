@@ -15,7 +15,7 @@ describe('SystemAdminService', () => {
   let settingRepository: jest.Mocked<Repository<SystemSetting>>;
   let jobRepository: jest.Mocked<Repository<BackgroundJob>>;
   let errorLogRepository: jest.Mocked<Repository<ErrorLog>>;
-  let permissionService: jest.Mocked<PermissionService>;
+  let _permissionService: jest.Mocked<PermissionService>;
 
   const mockUser: User = {
     id: 'user-1',
@@ -128,7 +128,10 @@ describe('SystemAdminService', () => {
         settingRepository.findOne.mockResolvedValue(null);
         settingRepository.save.mockResolvedValue(mockSetting as SystemSetting);
 
-        const result = await service.createSetting(mockUser, { key: 'app.name', value: 'Smart ERP' } as any);
+        const result = await service.createSetting(mockUser, {
+          key: 'app.name',
+          value: 'Smart ERP',
+        } as any);
 
         expect(settingRepository.save).toHaveBeenCalled();
         expect(result).toEqual(mockSetting);
@@ -137,8 +140,9 @@ describe('SystemAdminService', () => {
       it('should throw ConflictException when key already exists', async () => {
         settingRepository.findOne.mockResolvedValue(mockSetting as SystemSetting);
 
-        await expect(service.createSetting(mockUser, { key: 'app.name', value: 'Test' } as any))
-          .rejects.toThrow(ConflictException);
+        await expect(
+          service.createSetting(mockUser, { key: 'app.name', value: 'Test' } as any),
+        ).rejects.toThrow(ConflictException);
       });
     });
 
@@ -154,7 +158,9 @@ describe('SystemAdminService', () => {
       it('should throw NotFoundException when setting not found', async () => {
         settingRepository.findOne.mockResolvedValue(null);
 
-        await expect(service.getSetting(mockUser, 'invalid-key')).rejects.toThrow(NotFoundException);
+        await expect(service.getSetting(mockUser, 'invalid-key')).rejects.toThrow(
+          NotFoundException,
+        );
       });
     });
 
@@ -179,9 +185,14 @@ describe('SystemAdminService', () => {
     describe('updateSetting', () => {
       it('should update setting successfully', async () => {
         settingRepository.findOne.mockResolvedValue(mockSetting as SystemSetting);
-        settingRepository.save.mockResolvedValue({ ...mockSetting, value: 'Updated' } as SystemSetting);
+        settingRepository.save.mockResolvedValue({
+          ...mockSetting,
+          value: 'Updated',
+        } as SystemSetting);
 
-        const result = await service.updateSetting(mockUser, 'app.name', { value: 'Updated' } as any);
+        const result = await service.updateSetting(mockUser, 'app.name', {
+          value: 'Updated',
+        } as any);
 
         expect(result.value).toBe('Updated');
       });
@@ -212,7 +223,10 @@ describe('SystemAdminService', () => {
 
       it('should set scheduledAt when provided', async () => {
         const scheduledAt = '2024-12-31T00:00:00Z';
-        jobRepository.save.mockResolvedValue({ ...mockJob, scheduledAt: new Date(scheduledAt) } as BackgroundJob);
+        jobRepository.save.mockResolvedValue({
+          ...mockJob,
+          scheduledAt: new Date(scheduledAt),
+        } as BackgroundJob);
 
         const result = await service.createJob(mockUser, { jobType: 'backup', scheduledAt } as any);
 
@@ -263,7 +277,11 @@ describe('SystemAdminService', () => {
     describe('updateJobStatus', () => {
       it('should update job status to RUNNING and set startedAt', async () => {
         jobRepository.findOne.mockResolvedValue(mockJob as BackgroundJob);
-        jobRepository.save.mockResolvedValue({ ...mockJob, status: JobStatus.RUNNING, startedAt: new Date() } as BackgroundJob);
+        jobRepository.save.mockResolvedValue({
+          ...mockJob,
+          status: JobStatus.RUNNING,
+          startedAt: new Date(),
+        } as BackgroundJob);
 
         const result = await service.updateJobStatus(mockUser, 'job-1', JobStatus.RUNNING);
 
@@ -275,7 +293,12 @@ describe('SystemAdminService', () => {
         const startedAt = new Date('2024-01-01T10:00:00Z');
         const job = { ...mockJob, startedAt };
         jobRepository.findOne.mockResolvedValue(job as BackgroundJob);
-        jobRepository.save.mockResolvedValue({ ...job, status: JobStatus.COMPLETED, completedAt: new Date(), durationMs: 5000 } as BackgroundJob);
+        jobRepository.save.mockResolvedValue({
+          ...job,
+          status: JobStatus.COMPLETED,
+          completedAt: new Date(),
+          durationMs: 5000,
+        } as BackgroundJob);
 
         const result = await service.updateJobStatus(mockUser, 'job-1', JobStatus.COMPLETED);
 
@@ -286,9 +309,19 @@ describe('SystemAdminService', () => {
 
       it('should update job status to FAILED with error message', async () => {
         jobRepository.findOne.mockResolvedValue(mockJob as BackgroundJob);
-        jobRepository.save.mockResolvedValue({ ...mockJob, status: JobStatus.FAILED, errorMessage: 'Error occurred' } as BackgroundJob);
+        jobRepository.save.mockResolvedValue({
+          ...mockJob,
+          status: JobStatus.FAILED,
+          errorMessage: 'Error occurred',
+        } as BackgroundJob);
 
-        const result = await service.updateJobStatus(mockUser, 'job-1', JobStatus.FAILED, undefined, 'Error occurred');
+        const result = await service.updateJobStatus(
+          mockUser,
+          'job-1',
+          JobStatus.FAILED,
+          undefined,
+          'Error occurred',
+        );
 
         expect(result.status).toBe(JobStatus.FAILED);
         expect(result.errorMessage).toBe('Error occurred');
@@ -299,7 +332,12 @@ describe('SystemAdminService', () => {
         jobRepository.findOne.mockResolvedValue(mockJob as BackgroundJob);
         jobRepository.save.mockResolvedValue({ ...mockJob, result: result_data } as BackgroundJob);
 
-        const result = await service.updateJobStatus(mockUser, 'job-1', JobStatus.COMPLETED, result_data);
+        const result = await service.updateJobStatus(
+          mockUser,
+          'job-1',
+          JobStatus.COMPLETED,
+          result_data,
+        );
 
         expect(result.result).toEqual(result_data);
       });
@@ -311,10 +349,10 @@ describe('SystemAdminService', () => {
       it('should create error log successfully', async () => {
         errorLogRepository.save.mockResolvedValue(mockErrorLog as ErrorLog);
 
-        const result = await service.createErrorLog(mockUser, { 
-          severity: ErrorSeverity.HIGH, 
-          errorType: 'DatabaseError', 
-          message: 'Connection failed' 
+        const result = await service.createErrorLog(mockUser, {
+          severity: ErrorSeverity.HIGH,
+          errorType: 'DatabaseError',
+          message: 'Connection failed',
         } as any);
 
         expect(errorLogRepository.save).toHaveBeenCalled();
@@ -324,10 +362,10 @@ describe('SystemAdminService', () => {
       it('should handle array return from save', async () => {
         errorLogRepository.save.mockResolvedValue([mockErrorLog] as any);
 
-        const result = await service.createErrorLog(mockUser, { 
-          severity: ErrorSeverity.HIGH, 
-          errorType: 'DatabaseError', 
-          message: 'Test' 
+        const result = await service.createErrorLog(mockUser, {
+          severity: ErrorSeverity.HIGH,
+          errorType: 'DatabaseError',
+          message: 'Test',
         } as any);
 
         expect(result).toEqual(mockErrorLog);
@@ -396,12 +434,12 @@ describe('SystemAdminService', () => {
         };
         errorLogRepository.createQueryBuilder.mockReturnValue(queryBuilder as any);
 
-        await service.getErrorLogs(mockUser, { 
-          severity: ErrorSeverity.HIGH, 
-          errorType: 'DatabaseError', 
+        await service.getErrorLogs(mockUser, {
+          severity: ErrorSeverity.HIGH,
+          errorType: 'DatabaseError',
           resolved: false,
           limit: 10,
-          offset: 0
+          offset: 0,
         });
 
         expect(queryBuilder.andWhere).toHaveBeenCalledTimes(3);
@@ -411,15 +449,18 @@ describe('SystemAdminService', () => {
     describe('resolveErrorLog', () => {
       it('should resolve error log successfully', async () => {
         errorLogRepository.findOne.mockResolvedValue(mockErrorLog as ErrorLog);
-        errorLogRepository.save.mockResolvedValue({ 
-          ...mockErrorLog, 
-          resolved: true, 
+        errorLogRepository.save.mockResolvedValue({
+          ...mockErrorLog,
+          resolved: true,
           resolution: 'Fixed',
           resolvedBy: mockUser.id,
-          resolvedAt: new Date()
+          resolvedAt: new Date(),
         } as ErrorLog);
 
-        const result = await service.resolveErrorLog(mockUser, 'error-1', { resolved: true, resolution: 'Fixed' });
+        const result = await service.resolveErrorLog(mockUser, 'error-1', {
+          resolved: true,
+          resolution: 'Fixed',
+        });
 
         expect(result.resolved).toBe(true);
         expect(result.resolution).toBe('Fixed');
@@ -430,8 +471,9 @@ describe('SystemAdminService', () => {
       it('should throw NotFoundException when error log not found', async () => {
         errorLogRepository.findOne.mockResolvedValue(null);
 
-        await expect(service.resolveErrorLog(mockUser, 'invalid-id', { resolved: true }))
-          .rejects.toThrow(NotFoundException);
+        await expect(
+          service.resolveErrorLog(mockUser, 'invalid-id', { resolved: true }),
+        ).rejects.toThrow(NotFoundException);
       });
 
       it('should update without resolution text', async () => {

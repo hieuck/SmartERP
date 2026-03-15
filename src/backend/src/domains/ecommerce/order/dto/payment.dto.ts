@@ -6,7 +6,10 @@ export class ProcessPaymentDto {
   @IsString()
   orderId: string;
 
-  @ApiProperty({ example: 'stripe', description: 'Payment gateway: stripe, paypal, vnpay, momo, cod' })
+  @ApiProperty({
+    example: 'stripe',
+    description: 'Payment gateway: stripe, paypal, vnpay, momo, cod',
+  })
   @IsString()
   paymentMethod: string;
 

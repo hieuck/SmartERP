@@ -232,7 +232,7 @@ export class ShippingService {
     serviceFee: number;
     insuranceFee: number;
   }> {
-    const tenantId = user.tenantId;
+    const _tenantId = user.tenantId;
     try {
       let result: {
         total?: number;
@@ -380,7 +380,7 @@ export class ShippingService {
           await this.secureShipmentRepo.save(user, shipment);
 
           // Invalidate cache after update
-          await this.cacheService.del(generateCacheKey('shipment', user.tenantId, shipment.id));
+          await this.cacheService.del(generateCacheKey('shipment', user._tenantId, shipment.id));
 
           return {
             shipment,
@@ -402,7 +402,7 @@ export class ShippingService {
           await this.secureShipmentRepo.save(user, shipment);
 
           // Invalidate cache after update
-          await this.cacheService.del(generateCacheKey('shipment', user.tenantId, shipment.id));
+          await this.cacheService.del(generateCacheKey('shipment', user._tenantId, shipment.id));
 
           return {
             shipment,
@@ -424,7 +424,7 @@ export class ShippingService {
           await this.secureShipmentRepo.save(user, shipment);
 
           // Invalidate cache after update
-          await this.cacheService.del(generateCacheKey('shipment', user.tenantId, shipment.id));
+          await this.cacheService.del(generateCacheKey('shipment', user._tenantId, shipment.id));
 
           return {
             shipment,
@@ -446,7 +446,7 @@ export class ShippingService {
           await this.secureShipmentRepo.save(user, shipment);
 
           // Invalidate cache after update
-          await this.cacheService.del(generateCacheKey('shipment', user.tenantId, shipment.id));
+          await this.cacheService.del(generateCacheKey('shipment', user._tenantId, shipment.id));
 
           return {
             shipment,
@@ -528,7 +528,7 @@ export class ShippingService {
       await this.secureShipmentRepo.save(user, shipment);
 
       // Invalidate cache after update
-      await this.cacheService.del(generateCacheKey('shipment', user.tenantId, shipment.id));
+      await this.cacheService.del(generateCacheKey('shipment', user._tenantId, shipment.id));
 
       this.logger.log(`Shipment cancelled: ${shipment.id}`);
 
@@ -543,7 +543,7 @@ export class ShippingService {
    * Get shipment by ID
    */
   async getShipment(user: User, shipmentId: string): Promise<Shipment> {
-    const cacheKey = generateCacheKey('shipment', user.tenantId, shipmentId);
+    const cacheKey = generateCacheKey('shipment', user._tenantId, shipmentId);
     return this.cacheService.getOrSet(
       cacheKey,
       async () => {
@@ -575,7 +575,7 @@ export class ShippingService {
     },
   ): Promise<{ shipments: Shipment[]; total: number }> {
     // Build where conditions
-    const where: any = { tenantId: user.tenantId };
+    const where: any = { _tenantId: user.tenantId };
 
     if (filters?.orderId) {
       where.orderId = filters.orderId;

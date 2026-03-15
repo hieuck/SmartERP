@@ -24,7 +24,7 @@ export class BatchStock {
   @Column({ name: 'batch_id' })
   batchId: string;
 
-  @ManyToOne(() => Batch, batch => batch.stocks)
+  @ManyToOne(() => Batch, (batch) => batch.stocks)
   @JoinColumn({ name: 'batch_id' })
   batch: Batch;
 

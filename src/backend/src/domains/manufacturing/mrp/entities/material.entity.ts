@@ -1,4 +1,5 @@
-import { Entity, Column, Index } from 'typeorm';import { MaterialType } from '../enums/material-type.enum';
+import { Entity, Column, Index } from 'typeorm';
+import { MaterialType } from '../enums/material-type.enum';
 
 import { BaseEntity } from '@/common/entities/base.entity';
 

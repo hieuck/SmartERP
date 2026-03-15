@@ -1,11 +1,4 @@
-import {
-  Entity,
-  Column,
-  Index,
-  OneToMany,
-  BeforeInsert,
-  BeforeUpdate,
-} from 'typeorm';
+import { Entity, Column, Index, OneToMany, BeforeInsert, BeforeUpdate } from 'typeorm';
 import { BaseEntity } from '../../../../common/entities/base.entity';
 import { JournalEntryStatus } from '../enums/journal-entry-status.enum';
 import { JournalLine } from './journal-line.entity';

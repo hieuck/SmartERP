@@ -1,12 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  Patch,
-  Request,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Patch, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { WorkOrderService } from './work-order.service';
 import { CreateWorkOrderDto } from './dto/create-work-order.dto';
@@ -71,11 +63,7 @@ export class WorkOrderController {
   @Roles('manager', 'admin', 'production_manager', 'production_user')
   @ApiOperation({ summary: 'Finish work order production' })
   @ApiResponse({ status: 200, description: 'Work order finished' })
-  async finish(
-    @Param('id') id: string,
-    @Body() dto: FinishProductionDto,
-    @Request() req,
-  ) {
+  async finish(@Param('id') id: string, @Body() dto: FinishProductionDto, @Request() req) {
     return this.workOrderService.finish(req.user.tenantId, id, dto.producedQuantity);
   }
 

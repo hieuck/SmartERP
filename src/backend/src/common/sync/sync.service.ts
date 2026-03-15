@@ -31,7 +31,7 @@ export class SyncService {
     for (const entityName of entities) {
       try {
         const repository = this.getRepository(entityName);
-        
+
         // Get all records updated after sinceDate
         const records = await repository.find({
           where: {
@@ -67,7 +67,7 @@ export class SyncService {
     for (const change of changes) {
       try {
         const result = await this.applyChange(tenantId, change);
-        
+
         if (result.conflict) {
           conflicts.push(result.conflict);
         } else {
@@ -80,7 +80,7 @@ export class SyncService {
 
     return {
       applied: applied.length,
-      conflicts: conflicts.map(c => ({
+      conflicts: conflicts.map((c) => ({
         id: c.id,
         entity: c.entity,
         message: 'Version conflict detected',
@@ -132,7 +132,9 @@ export class SyncService {
             serverVersion: existing.version,
           };
           this.conflicts.set(conflict.id, conflict);
-          this.logger.warn(`Update conflict detected: ${conflict.id} - Server wins (last-write-wins)`);
+          this.logger.warn(
+            `Update conflict detected: ${conflict.id} - Server wins (last-write-wins)`,
+          );
           return { conflict };
         }
 
@@ -232,19 +234,13 @@ export class SyncService {
       };
     } catch (error) {
       // Requirement 3.5: Log error and notify administrator
-      this.logger.error(
-        `Conflict resolution failed: ${dto.conflictId}`,
-        error.stack,
-        {
-          conflictId: dto.conflictId,
-          resolution: dto.resolution,
-          tenantId,
-        },
-      );
+      this.logger.error(`Conflict resolution failed: ${dto.conflictId}`, error.stack, {
+        conflictId: dto.conflictId,
+        resolution: dto.resolution,
+        tenantId,
+      });
 
-      throw new ConflictException(
-        `Failed to resolve conflict: ${error.message}`,
-      );
+      throw new ConflictException(`Failed to resolve conflict: ${error.message}`);
     }
   }
 

@@ -3,10 +3,10 @@ import { Request, Response, NextFunction } from 'express';
 
 /**
  * TenantContextMiddleware
- * 
+ *
  * Purpose: Log and track tenant context for each request
  * Note: Actual tenantId extraction is done by JWT strategy
- * 
+ *
  * This middleware provides:
  * - Request logging with tenant context
  * - Tenant isolation verification
@@ -24,9 +24,7 @@ export class TenantContextMiddleware implements NestMiddleware {
 
     // Log tenant context for audit trail
     if (tenantId) {
-      this.logger.debug(
-        `[Tenant Context] TenantID: ${tenantId}, UserID: ${userId}, Path: ${path}`,
-      );
+      this.logger.debug(`[Tenant Context] TenantID: ${tenantId}, UserID: ${userId}, Path: ${path}`);
 
       // Add tenant context to request for downstream use
       req['tenantContext'] = {

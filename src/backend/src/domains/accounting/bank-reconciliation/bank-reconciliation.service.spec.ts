@@ -20,7 +20,7 @@ describe('BankReconciliationService', () => {
   let transactionRepository: jest.Mocked<Repository<BankTransaction>>;
   let journalEntryRepository: jest.Mocked<Repository<JournalEntry>>;
   let accountRepository: jest.Mocked<Repository<Account>>;
-  let permissionService: jest.Mocked<PermissionService>;
+  let _permissionService: jest.Mocked<PermissionService>;
 
   // Mock user
   const mockUser: User = {
@@ -31,42 +31,44 @@ describe('BankReconciliationService', () => {
   } as any;
 
   // Helper to create fresh mock bank statement
-  const createMockStatement = (overrides = {}): BankStatement => ({
-    id: 'statement-1',
-    number: 'BS-2024-0001',
-    bankAccount: {
-      id: 'account-1',
-      code: '1120',
-      name: 'Bank Account',
-      balance: 10000,
-    } as any,
-    statementDate: new Date('2024-01-31'),
-    openingBalance: 10000,
-    closingBalance: 12000,
-    transactions: [],
-    status: BankStatementStatus.DRAFT,
-    tenantId: 'tenant-1',
-    createdBy: 'user-1',
-    createdAt: new Date('2024-01-31'),
-    updatedAt: new Date('2024-01-31'),
-    ...overrides,
-  } as any);
+  const createMockStatement = (overrides = {}): BankStatement =>
+    ({
+      id: 'statement-1',
+      number: 'BS-2024-0001',
+      bankAccount: {
+        id: 'account-1',
+        code: '1120',
+        name: 'Bank Account',
+        balance: 10000,
+      } as any,
+      statementDate: new Date('2024-01-31'),
+      openingBalance: 10000,
+      closingBalance: 12000,
+      transactions: [],
+      status: BankStatementStatus.DRAFT,
+      tenantId: 'tenant-1',
+      createdBy: 'user-1',
+      createdAt: new Date('2024-01-31'),
+      updatedAt: new Date('2024-01-31'),
+      ...overrides,
+    }) as any;
 
   // Helper to create fresh mock bank transaction
-  const createMockTransaction = (overrides = {}): BankTransaction => ({
-    id: 'transaction-1',
-    statement: createMockStatement(),
-    date: new Date('2024-01-15'),
-    description: 'Payment received',
-    amount: 1000,
-    reference: 'REF-001',
-    matchedEntry: null,
-    isReconciled: false,
-    tenantId: 'tenant-1',
-    createdAt: new Date('2024-01-15'),
-    updatedAt: new Date('2024-01-15'),
-    ...overrides,
-  } as any);
+  const createMockTransaction = (overrides = {}): BankTransaction =>
+    ({
+      id: 'transaction-1',
+      statement: createMockStatement(),
+      date: new Date('2024-01-15'),
+      description: 'Payment received',
+      amount: 1000,
+      reference: 'REF-001',
+      matchedEntry: null,
+      isReconciled: false,
+      tenantId: 'tenant-1',
+      createdAt: new Date('2024-01-15'),
+      updatedAt: new Date('2024-01-15'),
+      ...overrides,
+    }) as any;
 
   beforeEach(async () => {
     // Create mock repositories
@@ -198,9 +200,7 @@ describe('BankReconciliationService', () => {
       statementRepository.create.mockReturnValue(
         createMockStatement({ number: 'BS-2024-0100' }) as any,
       );
-      statementRepository.save.mockResolvedValue(
-        createMockStatement({ number: 'BS-2024-0100' }),
-      );
+      statementRepository.save.mockResolvedValue(createMockStatement({ number: 'BS-2024-0100' }));
 
       const result = await service.create(dto as any, mockUser);
 
@@ -259,9 +259,7 @@ describe('BankReconciliationService', () => {
       const secureRepo = (service as any).secureStatementRepo;
       secureRepo.findOne.mockResolvedValue(null);
 
-      await expect(service.findOne('nonexistent', mockUser)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.findOne('nonexistent', mockUser)).rejects.toThrow(NotFoundException);
       await expect(service.findOne('nonexistent', mockUser)).rejects.toThrow(
         'Bank statement not found',
       );
@@ -403,9 +401,7 @@ describe('BankReconciliationService', () => {
         ],
       });
 
-      const mockEntries = [
-        { id: 'entry-1', date: new Date('2024-01-15'), amount: 1000 },
-      ];
+      const mockEntries = [{ id: 'entry-1', date: new Date('2024-01-15'), amount: 1000 }];
 
       const secureRepo = (service as any).secureStatementRepo;
       secureRepo.findOne.mockResolvedValue(mockStatement);
@@ -494,12 +490,12 @@ describe('BankReconciliationService', () => {
     it('should throw NotFoundException when transaction not found', async () => {
       transactionRepository.findOne.mockResolvedValue(null);
 
-      await expect(
-        service.manualMatch('nonexistent', 'entry-1', mockUser),
-      ).rejects.toThrow(NotFoundException);
-      await expect(
-        service.manualMatch('nonexistent', 'entry-1', mockUser),
-      ).rejects.toThrow('Transaction not found');
+      await expect(service.manualMatch('nonexistent', 'entry-1', mockUser)).rejects.toThrow(
+        NotFoundException,
+      );
+      await expect(service.manualMatch('nonexistent', 'entry-1', mockUser)).rejects.toThrow(
+        'Transaction not found',
+      );
     });
 
     it('should throw NotFoundException when journal entry not found', async () => {
@@ -508,12 +504,12 @@ describe('BankReconciliationService', () => {
       transactionRepository.findOne.mockResolvedValue(mockTransaction);
       journalEntryRepository.findOne.mockResolvedValue(null);
 
-      await expect(
-        service.manualMatch('transaction-1', 'nonexistent', mockUser),
-      ).rejects.toThrow(NotFoundException);
-      await expect(
-        service.manualMatch('transaction-1', 'nonexistent', mockUser),
-      ).rejects.toThrow('Journal entry not found');
+      await expect(service.manualMatch('transaction-1', 'nonexistent', mockUser)).rejects.toThrow(
+        NotFoundException,
+      );
+      await expect(service.manualMatch('transaction-1', 'nonexistent', mockUser)).rejects.toThrow(
+        'Journal entry not found',
+      );
     });
   });
 
@@ -543,9 +539,7 @@ describe('BankReconciliationService', () => {
     it('should throw NotFoundException when transaction not found', async () => {
       transactionRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.unmatch('nonexistent', mockUser)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.unmatch('nonexistent', mockUser)).rejects.toThrow(NotFoundException);
       await expect(service.unmatch('nonexistent', mockUser)).rejects.toThrow(
         'Transaction not found',
       );
@@ -558,9 +552,7 @@ describe('BankReconciliationService', () => {
 
       transactionRepository.findOne.mockResolvedValue(mockTransaction);
 
-      await expect(service.unmatch('transaction-1', mockUser)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.unmatch('transaction-1', mockUser)).rejects.toThrow(BadRequestException);
       await expect(service.unmatch('transaction-1', mockUser)).rejects.toThrow(
         'Transaction is not reconciled',
       );
@@ -671,12 +663,12 @@ describe('BankReconciliationService', () => {
 
       accountRepository.findOne.mockResolvedValue(null);
 
-      await expect(
-        service.getReconciliationReport('statement-1', mockUser),
-      ).rejects.toThrow(NotFoundException);
-      await expect(
-        service.getReconciliationReport('statement-1', mockUser),
-      ).rejects.toThrow('Bank account not found');
+      await expect(service.getReconciliationReport('statement-1', mockUser)).rejects.toThrow(
+        NotFoundException,
+      );
+      await expect(service.getReconciliationReport('statement-1', mockUser)).rejects.toThrow(
+        'Bank account not found',
+      );
     });
   });
 });

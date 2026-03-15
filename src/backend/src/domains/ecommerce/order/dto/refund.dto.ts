@@ -6,7 +6,11 @@ export class RefundDto {
   @IsString()
   orderId: string;
 
-  @ApiProperty({ example: 199.99, required: false, description: 'Refund amount (defaults to full order total)' })
+  @ApiProperty({
+    example: 199.99,
+    required: false,
+    description: 'Refund amount (defaults to full order total)',
+  })
   @IsNumber()
   @IsOptional()
   @Min(0)

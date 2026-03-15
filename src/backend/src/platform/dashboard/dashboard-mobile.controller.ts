@@ -23,14 +23,22 @@ export class DashboardMobileController {
 
   @Get('stats')
   @ApiOperation({ summary: 'Get dashboard stats (Mobile App)' })
-  @ApiResponse({ status: 200, description: 'Dashboard stats retrieved successfully', type: MobileDashboardStatsDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Dashboard stats retrieved successfully',
+    type: MobileDashboardStatsDto,
+  })
   async getStats(@CurrentUser() user: User): Promise<MobileDashboardStatsDto> {
     return this.dashboardService.getMobileStats(user);
   }
 
   @Get('revenue-chart')
   @ApiOperation({ summary: 'Get revenue chart data (Mobile App)' })
-  @ApiResponse({ status: 200, description: 'Revenue chart data retrieved successfully', type: MobileChartDataDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Revenue chart data retrieved successfully',
+    type: MobileChartDataDto,
+  })
   async getRevenueChart(
     @CurrentUser() user: User,
     @Query() query: MobileChartQueryDto,
@@ -40,7 +48,11 @@ export class DashboardMobileController {
 
   @Get('top-products')
   @ApiOperation({ summary: 'Get top selling products (Mobile App)' })
-  @ApiResponse({ status: 200, description: 'Top products retrieved successfully', type: MobileChartDataDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Top products retrieved successfully',
+    type: MobileChartDataDto,
+  })
   async getTopProducts(
     @CurrentUser() user: User,
     @Query() query: MobileTopItemsQueryDto,
@@ -54,7 +66,11 @@ export class DashboardMobileController {
 
   @Get('recent-orders')
   @ApiOperation({ summary: 'Get recent orders (Mobile App)' })
-  @ApiResponse({ status: 200, description: 'Recent orders retrieved successfully', type: [RecentOrderDto] })
+  @ApiResponse({
+    status: 200,
+    description: 'Recent orders retrieved successfully',
+    type: [RecentOrderDto],
+  })
   async getRecentOrders(
     @CurrentUser() user: User,
     @Query() query: MobileTopItemsQueryDto,
@@ -64,7 +80,11 @@ export class DashboardMobileController {
 
   @Get('low-stock')
   @ApiOperation({ summary: 'Get low stock products (Mobile App)' })
-  @ApiResponse({ status: 200, description: 'Low stock products retrieved successfully', type: [LowStockProductDto] })
+  @ApiResponse({
+    status: 200,
+    description: 'Low stock products retrieved successfully',
+    type: [LowStockProductDto],
+  })
   async getLowStock(
     @CurrentUser() user: User,
     @Query() query: MobileTopItemsQueryDto,

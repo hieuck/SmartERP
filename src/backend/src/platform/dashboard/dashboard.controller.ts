@@ -24,14 +24,22 @@ export class DashboardController {
 
   @Get('overview')
   @ApiOperation({ summary: 'Get dashboard overview (Frontend Web)' })
-  @ApiResponse({ status: 200, description: 'Dashboard overview retrieved successfully', type: DashboardOverviewDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Dashboard overview retrieved successfully',
+    type: DashboardOverviewDto,
+  })
   async getOverview(@CurrentUser() user: User): Promise<DashboardOverviewDto> {
     return this.dashboardService.getOverview(user);
   }
 
   @Get('sales-chart')
   @ApiOperation({ summary: 'Get sales chart data (Frontend Web)' })
-  @ApiResponse({ status: 200, description: 'Sales chart data retrieved successfully', type: [SalesChartDataDto] })
+  @ApiResponse({
+    status: 200,
+    description: 'Sales chart data retrieved successfully',
+    type: [SalesChartDataDto],
+  })
   async getSalesChart(
     @CurrentUser() user: User,
     @Query() query: SalesChartQueryDto,
@@ -41,7 +49,11 @@ export class DashboardController {
 
   @Get('top-products')
   @ApiOperation({ summary: 'Get top selling products (Frontend Web)' })
-  @ApiResponse({ status: 200, description: 'Top products retrieved successfully', type: [TopProductDto] })
+  @ApiResponse({
+    status: 200,
+    description: 'Top products retrieved successfully',
+    type: [TopProductDto],
+  })
   async getTopProducts(
     @CurrentUser() user: User,
     @Query() query: TopItemsQueryDto,
@@ -51,7 +63,11 @@ export class DashboardController {
 
   @Get('top-customers')
   @ApiOperation({ summary: 'Get top customers (Frontend Web)' })
-  @ApiResponse({ status: 200, description: 'Top customers retrieved successfully', type: [TopCustomerDto] })
+  @ApiResponse({
+    status: 200,
+    description: 'Top customers retrieved successfully',
+    type: [TopCustomerDto],
+  })
   async getTopCustomers(
     @CurrentUser() user: User,
     @Query() query: TopItemsQueryDto,
@@ -61,7 +77,11 @@ export class DashboardController {
 
   @Get('revenue-by-category')
   @ApiOperation({ summary: 'Get revenue by category (Frontend Web)' })
-  @ApiResponse({ status: 200, description: 'Revenue by category retrieved successfully', type: [RevenueByCategoryDto] })
+  @ApiResponse({
+    status: 200,
+    description: 'Revenue by category retrieved successfully',
+    type: [RevenueByCategoryDto],
+  })
   async getRevenueByCategory(@CurrentUser() user: User): Promise<RevenueByCategoryDto[]> {
     return this.dashboardService.getRevenueByCategory(user);
   }

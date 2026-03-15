@@ -1,7 +1,7 @@
 /**
  * PaymentGatewayController Integration Tests
  * Coverage target: 95%
- * 
+ *
  * Test cases:
  * 1. POST /payment-gateway - Create payment
  * 2. POST /payment-gateway/verify - Verify payment
@@ -25,14 +25,14 @@ describe('PaymentGatewayController (Integration)', () => {
   let app: INestApplication;
   let paymentGatewayService: jest.Mocked<PaymentGatewayService>;
 
-  const mockUser = {
+  const _mockUser = {
     id: 'user-123',
     email: 'user@example.com',
     tenantId: 'tenant-123',
     roles: ['user'],
   };
 
-  const mockTransaction = {
+  const _mockTransaction = {
     id: 'txn-123',
     orderId: 'order-123',
     gateway: 'vnpay',
@@ -118,10 +118,7 @@ describe('PaymentGatewayController (Integration)', () => {
     });
 
     it('should validate required fields', async () => {
-      await request(app.getHttpServer())
-        .post('/payment-gateway')
-        .send({})
-        .expect(400);
+      await request(app.getHttpServer()).post('/payment-gateway').send({}).expect(400);
     });
 
     it('should return 400 when gateway not supported', async () => {

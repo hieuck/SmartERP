@@ -1,12 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  UseGuards,
-  Patch,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards, Patch } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { BankReconciliationService } from './bank-reconciliation.service';
 import { CreateBankStatementDto } from './dto/create-bank-statement.dto';
@@ -21,16 +13,12 @@ import { User } from '@/common/security/permission.service';
 @Controller('bank-reconciliation')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class BankReconciliationController {
-  constructor(
-    private readonly bankReconciliationService: BankReconciliationService,
-  ) {}
+  constructor(private readonly bankReconciliationService: BankReconciliationService) {}
 
   @Post('statements')
   @Roles('accountant', 'manager', 'admin')
   @ApiOperation({ summary: 'Create bank statement' })
-  create(
-    @CurrentUser() user: User, @Body() createDto: CreateBankStatementDto,
-  ) {
+  create(@CurrentUser() user: User, @Body() createDto: CreateBankStatementDto) {
     return this.bankReconciliationService.create(createDto, user);
   }
 
@@ -60,13 +48,10 @@ export class BankReconciliationController {
   @ApiOperation({ summary: 'Manually match transaction with journal entry' })
   manualMatch(
     @Param('transactionId') transactionId: string,
-    @CurrentUser() user: User, @Param('entryId') entryId: string,
+    @CurrentUser() user: User,
+    @Param('entryId') entryId: string,
   ) {
-    return this.bankReconciliationService.manualMatch(
-      transactionId,
-      entryId,
-      user,
-    );
+    return this.bankReconciliationService.manualMatch(transactionId, entryId, user);
   }
 
   @Patch('transactions/:id/unmatch')

@@ -26,7 +26,10 @@ export class CreateErrorLogDto {
   @IsEnum(ErrorSeverity)
   severity: ErrorSeverity;
 
-  @ApiPropertyOptional({ example: { userId: '123', action: 'create' }, description: 'Additional context' })
+  @ApiPropertyOptional({
+    example: { userId: '123', action: 'create' },
+    description: 'Additional context',
+  })
   @IsOptional()
   @IsObject()
   context?: Record<string, any>;

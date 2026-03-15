@@ -7,7 +7,6 @@ import { Report } from './entities/report.entity';
 import { ReportColumn } from './entities/report-column.entity';
 import { ReportExecution } from './entities/report-execution.entity';
 import { ReportType } from './enums/report-type.enum';
-import { AggregationType } from '../enums/platform.enum';
 import { ExecutionStatus } from './enums/execution-status.enum';
 import { User } from '@/common/security/permission.service';
 
@@ -153,9 +152,7 @@ describe('ReportService', () => {
     it('should throw NotFoundException when report not found', async () => {
       reportRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findOne('non-existent', 'tenant-1')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.findOne('non-existent', 'tenant-1')).rejects.toThrow(NotFoundException);
       await expect(service.findOne('non-existent', 'tenant-1')).rejects.toThrow(
         'Report with ID non-existent not found',
       );
@@ -202,11 +199,21 @@ describe('ReportService', () => {
 
   describe('update', () => {
     it('should update report successfully', async () => {
-      const updatedReport = { ...mockReport, name: 'Updated Report', generateReference: jest.fn(), validate: jest.fn() };
+      const updatedReport = {
+        ...mockReport,
+        name: 'Updated Report',
+        generateReference: jest.fn(),
+        validate: jest.fn(),
+      };
       reportRepository.findOne.mockResolvedValue(mockReport);
       reportRepository.save.mockResolvedValue(updatedReport as any);
 
-      const result = await service.update('report-1', { name: 'Updated Report' }, 'tenant-1', mockUser);
+      const result = await service.update(
+        'report-1',
+        { name: 'Updated Report' },
+        'tenant-1',
+        mockUser,
+      );
 
       expect(result.name).toBe('Updated Report');
       expect(reportRepository.save).toHaveBeenCalled();
@@ -260,9 +267,9 @@ describe('ReportService', () => {
     it('should throw NotFoundException when report not found', async () => {
       reportRepository.findOne.mockResolvedValue(null);
 
-      await expect(
-        service.addColumn('non-existent', {}, 'tenant-1', mockUser),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.addColumn('non-existent', {}, 'tenant-1', mockUser)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 

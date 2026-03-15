@@ -18,6 +18,8 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:unit": "jest --testPathPattern=spec.ts",
     "test:integration": "jest --testPathPattern=test.ts",
+    "test:coverage": "jest --coverage",
+    "security:audit": "npm audit --audit-level=high",
     "migration:generate": "typeorm migration:generate -d src/config/database.config.ts",
     "migration:run": "typeorm migration:run -d src/config/database.config.ts",
     "migration:revert": "typeorm migration:revert -d src/config/database.config.ts",

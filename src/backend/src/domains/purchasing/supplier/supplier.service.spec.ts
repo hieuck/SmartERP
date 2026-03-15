@@ -14,7 +14,7 @@ describe('SupplierService', () => {
   let service: SupplierService;
   let supplierRepository: jest.Mocked<Repository<Supplier>>;
   let cacheService: jest.Mocked<CacheService>;
-  let permissionService: jest.Mocked<PermissionService>;
+  let _permissionService: jest.Mocked<PermissionService>;
 
   const mockUser: User = {
     id: 'user-1',
@@ -165,9 +165,7 @@ describe('SupplierService', () => {
       supplierRepository.findOne.mockResolvedValue(null);
       cacheService.getOrSet.mockImplementation(async (key, fn) => fn());
 
-      await expect(service.findOne(mockUser, 'non-existent')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.findOne(mockUser, 'non-existent')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -286,7 +284,10 @@ describe('SupplierService', () => {
     it('should not check email uniqueness when email unchanged', async () => {
       const updateWithSameEmail: UpdateSupplierDto = { name: 'Updated Name' };
       cacheService.getOrSet.mockResolvedValue(mockSupplier);
-      supplierRepository.save.mockResolvedValue({ ...mockSupplier, name: 'Updated Name' } as Supplier);
+      supplierRepository.save.mockResolvedValue({
+        ...mockSupplier,
+        name: 'Updated Name',
+      } as Supplier);
 
       await service.update(mockUser, 'supplier-1', updateWithSameEmail);
 

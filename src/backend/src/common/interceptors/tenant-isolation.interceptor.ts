@@ -8,16 +8,15 @@ import {
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { User } from '@/common/security/permission.service';
 
 /**
  * TenantIsolationInterceptor
- * 
+ *
  * Purpose: Ensure tenant data isolation in responses
  * Validates that returned data belongs to the authenticated tenant
- * 
+ *
  * Security: Prevents cross-tenant data leaks
- * 
+ *
  * Usage: Apply globally or to specific controllers
  * @UseInterceptors(TenantIsolationInterceptor)
  */

@@ -8,9 +8,7 @@ import { ReportColumn } from './entities/report-column.entity';
 import { ReportExecution } from './entities/report-execution.entity';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Report, ReportColumn, ReportExecution]),
-  ],
+  imports: [TypeOrmModule.forFeature([Report, ReportColumn, ReportExecution])],
   controllers: [ReportController],
   providers: [ReportService, ReportTemplateService],
   exports: [ReportService, ReportTemplateService],

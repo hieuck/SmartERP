@@ -68,11 +68,7 @@ export class PaymentController {
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string,
   ) {
-    return this.paymentService.getPaymentsByDateRange(
-      user,
-      new Date(startDate),
-      new Date(endDate),
-    );
+    return this.paymentService.getPaymentsByDateRange(user, new Date(startDate), new Date(endDate));
   }
 
   @Get(':id')
@@ -91,7 +87,8 @@ export class PaymentController {
   @ApiOperation({ summary: 'Update payment' })
   update(
     @Param('id') id: string,
-    @CurrentUser() user: User, @Body() updatePaymentDto: UpdatePaymentDto,
+    @CurrentUser() user: User,
+    @Body() updatePaymentDto: UpdatePaymentDto,
   ) {
     return this.paymentService.update(user, id, updatePaymentDto);
   }
@@ -108,11 +105,7 @@ export class PaymentController {
 
   @Patch(':id/fail')
   @ApiOperation({ summary: 'Fail payment' })
-  fail(
-    @CurrentUser() user: User,
-    @Param('id') id: string,
-    @Body('reason') reason: string,
-  ) {
+  fail(@CurrentUser() user: User, @Param('id') id: string, @Body('reason') reason: string) {
     return this.paymentService.fail(user, id, reason);
   }
 

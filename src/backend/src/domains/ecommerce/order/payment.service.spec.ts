@@ -13,7 +13,7 @@ import { RefundDto } from './dto/refund.dto';
 describe('PaymentService', () => {
   let service: PaymentService;
   let orderRepository: jest.Mocked<Repository<Order>>;
-  let permissionService: jest.Mocked<PermissionService>;
+  let _permissionService: jest.Mocked<PermissionService>;
 
   const mockUser: User = {
     id: 'user-1',
@@ -22,60 +22,61 @@ describe('PaymentService', () => {
   };
 
   // Helper function to create fresh mock order
-  const createMockOrder = (overrides = {}): Order => ({
-    id: 'order-1',
-    orderNumber: 'ORD-001',
-    customerId: 'customer-1',
-    customer: null,
-    cartId: 'cart-1',
-    status: 'pending' as any,
-    paymentStatus: PaymentStatus.PENDING,
-    shippingStatus: 'pending' as any,
-    items: [],
-    subtotal: 100,
-    tax: 0,
-    shipping: 0,
-    discount: 0,
-    total: 100,
-    couponCode: null,
-    customerEmail: 'customer@example.com',
-    customerPhone: '0123456789',
-    shippingAddress: {
-      street: '123 Main St',
-      city: 'Hanoi',
-      country: 'Vietnam',
-      postalCode: '100000',
-    },
-    billingAddress: {
-      street: '123 Main St',
-      city: 'Hanoi',
-      country: 'Vietnam',
-      postalCode: '100000',
-    },
-    paymentMethod: null,
-    paymentTransactionId: null,
-    paidAt: null,
-    shippingMethod: null,
-    trackingNumber: null,
-    shippedAt: null,
-    deliveredAt: null,
-    customerNotes: null,
-    internalNotes: null,
-    cancelledBy: null,
-    cancellationReason: null,
-    cancelledAt: null,
-    tenantId: 'tenant-1',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    generateOrderNumber: jest.fn(),
-    calculateTotals: jest.fn(),
-    validate: jest.fn(),
-    itemCount: 0,
-    isPaid: false,
-    canBeCancelled: true,
-    isCompleted: false,
-    ...overrides,
-  } as Order);
+  const createMockOrder = (overrides = {}): Order =>
+    ({
+      id: 'order-1',
+      orderNumber: 'ORD-001',
+      customerId: 'customer-1',
+      customer: null,
+      cartId: 'cart-1',
+      status: 'pending' as any,
+      paymentStatus: PaymentStatus.PENDING,
+      shippingStatus: 'pending' as any,
+      items: [],
+      subtotal: 100,
+      tax: 0,
+      shipping: 0,
+      discount: 0,
+      total: 100,
+      couponCode: null,
+      customerEmail: 'customer@example.com',
+      customerPhone: '0123456789',
+      shippingAddress: {
+        street: '123 Main St',
+        city: 'Hanoi',
+        country: 'Vietnam',
+        postalCode: '100000',
+      },
+      billingAddress: {
+        street: '123 Main St',
+        city: 'Hanoi',
+        country: 'Vietnam',
+        postalCode: '100000',
+      },
+      paymentMethod: null,
+      paymentTransactionId: null,
+      paidAt: null,
+      shippingMethod: null,
+      trackingNumber: null,
+      shippedAt: null,
+      deliveredAt: null,
+      customerNotes: null,
+      internalNotes: null,
+      cancelledBy: null,
+      cancellationReason: null,
+      cancelledAt: null,
+      tenantId: 'tenant-1',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      generateOrderNumber: jest.fn(),
+      calculateTotals: jest.fn(),
+      validate: jest.fn(),
+      itemCount: 0,
+      isPaid: false,
+      canBeCancelled: true,
+      isCompleted: false,
+      ...overrides,
+    }) as Order;
 
   beforeEach(async () => {
     const mockOrderRepo = {
@@ -534,9 +535,7 @@ describe('PaymentService', () => {
       });
       orderRepository.findOne.mockResolvedValue(paidOrder as any);
 
-      await expect(service.refundPayment(refundDto, mockUser)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.refundPayment(refundDto, mockUser)).rejects.toThrow(BadRequestException);
     });
 
     it('should handle undefined paymentMethod gracefully', async () => {
@@ -546,9 +545,7 @@ describe('PaymentService', () => {
       });
       orderRepository.findOne.mockResolvedValue(paidOrder as any);
 
-      await expect(service.refundPayment(refundDto, mockUser)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.refundPayment(refundDto, mockUser)).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -611,9 +608,9 @@ describe('PaymentService', () => {
 
     it('should handle very large amount', async () => {
       const largeAmount = 999999999;
-      const largeAmountOrder = createMockOrder({ 
-        total: largeAmount, 
-        paymentStatus: PaymentStatus.PENDING 
+      const largeAmountOrder = createMockOrder({
+        total: largeAmount,
+        paymentStatus: PaymentStatus.PENDING,
       });
       orderRepository.findOne.mockResolvedValue(largeAmountOrder as any);
       orderRepository.save.mockResolvedValue({

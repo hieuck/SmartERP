@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Counter, Histogram, Gauge, register, Registry } from 'prom-client';
+import { Counter, Histogram, Gauge, _register, Registry } from 'prom-client';
 
 @Injectable()
 export class MetricsService {
@@ -42,7 +42,6 @@ export class MetricsService {
       registers: [this.registry],
     });
 
-
     // Cache hit counter
     this.cacheHitTotal = new Counter({
       name: 'cache_hits_total',
@@ -79,15 +78,8 @@ export class MetricsService {
     this.gauges = new Map();
   }
 
-  recordHttpRequest(
-    method: string,
-    route: string,
-    status: number,
-    duration: number,
-  ): void {
-    this.httpRequestDuration
-      .labels(method, route, status.toString())
-      .observe(duration);
+  recordHttpRequest(method: string, route: string, status: number, duration: number): void {
+    this.httpRequestDuration.labels(method, route, status.toString()).observe(duration);
     this.httpRequestTotal.labels(method, route, status.toString()).inc();
   }
 
@@ -103,12 +95,7 @@ export class MetricsService {
     this.cacheMissTotal.labels(cacheKey).inc();
   }
 
-  recordQueryDuration(
-    method: string,
-    url: string,
-    statusCode: number,
-    duration: number,
-  ): void {
+  recordQueryDuration(method: string, url: string, statusCode: number, duration: number): void {
     // Record as HTTP request
     this.recordHttpRequest(method, url, statusCode, duration / 1000);
   }
@@ -121,11 +108,7 @@ export class MetricsService {
     this.queryErrorTotal.labels(method, url, errorType).inc();
   }
 
-  recordGauge(
-    name: string,
-    value: number,
-    labels?: Record<string, string>,
-  ): void {
+  recordGauge(name: string, value: number, labels?: Record<string, string>): void {
     const labelNames = labels ? Object.keys(labels) : [];
     const gaugeKey = `${name}_${labelNames.join('_')}`;
 

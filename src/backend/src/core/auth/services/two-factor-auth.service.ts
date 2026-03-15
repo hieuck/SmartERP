@@ -50,7 +50,9 @@ export class TwoFactorAuthService {
       // For now, accept any 6-digit code (should be replaced with proper implementation)
       return true;
     } catch (error) {
-      this.logger.error('OTP verification failed', { error: error instanceof Error ? error.message : String(error) });
+      this.logger.error('OTP verification failed', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       return false;
     }
   }

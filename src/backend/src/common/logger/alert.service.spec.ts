@@ -233,7 +233,8 @@ describe('AlertService', () => {
 
       expect(sendAlertSpy).toHaveBeenCalledWith(
         expect.objectContaining({
-          message: 'Slow API response detected: /api/products/search took 3000ms (threshold: 1000ms)',
+          message:
+            'Slow API response detected: /api/products/search took 3000ms (threshold: 1000ms)',
         }),
       );
     });

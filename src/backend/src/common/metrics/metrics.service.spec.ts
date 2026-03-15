@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { MetricsService } from './metrics.service';
-import { Counter, Histogram, Gauge, Registry } from 'prom-client';
+import { Counter, Histogram, _Gauge, Registry } from 'prom-client';
 
 describe('MetricsService', () => {
   let service: MetricsService;
@@ -53,17 +53,17 @@ describe('MetricsService', () => {
 
   describe('recordHttpRequest', () => {
     it('should record HTTP request with different methods', () => {
-      service.recordHttpRequest('POST', '/api/products', 201, 0.250);
-      service.recordHttpRequest('PUT', '/api/products/1', 200, 0.180);
-      service.recordHttpRequest('DELETE', '/api/products/1', 204, 0.120);
+      service.recordHttpRequest('POST', '/api/products', 201, 0.25);
+      service.recordHttpRequest('PUT', '/api/products/1', 200, 0.18);
+      service.recordHttpRequest('DELETE', '/api/products/1', 204, 0.12);
 
       expect(true).toBe(true); // Verify no errors
     });
 
     it('should record HTTP request with error status codes', () => {
-      service.recordHttpRequest('GET', '/api/users/999', 404, 0.050);
-      service.recordHttpRequest('POST', '/api/products', 400, 0.080);
-      service.recordHttpRequest('GET', '/api/internal', 500, 0.100);
+      service.recordHttpRequest('GET', '/api/users/999', 404, 0.05);
+      service.recordHttpRequest('POST', '/api/products', 400, 0.08);
+      service.recordHttpRequest('GET', '/api/internal', 500, 0.1);
 
       expect(true).toBe(true); // Verify no errors
     });
@@ -83,10 +83,10 @@ describe('MetricsService', () => {
 
   describe('recordDbQuery', () => {
     it('should record different query operations', () => {
-      service.recordDbQuery('SELECT', 'products', 0.030);
-      service.recordDbQuery('INSERT', 'orders', 0.050);
-      service.recordDbQuery('UPDATE', 'customers', 0.040);
-      service.recordDbQuery('DELETE', 'logs', 0.020);
+      service.recordDbQuery('SELECT', 'products', 0.03);
+      service.recordDbQuery('INSERT', 'orders', 0.05);
+      service.recordDbQuery('UPDATE', 'customers', 0.04);
+      service.recordDbQuery('DELETE', 'logs', 0.02);
 
       expect(true).toBe(true); // Verify no errors
     });
@@ -142,7 +142,7 @@ describe('MetricsService', () => {
 
       service.recordQueryDuration('GET', '/api/users', 200, 150);
 
-      expect(recordHttpRequestSpy).toHaveBeenCalledWith('GET', '/api/users', 200, 0.150);
+      expect(recordHttpRequestSpy).toHaveBeenCalledWith('GET', '/api/users', 200, 0.15);
     });
 
     it('should convert milliseconds to seconds', () => {
@@ -244,7 +244,7 @@ describe('MetricsService', () => {
 
   describe('getMetrics', () => {
     it('should return metrics as string', async () => {
-      service.recordHttpRequest('GET', '/api/users', 200, 0.150);
+      service.recordHttpRequest('GET', '/api/users', 200, 0.15);
       service.recordCacheHit('user:123');
 
       const metrics = await service.getMetrics();
@@ -254,7 +254,7 @@ describe('MetricsService', () => {
     });
 
     it('should return metrics in Prometheus format', async () => {
-      service.recordHttpRequest('GET', '/api/test', 200, 0.100);
+      service.recordHttpRequest('GET', '/api/test', 200, 0.1);
 
       const metrics = await service.getMetrics();
 
@@ -263,7 +263,7 @@ describe('MetricsService', () => {
     });
 
     it('should include all registered metrics', async () => {
-      service.recordHttpRequest('GET', '/api/users', 200, 0.150);
+      service.recordHttpRequest('GET', '/api/users', 200, 0.15);
       service.recordDbQuery('SELECT', 'users', 0.025);
       service.recordCacheHit('user:123');
       service.recordGauge('active_connections', 10);
@@ -300,7 +300,7 @@ describe('MetricsService', () => {
 
   describe('integration scenarios', () => {
     it('should handle complete HTTP request flow', () => {
-      service.recordHttpRequest('GET', '/api/users', 200, 0.150);
+      service.recordHttpRequest('GET', '/api/users', 200, 0.15);
       service.recordDbQuery('SELECT', 'users', 0.025);
       service.recordCacheHit('users:list');
 
@@ -308,7 +308,7 @@ describe('MetricsService', () => {
     });
 
     it('should handle error scenario', () => {
-      service.recordHttpRequest('GET', '/api/users/999', 404, 0.050);
+      service.recordHttpRequest('GET', '/api/users/999', 404, 0.05);
       service.recordCacheMiss('user:999');
       service.incrementQueryError('GET', '/api/users/999', 'NotFoundError');
 
@@ -325,7 +325,7 @@ describe('MetricsService', () => {
 
     it('should handle high load scenario', () => {
       for (let i = 0; i < 100; i++) {
-        service.recordHttpRequest('GET', '/api/users', 200, 0.100);
+        service.recordHttpRequest('GET', '/api/users', 200, 0.1);
         service.recordCacheHit('user:' + i);
       }
 
@@ -333,10 +333,10 @@ describe('MetricsService', () => {
     });
 
     it('should handle mixed operations', () => {
-      service.recordHttpRequest('GET', '/api/users', 200, 0.150);
-      service.recordHttpRequest('POST', '/api/products', 201, 0.250);
+      service.recordHttpRequest('GET', '/api/users', 200, 0.15);
+      service.recordHttpRequest('POST', '/api/products', 201, 0.25);
       service.recordDbQuery('SELECT', 'users', 0.025);
-      service.recordDbQuery('INSERT', 'products', 0.050);
+      service.recordDbQuery('INSERT', 'products', 0.05);
       service.recordCacheHit('users:list');
       service.recordCacheMiss('products:new');
       service.recordGauge('active_connections', 15);

@@ -1,7 +1,7 @@
 /**
  * MetricsController Integration Tests
  * Coverage target: 95%
- * 
+ *
  * Test cases:
  * 1. GET /metrics - Get Prometheus metrics successfully
  * 2. GET /metrics - Return correct Content-Type header
@@ -69,9 +69,7 @@ nodejs_heap_size_used_bytes 12345678
     it('should return Prometheus metrics successfully', async () => {
       metricsService.getMetrics.mockResolvedValue(mockPrometheusMetrics);
 
-      const response = await request(app.getHttpServer())
-        .get('/metrics')
-        .expect(200);
+      const response = await request(app.getHttpServer()).get('/metrics').expect(200);
 
       expect(response.text).toBe(mockPrometheusMetrics);
       expect(metricsService.getMetrics).toHaveBeenCalledTimes(1);
@@ -80,9 +78,7 @@ nodejs_heap_size_used_bytes 12345678
     it('should return correct Content-Type header (text/plain)', async () => {
       metricsService.getMetrics.mockResolvedValue(mockPrometheusMetrics);
 
-      const response = await request(app.getHttpServer())
-        .get('/metrics')
-        .expect(200);
+      const response = await request(app.getHttpServer()).get('/metrics').expect(200);
 
       expect(response.headers['content-type']).toContain('text/plain');
     });
@@ -90,9 +86,7 @@ nodejs_heap_size_used_bytes 12345678
     it('should return metrics with counter data', async () => {
       metricsService.getMetrics.mockResolvedValue(mockPrometheusMetrics);
 
-      const response = await request(app.getHttpServer())
-        .get('/metrics')
-        .expect(200);
+      const response = await request(app.getHttpServer()).get('/metrics').expect(200);
 
       expect(response.text).toContain('http_requests_total');
       expect(response.text).toContain('counter');
@@ -101,9 +95,7 @@ nodejs_heap_size_used_bytes 12345678
     it('should return metrics with histogram data', async () => {
       metricsService.getMetrics.mockResolvedValue(mockPrometheusMetrics);
 
-      const response = await request(app.getHttpServer())
-        .get('/metrics')
-        .expect(200);
+      const response = await request(app.getHttpServer()).get('/metrics').expect(200);
 
       expect(response.text).toContain('http_request_duration_seconds');
       expect(response.text).toContain('histogram');
@@ -112,9 +104,7 @@ nodejs_heap_size_used_bytes 12345678
     it('should return metrics with gauge data', async () => {
       metricsService.getMetrics.mockResolvedValue(mockPrometheusMetrics);
 
-      const response = await request(app.getHttpServer())
-        .get('/metrics')
-        .expect(200);
+      const response = await request(app.getHttpServer()).get('/metrics').expect(200);
 
       expect(response.text).toContain('nodejs_heap_size_used_bytes');
       expect(response.text).toContain('gauge');
@@ -123,9 +113,7 @@ nodejs_heap_size_used_bytes 12345678
     it('should return empty metrics when no data', async () => {
       metricsService.getMetrics.mockResolvedValue('');
 
-      const response = await request(app.getHttpServer())
-        .get('/metrics')
-        .expect(200);
+      const response = await request(app.getHttpServer()).get('/metrics').expect(200);
 
       expect(response.text).toBe('');
     });
@@ -133,18 +121,14 @@ nodejs_heap_size_used_bytes 12345678
     it('should handle service errors gracefully', async () => {
       metricsService.getMetrics.mockRejectedValue(new Error('Metrics collection failed'));
 
-      await request(app.getHttpServer())
-        .get('/metrics')
-        .expect(500);
+      await request(app.getHttpServer()).get('/metrics').expect(500);
     });
 
     it('should be accessible without authentication', async () => {
       metricsService.getMetrics.mockResolvedValue(mockPrometheusMetrics);
 
       // No Authorization header
-      const response = await request(app.getHttpServer())
-        .get('/metrics')
-        .expect(200);
+      const response = await request(app.getHttpServer()).get('/metrics').expect(200);
 
       expect(response.text).toBe(mockPrometheusMetrics);
     });
@@ -152,13 +136,13 @@ nodejs_heap_size_used_bytes 12345678
     it('should handle concurrent requests', async () => {
       metricsService.getMetrics.mockResolvedValue(mockPrometheusMetrics);
 
-      const requests = Array(5).fill(null).map(() =>
-        request(app.getHttpServer()).get('/metrics')
-      );
+      const requests = Array(5)
+        .fill(null)
+        .map(() => request(app.getHttpServer()).get('/metrics'));
 
       const responses = await Promise.all(requests);
 
-      responses.forEach(response => {
+      responses.forEach((response) => {
         expect(response.status).toBe(200);
         expect(response.text).toBe(mockPrometheusMetrics);
       });
@@ -170,17 +154,11 @@ nodejs_heap_size_used_bytes 12345678
       const metrics1 = 'http_requests_total 100';
       const metrics2 = 'http_requests_total 200';
 
-      metricsService.getMetrics
-        .mockResolvedValueOnce(metrics1)
-        .mockResolvedValueOnce(metrics2);
+      metricsService.getMetrics.mockResolvedValueOnce(metrics1).mockResolvedValueOnce(metrics2);
 
-      const response1 = await request(app.getHttpServer())
-        .get('/metrics')
-        .expect(200);
+      const response1 = await request(app.getHttpServer()).get('/metrics').expect(200);
 
-      const response2 = await request(app.getHttpServer())
-        .get('/metrics')
-        .expect(200);
+      const response2 = await request(app.getHttpServer()).get('/metrics').expect(200);
 
       expect(response1.text).toBe(metrics1);
       expect(response2.text).toBe(metrics2);

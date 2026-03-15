@@ -46,7 +46,8 @@ export class AttendanceController {
   async getByEmployee(
     @Query('employeeId') employeeId: string,
     @Query('startDate') startDate: string,
-    @CurrentUser() user: User, @Query('endDate') endDate: string,
+    @CurrentUser() user: User,
+    @Query('endDate') endDate: string,
   ) {
     return this.attendanceService.getAttendanceByEmployee(
       employeeId,
@@ -62,7 +63,8 @@ export class AttendanceController {
   async getReport(
     @Query('employeeId') employeeId: string,
     @Query('startDate') startDate: string,
-    @CurrentUser() user: User, @Query('endDate') endDate: string,
+    @CurrentUser() user: User,
+    @Query('endDate') endDate: string,
   ) {
     return this.attendanceService.getAttendanceReport(
       employeeId,

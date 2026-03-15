@@ -16,7 +16,7 @@ describe('CheckoutService', () => {
   let orderRepository: jest.Mocked<Repository<Order>>;
   let orderItemRepository: jest.Mocked<Repository<OrderItem>>;
   let cartRepository: jest.Mocked<Repository<ShoppingCart>>;
-  let permissionService: jest.Mocked<PermissionService>;
+  let _permissionService: jest.Mocked<PermissionService>;
 
   const mockUser: User = {
     id: 'user-123',
@@ -89,9 +89,15 @@ describe('CheckoutService', () => {
     updatedAt: new Date(),
     calculateTotals: jest.fn(),
     validate: jest.fn(),
-    get itemCount() { return this.items.reduce((sum, item) => sum + item.quantity, 0); },
-    get isEmpty() { return !this.items || this.items.length === 0; },
-    get isExpired() { return this.expiresAt && new Date() > this.expiresAt; },
+    get itemCount() {
+      return this.items.reduce((sum, item) => sum + item.quantity, 0);
+    },
+    get isEmpty() {
+      return !this.items || this.items.length === 0;
+    },
+    get isExpired() {
+      return this.expiresAt && new Date() > this.expiresAt;
+    },
   } as unknown as ShoppingCart;
 
   const mockOrder: Order = {
@@ -217,9 +223,9 @@ describe('CheckoutService', () => {
     it('should throw NotFoundException when cart not found', async () => {
       cartRepository.findOne.mockResolvedValue(null);
 
-      await expect(
-        service.initiateCheckout(mockCheckoutDto, mockUser),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.initiateCheckout(mockCheckoutDto, mockUser)).rejects.toThrow(
+        NotFoundException,
+      );
 
       expect(cartRepository.findOne).toHaveBeenCalled();
     });
@@ -228,26 +234,30 @@ describe('CheckoutService', () => {
       const emptyCart = {
         ...mockCart,
         items: [],
-        get isEmpty() { return true; },
+        get isEmpty() {
+          return true;
+        },
       } as unknown as ShoppingCart;
       cartRepository.findOne.mockResolvedValue(emptyCart);
 
-      await expect(
-        service.initiateCheckout(mockCheckoutDto, mockUser),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.initiateCheckout(mockCheckoutDto, mockUser)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw BadRequestException when cart is expired', async () => {
       const expiredCart = {
         ...mockCart,
         expiresAt: new Date(Date.now() - 86400000), // 24 hours ago
-        get isExpired() { return true; },
+        get isExpired() {
+          return true;
+        },
       } as unknown as ShoppingCart;
       cartRepository.findOne.mockResolvedValue(expiredCart);
 
-      await expect(
-        service.initiateCheckout(mockCheckoutDto, mockUser),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.initiateCheckout(mockCheckoutDto, mockUser)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should calculate express shipping cost correctly', async () => {
@@ -351,24 +361,24 @@ describe('CheckoutService', () => {
       const emptyCart = {
         ...mockCart,
         items: [],
-        get isEmpty() { return true; },
+        get isEmpty() {
+          return true;
+        },
       } as unknown as ShoppingCart;
 
-      await expect(service.validateCart(emptyCart)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.validateCart(emptyCart)).rejects.toThrow(BadRequestException);
     });
 
     it('should throw BadRequestException when cart is expired', async () => {
       const expiredCart = {
         ...mockCart,
         expiresAt: new Date(Date.now() - 86400000),
-        get isExpired() { return true; },
+        get isExpired() {
+          return true;
+        },
       } as unknown as ShoppingCart;
 
-      await expect(service.validateCart(expiredCart)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.validateCart(expiredCart)).rejects.toThrow(BadRequestException);
     });
 
     it('should throw BadRequestException when product is not published', async () => {
@@ -382,14 +392,18 @@ describe('CheckoutService', () => {
         ],
         calculateTotals: jest.fn(),
         validate: jest.fn(),
-        get itemCount() { return 2; },
-        get isEmpty() { return false; },
-        get isExpired() { return false; },
+        get itemCount() {
+          return 2;
+        },
+        get isEmpty() {
+          return false;
+        },
+        get isExpired() {
+          return false;
+        },
       } as unknown as ShoppingCart;
 
-      await expect(service.validateCart(unpublishedCart)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.validateCart(unpublishedCart)).rejects.toThrow(BadRequestException);
     });
 
     it('should throw BadRequestException when insufficient stock', async () => {
@@ -404,14 +418,20 @@ describe('CheckoutService', () => {
         ],
         calculateTotals: jest.fn(),
         validate: jest.fn(),
-        get itemCount() { return 20; },
-        get isEmpty() { return false; },
-        get isExpired() { return false; },
+        get itemCount() {
+          return 20;
+        },
+        get isEmpty() {
+          return false;
+        },
+        get isExpired() {
+          return false;
+        },
       } as unknown as ShoppingCart;
 
-      await expect(
-        service.validateCart(insufficientStockCart),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.validateCart(insufficientStockCart)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should not check stock when product does not track inventory', async () => {
@@ -426,9 +446,15 @@ describe('CheckoutService', () => {
         ],
         calculateTotals: jest.fn(),
         validate: jest.fn(),
-        get itemCount() { return 100; },
-        get isEmpty() { return false; },
-        get isExpired() { return false; },
+        get itemCount() {
+          return 100;
+        },
+        get isEmpty() {
+          return false;
+        },
+        get isExpired() {
+          return false;
+        },
       } as unknown as ShoppingCart;
 
       await expect(service.validateCart(noTrackCart)).resolves.not.toThrow();
@@ -485,10 +511,7 @@ describe('CheckoutService', () => {
     });
 
     it('should default to standard shipping when method not specified', async () => {
-      const shipping = await service.calculateShipping(
-        mockCart,
-        mockCart.shippingAddress,
-      );
+      const shipping = await service.calculateShipping(mockCart, mockCart.shippingAddress);
 
       expect(shipping).toBe(20000);
     });

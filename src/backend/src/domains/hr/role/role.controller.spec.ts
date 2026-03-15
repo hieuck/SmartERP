@@ -1,7 +1,7 @@
 /**
  * RoleController Integration Tests
  * Coverage target: 95%
- * 
+ *
  * Test cases:
  * 1. POST /roles - Create role
  * 2. GET /roles - Get all roles
@@ -67,12 +67,12 @@ describe('RoleController (Integration)', () => {
       canActivate: jest.fn().mockImplementation((context) => {
         const request = context.switchToHttp().getRequest();
         const authHeader = request.headers.authorization;
-        
+
         if (authHeader && authHeader.startsWith('Bearer ')) {
           request.user = mockUser;
           return true;
         }
-        
+
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }),
     };
@@ -158,10 +158,7 @@ describe('RoleController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .post('/roles')
-        .send({ name: 'test' })
-        .expect(401);
+      await request(app.getHttpServer()).post('/roles').send({ name: 'test' }).expect(401);
     });
 
     it('should validate required fields', async () => {
@@ -351,7 +348,11 @@ describe('RoleController (Integration)', () => {
         .expect(200);
 
       expect(response.body.permissions).toEqual([]);
-      expect(roleService.removePermissions).toHaveBeenCalledWith('role-123', permissionIds, mockUser);
+      expect(roleService.removePermissions).toHaveBeenCalledWith(
+        'role-123',
+        permissionIds,
+        mockUser,
+      );
     });
 
     it('should return 404 when role not found', async () => {

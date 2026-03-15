@@ -105,21 +105,14 @@ export class PayrollService {
     return payslip;
   }
 
-  async getPayslipsByEmployee(
-    employeeId: string,
-    tenantId: string,
-  ): Promise<Payslip[]> {
+  async getPayslipsByEmployee(employeeId: string, tenantId: string): Promise<Payslip[]> {
     return this.payslipRepository.find({
       where: { employeeId, tenantId },
       order: { year: 'DESC', month: 'DESC' },
     });
   }
 
-  async getPayslipsByMonth(
-    month: number,
-    year: number,
-    tenantId: string,
-  ): Promise<Payslip[]> {
+  async getPayslipsByMonth(month: number, year: number, tenantId: string): Promise<Payslip[]> {
     return this.payslipRepository.find({
       where: { month, year, tenantId },
       relations: ['employee'],
@@ -137,11 +130,7 @@ export class PayrollService {
     return this.payslipRepository.save(payslip);
   }
 
-  async markAsPaid(
-    id: string,
-    paymentDate: Date,
-    tenantId: string,
-  ): Promise<Payslip> {
+  async markAsPaid(id: string, paymentDate: Date, tenantId: string): Promise<Payslip> {
     const payslip = await this.getPayslip(id, tenantId);
 
     if (payslip.status !== PayslipStatus.SUBMITTED) {

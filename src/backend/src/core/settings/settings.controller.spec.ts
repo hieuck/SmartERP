@@ -1,7 +1,7 @@
 /**
  * SettingsController Integration Tests
  * Coverage target: 99%
- * 
+ *
  * Test cases:
  * 1. POST /settings - Create setting (admin only)
  * 2. POST /settings/bulk - Bulk upsert settings (admin only)
@@ -277,9 +277,7 @@ describe('SettingsController (Integration)', () => {
 
     it('should return 404 when setting not found', async () => {
       const NotFoundException = require('@nestjs/common').NotFoundException;
-      settingsService.update.mockRejectedValue(
-        new NotFoundException('Setting not found'),
-      );
+      settingsService.update.mockRejectedValue(new NotFoundException('Setting not found'));
 
       await request(app.getHttpServer())
         .patch('/settings/nonexistent')
@@ -303,9 +301,7 @@ describe('SettingsController (Integration)', () => {
 
     it('should return 404 when setting not found', async () => {
       const NotFoundException = require('@nestjs/common').NotFoundException;
-      settingsService.remove.mockRejectedValue(
-        new NotFoundException('Setting not found'),
-      );
+      settingsService.remove.mockRejectedValue(new NotFoundException('Setting not found'));
 
       await request(app.getHttpServer())
         .delete('/settings/nonexistent')

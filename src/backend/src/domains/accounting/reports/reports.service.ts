@@ -43,8 +43,8 @@ export interface GeneralLedgerReport {
     type: AccountType;
   };
   period: {
-    startDate: Date;
-    endDate: Date;
+    _startDate: Date;
+    _endDate: Date;
   };
   openingBalance: number;
   transactions: GeneralLedgerTransaction[];
@@ -53,8 +53,8 @@ export interface GeneralLedgerReport {
 
 export interface SalesSummary {
   period: {
-    startDate: Date;
-    endDate: Date;
+    _startDate: Date;
+    _endDate: Date;
   };
   totalSales: number;
   totalInvoices: number;
@@ -71,7 +71,7 @@ export interface SalesSummary {
 
 export interface InventorySummary {
   products: {
-    productId: string;
+    _productId: string;
     sku: string;
     name: string;
     quantity: number;
@@ -88,7 +88,7 @@ export interface InventorySummary {
 
 export interface InventoryValuation {
   products: {
-    productId: string;
+    _productId: string;
     sku: string;
     name: string;
     quantity: number;
@@ -100,7 +100,7 @@ export interface InventoryValuation {
 
 export interface InventoryMovement {
   movements: {
-    productId: string;
+    _productId: string;
     sku: string;
     name: string;
     movementType: string;
@@ -134,11 +134,7 @@ export class ReportsService {
     private readonly permissionService: PermissionService,
   ) {
     // Initialize secure repositories
-    this.secureAccountRepo = new SecureRepository(
-      accountRepository,
-      permissionService,
-      'Account',
-    );
+    this.secureAccountRepo = new SecureRepository(accountRepository, permissionService, 'Account');
     this.secureJournalLineRepo = new SecureRepository(
       journalLineRepository,
       permissionService,
@@ -150,8 +146,8 @@ export class ReportsService {
     this.paymentRepository = paymentRepository;
   }
 
-  async getTrialBalance(user: User, asOfDate: Date): Promise<TrialBalanceReport> {
-    const accounts = await this.secureAccountRepo.find(user, {
+  async getTrialBalance(_user: User, asOfDate: Date): Promise<TrialBalanceReport> {
+    const accounts = await this.secureAccountRepo.find(_user, {
       where: {
         isGroup: false,
         isActive: true,
@@ -169,10 +165,7 @@ export class ReportsService {
       let credit = 0;
 
       // Assets & Expenses: debit normal balance
-      if (
-        account.type === AccountType.ASSET ||
-        account.type === AccountType.EXPENSE
-      ) {
+      if (account.type === AccountType.ASSET || account.type === AccountType.EXPENSE) {
         if (balance >= 0) {
           debit = balance;
         } else {
@@ -208,12 +201,12 @@ export class ReportsService {
   }
 
   async getGeneralLedger(
-    user: User,
+    _user: User,
     accountId: string,
-    startDate: Date,
-    endDate: Date,
+    _startDate: Date,
+    _endDate: Date,
   ): Promise<GeneralLedgerReport> {
-    const account = await this.secureAccountRepo.findOne(user, {
+    const account = await this.secureAccountRepo.findOne(_user, {
       where: { id: accountId },
     });
 
@@ -229,8 +222,8 @@ export class ReportsService {
       .andWhere('line.tenantId = :tenantId', { tenantId: user.tenantId })
       .andWhere('entry.status = :status', { status: JournalEntryStatus.POSTED })
       .andWhere('entry.entryDate BETWEEN :startDate AND :endDate', {
-        startDate,
-        endDate,
+        _startDate,
+        _endDate,
       })
       .orderBy('entry.entryDate', 'ASC')
       .addOrderBy('entry.number', 'ASC')
@@ -245,10 +238,7 @@ export class ReportsService {
       const credit = Number(line.credit) || 0;
 
       // Calculate running balance based on account type
-      if (
-        account.type === AccountType.ASSET ||
-        account.type === AccountType.EXPENSE
-      ) {
+      if (account.type === AccountType.ASSET || account.type === AccountType.EXPENSE) {
         runningBalance += debit - credit;
       } else {
         runningBalance += credit - debit;
@@ -271,8 +261,8 @@ export class ReportsService {
         type: account.type,
       },
       period: {
-        startDate,
-        endDate,
+        _startDate,
+        _endDate,
       },
       openingBalance,
       transactions,
@@ -280,14 +270,10 @@ export class ReportsService {
     };
   }
 
-  async getCashFlowStatement(
-    user: User,
-    startDate: Date,
-    endDate: Date,
-  ): Promise<any> {
+  async getCashFlowStatement(_user: User, _startDate: Date, _endDate: Date): Promise<any> {
     // TODO: Implement cash flow statement logic
     return {
-      period: { startDate, endDate },
+      period: { _startDate, endDate },
       operating: { activities: [], total: 0 },
       investing: { activities: [], total: 0 },
       financing: { activities: [], total: 0 },
@@ -296,9 +282,9 @@ export class ReportsService {
   }
 
   async getSalesSummary(
-    user: User,
-    startDate: Date,
-    endDate: Date,
+    _user: User,
+    _startDate: Date,
+    _endDate: Date,
     customerId?: string,
   ): Promise<SalesSummary> {
     // Query invoices within date range
@@ -306,8 +292,8 @@ export class ReportsService {
       .createQueryBuilder('invoice')
       .where('invoice.tenantId = :tenantId', { tenantId: user.tenantId })
       .andWhere('invoice.invoiceDate BETWEEN :startDate AND :endDate', {
-        startDate,
-        endDate,
+        _startDate,
+        _endDate,
       })
       .andWhere('invoice.status IN (:...statuses)', {
         statuses: ['sent', 'paid', 'overdue'],
@@ -322,7 +308,10 @@ export class ReportsService {
     let totalSales = 0;
     let totalPaid = 0;
     let totalOutstanding = 0;
-    const salesByCustomerMap = new Map<string, { customerId: string; customerName: string; totalSales: number; invoiceCount: number }>();
+    const salesByCustomerMap = new Map<
+      string,
+      { customerId: string; customerName: string; totalSales: number; invoiceCount: number }
+    >();
 
     for (const invoice of invoices) {
       totalSales += Number(invoice.totalAmount);
@@ -346,7 +335,7 @@ export class ReportsService {
     const salesByCustomer = Array.from(salesByCustomerMap.values());
 
     return {
-      period: { startDate, endDate },
+      period: { _startDate, endDate },
       totalSales,
       totalInvoices: invoices.length,
       totalPaid,
@@ -357,7 +346,7 @@ export class ReportsService {
   }
 
   async getInventorySummary(
-    user: User,
+    _user: User,
     productId?: string,
     categoryId?: string,
     lowStockOnly?: boolean,
@@ -366,7 +355,7 @@ export class ReportsService {
       .createQueryBuilder('product')
       .where('product.tenantId = :tenantId', { tenantId: user.tenantId });
 
-    if (productId) {
+    if (_productId) {
       productQuery.andWhere('product.id = :productId', { productId });
     }
 
@@ -381,7 +370,7 @@ export class ReportsService {
     const products = await productQuery.getMany();
 
     const productSummaries = products.map((product) => ({
-      productId: product.id,
+      _productId: product.id,
       sku: product.sku,
       name: product.name,
       quantity: product.stockQuantity,
@@ -404,7 +393,7 @@ export class ReportsService {
   }
 
   async getInventoryValuation(
-    user: User,
+    _user: User,
     productId?: string,
     warehouseId?: string,
   ): Promise<InventoryValuation> {
@@ -412,14 +401,14 @@ export class ReportsService {
       .createQueryBuilder('product')
       .where('product.tenantId = :tenantId', { tenantId: user.tenantId });
 
-    if (productId) {
+    if (_productId) {
       productQuery.andWhere('product.id = :productId', { productId });
     }
 
     const products = await productQuery.getMany();
 
     const productValuations = products.map((product) => ({
-      productId: product.id,
+      _productId: product.id,
       sku: product.sku,
       name: product.name,
       quantity: product.stockQuantity,
@@ -436,9 +425,9 @@ export class ReportsService {
   }
 
   async getInventoryMovement(
-    user: User,
-    startDate: Date,
-    endDate: Date,
+    _user: User,
+    _startDate: Date,
+    _endDate: Date,
     productId?: string,
     warehouseId?: string,
   ): Promise<InventoryMovement> {

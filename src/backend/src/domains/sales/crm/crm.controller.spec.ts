@@ -1,7 +1,7 @@
 /**
  * CrmController Integration Tests
  * Coverage target: 95%+
- * 
+ *
  * Test cases:
  * 1. Lead Endpoints (GET, POST, PUT, DELETE, convert)
  * 2. Opportunity Endpoints (GET, POST, PUT, DELETE)
@@ -82,12 +82,12 @@ describe('CrmController (Integration)', () => {
       canActivate: jest.fn().mockImplementation((context) => {
         const request = context.switchToHttp().getRequest();
         const authHeader = request.headers.authorization;
-        
+
         if (authHeader && authHeader.startsWith('Bearer ')) {
           request.user = mockUser;
           return true;
         }
-        
+
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }),
     };
@@ -146,9 +146,7 @@ describe('CrmController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/crm/leads')
-        .expect(401);
+      await request(app.getHttpServer()).get('/crm/leads').expect(401);
     });
   });
 
@@ -177,9 +175,7 @@ describe('CrmController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/crm/leads/lead-123')
-        .expect(401);
+      await request(app.getHttpServer()).get('/crm/leads/lead-123').expect(401);
     });
   });
 
@@ -277,9 +273,7 @@ describe('CrmController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .delete('/crm/leads/lead-123')
-        .expect(401);
+      await request(app.getHttpServer()).delete('/crm/leads/lead-123').expect(401);
     });
   });
 
@@ -344,9 +338,7 @@ describe('CrmController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/crm/opportunities')
-        .expect(401);
+      await request(app.getHttpServer()).get('/crm/opportunities').expect(401);
     });
   });
 
@@ -375,9 +367,7 @@ describe('CrmController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/crm/opportunities/opp-123')
-        .expect(401);
+      await request(app.getHttpServer()).get('/crm/opportunities/opp-123').expect(401);
     });
   });
 
@@ -475,9 +465,7 @@ describe('CrmController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .delete('/crm/opportunities/opp-123')
-        .expect(401);
+      await request(app.getHttpServer()).delete('/crm/opportunities/opp-123').expect(401);
     });
   });
 
@@ -544,9 +532,7 @@ describe('CrmController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/crm/pipeline')
-        .expect(401);
+      await request(app.getHttpServer()).get('/crm/pipeline').expect(401);
     });
   });
 
@@ -557,9 +543,7 @@ describe('CrmController (Integration)', () => {
       const requests = Array(5)
         .fill(null)
         .map(() =>
-          request(app.getHttpServer())
-            .get('/crm/leads')
-            .set('Authorization', 'Bearer valid-token'),
+          request(app.getHttpServer()).get('/crm/leads').set('Authorization', 'Bearer valid-token'),
         );
 
       const responses = await Promise.all(requests);

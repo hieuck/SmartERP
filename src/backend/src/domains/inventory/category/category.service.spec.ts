@@ -11,9 +11,9 @@ import { UpdateCategoryDto } from './dto/update-category.dto';
 
 describe('CategoryService', () => {
   let service: CategoryService;
-  let categoryRepository: Repository<Category>;
-  let cacheService: CacheService;
-  let permissionService: PermissionService;
+  let _categoryRepository: Repository<Category>;
+  let _cacheService: CacheService;
+  let _permissionService: PermissionService;
   let secureCategoryRepo: any;
 
   const mockUser: User = {
@@ -469,7 +469,7 @@ describe('CategoryService', () => {
       const cat2 = { ...mockCategory, id: 'cat-2', parentId: 'cat-1' };
 
       mockCacheService.getOrSet.mockResolvedValue(cat1); // Get cat-1
-      
+
       // Mock findOne to return correct category based on where clause
       secureCategoryRepo.findOne = jest.fn().mockImplementation((user, options) => {
         const id = options.where?.id;

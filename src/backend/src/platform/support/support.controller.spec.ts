@@ -1,7 +1,7 @@
 /**
  * SupportController Integration Tests
  * Coverage target: 95%+
- * 
+ *
  * Test cases:
  * TICKETS (8 endpoints):
  * 1. POST /support/tickets - Create ticket
@@ -10,21 +10,21 @@
  * 4. PUT /support/tickets/:id - Update ticket
  * 5. POST /support/tickets/:id/rate - Rate ticket
  * 6. POST /support/tickets/:id/escalate - Escalate ticket
- * 
+ *
  * SLA (5 endpoints):
  * 7. POST /support/slas - Create SLA
  * 8. GET /support/slas - Get all SLAs
  * 9. GET /support/slas/:id - Get SLA by ID
  * 10. PUT /support/slas/:id - Update SLA
  * 11. DELETE /support/slas/:id - Delete SLA
- * 
+ *
  * ASSIGNMENT RULES (5 endpoints):
  * 12. POST /support/assignment-rules - Create rule
  * 13. GET /support/assignment-rules - Get all rules
  * 14. GET /support/assignment-rules/:id - Get rule by ID
  * 15. PUT /support/assignment-rules/:id - Update rule
  * 16. DELETE /support/assignment-rules/:id - Delete rule
- * 
+ *
  * KNOWLEDGE BASE (6 endpoints):
  * 17. POST /support/articles - Create article
  * 18. GET /support/articles - Get all articles
@@ -32,7 +32,7 @@
  * 20. PUT /support/articles/:id - Update article
  * 21. DELETE /support/articles/:id - Delete article
  * 22. POST /support/articles/:id/helpful - Mark helpful
- * 
+ *
  * CANNED RESPONSES (6 endpoints):
  * 23. POST /support/canned-responses - Create response
  * 24. GET /support/canned-responses - Get all responses
@@ -40,7 +40,7 @@
  * 26. PUT /support/canned-responses/:id - Update response
  * 27. DELETE /support/canned-responses/:id - Delete response
  * 28. POST /support/canned-responses/:id/use - Use response
- * 
+ *
  * 29. Authentication/Authorization tests
  * 30. Edge cases and error scenarios
  */
@@ -182,7 +182,7 @@ describe('SupportController (Integration)', () => {
       canActivate: jest.fn().mockImplementation((context) => {
         const request = context.switchToHttp().getRequest();
         const authHeader = request.headers.authorization;
-        
+
         if (authHeader && authHeader.startsWith('Bearer ')) {
           const token = authHeader.substring(7);
           if (token === 'agent-token') {
@@ -194,7 +194,7 @@ describe('SupportController (Integration)', () => {
           }
           return true;
         }
-        
+
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }),
     };

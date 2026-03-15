@@ -1,7 +1,7 @@
 /**
  * IntegrationController Integration Tests
  * Coverage target: 95%
- * 
+ *
  * Test cases:
  * 1. GET /integrations - List all integrations
  * 2. GET /integrations/:name - Get integration by name
@@ -52,12 +52,12 @@ describe('IntegrationController (Integration)', () => {
       canActivate: jest.fn().mockImplementation((context) => {
         const request = context.switchToHttp().getRequest();
         const authHeader = request.headers.authorization;
-        
+
         if (authHeader && authHeader.startsWith('Bearer ')) {
           request.user = mockUser;
           return true;
         }
-        
+
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }),
     };
@@ -105,9 +105,7 @@ describe('IntegrationController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/integrations')
-        .expect(401);
+      await request(app.getHttpServer()).get('/integrations').expect(401);
     });
 
     it('should return empty array when no integrations', async () => {
@@ -330,11 +328,9 @@ describe('IntegrationController (Integration)', () => {
         .expect(201);
 
       expect(response.body).toEqual(shipmentResult);
-      expect(integrationService.createShipment).toHaveBeenCalledWith(
-        mockUser,
-        'ghtk',
-        { orderId: 'order-123' },
-      );
+      expect(integrationService.createShipment).toHaveBeenCalledWith(mockUser, 'ghtk', {
+        orderId: 'order-123',
+      });
     });
 
     it('should return 400 when provider not configured', async () => {

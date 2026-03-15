@@ -4,7 +4,7 @@ import { Repository, DataSource } from 'typeorm';
 import { Report } from './entities/report.entity';
 import { ReportColumn } from './entities/report-column.entity';
 import { ReportExecution } from './entities/report-execution.entity';
-import { ReportType, AggregationType } from '../enums/platform.enum';
+import { _ReportType, AggregationType } from '../enums/platform.enum';
 import { ExecutionStatus } from './enums/execution-status.enum';
 import { User } from '@/common/security/permission.service';
 
@@ -29,11 +29,7 @@ export class ReportService {
   /**
    * Create a new report definition
    */
-  async create(
-    data: Partial<Report>,
-    tenantId: string,
-    user: User,
-  ): Promise<Report> {
+  async create(data: Partial<Report>, tenantId: string, _user: User): Promise<Report> {
     const report = this.reportRepository.create({
       ...data,
       tenantId,
@@ -84,12 +80,7 @@ export class ReportService {
   /**
    * Update report definition
    */
-  async update(
-    id: string,
-    data: Partial<Report>,
-    tenantId: string,
-    user: User,
-  ): Promise<Report> {
+  async update(id: string, data: Partial<Report>, tenantId: string, _user: User): Promise<Report> {
     const report = await this.findOne(id, tenantId);
 
     Object.assign(report, data);
@@ -99,7 +90,7 @@ export class ReportService {
   /**
    * Delete report
    */
-  async remove(id: string, tenantId: string, user: User): Promise<void> {
+  async remove(id: string, tenantId: string, _user: User): Promise<void> {
     const report = await this.findOne(id, tenantId);
     await this.reportRepository.remove(report);
   }
@@ -111,7 +102,7 @@ export class ReportService {
     reportId: string,
     columnData: Partial<ReportColumn>,
     tenantId: string,
-    user: User,
+    _user: User,
   ): Promise<ReportColumn> {
     const report = await this.findOne(reportId, tenantId);
 
@@ -131,7 +122,7 @@ export class ReportService {
     reportId: string,
     columnId: string,
     tenantId: string,
-    user: User,
+    _user: User,
   ): Promise<void> {
     await this.findOne(reportId, tenantId); // Verify report exists
 
@@ -154,7 +145,7 @@ export class ReportService {
     reportId: string,
     parameters: any,
     tenantId: string,
-    user: User,
+    _user: User,
   ): Promise<ReportExecution> {
     const report = await this.findOne(reportId, tenantId);
 
@@ -197,11 +188,7 @@ export class ReportService {
    * SECURITY: Uses QueryBuilder to prevent SQL injection
    * SECURITY: Validates all field names and operators
    */
-  private async executeQuery(
-    report: Report,
-    parameters: any,
-    tenantId: string,
-  ): Promise<any[]> {
+  private async executeQuery(report: Report, parameters: any, tenantId: string): Promise<any[]> {
     // Validate source entity exists
     let entityMetadata;
     try {
@@ -221,17 +208,16 @@ export class ReportService {
       report.filters.forEach((filter, index) => {
         // Validate field exists in entity
         this.validateFieldName(entityMetadata, filter.field);
-        
+
         // Validate operator is allowed
         if (!ALLOWED_OPERATORS.includes(filter.operator)) {
           throw new BadRequestException(`Invalid operator: ${filter.operator}`);
         }
 
         const paramName = `filter_${index}`;
-        query = query.andWhere(
-          `entity.${filter.field} ${filter.operator} :${paramName}`,
-          { [paramName]: filter.value },
-        );
+        query = query.andWhere(`entity.${filter.field} ${filter.operator} :${paramName}`, {
+          [paramName]: filter.value,
+        });
       });
     }
 
@@ -318,10 +304,7 @@ export class ReportService {
   /**
    * Get execution by ID
    */
-  async getExecution(
-    executionId: string,
-    tenantId: string,
-  ): Promise<ReportExecution> {
+  async getExecution(executionId: string, tenantId: string): Promise<ReportExecution> {
     const execution = await this.executionRepository.findOne({
       where: { id: executionId, tenantId },
       relations: ['report', 'executor'],

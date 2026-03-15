@@ -1,7 +1,7 @@
 /**
  * AccountLockoutService Unit Tests
  * Coverage target: >90%
- * 
+ *
  * Test cases:
  * 1. isAccountLocked - Check if account is locked
  * 2. recordFailedAttempt - Record failed login attempts
@@ -17,7 +17,7 @@ describe('AccountLockoutService', () => {
   let service: AccountLockoutService;
   let cacheService: jest.Mocked<CacheService>;
 
-  const MAX_ATTEMPTS = 5;
+  const _MAX_ATTEMPTS = 5;
   const LOCKOUT_DURATION_MS = 60 * 60 * 1000; // 1 hour (ATTEMPT_WINDOW_MS from service)
 
   beforeEach(async () => {
@@ -128,10 +128,7 @@ describe('AccountLockoutService', () => {
 
     it('should handle multiple failed attempts', async () => {
       // Arrange
-      cacheService.get
-        .mockResolvedValueOnce(0)
-        .mockResolvedValueOnce(1)
-        .mockResolvedValueOnce(2);
+      cacheService.get.mockResolvedValueOnce(0).mockResolvedValueOnce(1).mockResolvedValueOnce(2);
       cacheService.set.mockResolvedValue(undefined);
 
       // Act

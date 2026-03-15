@@ -1,7 +1,7 @@
 /**
  * MetricsController Integration Tests
  * Coverage target: 95%+
- * 
+ *
  * Test cases:
  * 1. GET /metrics - Get Prometheus metrics
  * 2. Content-Type header validation
@@ -69,9 +69,7 @@ nodejs_memory_heap_used_bytes 50000000
     it('should return Prometheus metrics with correct content type', async () => {
       metricsService.getMetrics.mockResolvedValue(mockPrometheusMetrics);
 
-      const response = await request(app.getHttpServer())
-        .get('/metrics')
-        .expect(200);
+      const response = await request(app.getHttpServer()).get('/metrics').expect(200);
 
       expect(response.text).toBe(mockPrometheusMetrics);
       expect(response.headers['content-type']).toContain('text/plain');
@@ -81,9 +79,7 @@ nodejs_memory_heap_used_bytes 50000000
     it('should return metrics in Prometheus format', async () => {
       metricsService.getMetrics.mockResolvedValue(mockPrometheusMetrics);
 
-      const response = await request(app.getHttpServer())
-        .get('/metrics')
-        .expect(200);
+      const response = await request(app.getHttpServer()).get('/metrics').expect(200);
 
       expect(response.text).toContain('# HELP');
       expect(response.text).toContain('# TYPE');
@@ -93,9 +89,7 @@ nodejs_memory_heap_used_bytes 50000000
     it('should return empty metrics when no data', async () => {
       metricsService.getMetrics.mockResolvedValue('');
 
-      const response = await request(app.getHttpServer())
-        .get('/metrics')
-        .expect(200);
+      const response = await request(app.getHttpServer()).get('/metrics').expect(200);
 
       expect(response.text).toBe('');
     });
@@ -105,9 +99,7 @@ nodejs_memory_heap_used_bytes 50000000
         new HttpException('Metrics service unavailable', HttpStatus.SERVICE_UNAVAILABLE),
       );
 
-      await request(app.getHttpServer())
-        .get('/metrics')
-        .expect(503);
+      await request(app.getHttpServer()).get('/metrics').expect(503);
     });
 
     it('should handle concurrent requests', async () => {
@@ -134,13 +126,9 @@ nodejs_memory_heap_used_bytes 50000000
       metricsService.getMetrics.mockResolvedValueOnce(metrics1);
       metricsService.getMetrics.mockResolvedValueOnce(metrics2);
 
-      const response1 = await request(app.getHttpServer())
-        .get('/metrics')
-        .expect(200);
+      const response1 = await request(app.getHttpServer()).get('/metrics').expect(200);
 
-      const response2 = await request(app.getHttpServer())
-        .get('/metrics')
-        .expect(200);
+      const response2 = await request(app.getHttpServer()).get('/metrics').expect(200);
 
       expect(response1.text).toBe(metrics1);
       expect(response2.text).toBe(metrics2);
@@ -154,9 +142,7 @@ nodejs_memory_heap_used_bytes 50000000
 
       metricsService.getMetrics.mockResolvedValue(largeMetrics);
 
-      const response = await request(app.getHttpServer())
-        .get('/metrics')
-        .expect(200);
+      const response = await request(app.getHttpServer()).get('/metrics').expect(200);
 
       expect(response.text).toBe(largeMetrics);
     });
@@ -170,9 +156,7 @@ test_metric{label="value with spaces",other="special@#$%"} 123
 
       metricsService.getMetrics.mockResolvedValue(metricsWithSpecialChars);
 
-      const response = await request(app.getHttpServer())
-        .get('/metrics')
-        .expect(200);
+      const response = await request(app.getHttpServer()).get('/metrics').expect(200);
 
       expect(response.text).toContain('special@#$%');
     });
@@ -186,9 +170,7 @@ test_metric{label="value with spaces",other="special@#$%"} 123
         });
       });
 
-      const response = await request(app.getHttpServer())
-        .get('/metrics')
-        .expect(200);
+      const response = await request(app.getHttpServer()).get('/metrics').expect(200);
 
       expect(response.text).toBe(mockPrometheusMetrics);
     });
@@ -196,9 +178,7 @@ test_metric{label="value with spaces",other="special@#$%"} 123
     it('should handle null response', async () => {
       metricsService.getMetrics.mockResolvedValue(null as any);
 
-      const response = await request(app.getHttpServer())
-        .get('/metrics')
-        .expect(200);
+      const response = await request(app.getHttpServer()).get('/metrics').expect(200);
 
       expect(response.text).toBe('');
     });
@@ -206,9 +186,7 @@ test_metric{label="value with spaces",other="special@#$%"} 123
     it('should handle undefined response', async () => {
       metricsService.getMetrics.mockResolvedValue(undefined as any);
 
-      const response = await request(app.getHttpServer())
-        .get('/metrics')
-        .expect(200);
+      const response = await request(app.getHttpServer()).get('/metrics').expect(200);
 
       expect(response.text).toBe('');
     });

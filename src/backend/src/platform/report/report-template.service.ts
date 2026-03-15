@@ -67,7 +67,14 @@ export class ReportTemplateService {
           { fieldName: 'code', label: 'Account Code', type: ColumnType.TEXT, sequence: 1 },
           { fieldName: 'name', label: 'Account Name', type: ColumnType.TEXT, sequence: 2 },
           { fieldName: 'type', label: 'Type', type: ColumnType.TEXT, sequence: 3 },
-          { fieldName: 'balance', label: 'Balance', type: ColumnType.CURRENCY, aggregation: AggregationType.SUM, sequence: 4, format: '0,0.00' },
+          {
+            fieldName: 'balance',
+            label: 'Balance',
+            type: ColumnType.CURRENCY,
+            aggregation: AggregationType.SUM,
+            sequence: 4,
+            format: '0,0.00',
+          },
         ],
       },
       {
@@ -82,7 +89,14 @@ export class ReportTemplateService {
         columns: [
           { fieldName: 'code', label: 'Account Code', type: ColumnType.TEXT, sequence: 1 },
           { fieldName: 'name', label: 'Account Name', type: ColumnType.TEXT, sequence: 2 },
-          { fieldName: 'balance', label: 'Amount', type: ColumnType.CURRENCY, aggregation: AggregationType.SUM, sequence: 3, format: '0,0.00' },
+          {
+            fieldName: 'balance',
+            label: 'Amount',
+            type: ColumnType.CURRENCY,
+            aggregation: AggregationType.SUM,
+            sequence: 3,
+            format: '0,0.00',
+          },
         ],
       },
       {
@@ -97,8 +111,22 @@ export class ReportTemplateService {
           { fieldName: 'date', label: 'Date', type: ColumnType.DATE, sequence: 1 },
           { fieldName: 'reference', label: 'Reference', type: ColumnType.TEXT, sequence: 2 },
           { fieldName: 'description', label: 'Description', type: ColumnType.TEXT, sequence: 3 },
-          { fieldName: 'totalDebit', label: 'Debit', type: ColumnType.CURRENCY, aggregation: AggregationType.SUM, sequence: 4, format: '0,0.00' },
-          { fieldName: 'totalCredit', label: 'Credit', type: ColumnType.CURRENCY, aggregation: AggregationType.SUM, sequence: 5, format: '0,0.00' },
+          {
+            fieldName: 'totalDebit',
+            label: 'Debit',
+            type: ColumnType.CURRENCY,
+            aggregation: AggregationType.SUM,
+            sequence: 4,
+            format: '0,0.00',
+          },
+          {
+            fieldName: 'totalCredit',
+            label: 'Credit',
+            type: ColumnType.CURRENCY,
+            aggregation: AggregationType.SUM,
+            sequence: 5,
+            format: '0,0.00',
+          },
         ],
       },
       {
@@ -111,8 +139,22 @@ export class ReportTemplateService {
         columns: [
           { fieldName: 'code', label: 'Account Code', type: ColumnType.TEXT, sequence: 1 },
           { fieldName: 'name', label: 'Account Name', type: ColumnType.TEXT, sequence: 2 },
-          { fieldName: 'debit', label: 'Debit', type: ColumnType.CURRENCY, aggregation: AggregationType.SUM, sequence: 3, format: '0,0.00' },
-          { fieldName: 'credit', label: 'Credit', type: ColumnType.CURRENCY, aggregation: AggregationType.SUM, sequence: 4, format: '0,0.00' },
+          {
+            fieldName: 'debit',
+            label: 'Debit',
+            type: ColumnType.CURRENCY,
+            aggregation: AggregationType.SUM,
+            sequence: 3,
+            format: '0,0.00',
+          },
+          {
+            fieldName: 'credit',
+            label: 'Credit',
+            type: ColumnType.CURRENCY,
+            aggregation: AggregationType.SUM,
+            sequence: 4,
+            format: '0,0.00',
+          },
         ],
       },
       {
@@ -126,8 +168,20 @@ export class ReportTemplateService {
           { fieldName: 'date', label: 'Date', type: ColumnType.DATE, sequence: 1 },
           { fieldName: 'accountCode', label: 'Account', type: ColumnType.TEXT, sequence: 2 },
           { fieldName: 'description', label: 'Description', type: ColumnType.TEXT, sequence: 3 },
-          { fieldName: 'debit', label: 'Debit', type: ColumnType.CURRENCY, sequence: 4, format: '0,0.00' },
-          { fieldName: 'credit', label: 'Credit', type: ColumnType.CURRENCY, sequence: 5, format: '0,0.00' },
+          {
+            fieldName: 'debit',
+            label: 'Debit',
+            type: ColumnType.CURRENCY,
+            sequence: 4,
+            format: '0,0.00',
+          },
+          {
+            fieldName: 'credit',
+            label: 'Credit',
+            type: ColumnType.CURRENCY,
+            sequence: 5,
+            format: '0,0.00',
+          },
         ],
       },
 
@@ -142,9 +196,27 @@ export class ReportTemplateService {
         columns: [
           { fieldName: 'code', label: 'Product Code', type: ColumnType.TEXT, sequence: 1 },
           { fieldName: 'name', label: 'Product Name', type: ColumnType.TEXT, sequence: 2 },
-          { fieldName: 'quantityOnHand', label: 'On Hand', type: ColumnType.NUMBER, aggregation: AggregationType.SUM, sequence: 3 },
-          { fieldName: 'quantityReserved', label: 'Reserved', type: ColumnType.NUMBER, aggregation: AggregationType.SUM, sequence: 4 },
-          { fieldName: 'quantityAvailable', label: 'Available', type: ColumnType.NUMBER, aggregation: AggregationType.SUM, sequence: 5 },
+          {
+            fieldName: 'quantityOnHand',
+            label: 'On Hand',
+            type: ColumnType.NUMBER,
+            aggregation: AggregationType.SUM,
+            sequence: 3,
+          },
+          {
+            fieldName: 'quantityReserved',
+            label: 'Reserved',
+            type: ColumnType.NUMBER,
+            aggregation: AggregationType.SUM,
+            sequence: 4,
+          },
+          {
+            fieldName: 'quantityAvailable',
+            label: 'Available',
+            type: ColumnType.NUMBER,
+            aggregation: AggregationType.SUM,
+            sequence: 5,
+          },
         ],
       },
       {
@@ -157,9 +229,28 @@ export class ReportTemplateService {
         columns: [
           { fieldName: 'code', label: 'Product Code', type: ColumnType.TEXT, sequence: 1 },
           { fieldName: 'name', label: 'Product Name', type: ColumnType.TEXT, sequence: 2 },
-          { fieldName: 'quantityOnHand', label: 'Quantity', type: ColumnType.NUMBER, aggregation: AggregationType.SUM, sequence: 3 },
-          { fieldName: 'costPrice', label: 'Unit Cost', type: ColumnType.CURRENCY, sequence: 4, format: '0,0.00' },
-          { fieldName: 'totalValue', label: 'Total Value', type: ColumnType.CURRENCY, aggregation: AggregationType.SUM, sequence: 5, format: '0,0.00' },
+          {
+            fieldName: 'quantityOnHand',
+            label: 'Quantity',
+            type: ColumnType.NUMBER,
+            aggregation: AggregationType.SUM,
+            sequence: 3,
+          },
+          {
+            fieldName: 'costPrice',
+            label: 'Unit Cost',
+            type: ColumnType.CURRENCY,
+            sequence: 4,
+            format: '0,0.00',
+          },
+          {
+            fieldName: 'totalValue',
+            label: 'Total Value',
+            type: ColumnType.CURRENCY,
+            aggregation: AggregationType.SUM,
+            sequence: 5,
+            format: '0,0.00',
+          },
         ],
       },
       {
@@ -173,7 +264,13 @@ export class ReportTemplateService {
           { fieldName: 'date', label: 'Date', type: ColumnType.DATE, sequence: 1 },
           { fieldName: 'productCode', label: 'Product', type: ColumnType.TEXT, sequence: 2 },
           { fieldName: 'type', label: 'Type', type: ColumnType.TEXT, sequence: 3 },
-          { fieldName: 'quantity', label: 'Quantity', type: ColumnType.NUMBER, aggregation: AggregationType.SUM, sequence: 4 },
+          {
+            fieldName: 'quantity',
+            label: 'Quantity',
+            type: ColumnType.NUMBER,
+            aggregation: AggregationType.SUM,
+            sequence: 4,
+          },
           { fieldName: 'reference', label: 'Reference', type: ColumnType.TEXT, sequence: 5 },
         ],
       },
@@ -188,9 +285,19 @@ export class ReportTemplateService {
         columns: [
           { fieldName: 'code', label: 'Product Code', type: ColumnType.TEXT, sequence: 1 },
           { fieldName: 'name', label: 'Product Name', type: ColumnType.TEXT, sequence: 2 },
-          { fieldName: 'quantityOnHand', label: 'Current Stock', type: ColumnType.NUMBER, sequence: 3 },
+          {
+            fieldName: 'quantityOnHand',
+            label: 'Current Stock',
+            type: ColumnType.NUMBER,
+            sequence: 3,
+          },
           { fieldName: 'minStockLevel', label: 'Min Level', type: ColumnType.NUMBER, sequence: 4 },
-          { fieldName: 'reorderQuantity', label: 'Reorder Qty', type: ColumnType.NUMBER, sequence: 5 },
+          {
+            fieldName: 'reorderQuantity',
+            label: 'Reorder Qty',
+            type: ColumnType.NUMBER,
+            sequence: 5,
+          },
         ],
       },
 
@@ -206,8 +313,21 @@ export class ReportTemplateService {
         orderBy: { field: 'totalAmount', order: 'DESC' },
         columns: [
           { fieldName: 'customerName', label: 'Customer', type: ColumnType.TEXT, sequence: 1 },
-          { fieldName: 'orderCount', label: 'Orders', type: ColumnType.NUMBER, aggregation: AggregationType.COUNT, sequence: 2 },
-          { fieldName: 'totalAmount', label: 'Total Sales', type: ColumnType.CURRENCY, aggregation: AggregationType.SUM, sequence: 3, format: '0,0.00' },
+          {
+            fieldName: 'orderCount',
+            label: 'Orders',
+            type: ColumnType.NUMBER,
+            aggregation: AggregationType.COUNT,
+            sequence: 2,
+          },
+          {
+            fieldName: 'totalAmount',
+            label: 'Total Sales',
+            type: ColumnType.CURRENCY,
+            aggregation: AggregationType.SUM,
+            sequence: 3,
+            format: '0,0.00',
+          },
         ],
       },
       {
@@ -221,8 +341,21 @@ export class ReportTemplateService {
         columns: [
           { fieldName: 'productCode', label: 'Product Code', type: ColumnType.TEXT, sequence: 1 },
           { fieldName: 'productName', label: 'Product Name', type: ColumnType.TEXT, sequence: 2 },
-          { fieldName: 'quantity', label: 'Quantity Sold', type: ColumnType.NUMBER, aggregation: AggregationType.SUM, sequence: 3 },
-          { fieldName: 'totalAmount', label: 'Total Sales', type: ColumnType.CURRENCY, aggregation: AggregationType.SUM, sequence: 4, format: '0,0.00' },
+          {
+            fieldName: 'quantity',
+            label: 'Quantity Sold',
+            type: ColumnType.NUMBER,
+            aggregation: AggregationType.SUM,
+            sequence: 3,
+          },
+          {
+            fieldName: 'totalAmount',
+            label: 'Total Sales',
+            type: ColumnType.CURRENCY,
+            aggregation: AggregationType.SUM,
+            sequence: 4,
+            format: '0,0.00',
+          },
         ],
       },
       {
@@ -237,7 +370,14 @@ export class ReportTemplateService {
         orderBy: { field: 'date', order: 'ASC' },
         columns: [
           { fieldName: 'month', label: 'Month', type: ColumnType.TEXT, sequence: 1 },
-          { fieldName: 'totalAmount', label: 'Sales', type: ColumnType.CURRENCY, aggregation: AggregationType.SUM, sequence: 2, format: '0,0.00' },
+          {
+            fieldName: 'totalAmount',
+            label: 'Sales',
+            type: ColumnType.CURRENCY,
+            aggregation: AggregationType.SUM,
+            sequence: 2,
+            format: '0,0.00',
+          },
         ],
       },
       {
@@ -252,7 +392,14 @@ export class ReportTemplateService {
         orderBy: { field: 'totalAmount', order: 'DESC' },
         columns: [
           { fieldName: 'customerName', label: 'Customer', type: ColumnType.TEXT, sequence: 1 },
-          { fieldName: 'totalAmount', label: 'Sales', type: ColumnType.CURRENCY, aggregation: AggregationType.SUM, sequence: 2, format: '0,0.00' },
+          {
+            fieldName: 'totalAmount',
+            label: 'Sales',
+            type: ColumnType.CURRENCY,
+            aggregation: AggregationType.SUM,
+            sequence: 2,
+            format: '0,0.00',
+          },
         ],
       },
 
@@ -268,8 +415,21 @@ export class ReportTemplateService {
         orderBy: { field: 'totalAmount', order: 'DESC' },
         columns: [
           { fieldName: 'supplierName', label: 'Supplier', type: ColumnType.TEXT, sequence: 1 },
-          { fieldName: 'orderCount', label: 'Orders', type: ColumnType.NUMBER, aggregation: AggregationType.COUNT, sequence: 2 },
-          { fieldName: 'totalAmount', label: 'Total Purchase', type: ColumnType.CURRENCY, aggregation: AggregationType.SUM, sequence: 3, format: '0,0.00' },
+          {
+            fieldName: 'orderCount',
+            label: 'Orders',
+            type: ColumnType.NUMBER,
+            aggregation: AggregationType.COUNT,
+            sequence: 2,
+          },
+          {
+            fieldName: 'totalAmount',
+            label: 'Total Purchase',
+            type: ColumnType.CURRENCY,
+            aggregation: AggregationType.SUM,
+            sequence: 3,
+            format: '0,0.00',
+          },
         ],
       },
       {
@@ -283,8 +443,21 @@ export class ReportTemplateService {
         columns: [
           { fieldName: 'productCode', label: 'Product Code', type: ColumnType.TEXT, sequence: 1 },
           { fieldName: 'productName', label: 'Product Name', type: ColumnType.TEXT, sequence: 2 },
-          { fieldName: 'quantity', label: 'Quantity Purchased', type: ColumnType.NUMBER, aggregation: AggregationType.SUM, sequence: 3 },
-          { fieldName: 'totalAmount', label: 'Total Cost', type: ColumnType.CURRENCY, aggregation: AggregationType.SUM, sequence: 4, format: '0,0.00' },
+          {
+            fieldName: 'quantity',
+            label: 'Quantity Purchased',
+            type: ColumnType.NUMBER,
+            aggregation: AggregationType.SUM,
+            sequence: 3,
+          },
+          {
+            fieldName: 'totalAmount',
+            label: 'Total Cost',
+            type: ColumnType.CURRENCY,
+            aggregation: AggregationType.SUM,
+            sequence: 4,
+            format: '0,0.00',
+          },
         ],
       },
       {
@@ -302,7 +475,13 @@ export class ReportTemplateService {
           { fieldName: 'reference', label: 'PO Number', type: ColumnType.TEXT, sequence: 1 },
           { fieldName: 'supplierName', label: 'Supplier', type: ColumnType.TEXT, sequence: 2 },
           { fieldName: 'date', label: 'Order Date', type: ColumnType.DATE, sequence: 3 },
-          { fieldName: 'totalAmount', label: 'Amount', type: ColumnType.CURRENCY, sequence: 4, format: '0,0.00' },
+          {
+            fieldName: 'totalAmount',
+            label: 'Amount',
+            type: ColumnType.CURRENCY,
+            sequence: 4,
+            format: '0,0.00',
+          },
           { fieldName: 'status', label: 'Status', type: ColumnType.TEXT, sequence: 5 },
         ],
       },
@@ -319,8 +498,21 @@ export class ReportTemplateService {
         columns: [
           { fieldName: 'employeeName', label: 'Employee', type: ColumnType.TEXT, sequence: 1 },
           { fieldName: 'month', label: 'Month', type: ColumnType.TEXT, sequence: 2 },
-          { fieldName: 'daysPresent', label: 'Days Present', type: ColumnType.NUMBER, aggregation: AggregationType.COUNT, sequence: 3 },
-          { fieldName: 'hoursWorked', label: 'Hours Worked', type: ColumnType.NUMBER, aggregation: AggregationType.SUM, sequence: 4, format: '0.00' },
+          {
+            fieldName: 'daysPresent',
+            label: 'Days Present',
+            type: ColumnType.NUMBER,
+            aggregation: AggregationType.COUNT,
+            sequence: 3,
+          },
+          {
+            fieldName: 'hoursWorked',
+            label: 'Hours Worked',
+            type: ColumnType.NUMBER,
+            aggregation: AggregationType.SUM,
+            sequence: 4,
+            format: '0.00',
+          },
         ],
       },
       {
@@ -334,10 +526,37 @@ export class ReportTemplateService {
         columns: [
           { fieldName: 'month', label: 'Month', type: ColumnType.TEXT, sequence: 1 },
           { fieldName: 'year', label: 'Year', type: ColumnType.NUMBER, sequence: 2 },
-          { fieldName: 'employeeCount', label: 'Employees', type: ColumnType.NUMBER, aggregation: AggregationType.COUNT, sequence: 3 },
-          { fieldName: 'grossSalary', label: 'Gross Salary', type: ColumnType.CURRENCY, aggregation: AggregationType.SUM, sequence: 4, format: '0,0.00' },
-          { fieldName: 'taxAmount', label: 'Tax', type: ColumnType.CURRENCY, aggregation: AggregationType.SUM, sequence: 5, format: '0,0.00' },
-          { fieldName: 'netSalary', label: 'Net Salary', type: ColumnType.CURRENCY, aggregation: AggregationType.SUM, sequence: 6, format: '0,0.00' },
+          {
+            fieldName: 'employeeCount',
+            label: 'Employees',
+            type: ColumnType.NUMBER,
+            aggregation: AggregationType.COUNT,
+            sequence: 3,
+          },
+          {
+            fieldName: 'grossSalary',
+            label: 'Gross Salary',
+            type: ColumnType.CURRENCY,
+            aggregation: AggregationType.SUM,
+            sequence: 4,
+            format: '0,0.00',
+          },
+          {
+            fieldName: 'taxAmount',
+            label: 'Tax',
+            type: ColumnType.CURRENCY,
+            aggregation: AggregationType.SUM,
+            sequence: 5,
+            format: '0,0.00',
+          },
+          {
+            fieldName: 'netSalary',
+            label: 'Net Salary',
+            type: ColumnType.CURRENCY,
+            aggregation: AggregationType.SUM,
+            sequence: 6,
+            format: '0,0.00',
+          },
         ],
       },
 
@@ -351,8 +570,21 @@ export class ReportTemplateService {
         groupBy: ['status'],
         columns: [
           { fieldName: 'status', label: 'Status', type: ColumnType.TEXT, sequence: 1 },
-          { fieldName: 'count', label: 'Count', type: ColumnType.NUMBER, aggregation: AggregationType.COUNT, sequence: 2 },
-          { fieldName: 'totalCost', label: 'Total Cost', type: ColumnType.CURRENCY, aggregation: AggregationType.SUM, sequence: 3, format: '0,0.00' },
+          {
+            fieldName: 'count',
+            label: 'Count',
+            type: ColumnType.NUMBER,
+            aggregation: AggregationType.COUNT,
+            sequence: 2,
+          },
+          {
+            fieldName: 'totalCost',
+            label: 'Total Cost',
+            type: ColumnType.CURRENCY,
+            aggregation: AggregationType.SUM,
+            sequence: 3,
+            format: '0,0.00',
+          },
         ],
       },
       {
@@ -366,9 +598,28 @@ export class ReportTemplateService {
           { fieldName: 'reference', label: 'BOM Reference', type: ColumnType.TEXT, sequence: 1 },
           { fieldName: 'productName', label: 'Product', type: ColumnType.TEXT, sequence: 2 },
           { fieldName: 'quantity', label: 'Quantity', type: ColumnType.NUMBER, sequence: 3 },
-          { fieldName: 'materialCost', label: 'Material Cost', type: ColumnType.CURRENCY, sequence: 4, format: '0,0.00' },
-          { fieldName: 'laborCost', label: 'Labor Cost', type: ColumnType.CURRENCY, sequence: 5, format: '0,0.00' },
-          { fieldName: 'totalCost', label: 'Total Cost', type: ColumnType.CURRENCY, aggregation: AggregationType.SUM, sequence: 6, format: '0,0.00' },
+          {
+            fieldName: 'materialCost',
+            label: 'Material Cost',
+            type: ColumnType.CURRENCY,
+            sequence: 4,
+            format: '0,0.00',
+          },
+          {
+            fieldName: 'laborCost',
+            label: 'Labor Cost',
+            type: ColumnType.CURRENCY,
+            sequence: 5,
+            format: '0,0.00',
+          },
+          {
+            fieldName: 'totalCost',
+            label: 'Total Cost',
+            type: ColumnType.CURRENCY,
+            aggregation: AggregationType.SUM,
+            sequence: 6,
+            format: '0,0.00',
+          },
         ],
       },
     ];
@@ -391,11 +642,7 @@ export class ReportTemplateService {
   /**
    * Create report from template
    */
-  async createFromTemplate(
-    templateName: string,
-    tenantId: string,
-    user: User,
-  ): Promise<Report> {
+  async createFromTemplate(templateName: string, tenantId: string, user: User): Promise<Report> {
     const template = this.getStandardTemplates().find((t) => t.name === templateName);
     if (!template) {
       throw new Error(`Template "${templateName}" not found`);

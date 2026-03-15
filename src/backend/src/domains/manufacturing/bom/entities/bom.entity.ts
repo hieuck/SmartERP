@@ -11,7 +11,8 @@ import {
   BeforeInsert,
   BeforeUpdate,
 } from 'typeorm';
-import { Product } from '../../../inventory/product/entities/product.entity';import { BOMType } from '../enums/b-o-m-type.enum';
+import { Product } from '../../../inventory/product/entities/product.entity';
+import { BOMType } from '../enums/b-o-m-type.enum';
 
 import { BOMLine } from './bom-line.entity';
 
@@ -54,7 +55,7 @@ export class BOM {
   @Column({ type: 'decimal', precision: 15, scale: 2, name: 'unit_cost', default: 0 })
   unitCost: number;
 
-  @OneToMany(() => BOMLine, line => line.bom, { cascade: true, eager: true })
+  @OneToMany(() => BOMLine, (line) => line.bom, { cascade: true, eager: true })
   lines: BOMLine[];
 
   @CreateDateColumn({ name: 'created_at' })
@@ -68,7 +69,7 @@ export class BOM {
   calculateCosts() {
     if (this.lines && this.lines.length > 0) {
       this.totalCost = this.lines.reduce((sum, line) => {
-        return sum + (line.quantity * (line.unitCost || 0));
+        return sum + line.quantity * (line.unitCost || 0);
       }, 0);
       this.unitCost = this.totalCost / (this.productQty || 1);
     }

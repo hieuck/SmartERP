@@ -1,7 +1,7 @@
 /**
  * CheckoutController Integration Tests
  * Coverage target: 95%+
- * 
+ *
  * Test cases:
  * 1. POST /checkout/initiate - Success, cart not found, empty cart, expired cart, insufficient stock
  * 2. POST /checkout/create-order - Success, cart not found, validation errors
@@ -90,12 +90,16 @@ describe('CheckoutController (Integration)', () => {
       canActivate: jest.fn().mockImplementation((context) => {
         const request = context.switchToHttp().getRequest();
         const authHeader = request.headers.authorization;
-        
-        if (authHeader && authHeader.startsWith('Bearer ') && authHeader !== 'Bearer invalid-token') {
+
+        if (
+          authHeader &&
+          authHeader.startsWith('Bearer ') &&
+          authHeader !== 'Bearer invalid-token'
+        ) {
           request.user = mockUser;
           return true;
         }
-        
+
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }),
     };
@@ -193,10 +197,7 @@ describe('CheckoutController (Integration)', () => {
 
     it('should return 400 when product has insufficient stock', async () => {
       checkoutService.initiateCheckout.mockRejectedValue(
-        new HttpException(
-          'Insufficient stock for T-Shirt. Available: 1',
-          HttpStatus.BAD_REQUEST,
-        ),
+        new HttpException('Insufficient stock for T-Shirt. Available: 1', HttpStatus.BAD_REQUEST),
       );
 
       await request(app.getHttpServer())
@@ -331,7 +332,7 @@ describe('CheckoutController (Integration)', () => {
 
     it('should return 401 when not authenticated', async () => {
       checkoutService.createOrderFromCart.mockResolvedValue(mockOrder as any);
-      
+
       await request(app.getHttpServer())
         .post('/checkout/create-order')
         .send(mockCheckoutDto)
@@ -359,7 +360,7 @@ describe('CheckoutController (Integration)', () => {
 
     it('should validate phone format', async () => {
       checkoutService.createOrderFromCart.mockResolvedValue(mockOrder as any);
-      
+
       // Phone validation might not be strict in DTO, so this might pass
       await request(app.getHttpServer())
         .post('/checkout/create-order')

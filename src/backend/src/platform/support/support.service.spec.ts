@@ -220,7 +220,7 @@ describe('SupportService', () => {
       await service.createTicket(mockUser, createDto as any);
 
       expect(ticketRepository.create).toHaveBeenCalledWith(
-        expect.objectContaining({ customerId: 'customer-1' })
+        expect.objectContaining({ customerId: 'customer-1' }),
       );
     });
   });
@@ -255,7 +255,9 @@ describe('SupportService', () => {
 
       await service.findAllTickets(mockUser, { status: IssueStatus.CLOSED });
 
-      expect(queryBuilder.andWhere).toHaveBeenCalledWith('ticket.status = :status', { status: IssueStatus.CLOSED });
+      expect(queryBuilder.andWhere).toHaveBeenCalledWith('ticket.status = :status', {
+        status: IssueStatus.CLOSED,
+      });
     });
 
     it('should filter by channel', async () => {
@@ -271,7 +273,9 @@ describe('SupportService', () => {
 
       await service.findAllTickets(mockUser, { channel: TicketChannel.EMAIL });
 
-      expect(queryBuilder.andWhere).toHaveBeenCalledWith('ticket.channel = :channel', { channel: TicketChannel.EMAIL });
+      expect(queryBuilder.andWhere).toHaveBeenCalledWith('ticket.channel = :channel', {
+        channel: TicketChannel.EMAIL,
+      });
     });
 
     it('should use default pagination', async () => {
@@ -308,7 +312,9 @@ describe('SupportService', () => {
     it('should throw NotFoundException when ticket not found', async () => {
       ticketRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findOneTicket(mockUser, 'invalid-id')).rejects.toThrow(NotFoundException);
+      await expect(service.findOneTicket(mockUser, 'invalid-id')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -326,7 +332,7 @@ describe('SupportService', () => {
     it('should update SLA when slaId changed', async () => {
       const updateDto = { slaId: 'sla-2' };
       const ticketWithOldSla = { ...mockTicket, slaId: 'sla-1' };
-      
+
       // Mock findOneTicket to return ticket without mutation
       ticketRepository.findOne.mockResolvedValue({ ...ticketWithOldSla } as Ticket);
       slaRepository.findOne.mockResolvedValue(mockSLA as SLA);
@@ -346,7 +352,10 @@ describe('SupportService', () => {
       ticketRepository.findOne.mockResolvedValue(closedTicket as Ticket);
       ticketRepository.save.mockResolvedValue(closedTicket as Ticket);
 
-      const result = await service.rateTicket(mockUser, 'ticket-1', { rating: 5, comment: 'Great' });
+      const result = await service.rateTicket(mockUser, 'ticket-1', {
+        rating: 5,
+        comment: 'Great',
+      });
 
       expect(result.satisfactionRating).toBe(5);
     });
@@ -355,25 +364,29 @@ describe('SupportService', () => {
       const ticket = { ...mockTicket, customerId: 'other-user', status: IssueStatus.CLOSED };
       ticketRepository.findOne.mockResolvedValue(ticket as Ticket);
 
-      await expect(service.rateTicket(mockUser, 'ticket-1', { rating: 5 })).rejects.toThrow(BadRequestException);
+      await expect(service.rateTicket(mockUser, 'ticket-1', { rating: 5 })).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw error when rating non-closed ticket', async () => {
       const ticket = { ...mockTicket, customerId: mockUser.id, status: IssueStatus.NEW };
       ticketRepository.findOne.mockResolvedValue(ticket as Ticket);
 
-      await expect(service.rateTicket(mockUser, 'ticket-1', { rating: 5 })).rejects.toThrow(BadRequestException);
+      await expect(service.rateTicket(mockUser, 'ticket-1', { rating: 5 })).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
   describe('escalateTicket', () => {
     it('should escalate ticket successfully', async () => {
       ticketRepository.findOne.mockResolvedValue(mockTicket as Ticket);
-      const escalatedTicket = { 
-        ...mockTicket, 
-        isEscalated: true, 
+      const escalatedTicket = {
+        ...mockTicket,
+        isEscalated: true,
         escalatedAt: new Date(),
-        escalatedToId: 'manager-1' 
+        escalatedToId: 'manager-1',
       };
       ticketRepository.save.mockResolvedValue(escalatedTicket as Ticket);
 
@@ -394,7 +407,10 @@ describe('SupportService', () => {
 
         const result = await service.createSLA(mockUser, createDto as any);
 
-        expect(slaRepository.create).toHaveBeenCalledWith({ ...createDto, tenantId: mockUser.tenantId });
+        expect(slaRepository.create).toHaveBeenCalledWith({
+          ...createDto,
+          tenantId: mockUser.tenantId,
+        });
         expect(result).toEqual(mockSLA);
       });
     });
@@ -456,7 +472,11 @@ describe('SupportService', () => {
   describe('Assignment Rule Operations', () => {
     describe('createAssignmentRule', () => {
       it('should create assignment rule successfully', async () => {
-        const createDto = { name: 'Auto assign', strategy: AssignmentStrategy.ROUND_ROBIN, assigneeIds: ['user-1'] };
+        const createDto = {
+          name: 'Auto assign',
+          strategy: AssignmentStrategy.ROUND_ROBIN,
+          assigneeIds: ['user-1'],
+        };
         assignmentRuleRepository.create.mockReturnValue(mockAssignmentRule as AssignmentRule);
         assignmentRuleRepository.save.mockResolvedValue(mockAssignmentRule as AssignmentRule);
 
@@ -484,7 +504,10 @@ describe('SupportService', () => {
       it('should update rule successfully', async () => {
         const updateDto = { name: 'Updated rule' };
         assignmentRuleRepository.findOne.mockResolvedValue(mockAssignmentRule as AssignmentRule);
-        assignmentRuleRepository.save.mockResolvedValue({ ...mockAssignmentRule, ...updateDto } as AssignmentRule);
+        assignmentRuleRepository.save.mockResolvedValue({
+          ...mockAssignmentRule,
+          ...updateDto,
+        } as AssignmentRule);
 
         const result = await service.updateAssignmentRule(mockUser, 'rule-1', updateDto as any);
 
@@ -552,7 +575,9 @@ describe('SupportService', () => {
 
         await service.findAllArticles(mockUser, { status: ArticleStatus.PUBLISHED });
 
-        expect(queryBuilder.andWhere).toHaveBeenCalledWith('article.status = :status', { status: ArticleStatus.PUBLISHED });
+        expect(queryBuilder.andWhere).toHaveBeenCalledWith('article.status = :status', {
+          status: ArticleStatus.PUBLISHED,
+        });
       });
 
       it('should search by title and content', async () => {
@@ -575,7 +600,10 @@ describe('SupportService', () => {
     describe('findOneArticle', () => {
       it('should return article and increment view count', async () => {
         articleRepository.findOne.mockResolvedValue(mockArticle as KnowledgeBaseArticle);
-        articleRepository.save.mockResolvedValue({ ...mockArticle, viewCount: 1 } as KnowledgeBaseArticle);
+        articleRepository.save.mockResolvedValue({
+          ...mockArticle,
+          viewCount: 1,
+        } as KnowledgeBaseArticle);
 
         const result = await service.findOneArticle(mockUser, 'article-1');
 
@@ -585,7 +613,9 @@ describe('SupportService', () => {
       it('should throw NotFoundException when article not found', async () => {
         articleRepository.findOne.mockResolvedValue(null);
 
-        await expect(service.findOneArticle(mockUser, 'invalid-id')).rejects.toThrow(NotFoundException);
+        await expect(service.findOneArticle(mockUser, 'invalid-id')).rejects.toThrow(
+          NotFoundException,
+        );
       });
     });
 
@@ -593,7 +623,10 @@ describe('SupportService', () => {
       it('should update article successfully', async () => {
         const updateDto = { title: 'Updated title' };
         articleRepository.findOne.mockResolvedValue(mockArticle as KnowledgeBaseArticle);
-        articleRepository.save.mockResolvedValue({ ...mockArticle, ...updateDto } as KnowledgeBaseArticle);
+        articleRepository.save.mockResolvedValue({
+          ...mockArticle,
+          ...updateDto,
+        } as KnowledgeBaseArticle);
 
         const result = await service.updateArticle(mockUser, 'article-1', updateDto as any);
 
@@ -604,7 +637,11 @@ describe('SupportService', () => {
         const updateDto = { status: ArticleStatus.PUBLISHED };
         const draftArticle = { ...mockArticle, status: ArticleStatus.DRAFT, publishedAt: null };
         articleRepository.findOne.mockResolvedValue(draftArticle as KnowledgeBaseArticle);
-        articleRepository.save.mockResolvedValue({ ...draftArticle, ...updateDto, publishedAt: new Date() } as KnowledgeBaseArticle);
+        articleRepository.save.mockResolvedValue({
+          ...draftArticle,
+          ...updateDto,
+          publishedAt: new Date(),
+        } as KnowledgeBaseArticle);
 
         const result = await service.updateArticle(mockUser, 'article-1', updateDto as any);
 
@@ -626,7 +663,10 @@ describe('SupportService', () => {
     describe('markArticleHelpful', () => {
       it('should increment helpful count when helpful is true', async () => {
         articleRepository.findOne.mockResolvedValue(mockArticle as KnowledgeBaseArticle);
-        articleRepository.save.mockResolvedValue({ ...mockArticle, helpfulCount: 1 } as KnowledgeBaseArticle);
+        articleRepository.save.mockResolvedValue({
+          ...mockArticle,
+          helpfulCount: 1,
+        } as KnowledgeBaseArticle);
 
         const result = await service.markArticleHelpful(mockUser, 'article-1', true);
 
@@ -635,7 +675,10 @@ describe('SupportService', () => {
 
       it('should increment not helpful count when helpful is false', async () => {
         articleRepository.findOne.mockResolvedValue(mockArticle as KnowledgeBaseArticle);
-        articleRepository.save.mockResolvedValue({ ...mockArticle, notHelpfulCount: 1 } as KnowledgeBaseArticle);
+        articleRepository.save.mockResolvedValue({
+          ...mockArticle,
+          notHelpfulCount: 1,
+        } as KnowledgeBaseArticle);
 
         const result = await service.markArticleHelpful(mockUser, 'article-1', false);
 
@@ -704,7 +747,9 @@ describe('SupportService', () => {
       it('should throw NotFoundException when response not found', async () => {
         cannedResponseRepository.findOne.mockResolvedValue(null);
 
-        await expect(service.findOneCannedResponse(mockUser, 'invalid-id')).rejects.toThrow(NotFoundException);
+        await expect(service.findOneCannedResponse(mockUser, 'invalid-id')).rejects.toThrow(
+          NotFoundException,
+        );
       });
     });
 
@@ -712,7 +757,10 @@ describe('SupportService', () => {
       it('should update canned response successfully', async () => {
         const updateDto = { title: 'Updated title' };
         cannedResponseRepository.findOne.mockResolvedValue(mockCannedResponse as CannedResponse);
-        cannedResponseRepository.save.mockResolvedValue({ ...mockCannedResponse, ...updateDto } as CannedResponse);
+        cannedResponseRepository.save.mockResolvedValue({
+          ...mockCannedResponse,
+          ...updateDto,
+        } as CannedResponse);
 
         const result = await service.updateCannedResponse(mockUser, 'response-1', updateDto as any);
 
@@ -734,7 +782,10 @@ describe('SupportService', () => {
     describe('useCannedResponse', () => {
       it('should increment usage count', async () => {
         cannedResponseRepository.findOne.mockResolvedValue(mockCannedResponse as CannedResponse);
-        cannedResponseRepository.save.mockResolvedValue({ ...mockCannedResponse, usageCount: 1 } as CannedResponse);
+        cannedResponseRepository.save.mockResolvedValue({
+          ...mockCannedResponse,
+          usageCount: 1,
+        } as CannedResponse);
 
         const result = await service.useCannedResponse(mockUser, 'response-1');
 

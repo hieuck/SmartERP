@@ -19,7 +19,7 @@ describe('ShippingService', () => {
   let viettelPostService: jest.Mocked<ViettelPostService>;
   let vnPostService: jest.Mocked<VNPostService>;
   let cacheService: jest.Mocked<CacheService>;
-  let permissionService: jest.Mocked<PermissionService>;
+  let _permissionService: jest.Mocked<PermissionService>;
 
   const mockUser: User = {
     id: 'user-123',
@@ -177,13 +177,15 @@ describe('ShippingService', () => {
       });
 
       // Mock SecureRepository save
-      const saveSpy = jest.spyOn(service['secureShipmentRepo'], 'save').mockResolvedValue(mockShipment as Shipment);
+      const _saveSpy = jest
+        .spyOn(service['secureShipmentRepo'], 'save')
+        .mockResolvedValue(mockShipment as Shipment);
 
       const result = await service.createShipment(mockUser, dto);
 
       expect(result).toBeDefined();
       expect(ghnService.createOrder).toHaveBeenCalled();
-      expect(saveSpy).toHaveBeenCalled();
+      expect(_saveSpy).toHaveBeenCalled();
     });
 
     it('should create shipment with GHTK provider', async () => {
@@ -203,7 +205,7 @@ describe('ShippingService', () => {
         estimatedDeliveryTime: new Date(),
       });
 
-      const saveSpy = jest.spyOn(service['secureShipmentRepo'], 'save').mockResolvedValue({
+      const _saveSpy = jest.spyOn(service['secureShipmentRepo'], 'save').mockResolvedValue({
         ...mockShipment,
         provider: 'ghtk',
       } as Shipment);
@@ -212,7 +214,7 @@ describe('ShippingService', () => {
 
       expect(result).toBeDefined();
       expect(ghtkService.createOrder).toHaveBeenCalled();
-      expect(saveSpy).toHaveBeenCalled();
+      expect(_saveSpy).toHaveBeenCalled();
     });
 
     it('should create shipment with ViettelPost provider', async () => {
@@ -231,7 +233,7 @@ describe('ShippingService', () => {
         exchangeWeight: 1500,
       });
 
-      const saveSpy = jest.spyOn(service['secureShipmentRepo'], 'save').mockResolvedValue({
+      const _saveSpy = jest.spyOn(service['secureShipmentRepo'], 'save').mockResolvedValue({
         ...mockShipment,
         provider: 'viettelpost',
       } as Shipment);
@@ -240,7 +242,7 @@ describe('ShippingService', () => {
 
       expect(result).toBeDefined();
       expect(viettelPostService.createOrder).toHaveBeenCalled();
-      expect(saveSpy).toHaveBeenCalled();
+      expect(_saveSpy).toHaveBeenCalled();
     });
 
     it('should create shipment with VNPost provider', async () => {
@@ -260,7 +262,7 @@ describe('ShippingService', () => {
         expectedDeliveryTime: new Date(),
       });
 
-      const saveSpy = jest.spyOn(service['secureShipmentRepo'], 'save').mockResolvedValue({
+      const _saveSpy = jest.spyOn(service['secureShipmentRepo'], 'save').mockResolvedValue({
         ...mockShipment,
         provider: 'vnpost',
       } as Shipment);
@@ -269,7 +271,7 @@ describe('ShippingService', () => {
 
       expect(result).toBeDefined();
       expect(vnPostService.createOrder).toHaveBeenCalled();
-      expect(saveSpy).toHaveBeenCalled();
+      expect(_saveSpy).toHaveBeenCalled();
     });
 
     it('should throw error for unsupported provider', async () => {
@@ -281,13 +283,13 @@ describe('ShippingService', () => {
         packageInfo: mockShipment.packageInfo,
       };
 
-      const saveSpy = jest.spyOn(service['secureShipmentRepo'], 'save').mockResolvedValue({
+      const _saveSpy = jest.spyOn(service['secureShipmentRepo'], 'save').mockResolvedValue({
         ...mockShipment,
         status: 'pending',
       } as Shipment);
 
       await expect(service.createShipment(mockUser, dto)).rejects.toThrow(BadRequestException);
-      expect(saveSpy).toHaveBeenCalled();
+      expect(_saveSpy).toHaveBeenCalled();
     });
 
     it('should handle provider error and update shipment status', async () => {
@@ -303,13 +305,13 @@ describe('ShippingService', () => {
         error: 'Provider error',
       });
 
-      const saveSpy = jest.spyOn(service['secureShipmentRepo'], 'save').mockResolvedValue({
+      const _saveSpy = jest.spyOn(service['secureShipmentRepo'], 'save').mockResolvedValue({
         ...mockShipment,
         status: 'failed',
       } as Shipment);
 
       await expect(service.createShipment(mockUser, dto)).rejects.toThrow();
-      expect(saveSpy).toHaveBeenCalledTimes(1); // Only once for failed status in catch block
+      expect(_saveSpy).toHaveBeenCalledTimes(1); // Only once for failed status in catch block
     });
 
     it('should create shipment with note', async () => {
@@ -329,14 +331,18 @@ describe('ShippingService', () => {
         expectedDeliveryTime: new Date(),
       });
 
-      const saveSpy = jest.spyOn(service['secureShipmentRepo'], 'save').mockResolvedValue(mockShipment as Shipment);
+      const _saveSpy = jest
+        .spyOn(service['secureShipmentRepo'], 'save')
+        .mockResolvedValue(mockShipment as Shipment);
 
       const result = await service.createShipment(mockUser, dto);
 
       expect(result).toBeDefined();
-      expect(ghnService.createOrder).toHaveBeenCalledWith(expect.objectContaining({
-        note: 'Handle with care',
-      }));
+      expect(ghnService.createOrder).toHaveBeenCalledWith(
+        expect.objectContaining({
+          note: 'Handle with care',
+        }),
+      );
     });
   });
 
@@ -475,7 +481,9 @@ describe('ShippingService', () => {
         provider: 'ghn',
       };
 
-      const findOneSpy = jest.spyOn(service['secureShipmentRepo'], 'findOne').mockResolvedValue(mockShipment as Shipment);
+      const findOneSpy = jest
+        .spyOn(service['secureShipmentRepo'], 'findOne')
+        .mockResolvedValue(mockShipment as Shipment);
 
       ghnService.trackShipment.mockResolvedValue({
         status: 'delivering',
@@ -485,7 +493,9 @@ describe('ShippingService', () => {
         history: [],
       });
 
-      const saveSpy = jest.spyOn(service['secureShipmentRepo'], 'save').mockResolvedValue(mockShipment as Shipment);
+      const _saveSpy = jest
+        .spyOn(service['secureShipmentRepo'], 'save')
+        .mockResolvedValue(mockShipment as Shipment);
 
       const result = await service.trackShipment(mockUser, dto);
 
@@ -494,7 +504,7 @@ describe('ShippingService', () => {
       expect(result.tracking).toBeDefined();
       expect(findOneSpy).toHaveBeenCalled();
       expect(ghnService.trackShipment).toHaveBeenCalled();
-      expect(saveSpy).toHaveBeenCalled();
+      expect(_saveSpy).toHaveBeenCalled();
       expect(cacheService.del).toHaveBeenCalled();
     });
 
@@ -515,14 +525,16 @@ describe('ShippingService', () => {
         provider: 'ghn',
       };
 
-      jest.spyOn(service['secureShipmentRepo'], 'findOne').mockResolvedValue(mockShipment as Shipment);
+      jest
+        .spyOn(service['secureShipmentRepo'], 'findOne')
+        .mockResolvedValue(mockShipment as Shipment);
 
       ghnService.trackShipment.mockResolvedValue({
         status: 'delivered',
         statusText: 'Đã giao hàng',
       });
 
-      const saveSpy = jest.spyOn(service['secureShipmentRepo'], 'save').mockResolvedValue({
+      const _saveSpy = jest.spyOn(service['secureShipmentRepo'], 'save').mockResolvedValue({
         ...mockShipment,
         status: 'delivered',
         deliveredAt: new Date(),
@@ -530,7 +542,7 @@ describe('ShippingService', () => {
 
       await service.trackShipment(mockUser, dto);
 
-      expect(saveSpy).toHaveBeenCalledWith(
+      expect(_saveSpy).toHaveBeenCalledWith(
         mockUser,
         expect.objectContaining({
           status: 'delivered',
@@ -545,7 +557,9 @@ describe('ShippingService', () => {
         provider: 'ghn',
       };
 
-      jest.spyOn(service['secureShipmentRepo'], 'findOne').mockResolvedValue(mockShipment as Shipment);
+      jest
+        .spyOn(service['secureShipmentRepo'], 'findOne')
+        .mockResolvedValue(mockShipment as Shipment);
 
       ghnService.trackShipment.mockResolvedValue({
         error: 'Provider error',
@@ -567,14 +581,16 @@ describe('ShippingService', () => {
         status: 'in_transit', // Use a status that can be cancelled
       };
 
-      jest.spyOn(service['secureShipmentRepo'], 'findOne').mockResolvedValue(cancellableShipment as Shipment);
+      jest
+        .spyOn(service['secureShipmentRepo'], 'findOne')
+        .mockResolvedValue(cancellableShipment as Shipment);
 
       ghnService.cancelOrder.mockResolvedValue({
         success: true,
         message: 'Order cancelled',
       });
 
-      const saveSpy = jest.spyOn(service['secureShipmentRepo'], 'save').mockResolvedValue({
+      const _saveSpy = jest.spyOn(service['secureShipmentRepo'], 'save').mockResolvedValue({
         ...cancellableShipment,
         status: 'cancelled',
       } as Shipment);
@@ -584,7 +600,7 @@ describe('ShippingService', () => {
       expect(result).toBeDefined();
       expect(result.status).toBe('cancelled');
       expect(ghnService.cancelOrder).toHaveBeenCalled();
-      expect(saveSpy).toHaveBeenCalled();
+      expect(_saveSpy).toHaveBeenCalled();
       expect(cacheService.del).toHaveBeenCalled();
     });
 
@@ -629,7 +645,9 @@ describe('ShippingService', () => {
         shipmentId: 'shipment-123',
       };
 
-      jest.spyOn(service['secureShipmentRepo'], 'findOne').mockResolvedValue(mockShipment as Shipment);
+      jest
+        .spyOn(service['secureShipmentRepo'], 'findOne')
+        .mockResolvedValue(mockShipment as Shipment);
 
       ghnService.cancelOrder.mockResolvedValue({
         success: false,
@@ -655,7 +673,9 @@ describe('ShippingService', () => {
         return await fn();
       });
 
-      jest.spyOn(service['secureShipmentRepo'], 'findOne').mockResolvedValue(mockShipment as Shipment);
+      jest
+        .spyOn(service['secureShipmentRepo'], 'findOne')
+        .mockResolvedValue(mockShipment as Shipment);
 
       const result = await service.getShipment(mockUser, 'shipment-123');
 
@@ -677,7 +697,9 @@ describe('ShippingService', () => {
     it('should list all shipments', async () => {
       const mockShipments = [mockShipment, { ...mockShipment, id: 'shipment-456' }];
 
-      jest.spyOn(service['secureShipmentRepo'], 'find').mockResolvedValue(mockShipments as Shipment[]);
+      jest
+        .spyOn(service['secureShipmentRepo'], 'find')
+        .mockResolvedValue(mockShipments as Shipment[]);
       shipmentRepo.count.mockResolvedValue(2);
 
       const result = await service.listShipments(mockUser);
@@ -688,7 +710,9 @@ describe('ShippingService', () => {
     });
 
     it('should filter shipments by orderId', async () => {
-      jest.spyOn(service['secureShipmentRepo'], 'find').mockResolvedValue([mockShipment] as Shipment[]);
+      jest
+        .spyOn(service['secureShipmentRepo'], 'find')
+        .mockResolvedValue([mockShipment] as Shipment[]);
       shipmentRepo.count.mockResolvedValue(1);
 
       const result = await service.listShipments(mockUser, { orderId: 'order-123' });
@@ -697,7 +721,9 @@ describe('ShippingService', () => {
     });
 
     it('should filter shipments by provider', async () => {
-      jest.spyOn(service['secureShipmentRepo'], 'find').mockResolvedValue([mockShipment] as Shipment[]);
+      jest
+        .spyOn(service['secureShipmentRepo'], 'find')
+        .mockResolvedValue([mockShipment] as Shipment[]);
       shipmentRepo.count.mockResolvedValue(1);
 
       const result = await service.listShipments(mockUser, { provider: 'ghn' });
@@ -706,7 +732,9 @@ describe('ShippingService', () => {
     });
 
     it('should filter shipments by status', async () => {
-      jest.spyOn(service['secureShipmentRepo'], 'find').mockResolvedValue([mockShipment] as Shipment[]);
+      jest
+        .spyOn(service['secureShipmentRepo'], 'find')
+        .mockResolvedValue([mockShipment] as Shipment[]);
       shipmentRepo.count.mockResolvedValue(1);
 
       const result = await service.listShipments(mockUser, { status: 'picked_up' });
@@ -715,7 +743,9 @@ describe('ShippingService', () => {
     });
 
     it('should paginate results', async () => {
-      jest.spyOn(service['secureShipmentRepo'], 'find').mockResolvedValue([mockShipment] as Shipment[]);
+      jest
+        .spyOn(service['secureShipmentRepo'], 'find')
+        .mockResolvedValue([mockShipment] as Shipment[]);
       shipmentRepo.count.mockResolvedValue(100);
 
       const result = await service.listShipments(mockUser, { limit: 10, offset: 20 });

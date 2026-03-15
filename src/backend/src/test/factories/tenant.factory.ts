@@ -11,7 +11,7 @@ let tenantIdCounter = 1;
 
 export const createMockTenant = (overrides?: Partial<Tenant>): Tenant => {
   const id = `tenant-${tenantIdCounter++}`;
-  
+
   return {
     id,
     name: `Test Company ${tenantIdCounter}`,

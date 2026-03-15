@@ -16,20 +16,16 @@ export default new DataSource({
   username: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD || 'postgres',
   database: process.env.DB_NAME || 'erp_production',
-  
+
   // Entities - relative to backend root
-  entities: isProduction
-    ? ['dist/**/*.entity.js']
-    : ['src/**/*.entity.ts'],
-  
+  entities: isProduction ? ['dist/**/*.entity.js'] : ['src/**/*.entity.ts'],
+
   // Migrations - relative to backend root
-  migrations: isProduction
-    ? ['dist/migrations/*.js']
-    : ['src/migrations/*.ts'],
-  
+  migrations: isProduction ? ['dist/migrations/*.js'] : ['src/migrations/*.ts'],
+
   // Disable synchronize - use migrations
   synchronize: false,
-  
+
   // Logging
   logging: process.env.NODE_ENV === 'development',
 });

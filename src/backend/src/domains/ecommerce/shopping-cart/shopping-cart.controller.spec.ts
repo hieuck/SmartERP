@@ -1,7 +1,7 @@
 /**
  * ShoppingCartController Integration Tests
  * Coverage target: 95%+
- * 
+ *
  * Test cases:
  * 1. GET /ecommerce/cart - Get or create cart
  * 2. POST /ecommerce/cart/items - Add item to cart
@@ -96,13 +96,17 @@ describe('ShoppingCartController (Integration)', () => {
       canActivate: jest.fn().mockImplementation((context) => {
         const request = context.switchToHttp().getRequest();
         const authHeader = request.headers.authorization;
-        
-        if (authHeader && authHeader.startsWith('Bearer ') && authHeader !== 'Bearer invalid-token') {
+
+        if (
+          authHeader &&
+          authHeader.startsWith('Bearer ') &&
+          authHeader !== 'Bearer invalid-token'
+        ) {
           request.user = mockUser;
           request.sessionID = 'session-123';
           return true;
         }
-        
+
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }),
     };
@@ -167,9 +171,7 @@ describe('ShoppingCartController (Integration)', () => {
     });
 
     it('should return 401 when not authenticated', async () => {
-      await request(app.getHttpServer())
-        .get('/ecommerce/cart')
-        .expect(401);
+      await request(app.getHttpServer()).get('/ecommerce/cart').expect(401);
     });
   });
 
@@ -186,11 +188,7 @@ describe('ShoppingCartController (Integration)', () => {
         .expect(201);
 
       expect(response.body).toEqual(updatedCart);
-      expect(cartService.addItem).toHaveBeenCalledWith(
-        mockUser,
-        'session-123',
-        mockAddToCartDto,
-      );
+      expect(cartService.addItem).toHaveBeenCalledWith(mockUser, 'session-123', mockAddToCartDto);
     });
 
     it('should return 404 when product not found', async () => {
@@ -345,9 +343,7 @@ describe('ShoppingCartController (Integration)', () => {
     });
 
     it('should return 401 when not authenticated', async () => {
-      await request(app.getHttpServer())
-        .delete('/ecommerce/cart/items/item-1')
-        .expect(401);
+      await request(app.getHttpServer()).delete('/ecommerce/cart/items/item-1').expect(401);
     });
   });
 
@@ -380,9 +376,7 @@ describe('ShoppingCartController (Integration)', () => {
     });
 
     it('should return 401 when not authenticated', async () => {
-      await request(app.getHttpServer())
-        .delete('/ecommerce/cart')
-        .expect(401);
+      await request(app.getHttpServer()).delete('/ecommerce/cart').expect(401);
     });
   });
 
@@ -404,11 +398,7 @@ describe('ShoppingCartController (Integration)', () => {
 
       expect(response.body.couponCode).toBe('SUMMER2024');
       expect(response.body.discount).toBe(50000);
-      expect(cartService.applyCoupon).toHaveBeenCalledWith(
-        mockUser,
-        'cart-123',
-        'SUMMER2024',
-      );
+      expect(cartService.applyCoupon).toHaveBeenCalledWith(mockUser, 'cart-123', 'SUMMER2024');
     });
 
     it('should return 400 when coupon is invalid', async () => {
@@ -473,9 +463,7 @@ describe('ShoppingCartController (Integration)', () => {
     });
 
     it('should return 401 when not authenticated', async () => {
-      await request(app.getHttpServer())
-        .delete('/ecommerce/cart/coupon')
-        .expect(401);
+      await request(app.getHttpServer()).delete('/ecommerce/cart/coupon').expect(401);
     });
   });
 

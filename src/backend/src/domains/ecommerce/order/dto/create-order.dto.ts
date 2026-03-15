@@ -1,4 +1,13 @@
-import { IsString, IsEmail, IsOptional, IsObject, IsArray, ValidateNested, IsNumber, Min } from 'class-validator';
+import {
+  IsString,
+  IsEmail,
+  IsOptional,
+  IsObject,
+  IsArray,
+  ValidateNested,
+  IsNumber,
+  Min,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -57,11 +66,30 @@ export class CreateOrderDto {
   @Type(() => OrderItemDto)
   items: OrderItemDto[];
 
-  @ApiProperty({ example: { fullName: 'John Doe', phone: '+84901234567', addressLine1: '123 Main St', city: 'HCMC', postalCode: '700000', country: 'Vietnam' } })
+  @ApiProperty({
+    example: {
+      fullName: 'John Doe',
+      phone: '+84901234567',
+      addressLine1: '123 Main St',
+      city: 'HCMC',
+      postalCode: '700000',
+      country: 'Vietnam',
+    },
+  })
   @IsObject()
   shippingAddress: any;
 
-  @ApiProperty({ example: { fullName: 'John Doe', phone: '+84901234567', addressLine1: '123 Main St', city: 'HCMC', postalCode: '700000', country: 'Vietnam' }, required: false })
+  @ApiProperty({
+    example: {
+      fullName: 'John Doe',
+      phone: '+84901234567',
+      addressLine1: '123 Main St',
+      city: 'HCMC',
+      postalCode: '700000',
+      country: 'Vietnam',
+    },
+    required: false,
+  })
   @IsObject()
   @IsOptional()
   billingAddress?: any;

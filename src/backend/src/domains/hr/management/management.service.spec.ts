@@ -18,7 +18,7 @@ describe('ManagementService', () => {
   let attendanceRepository: jest.Mocked<Repository<Attendance>>;
   let leaveRepository: jest.Mocked<Repository<Leave>>;
   let cacheService: jest.Mocked<CacheService>;
-  let permissionService: jest.Mocked<PermissionService>;
+  let _permissionService: jest.Mocked<PermissionService>;
 
   const mockUser: User = {
     id: 'user-123',
@@ -172,9 +172,9 @@ describe('ManagementService', () => {
         cacheService.getOrSet.mockImplementation(async (key, fn) => fn());
         employeeRepository.findOne.mockResolvedValue(null);
 
-        await expect(
-          service.findEmployeeById(mockUser, 'employee-123'),
-        ).rejects.toThrow(NotFoundException);
+        await expect(service.findEmployeeById(mockUser, 'employee-123')).rejects.toThrow(
+          NotFoundException,
+        );
       });
     });
 
@@ -344,9 +344,9 @@ describe('ManagementService', () => {
         cacheService.getOrSet.mockImplementation(async (key, fn) => fn());
         attendanceRepository.findOne.mockResolvedValue(null);
 
-        await expect(
-          service.findAttendanceById(mockUser, 'attendance-123'),
-        ).rejects.toThrow(NotFoundException);
+        await expect(service.findAttendanceById(mockUser, 'attendance-123')).rejects.toThrow(
+          NotFoundException,
+        );
       });
     });
 
@@ -486,9 +486,9 @@ describe('ManagementService', () => {
         cacheService.getOrSet.mockImplementation(async (key, fn) => fn());
         leaveRepository.findOne.mockResolvedValue(null);
 
-        await expect(
-          service.findLeaveById(mockUser, 'leave-123'),
-        ).rejects.toThrow(NotFoundException);
+        await expect(service.findLeaveById(mockUser, 'leave-123')).rejects.toThrow(
+          NotFoundException,
+        );
       });
     });
 
@@ -587,9 +587,9 @@ describe('ManagementService', () => {
           status: LeaveStatus.APPROVED,
         });
 
-        await expect(
-          service.approveLeave(mockUser, 'leave-123', 'approver-123'),
-        ).rejects.toThrow(BadRequestException);
+        await expect(service.approveLeave(mockUser, 'leave-123', 'approver-123')).rejects.toThrow(
+          BadRequestException,
+        );
       });
     });
 
@@ -617,17 +617,27 @@ describe('ManagementService', () => {
           status: LeaveStatus.REJECTED,
         });
 
-        await expect(
-          service.rejectLeave(mockUser, 'leave-123'),
-        ).rejects.toThrow(BadRequestException);
+        await expect(service.rejectLeave(mockUser, 'leave-123')).rejects.toThrow(
+          BadRequestException,
+        );
       });
     });
 
     describe('getLeaveBalance', () => {
       it('should calculate leave balance correctly', async () => {
         const approvedLeaves = [
-          { ...mockLeave, status: LeaveStatus.APPROVED, days: 5, startDate: new Date('2024-03-01') },
-          { ...mockLeave, status: LeaveStatus.APPROVED, days: 3, startDate: new Date('2024-06-01') },
+          {
+            ...mockLeave,
+            status: LeaveStatus.APPROVED,
+            days: 5,
+            startDate: new Date('2024-03-01'),
+          },
+          {
+            ...mockLeave,
+            status: LeaveStatus.APPROVED,
+            days: 3,
+            startDate: new Date('2024-06-01'),
+          },
         ];
         leaveRepository.find.mockResolvedValue(approvedLeaves);
 
@@ -644,9 +654,24 @@ describe('ManagementService', () => {
       it('should only count approved leaves in the specified year', async () => {
         // Service queries with status=APPROVED, so mock should only return approved leaves
         const approvedLeaves = [
-          { ...mockLeave, status: LeaveStatus.APPROVED, days: 5, startDate: new Date('2024-03-01') },
-          { ...mockLeave, status: LeaveStatus.APPROVED, days: 3, startDate: new Date('2024-06-01') },
-          { ...mockLeave, status: LeaveStatus.APPROVED, days: 2, startDate: new Date('2023-12-01') },
+          {
+            ...mockLeave,
+            status: LeaveStatus.APPROVED,
+            days: 5,
+            startDate: new Date('2024-03-01'),
+          },
+          {
+            ...mockLeave,
+            status: LeaveStatus.APPROVED,
+            days: 3,
+            startDate: new Date('2024-06-01'),
+          },
+          {
+            ...mockLeave,
+            status: LeaveStatus.APPROVED,
+            days: 2,
+            startDate: new Date('2023-12-01'),
+          },
         ];
         leaveRepository.find.mockResolvedValue(approvedLeaves);
 

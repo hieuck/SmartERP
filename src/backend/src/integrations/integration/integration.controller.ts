@@ -2,8 +2,6 @@ import { Controller, Get, Post, Delete, Body, Param, UseGuards } from '@nestjs/c
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { IntegrationService, IntegrationConfig } from './integration.service';
 import { JwtAuthGuard } from '../../core/auth/guards/jwt-auth.guard';
-import { TenantId } from '../../common/decorators/tenant-id.decorator';
-
 import { User } from '@/common/security/permission.service';
 @Controller('integrations')
 @UseGuards(JwtAuthGuard)
@@ -32,10 +30,7 @@ export class IntegrationController {
   }
 
   @Delete(':name')
-  async removeIntegration(
-    @CurrentUser() user: User,
-    @Param('name') name: string,
-  ): Promise<void> {
+  async removeIntegration(@CurrentUser() user: User, @Param('name') name: string): Promise<void> {
     return this.integrationService.removeIntegration(user, name);
   }
 

@@ -1,13 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  Patch,
-  Delete,
-  Request,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Patch, Delete, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { WorkCenterService } from './work-center.service';
 import { CreateWorkCenterDto } from './dto/create-work-center.dto';
@@ -47,11 +38,7 @@ export class WorkCenterController {
   @Roles('manager', 'admin', 'production_manager')
   @ApiOperation({ summary: 'Update work center' })
   @ApiResponse({ status: 200, description: 'Work center updated successfully' })
-  async update(
-    @Param('id') id: string,
-    @Body() dto: UpdateWorkCenterDto,
-    @Request() req,
-  ) {
+  async update(@Param('id') id: string, @Body() dto: UpdateWorkCenterDto, @Request() req) {
     return this.workCenterService.update(req.user.tenantId, id, dto);
   }
 

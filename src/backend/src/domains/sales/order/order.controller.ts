@@ -64,18 +64,18 @@ export class OrderController {
   @ApiOperation({ summary: 'Get revenue by date range' })
   getRevenueByDateRange(
     @Query('startDate') startDate: string,
-    @CurrentUser() user: User, @Query('endDate') endDate: string,
+    @CurrentUser() user: User,
+    @Query('endDate') endDate: string,
   ) {
-    return this.orderService.getRevenueByDateRange(
-      user, new Date(startDate), new Date(endDate),
-    );
+    return this.orderService.getRevenueByDateRange(user, new Date(startDate), new Date(endDate));
   }
 
   @Get('date-range')
   @ApiOperation({ summary: 'Get orders by date range' })
   findByDateRange(
     @Query('startDate') startDate: string,
-    @CurrentUser() user: User, @Query('endDate') endDate: string,
+    @CurrentUser() user: User,
+    @Query('endDate') endDate: string,
   ) {
     return this.orderService.findByDateRange(user, new Date(startDate), new Date(endDate));
   }
@@ -108,17 +108,15 @@ export class OrderController {
   @ApiOperation({ summary: 'Update order' })
   update(
     @Param('id') id: string,
-    @CurrentUser() user: User, @Body() updateOrderDto: UpdateOrderDto,
+    @CurrentUser() user: User,
+    @Body() updateOrderDto: UpdateOrderDto,
   ) {
     return this.orderService.update(user, id, updateOrderDto);
   }
 
   @Patch(':id/status')
   @ApiOperation({ summary: 'Update order status' })
-  updateStatus(
-    @Param('id') id: string,
-    @CurrentUser() user: User, @Body('status') status: string,
-  ) {
+  updateStatus(@Param('id') id: string, @CurrentUser() user: User, @Body('status') status: string) {
     return this.orderService.updateStatus(user, id, status);
   }
 
@@ -132,7 +130,8 @@ export class OrderController {
   @ApiOperation({ summary: 'Ship order' })
   ship(
     @Param('id') id: string,
-    @CurrentUser() user: User, @Body('trackingNumber') trackingNumber: string,
+    @CurrentUser() user: User,
+    @Body('trackingNumber') trackingNumber: string,
   ) {
     return this.orderService.ship(user, id, trackingNumber);
   }

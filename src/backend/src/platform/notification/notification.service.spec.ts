@@ -130,7 +130,11 @@ describe('NotificationService', () => {
 
       expect(result).toEqual(unreadNotifications);
       expect(notificationRepository.find).toHaveBeenCalledWith({
-        where: { userId: mockUser.id, status: NotificationStatus.UNREAD, tenantId: mockUser.tenantId },
+        where: {
+          userId: mockUser.id,
+          status: NotificationStatus.UNREAD,
+          tenantId: mockUser.tenantId,
+        },
         order: { createdAt: 'DESC' },
       });
     });
@@ -168,9 +172,7 @@ describe('NotificationService', () => {
       notificationRepository.findOne.mockResolvedValue(null);
       cacheService.getOrSet.mockImplementation(async (key, fn) => fn());
 
-      await expect(service.findById(mockUser, 'non-existent')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.findById(mockUser, 'non-existent')).rejects.toThrow(NotFoundException);
       await expect(service.findById(mockUser, 'non-existent')).rejects.toThrow(
         'Notification with ID non-existent not found',
       );
@@ -244,9 +246,7 @@ describe('NotificationService', () => {
       notificationRepository.findOne.mockResolvedValue(null);
       cacheService.getOrSet.mockImplementation(async (key, fn) => fn());
 
-      await expect(service.markAsRead(mockUser, 'non-existent')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.markAsRead(mockUser, 'non-existent')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -264,7 +264,11 @@ describe('NotificationService', () => {
 
       expect(notificationRepository.save).toHaveBeenCalledTimes(3);
       expect(notificationRepository.find).toHaveBeenCalledWith({
-        where: { userId: mockUser.id, status: NotificationStatus.UNREAD, tenantId: mockUser.tenantId },
+        where: {
+          userId: mockUser.id,
+          status: NotificationStatus.UNREAD,
+          tenantId: mockUser.tenantId,
+        },
       });
     });
 
@@ -284,7 +288,9 @@ describe('NotificationService', () => {
         status: NotificationStatus.ARCHIVED,
       };
       cacheService.getOrSet.mockResolvedValue(mockNotification);
-      notificationRepository.save = jest.fn().mockResolvedValue(archivedNotification as Notification);
+      notificationRepository.save = jest
+        .fn()
+        .mockResolvedValue(archivedNotification as Notification);
 
       const result = await service.archive(mockUser, 'notification-1');
 
@@ -296,9 +302,7 @@ describe('NotificationService', () => {
       notificationRepository.findOne.mockResolvedValue(null);
       cacheService.getOrSet.mockImplementation(async (key, fn) => fn());
 
-      await expect(service.archive(mockUser, 'non-existent')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.archive(mockUser, 'non-existent')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -307,7 +311,7 @@ describe('NotificationService', () => {
       cacheService.getOrSet.mockResolvedValue(mockNotification);
       notificationRepository.findOne.mockResolvedValue(mockNotification); // SecureRepository needs this
       notificationRepository.remove = jest.fn().mockResolvedValue(mockNotification);
-      
+
       // Mock canDelete to return true (SecureRepository checks canDelete, not canWrite)
       permissionService.canDelete = jest.fn().mockReturnValue(true);
 
@@ -321,9 +325,7 @@ describe('NotificationService', () => {
       notificationRepository.findOne.mockResolvedValue(null);
       cacheService.getOrSet.mockImplementation(async (key, fn) => fn());
 
-      await expect(service.delete(mockUser, 'non-existent')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.delete(mockUser, 'non-existent')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -340,7 +342,11 @@ describe('NotificationService', () => {
 
       expect(result).toBe(3);
       expect(notificationRepository.find).toHaveBeenCalledWith({
-        where: { userId: mockUser.id, status: NotificationStatus.UNREAD, tenantId: mockUser.tenantId },
+        where: {
+          userId: mockUser.id,
+          status: NotificationStatus.UNREAD,
+          tenantId: mockUser.tenantId,
+        },
       });
     });
 

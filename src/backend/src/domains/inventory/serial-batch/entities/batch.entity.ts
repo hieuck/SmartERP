@@ -42,7 +42,7 @@ export class Batch {
   @Column({ name: 'expiry_date', type: 'date', nullable: true })
   expiryDate?: Date;
 
-  @OneToMany(() => BatchStock, stock => stock.batch)
+  @OneToMany(() => BatchStock, (stock) => stock.batch)
   stocks: BatchStock[];
 
   @CreateDateColumn({ name: 'created_at' })

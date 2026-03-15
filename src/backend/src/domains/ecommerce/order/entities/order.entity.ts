@@ -10,7 +10,8 @@ import {
   BeforeInsert,
   BeforeUpdate,
 } from 'typeorm';
-import { User as UserEntity } from '../../../../core/user/entities/user.entity';import { OrderStatus } from '../enums/order-status.enum';
+import { User as UserEntity } from '../../../../core/user/entities/user.entity';
+import { OrderStatus } from '../enums/order-status.enum';
 import { PaymentStatus } from '../enums/payment-status.enum';
 import { ShippingStatus } from '../enums/shipping-status.enum';
 
@@ -167,10 +168,7 @@ export class Order {
     }
 
     // Calculate subtotal
-    this.subtotal = this.items.reduce(
-      (sum, item) => sum + item.quantity * item.price,
-      0,
-    );
+    this.subtotal = this.items.reduce((sum, item) => sum + item.quantity * item.price, 0);
 
     // Calculate total
     this.total = this.subtotal + this.tax + this.shipping - this.discount;
@@ -223,10 +221,7 @@ export class Order {
 
   // Helper: Check if order can be cancelled
   get canBeCancelled(): boolean {
-    return (
-      this.status === OrderStatus.PENDING ||
-      this.status === OrderStatus.CONFIRMED
-    );
+    return this.status === OrderStatus.PENDING || this.status === OrderStatus.CONFIRMED;
   }
 
   // Helper: Check if order is completed

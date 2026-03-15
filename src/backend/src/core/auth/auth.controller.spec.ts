@@ -1,7 +1,7 @@
 /**
  * AuthController Integration Tests
  * Coverage target: 99%
- * 
+ *
  * Test cases:
  * 1. POST /auth/login - Success, account locked, invalid credentials, inactive tenant
  * 2. POST /auth/register-tenant - Success, duplicate subdomain, duplicate email
@@ -38,7 +38,7 @@ describe('AuthController (Integration)', () => {
   let authService: jest.Mocked<AuthService>;
   let tokenBlacklistService: jest.Mocked<TokenBlacklistService>;
   let accountLockoutService: jest.Mocked<AccountLockoutService>;
-  let jwtService: jest.Mocked<JwtService>;
+  let _jwtService: jest.Mocked<JwtService>;
 
   const mockUser = {
     id: 'user-123',
@@ -87,13 +87,13 @@ describe('AuthController (Integration)', () => {
       canActivate: jest.fn().mockImplementation((context) => {
         const request = context.switchToHttp().getRequest();
         const { email, password } = request.body || {};
-        
+
         // Simulate authentication logic
         if (email === 'test@example.com' && password === 'Password123') {
           request.user = mockUser;
           return true;
         }
-        
+
         // Invalid credentials
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }),
@@ -103,13 +103,17 @@ describe('AuthController (Integration)', () => {
       canActivate: jest.fn().mockImplementation((context) => {
         const request = context.switchToHttp().getRequest();
         const authHeader = request.headers.authorization;
-        
+
         // Check if Authorization header exists and is valid
-        if (authHeader && authHeader.startsWith('Bearer ') && authHeader !== 'Bearer invalid-token') {
+        if (
+          authHeader &&
+          authHeader.startsWith('Bearer ') &&
+          authHeader !== 'Bearer invalid-token'
+        ) {
           request.user = mockUser;
           return true;
         }
-        
+
         // No token or invalid token
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }),
@@ -436,9 +440,7 @@ describe('AuthController (Integration)', () => {
         new HttpException('Invalid or expired verification token', HttpStatus.BAD_REQUEST),
       );
 
-      await request(app.getHttpServer())
-        .get(`/auth/verify-email?token=${token}`)
-        .expect(400);
+      await request(app.getHttpServer()).get(`/auth/verify-email?token=${token}`).expect(400);
     });
 
     it('should handle already verified email', async () => {
@@ -460,7 +462,7 @@ describe('AuthController (Integration)', () => {
       authService.verifyEmail.mockRejectedValue(
         new HttpException('Invalid or expired verification token', HttpStatus.BAD_REQUEST),
       );
-      
+
       await request(app.getHttpServer()).get('/auth/verify-email').expect(400);
     });
   });
@@ -476,9 +478,7 @@ describe('AuthController (Integration)', () => {
     });
 
     it('should return 401 when not authenticated', async () => {
-      await request(app.getHttpServer())
-        .get('/auth/profile')
-        .expect(401);
+      await request(app.getHttpServer()).get('/auth/profile').expect(401);
     });
 
     it('should return 401 with invalid token', async () => {

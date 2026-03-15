@@ -7,11 +7,7 @@ import { CacheModule } from '@/common/cache/cache.module';
 import { SecurityModule } from '@/common/security/security.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Notification]),
-    CacheModule,
-    SecurityModule,
-  ],
+  imports: [TypeOrmModule.forFeature([Notification]), CacheModule, SecurityModule],
   controllers: [NotificationController],
   providers: [NotificationService],
   exports: [NotificationService],

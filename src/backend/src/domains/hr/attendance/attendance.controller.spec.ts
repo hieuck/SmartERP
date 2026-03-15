@@ -1,7 +1,7 @@
 /**
  * AttendanceController Integration Tests
  * Coverage target: 90%+
- * 
+ *
  * Test cases:
  * 1. POST /attendance/check-in - Success, unauthorized, validation errors
  * 2. POST /attendance/check-out - Success, unauthorized, validation errors
@@ -68,7 +68,7 @@ describe('AttendanceController (Integration)', () => {
       canActivate: jest.fn().mockImplementation((context) => {
         const request = context.switchToHttp().getRequest();
         const authHeader = request.headers.authorization;
-        
+
         if (authHeader && authHeader.startsWith('Bearer ')) {
           const token = authHeader.substring(7);
           if (token === 'valid-token') {
@@ -79,7 +79,7 @@ describe('AttendanceController (Integration)', () => {
             return true;
           }
         }
-        
+
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }),
     };
@@ -88,15 +88,15 @@ describe('AttendanceController (Integration)', () => {
       canActivate: jest.fn().mockImplementation((context) => {
         const request = context.switchToHttp().getRequest();
         const user = request.user;
-        
+
         if (!user) {
           throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
         }
-        
+
         // Check route-specific role requirements
         const handler = context.getHandler();
         const handlerName = handler.name;
-        
+
         // Report endpoint requires manager/admin/hr_manager
         if (handlerName === 'getReport') {
           if (['manager', 'admin', 'hr_manager'].includes(user.role)) {
@@ -104,7 +104,7 @@ describe('AttendanceController (Integration)', () => {
           }
           throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
         }
-        
+
         return true;
       }),
     };
@@ -177,10 +177,7 @@ describe('AttendanceController (Integration)', () => {
         checkInTime: '09:00:00',
       };
 
-      await request(app.getHttpServer())
-        .post('/attendance/check-in')
-        .send(checkInDto)
-        .expect(401);
+      await request(app.getHttpServer()).post('/attendance/check-in').send(checkInDto).expect(401);
 
       expect(attendanceService.checkIn).not.toHaveBeenCalled();
     });

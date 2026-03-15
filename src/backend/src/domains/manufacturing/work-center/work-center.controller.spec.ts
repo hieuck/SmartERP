@@ -1,7 +1,7 @@
 /**
  * WorkCenterController Integration Tests
  * Coverage target: 95%
- * 
+ *
  * Test cases:
  * 1. POST /manufacturing/work-centers - Create work center
  * 2. GET /manufacturing/work-centers - Get all work centers
@@ -59,12 +59,12 @@ describe('WorkCenterController (Integration)', () => {
       canActivate: jest.fn().mockImplementation((context) => {
         const request = context.switchToHttp().getRequest();
         const authHeader = request.headers.authorization;
-        
+
         if (authHeader && authHeader.startsWith('Bearer ')) {
           request.user = mockUser;
           return true;
         }
-        
+
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }),
     };
@@ -222,9 +222,7 @@ describe('WorkCenterController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/manufacturing/work-centers')
-        .expect(401);
+      await request(app.getHttpServer()).get('/manufacturing/work-centers').expect(401);
     });
   });
 
@@ -253,9 +251,7 @@ describe('WorkCenterController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/manufacturing/work-centers/wc-123')
-        .expect(401);
+      await request(app.getHttpServer()).get('/manufacturing/work-centers/wc-123').expect(401);
     });
   });
 
@@ -326,11 +322,9 @@ describe('WorkCenterController (Integration)', () => {
         .send({ description: 'Only description updated' })
         .expect(200);
 
-      expect(workCenterService.update).toHaveBeenCalledWith(
-        'tenant-123',
-        'wc-123',
-        { description: 'Only description updated' },
-      );
+      expect(workCenterService.update).toHaveBeenCalledWith('tenant-123', 'wc-123', {
+        description: 'Only description updated',
+      });
     });
   });
 
@@ -360,7 +354,10 @@ describe('WorkCenterController (Integration)', () => {
 
     it('should return 400 when work center is in use', async () => {
       workCenterService.remove.mockRejectedValue(
-        new HttpException('Cannot delete work center that is assigned to work orders', HttpStatus.BAD_REQUEST),
+        new HttpException(
+          'Cannot delete work center that is assigned to work orders',
+          HttpStatus.BAD_REQUEST,
+        ),
       );
 
       await request(app.getHttpServer())
@@ -370,9 +367,7 @@ describe('WorkCenterController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .delete('/manufacturing/work-centers/wc-123')
-        .expect(401);
+      await request(app.getHttpServer()).delete('/manufacturing/work-centers/wc-123').expect(401);
     });
   });
 

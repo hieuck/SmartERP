@@ -25,7 +25,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     // Extract error details
     let errorCode = 'INTERNAL_SERVER_ERROR';
     let errorMessage = 'Internal server error';
-    let errorDetails: Record<string, unknown> = {};
+    const errorDetails: Record<string, unknown> = {};
 
     if (typeof exceptionResponse === 'string') {
       errorMessage = exceptionResponse;
@@ -33,7 +33,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     } else if (typeof exceptionResponse === 'object') {
       const responseObj = exceptionResponse as Record<string, unknown>;
       errorCode = this.getErrorCode(status);
-      
+
       // Handle validation errors (message as array)
       if (responseObj.message && Array.isArray(responseObj.message)) {
         errorDetails.validationErrors = responseObj.message;

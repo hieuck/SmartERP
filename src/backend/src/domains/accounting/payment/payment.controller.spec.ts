@@ -1,7 +1,7 @@
 /**
  * PaymentController Integration Tests
  * Coverage target: 95%
- * 
+ *
  * Test cases:
  * 1. GET /payments - Get all payments
  * 2. GET /payments/order/:orderId - Get payments by order
@@ -79,12 +79,12 @@ describe('PaymentController (Integration)', () => {
       canActivate: jest.fn().mockImplementation((context) => {
         const request = context.switchToHttp().getRequest();
         const authHeader = request.headers.authorization;
-        
+
         if (authHeader && authHeader.startsWith('Bearer ')) {
           request.user = mockUser;
           return true;
         }
-        
+
         throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
       }),
     };
@@ -144,9 +144,7 @@ describe('PaymentController (Integration)', () => {
     });
 
     it('should require authentication', async () => {
-      await request(app.getHttpServer())
-        .get('/payments')
-        .expect(401);
+      await request(app.getHttpServer()).get('/payments').expect(401);
     });
 
     it('should return empty array when no payments', async () => {
@@ -450,7 +448,11 @@ describe('PaymentController (Integration)', () => {
         .expect(200);
 
       expect(response.body.status).toBe('failed');
-      expect(paymentService.fail).toHaveBeenCalledWith(mockUser, 'payment-123', 'Insufficient funds');
+      expect(paymentService.fail).toHaveBeenCalledWith(
+        mockUser,
+        'payment-123',
+        'Insufficient funds',
+      );
     });
 
     it('should return 404 when payment not found', async () => {

@@ -1,12 +1,4 @@
-import {
-  IsString,
-  IsNumber,
-  IsEnum,
-  IsOptional,
-  IsArray,
-  IsBoolean,
-  Min,
-} from 'class-validator';
+import { IsString, IsNumber, IsEnum, IsOptional, IsArray, IsBoolean, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { ProductStatus } from '../../enums/ecommerce.enum';

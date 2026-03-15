@@ -66,11 +66,7 @@ export class DocumentService {
     );
   }
 
-  async createFolder(
-    user: User,
-    name: string,
-    parentId: string | null,
-  ): Promise<Document> {
+  async createFolder(user: User, name: string, parentId: string | null): Promise<Document> {
     const doc = this.documentRepository.create({
       name,
       type: DocumentType.FOLDER,
@@ -107,11 +103,7 @@ export class DocumentService {
     await this.cacheService.del(cacheKey);
   }
 
-  async createVersion(
-    user: User,
-    id: string,
-    filePath: string,
-  ): Promise<Document> {
+  async createVersion(user: User, id: string, filePath: string): Promise<Document> {
     const original = await this.findById(user, id);
     const saved = await this.secureDocumentRepo.save(user, {
       name: original.name,

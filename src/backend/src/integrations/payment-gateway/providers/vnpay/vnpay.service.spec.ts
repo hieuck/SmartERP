@@ -276,10 +276,13 @@ describe('VNPayService', () => {
 
         const sortedParams = Object.keys(vnpParams)
           .sort()
-          .reduce((acc, key) => {
-            acc[key] = vnpParams[key];
-            return acc;
-          }, {} as Record<string, unknown>);
+          .reduce(
+            (acc, key) => {
+              acc[key] = vnpParams[key];
+              return acc;
+            },
+            {} as Record<string, unknown>,
+          );
 
         const signData = new URLSearchParams(sortedParams as any).toString();
         const hmac = crypto.createHmac('sha512', 'TEST_SECRET_KEY');

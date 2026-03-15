@@ -18,11 +18,7 @@ export class AuditService {
     private cacheService: CacheService,
     private readonly permissionService: PermissionService,
   ) {
-    this.secureAuditRepo = new SecureRepository(
-      auditRepository,
-      permissionService,
-      'AuditLog',
-    );
+    this.secureAuditRepo = new SecureRepository(auditRepository, permissionService, 'AuditLog');
   }
 
   async log(

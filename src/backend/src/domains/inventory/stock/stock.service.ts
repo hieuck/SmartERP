@@ -13,7 +13,11 @@ import { AdjustInventoryDto } from './dto/adjust-inventory.dto';
 import { CacheService } from '@/common/cache/cache.service';
 import { CacheTTL, generateCacheKey } from '@/common/cache/cache.config';
 import { SecureRepository } from '@/common/security/secure-repository';
-import { PermissionService, User, BaseRecord as PermissionRecord } from '@/common/security/permission.service';
+import {
+  PermissionService,
+  User,
+  BaseRecord as PermissionRecord,
+} from '@/common/security/permission.service';
 
 @Injectable()
 export class StockService {

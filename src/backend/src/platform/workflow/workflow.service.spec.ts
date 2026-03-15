@@ -14,7 +14,7 @@ describe('WorkflowService', () => {
   let workflowRepository: jest.Mocked<Repository<Workflow>>;
   let instanceRepository: jest.Mocked<Repository<WorkflowInstance>>;
   let cacheService: jest.Mocked<CacheService>;
-  let permissionService: jest.Mocked<PermissionService>;
+  let _permissionService: jest.Mocked<PermissionService>;
 
   const mockUser: User = {
     id: 'user-1',

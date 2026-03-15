@@ -71,7 +71,8 @@ export class SupplierController {
   @ApiOperation({ summary: 'Update supplier' })
   update(
     @Param('id') id: string,
-    @CurrentUser() user: User, @Body() updateSupplierDto: UpdateSupplierDto,
+    @CurrentUser() user: User,
+    @Body() updateSupplierDto: UpdateSupplierDto,
   ) {
     return this.supplierService.update(user, id, updateSupplierDto);
   }
@@ -80,7 +81,8 @@ export class SupplierController {
   @ApiOperation({ summary: 'Update supplier balance' })
   updateBalance(
     @Param('id') id: string,
-    @CurrentUser() user: User, @Body('amount') amount: number,
+    @CurrentUser() user: User,
+    @Body('amount') amount: number,
   ) {
     return this.supplierService.updateBalance(user, id, amount);
   }
@@ -89,7 +91,8 @@ export class SupplierController {
   @ApiOperation({ summary: 'Update supplier payment terms' })
   updatePaymentTerms(
     @Param('id') id: string,
-    @CurrentUser() user: User, @Body('paymentTerms') paymentTerms: number,
+    @CurrentUser() user: User,
+    @Body('paymentTerms') paymentTerms: number,
   ) {
     return this.supplierService.updatePaymentTerms(user, id, paymentTerms);
   }

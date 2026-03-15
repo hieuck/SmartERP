@@ -131,7 +131,7 @@ describe('ApprovalService', () => {
           requestedBy: mockUser.id,
           status: ApprovalStatus.PENDING,
           tenantId: mockUser.tenantId,
-        })
+        }),
       );
       expect(result).toEqual(mockApprovalRequest);
     });
@@ -139,8 +139,9 @@ describe('ApprovalService', () => {
     it('should throw NotFoundException when workflow not found', async () => {
       workflowRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.submitForApproval('InvalidType', 'entity-1', mockUser))
-        .rejects.toThrow(NotFoundException);
+      await expect(service.submitForApproval('InvalidType', 'entity-1', mockUser)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -167,8 +168,7 @@ describe('ApprovalService', () => {
       const approvedRequest = { ...mockApprovalRequest, status: ApprovalStatus.APPROVED };
       approvalRepository.findOne.mockResolvedValue(approvedRequest as ApprovalRequest);
 
-      await expect(service.approve('request-1', mockApprover))
-        .rejects.toThrow(BadRequestException);
+      await expect(service.approve('request-1', mockApprover)).rejects.toThrow(BadRequestException);
     });
 
     it('should throw ForbiddenException when user cannot approve', async () => {
@@ -177,8 +177,9 @@ describe('ApprovalService', () => {
       approvalRepository.findOne.mockResolvedValue(pendingRequest as ApprovalRequest);
       workflowRepository.findOne.mockResolvedValue(mockWorkflow as Workflow);
 
-      await expect(service.approve('request-1', unauthorizedUser))
-        .rejects.toThrow(ForbiddenException);
+      await expect(service.approve('request-1', unauthorizedUser)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
   });
 
@@ -206,8 +207,9 @@ describe('ApprovalService', () => {
       const rejectedRequest = { ...mockApprovalRequest, status: ApprovalStatus.REJECTED };
       approvalRepository.findOne.mockResolvedValue(rejectedRequest as ApprovalRequest);
 
-      await expect(service.reject('request-1', mockApprover, 'Reason'))
-        .rejects.toThrow(BadRequestException);
+      await expect(service.reject('request-1', mockApprover, 'Reason')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw ForbiddenException when user cannot reject', async () => {
@@ -216,8 +218,9 @@ describe('ApprovalService', () => {
       approvalRepository.findOne.mockResolvedValue(pendingRequest as ApprovalRequest);
       workflowRepository.findOne.mockResolvedValue(mockWorkflow as Workflow);
 
-      await expect(service.reject('request-1', unauthorizedUser, 'Reason'))
-        .rejects.toThrow(ForbiddenException);
+      await expect(service.reject('request-1', unauthorizedUser, 'Reason')).rejects.toThrow(
+        ForbiddenException,
+      );
     });
   });
 
@@ -239,8 +242,7 @@ describe('ApprovalService', () => {
       const approvedRequest = { ...mockApprovalRequest, status: ApprovalStatus.APPROVED };
       approvalRepository.findOne.mockResolvedValue(approvedRequest as ApprovalRequest);
 
-      await expect(service.cancel(mockUser, 'request-1'))
-        .rejects.toThrow(BadRequestException);
+      await expect(service.cancel(mockUser, 'request-1')).rejects.toThrow(BadRequestException);
     });
 
     it('should throw ForbiddenException when non-requester tries to cancel', async () => {
@@ -248,8 +250,7 @@ describe('ApprovalService', () => {
       const pendingRequest = { ...mockApprovalRequest, status: ApprovalStatus.PENDING };
       approvalRepository.findOne.mockResolvedValue(pendingRequest as ApprovalRequest);
 
-      await expect(service.cancel(otherUser, 'request-1'))
-        .rejects.toThrow(ForbiddenException);
+      await expect(service.cancel(otherUser, 'request-1')).rejects.toThrow(ForbiddenException);
     });
   });
 
@@ -319,8 +320,7 @@ describe('ApprovalService', () => {
     it('should throw NotFoundException when request not found', async () => {
       approvalRepository.findOne.mockResolvedValue(null);
 
-      await expect(service['findOne']('invalid-id', mockUser))
-        .rejects.toThrow(NotFoundException);
+      await expect(service['findOne']('invalid-id', mockUser)).rejects.toThrow(NotFoundException);
     });
   });
 });

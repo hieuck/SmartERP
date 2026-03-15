@@ -1,4 +1,13 @@
-import { IsNotEmpty, IsDate, IsNumber, IsArray, ValidateNested, IsOptional, IsString, Min } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsDate,
+  IsNumber,
+  IsArray,
+  ValidateNested,
+  IsOptional,
+  IsString,
+  Min,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateBankTransactionDto {

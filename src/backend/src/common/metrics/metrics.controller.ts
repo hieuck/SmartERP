@@ -2,7 +2,6 @@ import { Controller, Get, Header } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { MetricsService } from './metrics.service';
 
-import { User } from '@/common/security/permission.service';
 @Controller('metrics')
 @ApiTags('metrics')
 export class MetricsController {

@@ -19,7 +19,8 @@ export class ShippingController {
    * POST /shipping
    */
   @Post()
-  async createShipment(@CurrentUser() user: User, 
+  async createShipment(
+    @CurrentUser() user: User,
     @Req() req: Request & { tenantId?: string },
     @Body() dto: CreateShipmentDto,
   ) {
@@ -31,7 +32,8 @@ export class ShippingController {
    * POST /shipping/calculate-fee
    */
   @Post('calculate-fee')
-  async calculateFee(@CurrentUser() user: User, 
+  async calculateFee(
+    @CurrentUser() user: User,
     @Req() req: Request & { tenantId?: string },
     @Body() dto: CalculateShippingFeeDto,
   ) {
@@ -43,7 +45,11 @@ export class ShippingController {
    * POST /shipping/track
    */
   @Post('track')
-  async trackShipment(@CurrentUser() user: User, @Req() req: Request & { tenantId?: string }, @Body() dto: TrackShipmentDto) {
+  async trackShipment(
+    @CurrentUser() user: User,
+    @Req() req: Request & { tenantId?: string },
+    @Body() dto: TrackShipmentDto,
+  ) {
     return this.shippingService.trackShipment(user, dto);
   }
 
@@ -52,7 +58,8 @@ export class ShippingController {
    * POST /shipping/cancel
    */
   @Post('cancel')
-  async cancelShipment(@CurrentUser() user: User, 
+  async cancelShipment(
+    @CurrentUser() user: User,
     @Req() req: Request & { tenantId?: string },
     @Body() dto: CancelShipmentDto,
   ) {
@@ -64,7 +71,11 @@ export class ShippingController {
    * GET /shipping/:id
    */
   @Get(':id')
-  async getShipment(@CurrentUser() user: User, @Req() req: Request & { tenantId?: string }, @Param('id') id: string) {
+  async getShipment(
+    @CurrentUser() user: User,
+    @Req() req: Request & { tenantId?: string },
+    @Param('id') id: string,
+  ) {
     return this.shippingService.getShipment(user, id);
   }
 
@@ -73,7 +84,8 @@ export class ShippingController {
    * GET /shipping
    */
   @Get()
-  async listShipments(@CurrentUser() user: User, 
+  async listShipments(
+    @CurrentUser() user: User,
     @Req() req: Request & { tenantId?: string },
     @Query('orderId') orderId?: string,
     @Query('provider') provider?: string,

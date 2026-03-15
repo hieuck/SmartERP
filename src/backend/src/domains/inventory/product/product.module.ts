@@ -3,7 +3,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Product } from './entities/product.entity';
 import { ProductController } from './product.controller';
 import { ProductService } from './product.service';
-;
 import { CacheModule } from '@/common/cache/cache.module';
 import { SecurityModule } from '@/common/security/security.module';
 

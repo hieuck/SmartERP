@@ -1,5 +1,5 @@
 // Platform-specific enums
-// Note: Shared enums (ApprovalStatus, JobStatus, JobPriority, ErrorSeverity, etc.) 
+// Note: Shared enums (ApprovalStatus, JobStatus, JobPriority, ErrorSeverity, etc.)
 // have been moved to @common/enums/shared.enum
 
 // Workflow enums

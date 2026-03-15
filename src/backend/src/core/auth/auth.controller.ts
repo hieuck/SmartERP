@@ -1,4 +1,17 @@
-import { Controller, Post, Get, Body, UseGuards, Request, Query, HttpCode, HttpStatus, BadRequestException, UnauthorizedException, Logger } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  UseGuards,
+  Request,
+  Query,
+  HttpCode,
+  HttpStatus,
+  BadRequestException,
+  UnauthorizedException,
+  Logger,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBody, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
@@ -12,7 +25,6 @@ import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { TokenBlacklistService } from './services/token-blacklist.service';
 import { AccountLockoutService } from './services/account-lockout.service';
 
-import { User } from '@/common/security/permission.service';
 class LoginDto {
   email: string;
   password: string;
@@ -37,20 +49,18 @@ export class AuthController {
   @ApiBody({ type: LoginDto })
   async login(@Request() req) {
     const email = req.user?.email;
-    
+
     // Check if account is locked
     const isLocked = await this.accountLockoutService.isAccountLocked(email);
     if (isLocked) {
       const remainingTime = await this.accountLockoutService.getRemainingLockoutTime(email);
       this.logger.warn(`Login attempt to locked account: ${email}`);
-      throw new UnauthorizedException(
-        `Account is locked. Try again in ${remainingTime} seconds.`,
-      );
+      throw new UnauthorizedException(`Account is locked. Try again in ${remainingTime} seconds.`);
     }
 
     // Reset failed attempts on successful login
     await this.accountLockoutService.resetAttempts(email);
-    
+
     return this.authService.login(req.user);
   }
 

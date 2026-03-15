@@ -10,7 +10,7 @@ import { PermissionService, User } from '@/common/security/permission.service';
 describe('ProjectService', () => {
   let service: ProjectService;
   let projectRepository: jest.Mocked<Repository<Project>>;
-  let permissionService: jest.Mocked<PermissionService>;
+  let _permissionService: jest.Mocked<PermissionService>;
 
   const mockUser: User = {
     id: 'user-1',
@@ -125,9 +125,7 @@ describe('ProjectService', () => {
     it('should throw NotFoundException when project not found', async () => {
       projectRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findOne('invalid-id', mockUser)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.findOne('invalid-id', mockUser)).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -147,9 +145,7 @@ describe('ProjectService', () => {
     it('should throw NotFoundException when project not found', async () => {
       projectRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findByCode('INVALID', mockUser)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.findByCode('INVALID', mockUser)).rejects.toThrow(NotFoundException);
     });
   });
 

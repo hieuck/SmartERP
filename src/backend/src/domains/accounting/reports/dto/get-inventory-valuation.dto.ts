@@ -1,4 +1,4 @@
-import { IsDateString, IsOptional, IsUUID } from 'class-validator';
+import { _IsDateString, IsOptional, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class GetInventoryValuationDto {

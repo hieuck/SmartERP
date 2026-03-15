@@ -29,8 +29,9 @@ export class RoleController {
   @Post()
   @ApiOperation({ summary: 'Create role' })
   create(
-    @CurrentUser() user: User, @Body() createRoleDto: CreateRoleDto,
-    @Request() req: ExpressRequest & { user?: { id: string } },
+    @CurrentUser() user: User,
+    @Body() createRoleDto: CreateRoleDto,
+    @Request() _req: ExpressRequest & { user?: { id: string } },
   ) {
     return this.roleService.create(createRoleDto, user);
   }
@@ -63,8 +64,9 @@ export class RoleController {
   @ApiOperation({ summary: 'Update role' })
   update(
     @Param('id') id: string,
-    @CurrentUser() user: User, @Body() updateRoleDto: UpdateRoleDto,
-    @Request() req: ExpressRequest & { user?: { id: string } },
+    @CurrentUser() user: User,
+    @Body() updateRoleDto: UpdateRoleDto,
+    @Request() _req: ExpressRequest & { user?: { id: string } },
   ) {
     return this.roleService.update(id, updateRoleDto, user);
   }

@@ -13,8 +13,8 @@ import { createMockUser } from '@/test/factories/user.factory';
 
 describe('UserService', () => {
   let service: UserService;
-  let userRepository: jest.Mocked<Repository<UserEntity>>;
-  let permissionService: jest.Mocked<PermissionService>;
+  let _userRepository: jest.Mocked<Repository<UserEntity>>;
+  let _permissionService: jest.Mocked<PermissionService>;
   let secureUserRepo: jest.Mocked<SecureRepository<UserEntity>>;
 
   const mockCurrentUser: User = {
@@ -202,7 +202,9 @@ describe('UserService', () => {
       secureUserRepo.save.mockResolvedValue(mockUser);
 
       jest.spyOn(bcrypt, 'compare').mockResolvedValue(true as never);
-      const hashSpy = jest.spyOn(bcrypt, 'hash').mockResolvedValue('$2b$12$newHashedPassword' as never);
+      const hashSpy = jest
+        .spyOn(bcrypt, 'hash')
+        .mockResolvedValue('$2b$12$newHashedPassword' as never);
 
       const result = await service.changePassword(mockCurrentUser, 'user-123', changePasswordDto);
 
@@ -280,7 +282,9 @@ describe('UserService', () => {
       secureUserRepo.save.mockResolvedValue(mockUser);
 
       jest.spyOn(bcrypt, 'compare').mockResolvedValue(true as never);
-      const hashSpy = jest.spyOn(bcrypt, 'hash').mockResolvedValue('$2b$12$newHashedPassword' as never);
+      const hashSpy = jest
+        .spyOn(bcrypt, 'hash')
+        .mockResolvedValue('$2b$12$newHashedPassword' as never);
 
       await service.changePassword(mockCurrentUser, 'user-123', changePasswordDto);
 

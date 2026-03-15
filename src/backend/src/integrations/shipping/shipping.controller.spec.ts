@@ -1,7 +1,7 @@
 /**
  * ShippingController Integration Tests
  * Coverage target: 95%+
- * 
+ *
  * Test cases:
  * 1. POST /shipping - Create shipment
  * 2. POST /shipping/calculate-fee - Calculate shipping fee
@@ -24,7 +24,7 @@ describe('ShippingController (Integration)', () => {
   let app: INestApplication;
   let shippingService: jest.Mocked<ShippingService>;
 
-  const mockUser = {
+  const _mockUser = {
     id: 'user-123',
     email: 'logistics@example.com',
     tenantId: 'tenant-123',
@@ -134,17 +134,11 @@ describe('ShippingController (Integration)', () => {
         new HttpException('Invalid shipping provider', HttpStatus.BAD_REQUEST),
       );
 
-      await request(app.getHttpServer())
-        .post('/shipping')
-        .send(createDto)
-        .expect(400);
+      await request(app.getHttpServer()).post('/shipping').send(createDto).expect(400);
     });
 
     it('should validate required fields', async () => {
-      await request(app.getHttpServer())
-        .post('/shipping')
-        .send({})
-        .expect(400);
+      await request(app.getHttpServer()).post('/shipping').send({}).expect(400);
     });
   });
 
@@ -257,8 +251,16 @@ describe('ShippingController (Integration)', () => {
         currentLocation: 'HCMC Hub',
         estimatedDelivery: new Date('2024-01-17'),
         history: [
-          { timestamp: new Date('2024-01-15T10:00:00Z'), status: 'picked_up', location: 'Warehouse A' },
-          { timestamp: new Date('2024-01-15T14:00:00Z'), status: 'in_transit', location: 'HCMC Hub' },
+          {
+            timestamp: new Date('2024-01-15T10:00:00Z'),
+            status: 'picked_up',
+            location: 'Warehouse A',
+          },
+          {
+            timestamp: new Date('2024-01-15T14:00:00Z'),
+            status: 'in_transit',
+            location: 'HCMC Hub',
+          },
         ],
       };
 
@@ -284,10 +286,7 @@ describe('ShippingController (Integration)', () => {
         new HttpException('Tracking number not found', HttpStatus.NOT_FOUND),
       );
 
-      await request(app.getHttpServer())
-        .post('/shipping/track')
-        .send(trackDto)
-        .expect(404);
+      await request(app.getHttpServer()).post('/shipping/track').send(trackDto).expect(404);
     });
 
     it('should handle provider API error', async () => {
@@ -300,10 +299,7 @@ describe('ShippingController (Integration)', () => {
         new HttpException('Provider API unavailable', HttpStatus.SERVICE_UNAVAILABLE),
       );
 
-      await request(app.getHttpServer())
-        .post('/shipping/track')
-        .send(trackDto)
-        .expect(503);
+      await request(app.getHttpServer()).post('/shipping/track').send(trackDto).expect(503);
     });
   });
 
@@ -341,10 +337,7 @@ describe('ShippingController (Integration)', () => {
         new HttpException('Cannot cancel delivered shipment', HttpStatus.BAD_REQUEST),
       );
 
-      await request(app.getHttpServer())
-        .post('/shipping/cancel')
-        .send(cancelDto)
-        .expect(400);
+      await request(app.getHttpServer()).post('/shipping/cancel').send(cancelDto).expect(400);
     });
 
     it('should handle shipment not found', async () => {
@@ -357,10 +350,7 @@ describe('ShippingController (Integration)', () => {
         new HttpException('Shipment not found', HttpStatus.NOT_FOUND),
       );
 
-      await request(app.getHttpServer())
-        .post('/shipping/cancel')
-        .send(cancelDto)
-        .expect(404);
+      await request(app.getHttpServer()).post('/shipping/cancel').send(cancelDto).expect(404);
     });
   });
 
@@ -368,9 +358,7 @@ describe('ShippingController (Integration)', () => {
     it('should get shipment by ID', async () => {
       shippingService.getShipment.mockResolvedValue(mockShipment as any);
 
-      const response = await request(app.getHttpServer())
-        .get('/shipping/shipment-123')
-        .expect(200);
+      const response = await request(app.getHttpServer()).get('/shipping/shipment-123').expect(200);
 
       expect(response.body).toEqual(mockShipment);
       expect(shippingService.getShipment).toHaveBeenCalledWith(undefined, 'shipment-123');
@@ -381,9 +369,7 @@ describe('ShippingController (Integration)', () => {
         new HttpException('Shipment not found', HttpStatus.NOT_FOUND),
       );
 
-      await request(app.getHttpServer())
-        .get('/shipping/shipment-999')
-        .expect(404);
+      await request(app.getHttpServer()).get('/shipping/shipment-999').expect(404);
     });
   });
 
@@ -392,9 +378,7 @@ describe('ShippingController (Integration)', () => {
       const shipments = [mockShipment];
       shippingService.listShipments.mockResolvedValue(shipments as any);
 
-      const response = await request(app.getHttpServer())
-        .get('/shipping')
-        .expect(200);
+      const response = await request(app.getHttpServer()).get('/shipping').expect(200);
 
       expect(response.body).toEqual(shipments);
       expect(shippingService.listShipments).toHaveBeenCalledWith(undefined, {
@@ -499,9 +483,7 @@ describe('ShippingController (Integration)', () => {
     it('should return empty array when no shipments', async () => {
       shippingService.listShipments.mockResolvedValue([] as any);
 
-      const response = await request(app.getHttpServer())
-        .get('/shipping')
-        .expect(200);
+      const response = await request(app.getHttpServer()).get('/shipping').expect(200);
 
       expect(response.body).toEqual([]);
     });
@@ -561,10 +543,7 @@ describe('ShippingController (Integration)', () => {
 
       shippingService.createShipment.mockResolvedValue(mockShipment as any);
 
-      await request(app.getHttpServer())
-        .post('/shipping')
-        .send(createDto)
-        .expect(201);
+      await request(app.getHttpServer()).post('/shipping').send(createDto).expect(201);
     });
 
     it('should handle service errors', async () => {
@@ -572,9 +551,7 @@ describe('ShippingController (Integration)', () => {
         new HttpException('Database error', HttpStatus.INTERNAL_SERVER_ERROR),
       );
 
-      await request(app.getHttpServer())
-        .get('/shipping')
-        .expect(500);
+      await request(app.getHttpServer()).get('/shipping').expect(500);
     });
   });
 });
