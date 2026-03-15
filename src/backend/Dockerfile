@@ -28,8 +28,9 @@ RUN apk add --no-cache dumb-init
 # Copy package files
 COPY package*.json ./
 
-# Install production dependencies only
-RUN npm ci --only=production
+# Install production dependencies + tsconfig-paths (needed at runtime)
+RUN npm ci --only=production && \
+    npm install tsconfig-paths
 
 # Copy built application from build stage
 COPY --from=build /app/dist ./dist
