@@ -20,7 +20,8 @@ import type {
   Mold,
   ProductionOrder,
   Attendance,
-  Notification
+  Notification,
+  Category
 } from '../lib/offline/db';
 
 // User service
@@ -71,6 +72,9 @@ export const attendanceOfflineService = createOfflineService<Attendance>('attend
 // Notification service (Batch 3A)
 export const notificationOfflineService = createOfflineService<Notification>('notifications', 'notifications');
 
+// Category service (for ProductForm and CategoryManagement)
+export const categoryOfflineService = createOfflineService<Category>('categories', 'categories');
+
 /**
  * Export all services
  */
@@ -91,4 +95,5 @@ export const offlineServices = {
   productionOrders: productionOrderOfflineService,
   attendances: attendanceOfflineService,
   notifications: notificationOfflineService,
+  categories: categoryOfflineService,
 };

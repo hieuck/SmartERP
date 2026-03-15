@@ -334,6 +334,23 @@ export interface Notification extends BaseEntity {
   readAt?: Date;
 }
 
+// Category entity (matches backend Category entity)
+export interface Category extends BaseEntity {
+  name: string;
+  code: string;
+  description?: string;
+  parentId?: string;
+  level: number;
+  path?: string;
+  icon?: string;
+  image?: string;
+  sortOrder: number;
+  isActive: boolean;
+  metadata?: Record<string, unknown>;
+  createdBy?: string;
+  updatedBy?: string;
+}
+
 // Sync queue item
 export interface SyncQueueItem {
   id?: number;
@@ -364,6 +381,7 @@ export class OfflineDB extends Dexie {
   productionOrders!: Table<ProductionOrder, string>;
   attendances!: Table<Attendance, string>;
   notifications!: Table<Notification, string>;
+  categories!: Table<Category, string>;
   syncQueue!: Table<SyncQueueItem, number>;
 
   constructor() {

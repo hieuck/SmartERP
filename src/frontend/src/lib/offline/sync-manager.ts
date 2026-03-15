@@ -260,7 +260,8 @@ export class SyncManager {
           'molds',
           'productionOrders',
           'attendances',
-          'notifications'
+          'notifications',
+          'categories'
         ]
       },
       { headers: { Authorization: `Bearer ${token}` } }
@@ -336,6 +337,7 @@ export class SyncManager {
       productionOrders: 'productionOrders',
       attendances: 'attendances',
       notifications: 'notifications',
+      categories: 'categories',
     };
 
     const tableName = tableMap[entity];
