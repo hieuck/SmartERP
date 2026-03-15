@@ -203,14 +203,14 @@ export default function UserList() {
     }
   };
 
-  const handleResetPassword = (id: string) => {
+  const handleResetPassword = (_id: string) => {
     Modal.confirm({
       title: t('users:messages.resetPasswordConfirm'),
       content: t('users:messages.resetPasswordDescription'),
       onOk: async () => {
         try {
-          // TODO: Implement reset password when backend ready
-          message.success(t('users:messages.resetPasswordSuccess'));
+          // Backend API not yet implemented
+          message.info(t('users:messages.featureNotAvailable'));
         } catch (error) {
           message.error(t('users:messages.resetPasswordError'));
         }

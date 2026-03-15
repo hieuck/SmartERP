@@ -33,6 +33,7 @@ export default function StockList() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [stocks, setStocks] = useState<Stock[]>([]);
+  const [warehouses, setWarehouses] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -60,6 +61,18 @@ export default function StockList() {
       window.removeEventListener('offline', handleOffline);
     };
   }, [t]);
+
+  // Load warehouses from offline storage
+  const loadWarehouses = async () => {
+    try {
+      logger.debug('StockList', 'Loading warehouses from offline storage');
+      const allWarehouses = await offlineServices.warehouses.getAll();
+      setWarehouses(allWarehouses);
+      logger.info('StockList', `Loaded ${allWarehouses.length} warehouses`);
+    } catch (error) {
+      logger.error('StockList', 'Failed to load warehouses', error as Error);
+    }
+  };
 
   // Load stocks from offline storage
   const loadStocks = async () => {
@@ -109,6 +122,7 @@ export default function StockList() {
   // Auto-sync on mount if online
   useEffect(() => {
     const initializeData = async () => {
+      await loadWarehouses();
       await loadStocks();
       await updateQueueSize();
 
@@ -330,9 +344,11 @@ export default function StockList() {
           onChange={setWarehouseFilter}
           allowClear
         >
-          {/* TODO: Load warehouses from offline storage */}
-          <Option value="warehouse-1">Warehouse 1</Option>
-          <Option value="warehouse-2">Warehouse 2</Option>
+          {warehouses.map((warehouse) => (
+            <Option key={warehouse.id} value={warehouse.id}>
+              {warehouse.name}
+            </Option>
+          ))}
         </Select>
       }
       columns={columns}
