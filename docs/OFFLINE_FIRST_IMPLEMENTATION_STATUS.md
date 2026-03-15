@@ -108,7 +108,7 @@
 - ✅ Version increment
 - ✅ Soft delete
 - ✅ Search và count utilities
-- ✅ Pre-configured services cho 16 entities:
+- ✅ Pre-configured services cho 13 entities:
   - users
   - products
   - customers
@@ -120,9 +120,6 @@
   - warehouses
   - stocks
   - stockReceipts
-  - materials
-  - molds
-  - productionOrders
   - attendances
   - notifications
 
@@ -153,7 +150,92 @@
 
 ---
 
-## ✅ Phase 6: Batch 2A Complete (100%)
+## ❌ Phase 6: Batch 2A ROLLED BACK (Backend Not Exist)
+
+### ❌ Reason for Rollback
+
+**Backend Reality Check:**
+- Backend has `manufacturing` domain, NOT `production` domain
+- Backend does NOT have: Material, Mold, WorkOrder/ProductionOrder entities
+- All production pages call non-existent APIs
+- Violates code-quality-standards.md: "No broken pages"
+
+### ❌ Rolled Back Changes
+
+**Deleted Production Pages (12 files):**
+1. MaterialList.tsx - Called non-existent API
+2. MaterialForm.tsx - Called non-existent API
+3. MaterialTransactions.tsx - Called non-existent API
+4. MoldList.tsx - Called non-existent API
+5. MoldForm.tsx - Called non-existent API
+6. MoldMaintenance.tsx - Called non-existent API
+7. ProductionOrderList.tsx - Called non-existent API
+8. ProductionOrderDetail.tsx - Called non-existent API
+9. ProductionReports.tsx - Called non-existent API
+10. ShiftCalendar.tsx - Called non-existent API
+11. PieceworkTracking.tsx - Called non-existent API
+12. AttendanceTracking.tsx - Called non-existent API
+
+**Deleted Production Service (2 files):**
+- productionService.ts - Service called non-existent APIs
+- index.ts - Service export
+
+**Rolled Back Infrastructure (3 files):**
+- db.ts - Removed Material, Mold, ProductionOrder interfaces and tables (version 4 removed)
+- offline-services.ts - Removed materialOfflineService, moldOfflineService, productionOrderOfflineService
+- sync-manager.ts - Removed materials, molds, productionOrders from sync entities
+
+**Result:**
+- Clean codebase with only working pages
+- All pages call existing backend APIs
+- Professional production-ready code
+- Zero broken pages
+
+### ✅ What Remains Working
+
+**13 entities with full offline-first support:**
+1. User
+2. Product
+3. Customer
+4. Supplier
+5. SalesOrder
+6. Invoice
+7. Payment
+8. PurchaseOrder
+9. Warehouse
+10. Stock
+11. StockReceipt
+12. Attendance
+13. Notification
+
+---
+
+## ✅ Phase 8: Production Pages Cleanup Complete (100%)
+
+### ✅ Batch 1: Delete Production Pages (12 files)
+- Deleted all 12 production pages calling non-existent APIs
+- Reason: Backend does not have production domain
+
+### ✅ Batch 2: Delete Production Service (2 files)
+- Deleted productionService.ts and index.ts
+- Reason: Service calls non-existent APIs
+
+### ✅ Batch 3: Rollback Infrastructure (3 files)
+- Rolled back db.ts (removed production entities)
+- Rolled back offline-services.ts (removed production services)
+- Rolled back sync-manager.ts (removed production from sync)
+
+### ✅ Batch 4: Update Documentation (1 file)
+- Updated OFFLINE_FIRST_IMPLEMENTATION_STATUS.md to version 10.0.0
+- Documented rollback reason and changes
+- Updated entity count: 16 → 13 entities
+
+**Git Commits:**
+- Commit [pending]: Phase 8 - Delete 12 production pages + rollback infrastructure
+
+---
+
+## ✅ Phase 6: Batch 2A Complete (100%) - ROLLED BACK
 
 ### ✅ Infrastructure Complete (100%)
 - ✅ Extended IndexedDB schema (version 4) with 3 new entities
@@ -343,9 +425,10 @@ These pages called non-existent APIs and violated code-quality-standards.md. The
 | Phase 4: Backend Entities & Migrations | ✅ Complete | 100% |
 | Phase 5: Frontend Integration (deprecated) | ⏭️ Merged to Phase C | - |
 | Phase 6: Batch 1 (6 entities) | ✅ Complete | 100% |
-| Phase 6: Batch 2A (3 entities) | ✅ Complete | 100% |
+| Phase 6: Batch 2A (3 entities) | ❌ ROLLED BACK | 0% |
 | Phase 6: Batch 3A (2 entities) | ✅ Complete | 100% |
 | Phase 7: Form Pages & Report Refactoring | ✅ Complete | 100% |
+| Phase 8: Production Pages Cleanup | ✅ Complete | 100% |
 | **TOTAL** | **✅ COMPLETE** | **100%** |
 
 ---
@@ -581,7 +664,7 @@ const handleSync = async () => {
 ---
 
 **Last Updated:** 2026-03-15
-**Version:** 9.0.0
+**Version:** 10.0.0
 **Status:** ✅ COMPLETE - All offline-first implementation finished (100%)
 
 **Key Achievements:**
@@ -600,26 +683,26 @@ const handleSync = async () => {
   - WarehouseList.tsx
   - StockList.tsx
   - StockReceiptList.tsx
-- ✅ Batch 2A complete (3 entities):
-  - MaterialList.tsx
-  - MoldList.tsx
-  - ProductionOrderList.tsx
+- ✅ Batch 2A complete (3 entities) - ROLLED BACK:
+  - MaterialList.tsx (DELETED - no backend)
+  - MoldList.tsx (DELETED - no backend)
+  - ProductionOrderList.tsx (DELETED - no backend)
 - ✅ Batch 3A complete (2 entities):
   - AttendanceList.tsx (NEW PAGE CREATED)
   - NotificationList.tsx (NEW PAGE CREATED)
-- ✅ Phase 7 complete:
-  - Deleted 2 broken pages (WorkerForm, StockTransferForm)
-  - Refactored WarehouseStockReport to offline-first
-  - Cleaned all console.log in 17 files (3 utilities + 14 application code)
-  - Zero console.log remaining in production code
+- ✅ Phase 8 complete:
+  - Deleted 12 production pages (no backend production domain)
+  - Deleted 2 production service files
+  - Rolled back 3 infrastructure files (db, offline-services, sync-manager)
+  - Updated documentation to version 10.0.0
+  - Clean codebase: 13 entities with offline support (was 16)
 - ✅ Professional production-ready code
-- ✅ 100% completion (16/16 entities with offline support)
+- ✅ 100% completion (13/13 entities with offline support)
 - ✅ Zero console.log in production code
 - ✅ All broken pages removed
 
 **Cleanup:**
-- Removed 2 broken pages calling non-existent APIs:
-  - WorkerForm.tsx (no backend Worker entity)
-  - StockTransferForm.tsx (no backend StockTransfer entity)
-- Reason: Violates code-quality-standards.md
+- Phase 7: Removed 2 broken form pages (WorkerForm, StockTransferForm)
+- Phase 8: Removed 12 broken production pages + 2 service files
+- Reason: Backend does not have production domain, only manufacturing domain
 - Result: Clean codebase with only working, production-ready code
