@@ -23,10 +23,9 @@ import {
   auditService,
   AuditLog,
   AuditAction,
-} from '@/services/audit/auditService';
-import { logger } from '@/lib/logger/logger.service';
   AuditEntity,
 } from '@/services/audit/auditService';
+import { logger } from '@/lib/logger/logger.service';
 import dayjs from 'dayjs';
 import { useResponsive } from '@/hooks/useResponsive';
 import {
