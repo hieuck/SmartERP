@@ -1,88 +1,57 @@
-/**
- * Service Worker for PWA Support
- * Implements caching strategies for offline support and performance
- * Requirements: 22.10, 24.4
- */
+/* eslint-disable no-restricted-globals */
+import { registerRoute } from 'workbox-routing';
+import { NetworkFirst, CacheFirst, StaleWhileRevalidate } from 'workbox-strategies';
+import { BackgroundSyncPlugin } from 'workbox-background-sync';
+import { ExpirationPlugin } from 'workbox-expiration';
 
-const CACHE_NAME = 'smart-erp-v1';
-const RUNTIME_CACHE = 'smart-erp-runtime';
+// API calls: Network-first with background sync
+registerRoute(
+  ({ url }) => url.pathname.startsWith('/api/'),
+  new NetworkFirst({
+    cacheName: 'api-cache',
+    plugins: [
+      new BackgroundSyncPlugin('api-queue', {
+        maxRetentionTime: 24 * 60, // 24 hours
+      }),
+      new ExpirationPlugin({
+        maxEntries: 50,
+        maxAgeSeconds: 5 * 60, // 5 minutes
+      }),
+    ],
+  })
+);
 
-// Assets to cache on install
-const PRECACHE_ASSETS = ['/', '/index.html', '/manifest.json'];
+// Static assets: Cache-first
+registerRoute(
+  ({ request }) => request.destination === 'script' || request.destination === 'style',
+  new CacheFirst({
+    cacheName: 'static-cache',
+    plugins: [
+      new ExpirationPlugin({
+        maxEntries: 60,
+        maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+      }),
+    ],
+  })
+);
 
-// Install event - cache critical assets
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(PRECACHE_ASSETS);
-    }),
-  );
-  self.skipWaiting();
-});
+// Images: Stale-while-revalidate
+registerRoute(
+  ({ request }) => request.destination === 'image',
+  new StaleWhileRevalidate({
+    cacheName: 'image-cache',
+    plugins: [
+      new ExpirationPlugin({
+        maxEntries: 60,
+        maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+      }),
+    ],
+  })
+);
 
-// Activate event - clean up old caches
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames
-          .filter((name) => name !== CACHE_NAME && name !== RUNTIME_CACHE)
-          .map((name) => caches.delete(name)),
-      );
-    }),
-  );
-  self.clients.claim();
-});
-
-// Fetch event - network first, fallback to cache
-self.addEventListener('fetch', (event) => {
-  const { request } = event;
-  const url = new URL(request.url);
-
-  // Skip cross-origin requests
-  if (url.origin !== location.origin) {
-    return;
+// Listen for messages from the client
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
   }
-
-  // API requests - network first
-  if (url.pathname.startsWith('/api')) {
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
-          // Clone and cache successful responses
-          if (response.ok) {
-            const responseClone = response.clone();
-            caches.open(RUNTIME_CACHE).then((cache) => {
-              cache.put(request, responseClone);
-            });
-          }
-          return response;
-        })
-        .catch(() => {
-          // Fallback to cache on network failure
-          return caches.match(request);
-        }),
-    );
-    return;
-  }
-
-  // Static assets - cache first
-  event.respondWith(
-    caches.match(request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-
-      return fetch(request).then((response) => {
-        // Cache successful responses
-        if (response.ok) {
-          const responseClone = response.clone();
-          caches.open(RUNTIME_CACHE).then((cache) => {
-            cache.put(request, responseClone);
-          });
-        }
-        return response;
-      });
-    }),
-  );
 });

@@ -81,6 +81,8 @@ const NotificationPreferencesPage = lazy(
 const SearchResultsPage = lazy(() => import('./pages/search/SearchResultsPage'));
 // Tenancy pages (Requirements: 43)
 const TenantManagement = lazy(() => import('./pages/tenancy/TenantManagement'));
+// Offline demo page
+const OfflineDemo = lazy(() => import('./pages/OfflineDemo'));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -741,6 +743,16 @@ function App() {
             element={
               <Suspense fallback={<PageLoader />}>
                 <TenantManagement />
+              </Suspense>
+            }
+          />
+
+          {/* Offline Demo - Lazy loaded */}
+          <Route
+            path="offline-demo"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <OfflineDemo />
               </Suspense>
             }
           />

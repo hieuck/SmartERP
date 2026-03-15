@@ -7,7 +7,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import viVN from 'antd/locale/vi_VN';
 import App from './App';
 import { store } from './store';
-import { register as registerServiceWorker } from './utils/serviceWorkerRegistration';
+import { registerServiceWorker } from './lib/offline/register-sw';
 import { theme } from './theme';
 import './i18n/config'; // Initialize i18n
 import './index.css';

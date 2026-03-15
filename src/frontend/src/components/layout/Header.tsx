@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { logout } from '@/store/slices/authSlice';
 import { RootState } from '@/store';
 import LanguageSwitcher from '@/components/common/LanguageSwitcher';
+import { OfflineStatus } from '@/components/OfflineStatus';
 import type { MenuProps } from 'antd';
 
 const { Header: AntHeader } = Layout;
@@ -109,6 +110,7 @@ export default function Header({ collapsed, onToggle }: HeaderProps) {
       </Space>
 
       <Space>
+        <OfflineStatus />
         <LanguageSwitcher />
         <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
           <Space style={{ cursor: 'pointer' }}>

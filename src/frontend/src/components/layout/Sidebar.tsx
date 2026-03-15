@@ -17,6 +17,7 @@ import {
   SearchOutlined,
   ApartmentOutlined,
   HomeOutlined,
+  CloudSyncOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 
@@ -141,6 +142,11 @@ export default function Sidebar({ collapsed }: SidebarProps) {
       label: t('sidebar.settings'),
       children: [{ key: '/dashboard/settings/print', label: t('sidebar.printTemplates') }],
     },
+    {
+      key: '/dashboard/offline-demo',
+      icon: <CloudSyncOutlined />,
+      label: 'Offline Demo',
+    },
   ];
 
   const handleMenuClick: MenuProps['onClick'] = (e) => {
@@ -186,6 +192,7 @@ export default function Sidebar({ collapsed }: SidebarProps) {
     if (path.startsWith('/dashboard/reports')) return '/dashboard/reports';
     if (path.startsWith('/dashboard/users')) return '/dashboard/users';
     if (path.startsWith('/dashboard/settings/print')) return '/dashboard/settings/print';
+    if (path.startsWith('/dashboard/offline-demo')) return '/dashboard/offline-demo';
     return '/dashboard';
   };
 
