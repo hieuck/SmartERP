@@ -1,0 +1,775 @@
+# Instincts generated from https://github.com/hieuck/SmartERP
+# Generated: 2026-03-15T14:49:53.377Z
+# Version: 2.0
+
+---
+id: SmartERP-commit-conventional
+trigger: "when writing a commit message"
+confidence: 0.85
+domain: git
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Commit Conventional
+
+## Action
+
+Use conventional commit format with prefixes: test, docs, feat, refactor, fix
+
+## Evidence
+
+- 194 commits analyzed
+- Detected conventional commit pattern
+- Examples: chore(deps): bump the npm_and_yarn group across 3 directories with 5 updates, feat(mobile): add comprehensive test suite and offline database
+
+---
+id: SmartERP-commit-length
+trigger: "when writing a commit message"
+confidence: 0.6
+domain: git
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Commit Length
+
+## Action
+
+Write moderate-length commit messages (~50 characters)
+
+## Evidence
+
+- Average commit message length: 62 chars
+- Based on 194 commits
+
+---
+id: SmartERP-naming-files
+trigger: "when creating a new file"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Naming Files
+
+## Action
+
+Use camelCase naming convention
+
+## Evidence
+
+- Analyzed file naming patterns in repository
+- Dominant pattern: camelCase
+
+---
+id: SmartERP-import-relative
+trigger: "when importing modules"
+confidence: 0.75
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Import Relative
+
+## Action
+
+Use relative imports for project files
+
+## Evidence
+
+- Import analysis shows relative import pattern
+- Example: import { x } from '../lib/x'
+
+---
+id: SmartERP-export-style
+trigger: "when exporting from a module"
+confidence: 0.7
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Export Style
+
+## Action
+
+Prefer named exports
+
+## Evidence
+
+- Export pattern analysis
+- Dominant style: named
+
+---
+id: SmartERP-arch-feature-based
+trigger: "when adding a new feature"
+confidence: 0.85
+domain: architecture
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Arch Feature Based
+
+## Action
+
+Create a new folder in src/features/ with all related code colocated
+
+## Evidence
+
+- Feature-based module organization detected
+- Structure: src/features/[feature-name]/
+
+---
+id: SmartERP-test-colocate
+trigger: "when writing tests"
+confidence: 0.85
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Test Colocate
+
+## Action
+
+Place test file next to the source file (e.g., Button.test.tsx next to Button.tsx)
+
+## Evidence
+
+- Colocated test pattern detected
+- Tests live alongside source files
+
+---
+id: SmartERP-test-framework
+trigger: "when writing tests"
+confidence: 0.9
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Test Framework
+
+## Action
+
+Use vitest as the test framework
+
+## Evidence
+
+- Test framework detected: vitest
+- File pattern: *.spec.ts
+
+---
+id: SmartERP-test-naming
+trigger: "when creating a test file"
+confidence: 0.85
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Test Naming
+
+## Action
+
+Name test files using the pattern: *.spec.ts
+
+## Evidence
+
+- File pattern: *.spec.ts
+- Consistent across test files
+
+---
+id: SmartERP-test-types
+trigger: "when planning tests for a feature"
+confidence: 0.7
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Test Types
+
+## Action
+
+Write unit, integration, e2e tests to match project standards
+
+## Evidence
+
+- Test types detected: unit, integration, e2e
+- Coverage config: yes
+
+---
+id: SmartERP-workflow-database-migration
+trigger: "when modifying the database schema or adding tables"
+confidence: 0.65
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Workflow Database Migration
+
+## Action
+
+Follow the database-migration workflow:
+1. Create migration file
+2. Update schema definitions
+3. Generate/update types
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~3x per month
+- Files: migrations/*
+
+---
+id: SmartERP-workflow-feature-development
+trigger: "when implementing a new feature"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Workflow Feature Development
+
+## Action
+
+Follow the feature-development workflow:
+1. Add feature implementation
+2. Add tests for feature
+3. Update documentation
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~17x per month
+- Files: src/frontend/src/lib/offline/*, src/frontend/src/services/*, src/frontend/src/pages/products/*
+
+---
+id: SmartERP-workflow-refactoring
+trigger: "when refactoring code"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Workflow Refactoring
+
+## Action
+
+Follow the refactoring workflow:
+1. Ensure tests pass before refactor
+2. Refactor code structure
+3. Verify tests still pass
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~10x per month
+- Files: src/**/*
+
+---
+id: SmartERP-workflow-dependency-update
+trigger: "when doing dependency update"
+confidence: 0.65
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Workflow Dependency Update
+
+## Action
+
+Follow the dependency-update workflow:
+1. Run npm audit fix in backend/frontend/mobile directories
+2. Update package.json and package-lock.json files
+3. Verify builds still pass
+4. Document vulnerability fixes in commit message
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~3x per month
+- Files: src/backend/package.json, src/frontend/package.json, src/mobile/package.json
+
+---
+id: SmartERP-workflow-offline-entity-addition
+trigger: "when doing offline entity addition"
+confidence: 0.75
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Workflow Offline Entity Addition
+
+## Action
+
+Follow the offline-entity-addition workflow:
+1. Add entity interface to db.ts
+2. Update IndexedDB schema version
+3. Create offline service in offline-services.ts
+4. Add entity to sync-manager.ts
+5. Update documentation version
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~5x per month
+- Files: src/frontend/src/lib/offline/db.ts, src/frontend/src/lib/offline/sync-manager.ts, src/frontend/src/services/offline-services.ts
+
+---
+id: SmartERP-workflow-test-suite-addition
+trigger: "when doing test suite addition"
+confidence: 0.7
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Workflow Test Suite Addition
+
+## Action
+
+Follow the test-suite-addition workflow:
+1. Install testing dependencies (vitest/jest, @testing-library)
+2. Create test configuration files
+3. Add mock files in __mocks__ directory
+4. Create test files with .test.ts/.test.tsx extension
+5. Setup test utilities and helpers
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~4x per month
+- Files: package.json, jest.config.js, vitest.config.ts
+
+---
+id: SmartERP-workflow-page-refactor-offline-first
+trigger: "when doing page refactor offline first"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Workflow Page Refactor Offline First
+
+## Action
+
+Follow the page-refactor-offline-first workflow:
+1. Remove React Query (useQuery, useMutation, useQueryClient)
+2. Replace with offline services from IndexedDB
+3. Add auto-sync on mount when online
+4. Add manual sync button with loading state
+5. Add network status and sync queue indicators
+6. Replace console.log with Logger Service
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~8x per month
+- Files: src/frontend/src/pages/**/*.tsx, src/frontend/src/services/offline-services.ts
+
+---
+id: SmartERP-workflow-documentation-version-update
+trigger: "when doing documentation version update"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Workflow Documentation Version Update
+
+## Action
+
+Follow the documentation-version-update workflow:
+1. Update version number in documentation
+2. Document completed changes and entity counts
+3. Update progress percentages
+4. Add phase completion details
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~15x per month
+- Files: docs/OFFLINE_FIRST_IMPLEMENTATION_STATUS.md, docs/PROJECT_COMPLETION_SUMMARY.md, docs/*.md
+
+---
+id: SmartERP-workflow-typescript-error-batch-fix
+trigger: "when doing typescript error batch fix"
+confidence: 0.65
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Workflow Typescript Error Batch Fix
+
+## Action
+
+Follow the typescript-error-batch-fix workflow:
+1. Add missing properties to mock objects (version, syncStatus)
+2. Fix enum imports and usage
+3. Fix type assertions
+4. Update entity properties to match backend schema
+5. Verify test suite improvements
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~3x per month
+- Files: src/backend/src/**/*.spec.ts, src/backend/src/**/*.controller.spec.ts, src/backend/src/**/*.service.spec.ts
+
+---
+id: smarterp-conventional-commits
+trigger: "When making any commit"
+confidence: 0.9
+domain: git
+source: repo-analysis
+source_repo: hieuck/SmartERP
+---
+
+# Smarterp Conventional Commits
+
+## Action
+
+Use conventional commit format with type(scope): description under 62 characters
+
+## Evidence
+
+- All 8 commit examples follow conventional format
+- Average length 62 characters
+- Types: feat, fix, chore, test, docs, refactor
+
+---
+id: smarterp-camelcase-files
+trigger: "When creating new TypeScript files"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: hieuck/SmartERP
+---
+
+# Smarterp Camelcase Files
+
+## Action
+
+Name files in camelCase
+
+## Evidence
+
+- Naming conventions show files: camelCase
+- TypeScript language detected
+
+---
+id: smarterp-pascalcase-classes
+trigger: "When defining classes"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: hieuck/SmartERP
+---
+
+# Smarterp Pascalcase Classes
+
+## Action
+
+Use PascalCase for class names
+
+## Evidence
+
+- Naming conventions show classes: PascalCase
+- TypeScript codebase
+
+---
+id: smarterp-screaming-snake-constants
+trigger: "When defining constants"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: hieuck/SmartERP
+---
+
+# Smarterp Screaming Snake Constants
+
+## Action
+
+Use SCREAMING_SNAKE_CASE for constant names
+
+## Evidence
+
+- Naming conventions show constants: SCREAMING_SNAKE_CASE
+
+---
+id: smarterp-relative-imports
+trigger: "When importing modules"
+confidence: 0.7
+domain: code-style
+source: repo-analysis
+source_repo: hieuck/SmartERP
+---
+
+# Smarterp Relative Imports
+
+## Action
+
+Use relative import paths
+
+## Evidence
+
+- Import style configured as 'relative'
+
+---
+id: smarterp-named-exports
+trigger: "When exporting from modules"
+confidence: 0.7
+domain: code-style
+source: repo-analysis
+source_repo: hieuck/SmartERP
+---
+
+# Smarterp Named Exports
+
+## Action
+
+Use named exports instead of default exports
+
+## Evidence
+
+- Export style configured as 'named'
+
+---
+id: smarterp-vitest-spec-files
+trigger: "When writing tests"
+confidence: 0.9
+domain: testing
+source: repo-analysis
+source_repo: hieuck/SmartERP
+---
+
+# Smarterp Vitest Spec Files
+
+## Action
+
+Create test files with *.spec.ts pattern using vitest framework
+
+## Evidence
+
+- Testing framework: vitest
+- File pattern: *.spec.ts
+- Multiple vitest config files present
+
+---
+id: smarterp-colocated-tests
+trigger: "When adding tests for a module"
+confidence: 0.8
+domain: testing
+source: repo-analysis
+source_repo: hieuck/SmartERP
+---
+
+# Smarterp Colocated Tests
+
+## Action
+
+Place test files alongside source files (colocated)
+
+## Evidence
+
+- Test location: colocated
+- Test files throughout src directories
+
+---
+id: smarterp-try-catch-errors
+trigger: "When handling errors"
+confidence: 0.6
+domain: code-style
+source: repo-analysis
+source_repo: hieuck/SmartERP
+---
+
+# Smarterp Try Catch Errors
+
+## Action
+
+Use try-catch blocks for error handling
+
+## Evidence
+
+- Error handling style: try-catch
+
+---
+id: smarterp-dependency-update
+trigger: "When dependabot detects outdated packages"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: hieuck/SmartERP
+---
+
+# Smarterp Dependency Update
+
+## Action
+
+Run npm audit fix across backend/frontend/mobile and commit with chore(deps) prefix
+
+## Evidence
+
+- 3 dependency update commits
+- chore(deps): bump pattern in commits
+- Multi-directory package.json updates
+
+---
+id: smarterp-offline-entity-schema
+trigger: "When adding offline support for new entity"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: hieuck/SmartERP
+---
+
+# Smarterp Offline Entity Schema
+
+## Action
+
+Update db.ts schema, increment version, add to sync-manager and offline-services
+
+## Evidence
+
+- 5 offline entity addition workflows
+- Consistent file pattern: db.ts, sync-manager.ts, offline-services.ts
+
+---
+id: smarterp-comprehensive-test-setup
+trigger: "When implementing tests for new module"
+confidence: 0.85
+domain: workflow
+source: repo-analysis
+source_repo: hieuck/SmartERP
+---
+
+# Smarterp Comprehensive Test Setup
+
+## Action
+
+Create test config, mocks in __mocks__, and .test.ts files with testing-library
+
+## Evidence
+
+- 4 test suite additions
+- test(mobile): Add 700+ test cases
+- jest.config.js and vitest.config.ts patterns
+
+---
+id: smarterp-react-query-to-offline
+trigger: "When refactoring pages to offline-first"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: hieuck/SmartERP
+---
+
+# Smarterp React Query To Offline
+
+## Action
+
+Remove React Query hooks, replace with IndexedDB offline services, add sync buttons
+
+## Evidence
+
+- 8 page refactor workflows
+- feat(offline): refactor modules to offline-first pattern
+- Consistent offline services integration
+
+---
+id: smarterp-version-docs-update
+trigger: "When completing implementation phase"
+confidence: 0.8
+domain: workflow
+source: repo-analysis
+source_repo: hieuck/SmartERP
+---
+
+# Smarterp Version Docs Update
+
+## Action
+
+Update OFFLINE_FIRST_IMPLEMENTATION_STATUS.md with version bump and progress percentages
+
+## Evidence
+
+- 15 documentation updates
+- docs/OFFLINE_FIRST_IMPLEMENTATION_STATUS.md pattern
+- Version tracking in commits
+
+---
+id: smarterp-typescript-mock-fixes
+trigger: "When TypeScript compilation fails in tests"
+confidence: 0.8
+domain: workflow
+source: repo-analysis
+source_repo: hieuck/SmartERP
+---
+
+# Smarterp Typescript Mock Fixes
+
+## Action
+
+Add missing properties (version, syncStatus) to mock objects and fix enum imports
+
+## Evidence
+
+- 3 TypeScript error batch fixes
+- *.spec.ts file patterns
+- Mock object property fixes
+
+---
+id: smarterp-turborepo-structure
+trigger: "When organizing code"
+confidence: 0.9
+domain: architecture
+source: repo-analysis
+source_repo: hieuck/SmartERP
+---
+
+# Smarterp Turborepo Structure
+
+## Action
+
+Use turborepo layout with backend/frontend/mobile/shared directories
+
+## Evidence
+
+- Folder structure type: turborepo
+- Src layout: backend, frontend, mobile, shared
+
+---
+id: smarterp-feature-based-modules
+trigger: "When organizing application modules"
+confidence: 0.7
+domain: architecture
+source: repo-analysis
+source_repo: hieuck/SmartERP
+---
+
+# Smarterp Feature Based Modules
+
+## Action
+
+Structure code by features rather than technical layers
+
+## Evidence
+
+- Module organization: feature-based
+- pages/products/, pages/warehouses/ patterns
+
