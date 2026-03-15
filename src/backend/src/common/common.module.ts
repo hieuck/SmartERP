@@ -2,6 +2,7 @@ import { Module, Global } from '@nestjs/common';
 import { MetricsService } from './metrics/metrics.service';
 import { MetricsController } from './controllers/metrics.controller';
 import { QueryPerformanceInterceptor } from './interceptors/query-performance.interceptor';
+import { SyncModule } from './sync/sync.module';
 
 /**
  * Common module providing shared services and utilities
@@ -9,8 +10,9 @@ import { QueryPerformanceInterceptor } from './interceptors/query-performance.in
  */
 @Global()
 @Module({
+  imports: [SyncModule],
   providers: [MetricsService, QueryPerformanceInterceptor],
   controllers: [MetricsController],
-  exports: [MetricsService, QueryPerformanceInterceptor],
+  exports: [MetricsService, QueryPerformanceInterceptor, SyncModule],
 })
 export class CommonModule {}
