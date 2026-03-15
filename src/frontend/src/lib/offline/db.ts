@@ -202,6 +202,116 @@ export interface StockReceipt extends BaseEntity {
   metadata?: Record<string, unknown>;
 }
 
+// Material entity (matches backend Material entity)
+export interface Material extends BaseEntity {
+  code: string;
+  name: string;
+  description?: string;
+  type: string; // raw_material, component, consumable, etc.
+  unit: string;
+  purchasePrice: number;
+  supplierId?: string;
+  stockQuantity: number;
+  minQuantity?: number;
+  maxQuantity?: number;
+  reorderPoint?: number;
+  reorderQuantity?: number;
+  storageLocation?: string;
+  notes?: string;
+  status: string; // active, inactive
+}
+
+// Mold entity (matches backend Mold entity)
+export interface Mold extends BaseEntity {
+  code: string;
+  name: string;
+  description?: string;
+  category?: string;
+  dimensions?: {
+    length?: number;
+    width?: number;
+    height?: number;
+    unit?: string;
+  };
+  material?: string;
+  purchaseCost?: number;
+  purchaseDate?: Date;
+  supplierId?: string;
+  status: string; // active, inactive, maintenance, retired
+  condition: string; // excellent, good, fair, poor
+  usageCount: number;
+  maxUsageCount?: number;
+  lastMaintenanceDate?: Date;
+  nextMaintenanceDate?: Date;
+  maintenanceIntervalDays?: number;
+  storageLocation?: string;
+  notes?: string;
+  maintenanceHistory?: Array<{
+    date: string;
+    type: string;
+    description: string;
+    cost?: number;
+    performedBy?: string;
+  }>;
+}
+
+// ProductionOrder entity (matches backend WorkOrder entity)
+export interface ProductionOrder extends BaseEntity {
+  orderNumber: string;
+  name: string;
+  description?: string;
+  productId: string;
+  productName?: string;
+  bomId?: string;
+  bomCode?: string;
+  status: string; // draft, planned, in_progress, completed, cancelled
+  priority: string; // low, normal, high, urgent
+  quantityPlanned: number;
+  qtyProduced: number;
+  quantityRejected: number;
+  unit: string;
+  plannedStartDate?: Date;
+  plannedEndDate?: Date;
+  actualStartDate?: Date;
+  actualEndDate?: Date;
+  assignedTo?: string;
+  assignedToName?: string;
+  workstation?: string;
+  materialConsumption?: Array<{
+    materialId: string;
+    materialCode: string;
+    materialName: string;
+    quantityPlanned: number;
+    quantityConsumed: number;
+    unit: string;
+  }>;
+  operationProgress?: Array<{
+    stepNumber: number;
+    name: string;
+    status: string;
+    startTime?: string;
+    endTime?: string;
+    duration?: number;
+    notes?: string;
+  }>;
+  qualityChecks?: Array<{
+    checkTime: string;
+    inspector: string;
+    result: string;
+    notes?: string;
+    defects?: Array<{
+      type: string;
+      quantity: number;
+      description: string;
+    }>;
+  }>;
+  completionPercentage?: number;
+  notes?: string;
+  createdBy?: string;
+  approvedBy?: string;
+  approvedAt?: Date;
+}
+
 // Sync queue item
 export interface SyncQueueItem {
   id?: number;
@@ -227,6 +337,9 @@ export class OfflineDB extends Dexie {
   warehouses!: Table<Warehouse, string>;
   stocks!: Table<Stock, string>;
   stockReceipts!: Table<StockReceipt, string>;
+  materials!: Table<Material, string>;
+  molds!: Table<Mold, string>;
+  productionOrders!: Table<ProductionOrder, string>;
   syncQueue!: Table<SyncQueueItem, number>;
 
   constructor() {
@@ -261,6 +374,25 @@ export class OfflineDB extends Dexie {
       warehouses: 'id, tenantId, code, name, status, isDefault, syncStatus, lastSyncedAt',
       stocks: 'id, tenantId, productId, warehouseId, quantity, syncStatus, lastSyncedAt',
       stockReceipts: 'id, tenantId, receiptNumber, warehouseId, status, receiptDate, syncStatus, lastSyncedAt',
+      syncQueue: '++id, entity, operation, createdAt',
+    });
+
+    // Version 4: Add Batch 2A entities (Material, Mold, ProductionOrder)
+    this.version(4).stores({
+      users: 'id, tenantId, email, syncStatus, lastSyncedAt',
+      products: 'id, tenantId, sku, name, status, categoryId, stockQuantity, syncStatus, lastSyncedAt',
+      customers: 'id, tenantId, name, email, phone, status, syncStatus, lastSyncedAt',
+      suppliers: 'id, tenantId, name, email, status, syncStatus, lastSyncedAt',
+      salesOrders: 'id, tenantId, orderNumber, customerId, status, syncStatus, lastSyncedAt',
+      invoices: 'id, tenantId, invoiceNumber, customerId, supplierId, invoiceDate, status, syncStatus, lastSyncedAt',
+      payments: 'id, tenantId, orderId, status, paymentDate, syncStatus, lastSyncedAt',
+      purchaseOrders: 'id, tenantId, poNumber, supplierId, status, orderDate, syncStatus, lastSyncedAt',
+      warehouses: 'id, tenantId, code, name, status, isDefault, syncStatus, lastSyncedAt',
+      stocks: 'id, tenantId, productId, warehouseId, quantity, syncStatus, lastSyncedAt',
+      stockReceipts: 'id, tenantId, receiptNumber, warehouseId, status, receiptDate, syncStatus, lastSyncedAt',
+      materials: 'id, tenantId, code, name, type, status, stockQuantity, syncStatus, lastSyncedAt',
+      molds: 'id, tenantId, code, name, status, condition, usageCount, syncStatus, lastSyncedAt',
+      productionOrders: 'id, tenantId, orderNumber, productId, status, priority, syncStatus, lastSyncedAt',
       syncQueue: '++id, entity, operation, createdAt',
     });
   }
