@@ -10,13 +10,43 @@ export const OfflineStatus: React.FC = () => {
   const [isSyncing, setIsSyncing] = useState(false);
   const [queueSize, setQueueSize] = useState(0);
   const [lastSync, setLastSync] = useState<Date | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
+    // Requirement 1.3: IF network connection is restored, auto detect
+    const handleOnline = async () => {
+      setIsOnline(true);
+      setError(null);
+      
+      // Requirement 2.1: WHEN network detected, auto start sync
+      const token = localStorage.getItem('token');
+      if (token) {
+        await syncManager.resumeSync(token);
+      }
+    };
+
+    // Requirement 1.4: IF network lost during sync, pause
+    const handleOffline = () => {
+      setIsOnline(false);
+      if (syncManager.isSyncing()) {
+        syncManager.pauseSync();
+      }
+    };
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
+
+    // Requirement 1.5: Check if offline storage available
+    const checkIndexedDB = () => {
+      try {
+        if (!('indexedDB' in window) || window.indexedDB === null) {
+          setError('Offline storage unavailable. Please use a modern browser.');
+        }
+      } catch (e) {
+        setError('Offline storage unavailable. Please use a modern browser.');
+      }
+    };
+    checkIndexedDB();
 
     // Update queue size periodically
     const interval = setInterval(async () => {
@@ -35,17 +65,20 @@ export const OfflineStatus: React.FC = () => {
   const handleSync = async () => {
     const token = localStorage.getItem('token');
     if (!token) {
-      console.error('No auth token found');
+      setError('No auth token found');
       return;
     }
 
     setIsSyncing(true);
+    setError(null);
     try {
       const result = await syncManager.sync(token);
-      console.log('Sync result:', result);
+      if (!result.success) {
+        setError(result.errors.join(', '));
+      }
       setLastSync(new Date());
-    } catch (error) {
-      console.error('Sync failed:', error);
+    } catch (error: any) {
+      setError(error.message);
     } finally {
       setIsSyncing(false);
     }
@@ -66,6 +99,14 @@ export const OfflineStatus: React.FC = () => {
         )}
       </Text>
 
+      {error && (
+        <Tooltip title={error}>
+          <Text type="danger" style={{ fontSize: '12px' }}>
+            Error
+          </Text>
+        </Tooltip>
+      )}
+
       {queueSize > 0 && (
         <Tooltip title={`${queueSize} pending changes`}>
           <Badge count={queueSize} showZero={false}>
@@ -85,7 +126,7 @@ export const OfflineStatus: React.FC = () => {
         size="small"
         icon={<SyncOutlined spin={isSyncing} />}
         onClick={handleSync}
-        disabled={!isOnline || isSyncing}
+        disabled={!isOnline || isSyncing || !!error}
         loading={isSyncing}
       >
         Sync

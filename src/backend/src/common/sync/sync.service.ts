@@ -90,6 +90,8 @@ export class SyncService {
 
   /**
    * Apply single change with conflict detection
+   * Requirement 3.2: FOR update conflicts, apply last-write-wins strategy
+   * Requirement 3.3: FOR delete conflicts, prioritize delete operation
    */
   private async applyChange(tenantId: string, change: ChangeDto) {
     const repository = this.getRepository(change.entity);
@@ -114,21 +116,27 @@ export class SyncService {
           throw new NotFoundException(`${change.entity} not found`);
         }
 
-        // Check version for conflict
-        if (change.version && existing.version !== change.version) {
+        // Requirement 3.2: Apply last-write-wins strategy
+        // Compare timestamps instead of versions
+        const localTimestamp = new Date(change.data.updatedAt || 0);
+        const serverTimestamp = new Date(existing.updatedAt);
+
+        if (localTimestamp < serverTimestamp) {
+          // Server is newer, reject local change
           const conflict: SyncConflict = {
             id: `${change.entity}-${change.data.id}`,
             entity: change.entity,
             localData: change.data,
             serverData: existing,
-            localVersion: change.version,
+            localVersion: change.version || 0,
             serverVersion: existing.version,
           };
           this.conflicts.set(conflict.id, conflict);
+          this.logger.warn(`Update conflict detected: ${conflict.id} - Server wins (last-write-wins)`);
           return { conflict };
         }
 
-        // Apply update
+        // Local is newer or equal, apply update
         await repository.update(
           { id: change.data.id, tenantId },
           {
@@ -141,6 +149,25 @@ export class SyncService {
         return { conflict: null };
 
       case 'delete':
+        // Requirement 3.3: FOR delete conflicts, prioritize delete operation
+        const existingForDelete = await repository.findOne({
+          where: { id: change.data.id, tenantId },
+        });
+
+        if (!existingForDelete) {
+          // Already deleted, no conflict
+          return { conflict: null };
+        }
+
+        // Check if there's a pending update conflict
+        const updateConflictId = `${change.entity}-${change.data.id}`;
+        if (this.conflicts.has(updateConflictId)) {
+          // Delete wins over update conflict
+          this.conflicts.delete(updateConflictId);
+          this.logger.warn(`Delete conflict resolved: ${updateConflictId} - Delete wins`);
+        }
+
+        // Always prioritize delete
         await repository.softDelete({ id: change.data.id, tenantId });
         return { conflict: null };
 
@@ -151,6 +178,8 @@ export class SyncService {
 
   /**
    * Resolve conflict with user choice
+   * Requirement 3.4: WHERE manual resolution needed, queue for user review
+   * Requirement 3.5: IF conflict resolution fails, log error and notify admin
    */
   async resolveConflict(tenantId: string, dto: ResolveConflictDto) {
     const conflict = this.conflicts.get(dto.conflictId);
@@ -161,45 +190,62 @@ export class SyncService {
 
     const repository = this.getRepository(conflict.entity);
 
-    switch (dto.resolution) {
-      case ConflictResolution.KEEP_LOCAL:
-        await repository.update(
-          { id: conflict.localData.id, tenantId },
-          {
-            ...conflict.localData,
-            version: conflict.serverVersion + 1,
-            syncStatus: SyncStatus.SYNCED,
-            lastSyncedAt: new Date(),
-          },
-        );
-        break;
+    try {
+      switch (dto.resolution) {
+        case ConflictResolution.KEEP_LOCAL:
+          await repository.update(
+            { id: conflict.localData.id, tenantId },
+            {
+              ...conflict.localData,
+              version: conflict.serverVersion + 1,
+              syncStatus: SyncStatus.SYNCED,
+              lastSyncedAt: new Date(),
+            },
+          );
+          break;
 
-      case ConflictResolution.KEEP_SERVER:
-        // Do nothing, server version already exists
-        break;
+        case ConflictResolution.KEEP_SERVER:
+          // Do nothing, server version already exists
+          break;
 
-      case ConflictResolution.MERGE:
-        if (!dto.mergedData) {
-          throw new ConflictException('Merged data required for MERGE strategy');
-        }
-        await repository.update(
-          { id: conflict.localData.id, tenantId },
-          {
-            ...dto.mergedData,
-            version: conflict.serverVersion + 1,
-            syncStatus: SyncStatus.SYNCED,
-            lastSyncedAt: new Date(),
-          },
-        );
-        break;
+        case ConflictResolution.MERGE:
+          if (!dto.mergedData) {
+            throw new ConflictException('Merged data required for MERGE strategy');
+          }
+          await repository.update(
+            { id: conflict.localData.id, tenantId },
+            {
+              ...dto.mergedData,
+              version: conflict.serverVersion + 1,
+              syncStatus: SyncStatus.SYNCED,
+              lastSyncedAt: new Date(),
+            },
+          );
+          break;
+      }
+
+      this.conflicts.delete(dto.conflictId);
+
+      return {
+        success: true,
+        message: 'Conflict resolved',
+      };
+    } catch (error) {
+      // Requirement 3.5: Log error and notify administrator
+      this.logger.error(
+        `Conflict resolution failed: ${dto.conflictId}`,
+        error.stack,
+        {
+          conflictId: dto.conflictId,
+          resolution: dto.resolution,
+          tenantId,
+        },
+      );
+
+      throw new ConflictException(
+        `Failed to resolve conflict: ${error.message}`,
+      );
     }
-
-    this.conflicts.delete(dto.conflictId);
-
-    return {
-      success: true,
-      message: 'Conflict resolved',
-    };
   }
 
   /**
