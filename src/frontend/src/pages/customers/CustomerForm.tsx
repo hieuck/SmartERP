@@ -1,13 +1,10 @@
-import {
-  customerService,
-  type CreateCustomerDto,
-  type UpdateCustomerDto,
-} from '@/services/crm/customerService';
-import { ArrowLeftOutlined, SaveOutlined, UserOutlined } from '@ant-design/icons';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Button, Card, Col, Form, Input, InputNumber, message, Row, Space, Typography } from 'antd';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeftOutlined, SaveOutlined, UserOutlined, SyncOutlined } from '@ant-design/icons';
+import { Button, Card, Col, Form, Input, InputNumber, message, Row, Space, Typography, Badge } from 'antd';
+import { offlineServices } from '@/services/offline-services';
+import { syncManager } from '@/lib/offline/sync-manager';
+import { logger } from '@/lib/logger/logger.service';
 
 const { Title } = Typography;
 const { TextArea } = Input;
@@ -15,63 +12,132 @@ const { TextArea } = Input;
 export default function CustomerForm() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const queryClient = useQueryClient();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [queueSize, setQueueSize] = useState(0);
   const isEdit = !!id;
 
-  const { data: customer } = useQuery({
-    queryKey: ['customer', id],
-    queryFn: () => customerService.getById(Number(id)),
-    enabled: isEdit,
-  });
-
+  // Monitor network status
   useEffect(() => {
-    if (customer) {
-      form.setFieldsValue({
-        name: customer.name,
-        email: customer.email,
-        phone: customer.phone,
-        address: customer.address,
-        creditLimit: customer.creditLimit,
-      });
-    }
-  }, [customer, form]);
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
 
-  const saveMutation = useMutation({
-    mutationFn: async (values: any) => {
-      setLoading(true);
-      try {
-        if (isEdit) {
-          return await customerService.update(Number(id), values as UpdateCustomerDto);
-        } else {
-          return await customerService.create(values as CreateCustomerDto);
-        }
-      } finally {
-        setLoading(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  // Load customer data for edit
+  const loadCustomer = async () => {
+    if (!isEdit || !id) return;
+
+    try {
+      const customer = await offlineServices.customers.getById(id);
+      if (customer) {
+        form.setFieldsValue({
+          name: customer.name,
+          email: customer.email,
+          phone: customer.phone,
+          address: customer.address,
+          creditLimit: customer.creditLimit,
+        });
+        logger.info('CustomerForm', 'Loaded customer from IndexedDB', { id });
       }
-    },
-    onSuccess: () => {
-      message.success(isEdit ? 'Cập nhật khách hàng thành công' : 'Tạo khách hàng thành công');
-      queryClient.invalidateQueries({ queryKey: ['customers'] });
-      navigate('/dashboard/customers');
-    },
-    onError: (error: any) => {
-      message.error(error.response?.data?.message || 'Có lỗi xảy ra');
-    },
-  });
+    } catch (error) {
+      logger.error('CustomerForm', 'Failed to load customer', error as Error);
+      message.error('Không thể tải khách hàng');
+    }
+  };
 
-  const onFinish = (values: any) => {
-    saveMutation.mutate(values);
+  // Load queue size
+  const loadQueueSize = async () => {
+    const size = await syncManager.getQueueSize();
+    setQueueSize(size);
+  };
+
+  // Initial load
+  useEffect(() => {
+    loadCustomer();
+    loadQueueSize();
+  }, [id]);
+
+  // Auto-sync when online
+  useEffect(() => {
+    if (isOnline) {
+      handleSync();
+    }
+  }, [isOnline]);
+
+  // Manual sync
+  const handleSync = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    try {
+      setSyncing(true);
+      const result = await syncManager.sync(token);
+      
+      if (result.success) {
+        await loadQueueSize();
+        if (isEdit) await loadCustomer();
+      }
+    } catch (error) {
+      logger.error('CustomerForm', 'Sync failed', error as Error);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const onFinish = async (values: any) => {
+    try {
+      setLoading(true);
+
+      if (isEdit && id) {
+        await offlineServices.customers.update(id, values);
+        message.success('Cập nhật khách hàng thành công');
+        logger.info('CustomerForm', 'Customer updated', { id });
+      } else {
+        await offlineServices.customers.create(values);
+        message.success('Tạo khách hàng thành công');
+        logger.info('CustomerForm', 'Customer created');
+      }
+
+      await loadQueueSize();
+      navigate('/dashboard/customers');
+    } catch (error) {
+      logger.error('CustomerForm', 'Failed to save customer', error as Error);
+      message.error('Có lỗi xảy ra');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div style={{ padding: '24px' }}>
       <Card>
-        <Space style={{ marginBottom: 16 }}>
+        <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
           <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/dashboard/customers')}>
             Quay lại
           </Button>
+          <Space>
+            <Badge count={queueSize} offset={[-5, 5]}>
+              <Button
+                icon={<SyncOutlined spin={syncing} />}
+                onClick={handleSync}
+                loading={syncing}
+                disabled={!isOnline}
+              >
+                Đồng bộ
+              </Button>
+            </Badge>
+            <Badge status={isOnline ? 'success' : 'error'} text={isOnline ? 'Online' : 'Offline'} />
+          </Space>
         </Space>
 
         <Title level={3}>
