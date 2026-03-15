@@ -1,40 +1,177 @@
 /**
- * Warehouse List Page
+ * Warehouse List Page - Offline-First
  * Displays and manages warehouses
- * Uses StandardListPage with i18n and responsive design
+ * Integrated with offline storage for offline-first functionality
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Tag, message } from 'antd';
+import { Tag, message, Space, Badge, Button } from 'antd';
 import { useTranslation } from 'react-i18next';
+import {
+  HomeOutlined,
+  SyncOutlined,
+  CloudOutlined,
+  DisconnectOutlined,
+} from '@ant-design/icons';
 import StandardListPage from '@/components/common/StandardListPage';
-import warehouseService, { Warehouse } from '@/services/inventory/warehouseService';
+import { offlineServices } from '@/services/offline-services';
+import { syncManager } from '@/lib/offline/sync-manager';
+import { logger } from '@/lib/logger/logger.service';
+import { Warehouse, SyncStatus } from '@/lib/offline/db';
 import type { ColumnsType } from 'antd/es/table';
 
-const WarehouseList = () => {
+export default function WarehouseList() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const { t } = useTranslation(['warehouses', 'commonUi']);
+  const { t } = useTranslation(['warehouses', 'commonUi', 'common']);
   const [search, setSearch] = useState('');
-  const [status, setStatus] = useState<string>();
+  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [queueSize, setQueueSize] = useState(0);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['warehouses', { search, status }],
-    queryFn: () => warehouseService.getWarehouses({ search, status }),
-  });
+  // Monitor network status
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      logger.info('WarehouseList', 'Network connection restored');
+      message.success(t('common:messages.networkRestored'));
+    };
 
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => warehouseService.deleteWarehouse(id),
-    onSuccess: () => {
+    const handleOffline = () => {
+      setIsOnline(false);
+      logger.warn('WarehouseList', 'Network connection lost');
+      message.warning(t('common:messages.networkLost'));
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [t]);
+
+  // Load warehouses from offline storage
+  const loadWarehouses = async () => {
+    setLoading(true);
+    try {
+      logger.debug('WarehouseList', 'Loading warehouses from offline storage');
+      let allWarehouses = await offlineServices.warehouses.getAll();
+      
+      // Filter by search term
+      let filtered = allWarehouses;
+      if (search) {
+        const searchLower = search.toLowerCase();
+        filtered = allWarehouses.filter(
+          (w) =>
+            w.code.toLowerCase().includes(searchLower) ||
+            w.name.toLowerCase().includes(searchLower) ||
+            w.address?.toLowerCase().includes(searchLower)
+        );
+      }
+
+      setWarehouses(filtered);
+      logger.info('WarehouseList', `Loaded ${filtered.length} warehouses`);
+    } catch (error) {
+      logger.error('WarehouseList', 'Failed to load warehouses', error as Error);
+      message.error(t('warehouses:messages.loadError'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Update queue size
+  const updateQueueSize = async () => {
+    try {
+      const size = await syncManager.getQueueSize();
+      setQueueSize(size);
+    } catch (error) {
+      logger.error('WarehouseList', 'Failed to get queue size', error as Error);
+    }
+  };
+
+  // Auto-sync on mount if online
+  useEffect(() => {
+    const initializeData = async () => {
+      await loadWarehouses();
+      await updateQueueSize();
+
+      // Auto-sync if online and has token
+      if (isOnline) {
+        const token = localStorage.getItem('token');
+        if (token && !syncManager.isSyncing()) {
+          handleSync();
+        }
+      }
+    };
+
+    initializeData();
+  }, []);
+
+  // Reload warehouses when search changes
+  useEffect(() => {
+    loadWarehouses();
+  }, [search]);
+
+  // Handle sync
+  const handleSync = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      message.error(t('common:messages.loginRequired'));
+      return;
+    }
+
+    if (!isOnline) {
+      message.warning(t('common:messages.offlineMode'));
+      return;
+    }
+
+    setSyncing(true);
+    try {
+      logger.info('WarehouseList', 'Starting manual sync');
+      const result = await syncManager.sync(token);
+      
+      if (result.success) {
+        message.success(
+          t('common:messages.syncSuccess', {
+            pulled: result.pulled,
+            pushed: result.pushed,
+          })
+        );
+        await loadWarehouses();
+        await updateQueueSize();
+      } else {
+        message.error(t('common:messages.syncError', { errors: result.errors.join(', ') }));
+      }
+    } catch (error) {
+      logger.error('WarehouseList', 'Sync failed', error as Error);
+      message.error(t('common:messages.syncError', { errors: (error as Error).message }));
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  // Handle delete
+  const handleDelete = async (warehouse: Warehouse) => {
+    try {
+      logger.info('WarehouseList', `Deleting warehouse: ${warehouse.id}`);
+      await offlineServices.warehouses.delete(warehouse.id);
       message.success(t('warehouses:messages.deleteSuccess'));
-      queryClient.invalidateQueries({ queryKey: ['warehouses'] });
-    },
-    onError: () => {
+      await loadWarehouses();
+      await updateQueueSize();
+    } catch (error) {
+      logger.error('WarehouseList', 'Failed to delete warehouse', error as Error);
       message.error(t('warehouses:messages.deleteError'));
-    },
-  });
+    }
+  };
+
+  // Get paginated data
+  const paginatedWarehouses = warehouses.slice((page - 1) * pageSize, page * pageSize);
 
   const columns: ColumnsType<Warehouse> = [
     {
@@ -69,6 +206,7 @@ const WarehouseList = () => {
       dataIndex: 'phone',
       key: 'phone',
       width: 130,
+      render: (phone: string) => phone || '-',
     },
     {
       title: t('warehouses:columns.status'),
@@ -77,7 +215,7 @@ const WarehouseList = () => {
       width: 120,
       render: (status: string) => (
         <Tag color={status === 'active' ? 'green' : 'red'}>
-          {t(`warehouses:status.${status}`)}
+          {status?.toUpperCase() || 'ACTIVE'}
         </Tag>
       ),
     },
@@ -89,31 +227,90 @@ const WarehouseList = () => {
       render: (isDefault: boolean) =>
         isDefault ? <Tag color="blue">{t('warehouses:labels.default')}</Tag> : null,
     },
+    {
+      title: 'Sync',
+      dataIndex: 'syncStatus',
+      key: 'syncStatus',
+      width: 100,
+      render: (syncStatus: SyncStatus) => {
+        const colors = {
+          [SyncStatus.SYNCED]: 'success',
+          [SyncStatus.PENDING]: 'warning',
+          [SyncStatus.CONFLICT]: 'error',
+        };
+        const labels = {
+          [SyncStatus.SYNCED]: 'Synced',
+          [SyncStatus.PENDING]: 'Pending',
+          [SyncStatus.CONFLICT]: 'Conflict',
+        };
+        return (
+          <Tag color={colors[syncStatus] || 'default'}>
+            {labels[syncStatus] || 'Unknown'}
+          </Tag>
+        );
+      },
+    },
   ];
 
   return (
     <StandardListPage
-      title={t('warehouses:title')}
+      title={
+        <>
+          <HomeOutlined /> {t('warehouses:title')}
+        </>
+      }
       createButtonText={t('warehouses:createButton')}
-      onCreateClick={() => navigate('/warehouses/new')}
+      onCreateClick={() => navigate('/dashboard/warehouses/new')}
       searchPlaceholder={t('warehouses:searchPlaceholder')}
       searchValue={search}
       onSearchChange={setSearch}
+      extraActions={
+        <Space>
+          {/* Network Status Badge */}
+          <Badge
+            status={isOnline ? 'success' : 'error'}
+            text={
+              <Space size="small">
+                {isOnline ? <CloudOutlined /> : <DisconnectOutlined />}
+                {isOnline ? 'Online' : 'Offline'}
+              </Space>
+            }
+          />
+          
+          {/* Sync Queue Indicator */}
+          {queueSize > 0 && (
+            <Badge count={queueSize} showZero={false}>
+              <Tag color="warning">Pending Sync</Tag>
+            </Badge>
+          )}
+
+          {/* Sync Button */}
+          <Button
+            icon={<SyncOutlined spin={syncing} />}
+            onClick={handleSync}
+            loading={syncing}
+            disabled={!isOnline}
+          >
+            {syncing ? 'Syncing...' : 'Sync Now'}
+          </Button>
+        </Space>
+      }
       columns={columns}
-      dataSource={data?.data || []}
-      loading={isLoading}
-      onEdit={(record) => navigate(`/warehouses/${record.id}`)}
-      onDelete={(record) => deleteMutation.mutate(record.id)}
+      dataSource={paginatedWarehouses}
+      loading={loading}
+      onEdit={(record) => navigate(`/dashboard/warehouses/${record.id}`)}
+      onDelete={handleDelete}
       deleteConfirmTitle={t('commonUi:messages.deleteConfirm')}
       pagination={{
-        current: data?.meta?.page || 1,
-        pageSize: data?.meta?.limit || 10,
-        total: data?.meta?.total || 0,
+        current: page,
+        pageSize,
+        total: warehouses.length,
         showTotal: (total) => t('warehouses:messages.total', { total }),
-        onChange: () => {},
+        onChange: (newPage, newPageSize) => {
+          setPage(newPage);
+          setPageSize(newPageSize);
+        },
       }}
     />
   );
-};
-
-export default WarehouseList;
+}

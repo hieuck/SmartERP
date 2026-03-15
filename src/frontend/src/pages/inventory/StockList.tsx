@@ -1,86 +1,198 @@
 /**
- * Stock List Page
+ * Stock List Page - Offline-First
  * Displays inventory stock levels with warehouse filtering
- * Uses StandardListPage for consistent UI
+ * Integrated with offline storage for offline-first functionality
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Tag, Select, Space, Button } from 'antd';
-import { InboxOutlined, WarningOutlined } from '@ant-design/icons';
-import { useQuery } from '@tanstack/react-query';
+import { Tag, Select, Space, Button, Badge, message } from 'antd';
+import {
+  InboxOutlined,
+  WarningOutlined,
+  SyncOutlined,
+  CloudOutlined,
+  DisconnectOutlined,
+} from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import inventoryServiceNew from '@/services/inventory/inventoryService';
 import StandardListPage from '@/components/common/StandardListPage';
 import { formatNumber } from '@/utils/responsive';
+import { offlineServices } from '@/services/offline-services';
+import { syncManager } from '@/lib/offline/sync-manager';
+import { logger } from '@/lib/logger/logger.service';
+import { Stock, SyncStatus } from '@/lib/offline/db';
 import type { ColumnsType } from 'antd/es/table';
 
 const { Option } = Select;
 
-interface Stock {
-  id: number;
-  productId: number;
-  product?: { id: number; name: string; sku: string };
-  warehouseId: number;
-  warehouse?: { id: number; name: string };
-  quantity: number;
-  reservedQuantity: number;
-  availableQuantity: number;
-  minQuantity: number;
-  maxQuantity: number;
-  lastUpdated: string;
-}
-
 export default function StockList() {
   const navigate = useNavigate();
-  const { t, i18n } = useTranslation(['inventory', 'commonUi']);
+  const { t, i18n } = useTranslation(['inventory', 'commonUi', 'common']);
   const [search, setSearch] = useState('');
-  const [warehouseFilter, setWarehouseFilter] = useState<number | undefined>();
+  const [warehouseFilter, setWarehouseFilter] = useState<string | undefined>();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [stocks, setStocks] = useState<Stock[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [queueSize, setQueueSize] = useState(0);
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['inventory', { page, pageSize, search, warehouseId: warehouseFilter }],
-    queryFn: () =>
-      inventoryServiceNew.getAll({ page, limit: pageSize, search, warehouseId: warehouseFilter }),
-  });
+  // Monitor network status
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      logger.info('StockList', 'Network connection restored');
+      message.success(t('common:messages.networkRestored'));
+    };
 
-  const { data: warehouses } = useQuery({
-    queryKey: ['warehouses'],
-    queryFn: () => inventoryServiceNew.getAll({ limit: 100 }),
-  });
+    const handleOffline = () => {
+      setIsOnline(false);
+      logger.warn('StockList', 'Network connection lost');
+      message.warning(t('common:messages.networkLost'));
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [t]);
+
+  // Load stocks from offline storage
+  const loadStocks = async () => {
+    setLoading(true);
+    try {
+      logger.debug('StockList', 'Loading stocks from offline storage');
+      let allStocks = await offlineServices.stocks.getAll();
+      
+      // Apply filters
+      let filtered = allStocks;
+      
+      // Search filter
+      if (search) {
+        const searchLower = search.toLowerCase();
+        filtered = filtered.filter(
+          (s) =>
+            s.productId.toLowerCase().includes(searchLower) ||
+            s.location?.toLowerCase().includes(searchLower)
+        );
+      }
+      
+      // Warehouse filter
+      if (warehouseFilter) {
+        filtered = filtered.filter(s => s.warehouseId === warehouseFilter);
+      }
+
+      setStocks(filtered);
+      logger.info('StockList', `Loaded ${filtered.length} stocks`);
+    } catch (error) {
+      logger.error('StockList', 'Failed to load stocks', error as Error);
+      message.error(t('inventory:messages.loadError'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Update queue size
+  const updateQueueSize = async () => {
+    try {
+      const size = await syncManager.getQueueSize();
+      setQueueSize(size);
+    } catch (error) {
+      logger.error('StockList', 'Failed to get queue size', error as Error);
+    }
+  };
+
+  // Auto-sync on mount if online
+  useEffect(() => {
+    const initializeData = async () => {
+      await loadStocks();
+      await updateQueueSize();
+
+      // Auto-sync if online and has token
+      if (isOnline) {
+        const token = localStorage.getItem('token');
+        if (token && !syncManager.isSyncing()) {
+          handleSync();
+        }
+      }
+    };
+
+    initializeData();
+  }, []);
+
+  // Reload when filters change
+  useEffect(() => {
+    loadStocks();
+  }, [search, warehouseFilter]);
+
+  // Handle sync
+  const handleSync = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      message.error(t('common:messages.loginRequired'));
+      return;
+    }
+
+    if (!isOnline) {
+      message.warning(t('common:messages.offlineMode'));
+      return;
+    }
+
+    setSyncing(true);
+    try {
+      logger.info('StockList', 'Starting manual sync');
+      const result = await syncManager.sync(token);
+      
+      if (result.success) {
+        message.success(
+          t('common:messages.syncSuccess', {
+            pulled: result.pulled,
+            pushed: result.pushed,
+          })
+        );
+        await loadStocks();
+        await updateQueueSize();
+      } else {
+        message.error(t('common:messages.syncError', { errors: result.errors.join(', ') }));
+      }
+    } catch (error) {
+      logger.error('StockList', 'Sync failed', error as Error);
+      message.error(t('common:messages.syncError', { errors: (error as Error).message }));
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const getStockStatus = (stock: Stock) => {
-    if (stock.availableQuantity <= stock.minQuantity) {
+    if (stock.availableQuantity <= stock.minStockLevel) {
       return { color: 'red', text: t('inventory:status.low') };
     }
-    if (stock.availableQuantity >= stock.maxQuantity) {
+    if (stock.availableQuantity >= stock.maxStockLevel) {
       return { color: 'orange', text: t('inventory:status.high') };
     }
     return { color: 'green', text: t('inventory:status.normal') };
   };
 
+  // Get paginated data
+  const paginatedStocks = stocks.slice((page - 1) * pageSize, page * pageSize);
+
   const columns: ColumnsType<Stock> = [
     {
-      title: t('inventory:columns.sku'),
-      dataIndex: ['product', 'sku'],
-      key: 'sku',
-      width: 120,
-      render: (sku: string) => sku || '-',
-    },
-    {
       title: t('inventory:columns.product'),
-      dataIndex: ['product', 'name'],
-      key: 'product',
+      dataIndex: 'productId',
+      key: 'productId',
       ellipsis: true,
-      render: (name: string) => name || '-',
     },
     {
       title: t('inventory:columns.warehouse'),
-      dataIndex: ['warehouse', 'name'],
-      key: 'warehouse',
+      dataIndex: 'warehouseId',
+      key: 'warehouseId',
       width: 150,
-      render: (name: string) => name || '-',
+      render: (id: string) => id || '-',
     },
     {
       title: t('inventory:columns.quantity'),
@@ -120,7 +232,7 @@ export default function StockList() {
       align: 'center',
       render: (_: any, record: Stock) => (
         <span style={{ fontSize: 12 }}>
-          {record.minQuantity} / {record.maxQuantity}
+          {record.minStockLevel} / {record.maxStockLevel}
         </span>
       ),
     },
@@ -131,6 +243,29 @@ export default function StockList() {
       render: (_: any, record: Stock) => {
         const status = getStockStatus(record);
         return <Tag color={status.color}>{status.text}</Tag>;
+      },
+    },
+    {
+      title: 'Sync',
+      dataIndex: 'syncStatus',
+      key: 'syncStatus',
+      width: 100,
+      render: (syncStatus: SyncStatus) => {
+        const colors = {
+          [SyncStatus.SYNCED]: 'success',
+          [SyncStatus.PENDING]: 'warning',
+          [SyncStatus.CONFLICT]: 'error',
+        };
+        const labels = {
+          [SyncStatus.SYNCED]: 'Synced',
+          [SyncStatus.PENDING]: 'Pending',
+          [SyncStatus.CONFLICT]: 'Conflict',
+        };
+        return (
+          <Tag color={colors[syncStatus] || 'default'}>
+            {labels[syncStatus] || 'Unknown'}
+          </Tag>
+        );
       },
     },
   ];
@@ -154,6 +289,34 @@ export default function StockList() {
           >
             {t('inventory:actions.lowStock')}
           </Button>
+          
+          {/* Network Status Badge */}
+          <Badge
+            status={isOnline ? 'success' : 'error'}
+            text={
+              <Space size="small">
+                {isOnline ? <CloudOutlined /> : <DisconnectOutlined />}
+                {isOnline ? 'Online' : 'Offline'}
+              </Space>
+            }
+          />
+          
+          {/* Sync Queue Indicator */}
+          {queueSize > 0 && (
+            <Badge count={queueSize} showZero={false}>
+              <Tag color="warning">Pending Sync</Tag>
+            </Badge>
+          )}
+
+          {/* Sync Button */}
+          <Button
+            icon={<SyncOutlined spin={syncing} />}
+            onClick={handleSync}
+            loading={syncing}
+            disabled={!isOnline}
+          >
+            {syncing ? 'Syncing...' : 'Sync Now'}
+          </Button>
         </Space>
       }
       searchPlaceholder={t('inventory:searchPlaceholder')}
@@ -167,21 +330,19 @@ export default function StockList() {
           onChange={setWarehouseFilter}
           allowClear
         >
-          {warehouses?.data?.map((w: any) => (
-            <Option key={w.id} value={w.id}>
-              {w.warehouse?.name || `${t('inventory:filters.warehouse')} ${w.id}`}
-            </Option>
-          ))}
+          {/* TODO: Load warehouses from offline storage */}
+          <Option value="warehouse-1">Warehouse 1</Option>
+          <Option value="warehouse-2">Warehouse 2</Option>
         </Select>
       }
       columns={columns}
-      dataSource={data?.data || []}
-      loading={isLoading}
+      dataSource={paginatedStocks}
+      loading={loading}
       rowKey="id"
       pagination={{
         current: page,
         pageSize,
-        total: data?.meta?.total || 0,
+        total: stocks.length,
         showTotal: (total) => t('inventory:messages.total', { total }),
         onChange: (newPage, newPageSize) => {
           setPage(newPage);

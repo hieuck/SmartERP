@@ -1,12 +1,12 @@
 /**
- * Purchase Order List Page
+ * Purchase Order List Page - Offline-First
  * Displays list of purchase orders with status filtering and approval workflow
- * Uses StandardListPage for consistent UI
+ * Integrated with offline storage for offline-first functionality
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Tag, Select, message, Dropdown, Button } from 'antd';
+import { Tag, Select, message, Dropdown, Button, Space, Badge, Modal } from 'antd';
 import type { MenuProps } from 'antd/es/menu';
 import {
   ShoppingOutlined,
@@ -16,89 +16,214 @@ import {
   MoreOutlined,
   CheckOutlined,
   CloseOutlined,
+  SyncOutlined,
+  CloudOutlined,
+  DisconnectOutlined,
 } from '@ant-design/icons';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import purchaseOrderService, {
-  PurchaseOrderStatus,
-} from '@/services/logistics/purchaseOrderService';
 import StandardListPage from '@/components/common/StandardListPage';
 import { formatCurrency } from '@/utils/responsive';
+import { offlineServices } from '@/services/offline-services';
+import { syncManager } from '@/lib/offline/sync-manager';
+import { logger } from '@/lib/logger/logger.service';
+import { PurchaseOrder, SyncStatus } from '@/lib/offline/db';
 import dayjs from 'dayjs';
 import type { ColumnsType } from 'antd/es/table';
 
 const { Option } = Select;
 
-interface PurchaseOrder {
-  id: number;
-  poNumber: string;
-  supplierId: number;
-  supplier?: { id: number; name: string };
-  orderDate: string;
-  expectedDate?: string;
-  status: PurchaseOrderStatus;
-  totalAmount: number;
-  items: any[];
-  notes?: string;
-  createdAt: string;
-}
-
-const statusColors: Record<PurchaseOrderStatus, string> = {
-  [PurchaseOrderStatus.DRAFT]: 'default',
-  [PurchaseOrderStatus.PENDING]: 'blue',
-  [PurchaseOrderStatus.APPROVED]: 'cyan',
-  [PurchaseOrderStatus.ORDERED]: 'orange',
-  [PurchaseOrderStatus.RECEIVED]: 'green',
-  [PurchaseOrderStatus.CANCELLED]: 'red',
+const statusColors: Record<string, string> = {
+  draft: 'default',
+  pending: 'blue',
+  approved: 'cyan',
+  ordered: 'orange',
+  received: 'green',
+  cancelled: 'red',
 };
 
 export default function PurchaseOrderList() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const { t, i18n } = useTranslation(['purchaseOrders', 'commonUi']);
+  const { t, i18n } = useTranslation(['purchaseOrders', 'commonUi', 'common']);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<PurchaseOrderStatus | undefined>();
+  const [statusFilter, setStatusFilter] = useState<string | undefined>();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [queueSize, setQueueSize] = useState(0);
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['purchase-orders', { page, pageSize, search, status: statusFilter }],
-    queryFn: () =>
-      purchaseOrderService.getAll({ page, limit: pageSize, search, status: statusFilter }),
-  });
+  // Monitor network status
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      logger.info('PurchaseOrderList', 'Network connection restored');
+      message.success(t('common:messages.networkRestored'));
+    };
 
-  const approveMutation = useMutation({
-    mutationFn: (id: number) => purchaseOrderService.approve(id),
-    onSuccess: () => {
+    const handleOffline = () => {
+      setIsOnline(false);
+      logger.warn('PurchaseOrderList', 'Network connection lost');
+      message.warning(t('common:messages.networkLost'));
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [t]);
+
+  // Load purchase orders from offline storage
+  const loadPurchaseOrders = async () => {
+    setLoading(true);
+    try {
+      logger.debug('PurchaseOrderList', 'Loading purchase orders from offline storage');
+      let allOrders = await offlineServices.purchaseOrders.getAll();
+      
+      // Apply filters
+      let filtered = allOrders;
+      
+      // Search filter
+      if (search) {
+        const searchLower = search.toLowerCase();
+        filtered = filtered.filter(
+          (po) =>
+            po.poNumber.toLowerCase().includes(searchLower) ||
+            po.notes?.toLowerCase().includes(searchLower)
+        );
+      }
+      
+      // Status filter
+      if (statusFilter) {
+        filtered = filtered.filter(po => po.status === statusFilter);
+      }
+
+      setPurchaseOrders(filtered);
+      logger.info('PurchaseOrderList', `Loaded ${filtered.length} purchase orders`);
+    } catch (error) {
+      logger.error('PurchaseOrderList', 'Failed to load purchase orders', error as Error);
+      message.error(t('purchaseOrders:messages.loadError'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Update queue size
+  const updateQueueSize = async () => {
+    try {
+      const size = await syncManager.getQueueSize();
+      setQueueSize(size);
+    } catch (error) {
+      logger.error('PurchaseOrderList', 'Failed to get queue size', error as Error);
+    }
+  };
+
+  // Auto-sync on mount if online
+  useEffect(() => {
+    const initializeData = async () => {
+      await loadPurchaseOrders();
+      await updateQueueSize();
+
+      // Auto-sync if online and has token
+      if (isOnline) {
+        const token = localStorage.getItem('token');
+        if (token && !syncManager.isSyncing()) {
+          handleSync();
+        }
+      }
+    };
+
+    initializeData();
+  }, []);
+
+  // Reload when filters change
+  useEffect(() => {
+    loadPurchaseOrders();
+  }, [search, statusFilter]);
+
+  // Handle sync
+  const handleSync = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      message.error(t('common:messages.loginRequired'));
+      return;
+    }
+
+    if (!isOnline) {
+      message.warning(t('common:messages.offlineMode'));
+      return;
+    }
+
+    setSyncing(true);
+    try {
+      logger.info('PurchaseOrderList', 'Starting manual sync');
+      const result = await syncManager.sync(token);
+      
+      if (result.success) {
+        message.success(
+          t('common:messages.syncSuccess', {
+            pulled: result.pulled,
+            pushed: result.pushed,
+          })
+        );
+        await loadPurchaseOrders();
+        await updateQueueSize();
+      } else {
+        message.error(t('common:messages.syncError', { errors: result.errors.join(', ') }));
+      }
+    } catch (error) {
+      logger.error('PurchaseOrderList', 'Sync failed', error as Error);
+      message.error(t('common:messages.syncError', { errors: (error as Error).message }));
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  // Handle approve
+  const handleApprove = async (po: PurchaseOrder) => {
+    try {
+      logger.info('PurchaseOrderList', `Approving purchase order: ${po.id}`);
+      await offlineServices.purchaseOrders.update(po.id, { status: 'approved' });
       message.success(t('purchaseOrders:messages.approveSuccess'));
-      queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
-    },
-    onError: () => {
+      await loadPurchaseOrders();
+      await updateQueueSize();
+    } catch (error) {
+      logger.error('PurchaseOrderList', 'Failed to approve purchase order', error as Error);
       message.error(t('purchaseOrders:messages.approveError'));
-    },
-  });
+    }
+  };
 
-  const cancelMutation = useMutation({
-    mutationFn: (id: number) => purchaseOrderService.cancel(id),
-    onSuccess: () => {
+  // Handle cancel
+  const handleCancel = async (po: PurchaseOrder) => {
+    try {
+      logger.info('PurchaseOrderList', `Cancelling purchase order: ${po.id}`);
+      await offlineServices.purchaseOrders.update(po.id, { status: 'cancelled' });
       message.success(t('purchaseOrders:messages.cancelSuccess'));
-      queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
-    },
-    onError: () => {
+      await loadPurchaseOrders();
+      await updateQueueSize();
+    } catch (error) {
+      logger.error('PurchaseOrderList', 'Failed to cancel purchase order', error as Error);
       message.error(t('purchaseOrders:messages.cancelError'));
-    },
-  });
+    }
+  };
 
-  const deleteMutation = useMutation({
-    mutationFn: (id: number) => purchaseOrderService.delete(id),
-    onSuccess: () => {
+  // Handle delete
+  const handleDelete = async (po: PurchaseOrder) => {
+    try {
+      logger.info('PurchaseOrderList', `Deleting purchase order: ${po.id}`);
+      await offlineServices.purchaseOrders.delete(po.id);
       message.success(t('purchaseOrders:messages.deleteSuccess'));
-      queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
-    },
-    onError: () => {
+      await loadPurchaseOrders();
+      await updateQueueSize();
+    } catch (error) {
+      logger.error('PurchaseOrderList', 'Failed to delete purchase order', error as Error);
       message.error(t('purchaseOrders:messages.deleteError'));
-    },
-  });
+    }
+  };
 
   const getActionMenu = (record: PurchaseOrder): MenuProps['items'] => [
     {
@@ -107,18 +232,17 @@ export default function PurchaseOrderList() {
       label: t('purchaseOrders:actions.viewDetail'),
       onClick: () => navigate(`/dashboard/orders/purchase/${record.id}`),
     },
-    ...(record.status === PurchaseOrderStatus.PENDING
+    ...(record.status === 'pending'
       ? [
           {
             key: 'approve',
             icon: <CheckOutlined />,
             label: t('purchaseOrders:actions.approve'),
-            onClick: () => approveMutation.mutate(record.id),
+            onClick: () => handleApprove(record),
           },
         ]
       : []),
-    ...(record.status !== PurchaseOrderStatus.RECEIVED &&
-    record.status !== PurchaseOrderStatus.CANCELLED
+    ...(record.status !== 'received' && record.status !== 'cancelled'
       ? [
           {
             key: 'edit',
@@ -128,30 +252,38 @@ export default function PurchaseOrderList() {
           },
         ]
       : []),
-    ...(record.status !== PurchaseOrderStatus.RECEIVED &&
-    record.status !== PurchaseOrderStatus.CANCELLED
+    ...(record.status !== 'received' && record.status !== 'cancelled'
       ? [
           {
             key: 'cancel',
             icon: <CloseOutlined />,
             label: t('purchaseOrders:actions.cancel'),
             danger: true,
-            onClick: () => cancelMutation.mutate(record.id),
+            onClick: () => handleCancel(record),
           },
         ]
       : []),
-    ...(record.status === PurchaseOrderStatus.DRAFT
+    ...(record.status === 'draft'
       ? [
           {
             key: 'delete',
             icon: <DeleteOutlined />,
             label: t('purchaseOrders:actions.delete'),
             danger: true,
-            onClick: () => deleteMutation.mutate(record.id),
+            onClick: () => {
+              Modal.confirm({
+                title: t('purchaseOrders:messages.deleteConfirm'),
+                content: t('purchaseOrders:messages.deleteDescription'),
+                onOk: () => handleDelete(record),
+              });
+            },
           },
         ]
       : []),
   ];
+
+  // Get paginated data
+  const paginatedOrders = purchaseOrders.slice((page - 1) * pageSize, page * pageSize);
 
   const columns: ColumnsType<PurchaseOrder> = [
     {
@@ -171,24 +303,24 @@ export default function PurchaseOrderList() {
     },
     {
       title: t('purchaseOrders:columns.supplier'),
-      dataIndex: ['supplier', 'name'],
-      key: 'supplier',
+      dataIndex: 'supplierId',
+      key: 'supplierId',
       ellipsis: true,
-      render: (name: string) => name || '-',
+      render: (supplierId: string) => supplierId || '-',
     },
     {
       title: t('purchaseOrders:columns.orderDate'),
       dataIndex: 'orderDate',
       key: 'orderDate',
       width: 120,
-      render: (date: string) => dayjs(date).format('DD/MM/YYYY'),
+      render: (date: Date) => dayjs(date).format('DD/MM/YYYY'),
     },
     {
       title: t('purchaseOrders:columns.expectedDate'),
       dataIndex: 'expectedDate',
       key: 'expectedDate',
       width: 120,
-      render: (date: string) => (date ? dayjs(date).format('DD/MM/YYYY') : '-'),
+      render: (date: Date) => (date ? dayjs(date).format('DD/MM/YYYY') : '-'),
     },
     {
       title: t('purchaseOrders:columns.totalAmount'),
@@ -203,9 +335,34 @@ export default function PurchaseOrderList() {
       dataIndex: 'status',
       key: 'status',
       width: 140,
-      render: (status: PurchaseOrderStatus) => (
-        <Tag color={statusColors[status]}>{t(`purchaseOrders:status.${status}`)}</Tag>
+      render: (status: string) => (
+        <Tag color={statusColors[status] || 'default'}>
+          {status?.toUpperCase() || 'DRAFT'}
+        </Tag>
       ),
+    },
+    {
+      title: 'Sync',
+      dataIndex: 'syncStatus',
+      key: 'syncStatus',
+      width: 100,
+      render: (syncStatus: SyncStatus) => {
+        const colors = {
+          [SyncStatus.SYNCED]: 'success',
+          [SyncStatus.PENDING]: 'warning',
+          [SyncStatus.CONFLICT]: 'error',
+        };
+        const labels = {
+          [SyncStatus.SYNCED]: 'Synced',
+          [SyncStatus.PENDING]: 'Pending',
+          [SyncStatus.CONFLICT]: 'Conflict',
+        };
+        return (
+          <Tag color={colors[syncStatus] || 'default'}>
+            {labels[syncStatus] || 'Unknown'}
+          </Tag>
+        );
+      },
     },
     {
       title: t('commonUi:table.actions'),
@@ -241,34 +398,53 @@ export default function PurchaseOrderList() {
           onChange={setStatusFilter}
           allowClear
         >
-          <Option value={PurchaseOrderStatus.DRAFT}>
-            {t('purchaseOrders:status.draft')}
-          </Option>
-          <Option value={PurchaseOrderStatus.PENDING}>
-            {t('purchaseOrders:status.pending')}
-          </Option>
-          <Option value={PurchaseOrderStatus.APPROVED}>
-            {t('purchaseOrders:status.approved')}
-          </Option>
-          <Option value={PurchaseOrderStatus.ORDERED}>
-            {t('purchaseOrders:status.ordered')}
-          </Option>
-          <Option value={PurchaseOrderStatus.RECEIVED}>
-            {t('purchaseOrders:status.received')}
-          </Option>
-          <Option value={PurchaseOrderStatus.CANCELLED}>
-            {t('purchaseOrders:status.cancelled')}
-          </Option>
+          <Option value="draft">{t('purchaseOrders:status.draft')}</Option>
+          <Option value="pending">{t('purchaseOrders:status.pending')}</Option>
+          <Option value="approved">{t('purchaseOrders:status.approved')}</Option>
+          <Option value="ordered">{t('purchaseOrders:status.ordered')}</Option>
+          <Option value="received">{t('purchaseOrders:status.received')}</Option>
+          <Option value="cancelled">{t('purchaseOrders:status.cancelled')}</Option>
         </Select>
       }
+      extraActions={
+        <Space>
+          {/* Network Status Badge */}
+          <Badge
+            status={isOnline ? 'success' : 'error'}
+            text={
+              <Space size="small">
+                {isOnline ? <CloudOutlined /> : <DisconnectOutlined />}
+                {isOnline ? 'Online' : 'Offline'}
+              </Space>
+            }
+          />
+          
+          {/* Sync Queue Indicator */}
+          {queueSize > 0 && (
+            <Badge count={queueSize} showZero={false}>
+              <Tag color="warning">Pending Sync</Tag>
+            </Badge>
+          )}
+
+          {/* Sync Button */}
+          <Button
+            icon={<SyncOutlined spin={syncing} />}
+            onClick={handleSync}
+            loading={syncing}
+            disabled={!isOnline}
+          >
+            {syncing ? 'Syncing...' : 'Sync Now'}
+          </Button>
+        </Space>
+      }
       columns={columns}
-      dataSource={data?.data || []}
-      loading={isLoading}
+      dataSource={paginatedOrders}
+      loading={loading}
       rowKey="id"
       pagination={{
         current: page,
         pageSize,
-        total: data?.meta?.total || 0,
+        total: purchaseOrders.length,
         showTotal: (total) => t('purchaseOrders:messages.total', { total }),
         onChange: (newPage, newPageSize) => {
           setPage(newPage);
