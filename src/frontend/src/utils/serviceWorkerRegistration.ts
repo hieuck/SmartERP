@@ -4,6 +4,10 @@
  * Requirements: 22.10, 24.4
  */
 
+import { logger } from '@/lib/logger/logger.service';
+
+const context = 'ServiceWorkerRegistration';
+
 export function register() {
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
@@ -12,9 +16,7 @@ export function register() {
       navigator.serviceWorker
         .register(swUrl)
         .then((registration) => {
-          if (import.meta.env.DEV) {
-            console.log('Service Worker registered:', registration);
-          }
+          logger.info(context, 'Service Worker registered', { registration: registration.scope });
 
           // Check for updates periodically
           setInterval(() => {
@@ -28,9 +30,7 @@ export function register() {
                 if (installingWorker.state === 'installed') {
                   if (navigator.serviceWorker.controller) {
                     // New content available, notify user
-                    if (import.meta.env.DEV) {
-                      console.log('New content available, please refresh.');
-                    }
+                    logger.info(context, 'New content available, please refresh');
 
                     // Optionally show a notification to the user
                     if (window.confirm('New version available! Reload to update?')) {
@@ -38,9 +38,7 @@ export function register() {
                     }
                   } else {
                     // Content cached for offline use
-                    if (import.meta.env.DEV) {
-                      console.log('Content cached for offline use.');
-                    }
+                    logger.info(context, 'Content cached for offline use');
                   }
                 }
               };
@@ -48,9 +46,7 @@ export function register() {
           };
         })
         .catch((error) => {
-          if (import.meta.env.DEV) {
-            console.error('Service Worker registration failed:', error);
-          }
+          logger.error(context, 'Service Worker registration failed', error);
         });
     });
   }
@@ -63,7 +59,7 @@ export function unregister() {
         registration.unregister();
       })
       .catch((error) => {
-        console.error('Service Worker unregistration failed:', error);
+        logger.error(context, 'Service Worker unregistration failed', error);
       });
   }
 }

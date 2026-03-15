@@ -1,4 +1,7 @@
 import { Workbox } from 'workbox-window';
+import { logger } from '@/lib/logger/logger.service';
+
+const context = 'ServiceWorkerRegister';
 
 export function registerServiceWorker() {
   if ('serviceWorker' in navigator) {
@@ -6,39 +9,39 @@ export function registerServiceWorker() {
 
     wb.addEventListener('installed', (event) => {
       if (event.isUpdate) {
-        console.log('New service worker installed, reloading...');
+        logger.info(context, 'New service worker installed, reloading...');
         window.location.reload();
       } else {
-        console.log('Service worker installed for the first time');
+        logger.info(context, 'Service worker installed for the first time');
       }
     });
 
     wb.addEventListener('waiting', () => {
-      console.log('Service worker waiting to activate');
+      logger.info(context, 'Service worker waiting to activate');
       // Optionally show a prompt to user to reload
     });
 
     wb.addEventListener('controlling', () => {
-      console.log('Service worker is now controlling the page');
+      logger.info(context, 'Service worker is now controlling the page');
     });
 
     wb.addEventListener('activated', (event) => {
       if (!event.isUpdate) {
-        console.log('Service worker activated for the first time');
+        logger.info(context, 'Service worker activated for the first time');
       }
     });
 
     wb.register()
       .then((registration) => {
-        console.log('Service worker registered:', registration);
+        logger.info(context, 'Service worker registered', { scope: registration?.scope });
       })
       .catch((error) => {
-        console.error('Service worker registration failed:', error);
+        logger.error(context, 'Service worker registration failed', error);
       });
 
     return wb;
   }
 
-  console.warn('Service workers are not supported in this browser');
+  logger.warn(context, 'Service workers are not supported in this browser');
   return null;
 }

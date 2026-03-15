@@ -4,6 +4,10 @@
  * Requirements: 22.10, 24.4
  */
 
+import { logger } from '@/lib/logger/logger.service';
+
+const context = 'PerformanceMonitor';
+
 export interface PerformanceEntryWithStartTime extends PerformanceEntry {
   startTime: number;
 }
@@ -68,19 +72,23 @@ class PerformanceMonitor {
       const metrics = this.getPageLoadMetrics();
 
       if (metrics) {
-        console.group('Performance Metrics');
-        console.log(`Page Load Time: ${metrics.pageLoadTime}ms`);
-        console.log(`DOM Content Loaded: ${metrics.domContentLoaded}ms`);
-        console.log(`Time To Interactive: ${metrics.timeToInteractive}ms`);
-        console.log(`First Contentful Paint: ${metrics.firstContentfulPaint}ms`);
-        console.log(`Largest Contentful Paint: ${metrics.largestContentfulPaint}ms`);
-        console.groupEnd();
+        logger.debug(context, 'Performance Metrics', {
+          pageLoadTime: `${metrics.pageLoadTime}ms`,
+          domContentLoaded: `${metrics.domContentLoaded}ms`,
+          timeToInteractive: `${metrics.timeToInteractive}ms`,
+          firstContentfulPaint: `${metrics.firstContentfulPaint}ms`,
+          largestContentfulPaint: `${metrics.largestContentfulPaint}ms`,
+        });
 
         // Check against requirements
         if (metrics.pageLoadTime > 3000) {
-          console.warn('⚠️ Page load time exceeds 3 seconds (Requirement 22.10)');
+          logger.warn(context, 'Page load time exceeds 3 seconds (Requirement 22.10)', {
+            pageLoadTime: metrics.pageLoadTime,
+          });
         } else {
-          console.log('✅ Page load time meets requirements');
+          logger.info(context, 'Page load time meets requirements', {
+            pageLoadTime: metrics.pageLoadTime,
+          });
         }
       }
     }
