@@ -1,241 +1,172 @@
 #!/bin/bash
 
-# Production Deployment Script for SmartERP
-# This script automates the deployment process
+# SmartERP Production Deployment Script
+# Usage: ./deploy-production.sh
 
-set -e  # Exit on error
+set -e
 
-# Colors
-GREEN='\033[0;32m'
 RED='\033[0;31m'
+GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-# Configuration
-REPO_URL="https://github.com/your-org/smart-erp.git"
-DEPLOY_DIR="/opt/smart-erp"
-BACKUP_DIR="/backups/smart-erp"
-LOG_FILE="/var/log/smart-erp-deploy.log"
+PROJECT_DIR="/opt/smart-erp"
+BACKUP_DIR="/opt/backups/smart-erp"
+DOCKER_COMPOSE_FILE="config/docker/docker-compose.production.yml"
+TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 
-# Functions
-log() {
-    echo -e "${BLUE}[$(date +'%Y-%m-%d %H:%M:%S')]${NC} $1" | tee -a $LOG_FILE
-}
+print_success() { echo -e "${GREEN}✅ $1${NC}"; }
+print_error() { echo -e "${RED}❌ $1${NC}"; }
+print_warning() { echo -e "${YELLOW}⚠️  $1${NC}"; }
+print_info() { echo -e "ℹ️  $1"; }
 
-success() {
-    echo -e "${GREEN}✓${NC} $1" | tee -a $LOG_FILE
-}
-
-error() {
-    echo -e "${RED}✗${NC} $1" | tee -a $LOG_FILE
-}
-
-warning() {
-    echo -e "${YELLOW}⚠${NC} $1" | tee -a $LOG_FILE
-}
-
-# Banner
-echo ""
-echo -e "${BLUE}╔════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║   SMARTERP - PRODUCTION DEPLOY        ║${NC}"
-echo -e "${BLUE}╔════════════════════════════════════════╗${NC}"
+echo "=========================================="
+echo "SmartERP Production Deployment"
+echo "Timestamp: $TIMESTAMP"
+echo "=========================================="
 echo ""
 
-# Check if running as root
-if [ "$EUID" -ne 0 ]; then 
-    error "Please run as root or with sudo"
+# Pre-flight checks
+echo "Step 1: Pre-flight checks..."
+
+if [ "$EUID" -ne 0 ]; then
+    print_error "Please run as root or with sudo"
     exit 1
 fi
 
-log "Starting production deployment..."
+for cmd in docker docker-compose git psql curl; do
+    if ! command -v "$cmd" >/dev/null 2>&1; then
+        print_error "$cmd is not installed"
+        exit 1
+    fi
+done
 
-# Step 1: Pre-deployment checks
-log "Step 1: Running pre-deployment checks..."
-
-# Check Docker
-if ! command -v docker &> /dev/null; then
-    error "Docker is not installed"
-    exit 1
-fi
-success "Docker installed"
-
-# Check Docker Compose
-if ! command -v docker-compose &> /dev/null; then
-    error "Docker Compose is not installed"
-    exit 1
-fi
-success "Docker Compose installed"
-
-# Check disk space (need at least 10GB)
-AVAILABLE_SPACE=$(df -BG / | awk 'NR==2 {print $4}' | sed 's/G//')
-if [ $AVAILABLE_SPACE -lt 10 ]; then
-    error "Insufficient disk space. Need at least 10GB, have ${AVAILABLE_SPACE}GB"
-    exit 1
-fi
-success "Sufficient disk space: ${AVAILABLE_SPACE}GB available"
-
-# Step 2: Backup existing deployment
-log "Step 2: Creating backup..."
-
-if [ -d "$DEPLOY_DIR" ]; then
-    BACKUP_NAME="backup_$(date +%Y%m%d_%H%M%S)"
-    mkdir -p $BACKUP_DIR
-    
-    # Backup database
-    log "Backing up database..."
-    docker exec postgres pg_dumpall -U postgres > $BACKUP_DIR/${BACKUP_NAME}_db.sql 2>/dev/null || true
-    
-    # Backup configuration
-    log "Backing up configuration..."
-    cp -r $DEPLOY_DIR/.env* $BACKUP_DIR/${BACKUP_NAME}_config/ 2>/dev/null || true
-    
-    # Compress backup
-    tar -czf $BACKUP_DIR/${BACKUP_NAME}.tar.gz $BACKUP_DIR/${BACKUP_NAME}_* 2>/dev/null || true
-    rm -rf $BACKUP_DIR/${BACKUP_NAME}_* 2>/dev/null || true
-    
-    success "Backup created: ${BACKUP_NAME}.tar.gz"
-else
-    warning "No existing deployment to backup"
-fi
-
-# Step 3: Clone/Update repository
-log "Step 3: Updating code..."
-
-if [ -d "$DEPLOY_DIR" ]; then
-    cd $DEPLOY_DIR
-    log "Pulling latest changes..."
-    git pull origin main
-else
-    log "Cloning repository..."
-    git clone $REPO_URL $DEPLOY_DIR
-    cd $DEPLOY_DIR
-fi
-
-success "Code updated"
-
-# Step 4: Environment configuration
-log "Step 4: Configuring environment..."
-
-if [ ! -f ".env" ]; then
-    warning ".env file not found. Please create it before continuing."
-    echo "Copy .env.example to .env and configure:"
-    echo "  cp .env.example .env"
-    echo "  nano .env"
+if [ ! -d "$PROJECT_DIR" ]; then
+    print_error "Project directory $PROJECT_DIR does not exist"
     exit 1
 fi
 
-success "Environment configured"
+cd "$PROJECT_DIR"
 
-# Step 5: Stop existing services
-log "Step 5: Stopping existing services..."
-
-if docker-compose ps | grep -q "Up"; then
-    docker-compose down
-    success "Services stopped"
-else
-    warning "No running services to stop"
+if [ ! -f ".env.production" ]; then
+    print_error ".env.production file not found"
+    exit 1
 fi
 
-# Step 6: Build images
-log "Step 6: Building Docker images..."
+print_success "Pre-flight checks passed"
+echo ""
 
-docker-compose build --no-cache
-success "Images built"
+# Confirmation
+echo "Step 2: Deployment confirmation..."
+print_warning "You are about to deploy to PRODUCTION"
+read -p "Type 'deploy' to confirm: " confirm
 
-# Step 7: Start services
-log "Step 7: Starting services..."
+if [ "$confirm" != "deploy" ]; then
+    print_error "Deployment cancelled"
+    exit 0
+fi
 
-docker-compose up -d
-success "Services started"
+print_success "Deployment confirmed"
+echo ""
 
-# Wait for services to be ready
-log "Waiting for services to be ready..."
+# Create backup
+echo "Step 3: Creating backup..."
+mkdir -p "$BACKUP_DIR"
+
+source .env.production
+if [ -n "$DB_HOST" ] && [ -n "$DB_USERNAME" ] && [ -n "$DB_DATABASE" ]; then
+    PGPASSWORD=$DB_PASSWORD pg_dump -h $DB_HOST -U $DB_USERNAME -d $DB_DATABASE > "$BACKUP_DIR/database-$TIMESTAMP.sql"
+    print_success "Database backup created"
+fi
+
+tar -czf "$BACKUP_DIR/app-$TIMESTAMP.tar.gz" --exclude='node_modules' --exclude='dist' --exclude='.git' .
+print_success "Application backup created"
+echo ""
+
+# Pull latest code
+echo "Step 4: Pulling latest code..."
+git fetch origin
+git checkout main
+git pull origin main
+print_success "Code updated"
+echo ""
+
+# Build Docker images
+echo "Step 5: Building Docker images..."
+cd src/backend
+docker build -t smart-erp-backend:latest -t smart-erp-backend:$TIMESTAMP .
+print_success "Backend image built"
+
+cd ../frontend
+docker build -t smart-erp-frontend:latest -t smart-erp-frontend:$TIMESTAMP .
+print_success "Frontend image built"
+
+cd "$PROJECT_DIR"
+echo ""
+
+# Run migrations
+echo "Step 6: Running database migrations..."
+cd src/backend
+npm ci --only=production --silent
+npm run migration:show
+
+read -p "Run migrations? (yes/no): " run_migrations
+if [ "$run_migrations" == "yes" ]; then
+    npm run migration:run
+    print_success "Migrations completed"
+fi
+
+cd "$PROJECT_DIR"
+echo ""
+
+# Deploy
+echo "Step 7: Deploying containers..."
+docker-compose -f "$DOCKER_COMPOSE_FILE" down
+docker-compose -f "$DOCKER_COMPOSE_FILE" up -d
 sleep 10
 
-# Step 8: Run database migrations
-log "Step 8: Running database migrations..."
-
-docker-compose exec -T api-gateway npm run migration:run || warning "Migration failed or already up to date"
-success "Migrations completed"
-
-# Step 9: Health checks
-log "Step 9: Running health checks..."
-
-HEALTH_CHECK_PASSED=true
-
-# Check PostgreSQL
-if docker exec postgres pg_isready > /dev/null 2>&1; then
-    success "PostgreSQL: healthy"
-else
-    error "PostgreSQL: unhealthy"
-    HEALTH_CHECK_PASSED=false
-fi
-
-# Check Redis
-if docker exec redis redis-cli ping > /dev/null 2>&1; then
-    success "Redis: healthy"
-else
-    error "Redis: unhealthy"
-    HEALTH_CHECK_PASSED=false
-fi
-
-# Check API Gateway
-if curl -f http://localhost:3000/health > /dev/null 2>&1; then
-    success "API Gateway: healthy"
-else
-    error "API Gateway: unhealthy"
-    HEALTH_CHECK_PASSED=false
-fi
-
-# Check Landing Page
-if curl -f http://localhost:3016 > /dev/null 2>&1; then
-    success "Landing Page: healthy"
-else
-    error "Landing Page: unhealthy"
-    HEALTH_CHECK_PASSED=false
-fi
-
-# Step 10: Verify deployment
-log "Step 10: Verifying deployment..."
-
-RUNNING_SERVICES=$(docker-compose ps | grep "Up" | wc -l)
-log "Running services: $RUNNING_SERVICES"
-
-if [ $RUNNING_SERVICES -lt 15 ]; then
-    error "Not all services are running. Expected 15+, got $RUNNING_SERVICES"
-    HEALTH_CHECK_PASSED=false
-fi
-
-# Step 11: Final report
-echo ""
-echo -e "${BLUE}╔════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║        DEPLOYMENT SUMMARY              ║${NC}"
-echo -e "${BLUE}╚════════════════════════════════════════╝${NC}"
+print_success "Containers started"
 echo ""
 
-if [ "$HEALTH_CHECK_PASSED" = true ]; then
-    success "Deployment completed successfully!"
-    echo ""
-    log "Services accessible at:"
-    log "  - Landing Page: http://localhost:3016"
-    log "  - Frontend App: http://localhost:5175"
-    log "  - API Gateway:  http://localhost:3000"
-    echo ""
-    log "Next steps:"
-    log "  1. Configure SSL/TLS (see docs/SSL-TLS-SETUP-GUIDE.md)"
-    log "  2. Configure DNS records"
-    log "  3. Run final system tests: ./scripts/final-system-test.sh"
-    echo ""
-    exit 0
+# Health checks
+echo "Step 8: Running health checks..."
+sleep 30
+
+BACKEND_HEALTH=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/health)
+if [ "$BACKEND_HEALTH" == "200" ]; then
+    print_success "Backend is healthy"
 else
-    error "Deployment completed with errors!"
-    echo ""
-    log "Please check the logs:"
-    log "  docker-compose logs"
-    echo ""
-    log "To rollback, restore from backup:"
-    log "  tar -xzf $BACKUP_DIR/backup_*.tar.gz"
-    echo ""
+    print_error "Backend health check failed"
     exit 1
 fi
+
+FRONTEND_HEALTH=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:80)
+if [ "$FRONTEND_HEALTH" == "200" ]; then
+    print_success "Frontend is accessible"
+else
+    print_error "Frontend check failed"
+    exit 1
+fi
+
+echo ""
+
+# Summary
+echo "=========================================="
+echo "Deployment Summary"
+echo "=========================================="
+print_success "Deployment completed successfully!"
+echo ""
+echo "Details:"
+echo "  - Timestamp: $TIMESTAMP"
+echo "  - Commit: $(git rev-parse --short HEAD)"
+echo ""
+echo "Backups:"
+echo "  - Database: $BACKUP_DIR/database-$TIMESTAMP.sql"
+echo "  - Application: $BACKUP_DIR/app-$TIMESTAMP.tar.gz"
+echo ""
+echo "Next Steps:"
+echo "  1. Monitor application for 24 hours"
+echo "  2. Check error rates in Sentry"
+echo "  3. Monitor performance in Grafana"
+echo ""
+echo "=========================================="

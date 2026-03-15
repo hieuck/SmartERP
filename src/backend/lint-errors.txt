@@ -1,0 +1,2006 @@
+﻿
+> @smart-erp/monolith-app@1.0.0 lint
+> eslint "{src,apps,libs}/**/*.ts" --fix
+
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\common\cache\cache-warming.service.spec.ts
+   45:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   58:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   75:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   89:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   92:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   95:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  106:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  107:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  108:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  117:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  129:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  132:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  135:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  157:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  176:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  195:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  205:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  208:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  211:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  225:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  238:45  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  284:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  300:49  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  311:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  321:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  322:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  323:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  335:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  336:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  337:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\common\cache\cache.service.spec.ts
+  9:7  error  'cacheManager' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\common\controllers\metrics.controller.spec.ts
+  179:59  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  187:64  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\common\database\database-monitoring.service.spec.ts
+   66:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   83:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   96:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  107:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  118:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  142:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  151:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  173:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  193:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  201:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  218:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  227:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  365:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  368:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  371:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  374:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  377:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  380:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  390:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  392:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\common\database\database-monitoring.service.ts
+  117:47  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\common\gdpr\gdpr.controller.spec.ts
+   65:8  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   82:8  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  100:8  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\common\gdpr\gdpr.service.spec.ts
+   27:22  warning  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+   45:28  warning  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+   65:30  warning  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+  146:69  warning  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+  147:63  warning  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+  166:69  warning  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+  167:63  warning  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+  181:69  warning  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+  182:68  warning  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+  200:71  warning  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+  201:61  warning  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+  213:69  warning  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+  224:69  warning  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+  239:71  warning  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+  315:13  error    '_revokedConsent' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  351:68  warning  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+  371:60  warning  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+  434:72  warning  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+  458:72  warning  Unexpected any. Specify a different type              @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\common\guards\throttler.guard.ts
+  37:50  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\common\interceptors\cache.interceptor.ts
+  36:85  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  75:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\common\interceptors\tenant-isolation.interceptor.ts
+  27:71  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  49:41  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\common\logger\alert.service.spec.ts
+  15:30  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\common\logger\alert.service.ts
+  14:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\common\logger\logger.service.ts
+  1:58  error  'Scope' is defined but never used  @typescript-eslint/no-unused-vars
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\common\logger\logging.interceptor.ts
+  17:71  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\common\metrics\metrics.interceptor.ts
+  10:71  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\common\metrics\metrics.service.spec.ts
+    3:30  error    'Gauge' is defined but never used         @typescript-eslint/no-unused-vars
+   31:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   32:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   36:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   40:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   41:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   45:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   46:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   50:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  196:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  203:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  211:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\common\metrics\metrics.service.ts
+  2:37  error  'register' is defined but never used  @typescript-eslint/no-unused-vars
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\common\middleware\tenant-context.middleware.ts
+  19:31  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\common\security\permission.service.spec.ts
+   91:73  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  260:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  269:70  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  310:63  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  319:73  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  361:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  362:71  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\common\security\permission.service.ts
+  59:33  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  61:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\common\security\secure-repository.ts
+   5:69  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  19:57  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  29:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  35:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  42:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  45:74  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  50:60  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  53:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  54:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  57:43  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  62:35  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  69:61  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\common\sync\dto\push.dto.ts
+  7:9  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\common\sync\dto\resolve-conflict.dto.ts
+  27:16  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\common\sync\sync.service.ts
+    9:14  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+   10:15  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  101:9   error    Unexpected lexical declaration in case block  no-case-declarations
+  111:9   error    Unexpected lexical declaration in case block  no-case-declarations
+  121:9   error    Unexpected lexical declaration in case block  no-case-declarations
+  122:9   error    Unexpected lexical declaration in case block  no-case-declarations
+  155:9   error    Unexpected lexical declaration in case block  no-case-declarations
+  165:9   error    Unexpected lexical declaration in case block  no-case-declarations
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\config\sentry.config.ts
+  22:3   warning  Unexpected console statement              no-console
+  77:73  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  93:70  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\core\auth\auth.controller.spec.ts
+  41:7  error  'jwtService' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\core\auth\auth.service.spec.ts
+    4:33  error    'BadRequestException' is defined but never used        @typescript-eslint/no-unused-vars
+   16:23  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+   17:7   error    'tenantRepository' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   17:25  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+   18:19  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+   19:7   error    'cacheService' is assigned a value but never used      @typescript-eslint/no-unused-vars
+   19:21  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+   20:30  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+   21:30  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  125:29  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\core\auth\auth.service.ts
+  129:23  error  '_password' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\core\auth\interfaces\jwt-payload.interface.ts
+  12:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\core\auth\services\account-lockout.service.spec.ts
+  20:9  error  '_MAX_ATTEMPTS' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\core\auth\services\two-factor-auth.service.spec.ts
+  240:60  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\core\permission\permission.controller.spec.ts
+  187:66  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  242:72  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  272:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\core\permission\permission.service.spec.ts
+   92:64  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   97:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  132:64  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  137:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  177:79  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  200:79  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  215:79  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  397:84  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  445:76  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  459:76  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  481:76  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\core\settings\settings.controller.spec.ts
+  143:33  error  Require statement not part of import statement  @typescript-eslint/no-var-requires
+  244:33  error  Require statement not part of import statement  @typescript-eslint/no-var-requires
+  279:33  error  Require statement not part of import statement  @typescript-eslint/no-var-requires
+  303:33  error  Require statement not part of import statement  @typescript-eslint/no-var-requires
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\core\settings\settings.service.spec.ts
+   83:77  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   84:77  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  225:60  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  226:70  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  270:60  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  271:70  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\core\tenant\onboarding.service.spec.ts
+   16:7   error    'permissionService' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   30:25  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+   43:33  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+   50:32  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  119:12  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  149:12  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  164:12  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  177:12  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  204:12  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  279:59  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  287:14  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  327:12  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\core\tenant\subscription.service.spec.ts
+  10:29  error  'BadRequestException' is defined but never used  @typescript-eslint/no-unused-vars
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\core\tenant\tenant.controller.spec.ts
+   75:32  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  196:33  error    Require statement not part of import statement  @typescript-eslint/no-var-requires
+  269:33  error    Require statement not part of import statement  @typescript-eslint/no-var-requires
+  294:33  error    Require statement not part of import statement  @typescript-eslint/no-var-requires
+  384:38  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  385:34  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  407:40  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  408:36  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  533:40  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  564:37  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  571:39  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  655:33  error    Require statement not part of import statement  @typescript-eslint/no-var-requires
+  731:35  error    Require statement not part of import statement  @typescript-eslint/no-var-requires
+  758:35  error    Require statement not part of import statement  @typescript-eslint/no-var-requires
+  772:33  error    Require statement not part of import statement  @typescript-eslint/no-var-requires
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\core\tenant\tenant.service.spec.ts
+   21:7   error    'permissionService' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   88:36  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  107:60  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  108:83  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  124:60  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  125:83  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  144:79  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  160:60  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  161:83  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  187:75  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  203:75  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  336:76  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  447:72  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  448:58  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  528:75  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\core\user\user.service.spec.ts
+   16:7   error    'userRepository' is assigned a value but never used     @typescript-eslint/no-unused-vars
+   17:7   error    'permissionService' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   57:34  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+   76:25  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  125:25  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\core\user\user.service.ts
+  32:23  error  '_' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  65:23  error  '_' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\accounting\account\account.controller.spec.ts
+  40:9  error  '_mockJournalEntry' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  51:9  error  '_mockInvoice' is assigned a value but never used       @typescript-eslint/no-unused-vars
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\accounting\account\account.controller.ts
+  177:71  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\accounting\account\account.service.spec.ts
+  363:73  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  393:74  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  394:71  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  409:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\accounting\account\account.service.ts
+  343:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  364:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\accounting\bank-reconciliation\bank-reconciliation.controller.spec.ts
+   39:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   43:24  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   57:24  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  139:79  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  170:73  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  195:80  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\accounting\bank-reconciliation\bank-reconciliation.service.spec.ts
+   18:7   error    'permissionService' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   24:7   error    '_permissionService' is defined but never used          @typescript-eslint/no-unused-vars
+   32:8   warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+   44:12  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+   55:11  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+   72:11  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  174:75  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  177:50  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  202:60  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  206:50  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  219:38  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  232:38  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  247:38  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  260:38  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  294:38  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  308:85  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  309:73  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  335:38  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  348:85  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  349:73  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  372:38  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  385:85  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  407:38  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  420:85  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  444:38  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  457:85  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  458:73  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  469:76  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  521:44  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  585:38  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  591:12  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  612:38  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  618:12  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  644:38  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  650:12  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  662:38  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\accounting\bank-reconciliation\bank-reconciliation.service.ts
+    3:28  error    'Between' is defined but never used       @typescript-eslint/no-unused-vars
+  208:90  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\accounting\payment\payment.service.spec.ts
+   11:7   error    'permissionService' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   15:7   error    '_permissionService' is defined but never used          @typescript-eslint/no-unused-vars
+  136:54  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\accounting\reports\dto\get-inventory-summary.dto.ts
+  1:10  error  'IsDateString' is defined but never used  @typescript-eslint/no-unused-vars
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\accounting\reports\dto\get-inventory-valuation.dto.ts
+  1:10  error  'IsDateString' is defined but never used  @typescript-eslint/no-unused-vars
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\accounting\reports\reports.controller.spec.ts
+   48:24  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  240:62  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  352:68  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  400:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\accounting\reports\reports.service.spec.ts
+   16:7   error    'accountRepository' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   17:7   error    'result' is defined but never used                      @typescript-eslint/no-unused-vars
+   17:15  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+   18:7   error    'permissionService' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   20:7   error    '_accountRepository' is defined but never used          @typescript-eslint/no-unused-vars
+   24:7   error    '_permissionService' is defined but never used          @typescript-eslint/no-unused-vars
+  103:43  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  141:45  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  166:45  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  176:45  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  213:45  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  225:80  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  240:45  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  291:76  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  312:76  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  344:76  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  359:76  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  387:76  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\accounting\reports\reports.service.ts
+  273:86  warning  Unexpected any. Specify a different type                                       @typescript-eslint/no-explicit-any
+  398:5   error    'warehouseId' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+  431:5   error    'productId' is defined but never used. Allowed unused args must match /^_/u    @typescript-eslint/no-unused-vars
+  432:5   error    'warehouseId' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\ecommerce\order\checkout.controller.spec.ts
+  144:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  150:76  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  254:74  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  297:85  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  322:74  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  334:74  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  362:74  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\ecommerce\order\checkout.controller.ts
+  16:64  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  17:11  error    '_tenantId' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  27:59  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  28:11  error    '_tenantId' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\ecommerce\order\checkout.service.spec.ts
+   15:7   error    'permissionService' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   20:7   error    '_permissionService' is defined but never used          @typescript-eslint/no-unused-vars
+   75:29  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  287:71  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  303:71  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  321:71  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  338:71  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\ecommerce\order\checkout.service.ts
+  52:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\ecommerce\order\dto\create-order.dto.ts
+  45:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  80:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  95:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\ecommerce\order\dto\payment.dto.ts
+  28:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\ecommerce\order\entities\order-item.entity.ts
+  46:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\ecommerce\order\entities\order.entity.ts
+  13:18  error    'UserEntity' is defined but never used    @typescript-eslint/no-unused-vars
+  94:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  97:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\ecommerce\order\order.controller.spec.ts
+   33:7   error    'response' is defined but never used      @typescript-eslint/no-unused-vars
+   33:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  182:58  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  209:61  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  228:61  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  244:61  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  260:61  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  276:61  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  292:61  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  370:68  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  399:69  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  428:59  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  458:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  477:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  488:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  499:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  531:63  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\ecommerce\order\order.controller.ts
+   39:57  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+   40:11  error    '_tenantId' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   74:18  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  113:94  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  114:11  error    '_tenantId' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  124:82  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  125:11  error    '_tenantId' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\ecommerce\order\order.service.spec.ts
+   16:7   error    'permissionService' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   20:7   error    '_permissionService' is defined but never used          @typescript-eslint/no-unused-vars
+   34:25  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+   97:25  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  174:59  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  175:56  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  187:59  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  188:56  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  201:59  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  202:56  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  212:59  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  246:44  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  314:78  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  725:78  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  773:55  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  777:71  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\ecommerce\order\order.service.ts
+  73:53  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\ecommerce\order\payment.service.spec.ts
+   14:7   error    'permissionService' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   17:7   error    '_permissionService' is defined but never used          @typescript-eslint/no-unused-vars
+   33:28  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+   35:36  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  143:12  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  189:12  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  204:12  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  219:12  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  234:12  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  260:12  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  263:29  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  289:62  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  293:12  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  312:62  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  316:12  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  326:62  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  330:12  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  340:62  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  344:12  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  354:62  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  358:12  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  368:62  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  379:62  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  401:62  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  405:12  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  428:64  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  440:62  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  444:12  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  457:62  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  461:12  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  474:62  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  478:12  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  491:62  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  495:12  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  508:62  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  520:62  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  524:12  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  537:62  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  547:62  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  573:56  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  578:68  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  589:12  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  597:62  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  616:69  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  620:12  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\ecommerce\order\payment.service.ts
+  212:5  error  'token' is defined but never used. Allowed unused args must match /^_/u    @typescript-eslint/no-unused-vars
+  213:5  error  'details' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+  225:5  error  'token' is defined but never used. Allowed unused args must match /^_/u    @typescript-eslint/no-unused-vars
+  226:5  error  'details' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+  238:5  error  'details' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+  250:5  error  'details' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\ecommerce\product-catalog\dto\create-product.dto.ts
+  149:14  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\ecommerce\product-catalog\entities\product-catalog.entity.ts
+  104:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\ecommerce\product-catalog\product-catalog.controller.spec.ts
+  171:62  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  248:64  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  260:64  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  288:63  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  317:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  346:66  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  376:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  443:68  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  473:72  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  505:70  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  543:73  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  575:77  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\ecommerce\product-catalog\product-catalog.controller.ts
+  34:53  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  78:57  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\ecommerce\product-catalog\product-catalog.service.spec.ts
+  11:7  error  'permissionService' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  14:7  error  '_permissionService' is defined but never used          @typescript-eslint/no-unused-vars
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\ecommerce\shopping-cart\shopping-cart.controller.spec.ts
+  150:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  163:64  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  181:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  182:60  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  252:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  253:71  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  272:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  273:71  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  285:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  298:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  321:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  322:63  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  334:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  353:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  354:60  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  367:66  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  368:60  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  390:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  391:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  405:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  440:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  441:71  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  454:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  455:62  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  476:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  477:78  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  515:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  516:77  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\ecommerce\shopping-cart\shopping-cart.service.spec.ts
+  15:7  error  'permissionService' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  20:7  error  '_permissionService' is defined but never used          @typescript-eslint/no-unused-vars
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\hr\attendance\attendance.controller.spec.ts
+   50:8   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   57:8   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  226:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\hr\leave\leave.controller.spec.ts
+  52:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  72:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\hr\leave\leave.controller.ts
+  80:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\hr\leave\leave.service.spec.ts
+  121:59  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  193:59  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  212:73  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  214:59  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  232:59  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  250:59  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  275:63  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  276:71  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  277:71  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  300:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  311:71  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  312:71  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  326:71  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  327:71  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  358:63  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  378:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  398:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  415:73  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  481:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  587:77  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  588:77  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  589:66  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  608:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  614:71  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  632:59  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  653:59  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\hr\management\management.controller.spec.ts
+  130:73  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  161:76  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  194:74  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  228:77  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  284:72  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  302:72  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  322:72  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  343:78  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  367:71  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  382:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  397:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  419:68  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  439:68  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  463:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\hr\management\management.controller.ts
+   18:62  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   23:87  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   31:14  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   40:14  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   55:14  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   65:14  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   73:14  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   82:14  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   88:59  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   96:14  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  104:14  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  113:14  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  118:82  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\hr\management\management.service.spec.ts
+  16:7   error    'permissionService' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  22:7   error    '_permissionService' is defined but never used          @typescript-eslint/no-unused-vars
+  39:36  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  68:23  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\hr\payroll\payroll.controller.spec.ts
+  189:85  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  229:82  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  255:84  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  289:71  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  343:66  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  369:74  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  387:71  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  417:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  450:59  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  492:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\hr\payroll\payroll.service.spec.ts
+   30:8   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   53:8   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  103:79  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  118:79  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  128:79  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  138:79  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  147:69  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  148:79  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  157:69  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  158:79  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  194:55  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  208:72  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  238:74  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  248:63  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  293:63  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  304:63  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  315:63  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  326:63  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  362:47  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  438:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  450:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  476:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  481:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  513:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  517:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  519:68  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  531:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  543:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  565:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  569:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  589:74  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  608:72  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  614:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\hr\role\entities\role.entity.ts
+  32:64  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\hr\role\role.controller.spec.ts
+   41:24  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  310:72  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\hr\role\role.service.spec.ts
+  113:36  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  139:36  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  397:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  400:44  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  400:59  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  584:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  585:41  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  585:54  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  590:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  590:43  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  591:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\inventory\category\category.controller.spec.ts
+  134:64  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  177:63  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  210:58  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  224:78  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  237:68  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  262:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  288:66  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  304:59  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  344:63  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  359:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  374:62  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\inventory\category\category.service.spec.ts
+   13:7   error    'categoryRepository' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   14:7   error    'result' is defined but never used                       @typescript-eslint/no-unused-vars
+   14:15  warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+   15:7   error    'cacheService' is assigned a value but never used        @typescript-eslint/no-unused-vars
+   16:7   error    'permissionService' is assigned a value but never used   @typescript-eslint/no-unused-vars
+   18:7   error    '_categoryRepository' is defined but never used          @typescript-eslint/no-unused-vars
+   19:7   error    '_cacheService' is defined but never used                @typescript-eslint/no-unused-vars
+   20:7   error    '_permissionService' is defined but never used           @typescript-eslint/no-unused-vars
+   21:27  warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+   90:38  warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  356:28  warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  358:28  warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  372:28  warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  373:28  warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\inventory\category\category.service.ts
+   50:54  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   58:57  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   58:80  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   85:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  136:66  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  174:56  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  187:68  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  187:91  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  218:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\inventory\product\product.controller.spec.ts
+  118:62  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  145:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  154:70  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  163:72  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  194:64  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  205:77  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  215:77  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  225:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  246:63  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  268:58  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  281:58  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  294:63  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  307:63  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  331:62  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  342:66  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\inventory\product\product.service.spec.ts
+  14:7   error    'productRepository' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  15:7   error    'result' is defined but never used                      @typescript-eslint/no-unused-vars
+  15:15  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  16:7   error    'cacheService' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  17:7   error    'permissionService' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  19:7   error    '_productRepository' is defined but never used          @typescript-eslint/no-unused-vars
+  20:7   error    '_cacheService' is defined but never used               @typescript-eslint/no-unused-vars
+  21:7   error    '_permissionService' is defined but never used          @typescript-eslint/no-unused-vars
+  22:26  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  91:37  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\inventory\product\product.service.ts
+  80:53  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\inventory\serial-batch\serial-batch.controller.spec.ts
+   91:77  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  125:69  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  148:86  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  159:79  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  171:78  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\inventory\serial-batch\serial-batch.service.spec.ts
+   31:8   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   38:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   54:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   61:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   69:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   73:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  194:31  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  330:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  377:72  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  403:72  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  416:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  425:79  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  426:79  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  445:79  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  463:79  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  464:79  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  523:31  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  577:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\inventory\serial-batch\serial-batch.service.ts
+  41:64  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  73:64  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\inventory\stock\stock.controller.spec.ts
+   98:58  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  110:61  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  118:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  127:69  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  149:70  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  159:72  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  180:77  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  190:59  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  211:56  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  222:66  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  234:58  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  246:58  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  257:70  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  268:68  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\inventory\stock\stock.service.spec.ts
+   60:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   65:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   69:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  160:93  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  177:93  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  194:93  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  372:93  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  386:93  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  400:93  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  411:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  416:93  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  428:66  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  433:93  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  444:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  456:66  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  461:93  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  480:93  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  515:93  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  551:93  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  760:93  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  781:93  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  801:93  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  816:93  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\inventory\stock\stock.service.ts
+  33:30  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\inventory\valuation\valuation.controller.spec.ts
+   7:44  error    'HttpException' is defined but never used       @typescript-eslint/no-unused-vars
+   7:59  error    'HttpStatus' is defined but never used          @typescript-eslint/no-unused-vars
+  16:9   error    '_mockUser' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  52:70  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  64:73  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  98:71  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\inventory\valuation\valuation.controller.ts
+  24:78  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\inventory\valuation\valuation.service.spec.ts
+    3:32  error    'SelectQueryBuilder' is defined but never used  @typescript-eslint/no-unused-vars
+   23:22  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+   35:10  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  162:26  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  203:87  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  334:86  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  360:86  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  375:86  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  390:86  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\manufacturing\bom\bom.controller.spec.ts
+   97:54  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  127:55  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  148:63  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  158:78  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  169:55  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  180:58  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  191:66  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\manufacturing\bom\bom.service.spec.ts
+  9:24  error  'BOMLineItemDto' is defined but never used  @typescript-eslint/no-unused-vars
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\manufacturing\mrp\production.service.spec.ts
+   20:15  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+   21:7   error    'permissionService' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   29:7   error    '_permissionService' is defined but never used          @typescript-eslint/no-unused-vars
+  163:13  error    '_result' is assigned a value but never used            @typescript-eslint/no-unused-vars
+  172:13  error    '_result' is assigned a value but never used            @typescript-eslint/no-unused-vars
+  235:13  error    '_result' is assigned a value but never used            @typescript-eslint/no-unused-vars
+  242:79  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  244:13  error    '_result' is assigned a value but never used            @typescript-eslint/no-unused-vars
+  322:13  error    '_result' is assigned a value but never used            @typescript-eslint/no-unused-vars
+  330:79  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  332:13  error    '_result' is assigned a value but never used            @typescript-eslint/no-unused-vars
+  371:13  error    '_result' is assigned a value but never used            @typescript-eslint/no-unused-vars
+  381:12  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  383:13  error    '_result' is assigned a value but never used            @typescript-eslint/no-unused-vars
+  395:12  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  397:13  error    '_result' is assigned a value but never used            @typescript-eslint/no-unused-vars
+  409:12  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  411:13  error    '_result' is assigned a value but never used            @typescript-eslint/no-unused-vars
+  422:12  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  424:13  error    '_result' is assigned a value but never used            @typescript-eslint/no-unused-vars
+  464:13  error    '_result' is assigned a value but never used            @typescript-eslint/no-unused-vars
+  481:13  error    '_result' is assigned a value but never used            @typescript-eslint/no-unused-vars
+  495:12  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  497:13  error    '_result' is assigned a value but never used            @typescript-eslint/no-unused-vars
+  509:13  error    '_result' is assigned a value but never used            @typescript-eslint/no-unused-vars
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\manufacturing\mrp\production.service.ts
+  46:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  50:66  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  51:64  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  53:30  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  58:33  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\manufacturing\work-center\work-center.controller.spec.ts
+  127:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  202:66  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  231:69  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  271:71  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  317:68  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  376:68  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  390:71  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  399:69  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  432:68  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\manufacturing\work-order\entities\work-order.entity.ts
+  17:18  error  'UserEntity' is defined but never used  @typescript-eslint/no-unused-vars
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\manufacturing\work-order\work-order.controller.spec.ts
+   30:7   error    'response' is defined but never used      @typescript-eslint/no-unused-vars
+   30:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  138:66  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  218:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  253:66  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  279:69  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  333:72  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  375:68  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  423:70  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  478:70  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  495:71  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  542:66  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  557:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  566:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\project\entities\project.entity.ts
+  14:18  error  'UserEntity' is defined but never used  @typescript-eslint/no-unused-vars
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\project\entities\task.entity.ts
+  14:18  error  'UserEntity' is defined but never used  @typescript-eslint/no-unused-vars
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\project\entities\time-entry.entity.ts
+  13:18  error  'UserEntity' is defined but never used  @typescript-eslint/no-unused-vars
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\project\project.controller.spec.ts
+  141:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  219:60  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  231:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  244:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  257:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  312:60  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  333:63  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  362:66  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  398:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  436:62  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  453:71  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  499:85  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  517:73  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  544:70  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  557:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  608:62  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  624:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  657:62  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\project\project.service.spec.ts
+   13:7   error    'permissionService' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  162:76  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  178:76  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  189:67  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  205:12  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  215:81  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  222:12  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  236:59  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  263:12  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  277:80  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  298:76  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\project\task.controller.spec.ts
+  160:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  259:54  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  271:59  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  284:59  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  297:59  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  310:59  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  336:57  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  365:60  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  401:59  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  432:56  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  449:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  474:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  516:79  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  564:69  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  651:84  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  693:69  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  739:63  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  764:56  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  780:59  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  789:62  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  823:56  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  861:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\project\task.service.spec.ts
+   18:15  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  332:13  error    '_result' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  359:13  error    '_result' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  379:13  error    '_result' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  586:52  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  590:13  error    '_result' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  620:13  error    '_result' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  628:13  error    '_result' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\project\task.service.ts
+  320:35  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\project\time-tracking.controller.spec.ts
+  136:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  226:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  241:64  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  253:72  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  266:72  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  279:72  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  292:72  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  306:72  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  332:70  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  367:68  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  665:69  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  680:72  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  689:69  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  735:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  770:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\project\time-tracking.service.spec.ts
+  144:66  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  145:69  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  187:66  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  188:69  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  207:66  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  208:69  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  354:66  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  355:69  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  405:66  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  406:69  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  424:66  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  425:69  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  452:66  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  453:69  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\purchasing\supplier\supplier.controller.spec.ts
+  138:62  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  171:61  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  183:66  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  194:66  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  219:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  232:76  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  261:73  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  273:75  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  284:75  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  322:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  368:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  455:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  478:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  519:64  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  552:74  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  570:74  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  601:79  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  629:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  646:71  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  676:75  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  730:64  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  743:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  752:64  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  795:64  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  823:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  843:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\purchasing\supplier\supplier.service.spec.ts
+  14:7  error  'permissionService' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  18:7  error  '_permissionService' is defined but never used          @typescript-eslint/no-unused-vars
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\sales\crm\crm.controller.spec.ts
+  126:58  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  155:61  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  192:80  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  220:62  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  283:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  318:74  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  347:75  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  384:94  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  412:68  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  493:60  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  524:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  541:63  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\sales\crm\crm.service.spec.ts
+   18:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   19:30  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   35:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   69:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   78:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   85:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   90:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  103:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  104:41  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  636:71  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\sales\customer\customer.controller.spec.ts
+  135:71  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  183:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  197:61  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  197:69  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  209:55  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  220:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  231:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  245:68  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  257:61  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  269:61  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  281:74  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  293:76  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  304:64  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  313:64  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  324:54  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  336:53  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  349:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  349:73  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  395:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  454:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  472:68  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  510:86  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  523:75  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  537:75  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  574:79  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  616:79  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  629:72  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  652:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  664:76  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  703:62  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\sales\customer\customer.service.spec.ts
+   14:7   error    'customerRepository' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   15:7   error    'result' is defined but never used                       @typescript-eslint/no-unused-vars
+   15:15  warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+   16:7   error    'permissionService' is assigned a value but never used   @typescript-eslint/no-unused-vars
+   18:7   error    '_customerRepository' is defined but never used          @typescript-eslint/no-unused-vars
+   20:7   error    '_permissionService' is defined but never used           @typescript-eslint/no-unused-vars
+   87:38  warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  382:75  warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  585:74  warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  586:75  warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  642:74  warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  643:75  warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\sales\order\entities\order.entity.ts
+  36:54  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\sales\order\order.controller.spec.ts
+   37:17  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  151:56  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  153:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  171:63  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  173:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  185:72  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  187:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  199:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  212:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  224:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  236:70  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  238:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  273:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  285:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  298:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  322:64  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  324:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  340:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  352:63  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  354:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  366:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  378:61  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  380:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  407:59  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  409:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  447:58  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  449:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  513:61  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  515:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  552:67  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  554:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  592:63  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  594:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  629:59  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  631:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  670:64  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  672:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  708:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\domains\sales\order\order.service.spec.ts
+   14:7   error    'permissionService' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   16:7   error    '_orderRepository' is defined but never used            @typescript-eslint/no-unused-vars
+   18:7   error    '_permissionService' is defined but never used          @typescript-eslint/no-unused-vars
+   34:68  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+   84:35  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  456:50  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  457:50  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\integrations\payment-gateway\payment-gateway.controller.spec.ts
+   28:9   error    '_mockUser' is assigned a value but never used         @typescript-eslint/no-unused-vars
+   35:9   error    '_mockTransaction' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  109:78  warning  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\integrations\payment-gateway\payment-gateway.service.spec.ts
+   15:7   error    'paymentWebhookRepo' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   16:7   error    'result' is defined but never used                       @typescript-eslint/no-unused-vars
+   16:15  warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+   17:7   error    'permissionService' is assigned a value but never used   @typescript-eslint/no-unused-vars
+   20:7   error    '_paymentWebhookRepo' is defined but never used          @typescript-eslint/no-unused-vars
+   25:7   error    '_permissionService' is defined but never used           @typescript-eslint/no-unused-vars
+  171:13  error    '_saveSpy' is assigned a value but never used            @typescript-eslint/no-unused-vars
+  202:13  error    '_saveSpy' is assigned a value but never used            @typescript-eslint/no-unused-vars
+  234:13  error    '_saveSpy' is assigned a value but never used            @typescript-eslint/no-unused-vars
+  254:35  warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  463:75  warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  464:74  warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  494:70  warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  526:70  warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  553:71  warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  564:71  warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  584:70  warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  632:13  error    '_saveSpy' is assigned a value but never used            @typescript-eslint/no-unused-vars
+  662:13  error    '_saveSpy' is assigned a value but never used            @typescript-eslint/no-unused-vars
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\integrations\payment-gateway\payment-gateway.service.ts
+  369:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\integrations\payment-gateway\providers\momo\momo.service.spec.ts
+   18:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   43:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   44:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   45:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   55:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   56:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   57:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  339:35  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  344:35  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  349:35  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  354:35  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\integrations\payment-gateway\providers\vnpay\vnpay.service.spec.ts
+  287:62  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\integrations\shipping\providers\ghtk\ghtk.service.spec.ts
+   50:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   51:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  243:36  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  249:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  254:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\integrations\shipping\providers\viettelpost\viettelpost.service.spec.ts
+   48:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   49:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   55:39  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   59:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  255:36  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  261:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  266:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\integrations\shipping\providers\vnpost\vnpost.service.spec.ts
+   39:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   40:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  175:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  176:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\integrations\shipping\shipping.controller.spec.ts
+   27:9   error    '_mockUser' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  112:12  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  160:67  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  187:14  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  213:14  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  267:73  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  319:72  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  359:69  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  379:68  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  395:68  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  413:68  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  431:68  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  449:68  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  467:68  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  484:61  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  494:73  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  519:12  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  544:72  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\integrations\shipping\shipping.service.spec.ts
+   15:7   error    'permissionService' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   23:7   error    '_permissionService' is defined but never used          @typescript-eslint/no-unused-vars
+  281:36  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  335:13  error    '_saveSpy' is assigned a value but never used           @typescript-eslint/no-unused-vars
+  449:36  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\integrations\shipping\shipping.service.ts
+   44:21  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  269:11  error    Unexpected lexical declaration in case block  no-case-declarations
+  290:11  error    Unexpected lexical declaration in case block  no-case-declarations
+  577:18  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\main.ts
+  110:22  error  Require statement not part of import statement  @typescript-eslint/no-var-requires
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\platform\audit\audit.controller.spec.ts
+   25:17  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  104:54  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  106:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  126:54  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  128:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  148:54  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  150:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  170:54  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  172:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  192:54  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  194:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  215:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  226:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  253:59  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  255:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  274:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  341:57  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  343:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  361:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  423:68  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  425:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  449:73  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  451:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  461:68  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  486:68  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  521:64  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\platform\audit\audit.service.spec.ts
+   11:7   error    'permissionService' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   15:7   error    '_permissionService' is defined but never used          @typescript-eslint/no-unused-vars
+   88:62  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  109:62  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\platform\dashboard\dashboard-mobile.controller.spec.ts
+   66:9   error    '_mockTopProductsChart' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  172:76  warning  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  193:71  warning  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  260:78  warning  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  272:78  warning  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  284:78  warning  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  299:80  warning  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  312:72  warning  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  338:73  warning  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  356:73  warning  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  387:78  warning  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  399:78  warning  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  414:80  warning  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  454:86  warning  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  466:86  warning  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  481:88  warning  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  521:76  warning  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  539:78  warning  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  557:86  warning  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  566:78  warning  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+  575:78  warning  Unexpected any. Specify a different type                    @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\platform\dashboard\dashboard.controller.spec.ts
+  155:70  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  175:71  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  242:74  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  254:74  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  269:76  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  292:74  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  307:76  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  319:76  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  334:78  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  363:78  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  375:78  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  390:80  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  419:88  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  459:70  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  477:76  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  495:76  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  504:74  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  524:52  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\platform\dashboard\dashboard.service.spec.ts
+   26:8   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   88:64  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   93:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   94:68  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   96:66  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  118:64  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  137:66  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  154:64  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  178:64  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  200:68  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\platform\dashboard\dashboard.service.ts
+  252:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  370:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  370:53  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  415:45  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  494:58  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\platform\document\document.controller.spec.ts
+   30:17  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  128:62  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  130:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  141:62  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  143:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  155:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  182:61  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  184:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  196:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  207:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  233:62  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  235:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  267:62  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  268:66  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  270:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  281:62  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  284:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  316:68  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  318:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  342:67  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  344:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  376:64  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  378:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  397:64  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  399:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  424:69  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  426:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  468:62  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  470:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  541:63  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  558:91  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  569:90  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  585:65  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  626:62  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  627:66  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  629:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\platform\document\document.service.spec.ts
+   12:7   error    'permissionService' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   16:7   error    '_permissionService' is defined but never used          @typescript-eslint/no-unused-vars
+   94:19  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  111:19  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  129:19  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  141:19  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  150:65  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  167:65  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  184:19  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  186:70  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  188:13  error    '_result' is assigned a value but never used            @typescript-eslint/no-unused-vars
+  200:19  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  202:74  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  217:19  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  220:13  error    '_result' is assigned a value but never used            @typescript-eslint/no-unused-vars
+  234:81  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\platform\email\email.controller.spec.ts
+   30:17  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  126:68  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  128:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  140:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  166:71  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  168:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  206:12  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  208:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  230:12  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  232:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  279:72  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  281:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  348:64  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  350:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  376:64  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  378:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  407:61  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  409:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  456:72  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  458:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  487:72  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  528:72  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  548:58  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  550:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  562:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  577:58  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  579:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  594:66  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  596:13  error    '_response' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  623:64  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  643:64  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  654:64  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  664:64  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  681:64  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  691:72  warning  Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\platform\email\email.service.spec.ts
+   15:7   error    'permissionService' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   20:7   error    '_permissionService' is defined but never used          @typescript-eslint/no-unused-vars
+  115:19  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  129:19  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  149:19  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  163:19  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  176:19  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  192:19  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  209:19  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  222:19  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  237:19  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  251:19  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  252:65  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  282:19  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  285:13  error    '_result' is assigned a value but never used            @typescript-eslint/no-unused-vars
+  300:19  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  302:74  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  324:19  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  340:19  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  341:55  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  343:13  error    '_result' is assigned a value but never used            @typescript-eslint/no-unused-vars
+  367:19  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  368:55  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  397:19  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  398:55  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  400:13  error    '_result' is assigned a value but never used            @typescript-eslint/no-unused-vars
+  415:19  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  416:19  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  418:55  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  420:13  error    '_result' is assigned a value but never used            @typescript-eslint/no-unused-vars
+  445:19  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  446:19  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  448:55  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  468:19  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  482:19  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  497:19  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  510:19  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  524:19  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\platform\issue-tracking\issue-tracking.controller.spec.ts
+  146:66  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  168:74  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  185:66  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  223:73  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  246:73  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  270:73  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  292:69  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  310:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  346:69  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  365:69  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  399:75  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  421:76  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  439:74  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  474:70  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  492:72  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  530:72  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  553:76  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  587:70  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  627:66  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  647:91  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  661:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  672:94  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  689:73  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  701:89  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\platform\issue-tracking\issue-tracking.service.spec.ts
+   15:7   error    'attachmentRepository' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   16:7   error    'result' is defined but never used                         @typescript-eslint/no-unused-vars
+   16:15  warning  Unexpected any. Specify a different type                   @typescript-eslint/no-explicit-any
+   20:7   error    '_attachmentRepository' is defined but never used          @typescript-eslint/no-unused-vars
+   43:8   warning  Unexpected any. Specify a different type                   @typescript-eslint/no-explicit-any
+  167:78  warning  Unexpected any. Specify a different type                   @typescript-eslint/no-explicit-any
+  191:78  warning  Unexpected any. Specify a different type                   @typescript-eslint/no-explicit-any
+  209:78  warning  Unexpected any. Specify a different type                   @typescript-eslint/no-explicit-any
+  228:78  warning  Unexpected any. Specify a different type                   @typescript-eslint/no-explicit-any
+  263:62  warning  Unexpected any. Specify a different type                   @typescript-eslint/no-explicit-any
+  287:63  warning  Unexpected any. Specify a different type                   @typescript-eslint/no-explicit-any
+  307:61  warning  Unexpected any. Specify a different type                   @typescript-eslint/no-explicit-any
+  326:65  warning  Unexpected any. Specify a different type                   @typescript-eslint/no-explicit-any
+  342:63  warning  Unexpected any. Specify a different type                   @typescript-eslint/no-explicit-any
+  366:63  warning  Unexpected any. Specify a different type                   @typescript-eslint/no-explicit-any
+  384:63  warning  Unexpected any. Specify a different type                   @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\platform\notification\notification.controller.spec.ts
+  108:70  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  138:70  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  167:79  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  195:79  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  202:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  252:74  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  290:72  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  316:72  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  343:87  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  374:76  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  404:71  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  452:77  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  481:73  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  537:72  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  560:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  574:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  588:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  619:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  635:69  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  654:70  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  670:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  688:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\platform\report\dto\create-report.dto.ts
+  34:11  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  42:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  59:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\platform\report\dto\execute-report.dto.ts
+  11:16  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\platform\report\entities\report-execution.entity.ts
+  11:18  error    'UserEntity' is defined but never used    @typescript-eslint/no-unused-vars
+  35:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  39:11  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\platform\report\entities\report.entity.ts
+  50:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  53:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  59:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\platform\report\report-template.service.spec.ts
+  225:61  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  227:61  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  228:61  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  234:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  264:61  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  266:53  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  267:53  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  283:61  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  285:68  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  286:53  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\platform\report\report-template.service.ts
+  26:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  28:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\platform\report\report.controller.spec.ts
+  196:60  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  218:62  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  240:58  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  270:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  299:61  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  334:63  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  409:63  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  436:85  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  513:64  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  533:64  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  549:66  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  584:73  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  601:73  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  633:69  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  737:74  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  772:64  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  792:83  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  815:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  840:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  857:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  896:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\platform\report\report.controller.ts
+  154:68  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\platform\report\report.service.spec.ts
+   39:8   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   50:8   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  124:61  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  209:64  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  253:61  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  315:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  316:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  322:62  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  323:68  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  333:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  349:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  378:71  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  379:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  381:62  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  382:68  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  409:79  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  410:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  412:62  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  413:68  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\platform\report\report.service.ts
+    7:10  error    'ReportType' is defined but never used                                  @typescript-eslint/no-unused-vars
+   83:69  error    'user' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+   93:46  error    'user' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+  105:5   error    'user' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+  125:5   error    'user' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+  146:17  warning  Unexpected any. Specify a different type                                @typescript-eslint/no-explicit-any
+  191:58  warning  Unexpected any. Specify a different type                                @typescript-eslint/no-explicit-any
+  191:90  warning  Unexpected any. Specify a different type                                @typescript-eslint/no-explicit-any
+  279:45  warning  Unexpected any. Specify a different type                                @typescript-eslint/no-explicit-any
+  280:54  warning  Unexpected any. Specify a different type                                @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\platform\search\search.service.spec.ts
+  117:80  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  121:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  125:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  152:80  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  156:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  160:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  183:80  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  184:81  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  188:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  216:80  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  217:81  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  218:78  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  235:80  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  236:81  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  237:78  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  253:80  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  254:81  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  255:78  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  272:80  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  273:81  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  274:78  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  294:80  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  295:81  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  296:78  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\platform\search\search.service.ts
+  55:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\platform\support\support.controller.spec.ts
+  247:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  270:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  282:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  293:68  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  318:88  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  336:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  351:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  371:61  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  385:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  398:62  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  412:82  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  445:83  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  459:87  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  472:84  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  489:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  522:69  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  537:66  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  550:70  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  564:90  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  592:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  605:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  625:83  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  639:87  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  650:87  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  661:84  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  678:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  706:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  718:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  738:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  752:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  773:14  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  807:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\platform\support\support.service.spec.ts
+  179:72  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  197:57  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  209:57  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  220:57  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  238:75  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  254:75  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  272:75  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  290:75  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  327:84  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  341:69  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  408:71  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  454:80  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  483:82  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  512:92  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  537:75  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  558:78  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  574:78  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  592:78  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  631:88  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  646:88  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  697:82  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  716:85  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  730:85  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  765:96  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\platform\support\support.service.ts
+  285:9  error  Unexpected lexical declaration in case block  no-case-declarations
+  290:9  error  Unexpected lexical declaration in case block  no-case-declarations
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\platform\system-admin\dto\create-background-job.dto.ts
+  22:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\platform\system-admin\dto\create-error-log.dto.ts
+  35:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\platform\system-admin\entities\background-job.entity.ts
+  43:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  46:11  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\platform\system-admin\entities\error-log.entity.ts
+  33:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\platform\system-admin\system-admin.controller.spec.ts
+   12:7   error    'result' is defined but never used            @typescript-eslint/no-unused-vars
+   12:15  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+   13:7   error    'service' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   15:7   error    '_service' is defined but never used          @typescript-eslint/no-unused-vars
+   50:69  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  656:53  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  662:65  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\platform\system-admin\system-admin.controller.ts
+  92:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\platform\system-admin\system-admin.service.spec.ts
+   14:7   error    'permissionService' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   19:7   error    '_permissionService' is defined but never used          @typescript-eslint/no-unused-vars
+  135:14  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  145:81  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  196:14  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  219:83  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  232:96  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  357:14  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  364:69  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  370:14  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  418:79  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  436:79  warning  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\platform\system-admin\system-admin.service.ts
+   80:36  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  146:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\platform\workflow\approval.controller.spec.ts
+    8:7   error    'result' is defined but never used            @typescript-eslint/no-unused-vars
+    8:15  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+    9:7   error    'service' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   11:7   error    '_service' is defined but never used          @typescript-eslint/no-unused-vars
+   48:63  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  505:57  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  511:69  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  549:12  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\platform\workflow\approval.service.spec.ts
+  60:8  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\platform\workflow\approval.service.ts
+  195:33  warning  Unexpected any. Specify a different type                                      @typescript-eslint/no-explicit-any
+  195:61  warning  Unexpected any. Specify a different type                                      @typescript-eslint/no-explicit-any
+  197:11  warning  Unexpected any. Specify a different type                                      @typescript-eslint/no-explicit-any
+  208:5   error    'entityType' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+  209:5   error    'entityId' is defined but never used. Allowed unused args must match /^_/u    @typescript-eslint/no-unused-vars
+  210:5   error    'newState' is defined but never used. Allowed unused args must match /^_/u    @typescript-eslint/no-unused-vars
+  218:33  error    'workflow' is defined but never used. Allowed unused args must match /^_/u    @typescript-eslint/no-unused-vars
+  218:53  error    'request' is defined but never used. Allowed unused args must match /^_/u     @typescript-eslint/no-unused-vars
+  223:33  error    'request' is defined but never used. Allowed unused args must match /^_/u     @typescript-eslint/no-unused-vars
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\platform\workflow\dto\approval.dto.ts
+  1:32  error  'IsOptional' is defined but never used  @typescript-eslint/no-unused-vars
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\platform\workflow\entities\approval-request.entity.ts
+  50:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\platform\workflow\workflow.controller.spec.ts
+    9:7   error    'result' is defined but never used            @typescript-eslint/no-unused-vars
+    9:15  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+   10:7   error    'service' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   12:7   error    '_service' is defined but never used          @typescript-eslint/no-unused-vars
+   48:63  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  656:56  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  662:71  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  669:12  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  694:12  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  708:12  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  720:12  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\platform\workflow\workflow.service.spec.ts
+  13:7  error  'permissionService' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  18:7  error  '_permissionService' is defined but never used          @typescript-eslint/no-unused-vars
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\utilities\health\health.controller.spec.ts
+  39:58  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\utilities\import-export\import-export.controller.spec.ts
+    8:7   error    'service' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   10:7   error    '_service' is defined but never used          @typescript-eslint/no-unused-vars
+   40:71  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  495:40  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  505:55  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  515:62  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  525:69  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  638:27  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\utilities\scheduled-jobs\scheduled-jobs.controller.spec.ts
+  104:63  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  144:64  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  185:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  218:14  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  266:70  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  285:70  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  385:68  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  415:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  436:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  447:72  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  459:63  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\utilities\scheduled-jobs\scheduled-jobs.service.spec.ts
+  17:9   error    '_mockCronJob' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  41:17  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  79:19  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+
+E:\GitHub\Kiro AI Team\smart-erp\src\backend\src\utilities\seed\seed.controller.spec.ts
+   63:64  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   88:64  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  125:64  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  141:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  158:64  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  179:64  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  201:64  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  221:64  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  260:64  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+Γ£û 1623 problems (267 errors, 1356 warnings)
+
