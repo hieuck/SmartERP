@@ -215,26 +215,38 @@
 
 **All 16 entities now have full offline-first support!**
 
+**Note:** 6 broken frontend pages without backend entities were removed in cleanup (commit b368ada):
+- StockIssueList.tsx
+- WorkerList.tsx  
+- StockTransferList.tsx
+- AdvancePaymentList.tsx
+- StockMovementList.tsx
+- PayrollList.tsx
+
+These pages called non-existent APIs and violated code-quality-standards.md. They can be recreated after backend entities are implemented.
+
 ---
 
-## ❌ Chưa Hoàn Thành
+## ❌ Entities Ngoài Scope (Không Có Backend)
 
-### Entities Ngoài Scope (7 entities - không có backend)
+**Note:** The following entities were listed in previous documentation but have been verified to have NO backend entities. Some had broken frontend pages which have been removed.
 
 **Batch 2B: Inventory Module (2 entities)**
-- StockIssue (cần tạo backend + frontend)
-- StockTransfer (cần tạo backend + frontend)
+- StockIssue (cần tạo backend + frontend) - ~~Broken page removed~~
+- StockTransfer (cần tạo backend + frontend) - ~~Broken page removed~~
 
-**Batch 3B: HR & Finance (3 entities)**
-- Worker (cần tạo backend + frontend)
-- Payroll (cần tạo backend + frontend)
+**Batch 3B: HR & Finance (5 entities)**
+- Worker (cần tạo backend + frontend) - ~~Broken page removed~~
+- Payroll (cần tạo backend + frontend) - ~~Broken page removed~~
 - Promotion (cần tạo backend + frontend)
+- StockMovement (cần tạo backend + frontend) - ~~Broken page removed~~
+- AdvancePayment (cần tạo backend + frontend) - ~~Broken page removed~~
 
 **Batch 4: System & Audit (2 entities)**
 - Audit (cần tạo backend + frontend)
 - SystemConfig (cần tạo backend + frontend)
 
-**Total Remaining: 7 entities (require full feature development)**
+**Total: 9 entities require full feature development (backend + frontend + offline-first)**
 
 ---
 
@@ -488,8 +500,8 @@ const handleSync = async () => {
 ---
 
 **Last Updated:** 2026-03-15
-**Version:** 7.0.0
-**Status:** ✅ COMPLETE - All 16 entities with offline-first support (100%)
+**Version:** 7.1.0
+**Status:** ✅ COMPLETE - All 16 entities with offline-first support (100%) + Codebase cleanup
 
 **Key Achievements:**
 - ✅ Refactored core infrastructure (Logger, TenantContext)
@@ -514,19 +526,13 @@ const handleSync = async () => {
 - ✅ Batch 3A complete (2 entities):
   - AttendanceList.tsx (NEW PAGE CREATED)
   - NotificationList.tsx (NEW PAGE CREATED)
+- ✅ Codebase cleanup: Removed 6 broken pages without backend entities
 - ✅ Professional production-ready code
 - ✅ 100% completion (16/16 entities with offline support)
 
-**Files Changed in Batch 3A:**
-- 2 new pages created (Attendance, Notification)
-- Infrastructure extended (IndexedDB v5, 16 entities in SyncManager)
-- All pages support:
-  - Offline-first operations
-  - Auto-sync when online
-  - Manual sync button
-  - Network status indicator
-  - Sync queue indicator
-  - Sync status column
-  - Professional error handling
-  - No console.log
-  - Complete feature set (filters, actions, workflows)
+**Cleanup (Commit b368ada):**
+- Removed 6 broken pages calling non-existent APIs:
+  - StockIssueList.tsx, WorkerList.tsx, StockTransferList.tsx
+  - AdvancePaymentList.tsx, StockMovementList.tsx, PayrollList.tsx
+- Reason: No backend entities, violates code-quality-standards.md
+- Result: Clean codebase with only working, production-ready code
