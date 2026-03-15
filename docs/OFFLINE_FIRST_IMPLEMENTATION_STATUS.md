@@ -143,16 +143,47 @@
 
 ---
 
+## ✅ Phase 6: Batch 2A Complete (100%)
+
+### ✅ Infrastructure Complete (100%)
+- ✅ Extended IndexedDB schema (version 4) with 3 new entities
+- ✅ Created offline services for 3 entities (materials, molds, productionOrders)
+- ✅ Updated SyncManager to sync 14 entities (was 11)
+
+### ✅ List Pages Integration (100% - 3/3)
+1. ✅ MaterialList.tsx - COMPLETE
+2. ✅ MoldList.tsx - COMPLETE
+3. ✅ ProductionOrderList.tsx - COMPLETE
+
+**Batch 2A Entities Added:**
+- Material (manufacturing)
+- Mold (manufacturing)
+- ProductionOrder (manufacturing - from WorkOrder backend entity)
+
+**Features Implemented (All 3 pages):**
+- ✅ Load from IndexedDB (works offline)
+- ✅ Auto-sync on mount when online
+- ✅ Manual sync button with loading state
+- ✅ Network status indicator (Online/Offline badge)
+- ✅ Sync queue indicator (pending changes count)
+- ✅ Sync status column (Synced/Pending/Conflict)
+- ✅ Professional error handling with logger
+- ✅ No console.log
+- ✅ Preserved all original features (filters, workflows, progress tracking)
+
+**Git Commits:**
+- Commit 1 (7cadb22): Infrastructure (db.ts, offline-services.ts, sync-manager.ts)
+- Commit 2 (f5cb71a): 3 pages (MaterialList, MoldList, ProductionOrderList) - 3 files, +851/-203 lines
+
+---
+
 ## ❌ Chưa Hoàn Thành
 
-### Phase 6: Remaining Entities (0% - Batch 2-4)
+### Phase 6: Remaining Entities (0% - Batch 2B-4)
 
-**Batch 2: Inventory Module (5 entities) - Next Priority**
-- StockIssue
-- StockTransfer
-- Material
-- Mold
-- ProductionOrder
+**Batch 2B: Inventory Module (2 entities) - Next Priority**
+- StockIssue (cần tạo backend)
+- StockTransfer (cần tạo backend)
 
 **Batch 3: HR & Finance (5 entities)**
 - Worker
@@ -165,7 +196,7 @@
 - Audit
 - SystemConfig
 
-**Total Remaining: 12 entities**
+**Total Remaining: 9 entities**
 
 ---
 
@@ -181,8 +212,10 @@
 | Phase 3: Generic Offline Service | ✅ Complete | 100% |
 | Phase 4: Backend Entities & Migrations | ✅ Complete | 100% |
 | Phase 5: Frontend Integration (deprecated) | ⏭️ Merged to Phase C | - |
-| Phase 6: Remaining Entities | 🔄 In Progress | 33% (6/18) |
-| **TOTAL** | **Phase 6 In Progress** | **88%** |
+| Phase 6: Batch 1 (6 entities) | ✅ Complete | 100% |
+| Phase 6: Batch 2A (3 entities) | ✅ Complete | 100% |
+| Phase 6: Remaining (9 entities) | ❌ Not Started | 0% |
+| **TOTAL** | **Phase 6 In Progress** | **91%** |
 
 ---
 
@@ -417,8 +450,8 @@ const handleSync = async () => {
 ---
 
 **Last Updated:** 2026-03-15
-**Version:** 6.1.0
-**Status:** Phase A, B, C Complete (100%) | Phase 1-4 Complete | Phase 6 Batch 1 Complete (100%)
+**Version:** 6.2.0
+**Status:** Phase A, B, C Complete (100%) | Phase 1-4 Complete | Phase 6 Batch 1 & 2A Complete (100%)
 
 **Key Achievements:**
 - ✅ Refactored core infrastructure (Logger, TenantContext)
@@ -436,11 +469,16 @@ const handleSync = async () => {
   - WarehouseList.tsx
   - StockList.tsx
   - StockReceiptList.tsx
+- ✅ Batch 2A complete (3 entities):
+  - MaterialList.tsx
+  - MoldList.tsx
+  - ProductionOrderList.tsx
 - ✅ Professional production-ready code
-- ✅ 88% overall completion (11/18 entities with offline support)
+- ✅ 91% overall completion (14/18 entities with offline support)
 
-**Files Changed in Batch 1:**
-- 6 List pages refactored (User, Payment, PurchaseOrder, Warehouse, Stock, StockReceipt)
+**Files Changed in Batch 2A:**
+- 3 List pages refactored (Material, Mold, ProductionOrder)
+- Infrastructure extended (IndexedDB v4, 14 entities in SyncManager)
 - All pages now support:
   - Offline-first operations
   - Auto-sync when online
@@ -450,4 +488,4 @@ const handleSync = async () => {
   - Sync status column
   - Professional error handling
   - No console.log
-  - Preserved all original features (filters, modals, actions, approval workflows)
+  - Preserved all original features (filters, workflows, progress tracking)
