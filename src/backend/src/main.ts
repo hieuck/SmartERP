@@ -12,8 +12,11 @@ import * as compression from 'compression';
 import helmet from 'helmet';
 import 'tsconfig-paths/register';
 import { AppModule } from './app.module';
+import { initSentry } from './config/sentry.config';
 
 async function bootstrap() {
+  // Initialize Sentry for error tracking (Day 4-7: Add Monitoring)
+  initSentry();
   const app = await NestFactory.create(AppModule, {
     logger: ['error', 'warn', 'log', 'debug', 'verbose'],
   });

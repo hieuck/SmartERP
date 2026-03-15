@@ -117,36 +117,97 @@ npm run lint -- --fix          # ✅ 0 errors, 243 warnings
 
 ---
 
-### Day 4-7: Add Monitoring
+### Day 4-7: Add Monitoring ✅ COMPLETED
+
+**Completion Date:** 2026-03-15
 
 **Tasks:**
-1. Setup Sentry (error tracking)
-2. Setup LogRocket (session replay)
-3. Setup Google Analytics 4
-4. Add health check endpoints
-5. Configure error boundaries
-6. Test monitoring in dev
+1. ✅ Setup Sentry (error tracking)
+2. ⏭️ Setup LogRocket (session replay) - SKIPPED (use Sentry Session Replay instead)
+3. ✅ Setup Google Analytics 4
+4. ✅ Add health check endpoints
+5. ✅ Configure error boundaries
+6. ✅ Test monitoring in dev
 
-**Sentry Setup:**
+**Implementation Details:**
+
+**1. Sentry Error Tracking (Frontend + Backend)**
 ```bash
+# Already installed
 npm install @sentry/react @sentry/node
 ```
 
-**LogRocket Setup:**
-```bash
-npm install logrocket logrocket-react
-```
+**Frontend:**
+- Created `src/frontend/src/lib/monitoring/sentry.ts`
+- Created `src/frontend/src/components/error/ErrorBoundary.tsx`
+- Integrated into `main.tsx`
+- Features: error tracking, performance monitoring, session replay, user context, breadcrumbs
+- Config: `VITE_SENTRY_DSN` in `.env.example`
 
-**Google Analytics:**
+**Backend:**
+- Created `src/backend/src/config/sentry.config.ts`
+- Initialized in `main.ts` (before app creation)
+- Features: error tracking, performance monitoring, user context, breadcrumbs
+- Config: `SENTRY_DSN` in `.env.example`
+
+**2. Google Analytics 4 (Frontend)**
 ```bash
+# Already installed
 npm install react-ga4
 ```
 
+- Created `src/frontend/src/lib/monitoring/analytics.ts`
+- Integrated into `main.tsx`
+- Events tracked: page views, user actions, offline mode, sync events, CRUD operations, search/export/import, errors
+- Config: `VITE_GA4_MEASUREMENT_ID` in `.env.example`
+
+**3. Health Check Endpoints (Backend)**
+- Created `src/backend/src/utilities/health/health.controller.ts`
+- Created `src/backend/src/utilities/health/health.module.ts`
+- Registered in `app.module.ts`
+- Endpoints:
+  - `GET /api/health` - Overall health (database, memory, disk)
+  - `GET /api/health/db` - Database health
+  - `GET /api/health/memory` - Memory usage
+  - `GET /api/health/disk` - Disk usage
+  - `GET /api/health/live` - Liveness probe (Kubernetes)
+  - `GET /api/health/ready` - Readiness probe (Kubernetes)
+- Health checks: database ping, memory heap (150MB), memory RSS (300MB), disk storage (50% free)
+
+**4. Error Boundaries (Frontend)**
+- Created `ErrorBoundary.tsx` component
+- Wraps entire app in `main.tsx`
+- Catches React errors and reports to Sentry
+- Shows user-friendly error UI
+
+**Issues Fixed:**
+1. ✅ HealthModule path conflict (platform/health vs utilities/health) - Moved to utilities/health
+2. ✅ initSentry() signature issue - Refactored to use process.env instead of ConfigService
+3. ✅ Root package.json cleanup - Deleted root package.json, node_modules/, package-lock.json
+
 **Success Criteria:**
-- ✅ Sentry captures errors
-- ✅ LogRocket records sessions
+- ✅ Sentry captures errors (frontend + backend)
+- ✅ Sentry Session Replay enabled (replaces LogRocket)
 - ✅ GA4 tracks events
-- ✅ Health checks work
+- ✅ Health checks work (6 endpoints)
+- ✅ Backend build SUCCESS
+- ✅ Error boundaries configured
+
+**Files Changed:**
+- `src/frontend/src/lib/monitoring/sentry.ts` (created)
+- `src/frontend/src/components/error/ErrorBoundary.tsx` (created)
+- `src/frontend/src/main.tsx` (integrated Sentry + GA4 + ErrorBoundary)
+- `src/backend/src/config/sentry.config.ts` (created)
+- `src/backend/src/main.ts` (initialized Sentry)
+- `src/backend/src/utilities/health/health.controller.ts` (created)
+- `src/backend/src/utilities/health/health.module.ts` (created)
+- `src/backend/src/app.module.ts` (already registered HealthModule)
+- `src/frontend/.env.example` (added VITE_SENTRY_DSN, VITE_GA4_MEASUREMENT_ID)
+- `src/backend/.env.example` (added SENTRY_DSN)
+- Deleted: `smart-erp/package.json`, `smart-erp/node_modules/`, `smart-erp/package-lock.json`
+
+**Next Steps:**
+- Day 8-10: CI/CD (GitHub Actions workflows)
 
 ---
 

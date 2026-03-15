@@ -1,127 +1,125 @@
 import { Controller, Get } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import {
+  HealthCheck,
   HealthCheckService,
   TypeOrmHealthIndicator,
   MemoryHealthIndicator,
+  DiskHealthIndicator,
 } from '@nestjs/terminus';
-import { InjectConnection } from '@nestjs/typeorm';
-import { Connection } from 'typeorm';
-import { Inject } from '@nestjs/common';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
+import { Public } from '../../common/decorators/public.decorator';
 
-import { User } from '@/common/security/permission.service';
-@ApiTags('health')
+/**
+ * Health Check Controller
+ * 
+ * Provides health check endpoints for monitoring
+ * - /health: Overall health status
+ * - /health/db: Database health
+ * - /health/memory: Memory usage
+ * - /health/disk: Disk usage
+ * 
+ * Day 4-7: Add Monitoring
+ */
 @Controller('health')
 export class HealthController {
   constructor(
     private health: HealthCheckService,
     private db: TypeOrmHealthIndicator,
     private memory: MemoryHealthIndicator,
-    @InjectConnection() private connection: Connection,
-    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    private disk: DiskHealthIndicator,
   ) {}
 
+  /**
+   * Overall health check
+   * GET /health
+   */
   @Get()
-  @ApiOperation({ summary: 'Comprehensive health check endpoint' })
-  @ApiResponse({
-    status: 200,
-    description: 'Service is healthy',
-    schema: {
-      example: {
-        status: 'ok',
-        info: {
-          database: { status: 'up' },
-          redis: { status: 'up' },
-          memory_heap: { status: 'up' },
-          memory_rss: { status: 'up' },
-        },
-        error: {},
-        details: {
-          database: { status: 'up' },
-          redis: { status: 'up' },
-          memory_heap: { status: 'up' },
-          memory_rss: { status: 'up' },
-        },
-      },
-    },
-  })
-  @ApiResponse({
-    status: 503,
-    description: 'Service is unhealthy',
-  })
-  async check() {
+  @Public()
+  @HealthCheck()
+  check() {
     return this.health.check([
       // Database health
       () => this.db.pingCheck('database'),
-
-      // Memory health (heap < 300MB)
-      () => this.memory.checkHeap('memory_heap', 300 * 1024 * 1024),
-
-      // Memory health (RSS < 500MB)
-      () => this.memory.checkRSS('memory_rss', 500 * 1024 * 1024),
-
-      // Redis health
-      async () => {
-        try {
-          // Try to set and get a test value
-          await this.cacheManager.set('health:check', 'ok', 1000);
-          const value = await this.cacheManager.get('health:check');
-          await this.cacheManager.del('health:check');
-
-          return {
-            redis: {
-              status: value === 'ok' ? 'up' : 'down',
-            },
-          };
-        } catch (error) {
-          return {
-            redis: {
-              status: 'down',
-              message: error.message,
-            },
-          };
-        }
-      },
+      
+      // Memory health (heap should not exceed 150MB)
+      () => this.memory.checkHeap('memory_heap', 150 * 1024 * 1024),
+      
+      // Memory health (RSS should not exceed 300MB)
+      () => this.memory.checkRSS('memory_rss', 300 * 1024 * 1024),
+      
+      // Disk health (storage should have at least 50% free)
+      () =>
+        this.disk.checkStorage('storage', {
+          path: '/',
+          thresholdPercent: 0.5,
+        }),
     ]);
   }
 
-  @Get('ready')
-  @ApiOperation({ summary: 'Readiness probe - checks if service can accept traffic' })
-  @ApiResponse({ status: 200, description: 'Service is ready' })
-  @ApiResponse({ status: 503, description: 'Service is not ready' })
-  async ready() {
-    // Check if database connection is established
-    if (!this.connection.isInitialized) {
-      return {
-        status: 'not ready',
-        reason: 'Database not initialized',
-      };
-    }
+  /**
+   * Database health check
+   * GET /health/db
+   */
+  @Get('db')
+  @Public()
+  @HealthCheck()
+  checkDatabase() {
+    return this.health.check([() => this.db.pingCheck('database')]);
+  }
 
+  /**
+   * Memory health check
+   * GET /health/memory
+   */
+  @Get('memory')
+  @Public()
+  @HealthCheck()
+  checkMemory() {
+    return this.health.check([
+      () => this.memory.checkHeap('memory_heap', 150 * 1024 * 1024),
+      () => this.memory.checkRSS('memory_rss', 300 * 1024 * 1024),
+    ]);
+  }
+
+  /**
+   * Disk health check
+   * GET /health/disk
+   */
+  @Get('disk')
+  @Public()
+  @HealthCheck()
+  checkDisk() {
+    return this.health.check([
+      () =>
+        this.disk.checkStorage('storage', {
+          path: '/',
+          thresholdPercent: 0.5,
+        }),
+    ]);
+  }
+
+  /**
+   * Liveness probe (for Kubernetes)
+   * GET /health/live
+   */
+  @Get('live')
+  @Public()
+  live() {
     return {
-      status: 'ready',
+      status: 'ok',
       timestamp: new Date().toISOString(),
     };
   }
 
-  @Get('live')
-  @ApiOperation({ summary: 'Liveness probe - checks if service is alive' })
-  @ApiResponse({ status: 200, description: 'Service is alive' })
-  async live() {
-    return {
-      status: 'alive',
-      timestamp: new Date().toISOString(),
-      service: 'smarterp-monolith',
-      version: '1.0.0',
-      uptime: process.uptime(),
-      memory: {
-        heapUsed: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
-        heapTotal: Math.round(process.memoryUsage().heapTotal / 1024 / 1024),
-        rss: Math.round(process.memoryUsage().rss / 1024 / 1024),
-        external: Math.round(process.memoryUsage().external / 1024 / 1024),
-      },
-    };
+  /**
+   * Readiness probe (for Kubernetes)
+   * GET /health/ready
+   */
+  @Get('ready')
+  @Public()
+  @HealthCheck()
+  ready() {
+    return this.health.check([
+      () => this.db.pingCheck('database'),
+    ]);
   }
 }

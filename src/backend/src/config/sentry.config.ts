@@ -1,24 +1,25 @@
 import * as Sentry from '@sentry/node';
-import { ConfigService } from '@nestjs/config';
 
 /**
  * Initialize Sentry for backend error tracking
  * 
  * Environment variables required:
  * - SENTRY_DSN: Sentry DSN from sentry.io
- * - SENTRY_ENVIRONMENT: Environment name (development, staging, production)
+ * - NODE_ENV: Environment name (development, staging, production)
  * - APP_VERSION: Application version for release tracking
  */
-export function initSentry(configService: ConfigService) {
-  const dsn = configService.get<string>('SENTRY_DSN');
-  const environment = configService.get<string>('NODE_ENV') || 'development';
-  const release = configService.get<string>('APP_VERSION') || '1.0.0';
+export function initSentry() {
+  const dsn = process.env.SENTRY_DSN;
+  const environment = process.env.NODE_ENV || 'development';
+  const release = process.env.APP_VERSION || '1.0.0';
 
   // Only initialize if DSN is provided
   if (!dsn) {
-    console.warn('Sentry DSN not provided. Error tracking disabled.');
+    console.warn('⚠️  Sentry DSN not provided. Error tracking disabled.');
     return;
   }
+
+  console.log('🔍 Initializing Sentry error tracking...');
 
   Sentry.init({
     dsn,
