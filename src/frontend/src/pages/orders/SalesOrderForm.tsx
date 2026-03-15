@@ -13,6 +13,7 @@ import {
   DatePicker,
 } from 'antd';
 import { PlusOutlined, DeleteOutlined, ArrowLeftOutlined } from '@ant-design/icons';
+import { logger } from '@/lib/logger/logger.service';
 import orderService from '@/services/order/orderService';
 import { productService } from '@/services/inventory/productService';
 import { customerService } from '@/services/crm/customerService';
@@ -108,7 +109,7 @@ export default function SalesOrderForm() {
         }),
       );
     } catch (error) {
-      console.error('Error loading sales order:', error);
+      logger.error('SalesOrderForm', 'Error loading sales order', error as Error);
       message.error('Không thể tải đơn hàng');
     } finally {
       setLoading(false);

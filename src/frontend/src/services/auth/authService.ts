@@ -1,4 +1,5 @@
 import api from './api';
+import { logger } from '@/lib/logger/logger.service';
 
 export interface RegisterRequest {
   email: string;
@@ -93,7 +94,7 @@ export const authService = {
       await api.post('/auth/logout');
     } catch (error: any) {
       // Log error but don't throw - logout should always succeed locally
-      console.error('Logout error:', error);
+      logger.error('AuthService', 'Logout error', error);
     }
   },
 

@@ -20,6 +20,7 @@ import { customerService } from '@/services/crm/customerService';
 import { supplierService } from '@/services/logistics/supplierService';
 import dayjs from 'dayjs';
 import { useResponsive } from '@/hooks/useResponsive';
+import { logger } from '@/lib/logger/logger.service';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -49,7 +50,7 @@ export default function PaymentPage() {
       const data = await customerService.getCustomers({ page: 1, limit: 1000 });
       setCustomers(data.data || []);
     } catch (error) {
-      console.error('Error loading customers:', error);
+      logger.error('PaymentPage', 'Error loading customers', error as Error);
       setCustomers([]);
       message.error('Không thể tải danh sách khách hàng');
     }
@@ -60,7 +61,7 @@ export default function PaymentPage() {
       const data = await supplierService.getSuppliers({ page: 1, limit: 1000 });
       setSuppliers(data.data || []);
     } catch (error) {
-      console.error('Error loading suppliers:', error);
+      logger.error('PaymentPage', 'Error loading suppliers', error as Error);
       setSuppliers([]);
       message.error('Không thể tải danh sách nhà cung cấp');
     }
@@ -71,7 +72,7 @@ export default function PaymentPage() {
       const data = await orderService.getAccountsReceivable();
       setReceivables(data.data || []);
     } catch (error) {
-      console.error('Error loading receivables:', error);
+      logger.error('PaymentPage', 'Error loading receivables', error as Error);
       setReceivables([]);
     }
   };
@@ -81,7 +82,7 @@ export default function PaymentPage() {
       const data = await orderService.getAccountsPayable();
       setPayables(data.data || []);
     } catch (error) {
-      console.error('Error loading payables:', error);
+      logger.error('PaymentPage', 'Error loading payables', error as Error);
       setPayables([]);
     }
   };
@@ -91,7 +92,7 @@ export default function PaymentPage() {
       const data = await orderService.getPayments();
       setPayments(data.data || []);
     } catch (error) {
-      console.error('Error loading payments:', error);
+      logger.error('PaymentPage', 'Error loading payments', error as Error);
       setPayments([]);
     }
   };

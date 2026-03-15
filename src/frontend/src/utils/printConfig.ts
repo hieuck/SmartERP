@@ -1,3 +1,5 @@
+import { logger } from '@/lib/logger/logger.service';
+
 export interface PrintConfig {
   company: {
     name: string;
@@ -61,7 +63,7 @@ export async function loadPrintConfig(): Promise<PrintConfig> {
     cachedConfig = await response.json();
     return cachedConfig!;
   } catch (error) {
-    console.error('Error loading print config, using defaults:', error);
+    logger.error('PrintConfig', 'Error loading print config, using defaults', error as Error);
     return getDefaultConfig();
   }
 }

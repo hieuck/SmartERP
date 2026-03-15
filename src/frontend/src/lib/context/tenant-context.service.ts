@@ -26,7 +26,7 @@ class TenantContextService {
         tenantName: payload.tenantName || '',
       };
     } catch (error) {
-      console.error('[TenantContext] Failed to initialize', error);
+      logger.error(this.context, 'Failed to initialize tenant context', error as Error);
       this.tenantInfo = null;
     }
   }
