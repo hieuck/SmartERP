@@ -1,6 +1,6 @@
 # SmartERP - Enterprise Resource Planning System
 
-[![Build Status](https://github.com/your-org/smart-erp/workflows/CI%20Pipeline/badge.svg)](https://github.com/your-org/smart-erp/actions)
+[![Build Status](https://github.com/hieuck/SmartERP/workflows/CI%20Pipeline/badge.svg)](https://github.com/hieuck/SmartERP/actions)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-1.0.0--mvp-green.svg)](PROJECT_STATUS.md)
 
@@ -70,8 +70,8 @@ Database (PostgreSQL + Redis)
 
 ```bash
 # Clone repository
-git clone https://github.com/your-org/smart-erp.git
-cd smart-erp
+git clone https://github.com/hieuck/SmartERP.git
+cd SmartERP
 
 # Install dependencies
 cd src/backend && npm install
@@ -263,9 +263,9 @@ This project is licensed under the MIT License - see [LICENSE](LICENSE) file.
 
 ## 👥 Team & Support
 
-**Repository:** https://github.com/your-org/smart-erp
-**Issues:** https://github.com/your-org/smart-erp/issues
-**Discussions:** https://github.com/your-org/smart-erp/discussions
+**Repository:** https://github.com/hieuck/SmartERP
+**Issues:** https://github.com/hieuck/SmartERP/issues
+**Discussions:** https://github.com/hieuck/SmartERP/discussions
 
 ---
 
