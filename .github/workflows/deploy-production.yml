@@ -1,0 +1,282 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "deploy" to confirm production deployment'
+        required: true
+        type: string
+
+env:
+  NODE_VERSION: '20'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  validate-input:
+    name: Validate Deployment
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Validate confirmation
+        run: |
+          if [ "${{ github.event.inputs.confirm }}" != "deploy" ]; then
+            echo "❌ Deployment not confirmed. Type 'deploy' to proceed."
+            exit 1
+          fi
+          echo "✅ Deployment confirmed"
+
+  build-and-push:
+    name: Build and Push Docker Images
+    runs-on: ubuntu-latest
+    needs: [validate-input]
+    if: always() && (needs.validate-input.result == 'success' || needs.validate-input.result == 'skipped')
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        service: [backend, frontend]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-${{ matrix.service }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix=prod-
+            type=raw,value=production-latest
+            type=raw,value=latest
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: src/${{ matrix.service }}
+          file: src/${{ matrix.service }}/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            NODE_ENV=production
+
+  deploy-production:
+    name: Deploy to Production Environment
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    environment:
+      name: production
+      url: https://app.smarterp.com
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Pre-deployment checks
+        run: |
+          echo "🔍 Running pre-deployment checks..."
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "Actor: ${{ github.actor }}"
+          echo "Environment: production"
+
+      - name: Create deployment backup
+        run: |
+          echo "💾 Creating backup before deployment..."
+          echo "⚠️  Backup steps not configured yet"
+          # Add backup commands here:
+          # - Database backup
+          # - File system backup
+          # - Configuration backup
+
+      - name: Deploy to production
+        run: |
+          echo "🚀 Deploying to production environment"
+          echo "⚠️  Deployment steps not configured yet"
+          echo "Add your deployment commands here:"
+          echo "  - SSH to production server"
+          echo "  - Pull Docker images"
+          echo "  - Run database migrations (if any)"
+          echo "  - Restart services with zero-downtime"
+          echo "  - Verify deployment"
+
+      # Add your deployment steps here
+      # Examples:
+      # - SSH to server and pull new images
+      # - Use kubectl for Kubernetes deployment
+      # - Use AWS CLI for ECS/EKS updates
+      # - Use Terraform/Ansible for infrastructure
+
+      - name: Run database migrations
+        run: |
+          echo "🗄️  Running database migrations..."
+          echo "⚠️  Migration steps not configured yet"
+          # Add migration commands here
+
+      - name: Deployment placeholder
+        run: |
+          echo "✅ Deployment commands would run here"
+
+  smoke-tests:
+    name: Smoke Tests
+    runs-on: ubuntu-latest
+    needs: deploy-production
+    steps:
+      - name: Wait for deployment
+        run: sleep 60
+
+      - name: Check backend health
+        run: |
+          echo "Checking backend health..."
+          # curl -f https://api.smarterp.com/api/health || exit 1
+          echo "⚠️  Health check not configured yet"
+
+      - name: Check frontend
+        run: |
+          echo "Checking frontend..."
+          # curl -f https://app.smarterp.com || exit 1
+          echo "⚠️  Health check not configured yet"
+
+      - name: Check critical endpoints
+        run: |
+          echo "Checking critical endpoints..."
+          # curl -f https://api.smarterp.com/api/health/db || exit 1
+          # curl -f https://api.smarterp.com/api/health/memory || exit 1
+          echo "⚠️  Endpoint checks not configured yet"
+
+      - name: Smoke test results
+        run: |
+          echo "✅ Smoke tests would run here"
+
+  monitor-deployment:
+    name: Monitor Deployment
+    runs-on: ubuntu-latest
+    needs: smoke-tests
+    steps:
+      - name: Monitor for 5 minutes
+        run: |
+          echo "📊 Monitoring deployment for 5 minutes..."
+          echo "Checking for errors, performance issues, etc."
+          sleep 300
+
+      - name: Check error rates
+        run: |
+          echo "Checking error rates in Sentry..."
+          echo "⚠️  Monitoring not configured yet"
+          # Add Sentry API check here
+
+      - name: Check performance metrics
+        run: |
+          echo "Checking performance metrics..."
+          echo "⚠️  Metrics check not configured yet"
+          # Add performance monitoring check here
+
+  notify:
+    name: Notify Deployment
+    runs-on: ubuntu-latest
+    needs: [deploy-production, smoke-tests, monitor-deployment]
+    if: always()
+    steps:
+      - name: Deployment status
+        run: |
+          if [ "${{ needs.deploy-production.result }}" == "success" ] && \
+             [ "${{ needs.smoke-tests.result }}" == "success" ] && \
+             [ "${{ needs.monitor-deployment.result }}" == "success" ]; then
+            echo "✅ Production deployment successful!"
+            echo "URL: https://app.smarterp.com"
+            echo "API: https://api.smarterp.com"
+          else
+            echo "❌ Production deployment failed!"
+            echo "Deploy: ${{ needs.deploy-production.result }}"
+            echo "Smoke Tests: ${{ needs.smoke-tests.result }}"
+            echo "Monitoring: ${{ needs.monitor-deployment.result }}"
+            exit 1
+          fi
+
+      # Add notification here
+      # - name: Notify team
+      #   uses: slackapi/slack-github-action@v1
+      #   with:
+      #     payload: |
+      #       {
+      #         "text": "🚀 Production deployment ${{ needs.deploy-production.result }}",
+      #         "blocks": [
+      #           {
+      #             "type": "section",
+      #             "text": {
+      #               "type": "mrkdwn",
+      #               "text": "*Production Deployment*\nStatus: ${{ needs.deploy-production.result }}\nCommit: ${{ github.sha }}\nActor: ${{ github.actor }}"
+      #             }
+      #           }
+      #         ]
+      #       }
+      #   env:
+      #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: notify
+    if: success()
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          echo "Generating release notes..."
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -z "$PREVIOUS_TAG" ]; then
+            COMMITS=$(git log --pretty=format:"- %s (%h)" -n 20)
+          else
+            COMMITS=$(git log ${PREVIOUS_TAG}..HEAD --pretty=format:"- %s (%h)")
+          fi
+          echo "commits<<EOF" >> $GITHUB_OUTPUT
+          echo "$COMMITS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ github.run_number }}
+          release_name: Release v${{ github.run_number }}
+          body: |
+            ## Production Deployment
+            
+            **Deployed:** ${{ github.event.head_commit.timestamp }}
+            **Commit:** ${{ github.sha }}
+            **Actor:** ${{ github.actor }}
+            
+            ### Changes
+            ${{ steps.release_notes.outputs.commits }}
+            
+            ### URLs
+            - Frontend: https://app.smarterp.com
+            - API: https://api.smarterp.com
+            - Health: https://api.smarterp.com/api/health
+          draft: false
+          prerelease: false
