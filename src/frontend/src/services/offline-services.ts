@@ -4,7 +4,19 @@
  */
 
 import { createOfflineService } from '../lib/offline/offline-service';
-import type { User, Product, Customer, Supplier, SalesOrder, Invoice } from '../lib/offline/db';
+import type { 
+  User, 
+  Product, 
+  Customer, 
+  Supplier, 
+  SalesOrder, 
+  Invoice,
+  Payment,
+  PurchaseOrder,
+  Warehouse,
+  Stock,
+  StockReceipt
+} from '../lib/offline/db';
 
 // User service
 export const userOfflineService = createOfflineService<User>('users', 'users');
@@ -24,6 +36,21 @@ export const salesOrderOfflineService = createOfflineService<SalesOrder>('salesO
 // Invoice service
 export const invoiceOfflineService = createOfflineService<Invoice>('invoices', 'invoices');
 
+// Payment service (Batch 1)
+export const paymentOfflineService = createOfflineService<Payment>('payments', 'payments');
+
+// Purchase Order service (Batch 1)
+export const purchaseOrderOfflineService = createOfflineService<PurchaseOrder>('purchaseOrders', 'purchaseOrders');
+
+// Warehouse service (Batch 1)
+export const warehouseOfflineService = createOfflineService<Warehouse>('warehouses', 'warehouses');
+
+// Stock service (Batch 1)
+export const stockOfflineService = createOfflineService<Stock>('stocks', 'stocks');
+
+// Stock Receipt service (Batch 1)
+export const stockReceiptOfflineService = createOfflineService<StockReceipt>('stockReceipts', 'stockReceipts');
+
 /**
  * Export all services
  */
@@ -34,4 +61,9 @@ export const offlineServices = {
   suppliers: supplierOfflineService,
   salesOrders: salesOrderOfflineService,
   invoices: invoiceOfflineService,
+  payments: paymentOfflineService,
+  purchaseOrders: purchaseOrderOfflineService,
+  warehouses: warehouseOfflineService,
+  stocks: stockOfflineService,
+  stockReceipts: stockReceiptOfflineService,
 };

@@ -126,6 +126,82 @@ export interface Invoice extends BaseEntity {
   notes?: string;
 }
 
+// Payment entity (matches backend Payment entity)
+export interface Payment extends BaseEntity {
+  orderId: string;
+  amount: number;
+  paymentMethod: string;
+  status: string; // pending, processing, completed, failed, refunded
+  paymentDate?: Date;
+  transactionId?: string;
+  currency: string;
+  notes?: string;
+  metadata?: Record<string, unknown>;
+}
+
+// PurchaseOrder entity (from frontend interface)
+export interface PurchaseOrder extends BaseEntity {
+  poNumber: string;
+  supplierId: string;
+  orderDate: Date;
+  expectedDate?: Date;
+  status: string; // draft, pending, approved, ordered, received, cancelled
+  totalAmount: number;
+  items: Record<string, unknown>[];
+  notes?: string;
+}
+
+// Warehouse entity (from frontend interface)
+export interface Warehouse extends BaseEntity {
+  code: string;
+  name: string;
+  address?: string;
+  ward?: string;
+  district?: string;
+  city?: string;
+  phone?: string;
+  status: string; // active, inactive
+  isDefault: boolean;
+  metadata?: Record<string, unknown>;
+}
+
+// Stock/Inventory entity (matches backend Inventory entity)
+export interface Stock extends BaseEntity {
+  productId: string;
+  warehouseId?: string;
+  quantity: number;
+  reservedQuantity: number;
+  availableQuantity: number;
+  minStockLevel: number;
+  maxStockLevel: number;
+  reorderPoint: number;
+  reorderQuantity: number;
+  lastRestockDate?: Date;
+  lastCountDate?: Date;
+  unitCost?: number;
+  totalValue: number;
+  location?: string;
+  bin?: string;
+  aisle?: string;
+  shelf?: string;
+  notes?: string;
+  metadata?: Record<string, unknown>;
+}
+
+// StockReceipt entity (inferred from typical ERP pattern)
+export interface StockReceipt extends BaseEntity {
+  receiptNumber: string;
+  warehouseId: string;
+  supplierId?: string;
+  purchaseOrderId?: string;
+  receiptDate: Date;
+  status: string; // draft, pending, received, cancelled
+  totalAmount: number;
+  items: Record<string, unknown>[];
+  notes?: string;
+  metadata?: Record<string, unknown>;
+}
+
 // Sync queue item
 export interface SyncQueueItem {
   id?: number;
@@ -146,6 +222,11 @@ export class OfflineDB extends Dexie {
   suppliers!: Table<Supplier, string>;
   salesOrders!: Table<SalesOrder, string>;
   invoices!: Table<Invoice, string>;
+  payments!: Table<Payment, string>;
+  purchaseOrders!: Table<PurchaseOrder, string>;
+  warehouses!: Table<Warehouse, string>;
+  stocks!: Table<Stock, string>;
+  stockReceipts!: Table<StockReceipt, string>;
   syncQueue!: Table<SyncQueueItem, number>;
 
   constructor() {
@@ -164,6 +245,22 @@ export class OfflineDB extends Dexie {
       suppliers: 'id, tenantId, name, email, status, syncStatus, lastSyncedAt',
       salesOrders: 'id, tenantId, orderNumber, customerId, status, syncStatus, lastSyncedAt',
       invoices: 'id, tenantId, invoiceNumber, customerId, supplierId, invoiceDate, status, syncStatus, lastSyncedAt',
+      syncQueue: '++id, entity, operation, createdAt',
+    });
+
+    // Version 3: Add Batch 1 entities (Payment, PurchaseOrder, Warehouse, Stock, StockReceipt)
+    this.version(3).stores({
+      users: 'id, tenantId, email, syncStatus, lastSyncedAt',
+      products: 'id, tenantId, sku, name, status, categoryId, stockQuantity, syncStatus, lastSyncedAt',
+      customers: 'id, tenantId, name, email, phone, status, syncStatus, lastSyncedAt',
+      suppliers: 'id, tenantId, name, email, status, syncStatus, lastSyncedAt',
+      salesOrders: 'id, tenantId, orderNumber, customerId, status, syncStatus, lastSyncedAt',
+      invoices: 'id, tenantId, invoiceNumber, customerId, supplierId, invoiceDate, status, syncStatus, lastSyncedAt',
+      payments: 'id, tenantId, orderId, status, paymentDate, syncStatus, lastSyncedAt',
+      purchaseOrders: 'id, tenantId, poNumber, supplierId, status, orderDate, syncStatus, lastSyncedAt',
+      warehouses: 'id, tenantId, code, name, status, isDefault, syncStatus, lastSyncedAt',
+      stocks: 'id, tenantId, productId, warehouseId, quantity, syncStatus, lastSyncedAt',
+      stockReceipts: 'id, tenantId, receiptNumber, warehouseId, status, receiptDate, syncStatus, lastSyncedAt',
       syncQueue: '++id, entity, operation, createdAt',
     });
   }

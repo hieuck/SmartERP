@@ -244,7 +244,19 @@ export class SyncManager {
       `${API_BASE_URL}/api/sync/pull`,
       { 
         since, 
-        entities: ['users', 'products', 'customers', 'suppliers', 'salesOrders', 'invoices']
+        entities: [
+          'users', 
+          'products', 
+          'customers', 
+          'suppliers', 
+          'salesOrders', 
+          'invoices',
+          'payments',
+          'purchaseOrders',
+          'warehouses',
+          'stocks',
+          'stockReceipts'
+        ]
       },
       { headers: { Authorization: `Bearer ${token}` } }
     );
@@ -309,6 +321,11 @@ export class SyncManager {
       suppliers: 'suppliers',
       salesOrders: 'salesOrders',
       invoices: 'invoices',
+      payments: 'payments',
+      purchaseOrders: 'purchaseOrders',
+      warehouses: 'warehouses',
+      stocks: 'stocks',
+      stockReceipts: 'stockReceipts',
     };
 
     const tableName = tableMap[entity];
@@ -318,7 +335,7 @@ export class SyncManager {
       return;
     }
 
-    const table = db[tableName];
+    const table = db[tableName] as any;
 
     // Apply all records
     for (const record of records) {

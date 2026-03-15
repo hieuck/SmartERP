@@ -1,12 +1,12 @@
 /**
- * User List Page
+ * User List Page - Offline-First
  * Displays list of users with search and CRUD operations
- * Uses StandardListPage with dropdown menu for actions
+ * Integrated with offline storage for offline-first functionality
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Tag, message, Modal, Dropdown, Button } from 'antd';
+import { Tag, message, Modal, Dropdown, Button, Space, Badge } from 'antd';
 import type { MenuProps } from 'antd/es/menu';
 import {
   UserOutlined,
@@ -15,23 +15,18 @@ import {
   DeleteOutlined,
   MoreOutlined,
   LockOutlined,
+  SyncOutlined,
+  CloudOutlined,
+  DisconnectOutlined,
 } from '@ant-design/icons';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import StandardListPage from '@/components/common/StandardListPage';
+import { offlineServices } from '@/services/offline-services';
+import { syncManager } from '@/lib/offline/sync-manager';
+import { logger } from '@/lib/logger/logger.service';
+import { User, SyncStatus } from '@/lib/offline/db';
 import dayjs from 'dayjs';
 import type { ColumnsType } from 'antd/es/table';
-
-interface User {
-  id: number;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: string;
-  isActive: boolean;
-  lastLogin?: string;
-  createdAt: string;
-}
 
 const roleColors: Record<string, string> = {
   ADMIN: 'red',
@@ -47,58 +42,174 @@ const roleColors: Record<string, string> = {
 
 export default function UserList() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const { t } = useTranslation(['users', 'commonUi']);
+  const { t } = useTranslation(['users', 'commonUi', 'common']);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [queueSize, setQueueSize] = useState(0);
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['users', { page, pageSize, search }],
-    queryFn: async () => {
-      // Mock data since we don't have user list endpoint yet
-      return {
-        data: [],
-        meta: { total: 0, page, limit: pageSize },
-      };
-    },
-  });
+  // Monitor network status
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      logger.info('UserList', 'Network connection restored');
+      message.success(t('common:messages.networkRestored'));
+    };
 
-  const deleteMutation = useMutation({
-    mutationFn: async (id: number) => {
-      // Mock delete - implement when backend ready
-      throw new Error('Not implemented');
-    },
-    onSuccess: () => {
+    const handleOffline = () => {
+      setIsOnline(false);
+      logger.warn('UserList', 'Network connection lost');
+      message.warning(t('common:messages.networkLost'));
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [t]);
+
+  // Load users from offline storage
+  const loadUsers = async () => {
+    setLoading(true);
+    try {
+      logger.debug('UserList', 'Loading users from offline storage');
+      const allUsers = await offlineServices.users.getAll();
+      
+      // Filter by search term
+      let filtered = allUsers;
+      if (search) {
+        const searchLower = search.toLowerCase();
+        filtered = allUsers.filter(
+          (u) =>
+            u.email.toLowerCase().includes(searchLower) ||
+            u.firstName?.toLowerCase().includes(searchLower) ||
+            u.lastName?.toLowerCase().includes(searchLower)
+        );
+      }
+
+      setUsers(filtered);
+      logger.info('UserList', `Loaded ${filtered.length} users`);
+    } catch (error) {
+      logger.error('UserList', 'Failed to load users', error as Error);
+      message.error(t('users:messages.loadError'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Update queue size
+  const updateQueueSize = async () => {
+    try {
+      const size = await syncManager.getQueueSize();
+      setQueueSize(size);
+    } catch (error) {
+      logger.error('UserList', 'Failed to get queue size', error as Error);
+    }
+  };
+
+  // Auto-sync on mount if online
+  useEffect(() => {
+    const initializeData = async () => {
+      await loadUsers();
+      await updateQueueSize();
+
+      // Auto-sync if online and has token
+      if (isOnline) {
+        const token = localStorage.getItem('token');
+        if (token && !syncManager.isSyncing()) {
+          handleSync();
+        }
+      }
+    };
+
+    initializeData();
+  }, []);
+
+  // Reload users when search changes
+  useEffect(() => {
+    loadUsers();
+  }, [search]);
+
+  // Handle sync
+  const handleSync = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      message.error(t('common:messages.loginRequired'));
+      return;
+    }
+
+    if (!isOnline) {
+      message.warning(t('common:messages.offlineMode'));
+      return;
+    }
+
+    setSyncing(true);
+    try {
+      logger.info('UserList', 'Starting manual sync');
+      const result = await syncManager.sync(token);
+      
+      if (result.success) {
+        message.success(
+          t('common:messages.syncSuccess', {
+            pulled: result.pulled,
+            pushed: result.pushed,
+          })
+        );
+        await loadUsers();
+        await updateQueueSize();
+      } else {
+        message.error(t('common:messages.syncError', { errors: result.errors.join(', ') }));
+      }
+    } catch (error) {
+      logger.error('UserList', 'Sync failed', error as Error);
+      message.error(t('common:messages.syncError', { errors: (error as Error).message }));
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  // Handle delete
+  const handleDelete = async (user: User) => {
+    try {
+      logger.info('UserList', `Deleting user: ${user.id}`);
+      await offlineServices.users.delete(user.id);
       message.success(t('users:messages.deleteSuccess'));
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-    },
-    onError: () => {
+      await loadUsers();
+      await updateQueueSize();
+    } catch (error) {
+      logger.error('UserList', 'Failed to delete user', error as Error);
       message.error(t('users:messages.deleteError'));
-    },
-  });
+    }
+  };
 
-  const toggleActiveMutation = useMutation({
-    mutationFn: async ({ id, isActive }: { id: number; isActive: boolean }) => {
-      // Mock toggle - implement when backend ready
-      throw new Error('Not implemented');
-    },
-    onSuccess: () => {
+  // Handle toggle active status
+  const handleToggleActive = async (user: User) => {
+    try {
+      logger.info('UserList', `Toggling active status for user: ${user.id}`);
+      await offlineServices.users.update(user.id, { status: user.status === 'active' ? 'inactive' : 'active' });
       message.success(t('users:messages.updateStatusSuccess'));
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-    },
-    onError: () => {
+      await loadUsers();
+      await updateQueueSize();
+    } catch (error) {
+      logger.error('UserList', 'Failed to toggle user status', error as Error);
       message.error(t('users:messages.updateStatusError'));
-    },
-  });
+    }
+  };
 
-  const handleResetPassword = (id: number) => {
+  const handleResetPassword = (id: string) => {
     Modal.confirm({
       title: t('users:messages.resetPasswordConfirm'),
       content: t('users:messages.resetPasswordDescription'),
       onOk: async () => {
         try {
-          // Mock reset password - implement when backend ready
+          // TODO: Implement reset password when backend ready
           message.success(t('users:messages.resetPasswordSuccess'));
         } catch (error) {
           message.error(t('users:messages.resetPasswordError'));
@@ -128,8 +239,8 @@ export default function UserList() {
     },
     {
       key: 'toggle-active',
-      label: record.isActive ? t('users:actions.deactivate') : t('users:actions.activate'),
-      onClick: () => toggleActiveMutation.mutate({ id: record.id, isActive: !record.isActive }),
+      label: record.status === 'active' ? t('users:actions.deactivate') : t('users:actions.activate'),
+      onClick: () => handleToggleActive(record),
     },
     {
       key: 'delete',
@@ -140,11 +251,14 @@ export default function UserList() {
         Modal.confirm({
           title: t('users:messages.deleteConfirm'),
           content: t('users:messages.deleteDescription'),
-          onOk: () => deleteMutation.mutate(record.id),
+          onOk: () => handleDelete(record),
         });
       },
     },
   ];
+
+  // Get paginated data
+  const paginatedUsers = users.slice((page - 1) * pageSize, page * pageSize);
 
   const columns: ColumnsType<User> = [
     {
@@ -166,7 +280,7 @@ export default function UserList() {
       title: t('users:columns.fullName'),
       key: 'fullName',
       width: 200,
-      render: (_: any, record: User) => `${record.firstName} ${record.lastName}`,
+      render: (_: any, record: User) => `${record.firstName || ''} ${record.lastName || ''}`.trim() || '-',
     },
     {
       title: t('users:columns.role'),
@@ -184,28 +298,44 @@ export default function UserList() {
     },
     {
       title: t('users:columns.status'),
-      dataIndex: 'isActive',
-      key: 'isActive',
+      dataIndex: 'status',
+      key: 'status',
       width: 120,
-      render: (isActive: boolean) => (
-        <Tag color={isActive ? 'green' : 'red'}>
-          {t(`users:status.${isActive ? 'active' : 'inactive'}`)}
+      render: (status: string) => (
+        <Tag color={status === 'active' ? 'green' : 'red'}>
+          {t(`users:status.${status}`)}
         </Tag>
       ),
     },
     {
-      title: t('users:columns.lastLogin'),
-      dataIndex: 'lastLogin',
-      key: 'lastLogin',
-      width: 150,
-      render: (date: string) => (date ? dayjs(date).format('DD/MM/YYYY HH:mm') : '-'),
+      title: 'Sync',
+      dataIndex: 'syncStatus',
+      key: 'syncStatus',
+      width: 100,
+      render: (syncStatus: SyncStatus) => {
+        const colors = {
+          [SyncStatus.SYNCED]: 'success',
+          [SyncStatus.PENDING]: 'warning',
+          [SyncStatus.CONFLICT]: 'error',
+        };
+        const labels = {
+          [SyncStatus.SYNCED]: 'Synced',
+          [SyncStatus.PENDING]: 'Pending',
+          [SyncStatus.CONFLICT]: 'Conflict',
+        };
+        return (
+          <Tag color={colors[syncStatus] || 'default'}>
+            {labels[syncStatus] || 'Unknown'}
+          </Tag>
+        );
+      },
     },
     {
       title: t('users:columns.createdAt'),
       dataIndex: 'createdAt',
       key: 'createdAt',
       width: 120,
-      render: (date: string) => dayjs(date).format('DD/MM/YYYY'),
+      render: (date: Date) => dayjs(date).format('DD/MM/YYYY'),
     },
     {
       title: t('commonUi:table.actions'),
@@ -233,14 +363,45 @@ export default function UserList() {
       searchPlaceholder={t('users:searchPlaceholder')}
       searchValue={search}
       onSearchChange={setSearch}
+      extraActions={
+        <Space>
+          {/* Network Status Badge */}
+          <Badge
+            status={isOnline ? 'success' : 'error'}
+            text={
+              <Space size="small">
+                {isOnline ? <CloudOutlined /> : <DisconnectOutlined />}
+                {isOnline ? 'Online' : 'Offline'}
+              </Space>
+            }
+          />
+          
+          {/* Sync Queue Indicator */}
+          {queueSize > 0 && (
+            <Badge count={queueSize} showZero={false}>
+              <Tag color="warning">Pending Sync</Tag>
+            </Badge>
+          )}
+
+          {/* Sync Button */}
+          <Button
+            icon={<SyncOutlined spin={syncing} />}
+            onClick={handleSync}
+            loading={syncing}
+            disabled={!isOnline}
+          >
+            {syncing ? 'Syncing...' : 'Sync Now'}
+          </Button>
+        </Space>
+      }
       columns={columns}
-      dataSource={data?.data || []}
-      loading={isLoading}
+      dataSource={paginatedUsers}
+      loading={loading}
       rowKey="id"
       pagination={{
         current: page,
         pageSize,
-        total: data?.meta?.total || 0,
+        total: users.length,
         showTotal: (total) => t('users:messages.total', { total }),
         onChange: (newPage, newPageSize) => {
           setPage(newPage);
