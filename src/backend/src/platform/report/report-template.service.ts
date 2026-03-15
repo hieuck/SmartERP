@@ -23,9 +23,9 @@ export interface ReportTemplate {
   type: ReportType;
   chartType?: ChartType;
   sourceEntity: string;
-  filters?: any[];
+  filters?: unknown[];
   groupBy?: string[];
-  orderBy?: any;
+  orderBy?: unknown;
   columns: Array<{
     fieldName: string;
     label: string;

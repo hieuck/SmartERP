@@ -15,7 +15,7 @@ export interface PayPalPaymentParams {
 @Injectable()
 export class PayPalService {
   private readonly logger = new Logger(PayPalService.name);
-  // private paypalClient: any;
+  // private paypalClient: unknown;
 
   constructor() {
     // TODO: Initialize PayPal SDK

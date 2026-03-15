@@ -47,16 +47,16 @@ export class Report {
   sourceEntity: string;
 
   @Column({ type: 'jsonb', nullable: true })
-  query: any;
+  query: unknown;
 
   @Column({ type: 'jsonb', nullable: true })
-  filters: any;
+  filters: unknown;
 
   @Column({ type: 'jsonb', nullable: true })
   groupBy: string[];
 
   @Column({ type: 'jsonb', nullable: true })
-  orderBy: any;
+  orderBy: unknown;
 
   @Column({ default: true })
   isActive: boolean;

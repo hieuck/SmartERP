@@ -80,7 +80,7 @@ export class ReportService {
   /**
    * Update report definition
    */
-  async update(id: string, data: Partial<Report>, tenantId: string, user: User): Promise<Report> {
+  async update(id: string, data: Partial<Report>, tenantId: string, _user: User): Promise<Report> {
     const report = await this.findOne(id, tenantId);
 
     Object.assign(report, data);
@@ -90,7 +90,7 @@ export class ReportService {
   /**
    * Delete report
    */
-  async remove(id: string, tenantId: string, user: User): Promise<void> {
+  async remove(id: string, tenantId: string, _user: User): Promise<void> {
     const report = await this.findOne(id, tenantId);
     await this.reportRepository.remove(report);
   }
@@ -102,7 +102,7 @@ export class ReportService {
     reportId: string,
     columnData: Partial<ReportColumn>,
     tenantId: string,
-    user: User,
+    _user: User,
   ): Promise<ReportColumn> {
     const report = await this.findOne(reportId, tenantId);
 
@@ -122,7 +122,7 @@ export class ReportService {
     reportId: string,
     columnId: string,
     tenantId: string,
-    user: User,
+    _user: User,
   ): Promise<void> {
     await this.findOne(reportId, tenantId); // Verify report exists
 
@@ -143,7 +143,7 @@ export class ReportService {
    */
   async execute(
     reportId: string,
-    parameters: any,
+    parameters: unknown,
     tenantId: string,
     user: User,
   ): Promise<ReportExecution> {
@@ -188,7 +188,7 @@ export class ReportService {
    * SECURITY: Uses QueryBuilder to prevent SQL injection
    * SECURITY: Validates all field names and operators
    */
-  private async executeQuery(report: Report, parameters: any, tenantId: string): Promise<any[]> {
+  private async executeQuery(report: Report, parameters: unknown, tenantId: string): Promise<unknown[]> {
     // Validate source entity exists
     let entityMetadata;
     try {
@@ -276,8 +276,8 @@ export class ReportService {
    * Validate that a field name exists in the entity metadata
    * Prevents SQL injection through field names
    */
-  private validateFieldName(entityMetadata: any, fieldName: string): void {
-    const columns = entityMetadata.columns.map((col: any) => col.propertyName);
+  private validateFieldName(entityMetadata: unknown, fieldName: string): void {
+    const columns = entityMetadata.columns.map((col: unknown) => col.propertyName);
     if (!columns.includes(fieldName)) {
       throw new BadRequestException(`Invalid field name: ${fieldName}`);
     }

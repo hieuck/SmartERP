@@ -17,7 +17,7 @@ describe('AccountLockoutService', () => {
   let service: AccountLockoutService;
   let cacheService: jest.Mocked<CacheService>;
 
-  const _MAX_ATTEMPTS = 5;
+  const __MAX_ATTEMPTS = 5;
   const LOCKOUT_DURATION_MS = 60 * 60 * 1000; // 1 hour (ATTEMPT_WINDOW_MS from service)
 
   beforeEach(async () => {

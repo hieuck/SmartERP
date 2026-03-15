@@ -12,12 +12,12 @@ import { AddToCartDto } from './dto/add-to-cart.dto';
 import { Address } from './interfaces/address.interface';
 
 describe('ShoppingCartService', () => {
-  let permissionService: jest.Mocked<PermissionService>;
+  let _permissionService: jest.Mocked<PermissionService>;
   let service: ShoppingCartService;
   let cartRepository: jest.Mocked<Repository<ShoppingCart>>;
   let cartItemRepository: jest.Mocked<Repository<CartItem>>;
   let productRepository: jest.Mocked<Repository<ProductCatalog>>;
-  let _permissionService: jest.Mocked<PermissionService>;
+  let __permissionService: jest.Mocked<PermissionService>;
 
   const mockUser: User = {
     id: 'user-123',

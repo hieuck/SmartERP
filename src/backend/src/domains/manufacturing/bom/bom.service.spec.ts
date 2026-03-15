@@ -6,7 +6,7 @@ import { BOMService } from './bom.service';
 import { BOM } from './entities/bom.entity';
 import { BOMLine } from './entities/bom-line.entity';
 import { BOMType } from './enums/b-o-m-type.enum';
-import { CreateBOMDto, BOMLineItemDto } from './dto/create-bom.dto';
+import { CreateBOMDto } from './dto/create-bom.dto';
 import { UpdateBOMDto } from './dto/update-bom.dto';
 import { AddBOMLineDto } from './dto/add-bom-line.dto';
 

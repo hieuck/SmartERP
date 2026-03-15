@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { User } from '../user/entities/user.entity';
 import { Tenant } from '../tenant/entities/tenant.entity';
@@ -13,12 +13,12 @@ import { TenantStatus } from '../tenant/enums/tenant-status.enum';
 
 describe('AuthService', () => {
   let service: AuthService;
-  let userRepository: any;
-  let tenantRepository: any;
-  let jwtService: any;
-  let cacheService: any;
-  let tokenBlacklistService: any;
-  let accountLockoutService: any;
+  let userRepository: unknown;
+  let _tenantRepository: unknown;
+  let jwtService: unknown;
+  let _cacheService: unknown;
+  let tokenBlacklistService: unknown;
+  let accountLockoutService: unknown;
 
   beforeEach(async () => {
     const mockUserRepository = {

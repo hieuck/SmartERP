@@ -7,7 +7,7 @@ import { PermissionService, User } from '@/common/security/permission.service';
 import { SubscriptionPlan } from './enums/subscription-plan.enum';
 import { BillingCycle } from './enums/billing-cycle.enum';
 import { TenantStatus } from './enums/tenant-status.enum';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { NotFoundException } from '@nestjs/common';
 
 describe('SubscriptionService', () => {
   let service: SubscriptionService;

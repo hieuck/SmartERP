@@ -24,7 +24,7 @@ import { tap } from 'rxjs/operators';
 export class TenantIsolationInterceptor implements NestInterceptor {
   private readonly logger = new Logger(TenantIsolationInterceptor.name);
 
-  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const request = context.switchToHttp().getRequest();
     const userTenantId = request.user?.tenantId;
 
@@ -46,7 +46,7 @@ export class TenantIsolationInterceptor implements NestInterceptor {
    * @param data Response data
    * @param userTenantId Authenticated user's tenant ID
    */
-  private validateTenantIsolation(data: any, userTenantId: string): void {
+  private validateTenantIsolation(data: unknown, userTenantId: string): void {
     if (!data) {
       return;
     }

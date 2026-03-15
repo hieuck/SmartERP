@@ -4,7 +4,7 @@ import { ApiProperty } from '@nestjs/swagger';
 export class ChangeDto {
   entity: string;
   operation: 'create' | 'update' | 'delete';
-  data: any;
+  data: unknown;
   version?: number;
   offlineId?: string;
 }

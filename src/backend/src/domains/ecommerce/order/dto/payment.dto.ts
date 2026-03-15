@@ -25,7 +25,7 @@ export class ProcessPaymentDto {
 
   @ApiProperty({ example: { cardLast4: '4242' }, required: false })
   @IsOptional()
-  paymentDetails?: any;
+  paymentDetails?: unknown;
 }
 
 export class VerifyPaymentDto {

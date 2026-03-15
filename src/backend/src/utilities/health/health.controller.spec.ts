@@ -36,7 +36,7 @@ describe('HealthController', () => {
     // Mock health check service to execute the check functions
     const mockHealthCheck = jest.fn().mockImplementation(async (checks) => {
       // Execute all check functions to trigger indicator calls
-      await Promise.all(checks.map((check: () => Promise<any>) => check()));
+      await Promise.all(checks.map((check: () => Promise<unknown>) => check()));
       return mockHealthCheckResult;
     });
 

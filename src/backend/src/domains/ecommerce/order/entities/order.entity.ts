@@ -91,10 +91,10 @@ export class Order {
 
   // Addresses (JSON for flexibility)
   @Column({ type: 'jsonb' })
-  shippingAddress: any;
+  shippingAddress: unknown;
 
   @Column({ type: 'jsonb' })
-  billingAddress: any;
+  billingAddress: unknown;
 
   // Payment info
   @Column({ nullable: true })

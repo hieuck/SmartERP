@@ -14,7 +14,7 @@ describe('ScheduledJobsService', () => {
     enabled: true,
   };
 
-  const _mockCronJob = {
+  const ___mockCronJob = {
     start: jest.fn(),
     stop: jest.fn(),
   };

@@ -21,7 +21,7 @@ export class ValuationController {
   @Post('add')
   @Roles('manager', 'admin', 'warehouse_manager')
   @ApiOperation({ summary: 'Add stock valuation (when stock is received)' })
-  async addStockValuation(@Body() dto: AddStockValuationDto, @Request() req: any) {
+  async addStockValuation(@Body() dto: AddStockValuationDto, @Request() req: unknown) {
     return this.valuationService.addStockValuation(
       dto.productId,
       dto.warehouseId,

@@ -11,12 +11,12 @@ import { User } from '@core/user/entities/user.entity';
 import { JobStatus, ErrorSeverity, SettingCategory } from './enums';
 
 describe('SystemAdminService', () => {
-  let permissionService: jest.Mocked<PermissionService>;
+  let _permissionService: jest.Mocked<PermissionService>;
   let service: SystemAdminService;
   let settingRepository: jest.Mocked<Repository<SystemSetting>>;
   let jobRepository: jest.Mocked<Repository<BackgroundJob>>;
   let errorLogRepository: jest.Mocked<Repository<ErrorLog>>;
-  let _permissionService: jest.Mocked<PermissionService>;
+  let __permissionService: jest.Mocked<PermissionService>;
 
   const mockUser: User = {
     id: 'user-1',

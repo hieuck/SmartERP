@@ -146,7 +146,7 @@ export class CreateProductDto {
   })
   @IsOptional()
   @IsObject()
-  variants?: any;
+  variants?: unknown;
 
   @ApiPropertyOptional({ example: 0 })
   @IsOptional()

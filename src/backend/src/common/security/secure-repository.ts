@@ -26,7 +26,7 @@ export class SecureRepository<T extends Partial<PermissionRecord> = any> {
   async find(user: User, options: FindManyOptions<T> = {}): Promise<T[]> {
     const secureWhere = this.permissionService.buildSecureQuery(
       user,
-      (options.where as Record<string, any>) || {},
+      (options.where as Record<string, unknown>) || {},
       this.entityName,
     );
 

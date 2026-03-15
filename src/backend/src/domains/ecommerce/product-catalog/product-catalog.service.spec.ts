@@ -8,10 +8,10 @@ import { PermissionService, User } from '@common/security/permission.service';
 import { ProductStatus } from './enums/product-status.enum';
 
 describe('ProductCatalogService', () => {
-  let permissionService: jest.Mocked<PermissionService>;
+  let _permissionService: jest.Mocked<PermissionService>;
   let service: ProductCatalogService;
   let repository: jest.Mocked<Repository<ProductCatalog>>;
-  let _permissionService: jest.Mocked<PermissionService>;
+  let __permissionService: jest.Mocked<PermissionService>;
 
   const mockUser: User = {
     id: 'user-123',

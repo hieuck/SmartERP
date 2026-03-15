@@ -15,8 +15,8 @@ describe('CrmService', () => {
   let opportunityRepository: jest.Mocked<Repository<Opportunity>>;
   let cacheService: jest.Mocked<CacheService>;
   let permissionService: jest.Mocked<PermissionService>;
-  let secureLeadRepo: any;
-  let secureOpportunityRepo: any;
+  let secureLeadRepo: unknown;
+  let secureOpportunityRepo: unknown;
 
   const mockUser: User = {
     id: 'user-123',

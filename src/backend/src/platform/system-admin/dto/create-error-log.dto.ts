@@ -32,7 +32,7 @@ export class CreateErrorLogDto {
   })
   @IsOptional()
   @IsObject()
-  context?: Record<string, any>;
+  context?: Record<string, unknown>;
 
   @ApiPropertyOptional({ example: '/api/users', description: 'Request path' })
   @IsOptional()

@@ -366,7 +366,7 @@ export class PaymentGatewayService {
     },
   ): Promise<{ transactions: PaymentTransaction[]; total: number }> {
     // Build where conditions
-    const where: any = { tenantId: user.tenantId };
+    const where: unknown = { tenantId: user.tenantId };
 
     if (filters?.orderId) {
       where.orderId = filters.orderId;

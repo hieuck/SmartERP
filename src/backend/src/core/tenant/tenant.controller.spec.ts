@@ -37,6 +37,7 @@ import { OnboardingService } from './onboarding.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { TenantStatus } from './enums/tenant-status.enum';
 import { SubscriptionPlan } from './enums/subscription-plan.enum';
+import mockTenant from '../../../test/fixtures/tenant.json';
 
 describe('TenantController (Integration)', () => {
   let app: INestApplication;

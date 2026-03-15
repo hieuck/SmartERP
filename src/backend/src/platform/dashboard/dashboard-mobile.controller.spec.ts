@@ -63,7 +63,7 @@ describe('DashboardMobileController (Integration)', () => {
     values: [1000000, 1500000, 2000000, 1800000, 2200000, 2500000, 1900000],
   };
 
-  const _mockTopProductsChart = {
+  const __mockTopProductsChart = {
     labels: ['Product A', 'Product B', 'Product C'],
     values: [5000000, 4000000, 3000000],
   };

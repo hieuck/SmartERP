@@ -47,7 +47,7 @@ export class ApprovalRequest {
   status: ApprovalStatus;
 
   @Column({ type: 'jsonb', nullable: true })
-  metadata?: Record<string, any>; // Additional context data
+  metadata?: Record<string, unknown>; // Additional context data
 
   @Column()
   tenantId: string;

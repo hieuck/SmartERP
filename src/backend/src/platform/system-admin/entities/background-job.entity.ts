@@ -40,10 +40,10 @@ export class BackgroundJob {
   priority: JobPriority;
 
   @Column({ type: 'jsonb', nullable: true })
-  payload: any;
+  payload: unknown;
 
   @Column({ type: 'jsonb', nullable: true })
-  result: any;
+  result: unknown;
 
   @Column({ type: 'text', nullable: true })
   errorMessage: string;

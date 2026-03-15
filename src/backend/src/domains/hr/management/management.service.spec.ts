@@ -13,13 +13,13 @@ import { CacheService } from '@/common/cache/cache.service';
 import { PermissionService, User } from '@/common/security/permission.service';
 
 describe('ManagementService', () => {
-  let permissionService: jest.Mocked<PermissionService>;
+  let _permissionService: jest.Mocked<PermissionService>;
   let service: ManagementService;
   let employeeRepository: jest.Mocked<Repository<Employee>>;
   let attendanceRepository: jest.Mocked<Repository<Attendance>>;
   let leaveRepository: jest.Mocked<Repository<Leave>>;
   let cacheService: jest.Mocked<CacheService>;
-  let _permissionService: jest.Mocked<PermissionService>;
+  let __permissionService: jest.Mocked<PermissionService>;
 
   const mockUser: User = {
     id: 'user-123',

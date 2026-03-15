@@ -12,17 +12,17 @@ import { PermissionService, User } from '@/common/security/permission.service';
 import { BadRequestException } from '@nestjs/common';
 
 describe('PaymentGatewayService', () => {
-  let paymentWebhookRepo: jest.Mocked<Repository<PaymentWebhook>>;
-  let result: any;
-  let permissionService: jest.Mocked<PermissionService>;
+  let _paymentWebhookRepo: jest.Mocked<Repository<PaymentWebhook>>;
+  let _result: unknown;
+  let _permissionService: jest.Mocked<PermissionService>;
   let service: PaymentGatewayService;
   let paymentTransactionRepo: jest.Mocked<Repository<PaymentTransaction>>;
-  let _paymentWebhookRepo: jest.Mocked<Repository<PaymentWebhook>>;
+  let __paymentWebhookRepo: jest.Mocked<Repository<PaymentWebhook>>;
   let vnpayService: jest.Mocked<VNPayService>;
   let momoService: jest.Mocked<MomoService>;
   let stripeService: jest.Mocked<StripeService>;
   let paypalService: jest.Mocked<PayPalService>;
-  let _permissionService: jest.Mocked<PermissionService>;
+  let __permissionService: jest.Mocked<PermissionService>;
 
   const mockUser: User = {
     id: 'user-123',
@@ -168,7 +168,7 @@ describe('PaymentGatewayService', () => {
         deeplink: 'momo://...',
       });
 
-      const _saveSpy = jest
+      const __saveSpy = jest
         .spyOn(service['secureTransactionRepo'], 'save')
         .mockResolvedValueOnce({ ...mockTransaction, status: 'pending' } as PaymentTransaction)
         .mockResolvedValueOnce({
@@ -199,7 +199,7 @@ describe('PaymentGatewayService', () => {
         paymentIntentId: 'pi_123',
       });
 
-      const _saveSpy = jest
+      const __saveSpy = jest
         .spyOn(service['secureTransactionRepo'], 'save')
         .mockResolvedValueOnce({ ...mockTransaction, status: 'pending' } as PaymentTransaction)
         .mockResolvedValueOnce({
@@ -231,7 +231,7 @@ describe('PaymentGatewayService', () => {
         orderId: 'PAYPAL123',
       });
 
-      const _saveSpy = jest
+      const __saveSpy = jest
         .spyOn(service['secureTransactionRepo'], 'save')
         .mockResolvedValueOnce({ ...mockTransaction, status: 'pending' } as PaymentTransaction)
         .mockResolvedValueOnce({
@@ -629,7 +629,7 @@ describe('PaymentGatewayService', () => {
 
       momoService.refundTransaction.mockResolvedValue({});
 
-      const _saveSpy = jest
+      const __saveSpy = jest
         .spyOn(service['secureTransactionRepo'], 'save')
         .mockResolvedValue({ ...mockTransaction, status: 'refunded' } as PaymentTransaction);
 
@@ -659,7 +659,7 @@ describe('PaymentGatewayService', () => {
 
       stripeService.refundPayment.mockResolvedValue({});
 
-      const _saveSpy = jest
+      const __saveSpy = jest
         .spyOn(service['secureTransactionRepo'], 'save')
         .mockResolvedValue({ ...mockTransaction, status: 'refunded' } as PaymentTransaction);
 

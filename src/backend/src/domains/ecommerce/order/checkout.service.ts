@@ -49,7 +49,7 @@ export class CheckoutService {
   /**
    * Convert AddressDto to Address format
    */
-  private convertToAddress(addressDto: any): Address {
+  private convertToAddress(addressDto: unknown): Address {
     return {
       fullName: addressDto.fullName,
       phone: addressDto.phone,

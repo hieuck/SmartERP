@@ -27,7 +27,7 @@ import { WorkOrderStatus } from './enums/work-order-status.enum';
 import { SyncStatus } from '../../../common/enums/sync-status.enum';
 
 describe('WorkOrderController (Integration)', () => {
-  let response: any;
+  let response: unknown;
   let app: INestApplication;
   let workOrderService: jest.Mocked<WorkOrderService>;
 

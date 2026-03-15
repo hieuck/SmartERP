@@ -199,7 +199,7 @@ describe('NotificationController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body.every((n: any) => n.status === NotificationStatus.UNREAD)).toBe(true);
+      expect(response.body.every((n: unknown) => n.status === NotificationStatus.UNREAD)).toBe(true);
     });
 
     it('should require authentication', async () => {

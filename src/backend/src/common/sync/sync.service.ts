@@ -6,8 +6,8 @@ import { SyncStatus } from '../enums/sync-status.enum';
 interface SyncConflict {
   id: string;
   entity: string;
-  localData: any;
-  serverData: any;
+  localData: unknown;
+  serverData: unknown;
   localVersion: number;
   serverVersion: number;
 }
@@ -97,7 +97,7 @@ export class SyncService {
     const repository = this.getRepository(change.entity);
 
     switch (change.operation) {
-      case 'create':
+      case 'create': {
         const created = repository.create({
           ...change.data,
           tenantId,
@@ -106,8 +106,9 @@ export class SyncService {
         });
         await repository.save(created);
         return { conflict: null };
+      }
 
-      case 'update':
+      case 'update': {
         const existing = await repository.findOne({
           where: { id: change.data.id, tenantId },
         });
@@ -149,8 +150,9 @@ export class SyncService {
           },
         );
         return { conflict: null };
+      }
 
-      case 'delete':
+      case 'delete': {
         // Requirement 3.3: FOR delete conflicts, prioritize delete operation
         const existingForDelete = await repository.findOne({
           where: { id: change.data.id, tenantId },
@@ -172,6 +174,7 @@ export class SyncService {
         // Always prioritize delete
         await repository.softDelete({ id: change.data.id, tenantId });
         return { conflict: null };
+      }
 
       default:
         throw new Error(`Unknown operation: ${change.operation}`);

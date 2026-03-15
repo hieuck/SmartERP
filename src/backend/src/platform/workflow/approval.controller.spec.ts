@@ -5,10 +5,10 @@ import { User } from '@/common/security/permission.service';
 import { SubmitApprovalDto, RejectApprovalDto } from './dto/approval.dto';
 
 describe('ApprovalController', () => {
-  let result: any;
-  let service: jest.Mocked<ApprovalService>;
+  let _result: unknown;
+  let _service: jest.Mocked<ApprovalService>;
   let controller: ApprovalController;
-  let _service: ApprovalService;
+  let __service: ApprovalService;
 
   const mockUser: User = {
     id: 'user-1',

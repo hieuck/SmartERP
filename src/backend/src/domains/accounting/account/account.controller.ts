@@ -174,7 +174,7 @@ export class AccountController {
   // Journal Entries - New Methods
   @Post('journal-entries/create')
   @ApiOperation({ summary: 'Create journal entry with validation' })
-  async createJournalEntryNew(@CurrentUser() user: User, @Body() dto: any) {
+  async createJournalEntryNew(@CurrentUser() user: User, @Body() dto: unknown) {
     return this.accountingService.createJournalEntry(user, dto);
   }
 

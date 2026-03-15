@@ -13,15 +13,15 @@ import { AccountType } from '../account/enums/account-type.enum';
 import { JournalEntryStatus } from '../account/enums/journal-entry-status.enum';
 
 describe('ReportsService', () => {
-  let accountRepository: jest.Mocked<Repository<Account>>;
-  let result: any;
-  let permissionService: jest.Mocked<PermissionService>;
-  let service: ReportsService;
   let _accountRepository: jest.Mocked<Repository<Account>>;
+  let _result: unknown;
+  let _permissionService: jest.Mocked<PermissionService>;
+  let service: ReportsService;
+  let __accountRepository: jest.Mocked<Repository<Account>>;
   let journalLineRepository: jest.Mocked<Repository<JournalLine>>;
   let productRepository: jest.Mocked<Repository<Product>>;
   let invoiceRepository: jest.Mocked<Repository<Invoice>>;
-  let _permissionService: jest.Mocked<PermissionService>;
+  let __permissionService: jest.Mocked<PermissionService>;
 
   const mockUser: User = {
     id: 'user-123',

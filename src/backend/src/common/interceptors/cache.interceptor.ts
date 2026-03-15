@@ -33,7 +33,7 @@ export class CacheInterceptor implements NestInterceptor {
     private reflector: Reflector,
   ) {}
 
-  async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
+  async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<unknown>> {
     const request = context.switchToHttp().getRequest();
     const method = request.method;
 
@@ -72,7 +72,7 @@ export class CacheInterceptor implements NestInterceptor {
    * Format: {method}:{path}:{queryString}:{userId}
    * Example: GET:/api/products:category=electronics:user123
    */
-  private generateCacheKey(request: any): string {
+  private generateCacheKey(request: unknown): string {
     const method = request.method;
     const path = request.url.split('?')[0]; // Remove query string
     const queryString = JSON.stringify(request.query || {});

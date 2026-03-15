@@ -34,7 +34,7 @@ export class CustomThrottlerGuard extends NestThrottlerGuard {
    *
    * Uses user ID if authenticated, otherwise falls back to IP address
    */
-  protected async getTracker(req: Record<string, any>): Promise<string> {
+  protected async getTracker(req: Record<string, unknown>): Promise<string> {
     // If user is authenticated, use user ID for tracking
     if (req.user && req.user.id) {
       return `user:${req.user.id}`;

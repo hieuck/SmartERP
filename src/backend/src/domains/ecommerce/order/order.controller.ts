@@ -36,8 +36,8 @@ export class OrderController {
   @ApiOperation({ summary: 'Create order manually' })
   @ApiResponse({ status: 201, description: 'Order created successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
-  async create(@Body() dto: CreateOrderDto, @Req() req: any) {
-    const _tenantId = req.user?.tenantId || 'default';
+  async create(@Body() dto: CreateOrderDto, @Req() req: unknown) {
+    const __tenantId = req.user?.tenantId || 'default';
     const user = req.user;
     return this.orderService.create(dto, user);
   }
@@ -71,7 +71,7 @@ export class OrderController {
   async getStatistics(
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
-    @Req() req?: any,
+    @Req() req?: unknown,
   ) {
     const _tenantId = req.user?.tenantId || 'default';
     return this.orderService.getStatistics(
@@ -110,8 +110,8 @@ export class OrderController {
   @ApiOperation({ summary: 'Update order status' })
   @ApiResponse({ status: 200, description: 'Order status updated successfully' })
   @ApiResponse({ status: 404, description: 'Order not found' })
-  async updateStatus(@Param('id') id: string, @Body() dto: UpdateOrderStatusDto, @Req() req: any) {
-    const _tenantId = req.user?.tenantId || 'default';
+  async updateStatus(@Param('id') id: string, @Body() dto: UpdateOrderStatusDto, @Req() req: unknown) {
+    const __tenantId = req.user?.tenantId || 'default';
     const user = req.user;
     return this.orderService.updateStatus(id, dto, user, user);
   }
@@ -121,8 +121,8 @@ export class OrderController {
   @ApiResponse({ status: 200, description: 'Order cancelled successfully' })
   @ApiResponse({ status: 400, description: 'Order cannot be cancelled' })
   @ApiResponse({ status: 404, description: 'Order not found' })
-  async cancel(@Param('id') id: string, @Body() dto: CancelOrderDto, @Req() req: any) {
-    const _tenantId = req.user?.tenantId || 'default';
+  async cancel(@Param('id') id: string, @Body() dto: CancelOrderDto, @Req() req: unknown) {
+    const __tenantId = req.user?.tenantId || 'default';
     const user = req.user;
     return this.orderService.cancel(id, dto, user, user);
   }

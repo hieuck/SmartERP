@@ -19,7 +19,7 @@ export class CreateBackgroundJobDto {
   @ApiPropertyOptional({ example: { recipients: ['user@example.com'] } })
   @IsOptional()
   @IsObject()
-  payload?: any;
+  payload?: unknown;
 
   @ApiPropertyOptional({ example: 3 })
   @IsOptional()

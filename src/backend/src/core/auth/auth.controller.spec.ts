@@ -38,7 +38,7 @@ describe('AuthController (Integration)', () => {
   let authService: jest.Mocked<AuthService>;
   let tokenBlacklistService: jest.Mocked<TokenBlacklistService>;
   let accountLockoutService: jest.Mocked<AccountLockoutService>;
-  let jwtService: jest.Mocked<JwtService>;
+  let _jwtService: jest.Mocked<JwtService>;
 
   const mockUser = {
     id: 'user-123',

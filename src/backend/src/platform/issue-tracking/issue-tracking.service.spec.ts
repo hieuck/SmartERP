@@ -12,12 +12,12 @@ import { IssueType } from './enums/issue-type.enum';
 import { User } from '@/common/security/permission.service';
 
 describe('IssueTrackingService', () => {
-  let attachmentRepository: jest.Mocked<Repository<IssueAttachment>>;
-  let result: any;
+  let _attachmentRepository: jest.Mocked<Repository<IssueAttachment>>;
+  let _result: unknown;
   let service: IssueTrackingService;
   let issueRepository: jest.Mocked<Repository<Issue>>;
   let commentRepository: jest.Mocked<Repository<IssueComment>>;
-  let _attachmentRepository: jest.Mocked<Repository<IssueAttachment>>;
+  let __attachmentRepository: jest.Mocked<Repository<IssueAttachment>>;
 
   const mockUser: User = {
     id: 'user-1',

@@ -18,7 +18,7 @@ describe('TenantService', () => {
   let tenantRepository: jest.Mocked<Repository<Tenant>>;
   let userRepository: jest.Mocked<Repository<UserEntity>>;
   let cacheService: jest.Mocked<CacheService>;
-  let permissionService: jest.Mocked<PermissionService>;
+  let _permissionService: jest.Mocked<PermissionService>;
   let secureTenantRepo: jest.Mocked<SecureRepository<Tenant>>;
 
   const mockCurrentUser: User = {

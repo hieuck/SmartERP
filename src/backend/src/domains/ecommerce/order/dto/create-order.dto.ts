@@ -42,7 +42,7 @@ class OrderItemDto {
   @ApiProperty({ example: { size: 'L', color: 'Red' }, required: false })
   @IsObject()
   @IsOptional()
-  selectedVariant?: any;
+  selectedVariant?: unknown;
 
   @ApiProperty({ example: 'Gift wrap please', required: false })
   @IsString()
@@ -77,7 +77,7 @@ export class CreateOrderDto {
     },
   })
   @IsObject()
-  shippingAddress: any;
+  shippingAddress: unknown;
 
   @ApiProperty({
     example: {
@@ -92,7 +92,7 @@ export class CreateOrderDto {
   })
   @IsObject()
   @IsOptional()
-  billingAddress?: any;
+  billingAddress?: unknown;
 
   @ApiProperty({ example: 'standard', required: false })
   @IsString()

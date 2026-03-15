@@ -13,7 +13,7 @@ describe('OnboardingService', () => {
   let service: OnboardingService;
   let tenantRepository: jest.Mocked<Repository<Tenant>>;
   let userRepository: jest.Mocked<Repository<UserEntity>>;
-  let permissionService: jest.Mocked<PermissionService>;
+  let _permissionService: jest.Mocked<PermissionService>;
 
   const mockUser: User = {
     id: 'user-1',
@@ -276,7 +276,7 @@ describe('OnboardingService', () => {
       tenantRepository.findOne.mockResolvedValue(mockTenant);
       tenantRepository.save.mockResolvedValue(mockTenant);
       // Mock to reject only when checking for team member existence
-      userRepository.findOne.mockImplementation((options: any) => {
+      userRepository.findOne.mockImplementation((options: unknown) => {
         if (options?.where?.email) {
           return Promise.reject(new Error('Database error'));
         }

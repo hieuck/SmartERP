@@ -9,11 +9,11 @@ import { CacheService } from '@common/cache/cache.service';
 import { PermissionService, User } from '@common/security/permission.service';
 
 describe('DocumentService', () => {
-  let permissionService: jest.Mocked<PermissionService>;
+  let _permissionService: jest.Mocked<PermissionService>;
   let service: DocumentService;
   let documentRepository: jest.Mocked<Repository<Document>>;
   let cacheService: jest.Mocked<CacheService>;
-  let _permissionService: jest.Mocked<PermissionService>;
+  let __permissionService: jest.Mocked<PermissionService>;
 
   const mockUser: User = {
     id: 'user-1',
@@ -185,7 +185,7 @@ describe('DocumentService', () => {
       cacheService.getOrSet.mockImplementation(async (_key, fn) => fn());
       documentRepository.update.mockResolvedValue({ affected: 1 } as any);
 
-      const _result = await service.update(mockUser, 'doc-1', { name: 'Updated' });
+      const __result = await service.update(mockUser, 'doc-1', { name: 'Updated' });
 
       expect(documentRepository.update).toHaveBeenCalled();
       expect(cacheService.del).toHaveBeenCalled();
@@ -217,7 +217,7 @@ describe('DocumentService', () => {
       (service as any).secureDocumentRepo = mockSecureRepo;
       cacheService.getOrSet.mockImplementation(async (_key, fn) => fn());
 
-      const _result = await service.createVersion(mockUser, 'doc-1', '/uploads/test-v2.pdf');
+      const __result = await service.createVersion(mockUser, 'doc-1', '/uploads/test-v2.pdf');
 
       expect(result.version).toBe(2);
     });

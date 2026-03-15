@@ -21,6 +21,7 @@ import { SettingsService } from './settings.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { SyncStatus } from '@/common/enums/sync-status.enum';
+import mockSettings from '../../../test/fixtures/settings.json';
 
 describe('SettingsController (Integration)', () => {
   let app: INestApplication;

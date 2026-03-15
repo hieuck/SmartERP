@@ -15,12 +15,12 @@ export class ManagementController {
 
   // Employee Endpoints
   @Get('employees')
-  async findAllEmployees(@CurrentUser() user: User): Promise<any[]> {
+  async findAllEmployees(@CurrentUser() user: User): Promise<unknown[]> {
     return this.managementService.findAllEmployees(user);
   }
 
   @Get('employees/:id')
-  async findEmployeeById(@CurrentUser() user: User, @Param('id') id: string): Promise<any> {
+  async findEmployeeById(@CurrentUser() user: User, @Param('id') id: string): Promise<unknown> {
     return this.managementService.findEmployeeById(user, id);
   }
 
@@ -28,7 +28,7 @@ export class ManagementController {
   async createEmployee(
     @CurrentUser() user: User,
     @Body() createEmployeeDto: CreateEmployeeDto,
-  ): Promise<any> {
+  ): Promise<unknown> {
     return this.managementService.createEmployee(user, createEmployeeDto);
   }
 
@@ -37,7 +37,7 @@ export class ManagementController {
     @CurrentUser() user: User,
     @Param('id') id: string,
     @Body() updateEmployeeDto: UpdateEmployeeDto,
-  ): Promise<any> {
+  ): Promise<unknown> {
     return this.managementService.updateEmployee(user, id, updateEmployeeDto);
   }
 
@@ -52,7 +52,7 @@ export class ManagementController {
     @CurrentUser() user: User,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
-  ): Promise<any[]> {
+  ): Promise<unknown[]> {
     const start = startDate ? new Date(startDate) : undefined;
     const end = endDate ? new Date(endDate) : undefined;
     return this.managementService.findAllAttendance(user, undefined, start, end);
@@ -62,7 +62,7 @@ export class ManagementController {
   async findAttendanceByEmployee(
     @CurrentUser() user: User,
     @Param('employeeId') employeeId: string,
-  ): Promise<any[]> {
+  ): Promise<unknown[]> {
     return this.managementService.findAllAttendance(user, employeeId);
   }
 
@@ -70,7 +70,7 @@ export class ManagementController {
   async createAttendance(
     @CurrentUser() user: User,
     @Body() createAttendanceDto: CreateAttendanceDto,
-  ): Promise<any> {
+  ): Promise<unknown> {
     return this.managementService.createAttendance(user, createAttendanceDto);
   }
 
@@ -79,13 +79,13 @@ export class ManagementController {
     @CurrentUser() user: User,
     @Param('id') id: string,
     @Body() updateAttendanceDto: UpdateAttendanceDto,
-  ): Promise<any> {
+  ): Promise<unknown> {
     return this.managementService.updateAttendance(user, id, updateAttendanceDto);
   }
 
   // Leave Endpoints
   @Get('leaves')
-  async findAllLeaves(@CurrentUser() user: User): Promise<any[]> {
+  async findAllLeaves(@CurrentUser() user: User): Promise<unknown[]> {
     return this.managementService.findAllLeaves(user);
   }
 
@@ -93,7 +93,7 @@ export class ManagementController {
   async findLeavesByEmployee(
     @CurrentUser() user: User,
     @Param('employeeId') employeeId: string,
-  ): Promise<any[]> {
+  ): Promise<unknown[]> {
     return this.managementService.findAllLeaves(user, employeeId);
   }
 
@@ -101,7 +101,7 @@ export class ManagementController {
   async createLeave(
     @CurrentUser() user: User,
     @Body() createLeaveDto: CreateLeaveDto,
-  ): Promise<any> {
+  ): Promise<unknown> {
     return this.managementService.createLeave(user, createLeaveDto);
   }
 
@@ -110,12 +110,12 @@ export class ManagementController {
     @CurrentUser() user: User,
     @Param('id') id: string,
     @Body('approvedBy') approvedBy: string,
-  ): Promise<any> {
+  ): Promise<unknown> {
     return this.managementService.approveLeave(user, id, approvedBy);
   }
 
   @Post('leaves/:id/reject')
-  async rejectLeave(@CurrentUser() user: User, @Param('id') id: string): Promise<any> {
+  async rejectLeave(@CurrentUser() user: User, @Param('id') id: string): Promise<unknown> {
     return this.managementService.rejectLeave(user, id);
   }
 }

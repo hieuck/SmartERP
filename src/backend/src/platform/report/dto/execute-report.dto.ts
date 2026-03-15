@@ -8,5 +8,5 @@ export class ExecuteReportDto {
   })
   @IsOptional()
   @IsObject()
-  parameters?: any;
+  parameters?: unknown;
 }

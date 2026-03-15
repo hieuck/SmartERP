@@ -11,7 +11,7 @@ export interface Alert {
   level: AlertLevel;
   message: string;
   timestamp: Date;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**

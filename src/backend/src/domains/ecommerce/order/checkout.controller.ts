@@ -13,8 +13,8 @@ export class CheckoutController {
   @ApiResponse({ status: 200, description: 'Checkout initiated successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 404, description: 'Cart not found' })
-  async initiateCheckout(@Body() dto: CheckoutDto, @Req() req: any) {
-    const _tenantId = req.user?.tenantId || 'default';
+  async initiateCheckout(@Body() dto: CheckoutDto, @Req() req: unknown) {
+    const __tenantId = req.user?.tenantId || 'default';
     const user = req.user;
     return this.checkoutService.initiateCheckout(dto, user);
   }
@@ -24,8 +24,8 @@ export class CheckoutController {
   @ApiResponse({ status: 201, description: 'Order created successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 404, description: 'Cart not found' })
-  async createOrder(@Body() dto: CheckoutDto, @Req() req: any) {
-    const _tenantId = req.user?.tenantId || 'default';
+  async createOrder(@Body() dto: CheckoutDto, @Req() req: unknown) {
+    const __tenantId = req.user?.tenantId || 'default';
     const user = req.user;
     return this.checkoutService.createOrderFromCart(dto, user);
   }

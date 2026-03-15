@@ -16,7 +16,7 @@ import { Request, Response, NextFunction } from 'express';
 export class TenantContextMiddleware implements NestMiddleware {
   private readonly logger = new Logger(TenantContextMiddleware.name);
 
-  use(req: Request & { user?: any }, res: Response, next: NextFunction) {
+  use(req: Request & { user?: unknown }, res: Response, next: NextFunction) {
     // Extract tenant context from JWT (if authenticated)
     const tenantId = req.user?.tenantId;
     const userId = req.user?.userId;

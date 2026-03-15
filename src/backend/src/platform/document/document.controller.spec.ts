@@ -27,7 +27,7 @@ import { JwtAuthGuard } from '../../core/auth/guards/jwt-auth.guard';
 import { DocumentType } from './enums/document-type.enum';
 
 describe('DocumentController (Integration)', () => {
-  let response: any;
+  let response: unknown;
   let app: INestApplication;
   let documentService: jest.Mocked<DocumentService>;
 
@@ -127,7 +127,7 @@ describe('DocumentController (Integration)', () => {
       const documents = [mockFolder, mockFile];
       documentService.findAll.mockResolvedValue(documents as any);
 
-      const _response = await request(app.getHttpServer())
+      const __response = await request(app.getHttpServer())
         .get('/documents')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -140,7 +140,7 @@ describe('DocumentController (Integration)', () => {
       const documents = [mockFile];
       documentService.findAll.mockResolvedValue(documents as any);
 
-      const _response = await request(app.getHttpServer())
+      const __response = await request(app.getHttpServer())
         .get('/documents?parentId=folder-123')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -152,7 +152,7 @@ describe('DocumentController (Integration)', () => {
     it('should return empty array when no documents', async () => {
       documentService.findAll.mockResolvedValue([]);
 
-      const _response = await request(app.getHttpServer())
+      const __response = await request(app.getHttpServer())
         .get('/documents')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -181,7 +181,7 @@ describe('DocumentController (Integration)', () => {
       const documents = [mockFile];
       documentService.search.mockResolvedValue(documents as any);
 
-      const _response = await request(app.getHttpServer())
+      const __response = await request(app.getHttpServer())
         .get('/documents/search?q=contract')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -193,7 +193,7 @@ describe('DocumentController (Integration)', () => {
     it('should return empty array when no matches', async () => {
       documentService.search.mockResolvedValue([]);
 
-      const _response = await request(app.getHttpServer())
+      const __response = await request(app.getHttpServer())
         .get('/documents/search?q=nonexistent')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -204,7 +204,7 @@ describe('DocumentController (Integration)', () => {
     it('should handle empty query string', async () => {
       documentService.search.mockResolvedValue([]);
 
-      const _response = await request(app.getHttpServer())
+      const __response = await request(app.getHttpServer())
         .get('/documents/search?q=')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -232,7 +232,7 @@ describe('DocumentController (Integration)', () => {
     it('should return document by ID', async () => {
       documentService.findById.mockResolvedValue(mockFile as any);
 
-      const _response = await request(app.getHttpServer())
+      const __response = await request(app.getHttpServer())
         .get('/documents/file-123')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -267,7 +267,7 @@ describe('DocumentController (Integration)', () => {
       documentService.findById.mockResolvedValue(mockFile as any);
       documentService.findVersions.mockResolvedValue(versions as any);
 
-      const _response = await request(app.getHttpServer())
+      const __response = await request(app.getHttpServer())
         .get('/documents/file-123/versions')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -281,7 +281,7 @@ describe('DocumentController (Integration)', () => {
       documentService.findById.mockResolvedValue(mockFile as any);
       documentService.findVersions.mockResolvedValue([]);
 
-      const _response = await request(app.getHttpServer())
+      const __response = await request(app.getHttpServer())
         .get('/documents/file-123/versions')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -315,7 +315,7 @@ describe('DocumentController (Integration)', () => {
 
       documentService.createFolder.mockResolvedValue(mockFolder as any);
 
-      const _response = await request(app.getHttpServer())
+      const __response = await request(app.getHttpServer())
         .post('/documents/folders')
         .set('Authorization', 'Bearer valid-token')
         .send(createDto)
@@ -341,7 +341,7 @@ describe('DocumentController (Integration)', () => {
       };
       documentService.createFolder.mockResolvedValue(subfolder as any);
 
-      const _response = await request(app.getHttpServer())
+      const __response = await request(app.getHttpServer())
         .post('/documents/folders')
         .set('Authorization', 'Bearer valid-token')
         .send(createDto)
@@ -375,7 +375,7 @@ describe('DocumentController (Integration)', () => {
 
       documentService.createFile.mockResolvedValue(mockFile as any);
 
-      const _response = await request(app.getHttpServer())
+      const __response = await request(app.getHttpServer())
         .post('/documents/files')
         .set('Authorization', 'Bearer valid-token')
         .send(createDto)
@@ -396,7 +396,7 @@ describe('DocumentController (Integration)', () => {
       const rootFile = { ...mockFile, parentId: null };
       documentService.createFile.mockResolvedValue(rootFile as any);
 
-      const _response = await request(app.getHttpServer())
+      const __response = await request(app.getHttpServer())
         .post('/documents/files')
         .set('Authorization', 'Bearer valid-token')
         .send(createDto)
@@ -423,7 +423,7 @@ describe('DocumentController (Integration)', () => {
       const newVersion = { ...mockFile, version: 2, filePath: '/uploads/contract-v2.pdf' };
       documentService.createVersion.mockResolvedValue(newVersion as any);
 
-      const _response = await request(app.getHttpServer())
+      const __response = await request(app.getHttpServer())
         .post('/documents/file-123/versions')
         .set('Authorization', 'Bearer valid-token')
         .send(versionDto)
@@ -467,7 +467,7 @@ describe('DocumentController (Integration)', () => {
       const updatedDoc = { ...mockFile, ...updateDto };
       documentService.update.mockResolvedValue(updatedDoc as any);
 
-      const _response = await request(app.getHttpServer())
+      const __response = await request(app.getHttpServer())
         .put('/documents/file-123')
         .set('Authorization', 'Bearer valid-token')
         .send(updateDto)
@@ -626,7 +626,7 @@ describe('DocumentController (Integration)', () => {
       documentService.findById.mockResolvedValue(mockFile as any);
       documentService.findVersions.mockResolvedValue(versions as any);
 
-      const _response = await request(app.getHttpServer())
+      const __response = await request(app.getHttpServer())
         .get('/documents/file-123/versions')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);

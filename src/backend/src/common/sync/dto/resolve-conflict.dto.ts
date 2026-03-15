@@ -24,5 +24,5 @@ export class ResolveConflictDto {
     required: false,
   })
   @IsObject()
-  mergedData?: any;
+  mergedData?: unknown;
 }

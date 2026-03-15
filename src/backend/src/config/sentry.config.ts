@@ -19,7 +19,7 @@ export function initSentry() {
     return;
   }
 
-  console.log('🔍 Initializing Sentry error tracking...');
+  // Removed console statement
 
   Sentry.init({
     dsn,
@@ -74,7 +74,7 @@ export function clearSentryUser() {
 /**
  * Capture exception manually
  */
-export function captureException(error: Error, context?: Record<string, any>) {
+export function captureException(error: Error, context?: Record<string, unknown>) {
   Sentry.captureException(error, {
     extra: context,
   });
@@ -90,7 +90,7 @@ export function captureMessage(message: string, level: Sentry.SeverityLevel = 'i
 /**
  * Add breadcrumb for debugging
  */
-export function addBreadcrumb(message: string, data?: Record<string, any>) {
+export function addBreadcrumb(message: string, data?: Record<string, unknown>) {
   Sentry.addBreadcrumb({
     message,
     data,

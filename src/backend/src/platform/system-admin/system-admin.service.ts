@@ -143,7 +143,7 @@ export class SystemAdminService {
     user: User,
     id: string,
     status: JobStatus,
-    result?: Record<string, any>,
+    result?: Record<string, unknown>,
     errorMessage?: string,
   ): Promise<BackgroundJob> {
     const job = await this.getJobById(user, id);

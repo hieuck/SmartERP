@@ -12,12 +12,12 @@ import { EmailStatus } from './enums/email-status.enum';
 import { TemplateType } from './enums/template-type.enum';
 
 describe('EmailService', () => {
-  let permissionService: jest.Mocked<PermissionService>;
+  let _permissionService: jest.Mocked<PermissionService>;
   let service: EmailService;
   let templateRepository: jest.Mocked<Repository<EmailTemplate>>;
   let logRepository: jest.Mocked<Repository<EmailLog>>;
   let cacheManager: jest.Mocked<Cache>;
-  let _permissionService: jest.Mocked<PermissionService>;
+  let __permissionService: jest.Mocked<PermissionService>;
 
   const mockUser: User = {
     id: 'user-1',
@@ -282,7 +282,7 @@ describe('EmailService', () => {
       (service as any).secureTemplateRepo = mockSecureRepo;
       cacheManager.get.mockResolvedValue(null);
 
-      const _result = await service.updateTemplate(mockUser, 'template-1', { name: 'Updated' });
+      const __result = await service.updateTemplate(mockUser, 'template-1', { name: 'Updated' });
 
       expect(mockSecureRepo.save).toHaveBeenCalled();
       expect(cacheManager.del).toHaveBeenCalledWith(
@@ -340,7 +340,7 @@ describe('EmailService', () => {
       (service as any).secureLogRepo = mockSecureRepo;
       logRepository.create.mockReturnValue(mockLog as any);
 
-      const _result = await service.sendEmail(
+      const __result = await service.sendEmail(
         mockUser,
         'test@example.com',
         'Test Subject',
@@ -397,7 +397,7 @@ describe('EmailService', () => {
       (service as any).secureLogRepo = mockSecureRepo;
       logRepository.create.mockReturnValue(mockLog as any);
 
-      const _result = await service.sendEmail(mockUser, 'test@example.com', 'Subject', 'Body');
+      const __result = await service.sendEmail(mockUser, 'test@example.com', 'Subject', 'Body');
 
       expect(result.status).toBe(EmailStatus.FAILED);
     });
@@ -417,7 +417,7 @@ describe('EmailService', () => {
       cacheManager.get.mockResolvedValue(null);
       logRepository.create.mockReturnValue(mockLog as any);
 
-      const _result = await service.sendTemplateEmail(mockUser, 'test@example.com', 'template-1', {
+      const __result = await service.sendTemplateEmail(mockUser, 'test@example.com', 'template-1', {
         name: 'John',
       });
 

@@ -32,11 +32,11 @@ export class ReportExecution {
 
   // Execution parameters (filters applied at runtime)
   @Column({ type: 'jsonb', nullable: true })
-  parameters: any;
+  parameters: unknown;
 
   // Execution result (data rows)
   @Column({ type: 'jsonb', nullable: true })
-  result: any;
+  result: unknown;
 
   // Number of rows returned
   @Column({ default: 0 })

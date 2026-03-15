@@ -43,7 +43,7 @@ export class OrderItem {
   quantity: number;
 
   @Column({ type: 'jsonb', nullable: true })
-  selectedVariant: any;
+  selectedVariant: unknown;
 
   @Column({ type: 'text', nullable: true })
   notes: string;

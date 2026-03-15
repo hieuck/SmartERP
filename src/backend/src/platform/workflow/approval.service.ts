@@ -194,7 +194,7 @@ export class ApprovalService {
     // Check if user has any of the allowed roles for approval
     const states = (workflow as any).states || (workflow as any).transitions || [];
     const approvalState = states.find(
-      (s: any) => s.name === 'pending_approval' || s.name === 'approved',
+      (s: unknown) => s.name === 'pending_approval' || s.name === 'approved',
     );
 
     if (!approvalState) {
@@ -205,9 +205,9 @@ export class ApprovalService {
   }
 
   private async updateEntityState(
-    entityType: string,
-    entityId: string,
-    newState: string,
+    _entityType: string,
+    _entityId: string,
+    _newState: string,
   ): Promise<void> {
     // This would update the actual entity's state
     // Implementation depends on entity type
@@ -215,12 +215,12 @@ export class ApprovalService {
     // In real implementation, this would use a registry of entity services
   }
 
-  private async notifyApprovers(workflow: Workflow, request: ApprovalRequest): Promise<void> {
+  private async notifyApprovers(_workflow: Workflow, _request: ApprovalRequest): Promise<void> {
     // Send notifications to users who can approve
     // Implementation would use NotificationService
   }
 
-  private async notifyRequester(request: ApprovalRequest): Promise<void> {
+  private async notifyRequester(_request: ApprovalRequest): Promise<void> {
     // Send notification to requester about approval/rejection
     // Implementation would use NotificationService
   }

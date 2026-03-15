@@ -30,7 +30,7 @@ export class ErrorLog {
   severity: ErrorSeverity;
 
   @Column({ type: 'jsonb', nullable: true })
-  context: any;
+  context: unknown;
 
   @Column({ nullable: true })
   userId: string;

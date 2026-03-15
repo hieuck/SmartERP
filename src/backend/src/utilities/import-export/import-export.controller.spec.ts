@@ -5,9 +5,9 @@ import { User } from '@/common/security/permission.service';
 import { Response } from 'express';
 
 describe('ImportExportController', () => {
-  let service: jest.Mocked<ImportExportService>;
+  let _service: jest.Mocked<ImportExportService>;
   let controller: ImportExportController;
-  let _service: ImportExportService;
+  let __service: ImportExportService;
 
   const mockUser: User = {
     id: 'user-1',
@@ -635,7 +635,7 @@ describe('ImportExportController', () => {
 
     it('should handle data with circular references', async () => {
       const entityType = 'Product';
-      const circularData: any = { id: '1', name: 'Test' };
+      const circularData: unknown = { id: '1', name: 'Test' };
       circularData.self = circularData;
 
       mockImportExportService.exportToCSV.mockRejectedValue(

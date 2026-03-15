@@ -397,7 +397,7 @@ describe('RoleService', () => {
       const secureRepo = (service as any).secureRoleRepo;
       const originalFindOne = secureRepo.findOne;
       let callCount = 0;
-      secureRepo.findOne = jest.fn((_user: any, _options: any) => {
+      secureRepo.findOne = jest.fn((_user: unknown, _options: unknown) => {
         callCount++;
         if (callCount === 1) {
           // First call in findOne(id) - return mockRole from cache
@@ -582,13 +582,13 @@ describe('RoleService', () => {
 
       // Mock secureRepo.save instead of roleRepository.save
       const secureRepo = (service as any).secureRoleRepo;
-      secureRepo.save = jest.fn((_user: any, entity: any) => {
+      secureRepo.save = jest.fn((_user: unknown, entity: unknown) => {
         // Simulate the filtering logic - only unique permissions
         return Promise.resolve({
           ...entity,
           permissions: entity.permissions.filter(
-            (p: any, index: number, self: any[]) =>
-              self.findIndex((t: any) => t.id === p.id) === index,
+            (p: unknown, index: number, self: unknown[]) =>
+              self.findIndex((t: unknown) => t.id === p.id) === index,
           ),
         } as Role);
       });

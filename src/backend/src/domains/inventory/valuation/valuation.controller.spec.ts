@@ -13,7 +13,7 @@ describe('ValuationController (Integration)', () => {
   let app: INestApplication;
   let valuationService: jest.Mocked<ValuationService>;
 
-  const _mockUser = {
+  const __mockUser = {
     id: 'user-123',
     email: 'admin@example.com',
     tenantId: 'tenant-123',

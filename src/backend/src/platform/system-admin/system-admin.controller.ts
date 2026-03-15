@@ -89,7 +89,7 @@ export class SystemAdminController {
   @Get('error-logs')
   @Roles('admin', 'manager')
   @ApiOperation({ summary: 'Get error logs with filters' })
-  async getErrorLogs(@CurrentUser() user: User, @Query() filters: any) {
+  async getErrorLogs(@CurrentUser() user: User, @Query() filters: unknown) {
     return this.systemAdminService.getErrorLogs(user, filters);
   }
 

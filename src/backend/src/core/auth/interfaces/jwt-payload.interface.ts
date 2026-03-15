@@ -9,5 +9,5 @@ export interface JwtPayload {
   roles?: string[];
   iat?: number; // Issued at
   exp?: number; // Expiration time
-  [key: string]: any; // Allow additional custom claims
+  [key: string]: unknown; // Allow additional custom claims
 }

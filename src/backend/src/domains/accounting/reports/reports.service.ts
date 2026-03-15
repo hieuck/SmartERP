@@ -270,7 +270,7 @@ export class ReportsService {
     };
   }
 
-  async getCashFlowStatement(_user: User, _startDate: Date, _endDate: Date): Promise<any> {
+  async getCashFlowStatement(_user: User, _startDate: Date, _endDate: Date): Promise<unknown> {
     // TODO: Implement cash flow statement logic
     return {
       period: { startDate: _startDate, endDate: _endDate },

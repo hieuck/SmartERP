@@ -56,9 +56,9 @@ export class PermissionService {
 
   buildSecureQuery(
     user: User,
-    baseWhere: { [key: string]: any },
+    baseWhere: { [key: string]: unknown },
     _entityName: string,
-  ): { [key: string]: any } {
+  ): { [key: string]: unknown } {
     const secureWhere = { ...baseWhere };
     secureWhere.tenantId = user.tenantId;
 

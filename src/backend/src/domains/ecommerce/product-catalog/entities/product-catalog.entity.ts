@@ -101,7 +101,7 @@ export class ProductCatalog {
 
   // Variants (JSON for flexibility)
   @Column({ type: 'jsonb', nullable: true })
-  variants: any; // { size: ['S', 'M', 'L'], color: ['Red', 'Blue'] }
+  variants: unknown; // { size: ['S', 'M', 'L'], color: ['Red', 'Blue'] }
 
   // Display order
   @Column({ default: 0 })

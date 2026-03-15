@@ -38,7 +38,7 @@ describe('RoleController (Integration)', () => {
     id: 'role-123',
     name: 'manager',
     description: 'Manager role',
-    permissions: [] as any[],
+    permissions: [] as unknown[],
     tenantId: 'tenant-123',
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -307,7 +307,7 @@ describe('RoleController (Integration)', () => {
   describe('PATCH /roles/:id/permissions/add', () => {
     it('should add permissions to role successfully', async () => {
       const permissionIds = ['perm-1', 'perm-2'];
-      const updatedRole = { ...mockRole, permissions: permissionIds as any[] };
+      const updatedRole = { ...mockRole, permissions: permissionIds as unknown[] };
 
       roleService.addPermissions.mockResolvedValue(updatedRole);
 

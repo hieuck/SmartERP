@@ -32,7 +32,7 @@ describe('PaymentGatewayController (Integration)', () => {
     roles: ['user'],
   };
 
-  const _mockTransaction = {
+  const __mockTransaction = {
     id: 'txn-123',
     orderId: 'order-123',
     gateway: 'vnpay',

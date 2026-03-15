@@ -31,7 +31,7 @@ export class CreateReportDto {
   })
   @IsOptional()
   @IsObject()
-  query?: any;
+  query?: unknown;
 
   @ApiPropertyOptional({
     example: [{ field: 'status', operator: '=', value: 'completed' }],
@@ -39,7 +39,7 @@ export class CreateReportDto {
   })
   @IsOptional()
   @IsArray()
-  filters?: any[];
+  filters?: unknown[];
 
   @ApiPropertyOptional({
     example: ['customerId', 'month'],
@@ -56,7 +56,7 @@ export class CreateReportDto {
   })
   @IsOptional()
   @IsObject()
-  orderBy?: any;
+  orderBy?: unknown;
 
   @ApiPropertyOptional({ example: true })
   @IsOptional()

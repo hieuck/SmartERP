@@ -12,7 +12,7 @@ import { UpdateCustomerDto } from './dto/update-customer.dto';
 
 describe('CustomerService', () => {
   let customerRepository: jest.Mocked<Repository<Customer>>;
-  let result: any;
+  let result: unknown;
   let permissionService: jest.Mocked<PermissionService>;
   let service: CustomerService;
   let _customerRepository: jest.Mocked<Repository<Customer>>;

@@ -24,7 +24,7 @@ describe('GdprService', () => {
   const userId = 'user-1';
   const tenantId = 'tenant-1';
 
-  const mockConsent: any = {
+  const mockConsent: unknown = {
     id: 'consent-1',
     userId,
     tenantId,
@@ -42,7 +42,7 @@ describe('GdprService', () => {
     },
   };
 
-  const mockExportRequest: any = {
+  const mockExportRequest: unknown = {
     id: 'export-1',
     userId,
     tenantId,
@@ -62,7 +62,7 @@ describe('GdprService', () => {
     },
   };
 
-  const mockDeletionRequest: any = {
+  const mockDeletionRequest: unknown = {
     id: 'deletion-1',
     userId,
     tenantId,
@@ -312,7 +312,7 @@ describe('GdprService', () => {
     });
 
     it('should return false when consent is revoked', async () => {
-      const _revokedConsent = { ...mockConsent, revokedAt: new Date() };
+      const __revokedConsent = { ...mockConsent, revokedAt: new Date() };
       consentRepository.findOne.mockResolvedValue(null);
 
       const result = await service.hasActiveConsent(userId, tenantId, ConsentType.MARKETING_EMAILS);

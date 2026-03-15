@@ -37,7 +37,7 @@ describe('AccountController (Integration)', () => {
     syncStatus: SyncStatus.SYNCED,
   };
 
-  const _mockJournalEntry = {
+  const __mockJournalEntry = {
     id: 'je-1',
     tenantId: 'tenant-1',
     number: 'JE-2024-0001',
@@ -48,7 +48,7 @@ describe('AccountController (Integration)', () => {
     updatedAt: new Date(),
   };
 
-  const _mockInvoice = {
+  const __mockInvoice = {
     id: 'invoice-1',
     tenantId: 'tenant-1',
     invoiceNumber: 'INV-001',

@@ -41,7 +41,7 @@ export class ShippingService {
    */
   async createShipment(user: User, dto: CreateShipmentDto): Promise<Shipment> {
     // Create shipment record with SecureRepository (auto tenant isolation)
-    const shipment: any = {
+    const shipment: unknown = {
       orderId: dto.orderId,
       provider: dto.provider,
       status: 'pending',
@@ -574,7 +574,7 @@ export class ShippingService {
     },
   ): Promise<{ shipments: Shipment[]; total: number }> {
     // Build where conditions
-    const where: any = { tenantId: user.tenantId };
+    const where: unknown = { tenantId: user.tenantId };
 
     if (filters?.orderId) {
       where.orderId = filters.orderId;
