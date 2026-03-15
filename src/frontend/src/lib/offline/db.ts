@@ -312,6 +312,28 @@ export interface ProductionOrder extends BaseEntity {
   approvedAt?: Date;
 }
 
+// Attendance entity (matches backend Attendance entity)
+export interface Attendance extends BaseEntity {
+  employeeId: string;
+  date: Date;
+  checkIn: string;
+  checkOut?: string | null;
+  hoursWorked: number;
+  notes?: string | null;
+}
+
+// Notification entity (matches backend Notification entity)
+export interface Notification extends BaseEntity {
+  userId: string;
+  title: string;
+  message: string;
+  type: string; // info, warning, success, error
+  status: string; // unread, read
+  link?: string;
+  metadata?: Record<string, unknown>;
+  readAt?: Date;
+}
+
 // Sync queue item
 export interface SyncQueueItem {
   id?: number;
@@ -340,6 +362,8 @@ export class OfflineDB extends Dexie {
   materials!: Table<Material, string>;
   molds!: Table<Mold, string>;
   productionOrders!: Table<ProductionOrder, string>;
+  attendances!: Table<Attendance, string>;
+  notifications!: Table<Notification, string>;
   syncQueue!: Table<SyncQueueItem, number>;
 
   constructor() {
@@ -393,6 +417,27 @@ export class OfflineDB extends Dexie {
       materials: 'id, tenantId, code, name, type, status, stockQuantity, syncStatus, lastSyncedAt',
       molds: 'id, tenantId, code, name, status, condition, usageCount, syncStatus, lastSyncedAt',
       productionOrders: 'id, tenantId, orderNumber, productId, status, priority, syncStatus, lastSyncedAt',
+      syncQueue: '++id, entity, operation, createdAt',
+    });
+
+    // Version 5: Add Batch 3A entities (Attendance, Notification)
+    this.version(5).stores({
+      users: 'id, tenantId, email, syncStatus, lastSyncedAt',
+      products: 'id, tenantId, sku, name, status, categoryId, stockQuantity, syncStatus, lastSyncedAt',
+      customers: 'id, tenantId, name, email, phone, status, syncStatus, lastSyncedAt',
+      suppliers: 'id, tenantId, name, email, status, syncStatus, lastSyncedAt',
+      salesOrders: 'id, tenantId, orderNumber, customerId, status, syncStatus, lastSyncedAt',
+      invoices: 'id, tenantId, invoiceNumber, customerId, supplierId, invoiceDate, status, syncStatus, lastSyncedAt',
+      payments: 'id, tenantId, orderId, status, paymentDate, syncStatus, lastSyncedAt',
+      purchaseOrders: 'id, tenantId, poNumber, supplierId, status, orderDate, syncStatus, lastSyncedAt',
+      warehouses: 'id, tenantId, code, name, status, isDefault, syncStatus, lastSyncedAt',
+      stocks: 'id, tenantId, productId, warehouseId, quantity, syncStatus, lastSyncedAt',
+      stockReceipts: 'id, tenantId, receiptNumber, warehouseId, status, receiptDate, syncStatus, lastSyncedAt',
+      materials: 'id, tenantId, code, name, type, status, stockQuantity, syncStatus, lastSyncedAt',
+      molds: 'id, tenantId, code, name, status, condition, usageCount, syncStatus, lastSyncedAt',
+      productionOrders: 'id, tenantId, orderNumber, productId, status, priority, syncStatus, lastSyncedAt',
+      attendances: 'id, tenantId, employeeId, date, syncStatus, lastSyncedAt',
+      notifications: 'id, tenantId, userId, type, status, createdAt, syncStatus, lastSyncedAt',
       syncQueue: '++id, entity, operation, createdAt',
     });
   }

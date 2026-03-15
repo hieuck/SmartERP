@@ -18,7 +18,9 @@ import type {
   StockReceipt,
   Material,
   Mold,
-  ProductionOrder
+  ProductionOrder,
+  Attendance,
+  Notification
 } from '../lib/offline/db';
 
 // User service
@@ -63,6 +65,12 @@ export const moldOfflineService = createOfflineService<Mold>('molds', 'molds');
 // Production Order service (Batch 2A)
 export const productionOrderOfflineService = createOfflineService<ProductionOrder>('productionOrders', 'productionOrders');
 
+// Attendance service (Batch 3A)
+export const attendanceOfflineService = createOfflineService<Attendance>('attendances', 'attendances');
+
+// Notification service (Batch 3A)
+export const notificationOfflineService = createOfflineService<Notification>('notifications', 'notifications');
+
 /**
  * Export all services
  */
@@ -81,4 +89,6 @@ export const offlineServices = {
   materials: materialOfflineService,
   molds: moldOfflineService,
   productionOrders: productionOrderOfflineService,
+  attendances: attendanceOfflineService,
+  notifications: notificationOfflineService,
 };
