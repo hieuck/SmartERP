@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Card,
   Descriptions,
@@ -10,6 +10,7 @@ import {
   message,
   Modal,
   Alert,
+  Badge,
 } from 'antd';
 import {
   ArrowLeftOutlined,
@@ -18,14 +19,19 @@ import {
   RollbackOutlined,
   ReconciliationOutlined,
   DollarCircleOutlined,
+  SyncOutlined,
+  WifiOutlined,
+  DisconnectOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  paymentService,
   PaymentStatus,
   PaymentMethod,
 } from '@/services/accounting/paymentService';
+import { offlineServices } from '@/services/offline-services';
+import { syncManager } from '@/lib/offline/sync-manager';
+import { logger } from '@/lib/logger/logger.service';
+import type { Payment } from '@/lib/offline/db';
 import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
@@ -55,71 +61,174 @@ const methodLabels: Record<PaymentMethod, string> = {
 const PaymentDetail: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const queryClient = useQueryClient();
+  const [payment, setPayment] = useState<Payment | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [syncQueueSize, setSyncQueueSize] = useState(0);
 
-  const { data: payment, isLoading } = useQuery({
-    queryKey: ['payment', id],
-    queryFn: () => paymentService.getById(id!),
-  });
+  // Load payment from IndexedDB
+  const loadPayment = async () => {
+    try {
+      setLoading(true);
+      if (!id) return;
+      
+      const data = await offlineServices.payments.getById(id);
+      setPayment(data || null);
+      logger.info('PaymentDetail', 'Loaded payment from IndexedDB', { id });
+    } catch (error) {
+      logger.error('PaymentDetail', 'Failed to load payment', error as Error);
+      message.error('Không thể tải thông tin thanh toán');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const completeMutation = useMutation({
-    mutationFn: () => paymentService.complete(id!),
-    onSuccess: () => {
-      message.success('Hoàn thành thanh toán thành công');
-      queryClient.invalidateQueries({ queryKey: ['payment', id] });
-    },
-    onError: () => {
-      message.error('Không thể hoàn thành thanh toán');
-    },
-  });
+  // Auto-sync on mount when online
+  useEffect(() => {
+    const initSync = async () => {
+      if (navigator.onLine) {
+        const token = localStorage.getItem('token');
+        if (token) {
+          try {
+            await syncManager.sync(token);
+            logger.info('PaymentDetail', 'Auto-sync completed');
+          } catch (error) {
+            logger.error('PaymentDetail', 'Auto-sync failed', error as Error);
+          }
+        }
+      }
+    };
 
-  const refundMutation = useMutation({
-    mutationFn: (amount: number) => paymentService.refund(id!, { amount, reason: 'Hoàn tiền' }),
-    onSuccess: () => {
-      message.success('Hoàn tiền thành công');
-      queryClient.invalidateQueries({ queryKey: ['payment', id] });
-    },
-    onError: () => {
-      message.error('Không thể hoàn tiền');
-    },
-  });
+    initSync();
+    loadPayment();
+  }, [id]);
 
-  const reconcileMutation = useMutation({
-    mutationFn: () => paymentService.reconcile(id!),
-    onSuccess: () => {
-      message.success('Đối soát thành công');
-      queryClient.invalidateQueries({ queryKey: ['payment', id] });
-    },
-    onError: () => {
-      message.error('Không thể đối soát');
-    },
-  });
+  // Monitor network status
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
 
-  const handleComplete = () => {
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  // Update sync queue size
+  useEffect(() => {
+    const updateQueueSize = async () => {
+      const size = await syncManager.getQueueSize();
+      setSyncQueueSize(size);
+    };
+
+    updateQueueSize();
+    const interval = setInterval(updateQueueSize, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Manual sync
+  const handleSync = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      message.error('Vui lòng đăng nhập');
+      return;
+    }
+
+    try {
+      setSyncing(true);
+      const result = await syncManager.sync(token);
+      
+      if (result.success) {
+        message.success(`Đồng bộ thành công: ${result.pulled} pulled, ${result.pushed} pushed`);
+        await loadPayment();
+      } else {
+        message.error(`Đồng bộ thất bại: ${result.errors.join(', ')}`);
+      }
+    } catch (error) {
+      logger.error('PaymentDetail', 'Sync failed', error as Error);
+      message.error('Đồng bộ thất bại');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const handleComplete = async () => {
+    if (!payment) return;
+
     Modal.confirm({
       title: 'Hoàn thành thanh toán',
       content: 'Bạn có chắc chắn muốn đánh dấu thanh toán này là hoàn thành?',
-      onOk: () => completeMutation.mutate(),
+      onOk: async () => {
+        try {
+          await offlineServices.payments.update(payment.id, {
+            ...payment,
+            status: PaymentStatus.COMPLETED,
+          });
+          message.success('Hoàn thành thanh toán thành công');
+          await loadPayment();
+        } catch (error) {
+          logger.error('PaymentDetail', 'Failed to complete payment', error as Error);
+          message.error('Không thể hoàn thành thanh toán');
+        }
+      },
     });
   };
 
-  const handleRefund = () => {
+  const handleRefund = async () => {
+    if (!payment) return;
+
     Modal.confirm({
       title: 'Hoàn tiền',
-      content: `Bạn có chắc chắn muốn hoàn tiền ${payment?.amount.toLocaleString('vi-VN')} ₫?`,
-      onOk: () => refundMutation.mutate(payment?.amount || 0),
+      content: `Bạn có chắc chắn muốn hoàn tiền ${payment.amount.toLocaleString('vi-VN')} ₫?`,
+      onOk: async () => {
+        try {
+          await offlineServices.payments.update(payment.id, {
+            ...payment,
+            status: PaymentStatus.REFUNDED,
+          });
+          message.success('Hoàn tiền thành công');
+          await loadPayment();
+        } catch (error) {
+          logger.error('PaymentDetail', 'Failed to refund payment', error as Error);
+          message.error('Không thể hoàn tiền');
+        }
+      },
     });
   };
 
-  const handleReconcile = () => {
+  const handleReconcile = async () => {
+    if (!payment) return;
+
     Modal.confirm({
       title: 'Đối soát thanh toán',
       content: 'Bạn có chắc chắn muốn đối soát thanh toán này?',
-      onOk: () => reconcileMutation.mutate(),
+      onOk: async () => {
+        try {
+          // Just mark as reconciled in metadata
+          await offlineServices.payments.update(payment.id, {
+            ...payment,
+            metadata: {
+              ...payment.metadata,
+              reconciled: true,
+              reconciledAt: new Date().toISOString(),
+            },
+          });
+          message.success('Đối soát thành công');
+          await loadPayment();
+        } catch (error) {
+          logger.error('PaymentDetail', 'Failed to reconcile payment', error as Error);
+          message.error('Không thể đối soát');
+        }
+      },
     });
   };
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div style={{ padding: '24px', textAlign: 'center' }}>
         <Spin size="large" />
@@ -145,6 +254,30 @@ const PaymentDetail: React.FC = () => {
   return (
     <div style={{ padding: '24px' }}>
       <Space direction="vertical" style={{ width: '100%' }} size="large">
+        {/* Network Status & Sync */}
+        <Card size="small">
+          <Space>
+            <Badge status={isOnline ? 'success' : 'error'} />
+            <Text>{isOnline ? <WifiOutlined /> : <DisconnectOutlined />}</Text>
+            <Text>{isOnline ? 'Online' : 'Offline'}</Text>
+            {syncQueueSize > 0 && (
+              <>
+                <Text>|</Text>
+                <Text type="warning">{syncQueueSize} thay đổi chưa đồng bộ</Text>
+              </>
+            )}
+            <Button
+              icon={<SyncOutlined spin={syncing} />}
+              onClick={handleSync}
+              loading={syncing}
+              disabled={!isOnline}
+              size="small"
+            >
+              Đồng bộ
+            </Button>
+          </Space>
+        </Card>
+
         <Card>
           <div
             style={{
@@ -155,7 +288,7 @@ const PaymentDetail: React.FC = () => {
             }}
           >
             <Title level={3}>
-              <DollarCircleOutlined /> Chi tiết thanh toán: {payment.paymentNumber}
+              <DollarCircleOutlined /> Chi tiết thanh toán: {payment.id}
             </Title>
             <Space>
               <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/dashboard/payments')}>
@@ -208,27 +341,27 @@ const PaymentDetail: React.FC = () => {
           )}
 
           <Descriptions bordered column={2}>
-            <Descriptions.Item label="Mã thanh toán">{payment.paymentNumber}</Descriptions.Item>
+            <Descriptions.Item label="Mã thanh toán">{payment.id}</Descriptions.Item>
             <Descriptions.Item label="Trạng thái">
-              <Tag color={statusColors[payment.status]}>{statusLabels[payment.status]}</Tag>
+              <Tag color={statusColors[payment.status as PaymentStatus]}>
+                {statusLabels[payment.status as PaymentStatus]}
+              </Tag>
             </Descriptions.Item>
-            <Descriptions.Item label="Hóa đơn">{payment.invoiceId || '-'}</Descriptions.Item>
             <Descriptions.Item label="Đơn hàng">{payment.orderId || '-'}</Descriptions.Item>
-            <Descriptions.Item label="Khách hàng">{payment.customerId}</Descriptions.Item>
             <Descriptions.Item label="Phương thức">
-              <Tag>{methodLabels[payment.method]}</Tag>
+              <Tag>{methodLabels[payment.paymentMethod as PaymentMethod]}</Tag>
             </Descriptions.Item>
             <Descriptions.Item label="Số tiền">
               <Text strong style={{ fontSize: 18, color: '#52c41a' }}>
-                {payment.amount.toLocaleString('vi-VN')} ₫
+                {payment.amount.toLocaleString('vi-VN')} {payment.currency}
               </Text>
             </Descriptions.Item>
             <Descriptions.Item label="Ngày thanh toán">
-              {dayjs(payment.paymentDate).format('DD/MM/YYYY HH:mm')}
+              {payment.paymentDate ? dayjs(payment.paymentDate).format('DD/MM/YYYY HH:mm') : '-'}
             </Descriptions.Item>
-            {payment.reference && (
-              <Descriptions.Item label="Tham chiếu" span={2}>
-                <Text code>{payment.reference}</Text>
+            {payment.transactionId && (
+              <Descriptions.Item label="Mã giao dịch" span={2}>
+                <Text code>{payment.transactionId}</Text>
               </Descriptions.Item>
             )}
             {payment.notes && (
@@ -238,6 +371,11 @@ const PaymentDetail: React.FC = () => {
             )}
             <Descriptions.Item label="Ngày tạo">
               {dayjs(payment.createdAt).format('DD/MM/YYYY HH:mm')}
+            </Descriptions.Item>
+            <Descriptions.Item label="Trạng thái đồng bộ">
+              <Tag color={payment.syncStatus === 'synced' ? 'green' : 'orange'}>
+                {payment.syncStatus === 'synced' ? 'Đã đồng bộ' : 'Chưa đồng bộ'}
+              </Tag>
             </Descriptions.Item>
           </Descriptions>
         </Card>
