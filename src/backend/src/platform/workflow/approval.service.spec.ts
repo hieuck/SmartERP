@@ -24,6 +24,8 @@ describe('ApprovalService', () => {
     status: 'active',
     isActive: true,
     emailVerified: true,
+    version: 1,
+    syncStatus: 'synced',
     createdAt: new Date(),
     updatedAt: new Date(),
   } as User;
@@ -38,6 +40,8 @@ describe('ApprovalService', () => {
     status: 'active',
     isActive: true,
     emailVerified: true,
+    version: 1,
+    syncStatus: 'synced',
     createdAt: new Date(),
     updatedAt: new Date(),
   } as User;
@@ -51,6 +55,8 @@ describe('ApprovalService', () => {
       { name: 'pending_approval', allowedRoles: ['approver', 'manager'] },
       { name: 'approved', allowedRoles: ['approver', 'manager'] },
     ],
+    createdAt: new Date(),
+    updatedAt: new Date(),
   } as any;
 
   const mockApprovalRequest: Partial<ApprovalRequest> = {
@@ -62,6 +68,8 @@ describe('ApprovalService', () => {
     currentState: 'pending_approval',
     requestedBy: 'user-1',
     status: ApprovalStatus.PENDING,
+    createdAt: new Date(),
+    updatedAt: new Date(),
   };
 
   beforeEach(async () => {

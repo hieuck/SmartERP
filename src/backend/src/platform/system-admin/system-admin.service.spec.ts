@@ -29,6 +29,8 @@ describe('SystemAdminService', () => {
     emailVerified: true,
     createdAt: new Date(),
     updatedAt: new Date(),
+    version: 1,
+    syncStatus: 'synced',
   } as User;
 
   const mockSetting: Partial<SystemSetting> = {

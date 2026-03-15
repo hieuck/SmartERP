@@ -24,6 +24,7 @@ import { WorkOrderService } from './work-order.service';
 import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@common/guards/roles.guard';
 import { WorkOrderStatus } from './enums/work-order-status.enum';
+import { SyncStatus } from '../../../common/enums/sync-status.enum';
 
 describe('WorkOrderController (Integration)', () => {
   let app: INestApplication;
@@ -52,6 +53,8 @@ describe('WorkOrderController (Integration)', () => {
     tenantId: 'tenant-123',
     createdAt: new Date(),
     updatedAt: new Date(),
+    version: 1,
+    syncStatus: SyncStatus.SYNCED,
   };
 
   beforeAll(async () => {
@@ -297,7 +300,7 @@ describe('WorkOrderController (Integration)', () => {
     it('should handle all status values', async () => {
       const statuses = [
         WorkOrderStatus.DRAFT,
-        WorkOrderStatus.CONFIRMED,
+        WorkOrderStatus.PLANNED,
         WorkOrderStatus.IN_PROGRESS,
         WorkOrderStatus.COMPLETED,
         WorkOrderStatus.CANCELLED,
@@ -320,7 +323,7 @@ describe('WorkOrderController (Integration)', () => {
     it('should confirm work order successfully', async () => {
       const confirmedWorkOrder = {
         ...mockWorkOrder,
-        status: WorkOrderStatus.CONFIRMED,
+        status: WorkOrderStatus.PLANNED,
       };
 
       workOrderService.confirm.mockResolvedValue(confirmedWorkOrder as any);
@@ -330,7 +333,7 @@ describe('WorkOrderController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body.status).toBe(WorkOrderStatus.CONFIRMED);
+      expect(response.body.status).toBe(WorkOrderStatus.PLANNED);
       expect(workOrderService.confirm).toHaveBeenCalledWith('tenant-123', 'wo-123');
     });
 

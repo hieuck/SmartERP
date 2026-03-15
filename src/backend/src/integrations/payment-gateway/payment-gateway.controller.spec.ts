@@ -38,7 +38,10 @@ describe('PaymentGatewayController (Integration)', () => {
     gateway: 'vnpay',
     amount: 100000,
     status: 'pending',
+    version: 1,
+    syncStatus: 'synced',
     createdAt: new Date(),
+    updatedAt: new Date(),
   };
 
   beforeAll(async () => {
@@ -103,7 +106,7 @@ describe('PaymentGatewayController (Integration)', () => {
         updatedAt: '2024-01-15T10:00:00.000Z',
       };
 
-      paymentGatewayService.createPayment.mockResolvedValue(paymentResult);
+      paymentGatewayService.createPayment.mockResolvedValue(paymentResult as any);
 
       const response = await request(app.getHttpServer())
         .post('/payment-gateway')

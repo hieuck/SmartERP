@@ -7,6 +7,7 @@ import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
 import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { AccountType } from './enums';
 import { User } from '@/common/security/permission.service';
+import { SyncStatus } from '@/common/enums/sync-status.enum';
 
 describe('AccountController (Integration)', () => {
   let app: INestApplication;
@@ -32,6 +33,8 @@ describe('AccountController (Integration)', () => {
     parentId: null,
     createdAt: new Date(),
     updatedAt: new Date(),
+    version: 1,
+    syncStatus: SyncStatus.SYNCED,
   };
 
   const mockJournalEntry = {

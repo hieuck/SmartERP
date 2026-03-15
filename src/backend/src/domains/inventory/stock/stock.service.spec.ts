@@ -7,6 +7,7 @@ import { Inventory } from './entities/inventory.entity';
 import { CacheService } from '@/common/cache/cache.service';
 import { PermissionService, User } from '@/common/security/permission.service';
 import { SecureRepository } from '@/common/security/secure-repository';
+import { SyncStatus } from '@/common/enums/sync-status.enum';
 
 describe('StockService', () => {
   let service: StockService;
@@ -45,6 +46,8 @@ describe('StockService', () => {
     updatedBy: null,
     createdAt: new Date(),
     updatedAt: new Date(),
+    version: 1,
+    syncStatus: SyncStatus.SYNCED,
   };
 
   beforeEach(async () => {

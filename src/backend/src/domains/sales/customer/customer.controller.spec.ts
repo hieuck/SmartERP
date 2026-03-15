@@ -25,6 +25,7 @@ import { CustomerController } from './customer.controller';
 import { CustomerService } from './customer.service';
 import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
 import { TenantGuard } from '../../../common/guards/tenant.guard';
+import { SyncStatus } from '../../../common/enums/sync-status.enum';
 
 describe('CustomerController (Integration)', () => {
   let app: INestApplication;
@@ -45,8 +46,11 @@ describe('CustomerController (Integration)', () => {
     address: '123 Main St',
     status: 'active',
     balance: 10000,
+    currentBalance: 10000,
     creditLimit: 50000,
     tenantId: 'tenant-123',
+    version: 1,
+    syncStatus: SyncStatus.SYNCED,
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -124,16 +128,19 @@ describe('CustomerController (Integration)', () => {
 
   describe('GET /customers', () => {
     it('should return all customers', async () => {
-      const customers = [mockCustomer];
-      customerService.findAll.mockResolvedValue(customers);
+      const paginatedResponse = {
+        data: [mockCustomer],
+        meta: { page: 1, limit: 20, total: 1, totalPages: 1 },
+      };
+      customerService.findAll.mockResolvedValue(paginatedResponse) as any;
 
       const response = await request(app.getHttpServer())
         .get('/customers')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual(customers);
-      expect(customerService.findAll).toHaveBeenCalledWith(mockUser);
+      expect(response.body).toEqual(paginatedResponse);
+      expect(customerService.findAll).toHaveBeenCalledWith(mockUser, 1, 20);
     });
 
     it('should require authentication', async () => {
@@ -171,21 +178,25 @@ describe('CustomerController (Integration)', () => {
     });
 
     it('should return empty array when no customers', async () => {
-      customerService.findAll.mockResolvedValue([]);
+      const emptyResponse = {
+        data: [],
+        meta: { page: 1, limit: 20, total: 0, totalPages: 0 },
+      };
+      customerService.findAll.mockResolvedValue(emptyResponse) as any;
 
       const response = await request(app.getHttpServer())
         .get('/customers')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual([]);
+      expect(response.body).toEqual(emptyResponse);
     });
   });
 
   describe('GET /customers/search', () => {
     it('should search customers by query', async () => {
       const customers = [mockCustomer];
-      customerService.search.mockResolvedValue(customers);
+      customerService.search.mockResolvedValue(customers as any) as any;
 
       const response = await request(app.getHttpServer())
         .get('/customers/search?q=ABC')
@@ -197,7 +208,7 @@ describe('CustomerController (Integration)', () => {
     });
 
     it('should return empty array when no matches', async () => {
-      customerService.search.mockResolvedValue([]);
+      customerService.search.mockResolvedValue([]) as any;
 
       const response = await request(app.getHttpServer())
         .get('/customers/search?q=nonexistent')
@@ -208,7 +219,7 @@ describe('CustomerController (Integration)', () => {
     });
 
     it('should handle empty query parameter', async () => {
-      customerService.search.mockResolvedValue([mockCustomer]);
+      customerService.search.mockResolvedValue([mockCustomer]) as any;
 
       await request(app.getHttpServer())
         .get('/customers/search?q=')
@@ -219,7 +230,7 @@ describe('CustomerController (Integration)', () => {
     });
 
     it('should handle missing query parameter', async () => {
-      customerService.search.mockResolvedValue([mockCustomer]);
+      customerService.search.mockResolvedValue([mockCustomer]) as any;
 
       await request(app.getHttpServer())
         .get('/customers/search')
@@ -233,7 +244,7 @@ describe('CustomerController (Integration)', () => {
   describe('GET /customers/status/:status', () => {
     it('should return customers by status', async () => {
       const customers = [mockCustomer];
-      customerService.findByStatus.mockResolvedValue(customers);
+      customerService.findByStatus.mockResolvedValue(customers) as any;
 
       const response = await request(app.getHttpServer())
         .get('/customers/status/active')
@@ -245,7 +256,7 @@ describe('CustomerController (Integration)', () => {
     });
 
     it('should handle inactive status', async () => {
-      customerService.findByStatus.mockResolvedValue([]);
+      customerService.findByStatus.mockResolvedValue([]) as any;
 
       const response = await request(app.getHttpServer())
         .get('/customers/status/inactive')
@@ -257,7 +268,7 @@ describe('CustomerController (Integration)', () => {
     });
 
     it('should handle invalid status', async () => {
-      customerService.findByStatus.mockResolvedValue([]);
+      customerService.findByStatus.mockResolvedValue([]) as any;
 
       await request(app.getHttpServer())
         .get('/customers/status/invalid')
@@ -269,7 +280,7 @@ describe('CustomerController (Integration)', () => {
   describe('GET /customers/top/:limit', () => {
     it('should return top customers by balance', async () => {
       const topCustomers = [mockCustomer];
-      customerService.getTopCustomers.mockResolvedValue(topCustomers);
+      customerService.getTopCustomers.mockResolvedValue(topCustomers) as any;
 
       const response = await request(app.getHttpServer())
         .get('/customers/top/10')
@@ -281,7 +292,7 @@ describe('CustomerController (Integration)', () => {
     });
 
     it('should handle limit as string and convert to number', async () => {
-      customerService.getTopCustomers.mockResolvedValue([mockCustomer]);
+      customerService.getTopCustomers.mockResolvedValue([mockCustomer]) as any;
 
       await request(app.getHttpServer())
         .get('/customers/top/5')
@@ -292,7 +303,7 @@ describe('CustomerController (Integration)', () => {
     });
 
     it('should handle zero limit', async () => {
-      customerService.getTopCustomers.mockResolvedValue([]);
+      customerService.getTopCustomers.mockResolvedValue([]) as any;
 
       await request(app.getHttpServer())
         .get('/customers/top/0')
@@ -301,7 +312,7 @@ describe('CustomerController (Integration)', () => {
     });
 
     it('should handle negative limit', async () => {
-      customerService.getTopCustomers.mockResolvedValue([]);
+      customerService.getTopCustomers.mockResolvedValue([]) as any;
 
       await request(app.getHttpServer())
         .get('/customers/top/-1')
@@ -312,7 +323,7 @@ describe('CustomerController (Integration)', () => {
 
   describe('GET /customers/count', () => {
     it('should return customer count', async () => {
-      customerService.count.mockResolvedValue(25);
+      customerService.count.mockResolvedValue(25) as any;
 
       const response = await request(app.getHttpServer())
         .get('/customers/count')
@@ -324,7 +335,7 @@ describe('CustomerController (Integration)', () => {
     });
 
     it('should return 0 when no customers', async () => {
-      customerService.count.mockResolvedValue(0);
+      customerService.count.mockResolvedValue(0) as any;
 
       const response = await request(app.getHttpServer())
         .get('/customers/count')
@@ -337,7 +348,7 @@ describe('CustomerController (Integration)', () => {
 
   describe('GET /customers/:id', () => {
     it('should return customer by ID', async () => {
-      customerService.findOne.mockResolvedValue(mockCustomer);
+      customerService.findOne.mockResolvedValue(mockCustomer as any) as any;
 
       const response = await request(app.getHttpServer())
         .get('/customers/customer-123')
@@ -383,7 +394,7 @@ describe('CustomerController (Integration)', () => {
       customerService.create.mockResolvedValue({
         ...mockCustomer,
         ...createDto,
-      });
+      }) as any;
 
       const response = await request(app.getHttpServer())
         .post('/customers')
@@ -442,7 +453,7 @@ describe('CustomerController (Integration)', () => {
       customerService.create.mockResolvedValue({
         ...mockCustomer,
         ...createDto,
-      });
+      }) as any;
 
       await request(app.getHttpServer())
         .post('/customers')
@@ -460,7 +471,7 @@ describe('CustomerController (Integration)', () => {
       };
 
       const updatedCustomer = { ...mockCustomer, ...updateDto };
-      customerService.update.mockResolvedValue(updatedCustomer);
+      customerService.update.mockResolvedValue(updatedCustomer) as any;
 
       const response = await request(app.getHttpServer())
         .patch('/customers/customer-123')
@@ -498,7 +509,7 @@ describe('CustomerController (Integration)', () => {
 
     it('should allow partial updates', async () => {
       const updateDto = { phone: '+84909999999' };
-      customerService.update.mockResolvedValue({ ...mockCustomer, ...updateDto });
+      customerService.update.mockResolvedValue({ ...mockCustomer, ...updateDto }) as any;
 
       await request(app.getHttpServer())
         .patch('/customers/customer-123')
@@ -511,7 +522,7 @@ describe('CustomerController (Integration)', () => {
   describe('PATCH /customers/:id/balance', () => {
     it('should update customer balance successfully', async () => {
       const updatedCustomer = { ...mockCustomer, balance: 15000 };
-      customerService.updateBalance.mockResolvedValue(updatedCustomer);
+      customerService.updateBalance.mockResolvedValue(updatedCustomer) as any;
 
       const response = await request(app.getHttpServer())
         .patch('/customers/customer-123/balance')
@@ -525,7 +536,7 @@ describe('CustomerController (Integration)', () => {
 
     it('should handle negative balance adjustment', async () => {
       const updatedCustomer = { ...mockCustomer, balance: 5000 };
-      customerService.updateBalance.mockResolvedValue(updatedCustomer);
+      customerService.updateBalance.mockResolvedValue(updatedCustomer) as any;
 
       await request(app.getHttpServer())
         .patch('/customers/customer-123/balance')
@@ -562,7 +573,7 @@ describe('CustomerController (Integration)', () => {
   describe('PATCH /customers/:id/credit-limit', () => {
     it('should update customer credit limit successfully', async () => {
       const updatedCustomer = { ...mockCustomer, creditLimit: 100000 };
-      customerService.updateCreditLimit.mockResolvedValue(updatedCustomer);
+      customerService.updateCreditLimit.mockResolvedValue(updatedCustomer) as any;
 
       const response = await request(app.getHttpServer())
         .patch('/customers/customer-123/credit-limit')
@@ -600,7 +611,7 @@ describe('CustomerController (Integration)', () => {
 
     it('should handle zero credit limit', async () => {
       const updatedCustomer = { ...mockCustomer, creditLimit: 0 };
-      customerService.updateCreditLimit.mockResolvedValue(updatedCustomer);
+      customerService.updateCreditLimit.mockResolvedValue(updatedCustomer) as any;
 
       await request(app.getHttpServer())
         .patch('/customers/customer-123/credit-limit')
@@ -613,7 +624,7 @@ describe('CustomerController (Integration)', () => {
   describe('PATCH /customers/:id/activate', () => {
     it('should activate customer successfully', async () => {
       const activatedCustomer = { ...mockCustomer, status: 'active' };
-      customerService.activate.mockResolvedValue(activatedCustomer);
+      customerService.activate.mockResolvedValue(activatedCustomer) as any;
 
       const response = await request(app.getHttpServer())
         .patch('/customers/customer-123/activate')
@@ -636,7 +647,7 @@ describe('CustomerController (Integration)', () => {
     });
 
     it('should handle already active customer', async () => {
-      customerService.activate.mockResolvedValue(mockCustomer);
+      customerService.activate.mockResolvedValue(mockCustomer) as any;
 
       await request(app.getHttpServer())
         .patch('/customers/customer-123/activate')
@@ -648,7 +659,7 @@ describe('CustomerController (Integration)', () => {
   describe('PATCH /customers/:id/deactivate', () => {
     it('should deactivate customer successfully', async () => {
       const deactivatedCustomer = { ...mockCustomer, status: 'inactive' };
-      customerService.deactivate.mockResolvedValue(deactivatedCustomer);
+      customerService.deactivate.mockResolvedValue(deactivatedCustomer) as any;
 
       const response = await request(app.getHttpServer())
         .patch('/customers/customer-123/deactivate')
@@ -684,7 +695,7 @@ describe('CustomerController (Integration)', () => {
 
   describe('DELETE /customers/:id', () => {
     it('should delete customer successfully', async () => {
-      customerService.remove.mockResolvedValue(undefined);
+      customerService.remove.mockResolvedValue(undefined) as any;
 
       const response = await request(app.getHttpServer())
         .delete('/customers/customer-123')
@@ -729,3 +740,4 @@ describe('CustomerController (Integration)', () => {
     });
   });
 });
+

@@ -65,6 +65,8 @@ describe('ReportController (Integration)', () => {
     filters: [],
     groupBy: [],
     orderBy: { field: 'createdAt', order: 'DESC' },
+    version: 1,
+    syncStatus: 'synced',
     createdAt: new Date('2024-01-15T10:00:00Z'),
     updatedAt: new Date('2024-01-15T10:00:00Z'),
   };
@@ -79,6 +81,10 @@ describe('ReportController (Integration)', () => {
     isVisible: true,
     sortOrder: 1,
     tenantId: 'tenant-123',
+    version: 1,
+    syncStatus: 'synced',
+    createdAt: new Date(),
+    updatedAt: new Date(),
   };
 
   const mockExecution = {
@@ -92,6 +98,10 @@ describe('ReportController (Integration)', () => {
     executedBy: 'user-123',
     executedAt: new Date('2024-01-15T10:05:00Z'),
     tenantId: 'tenant-123',
+    version: 1,
+    syncStatus: 'synced',
+    createdAt: new Date('2024-01-15T10:05:00Z'),
+    updatedAt: new Date('2024-01-15T10:05:00Z'),
   };
 
   beforeAll(async () => {
@@ -670,7 +680,7 @@ describe('ReportController (Integration)', () => {
         { name: 'inventory-status', category: 'inventory', description: 'Inventory status' },
       ];
 
-      templateService.getStandardTemplates.mockResolvedValue(templates as any);
+      (templateService.getStandardTemplates as jest.Mock).mockResolvedValue(templates);
 
       const response = await request(app.getHttpServer())
         .get('/reports/templates')
@@ -691,7 +701,7 @@ describe('ReportController (Integration)', () => {
     it('should return all categories', async () => {
       const categories = ['sales', 'inventory', 'accounting', 'hr'];
 
-      templateService.getCategories.mockResolvedValue(categories as any);
+      (templateService.getCategories as jest.Mock).mockResolvedValue(categories);
 
       const response = await request(app.getHttpServer())
         .get('/reports/templates/categories')
@@ -715,7 +725,7 @@ describe('ReportController (Integration)', () => {
         { name: 'sales-by-product', category: 'sales', description: 'Sales by product' },
       ];
 
-      templateService.getTemplatesByCategory.mockResolvedValue(templates as any);
+      (templateService.getTemplatesByCategory as jest.Mock).mockResolvedValue(templates);
 
       const response = await request(app.getHttpServer())
         .get('/reports/templates/category/sales')
@@ -727,7 +737,7 @@ describe('ReportController (Integration)', () => {
     });
 
     it('should return empty array for unknown category', async () => {
-      templateService.getTemplatesByCategory.mockResolvedValue([]);
+      (templateService.getTemplatesByCategory as jest.Mock).mockResolvedValue([]);
 
       const response = await request(app.getHttpServer())
         .get('/reports/templates/category/unknown')

@@ -12,6 +12,7 @@ import { Setting } from './entities/setting.entity';
 import { CreateSettingDto, SettingCategory, SettingDataType } from './dto/create-setting.dto';
 import { UpdateSettingDto } from './dto/update-setting.dto';
 import { User } from '@common/security/permission.service';
+import { SyncStatus } from '@/common/enums/sync-status.enum';
 
 describe('SettingsService', () => {
   let service: SettingsService;
@@ -36,6 +37,8 @@ describe('SettingsService', () => {
     updatedAt: new Date(),
     deletedAt: null,
     createdBy: 'user-123',
+    version: 1,
+    syncStatus: SyncStatus.SYNCED,
   };
 
   beforeEach(async () => {

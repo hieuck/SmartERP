@@ -17,11 +17,17 @@ describe('PayrollService', () => {
     id: 'salary-1',
     employeeId: 'emp-1',
     baseSalary: 5000,
-    allowances: { housing: 1000, transport: 500 },
-    deductions: { tax: 500, insurance: 200 },
+    allowances: 1500,
+    deductions: 700,
     effectiveFrom: new Date('2024-01-01'),
+    effectiveTo: null,
+    isActive: true,
     tenantId: 'tenant-1',
-  } as SalaryStructure;
+    version: 1,
+    syncStatus: 'synced',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  } as any;
 
   const mockPayslip: Payslip = {
     id: 'payslip-1',
@@ -30,11 +36,21 @@ describe('PayrollService', () => {
     month: 1,
     year: 2024,
     baseSalary: 5000,
-    allowances: { housing: 1000, transport: 500 },
-    deductions: { tax: 500, insurance: 200 },
+    allowances: 1500,
+    deductions: 700,
+    taxAmount: 0,
+    grossSalary: 6500,
+    netSalary: 5800,
     status: PayslipStatus.DRAFT,
+    paymentDate: null,
     tenantId: 'tenant-1',
-  } as Payslip;
+    version: 1,
+    syncStatus: 'synced',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    calculateSalary: jest.fn(),
+    validate: jest.fn(),
+  } as any;
 
   beforeEach(async () => {
     const mockSalaryRepo = {
@@ -78,8 +94,8 @@ describe('PayrollService', () => {
     const createDto: CreateSalaryStructureDto = {
       employeeId: 'emp-1',
       baseSalary: 5000,
-      allowances: { housing: 1000, transport: 500 },
-      deductions: { tax: 500, insurance: 200 },
+      allowances: 1500,
+      deductions: 700,
       effectiveFrom: new Date('2024-01-01'),
     };
 
@@ -108,7 +124,7 @@ describe('PayrollService', () => {
     });
 
     it('should handle empty allowances', async () => {
-      const noAllowancesDto = { ...createDto, allowances: {} };
+      const noAllowancesDto = { ...createDto, allowances: 0 };
       salaryStructureRepository.create.mockReturnValue(mockSalaryStructure as any);
       salaryStructureRepository.save.mockResolvedValue(mockSalaryStructure);
 
@@ -118,7 +134,7 @@ describe('PayrollService', () => {
     });
 
     it('should handle empty deductions', async () => {
-      const noDeductionsDto = { ...createDto, deductions: {} };
+      const noDeductionsDto = { ...createDto, deductions: 0 };
       salaryStructureRepository.create.mockReturnValue(mockSalaryStructure as any);
       salaryStructureRepository.save.mockResolvedValue(mockSalaryStructure);
 
@@ -242,8 +258,8 @@ describe('PayrollService', () => {
         month: 1,
         year: 2024,
         baseSalary: 5000,
-        allowances: { housing: 1000, transport: 500 },
-        deductions: { tax: 500, insurance: 200 },
+        allowances: 1500,
+        deductions: 700,
         status: PayslipStatus.DRAFT,
       });
     });
@@ -419,7 +435,7 @@ describe('PayrollService', () => {
       payslipRepository.save.mockResolvedValue({
         ...mockPayslip,
         status: PayslipStatus.SUBMITTED,
-      });
+      } as any);
 
       const result = await service.submitPayslip('payslip-1', 'tenant-1');
 
@@ -431,7 +447,7 @@ describe('PayrollService', () => {
       payslipRepository.findOne.mockResolvedValue({
         ...mockPayslip,
         status: PayslipStatus.PAID,
-      });
+      } as any);
 
       await expect(service.submitPayslip('payslip-1', 'tenant-1')).rejects.toThrow(
         BadRequestException,
@@ -457,12 +473,12 @@ describe('PayrollService', () => {
       payslipRepository.findOne.mockResolvedValue({
         ...mockPayslip,
         status: PayslipStatus.SUBMITTED,
-      });
+      } as any);
       payslipRepository.save.mockResolvedValue({
         ...mockPayslip,
         status: PayslipStatus.PAID,
         paymentDate,
-      });
+      } as any);
 
       const result = await service.markAsPaid('payslip-1', paymentDate, 'tenant-1');
 
@@ -494,11 +510,11 @@ describe('PayrollService', () => {
       payslipRepository.findOne.mockResolvedValue({
         ...mockPayslip,
         status: PayslipStatus.SUBMITTED,
-      });
+      } as any);
       payslipRepository.save.mockResolvedValue({
         ...mockPayslip,
         status: PayslipStatus.PAID,
-      });
+      } as any);
 
       const result = await service.markAsPaid('payslip-1', null as any, 'tenant-1');
 
@@ -512,7 +528,7 @@ describe('PayrollService', () => {
       payslipRepository.save.mockResolvedValue({
         ...mockPayslip,
         status: PayslipStatus.CANCELLED,
-      });
+      } as any);
 
       const result = await service.cancelPayslip('payslip-1', 'tenant-1');
 
@@ -524,7 +540,7 @@ describe('PayrollService', () => {
       payslipRepository.findOne.mockResolvedValue({
         ...mockPayslip,
         status: PayslipStatus.PAID,
-      });
+      } as any);
 
       await expect(service.cancelPayslip('payslip-1', 'tenant-1')).rejects.toThrow(
         BadRequestException,
@@ -546,11 +562,11 @@ describe('PayrollService', () => {
       payslipRepository.findOne.mockResolvedValue({
         ...mockPayslip,
         status: PayslipStatus.SUBMITTED,
-      });
+      } as any);
       payslipRepository.save.mockResolvedValue({
         ...mockPayslip,
         status: PayslipStatus.CANCELLED,
-      });
+      } as any);
 
       const result = await service.cancelPayslip('payslip-1', 'tenant-1');
 
@@ -576,8 +592,8 @@ describe('PayrollService', () => {
       const dto: CreateSalaryStructureDto = {
         employeeId: 'emp-1',
         baseSalary: -1000,
-        allowances: {},
-        deductions: {},
+        allowances: 0,
+        deductions: 0,
         effectiveFrom: new Date(),
       };
 

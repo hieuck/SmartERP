@@ -26,6 +26,7 @@ import { PaymentController } from './payment.controller';
 import { PaymentService } from './payment.service';
 import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
 import { TenantGuard } from '../../../common/guards/tenant.guard';
+import { SyncStatus } from '@/common/enums/sync-status.enum';
 
 describe('PaymentController (Integration)', () => {
   let app: INestApplication;
@@ -48,6 +49,8 @@ describe('PaymentController (Integration)', () => {
     tenantId: 'tenant-123',
     createdAt: new Date(),
     updatedAt: new Date(),
+    version: 1,
+    syncStatus: SyncStatus.SYNCED,
   };
 
   beforeAll(async () => {

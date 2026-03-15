@@ -34,6 +34,10 @@ describe('ManagementController (Integration)', () => {
     position: 'Developer',
     department: 'Engineering',
     tenantId: 'tenant-123',
+    version: 1,
+    syncStatus: 'synced',
+    createdAt: new Date(),
+    updatedAt: new Date(),
   };
 
   const mockAttendance = {
@@ -43,6 +47,10 @@ describe('ManagementController (Integration)', () => {
     checkInTime: '09:00:00',
     checkOutTime: '18:00:00',
     status: 'present',
+    version: 1,
+    syncStatus: 'synced',
+    createdAt: new Date(),
+    updatedAt: new Date(),
   };
 
   const mockLeave = {
@@ -52,6 +60,10 @@ describe('ManagementController (Integration)', () => {
     startDate: new Date('2024-01-20'),
     endDate: new Date('2024-01-22'),
     status: 'pending',
+    version: 1,
+    syncStatus: 'synced',
+    createdAt: new Date(),
+    updatedAt: new Date(),
   };
 
   beforeAll(async () => {
@@ -115,7 +127,7 @@ describe('ManagementController (Integration)', () => {
   describe('GET /hr/employees', () => {
     it('should return all employees', async () => {
       const employees = [mockEmployee];
-      managementService.findAllEmployees.mockResolvedValue(employees);
+      managementService.findAllEmployees.mockResolvedValue(employees as any);
 
       const response = await request(app.getHttpServer())
         .get('/hr/employees')
@@ -148,7 +160,7 @@ describe('ManagementController (Integration)', () => {
 
   describe('GET /hr/employees/:id', () => {
     it('should return employee by id', async () => {
-      managementService.findEmployeeById.mockResolvedValue(mockEmployee);
+      managementService.findEmployeeById.mockResolvedValue(mockEmployee as any);
 
       const response = await request(app.getHttpServer())
         .get('/hr/employees/employee-123')
@@ -181,7 +193,7 @@ describe('ManagementController (Integration)', () => {
         department: 'Engineering',
       };
 
-      managementService.createEmployee.mockResolvedValue(mockEmployee);
+      managementService.createEmployee.mockResolvedValue(mockEmployee as any);
 
       const response = await request(app.getHttpServer())
         .post('/hr/employees')
@@ -215,7 +227,7 @@ describe('ManagementController (Integration)', () => {
         position: 'Senior Developer',
       };
 
-      managementService.updateEmployee.mockResolvedValue(updatedEmployee);
+      managementService.updateEmployee.mockResolvedValue(updatedEmployee as any);
 
       const response = await request(app.getHttpServer())
         .put('/hr/employees/employee-123')
@@ -271,7 +283,7 @@ describe('ManagementController (Integration)', () => {
   describe('GET /hr/attendance', () => {
     it('should return all attendance records', async () => {
       const records = [mockAttendance];
-      managementService.findAllAttendance.mockResolvedValue(records);
+      managementService.findAllAttendance.mockResolvedValue(records as any);
 
       const response = await request(app.getHttpServer())
         .get('/hr/attendance')
@@ -289,7 +301,7 @@ describe('ManagementController (Integration)', () => {
 
     it('should filter by date range', async () => {
       const records = [mockAttendance];
-      managementService.findAllAttendance.mockResolvedValue(records);
+      managementService.findAllAttendance.mockResolvedValue(records as any);
 
       await request(app.getHttpServer())
         .get('/hr/attendance')
@@ -309,7 +321,7 @@ describe('ManagementController (Integration)', () => {
   describe('GET /hr/attendance/employee/:employeeId', () => {
     it('should return attendance by employee', async () => {
       const records = [mockAttendance];
-      managementService.findAllAttendance.mockResolvedValue(records);
+      managementService.findAllAttendance.mockResolvedValue(records as any);
 
       const response = await request(app.getHttpServer())
         .get('/hr/attendance/employee/employee-123')
@@ -330,7 +342,7 @@ describe('ManagementController (Integration)', () => {
         checkOutTime: '18:00:00',
       };
 
-      managementService.createAttendance.mockResolvedValue(mockAttendance);
+      managementService.createAttendance.mockResolvedValue(mockAttendance as any);
 
       const response = await request(app.getHttpServer())
         .post('/hr/attendance')
@@ -354,7 +366,7 @@ describe('ManagementController (Integration)', () => {
         checkOutTime: '19:00:00',
       };
 
-      managementService.updateAttendance.mockResolvedValue(updated);
+      managementService.updateAttendance.mockResolvedValue(updated as any);
 
       const response = await request(app.getHttpServer())
         .put('/hr/attendance/attendance-123')
@@ -369,7 +381,7 @@ describe('ManagementController (Integration)', () => {
   describe('GET /hr/leaves', () => {
     it('should return all leaves', async () => {
       const leaves = [mockLeave];
-      managementService.findAllLeaves.mockResolvedValue(leaves);
+      managementService.findAllLeaves.mockResolvedValue(leaves as any);
 
       const response = await request(app.getHttpServer())
         .get('/hr/leaves')
@@ -384,7 +396,7 @@ describe('ManagementController (Integration)', () => {
   describe('GET /hr/leaves/employee/:employeeId', () => {
     it('should return leaves by employee', async () => {
       const leaves = [mockLeave];
-      managementService.findAllLeaves.mockResolvedValue(leaves);
+      managementService.findAllLeaves.mockResolvedValue(leaves as any);
 
       const response = await request(app.getHttpServer())
         .get('/hr/leaves/employee/employee-123')
@@ -406,7 +418,7 @@ describe('ManagementController (Integration)', () => {
         reason: 'Vacation',
       };
 
-      managementService.createLeave.mockResolvedValue(mockLeave);
+      managementService.createLeave.mockResolvedValue(mockLeave as any);
 
       const response = await request(app.getHttpServer())
         .post('/hr/leaves')
@@ -426,7 +438,7 @@ describe('ManagementController (Integration)', () => {
         status: 'approved',
       };
 
-      managementService.approveLeave.mockResolvedValue(approved);
+      managementService.approveLeave.mockResolvedValue(approved as any);
 
       const response = await request(app.getHttpServer())
         .post('/hr/leaves/leave-123/approve')
@@ -450,7 +462,7 @@ describe('ManagementController (Integration)', () => {
         status: 'rejected',
       };
 
-      managementService.rejectLeave.mockResolvedValue(rejected);
+      managementService.rejectLeave.mockResolvedValue(rejected as any);
 
       const response = await request(app.getHttpServer())
         .post('/hr/leaves/leave-123/reject')

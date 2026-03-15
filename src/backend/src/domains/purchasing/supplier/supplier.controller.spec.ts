@@ -57,6 +57,8 @@ describe('SupplierController (Integration)', () => {
     tenantId: 'tenant-123',
     createdAt: new Date(),
     updatedAt: new Date(),
+    version: 1,
+    syncStatus: 'synced',
   };
 
   beforeAll(async () => {
@@ -151,14 +153,17 @@ describe('SupplierController (Integration)', () => {
     });
 
     it('should return empty array when no suppliers', async () => {
-      supplierService.findAll.mockResolvedValue([]);
+      supplierService.findAll.mockResolvedValue({
+        data: [],
+        meta: { page: 1, limit: 20, total: 0, totalPages: 0 },
+      });
 
       const response = await request(app.getHttpServer())
         .get('/suppliers')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual([]);
+      expect(response.body.data).toEqual([]);
     });
   });
 

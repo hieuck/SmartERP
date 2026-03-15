@@ -21,6 +21,7 @@ import { RoleController } from './role.controller';
 import { RoleService } from './role.service';
 import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
 import { TenantGuard } from '@/common/guards/tenant.guard';
+import { SyncStatus } from '@/common/enums/sync-status.enum';
 
 describe('RoleController (Integration)', () => {
   let app: INestApplication;
@@ -37,11 +38,16 @@ describe('RoleController (Integration)', () => {
     id: 'role-123',
     name: 'manager',
     description: 'Manager role',
-    permissions: [],
+    permissions: [] as any[],
     tenantId: 'tenant-123',
     createdAt: new Date(),
     updatedAt: new Date(),
     deletedAt: null,
+    version: 1,
+    syncStatus: SyncStatus.SYNCED,
+    isSystem: false,
+    createdBy: 'user-123',
+    updatedBy: null,
   };
 
   beforeAll(async () => {
@@ -304,7 +310,7 @@ describe('RoleController (Integration)', () => {
   describe('PATCH /roles/:id/permissions/add', () => {
     it('should add permissions to role successfully', async () => {
       const permissionIds = ['perm-1', 'perm-2'];
-      const updatedRole = { ...mockRole, permissions: permissionIds };
+      const updatedRole = { ...mockRole, permissions: permissionIds as any[] };
 
       roleService.addPermissions.mockResolvedValue(updatedRole);
 

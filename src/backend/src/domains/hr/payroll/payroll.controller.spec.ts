@@ -51,10 +51,17 @@ describe('PayrollController (Integration)', () => {
     id: 'salary-123',
     employeeId: 'employee-123',
     baseSalary: 50000,
-    allowances: { housing: 5000, transport: 2000 },
-    deductions: { tax: 5000, insurance: 2000 },
+    allowances: 7000,
+    deductions: 7000,
     effectiveDate: new Date('2024-01-01'),
+    effectiveFrom: new Date('2024-01-01'),
+    effectiveTo: null,
+    isActive: true,
     tenantId: 'tenant-123',
+    version: 1,
+    syncStatus: 'synced',
+    createdAt: new Date(),
+    updatedAt: new Date(),
   };
 
   const mockPayslip = {
@@ -63,10 +70,19 @@ describe('PayrollController (Integration)', () => {
     salaryStructureId: 'salary-123',
     month: 1,
     year: 2024,
+    baseSalary: 50000,
+    allowances: 7000,
+    deductions: 7000,
+    taxAmount: 0,
     grossSalary: 57000,
     netSalary: 50000,
     status: 'draft',
+    paymentDate: null,
     tenantId: 'tenant-123',
+    version: 1,
+    syncStatus: 'synced',
+    createdAt: new Date(),
+    updatedAt: new Date(),
   };
 
   beforeAll(async () => {
@@ -165,12 +181,12 @@ describe('PayrollController (Integration)', () => {
       const createDto = {
         employeeId: 'employee-123',
         baseSalary: 50000,
-        allowances: { housing: 5000, transport: 2000 },
-        deductions: { tax: 5000, insurance: 2000 },
+        allowances: 7000,
+        deductions: 7000,
         effectiveDate: '2024-01-01',
       };
 
-      payrollService.createSalaryStructure.mockResolvedValue(mockSalaryStructure);
+      payrollService.createSalaryStructure.mockResolvedValue(mockSalaryStructure as any);
 
       const response = await request(app.getHttpServer())
         .post('/payroll/salary-structures')
@@ -210,7 +226,7 @@ describe('PayrollController (Integration)', () => {
 
   describe('GET /payroll/salary-structures/:id', () => {
     it('should get salary structure by id', async () => {
-      payrollService.getSalaryStructure.mockResolvedValue(mockSalaryStructure);
+      payrollService.getSalaryStructure.mockResolvedValue(mockSalaryStructure as any);
 
       const response = await request(app.getHttpServer())
         .get('/payroll/salary-structures/salary-123')
@@ -236,7 +252,7 @@ describe('PayrollController (Integration)', () => {
   describe('GET /payroll/salary-structures/employee/:employeeId', () => {
     it('should get salary structures by employee', async () => {
       const structures = [mockSalaryStructure];
-      payrollService.getSalaryStructuresByEmployee.mockResolvedValue(structures);
+      payrollService.getSalaryStructuresByEmployee.mockResolvedValue(structures as any);
 
       const response = await request(app.getHttpServer())
         .get('/payroll/salary-structures/employee/employee-123')
@@ -270,7 +286,7 @@ describe('PayrollController (Integration)', () => {
         year: 2024,
       };
 
-      payrollService.generatePayslip.mockResolvedValue(mockPayslip);
+      payrollService.generatePayslip.mockResolvedValue(mockPayslip as any);
 
       const response = await request(app.getHttpServer())
         .post('/payroll/payslips/generate')
@@ -324,7 +340,7 @@ describe('PayrollController (Integration)', () => {
 
   describe('GET /payroll/payslips/:id', () => {
     it('should get payslip by id', async () => {
-      payrollService.getPayslip.mockResolvedValue(mockPayslip);
+      payrollService.getPayslip.mockResolvedValue(mockPayslip as any);
 
       const response = await request(app.getHttpServer())
         .get('/payroll/payslips/payslip-123')
@@ -350,7 +366,7 @@ describe('PayrollController (Integration)', () => {
   describe('GET /payroll/payslips/employee/:employeeId', () => {
     it('should get payslips by employee', async () => {
       const payslips = [mockPayslip];
-      payrollService.getPayslipsByEmployee.mockResolvedValue(payslips);
+      payrollService.getPayslipsByEmployee.mockResolvedValue(payslips as any);
 
       const response = await request(app.getHttpServer())
         .get('/payroll/payslips/employee/employee-123')
@@ -368,7 +384,7 @@ describe('PayrollController (Integration)', () => {
   describe('GET /payroll/payslips/month/:year/:month', () => {
     it('should get payslips by month', async () => {
       const payslips = [mockPayslip];
-      payrollService.getPayslipsByMonth.mockResolvedValue(payslips);
+      payrollService.getPayslipsByMonth.mockResolvedValue(payslips as any);
 
       const response = await request(app.getHttpServer())
         .get('/payroll/payslips/month/2024/1')
@@ -398,7 +414,7 @@ describe('PayrollController (Integration)', () => {
         status: 'submitted',
       };
 
-      payrollService.submitPayslip.mockResolvedValue(submitted);
+      payrollService.submitPayslip.mockResolvedValue(submitted as any);
 
       const response = await request(app.getHttpServer())
         .patch('/payroll/payslips/payslip-123/submit')
@@ -431,7 +447,7 @@ describe('PayrollController (Integration)', () => {
         paymentDate: new Date('2024-01-31'),
       };
 
-      payrollService.markAsPaid.mockResolvedValue(paid);
+      payrollService.markAsPaid.mockResolvedValue(paid as any);
 
       const response = await request(app.getHttpServer())
         .patch('/payroll/payslips/payslip-123/mark-paid')
@@ -473,7 +489,7 @@ describe('PayrollController (Integration)', () => {
         status: 'cancelled',
       };
 
-      payrollService.cancelPayslip.mockResolvedValue(cancelled);
+      payrollService.cancelPayslip.mockResolvedValue(cancelled as any);
 
       const response = await request(app.getHttpServer())
         .patch('/payroll/payslips/payslip-123/cancel')

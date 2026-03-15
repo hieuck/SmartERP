@@ -17,6 +17,7 @@ import * as request from 'supertest';
 import { CrmController } from './crm.controller';
 import { CrmService } from './crm.service';
 import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
+import { SyncStatus } from '../../../common/enums/sync-status.enum';
 
 describe('CrmController (Integration)', () => {
   let app: INestApplication;
@@ -41,6 +42,8 @@ describe('CrmController (Integration)', () => {
     tenantId: 'tenant-123',
     createdAt: new Date('2024-01-15T10:00:00Z'),
     updatedAt: new Date('2024-01-15T10:00:00Z'),
+    version: 1,
+    syncStatus: SyncStatus.SYNCED,
   };
 
   const mockOpportunity = {
@@ -55,6 +58,8 @@ describe('CrmController (Integration)', () => {
     tenantId: 'tenant-123',
     createdAt: new Date('2024-01-15T10:00:00Z'),
     updatedAt: new Date('2024-01-15T10:00:00Z'),
+    version: 1,
+    syncStatus: SyncStatus.SYNCED,
   };
 
   beforeAll(async () => {
@@ -479,16 +484,25 @@ describe('CrmController (Integration)', () => {
   describe('GET /crm/pipeline', () => {
     it('should return pipeline data', async () => {
       const pipeline = {
-        stages: [
-          { name: 'qualification', count: 10, totalAmount: 100000000 },
-          { name: 'proposal', count: 5, totalAmount: 80000000 },
-          { name: 'negotiation', count: 3, totalAmount: 60000000 },
-        ],
-        totalOpportunities: 18,
-        totalValue: 240000000,
+        pipeline: {
+          prospecting: [],
+          qualification: [mockOpportunity],
+          proposal: [],
+          negotiation: [],
+          closedWon: [],
+          closedLost: [],
+        },
+        summary: {
+          prospecting: { count: 0, value: 0 },
+          qualification: { count: 1, value: 50000000 },
+          proposal: { count: 0, value: 0 },
+          negotiation: { count: 0, value: 0 },
+          closedWon: { count: 0, value: 0 },
+          closedLost: { count: 0, value: 0 },
+        },
       };
 
-      crmService.getPipeline.mockResolvedValue(pipeline);
+      crmService.getPipeline.mockResolvedValue(pipeline as any);
 
       const response = await request(app.getHttpServer())
         .get('/crm/pipeline')
@@ -501,19 +515,32 @@ describe('CrmController (Integration)', () => {
 
     it('should return empty pipeline when no data', async () => {
       const emptyPipeline = {
-        stages: [],
-        totalOpportunities: 0,
-        totalValue: 0,
+        pipeline: {
+          prospecting: [],
+          qualification: [],
+          proposal: [],
+          negotiation: [],
+          closedWon: [],
+          closedLost: [],
+        },
+        summary: {
+          prospecting: { count: 0, value: 0 },
+          qualification: { count: 0, value: 0 },
+          proposal: { count: 0, value: 0 },
+          negotiation: { count: 0, value: 0 },
+          closedWon: { count: 0, value: 0 },
+          closedLost: { count: 0, value: 0 },
+        },
       };
 
-      crmService.getPipeline.mockResolvedValue(emptyPipeline);
+      crmService.getPipeline.mockResolvedValue(emptyPipeline as any);
 
       const response = await request(app.getHttpServer())
         .get('/crm/pipeline')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body.totalOpportunities).toBe(0);
+      expect(response.body.summary.qualification.count).toBe(0);
     });
 
     it('should require authentication', async () => {

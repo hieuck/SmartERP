@@ -6,6 +6,7 @@ import { WorkCenterService } from './work-center.service';
 import { WorkCenter } from './entities/work-center.entity';
 import { CreateWorkCenterDto } from './dto/create-work-center.dto';
 import { UpdateWorkCenterDto } from './dto/update-work-center.dto';
+import { SyncStatus } from '../../../common/enums/sync-status.enum';
 
 describe('WorkCenterService', () => {
   let service: WorkCenterService;
@@ -28,6 +29,8 @@ describe('WorkCenterService', () => {
     updatedAt: new Date(),
     createdBy: 'user-123',
     updatedBy: 'user-123',
+    version: 1,
+    syncStatus: SyncStatus.SYNCED,
   } as WorkCenter;
 
   beforeEach(async () => {

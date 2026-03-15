@@ -14,6 +14,7 @@ import * as request from 'supertest';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { SyncStatus } from '@/common/enums/sync-status.enum';
 
 describe('UserController (Integration)', () => {
   let app: INestApplication;
@@ -33,6 +34,8 @@ describe('UserController (Integration)', () => {
     emailVerified: true,
     createdAt: new Date(),
     updatedAt: new Date(),
+    version: 1,
+    syncStatus: SyncStatus.SYNCED,
   };
 
   const mockAuthUser = {

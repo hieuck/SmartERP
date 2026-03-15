@@ -10,13 +10,14 @@ import { BOMController } from './bom.controller';
 import { BOMService } from './bom.service';
 import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@common/guards/roles.guard';
+import { SyncStatus } from '../../../common/enums/sync-status.enum';
 
 describe('BOMController (Integration)', () => {
   let app: INestApplication;
   let bomService: jest.Mocked<BOMService>;
 
   const mockUser = { id: 'user-123', email: 'manager@example.com', tenantId: 'tenant-123', roles: ['production_manager'] };
-  const mockBOM = { id: 'bom-123', code: 'BOM-001', productId: 'prod-123', name: 'Product BOM', version: '1.0', isActive: true, quantity: 1, lines: [{ id: 'line-123', materialId: 'mat-123', quantity: 2, unit: 'pcs' }], tenantId: 'tenant-123', createdAt: new Date(), updatedAt: new Date() };
+  const mockBOM = { id: 'bom-123', code: 'BOM-001', productId: 'prod-123', name: 'Product BOM', version: 1, isActive: true, quantity: 1, lines: [{ id: 'line-123', materialId: 'mat-123', quantity: 2, unit: 'pcs' }], tenantId: 'tenant-123', createdAt: new Date(), updatedAt: new Date(), syncStatus: SyncStatus.SYNCED };
 
   beforeAll(async () => {
     const mockBOMService = { create: jest.fn(), findOne: jest.fn(), findByProduct: jest.fn(), update: jest.fn(), addLine: jest.fn(), removeLine: jest.fn(), calculateCosts: jest.fn(), remove: jest.fn() };
@@ -94,7 +95,8 @@ describe('BOMController (Integration)', () => {
 
   describe('GET /manufacturing/bom/:id/cost', () => {
     it('should calculate BOM cost', async () => {
-      bomService.calculateCosts.mockResolvedValue(150000);
+      const bomWithCost = { ...mockBOM, totalCost: 150000 };
+      bomService.calculateCosts.mockResolvedValue(bomWithCost as any);
       const response = await request(app.getHttpServer()).get('/manufacturing/bom/bom-123/cost').set('Authorization', 'Bearer valid-token').expect(200);
       expect(response.body.totalCost).toBe(150000);
     });

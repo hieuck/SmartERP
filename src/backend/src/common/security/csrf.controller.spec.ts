@@ -56,7 +56,7 @@ describe('CsrfController (Integration)', () => {
         .get('/csrf-token')
         .expect(200);
 
-      const cookies = response.headers['set-cookie'];
+      const cookies = response.headers['set-cookie'] as unknown as string[];
       expect(cookies).toBeDefined();
       expect(Array.isArray(cookies)).toBe(true);
       
@@ -90,7 +90,7 @@ describe('CsrfController (Integration)', () => {
         .get('/csrf-token')
         .expect(200);
 
-      const cookies = response.headers['set-cookie'];
+      const cookies = response.headers['set-cookie'] as unknown as string[];
       const csrfCookie = cookies.find((cookie: string) => cookie.startsWith('csrf-token='));
       
       expect(csrfCookie).toContain('HttpOnly');
@@ -111,7 +111,7 @@ describe('CsrfController (Integration)', () => {
         .get('/csrf-token')
         .expect(200);
 
-      const cookies = response.headers['set-cookie'];
+      const cookies = response.headers['set-cookie'] as unknown as string[];
       const csrfCookie = cookies.find((cookie: string) => cookie.startsWith('csrf-token='));
       
       expect(csrfCookie).toContain('Secure');
@@ -135,7 +135,7 @@ describe('CsrfController (Integration)', () => {
         .get('/csrf-token')
         .expect(200);
 
-      const cookies = response.headers['set-cookie'];
+      const cookies = response.headers['set-cookie'] as unknown as string[];
       const csrfCookie = cookies.find((cookie: string) => cookie.startsWith('csrf-token='));
       
       // In development, Secure flag should not be present
@@ -150,7 +150,7 @@ describe('CsrfController (Integration)', () => {
         .get('/csrf-token')
         .expect(200);
 
-      const cookies = response.headers['set-cookie'];
+      const cookies = response.headers['set-cookie'] as unknown as string[];
       const csrfCookie = cookies.find((cookie: string) => cookie.startsWith('csrf-token='));
       
       expect(csrfCookie).toContain('SameSite=Strict');
@@ -161,7 +161,7 @@ describe('CsrfController (Integration)', () => {
         .get('/csrf-token')
         .expect(200);
 
-      const cookies = response.headers['set-cookie'];
+      const cookies = response.headers['set-cookie'] as unknown as string[];
       const csrfCookie = cookies.find((cookie: string) => cookie.startsWith('csrf-token='));
       
       // 24 hours = 86400 seconds
@@ -218,7 +218,7 @@ describe('CsrfController (Integration)', () => {
         .expect(200);
 
       const bodyToken = response.body.csrfToken;
-      const cookies = response.headers['set-cookie'];
+      const cookies = response.headers['set-cookie'] as unknown as string[];
       const csrfCookie = cookies.find((cookie: string) => cookie.startsWith('csrf-token='));
       
       // Extract token from cookie
@@ -256,7 +256,7 @@ describe('CsrfController (Integration)', () => {
         .get('/csrf-token')
         .expect(200);
 
-      const cookies = response.headers['set-cookie'];
+      const cookies = response.headers['set-cookie'] as unknown as string[];
       const csrfCookie = cookies.find((cookie: string) => cookie.startsWith('csrf-token='));
       
       // Default path should be /

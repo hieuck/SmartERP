@@ -20,6 +20,7 @@ import { SettingsController } from './settings.controller';
 import { SettingsService } from './settings.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
+import { SyncStatus } from '@/common/enums/sync-status.enum';
 
 describe('SettingsController (Integration)', () => {
   let app: INestApplication;
@@ -48,6 +49,8 @@ describe('SettingsController (Integration)', () => {
     tenantId: 'tenant-123',
     createdAt: new Date(),
     updatedAt: new Date(),
+    version: 1,
+    syncStatus: SyncStatus.SYNCED,
   };
 
   beforeAll(async () => {

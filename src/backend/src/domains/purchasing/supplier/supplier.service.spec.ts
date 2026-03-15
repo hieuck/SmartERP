@@ -8,6 +8,7 @@ import { CacheService } from '@/common/cache/cache.service';
 import { PermissionService, User } from '@/common/security/permission.service';
 import { CreateSupplierDto } from './dto/create-supplier.dto';
 import { UpdateSupplierDto } from './dto/update-supplier.dto';
+import { SyncStatus } from '@/common/enums/sync-status.enum';
 
 describe('SupplierService', () => {
   let service: SupplierService;
@@ -36,6 +37,8 @@ describe('SupplierService', () => {
     updatedAt: new Date(),
     createdBy: 'user-1',
     updatedBy: 'user-1',
+    version: 1,
+    syncStatus: SyncStatus.SYNCED,
   } as Supplier;
 
   beforeEach(async () => {

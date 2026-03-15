@@ -57,10 +57,14 @@ describe('OrderController (Integration)', () => {
         quantity: 2,
         unitPrice: 500000,
         totalPrice: 1000000,
+        version: 1,
+        syncStatus: 'synced',
       },
     ],
     orderDate: new Date('2024-01-15'),
     tenantId: 'tenant-123',
+    version: 1,
+    syncStatus: 'synced',
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -161,14 +165,18 @@ describe('OrderController (Integration)', () => {
     });
 
     it('should return empty array when no orders', async () => {
-      orderService.findAll.mockResolvedValue([]);
+      const emptyResponse = {
+        data: [],
+        meta: { page: 1, limit: 20, total: 0, totalPages: 0 },
+      };
+      orderService.findAll.mockResolvedValue(emptyResponse as any);
 
       const response = await request(app.getHttpServer())
         .get('/orders')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual([]);
+      expect(response.body).toEqual(emptyResponse);
     });
   });
 

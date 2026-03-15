@@ -19,6 +19,7 @@ import { BankReconciliationController } from './bank-reconciliation.controller';
 import { BankReconciliationService } from './bank-reconciliation.service';
 import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '@/common/guards/roles.guard';
+import { SyncStatus } from '@/common/enums/sync-status.enum';
 
 describe('BankReconciliationController (Integration)', () => {
   let app: INestApplication;
@@ -33,24 +34,38 @@ describe('BankReconciliationController (Integration)', () => {
 
   const mockBankStatement = {
     id: 'statement-123',
+    number: 'BS-2024-001',
     bankAccountId: 'account-123',
+    bankAccount: null as any,
     statementDate: new Date('2024-01-31'),
     openingBalance: 10000,
     closingBalance: 15000,
+    status: 'draft' as any,
     transactions: [],
     tenantId: 'tenant-123',
     createdAt: new Date(),
     updatedAt: new Date(),
+    createdBy: 'user-123',
+    updatedBy: null,
+    version: 1,
+    syncStatus: SyncStatus.SYNCED,
   };
 
   const mockTransaction = {
     id: 'transaction-123',
     statementId: 'statement-123',
+    statement: null as any,
     date: new Date('2024-01-15'),
     description: 'Payment received',
     amount: 5000,
     type: 'credit',
     matched: false,
+    isReconciled: false,
+    tenantId: 'tenant-123',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    version: 1,
+    syncStatus: SyncStatus.SYNCED,
   };
 
   beforeAll(async () => {
@@ -121,7 +136,7 @@ describe('BankReconciliationController (Integration)', () => {
         closingBalance: 15000,
       };
 
-      bankReconciliationService.create.mockResolvedValue(mockBankStatement);
+      bankReconciliationService.create.mockResolvedValue(mockBankStatement as any);
 
       const response = await request(app.getHttpServer())
         .post('/bank-reconciliation/statements')
@@ -152,7 +167,7 @@ describe('BankReconciliationController (Integration)', () => {
   describe('GET /bank-reconciliation/statements', () => {
     it('should return all bank statements', async () => {
       const statements = [mockBankStatement];
-      bankReconciliationService.findAll.mockResolvedValue(statements);
+      bankReconciliationService.findAll.mockResolvedValue(statements as any);
 
       const response = await request(app.getHttpServer())
         .get('/bank-reconciliation/statements')
@@ -177,7 +192,7 @@ describe('BankReconciliationController (Integration)', () => {
 
   describe('GET /bank-reconciliation/statements/:id', () => {
     it('should return bank statement by ID', async () => {
-      bankReconciliationService.findOne.mockResolvedValue(mockBankStatement);
+      bankReconciliationService.findOne.mockResolvedValue(mockBankStatement as any);
 
       const response = await request(app.getHttpServer())
         .get('/bank-reconciliation/statements/statement-123')
@@ -312,14 +327,22 @@ describe('BankReconciliationController (Integration)', () => {
   describe('GET /bank-reconciliation/statements/:id/report', () => {
     it('should return reconciliation report', async () => {
       const report = {
-        statementId: 'statement-123',
-        openingBalance: 10000,
-        closingBalance: 15000,
-        totalCredits: 8000,
-        totalDebits: 3000,
-        matchedTransactions: 5,
-        unmatchedTransactions: 2,
-        reconciled: false,
+        statement: {
+          date: new Date('2024-01-31'),
+          openingBalance: 10000,
+          closingBalance: 15000,
+        },
+        book: {
+          balance: 14500,
+        },
+        reconciliation: {
+          reconciled: 5,
+          unreconciled: 2,
+          reconciledAmount: 8000,
+          unreconciledAmount: 3000,
+          difference: 500,
+        },
+        unreconciledTransactions: [],
       };
 
       bankReconciliationService.getReconciliationReport.mockResolvedValue(report);

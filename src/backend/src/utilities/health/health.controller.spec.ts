@@ -1,638 +1,335 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { HealthController } from './health.controller';
-import { HealthCheckService, TypeOrmHealthIndicator, MemoryHealthIndicator } from '@nestjs/terminus';
-import { Connection } from 'typeorm';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
+import {
+  HealthCheckService,
+  TypeOrmHealthIndicator,
+  MemoryHealthIndicator,
+  DiskHealthIndicator,
+  HealthCheckResult,
+} from '@nestjs/terminus';
 
 describe('HealthController', () => {
   let controller: HealthController;
-  let healthCheckService: HealthCheckService;
-  let dbHealthIndicator: TypeOrmHealthIndicator;
-  let memoryHealthIndicator: MemoryHealthIndicator;
-  let connection: Connection;
-  let cacheManager: Cache;
+  let healthCheckService: jest.Mocked<HealthCheckService>;
+  let dbHealthIndicator: jest.Mocked<TypeOrmHealthIndicator>;
+  let memoryHealthIndicator: jest.Mocked<MemoryHealthIndicator>;
+  let diskHealthIndicator: jest.Mocked<DiskHealthIndicator>;
 
-  const mockHealthCheckService = {
-    check: jest.fn(),
-  };
-
-  const mockDbHealthIndicator = {
-    pingCheck: jest.fn(),
-  };
-
-  const mockMemoryHealthIndicator = {
-    checkHeap: jest.fn(),
-    checkRSS: jest.fn(),
-  };
-
-  const mockConnection = {
-    isInitialized: true,
-  };
-
-  const mockCacheManager = {
-    set: jest.fn(),
-    get: jest.fn(),
-    del: jest.fn(),
+  const mockHealthCheckResult: HealthCheckResult = {
+    status: 'ok',
+    info: {
+      database: { status: 'up' },
+      memory_heap: { status: 'up' },
+      memory_rss: { status: 'up' },
+      storage: { status: 'up' },
+    },
+    error: {},
+    details: {
+      database: { status: 'up' },
+      memory_heap: { status: 'up' },
+      memory_rss: { status: 'up' },
+      storage: { status: 'up' },
+    },
   };
 
   beforeEach(async () => {
+    // Mock health check service to execute the check functions
+    const mockHealthCheck = jest.fn().mockImplementation(async (checks) => {
+      // Execute all check functions to trigger indicator calls
+      await Promise.all(checks.map((check: () => Promise<any>) => check()));
+      return mockHealthCheckResult;
+    });
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [HealthController],
       providers: [
         {
           provide: HealthCheckService,
-          useValue: mockHealthCheckService,
+          useValue: {
+            check: mockHealthCheck,
+          },
         },
         {
           provide: TypeOrmHealthIndicator,
-          useValue: mockDbHealthIndicator,
+          useValue: {
+            pingCheck: jest.fn().mockResolvedValue({ database: { status: 'up' } }),
+          },
         },
         {
           provide: MemoryHealthIndicator,
-          useValue: mockMemoryHealthIndicator,
+          useValue: {
+            checkHeap: jest.fn().mockResolvedValue({ memory_heap: { status: 'up' } }),
+            checkRSS: jest.fn().mockResolvedValue({ memory_rss: { status: 'up' } }),
+          },
         },
         {
-          provide: Connection,
-          useValue: mockConnection,
-        },
-        {
-          provide: CACHE_MANAGER,
-          useValue: mockCacheManager,
+          provide: DiskHealthIndicator,
+          useValue: {
+            checkStorage: jest.fn().mockResolvedValue({ storage: { status: 'up' } }),
+          },
         },
       ],
     }).compile();
 
     controller = module.get<HealthController>(HealthController);
-    healthCheckService = module.get<HealthCheckService>(HealthCheckService);
-    dbHealthIndicator = module.get<TypeOrmHealthIndicator>(TypeOrmHealthIndicator);
-    memoryHealthIndicator = module.get<MemoryHealthIndicator>(MemoryHealthIndicator);
-    connection = module.get<Connection>(Connection);
-    cacheManager = module.get<Cache>(CACHE_MANAGER);
-
-    jest.clearAllMocks();
+    healthCheckService = module.get(HealthCheckService);
+    dbHealthIndicator = module.get(TypeOrmHealthIndicator);
+    memoryHealthIndicator = module.get(MemoryHealthIndicator);
+    diskHealthIndicator = module.get(DiskHealthIndicator);
   });
 
   afterEach(() => {
     jest.clearAllMocks();
   });
 
-  describe('GET /health', () => {
-    it('should return healthy status when all checks pass', async () => {
-      const expectedResult = {
-        status: 'ok',
-        info: {
-          database: { status: 'up' },
-          redis: { status: 'up' },
-          memory_heap: { status: 'up' },
-          memory_rss: { status: 'up' },
-        },
-        error: {},
-        details: {
-          database: { status: 'up' },
-          redis: { status: 'up' },
-          memory_heap: { status: 'up' },
-          memory_rss: { status: 'up' },
-        },
-      };
+  describe('check', () => {
+    it('should be defined', () => {
+      expect(controller).toBeDefined();
+    });
 
-      mockHealthCheckService.check.mockResolvedValue(expectedResult);
-      mockCacheManager.set.mockResolvedValue(undefined);
-      mockCacheManager.get.mockResolvedValue('ok');
-      mockCacheManager.del.mockResolvedValue(undefined);
-
+    it('should return overall health status', async () => {
       const result = await controller.check();
 
-      expect(result).toEqual(expectedResult);
-      expect(result.status).toBe('ok');
-      expect(mockHealthCheckService.check).toHaveBeenCalledTimes(1);
+      expect(result).toEqual(mockHealthCheckResult);
+      expect(healthCheckService.check).toHaveBeenCalledTimes(1);
+      expect(healthCheckService.check).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.any(Function),
+          expect.any(Function),
+          expect.any(Function),
+          expect.any(Function),
+        ]),
+      );
     });
 
     it('should check database health', async () => {
-      const expectedResult = {
-        status: 'ok',
-        info: { database: { status: 'up' } },
-        error: {},
-        details: { database: { status: 'up' } },
-      };
-
-      mockHealthCheckService.check.mockResolvedValue(expectedResult);
-      mockCacheManager.set.mockResolvedValue(undefined);
-      mockCacheManager.get.mockResolvedValue('ok');
-      mockCacheManager.del.mockResolvedValue(undefined);
-
-      const result = await controller.check();
-
-      expect(result.details.database.status).toBe('up');
-      expect(mockHealthCheckService.check).toHaveBeenCalled();
-    });
-
-    it('should check memory heap health (< 300MB)', async () => {
-      const expectedResult = {
-        status: 'ok',
-        info: { memory_heap: { status: 'up' } },
-        error: {},
-        details: { memory_heap: { status: 'up' } },
-      };
-
-      mockHealthCheckService.check.mockResolvedValue(expectedResult);
-      mockCacheManager.set.mockResolvedValue(undefined);
-      mockCacheManager.get.mockResolvedValue('ok');
-      mockCacheManager.del.mockResolvedValue(undefined);
-
-      const result = await controller.check();
-
-      expect(result.details.memory_heap.status).toBe('up');
-    });
-
-    it('should check memory RSS health (< 500MB)', async () => {
-      const expectedResult = {
-        status: 'ok',
-        info: { memory_rss: { status: 'up' } },
-        error: {},
-        details: { memory_rss: { status: 'up' } },
-      };
-
-      mockHealthCheckService.check.mockResolvedValue(expectedResult);
-      mockCacheManager.set.mockResolvedValue(undefined);
-      mockCacheManager.get.mockResolvedValue('ok');
-      mockCacheManager.del.mockResolvedValue(undefined);
-
-      const result = await controller.check();
-
-      expect(result.details.memory_rss.status).toBe('up');
-    });
-
-    it('should check Redis health successfully', async () => {
-      const expectedResult = {
-        status: 'ok',
-        info: { redis: { status: 'up' } },
-        error: {},
-        details: { redis: { status: 'up' } },
-      };
-
-      mockHealthCheckService.check.mockResolvedValue(expectedResult);
-      mockCacheManager.set.mockResolvedValue(undefined);
-      mockCacheManager.get.mockResolvedValue('ok');
-      mockCacheManager.del.mockResolvedValue(undefined);
-
-      const result = await controller.check();
-
-      expect(result.details.redis.status).toBe('up');
-    });
-
-    it('should return unhealthy status when database is down', async () => {
-      const expectedResult = {
-        status: 'error',
-        info: {},
-        error: {
-          database: { status: 'down', message: 'Connection refused' },
-        },
-        details: {
-          database: { status: 'down', message: 'Connection refused' },
-        },
-      };
-
-      mockHealthCheckService.check.mockResolvedValue(expectedResult);
-      mockCacheManager.set.mockResolvedValue(undefined);
-      mockCacheManager.get.mockResolvedValue('ok');
-      mockCacheManager.del.mockResolvedValue(undefined);
-
-      const result = await controller.check();
-
-      expect(result.status).toBe('error');
-      expect(result.error.database.status).toBe('down');
-    });
-
-    it('should return unhealthy status when Redis is down', async () => {
-      const expectedResult = {
-        status: 'error',
-        info: {},
-        error: {
-          redis: { status: 'down', message: 'Connection timeout' },
-        },
-        details: {
-          redis: { status: 'down', message: 'Connection timeout' },
-        },
-      };
-
-      mockHealthCheckService.check.mockResolvedValue(expectedResult);
-      mockCacheManager.set.mockRejectedValue(new Error('Connection timeout'));
-
-      const result = await controller.check();
-
-      expect(result.status).toBe('error');
-      expect(result.error.redis.status).toBe('down');
-    });
-
-    it('should handle Redis connection errors', async () => {
-      const expectedResult = {
-        status: 'error',
-        info: {},
-        error: {
-          redis: { status: 'down', message: 'Redis unavailable' },
-        },
-        details: {
-          redis: { status: 'down', message: 'Redis unavailable' },
-        },
-      };
-
-      mockHealthCheckService.check.mockResolvedValue(expectedResult);
-      mockCacheManager.set.mockRejectedValue(new Error('Redis unavailable'));
-
-      const result = await controller.check();
-
-      expect(result.error.redis).toBeDefined();
-    });
-
-    it('should handle memory heap exceeding threshold', async () => {
-      const expectedResult = {
-        status: 'error',
-        info: {},
-        error: {
-          memory_heap: { status: 'down', message: 'Heap memory exceeded 300MB' },
-        },
-        details: {
-          memory_heap: { status: 'down', message: 'Heap memory exceeded 300MB' },
-        },
-      };
-
-      mockHealthCheckService.check.mockResolvedValue(expectedResult);
-      mockCacheManager.set.mockResolvedValue(undefined);
-      mockCacheManager.get.mockResolvedValue('ok');
-      mockCacheManager.del.mockResolvedValue(undefined);
-
-      const result = await controller.check();
-
-      expect(result.error.memory_heap).toBeDefined();
-    });
-
-    it('should handle memory RSS exceeding threshold', async () => {
-      const expectedResult = {
-        status: 'error',
-        info: {},
-        error: {
-          memory_rss: { status: 'down', message: 'RSS memory exceeded 500MB' },
-        },
-        details: {
-          memory_rss: { status: 'down', message: 'RSS memory exceeded 500MB' },
-        },
-      };
-
-      mockHealthCheckService.check.mockResolvedValue(expectedResult);
-      mockCacheManager.set.mockResolvedValue(undefined);
-      mockCacheManager.get.mockResolvedValue('ok');
-      mockCacheManager.del.mockResolvedValue(undefined);
-
-      const result = await controller.check();
-
-      expect(result.error.memory_rss).toBeDefined();
-    });
-
-    it('should handle multiple failing health checks', async () => {
-      const expectedResult = {
-        status: 'error',
-        info: {},
-        error: {
-          database: { status: 'down', message: 'Connection refused' },
-          redis: { status: 'down', message: 'Connection timeout' },
-          memory_heap: { status: 'down', message: 'Memory exceeded' },
-        },
-        details: {
-          database: { status: 'down', message: 'Connection refused' },
-          redis: { status: 'down', message: 'Connection timeout' },
-          memory_heap: { status: 'down', message: 'Memory exceeded' },
-        },
-      };
-
-      mockHealthCheckService.check.mockResolvedValue(expectedResult);
-      mockCacheManager.set.mockRejectedValue(new Error('Connection timeout'));
-
-      const result = await controller.check();
-
-      expect(result.status).toBe('error');
-      expect(Object.keys(result.error).length).toBeGreaterThan(1);
-    });
-
-    it('should handle health check service errors', async () => {
-      const error = new Error('Health check failed');
-      mockHealthCheckService.check.mockRejectedValue(error);
-
-      await expect(controller.check()).rejects.toThrow(error);
-    });
-
-    it('should verify Redis set/get/del operations', async () => {
-      const expectedResult = {
-        status: 'ok',
-        info: { redis: { status: 'up' } },
-        error: {},
-        details: { redis: { status: 'up' } },
-      };
-
-      mockHealthCheckService.check.mockResolvedValue(expectedResult);
-      mockCacheManager.set.mockResolvedValue(undefined);
-      mockCacheManager.get.mockResolvedValue('ok');
-      mockCacheManager.del.mockResolvedValue(undefined);
-
       await controller.check();
 
-      // Verify Redis operations are called in health check
-      expect(mockHealthCheckService.check).toHaveBeenCalled();
+      expect(dbHealthIndicator.pingCheck).toHaveBeenCalledWith('database');
+    });
+
+    it('should check memory heap health', async () => {
+      await controller.check();
+
+      expect(memoryHealthIndicator.checkHeap).toHaveBeenCalledWith(
+        'memory_heap',
+        150 * 1024 * 1024,
+      );
+    });
+
+    it('should check memory RSS health', async () => {
+      await controller.check();
+
+      expect(memoryHealthIndicator.checkRSS).toHaveBeenCalledWith(
+        'memory_rss',
+        300 * 1024 * 1024,
+      );
+    });
+
+    it('should check disk storage health', async () => {
+      await controller.check();
+
+      expect(diskHealthIndicator.checkStorage).toHaveBeenCalledWith('storage', {
+        path: '/',
+        thresholdPercent: 0.5,
+      });
     });
   });
 
-  describe('GET /health/ready', () => {
-    it('should return ready status when database is initialized', async () => {
-      mockConnection.isInitialized = true;
+  describe('checkDatabase', () => {
+    it('should return database health status', async () => {
+      const result = await controller.checkDatabase();
 
-      const result = await controller.ready();
-
-      expect(result.status).toBe('ready');
-      expect(result.timestamp).toBeDefined();
-      expect(typeof result.timestamp).toBe('string');
+      expect(result).toEqual(mockHealthCheckResult);
+      expect(healthCheckService.check).toHaveBeenCalledTimes(1);
+      expect(dbHealthIndicator.pingCheck).toHaveBeenCalledWith('database');
     });
 
-    it('should return not ready when database is not initialized', async () => {
-      mockConnection.isInitialized = false;
+    it('should only check database', async () => {
+      await controller.checkDatabase();
 
-      const result = await controller.ready();
-
-      expect(result.status).toBe('not ready');
-      expect(result.reason).toBe('Database not initialized');
-    });
-
-    it('should include timestamp in ready response', async () => {
-      mockConnection.isInitialized = true;
-
-      const result = await controller.ready();
-
-      expect(result.timestamp).toBeDefined();
-      const timestamp = new Date(result.timestamp);
-      expect(timestamp).toBeInstanceOf(Date);
-      expect(timestamp.getTime()).not.toBeNaN();
-    });
-
-    it('should handle database connection check', async () => {
-      mockConnection.isInitialized = true;
-
-      const result = await controller.ready();
-
-      expect(result.status).toBe('ready');
-    });
-
-    it('should return consistent response format', async () => {
-      mockConnection.isInitialized = true;
-
-      const result = await controller.ready();
-
-      expect(result).toHaveProperty('status');
-      expect(result).toHaveProperty('timestamp');
+      expect(dbHealthIndicator.pingCheck).toHaveBeenCalledTimes(1);
+      expect(memoryHealthIndicator.checkHeap).not.toHaveBeenCalled();
+      expect(memoryHealthIndicator.checkRSS).not.toHaveBeenCalled();
+      expect(diskHealthIndicator.checkStorage).not.toHaveBeenCalled();
     });
   });
 
-  describe('GET /health/live', () => {
-    it('should return alive status with service info', async () => {
-      const result = await controller.live();
+  describe('checkMemory', () => {
+    it('should return memory health status', async () => {
+      const result = await controller.checkMemory();
 
-      expect(result.status).toBe('alive');
-      expect(result.timestamp).toBeDefined();
-      expect(result.service).toBe('smarterp-monolith');
-      expect(result.version).toBe('1.0.0');
-      expect(result.uptime).toBeDefined();
-      expect(result.memory).toBeDefined();
+      expect(result).toEqual(mockHealthCheckResult);
+      expect(healthCheckService.check).toHaveBeenCalledTimes(1);
     });
 
-    it('should include memory usage information', async () => {
-      const result = await controller.live();
+    it('should check both heap and RSS memory', async () => {
+      await controller.checkMemory();
 
-      expect(result.memory).toHaveProperty('heapUsed');
-      expect(result.memory).toHaveProperty('heapTotal');
-      expect(result.memory).toHaveProperty('rss');
-      expect(result.memory).toHaveProperty('external');
-      expect(typeof result.memory.heapUsed).toBe('number');
-      expect(typeof result.memory.heapTotal).toBe('number');
-      expect(typeof result.memory.rss).toBe('number');
-      expect(typeof result.memory.external).toBe('number');
+      expect(memoryHealthIndicator.checkHeap).toHaveBeenCalledWith(
+        'memory_heap',
+        150 * 1024 * 1024,
+      );
+      expect(memoryHealthIndicator.checkRSS).toHaveBeenCalledWith(
+        'memory_rss',
+        300 * 1024 * 1024,
+      );
     });
 
-    it('should include process uptime', async () => {
-      const result = await controller.live();
+    it('should not check database or disk', async () => {
+      await controller.checkMemory();
 
-      expect(result.uptime).toBeDefined();
-      expect(typeof result.uptime).toBe('number');
-      expect(result.uptime).toBeGreaterThanOrEqual(0);
-    });
-
-    it('should include timestamp', async () => {
-      const result = await controller.live();
-
-      expect(result.timestamp).toBeDefined();
-      const timestamp = new Date(result.timestamp);
-      expect(timestamp).toBeInstanceOf(Date);
-      expect(timestamp.getTime()).not.toBeNaN();
-    });
-
-    it('should return service name and version', async () => {
-      const result = await controller.live();
-
-      expect(result.service).toBe('smarterp-monolith');
-      expect(result.version).toBe('1.0.0');
-    });
-
-    it('should return memory values in MB', async () => {
-      const result = await controller.live();
-
-      // Memory values should be reasonable (not in bytes)
-      expect(result.memory.heapUsed).toBeLessThan(10000); // Less than 10GB in MB
-      expect(result.memory.heapTotal).toBeLessThan(10000);
-      expect(result.memory.rss).toBeLessThan(10000);
-      expect(result.memory.external).toBeLessThan(10000);
-    });
-
-    it('should always return alive status', async () => {
-      // Call multiple times
-      const result1 = await controller.live();
-      const result2 = await controller.live();
-      const result3 = await controller.live();
-
-      expect(result1.status).toBe('alive');
-      expect(result2.status).toBe('alive');
-      expect(result3.status).toBe('alive');
-    });
-
-    it('should return increasing uptime on subsequent calls', async () => {
-      const result1 = await controller.live();
-      
-      // Wait a bit
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      const result2 = await controller.live();
-
-      expect(result2.uptime).toBeGreaterThanOrEqual(result1.uptime);
+      expect(dbHealthIndicator.pingCheck).not.toHaveBeenCalled();
+      expect(diskHealthIndicator.checkStorage).not.toHaveBeenCalled();
     });
   });
 
-  describe('Edge Cases and Error Scenarios', () => {
-    it('should handle null cache manager', async () => {
-      const expectedResult = {
-        status: 'error',
-        info: {},
-        error: { redis: { status: 'down' } },
-        details: { redis: { status: 'down' } },
-      };
+  describe('checkDisk', () => {
+    it('should return disk health status', async () => {
+      const result = await controller.checkDisk();
 
-      mockHealthCheckService.check.mockResolvedValue(expectedResult);
-      mockCacheManager.set.mockRejectedValue(new Error('Cache manager not available'));
-
-      const result = await controller.check();
-
-      expect(result.status).toBe('error');
+      expect(result).toEqual(mockHealthCheckResult);
+      expect(healthCheckService.check).toHaveBeenCalledTimes(1);
     });
 
-    it('should handle Redis get returning null', async () => {
-      const expectedResult = {
-        status: 'error',
-        info: {},
-        error: { redis: { status: 'down' } },
-        details: { redis: { status: 'down' } },
-      };
+    it('should check disk storage with correct threshold', async () => {
+      await controller.checkDisk();
 
-      mockHealthCheckService.check.mockResolvedValue(expectedResult);
-      mockCacheManager.set.mockResolvedValue(undefined);
-      mockCacheManager.get.mockResolvedValue(null);
-
-      const result = await controller.check();
-
-      expect(result.status).toBe('error');
-    });
-
-    it('should handle Redis get returning wrong value', async () => {
-      const expectedResult = {
-        status: 'error',
-        info: {},
-        error: { redis: { status: 'down' } },
-        details: { redis: { status: 'down' } },
-      };
-
-      mockHealthCheckService.check.mockResolvedValue(expectedResult);
-      mockCacheManager.set.mockResolvedValue(undefined);
-      mockCacheManager.get.mockResolvedValue('wrong-value');
-
-      const result = await controller.check();
-
-      expect(result.status).toBe('error');
-    });
-
-    it('should handle Redis del errors gracefully', async () => {
-      const expectedResult = {
-        status: 'ok',
-        info: { redis: { status: 'up' } },
-        error: {},
-        details: { redis: { status: 'up' } },
-      };
-
-      mockHealthCheckService.check.mockResolvedValue(expectedResult);
-      mockCacheManager.set.mockResolvedValue(undefined);
-      mockCacheManager.get.mockResolvedValue('ok');
-      mockCacheManager.del.mockRejectedValue(new Error('Delete failed'));
-
-      // Should still complete health check
-      const result = await controller.check();
-
-      expect(result).toBeDefined();
-    });
-
-    it('should handle concurrent health check requests', async () => {
-      const expectedResult = {
-        status: 'ok',
-        info: { database: { status: 'up' } },
-        error: {},
-        details: { database: { status: 'up' } },
-      };
-
-      mockHealthCheckService.check.mockResolvedValue(expectedResult);
-      mockCacheManager.set.mockResolvedValue(undefined);
-      mockCacheManager.get.mockResolvedValue('ok');
-      mockCacheManager.del.mockResolvedValue(undefined);
-
-      const promises = Array(10)
-        .fill(null)
-        .map(() => controller.check());
-
-      const results = await Promise.all(promises);
-
-      expect(results).toHaveLength(10);
-      results.forEach(result => {
-        expect(result.status).toBe('ok');
+      expect(diskHealthIndicator.checkStorage).toHaveBeenCalledWith('storage', {
+        path: '/',
+        thresholdPercent: 0.5,
       });
     });
 
-    it('should handle database connection flapping', async () => {
-      mockConnection.isInitialized = true;
-      const result1 = await controller.ready();
-      expect(result1.status).toBe('ready');
+    it('should not check database or memory', async () => {
+      await controller.checkDisk();
 
-      mockConnection.isInitialized = false;
-      const result2 = await controller.ready();
-      expect(result2.status).toBe('not ready');
+      expect(dbHealthIndicator.pingCheck).not.toHaveBeenCalled();
+      expect(memoryHealthIndicator.checkHeap).not.toHaveBeenCalled();
+      expect(memoryHealthIndicator.checkRSS).not.toHaveBeenCalled();
+    });
+  });
 
-      mockConnection.isInitialized = true;
-      const result3 = await controller.ready();
-      expect(result3.status).toBe('ready');
+  describe('live', () => {
+    it('should return liveness status', () => {
+      const result = controller.live();
+
+      expect(result).toHaveProperty('status', 'ok');
+      expect(result).toHaveProperty('timestamp');
+      expect(typeof result.timestamp).toBe('string');
     });
 
-    it('should handle very high memory usage', async () => {
-      const expectedResult = {
+    it('should return ISO timestamp', () => {
+      const result = controller.live();
+      const timestamp = new Date(result.timestamp);
+
+      expect(timestamp).toBeInstanceOf(Date);
+      expect(timestamp.toISOString()).toBe(result.timestamp);
+    });
+
+    it('should not call health check service', () => {
+      controller.live();
+
+      expect(healthCheckService.check).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('ready', () => {
+    it('should return readiness status', async () => {
+      const result = await controller.ready();
+
+      expect(result).toEqual(mockHealthCheckResult);
+      expect(healthCheckService.check).toHaveBeenCalledTimes(1);
+    });
+
+    it('should only check database for readiness', async () => {
+      await controller.ready();
+
+      expect(dbHealthIndicator.pingCheck).toHaveBeenCalledWith('database');
+      expect(memoryHealthIndicator.checkHeap).not.toHaveBeenCalled();
+      expect(memoryHealthIndicator.checkRSS).not.toHaveBeenCalled();
+      expect(diskHealthIndicator.checkStorage).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('error handling', () => {
+    it('should handle database connection failure', async () => {
+      const errorResult: HealthCheckResult = {
         status: 'error',
         info: {},
         error: {
-          memory_heap: { status: 'down', message: 'Heap: 500MB' },
-          memory_rss: { status: 'down', message: 'RSS: 800MB' },
+          database: {
+            status: 'down',
+            message: 'Connection failed',
+          },
         },
         details: {
-          memory_heap: { status: 'down', message: 'Heap: 500MB' },
-          memory_rss: { status: 'down', message: 'RSS: 800MB' },
+          database: {
+            status: 'down',
+            message: 'Connection failed',
+          },
         },
       };
 
-      mockHealthCheckService.check.mockResolvedValue(expectedResult);
-      mockCacheManager.set.mockResolvedValue(undefined);
-      mockCacheManager.get.mockResolvedValue('ok');
-      mockCacheManager.del.mockResolvedValue(undefined);
+      healthCheckService.check.mockResolvedValueOnce(errorResult);
 
-      const result = await controller.check();
+      const result = await controller.checkDatabase();
 
       expect(result.status).toBe('error');
-      expect(result.error.memory_heap).toBeDefined();
-      expect(result.error.memory_rss).toBeDefined();
+      expect(result.error).toHaveProperty('database');
     });
 
-    it('should handle health check timeout', async () => {
-      const error = new Error('Health check timeout');
-      mockHealthCheckService.check.mockRejectedValue(error);
+    it('should handle memory threshold exceeded', async () => {
+      const errorResult: HealthCheckResult = {
+        status: 'error',
+        info: {},
+        error: {
+          memory_heap: {
+            status: 'down',
+            message: 'Heap memory exceeded threshold',
+          },
+        },
+        details: {
+          memory_heap: {
+            status: 'down',
+            message: 'Heap memory exceeded threshold',
+          },
+        },
+      };
 
-      await expect(controller.check()).rejects.toThrow('Health check timeout');
+      healthCheckService.check.mockResolvedValueOnce(errorResult);
+
+      const result = await controller.checkMemory();
+
+      expect(result.status).toBe('error');
+      expect(result.error).toHaveProperty('memory_heap');
     });
 
-    it('should handle undefined connection', async () => {
-      const moduleWithoutConnection = await Test.createTestingModule({
-        controllers: [HealthController],
-        providers: [
-          { provide: HealthCheckService, useValue: mockHealthCheckService },
-          { provide: TypeOrmHealthIndicator, useValue: mockDbHealthIndicator },
-          { provide: MemoryHealthIndicator, useValue: mockMemoryHealthIndicator },
-          { provide: Connection, useValue: { isInitialized: undefined } },
-          { provide: CACHE_MANAGER, useValue: mockCacheManager },
-        ],
-      }).compile();
+    it('should handle disk space low', async () => {
+      const errorResult: HealthCheckResult = {
+        status: 'error',
+        info: {},
+        error: {
+          storage: {
+            status: 'down',
+            message: 'Disk space below threshold',
+          },
+        },
+        details: {
+          storage: {
+            status: 'down',
+            message: 'Disk space below threshold',
+          },
+        },
+      };
 
-      const controllerWithoutConnection = moduleWithoutConnection.get<HealthController>(
-        HealthController,
-      );
+      healthCheckService.check.mockResolvedValueOnce(errorResult);
 
-      const result = await controllerWithoutConnection.ready();
+      const result = await controller.checkDisk();
 
-      expect(result.status).toBe('not ready');
+      expect(result.status).toBe('error');
+      expect(result.error).toHaveProperty('storage');
     });
   });
 });
+

@@ -12,6 +12,7 @@ import { ShippingStatus } from './enums/shipping-status.enum';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { CancelOrderDto } from './dto/cancel-order.dto';
+import { SyncStatus } from '../../../common/enums/sync-status.enum';
 
 describe('OrderService', () => {
   let service: OrderService;
@@ -62,6 +63,8 @@ describe('OrderService', () => {
       tenantId: 'tenant-1',
       createdAt: new Date('2024-01-01'),
       updatedAt: new Date('2024-01-01'),
+      version: 1,
+      syncStatus: SyncStatus.SYNCED,
       generateOrderNumber: jest.fn(),
       calculateTotals: jest.fn(),
       validate: jest.fn(),
