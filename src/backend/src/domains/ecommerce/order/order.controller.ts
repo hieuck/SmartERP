@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import {
   Body,

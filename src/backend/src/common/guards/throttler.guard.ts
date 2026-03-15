@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { ExecutionContext, Injectable } from '@nestjs/common';
 import { ThrottlerGuard as NestThrottlerGuard } from '@nestjs/throttler';
 

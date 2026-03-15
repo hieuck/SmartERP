@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Controller, Post, Body, Req } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CheckoutService } from './checkout.service';

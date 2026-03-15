@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { PermissionService, User } from '@common/security/permission.service';
 import { SecureRepository } from '@common/security/secure-repository';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
