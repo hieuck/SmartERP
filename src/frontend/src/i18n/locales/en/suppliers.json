@@ -14,7 +14,12 @@
   "messages": {
     "deleteSuccess": "Supplier deleted successfully",
     "deleteError": "Cannot delete supplier",
-    "total": "Total {{total}} suppliers"
+    "total": "Total {{total}} suppliers",
+    "loadError": "Cannot load supplier",
+    "updateSuccess": "Supplier updated successfully",
+    "createSuccess": "Supplier created successfully",
+    "saveError": "An error occurred",
+    "syncError": "Sync failed"
   },
   "list": {
     "title": "Supplier List",
@@ -24,6 +29,7 @@
   "form": {
     "create": "Add Supplier",
     "edit": "Edit Supplier",
+    "title": "Supplier",
     "name": "Supplier Name",
     "code": "Supplier Code",
     "contact": "Contact Person",
@@ -32,7 +38,34 @@
     "address": "Address",
     "taxCode": "Tax Code",
     "bankAccount": "Bank Account",
-    "notes": "Notes"
+    "notes": "Notes",
+    "paymentTerms": "Payment Terms",
+    "paymentTermsDays": "days",
+    "paymentTermsPlaceholder": "Number of payment days"
+  },
+  "buttons": {
+    "back": "Back",
+    "sync": "Sync",
+    "syncing": "Syncing...",
+    "update": "Update",
+    "create": "Create",
+    "cancel": "Cancel"
+  },
+  "labels": {
+    "online": "Online",
+    "offline": "Offline"
+  },
+  "validation": {
+    "nameRequired": "Please enter supplier name",
+    "emailRequired": "Please enter email",
+    "emailInvalid": "Invalid email",
+    "phoneRequired": "Please enter phone number",
+    "phoneInvalid": "Invalid phone number",
+    "addressRequired": "Please enter address",
+    "namePlaceholder": "Enter supplier name",
+    "emailPlaceholder": "Enter email",
+    "phonePlaceholder": "Enter phone number",
+    "addressPlaceholder": "Enter address"
   },
   "status": {
     "active": "Active",

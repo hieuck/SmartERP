@@ -1,4 +1,7 @@
-// Status-related enums
+/**
+ * Status-related enums
+ * Centralized status definitions for all platforms
+ */
 
 export enum ApprovalStatus {
   PENDING = 'pending',
@@ -12,4 +15,16 @@ export enum ExecutionStatus {
   RUNNING = 'running',
   COMPLETED = 'completed',
   FAILED = 'failed',
+}
+
+export enum EntityStatus {
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+  BLOCKED = 'blocked',
+}
+
+export enum SyncStatus {
+  SYNCED = 'synced',
+  PENDING = 'pending',
+  CONFLICT = 'conflict',
 }

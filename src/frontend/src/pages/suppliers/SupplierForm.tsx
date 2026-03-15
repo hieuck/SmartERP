@@ -11,10 +11,10 @@ import {
   Typography,
   Row,
   Col,
-  Rate,
   Badge,
 } from 'antd';
 import { SaveOutlined, ArrowLeftOutlined, ShopOutlined, SyncOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import { offlineServices } from '@/services/offline-services';
 import { syncManager } from '@/lib/offline/sync-manager';
 import { logger } from '@/lib/logger/logger.service';
@@ -25,6 +25,7 @@ const { TextArea } = Input;
 export default function SupplierForm() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { t } = useTranslation(['suppliers', 'common']);
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
@@ -64,7 +65,7 @@ export default function SupplierForm() {
       }
     } catch (error) {
       logger.error('SupplierForm', 'Failed to load supplier', error as Error);
-      message.error('Không thể tải nhà cung cấp');
+      message.error(t('suppliers:messages.loadError'));
     }
   };
 
@@ -107,17 +108,29 @@ export default function SupplierForm() {
     }
   };
 
-  const onFinish = async (values: any) => {
+  const onFinish = async (values: {
+    name: string;
+    email: string;
+    phone: string;
+    address: string;
+    paymentTerms?: number;
+  }) => {
     try {
       setLoading(true);
 
       if (isEdit && id) {
-        await offlineServices.suppliers.update(id, values);
-        message.success('Cập nhật nhà cung cấp thành công');
+        await offlineServices.suppliers.update(id, {
+          ...values,
+          status: 'active',
+        });
+        message.success(t('suppliers:messages.updateSuccess'));
         logger.info('SupplierForm', 'Supplier updated', { id });
       } else {
-        await offlineServices.suppliers.create(values);
-        message.success('Tạo nhà cung cấp thành công');
+        await offlineServices.suppliers.create({
+          ...values,
+          status: 'active',
+        });
+        message.success(t('suppliers:messages.createSuccess'));
         logger.info('SupplierForm', 'Supplier created');
       }
 
@@ -125,7 +138,7 @@ export default function SupplierForm() {
       navigate('/dashboard/suppliers');
     } catch (error) {
       logger.error('SupplierForm', 'Failed to save supplier', error as Error);
-      message.error('Có lỗi xảy ra');
+      message.error(t('suppliers:messages.saveError'));
     } finally {
       setLoading(false);
     }
@@ -136,7 +149,7 @@ export default function SupplierForm() {
       <Card>
         <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
           <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/dashboard/suppliers')}>
-            Quay lại
+            {t('suppliers:buttons.back')}
           </Button>
           <Space>
             <Badge count={queueSize} offset={[-5, 5]}>
@@ -146,15 +159,18 @@ export default function SupplierForm() {
                 loading={syncing}
                 disabled={!isOnline}
               >
-                Đồng bộ
+                {syncing ? t('suppliers:buttons.syncing') : t('suppliers:buttons.sync')}
               </Button>
             </Badge>
-            <Badge status={isOnline ? 'success' : 'error'} text={isOnline ? 'Online' : 'Offline'} />
+            <Badge 
+              status={isOnline ? 'success' : 'error'} 
+              text={isOnline ? t('suppliers:labels.online') : t('suppliers:labels.offline')} 
+            />
           </Space>
         </Space>
 
         <Title level={3}>
-          <ShopOutlined /> {isEdit ? 'Chỉnh sửa nhà cung cấp' : 'Thêm nhà cung cấp mới'}
+          <ShopOutlined /> {isEdit ? t('suppliers:form.edit') : t('suppliers:form.create')}
         </Title>
 
         <Form
@@ -166,23 +182,23 @@ export default function SupplierForm() {
             <Col xs={24} md={12}>
               <Form.Item
                 name="name"
-                label="Tên nhà cung cấp"
-                rules={[{ required: true, message: 'Vui lòng nhập tên nhà cung cấp' }]}
+                label={t('suppliers:form.name')}
+                rules={[{ required: true, message: t('suppliers:validation.nameRequired') }]}
               >
-                <Input placeholder="Nhập tên nhà cung cấp" />
+                <Input placeholder={t('suppliers:validation.namePlaceholder')} />
               </Form.Item>
             </Col>
 
             <Col xs={24} md={12}>
               <Form.Item
                 name="email"
-                label="Email"
+                label={t('suppliers:form.email')}
                 rules={[
-                  { required: true, message: 'Vui lòng nhập email' },
-                  { type: 'email', message: 'Email không hợp lệ' },
+                  { required: true, message: t('suppliers:validation.emailRequired') },
+                  { type: 'email', message: t('suppliers:validation.emailInvalid') },
                 ]}
               >
-                <Input placeholder="Nhập email" />
+                <Input placeholder={t('suppliers:validation.emailPlaceholder')} />
               </Form.Item>
             </Col>
           </Row>
@@ -191,40 +207,47 @@ export default function SupplierForm() {
             <Col xs={24} md={12}>
               <Form.Item
                 name="phone"
-                label="Số điện thoại"
+                label={t('suppliers:form.phone')}
                 rules={[
-                  { required: true, message: 'Vui lòng nhập số điện thoại' },
-                  { pattern: /^[0-9]{10,11}$/, message: 'Số điện thoại không hợp lệ' },
+                  { required: true, message: t('suppliers:validation.phoneRequired') },
+                  { pattern: /^[0-9]{10,11}$/, message: t('suppliers:validation.phoneInvalid') },
                 ]}
               >
-                <Input placeholder="Nhập số điện thoại" />
+                <Input placeholder={t('suppliers:validation.phonePlaceholder')} />
               </Form.Item>
             </Col>
 
             <Col xs={24} md={12}>
               <Form.Item
                 name="paymentTerms"
-                label="Điều khoản thanh toán"
+                label={t('suppliers:form.paymentTerms')}
               >
-                <InputNumber min={0} style={{ width: '100%' }} placeholder="Số ngày thanh toán" addonAfter="ngày" />
+                <InputNumber 
+                  min={0} 
+                  style={{ width: '100%' }} 
+                  placeholder={t('suppliers:form.paymentTermsPlaceholder')}
+                  suffix={t('suppliers:form.paymentTermsDays')}
+                />
               </Form.Item>
             </Col>
           </Row>
 
           <Form.Item
             name="address"
-            label="Địa chỉ"
-            rules={[{ required: true, message: 'Vui lòng nhập địa chỉ' }]}
+            label={t('suppliers:form.address')}
+            rules={[{ required: true, message: t('suppliers:validation.addressRequired') }]}
           >
-            <TextArea rows={3} placeholder="Nhập địa chỉ" />
+            <TextArea rows={3} placeholder={t('suppliers:validation.addressPlaceholder')} />
           </Form.Item>
 
           <Form.Item>
             <Space>
               <Button type="primary" htmlType="submit" icon={<SaveOutlined />} loading={loading}>
-                {isEdit ? 'Cập nhật' : 'Tạo mới'}
+                {isEdit ? t('suppliers:buttons.update') : t('suppliers:buttons.create')}
               </Button>
-              <Button onClick={() => navigate('/dashboard/suppliers')}>Hủy</Button>
+              <Button onClick={() => navigate('/dashboard/suppliers')}>
+                {t('suppliers:buttons.cancel')}
+              </Button>
             </Space>
           </Form.Item>
         </Form>

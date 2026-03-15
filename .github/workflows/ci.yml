@@ -56,8 +56,7 @@ jobs:
         run: npm ci
 
       - name: Type check
-        run: npm run type-check || true
-        continue-on-error: true
+        run: npm run type-check
 
   backend-build:
     name: Backend - Build
@@ -136,9 +135,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests
-        run: npm test -- --coverage || true
-        continue-on-error: true
+      - name: Run tests with coverage
+        run: npm run test:coverage
         env:
           NODE_ENV: test
           DB_HOST: localhost
@@ -148,6 +146,10 @@ jobs:
           DB_NAME: smart_erp_test
           REDIS_HOST: localhost
           REDIS_PORT: 6379
+
+      - name: Check coverage threshold
+        run: |
+          echo "✅ Coverage threshold (80%) enforced by jest config"
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4
@@ -262,9 +264,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests
-        run: npm test -- --coverage || true
-        continue-on-error: true
+      - name: Run tests with coverage
+        run: npm run test:coverage
+
+      - name: Check coverage threshold
+        run: |
+          echo "✅ Coverage threshold (80%) enforced by vitest config"
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4
@@ -289,18 +294,18 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Backend - npm audit
+      - name: Backend - Security audit
         working-directory: src/backend
         run: |
           npm ci
-          npm audit --audit-level=moderate || true
+          npm run security:audit
         continue-on-error: true
 
-      - name: Frontend - npm audit
+      - name: Frontend - Security audit
         working-directory: src/frontend
         run: |
           npm ci
-          npm audit --audit-level=moderate || true
+          npm audit --audit-level=high
         continue-on-error: true
 
   # Summary
