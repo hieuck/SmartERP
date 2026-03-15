@@ -32,6 +32,7 @@ import configService, {
   BackupConfig,
 } from '@/services/utils/configService';
 import dayjs from 'dayjs';
+import { logger } from '@/lib/logger/logger.service';
 
 const { Title, Paragraph } = Typography;
 const { TabPane } = Tabs;
@@ -74,7 +75,7 @@ const SystemSettingsPage: React.FC = () => {
         time: backup.time ? dayjs(backup.time, 'HH:mm') : null,
       });
     } catch (error) {
-      console.error('Failed to load configurations:', error);
+      logger.error('SystemSettingsPage', 'Failed to load configurations', error as Error);
       message.error('Failed to load system settings');
     } finally {
       setLoading(false);

@@ -17,6 +17,7 @@ import notificationService, {
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/vi';
+import { logger } from '@/lib/logger/logger.service';
 
 dayjs.extend(relativeTime);
 dayjs.locale('vi');
@@ -81,7 +82,7 @@ export default function NotificationCenter() {
       const count = await notificationService.getUnreadCount();
       setUnreadCount(count);
     } catch (error: any) {
-      console.error('Error fetching unread count:', error);
+      logger.error('NotificationCenter', 'Error fetching unread count', error as Error);
     }
   };
 

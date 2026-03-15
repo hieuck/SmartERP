@@ -16,6 +16,7 @@ import {
   TESTIMONIALS,
   TYPOGRAPHY,
 } from '@/constants/landing-page';
+import { logger } from '@/lib/logger/logger.service';
 
 const { Header, Content, Footer } = Layout;
 const { Title, Paragraph, Text } = Typography;
@@ -29,7 +30,7 @@ const initializeAnalytics = (): void => {
       ReactGA.initialize(GA_CONFIG.MEASUREMENT_ID);
     }
   } catch (error) {
-    console.warn('Failed to initialize Google Analytics:', error);
+    logger.warn('LandingPage', 'Failed to initialize Google Analytics', error as Error);
   }
 };
 
@@ -49,7 +50,7 @@ export default function LandingPage(): React.ReactElement {
         ReactGA.send({ hitType: 'pageview', page: '/', title: 'Landing Page' });
       }
     } catch (error) {
-      console.warn('Failed to track page view:', error);
+      logger.warn('LandingPage', 'Failed to track page view', error as Error);
     }
   }, []);
 

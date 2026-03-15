@@ -24,6 +24,7 @@ import {
 } from '@ant-design/icons';
 import searchService, { SearchResult } from '@/services/utils/searchService';
 import AdvancedFilterPanel from '@/components/search/AdvancedFilterPanel';
+import { logger } from '@/lib/logger/logger.service';
 
 const { Search } = Input;
 const { Title, Text } = Typography;
@@ -73,7 +74,7 @@ const SearchResultsPage: React.FC = () => {
 
       setResults(result);
     } catch (error) {
-      console.error('Search error:', error);
+      logger.error('SearchResultsPage', 'Search error', error as Error);
     } finally {
       setLoading(false);
     }

@@ -4,6 +4,7 @@ import { SearchOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import searchService, { SearchResult } from '@/services/utils/searchService';
 import { debounce } from 'lodash';
+import { logger } from '@/lib/logger/logger.service';
 
 const { Search } = Input;
 
@@ -103,7 +104,7 @@ const GlobalSearchBar: React.FC = () => {
 
       setOptions(searchOptions);
     } catch (error) {
-      console.error('Search error:', error);
+      logger.error('GlobalSearchBar', 'Search error', error as Error);
       setOptions([]);
     } finally {
       setLoading(false);

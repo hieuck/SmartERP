@@ -4,6 +4,7 @@ import { SaveOutlined, BellOutlined, MailOutlined } from '@ant-design/icons';
 import notificationService, {
   NotificationPreferences,
 } from '@/services/notification/notificationService';
+import { logger } from '@/lib/logger/logger.service';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -25,7 +26,7 @@ const NotificationPreferencesPage: React.FC = () => {
       const preferences = await notificationService.getPreferences();
       form.setFieldsValue(preferences);
     } catch (error) {
-      console.error('Failed to load preferences:', error);
+      logger.error('NotificationPreferencesPage', 'Failed to load preferences', error as Error);
       message.error('Failed to load notification preferences');
     } finally {
       setLoading(false);
@@ -51,7 +52,7 @@ const NotificationPreferencesPage: React.FC = () => {
       await notificationService.updatePreferences(values);
       message.success('Notification preferences saved successfully');
     } catch (error) {
-      console.error('Failed to save preferences:', error);
+      logger.error('NotificationPreferencesPage', 'Failed to save preferences', error as Error);
       message.error('Failed to save notification preferences');
     } finally {
       setSaving(false);

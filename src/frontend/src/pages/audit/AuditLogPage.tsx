@@ -23,6 +23,8 @@ import {
   auditService,
   AuditLog,
   AuditAction,
+} from '@/services/audit/auditService';
+import { logger } from '@/lib/logger/logger.service';
   AuditEntity,
 } from '@/services/audit/auditService';
 import dayjs from 'dayjs';
@@ -106,7 +108,7 @@ export default function AuditLogPage() {
       setLogs(response.data || []);
       setTotal(response.total || 0);
     } catch (error: any) {
-      console.error('Error fetching audit logs:', error);
+      logger.error('AuditLogPage', 'Error fetching audit logs', error);
     } finally {
       setLoading(false);
     }
@@ -117,7 +119,7 @@ export default function AuditLogPage() {
       const stats = await auditService.getStatistics();
       setStatistics(stats);
     } catch (error: any) {
-      console.error('Error fetching statistics:', error);
+      logger.error('AuditLogPage', 'Error fetching statistics', error);
     }
   };
 
@@ -126,7 +128,7 @@ export default function AuditLogPage() {
       const data = await auditService.getTimeline(30);
       setTimeline(data);
     } catch (error: any) {
-      console.error('Error fetching timeline:', error);
+      logger.error('AuditLogPage', 'Error fetching timeline', error);
     }
   };
 

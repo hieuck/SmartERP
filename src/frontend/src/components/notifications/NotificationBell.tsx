@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import notificationService, { Notification } from '@/services/notification/notificationService';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
+import { logger } from '@/lib/logger/logger.service';
 
 dayjs.extend(relativeTime);
 
@@ -37,7 +38,7 @@ const NotificationBell: React.FC = () => {
       const count = await notificationService.getUnreadCount();
       setUnreadCount(count);
     } catch (error) {
-      console.error('Failed to load unread count:', error);
+      logger.error('NotificationBell', 'Failed to load unread count', error as Error);
     }
   };
 
@@ -50,7 +51,7 @@ const NotificationBell: React.FC = () => {
       });
       setNotifications(result.data);
     } catch (error) {
-      console.error('Failed to load notifications:', error);
+      logger.error('NotificationBell', 'Failed to load notifications', error as Error);
     } finally {
       setLoading(false);
     }
@@ -63,7 +64,7 @@ const NotificationBell: React.FC = () => {
       setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
       setUnreadCount((prev) => Math.max(0, prev - 1));
     } catch (error) {
-      console.error('Failed to mark as read:', error);
+      logger.error('NotificationBell', 'Failed to mark as read', error as Error);
     }
   };
 
@@ -73,7 +74,7 @@ const NotificationBell: React.FC = () => {
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
       setUnreadCount(0);
     } catch (error) {
-      console.error('Failed to mark all as read:', error);
+      logger.error('NotificationBell', 'Failed to mark all as read', error as Error);
     }
   };
 
@@ -84,7 +85,7 @@ const NotificationBell: React.FC = () => {
       setNotifications((prev) => prev.filter((n) => n.id !== id));
       loadUnreadCount();
     } catch (error) {
-      console.error('Failed to delete notification:', error);
+      logger.error('NotificationBell', 'Failed to delete notification', error as Error);
     }
   };
 

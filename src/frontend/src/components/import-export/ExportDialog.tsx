@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Modal, Radio, Button, Space, message, Typography } from 'antd';
 import { DownloadOutlined, FileExcelOutlined, FileTextOutlined } from '@ant-design/icons';
 import importExportService from '@/services/import-export/importExportService';
+import { logger } from '@/lib/logger/logger.service';
 
 const { Text } = Typography;
 
@@ -43,7 +44,7 @@ const ExportDialog: React.FC<ExportDialogProps> = ({ visible, onClose, type, tit
       message.success('Export completed successfully');
       onClose();
     } catch (error) {
-      console.error('Export error:', error);
+      logger.error('ExportDialog', 'Export error', error as Error);
       message.error('Failed to export data');
     } finally {
       setLoading(false);

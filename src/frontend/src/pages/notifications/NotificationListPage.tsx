@@ -17,6 +17,7 @@ import { useNavigate } from 'react-router-dom';
 import notificationService, { Notification } from '@/services/notification/notificationService';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
+import { logger } from '@/lib/logger/logger.service';
 
 dayjs.extend(relativeTime);
 
@@ -46,7 +47,7 @@ const NotificationListPage: React.FC = () => {
       setNotifications(result.data);
       setTotal(result.total);
     } catch (error) {
-      console.error('Failed to load notifications:', error);
+      logger.error('NotificationListPage', 'Failed to load notifications', error as Error);
       message.error('Failed to load notifications');
     } finally {
       setLoading(false);
