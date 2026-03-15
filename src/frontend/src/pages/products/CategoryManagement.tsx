@@ -1,62 +1,101 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, Table, Button, Space, Modal, Form, Input, message, Popconfirm } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, ArrowLeftOutlined } from '@ant-design/icons';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { productService } from '@/services/inventory/productService';
+import { Card, Table, Button, Space, Modal, Form, Input, message, Popconfirm, Badge } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, ArrowLeftOutlined, SyncOutlined, WifiOutlined, CloudOutlined } from '@ant-design/icons';
 import { useResponsive } from '@/hooks/useResponsive';
+import { offlineServices } from '@/services/offline-services';
+import { syncManager } from '@/lib/offline/sync-manager';
+import { logger } from '@/lib/logger/logger.service';
+import type { Category } from '@/lib/offline/db';
 
 export default function CategoryManagement() {
   const { isMobile } = useResponsive();
   const navigate = useNavigate();
   const [form] = Form.useForm();
-  const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<any>(null);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [queueSize, setQueueSize] = useState(0);
 
-  const { data: categories, isLoading } = useQuery({
-    queryKey: ['categories'],
-    queryFn: () => productService.getCategories(),
-  });
+  // Monitor network status
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
 
-  const createMutation = useMutation({
-    mutationFn: (values: any) => productService.createCategory(values),
-    onSuccess: () => {
-      message.success('Tạo danh mục thành công!');
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
-      handleCloseModal();
-    },
-    onError: () => {
-      message.error('Tạo danh mục thất bại!');
-    },
-  });
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
 
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) =>
-      productService.updateCategory(id, data),
-    onSuccess: () => {
-      message.success('Cập nhật danh mục thành công!');
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
-      handleCloseModal();
-    },
-    onError: () => {
-      message.error('Cập nhật danh mục thất bại!');
-    },
-  });
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => productService.deleteCategory(id),
-    onSuccess: () => {
-      message.success('Xóa danh mục thành công!');
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
-    },
-    onError: (error: any) => {
-      const errorMessage = error.response?.data?.message || 'Xóa danh mục thất bại!';
-      message.error(errorMessage);
-    },
-  });
+  // Load categories from IndexedDB
+  const loadCategories = async () => {
+    try {
+      setLoading(true);
+      const data = await offlineServices.categories.getAll();
+      setCategories(data);
+      logger.info('CategoryManagement', 'Loaded categories from IndexedDB', { count: data.length });
+    } catch (error) {
+      logger.error('CategoryManagement', 'Failed to load categories', error as Error);
+      message.error('Không thể tải danh mục');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const handleOpenModal = (category?: any) => {
+  // Load queue size
+  const loadQueueSize = async () => {
+    const size = await syncManager.getQueueSize();
+    setQueueSize(size);
+  };
+
+  // Initial load
+  useEffect(() => {
+    loadCategories();
+    loadQueueSize();
+  }, []);
+
+  // Auto-sync when online
+  useEffect(() => {
+    if (isOnline) {
+      handleSync();
+    }
+  }, [isOnline]);
+
+  // Manual sync
+  const handleSync = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      message.warning('Vui lòng đăng nhập để đồng bộ');
+      return;
+    }
+
+    try {
+      setSyncing(true);
+      const result = await syncManager.sync(token);
+      
+      if (result.success) {
+        message.success(`Đồng bộ thành công: ${result.pulled} pulled, ${result.pushed} pushed`);
+        await loadCategories();
+        await loadQueueSize();
+      } else {
+        message.error(`Đồng bộ thất bại: ${result.errors.join(', ')}`);
+      }
+    } catch (error) {
+      logger.error('CategoryManagement', 'Sync failed', error as Error);
+      message.error('Đồng bộ thất bại');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const handleOpenModal = (category?: Category) => {
     if (category) {
       setEditingCategory(category);
       form.setFieldsValue(category);
@@ -73,16 +112,49 @@ export default function CategoryManagement() {
     form.resetFields();
   };
 
-  const handleSubmit = (values: any) => {
-    if (editingCategory) {
-      updateMutation.mutate({ id: editingCategory.id, data: values });
-    } else {
-      createMutation.mutate(values);
+  const handleSubmit = async (values: any) => {
+    try {
+      if (editingCategory) {
+        await offlineServices.categories.update(editingCategory.id, values);
+        message.success('Cập nhật danh mục thành công!');
+        logger.info('CategoryManagement', 'Category updated', { id: editingCategory.id });
+      } else {
+        await offlineServices.categories.create(values);
+        message.success('Tạo danh mục thành công!');
+        logger.info('CategoryManagement', 'Category created');
+      }
+      
+      handleCloseModal();
+      await loadCategories();
+      await loadQueueSize();
+    } catch (error) {
+      logger.error('CategoryManagement', 'Failed to save category', error as Error);
+      message.error(editingCategory ? 'Cập nhật danh mục thất bại!' : 'Tạo danh mục thất bại!');
     }
   };
 
-  const handleDelete = (id: string) => {
-    deleteMutation.mutate(id);
+  const handleDelete = async (id: string) => {
+    try {
+      await offlineServices.categories.delete(id);
+      message.success('Xóa danh mục thành công!');
+      logger.info('CategoryManagement', 'Category deleted', { id });
+      await loadCategories();
+      await loadQueueSize();
+    } catch (error) {
+      logger.error('CategoryManagement', 'Failed to delete category', error as Error);
+      message.error('Xóa danh mục thất bại!');
+    }
+  };
+
+  const getSyncStatusBadge = (category: Category) => {
+    if (category.syncStatus === 'synced') {
+      return <Badge status="success" text="Synced" />;
+    } else if (category.syncStatus === 'pending') {
+      return <Badge status="warning" text="Pending" />;
+    } else if (category.syncStatus === 'conflict') {
+      return <Badge status="error" text="Conflict" />;
+    }
+    return null;
   };
 
   const columns = [
@@ -97,57 +169,55 @@ export default function CategoryManagement() {
       key: 'description',
     },
     {
-      title: 'Số sản phẩm',
-      dataIndex: 'productCount',
-      key: 'productCount',
-      width: 120,
-      render: (count: number) => count || 0,
+      title: 'Trạng thái đồng bộ',
+      key: 'syncStatus',
+      width: 150,
+      render: (_: any, record: Category) => getSyncStatusBadge(record),
     },
     {
       title: 'Thao tác',
       key: 'action',
       width: 150,
-      render: (_: any, record: any) => {
-        const hasProducts = record.productCount > 0;
-        return (
-          <Space>
-            <Button type="link" icon={<EditOutlined />} onClick={() => handleOpenModal(record)}>
-              Sửa
+      render: (_: any, record: Category) => (
+        <Space>
+          <Button type="link" icon={<EditOutlined />} onClick={() => handleOpenModal(record)}>
+            Sửa
+          </Button>
+          <Popconfirm
+            title="Xóa danh mục"
+            description="Bạn có chắc muốn xóa danh mục này?"
+            onConfirm={() => handleDelete(record.id)}
+            okText="Xóa"
+            cancelText="Hủy"
+          >
+            <Button type="link" danger icon={<DeleteOutlined />}>
+              Xóa
             </Button>
-            <Popconfirm
-              title="Xóa danh mục"
-              description={
-                hasProducts
-                  ? `Danh mục này có ${record.productCount} sản phẩm. Không thể xóa!`
-                  : 'Bạn có chắc muốn xóa danh mục này?'
-              }
-              onConfirm={() => handleDelete(record.id)}
-              okText="Xóa"
-              cancelText="Hủy"
-              disabled={hasProducts}
-            >
-              <Button
-                type="link"
-                danger
-                icon={<DeleteOutlined />}
-                disabled={hasProducts}
-                title={hasProducts ? 'Không thể xóa danh mục có sản phẩm' : ''}
-              >
-                Xóa
-              </Button>
-            </Popconfirm>
-          </Space>
-        );
-      },
+          </Popconfirm>
+        </Space>
+      ),
     },
   ];
 
   return (
     <div>
-      <div style={{ marginBottom: 16 }}>
+      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/products')}>
           Quay Lại
         </Button>
+        <Space>
+          <Badge count={queueSize} offset={[-5, 5]}>
+            <Button
+              icon={<SyncOutlined spin={syncing} />}
+              onClick={handleSync}
+              loading={syncing}
+              disabled={!isOnline}
+            >
+              Đồng bộ
+            </Button>
+          </Badge>
+          <Badge status={isOnline ? 'success' : 'error'} text={isOnline ? 'Online' : 'Offline'} />
+        </Space>
       </div>
       <Card
         title="Quản lý danh mục sản phẩm"
@@ -167,7 +237,7 @@ export default function CategoryManagement() {
           columns={columns}
           dataSource={categories}
           rowKey="id"
-          loading={isLoading}
+          loading={loading}
           pagination={{ pageSize: 20 }}
         />
       </Card>
@@ -187,17 +257,21 @@ export default function CategoryManagement() {
             <Input placeholder="Ví dụ: Tấm thạch cao" />
           </Form.Item>
 
+          <Form.Item
+            name="code"
+            label="Mã danh mục"
+            rules={[{ required: true, message: 'Vui lòng nhập mã danh mục!' }]}
+          >
+            <Input placeholder="Ví dụ: GYPSUM_BOARD" />
+          </Form.Item>
+
           <Form.Item name="description" label="Mô tả">
             <Input.TextArea rows={3} placeholder="Mô tả danh mục" />
           </Form.Item>
 
           <Form.Item>
             <Space>
-              <Button
-                type="primary"
-                htmlType="submit"
-                loading={createMutation.isPending || updateMutation.isPending}
-              >
+              <Button type="primary" htmlType="submit">
                 {editingCategory ? 'Cập nhật' : 'Tạo mới'}
               </Button>
               <Button onClick={handleCloseModal}>Hủy</Button>

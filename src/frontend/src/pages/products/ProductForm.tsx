@@ -13,14 +13,13 @@ import {
   Row,
   Col,
   Modal,
+  Badge,
 } from 'antd';
-import { SaveOutlined, ArrowLeftOutlined, AppstoreOutlined, PlusOutlined } from '@ant-design/icons';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  productService,
-  CreateProductDto,
-  UpdateProductDto,
-} from '@/services/inventory/productService';
+import { SaveOutlined, ArrowLeftOutlined, AppstoreOutlined, PlusOutlined, SyncOutlined } from '@ant-design/icons';
+import { offlineServices } from '@/services/offline-services';
+import { syncManager } from '@/lib/offline/sync-manager';
+import { logger } from '@/lib/logger/logger.service';
+import type { Product, Category } from '@/lib/offline/db';
 
 const { Title } = Typography;
 const { TextArea } = Input;
@@ -28,91 +27,175 @@ const { TextArea } = Input;
 export default function ProductForm() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const queryClient = useQueryClient();
   const [form] = Form.useForm();
   const [categoryForm] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [creatingCategory, setCreatingCategory] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [syncing, setSyncing] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [queueSize, setQueueSize] = useState(0);
   const isEdit = !!id;
 
-  const { data: product } = useQuery({
-    queryKey: ['product', id],
-    queryFn: () => productService.getById(Number(id)),
-    enabled: isEdit,
-  });
-
-  const { data: categoriesData, refetch: refetchCategories } = useQuery({
-    queryKey: ['categories'],
-    queryFn: () => productService.getCategories(),
-  });
-
+  // Monitor network status
   useEffect(() => {
-    if (product) {
-      form.setFieldsValue({
-        name: product.name,
-        sku: product.sku,
-        description: product.description,
-        price: product.price,
-        cost: product.cost,
-        stock: product.stock,
-        lowStockThreshold: product.lowStockThreshold,
-        categoryId: product.categoryId,
-      });
-    }
-  }, [product, form]);
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
 
-  const saveMutation = useMutation({
-    mutationFn: async (values: any) => {
-      setLoading(true);
-      try {
-        if (isEdit) {
-          return await productService.update(Number(id), values as UpdateProductDto);
-        } else {
-          return await productService.create(values as CreateProductDto);
-        }
-      } finally {
-        setLoading(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  // Load product data for edit
+  const loadProduct = async () => {
+    if (!isEdit || !id) return;
+
+    try {
+      const product = await offlineServices.products.getById(id);
+      if (product) {
+        form.setFieldsValue({
+          name: product.name,
+          sku: product.sku,
+          description: product.description,
+          price: product.price,
+          cost: product.cost,
+          stockQuantity: product.stockQuantity,
+          minStockLevel: product.minStockLevel,
+          categoryId: product.categoryId,
+        });
+        logger.info('ProductForm', 'Loaded product from IndexedDB', { id });
       }
-    },
-    onSuccess: () => {
-      message.success(isEdit ? 'Cập nhật sản phẩm thành công' : 'Tạo sản phẩm thành công');
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-      navigate('/dashboard/products');
-    },
-    onError: (error: any) => {
-      message.error(error.response?.data?.message || 'Có lỗi xảy ra');
-    },
-  });
+    } catch (error) {
+      logger.error('ProductForm', 'Failed to load product', error as Error);
+      message.error('Không thể tải sản phẩm');
+    }
+  };
+
+  // Load categories
+  const loadCategories = async () => {
+    try {
+      const data = await offlineServices.categories.getAll();
+      setCategories(data);
+      logger.info('ProductForm', 'Loaded categories from IndexedDB', { count: data.length });
+    } catch (error) {
+      logger.error('ProductForm', 'Failed to load categories', error as Error);
+      message.error('Không thể tải danh mục');
+    }
+  };
+
+  // Load queue size
+  const loadQueueSize = async () => {
+    const size = await syncManager.getQueueSize();
+    setQueueSize(size);
+  };
+
+  // Initial load
+  useEffect(() => {
+    loadProduct();
+    loadCategories();
+    loadQueueSize();
+  }, [id]);
+
+  // Auto-sync when online
+  useEffect(() => {
+    if (isOnline) {
+      handleSync();
+    }
+  }, [isOnline]);
+
+  // Manual sync
+  const handleSync = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    try {
+      setSyncing(true);
+      const result = await syncManager.sync(token);
+      
+      if (result.success) {
+        await loadCategories();
+        await loadQueueSize();
+        if (isEdit) await loadProduct();
+      }
+    } catch (error) {
+      logger.error('ProductForm', 'Sync failed', error as Error);
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const handleCreateCategory = async (values: any) => {
     try {
       setCreatingCategory(true);
-      const newCategory = await productService.createCategory(values);
+      const newCategory = await offlineServices.categories.create(values);
       message.success('Tạo danh mục thành công');
+      logger.info('ProductForm', 'Category created', { id: newCategory.id });
+      
       categoryForm.resetFields();
       setShowCategoryModal(false);
       form.setFieldsValue({ categoryId: newCategory.id });
-      await refetchCategories();
+      
+      await loadCategories();
+      await loadQueueSize();
     } catch (error) {
+      logger.error('ProductForm', 'Failed to create category', error as Error);
       message.error('Tạo danh mục thất bại');
     } finally {
       setCreatingCategory(false);
     }
   };
 
-  const onFinish = (values: any) => {
-    saveMutation.mutate(values);
+  const onFinish = async (values: any) => {
+    try {
+      setLoading(true);
+      
+      if (isEdit && id) {
+        await offlineServices.products.update(id, values);
+        message.success('Cập nhật sản phẩm thành công');
+        logger.info('ProductForm', 'Product updated', { id });
+      } else {
+        await offlineServices.products.create(values);
+        message.success('Tạo sản phẩm thành công');
+        logger.info('ProductForm', 'Product created');
+      }
+      
+      await loadQueueSize();
+      navigate('/dashboard/products');
+    } catch (error) {
+      logger.error('ProductForm', 'Failed to save product', error as Error);
+      message.error('Có lỗi xảy ra');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <>
       <div style={{ padding: '24px' }}>
         <Card>
-          <Space style={{ marginBottom: 16 }}>
+          <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
             <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/dashboard/products')}>
               Quay lại
             </Button>
+            <Space>
+              <Badge count={queueSize} offset={[-5, 5]}>
+                <Button
+                  icon={<SyncOutlined spin={syncing} />}
+                  onClick={handleSync}
+                  loading={syncing}
+                  disabled={!isOnline}
+                >
+                  Đồng bộ
+                </Button>
+              </Badge>
+              <Badge status={isOnline ? 'success' : 'error'} text={isOnline ? 'Online' : 'Offline'} />
+            </Space>
           </Space>
 
           <Title level={3}>
@@ -124,8 +207,8 @@ export default function ProductForm() {
             layout="vertical"
             onFinish={onFinish}
             initialValues={{
-              stock: 0,
-              lowStockThreshold: 10,
+              stockQuantity: 0,
+              minStockLevel: 10,
             }}
           >
             <Row gutter={16}>
@@ -173,7 +256,7 @@ export default function ProductForm() {
                   </>
                 )}
               >
-                {categoriesData?.map((cat: any) => (
+                {categories.map((cat) => (
                   <Select.Option key={cat.id} value={cat.id}>
                     {cat.name}
                   </Select.Option>
@@ -222,7 +305,7 @@ export default function ProductForm() {
             <Row gutter={16}>
               <Col xs={24} md={12}>
                 <Form.Item
-                  name="stock"
+                  name="stockQuantity"
                   label="Số lượng tồn kho"
                   rules={[{ required: true, message: 'Vui lòng nhập số lượng' }]}
                 >
@@ -232,7 +315,7 @@ export default function ProductForm() {
 
               <Col xs={24} md={12}>
                 <Form.Item
-                  name="lowStockThreshold"
+                  name="minStockLevel"
                   label="Ngưỡng cảnh báo tồn kho"
                   rules={[{ required: true, message: 'Vui lòng nhập ngưỡng cảnh báo' }]}
                 >
@@ -266,6 +349,14 @@ export default function ProductForm() {
             rules={[{ required: true, message: 'Vui lòng nhập tên danh mục' }]}
           >
             <Input placeholder="Nhập tên danh mục" />
+          </Form.Item>
+
+          <Form.Item
+            name="code"
+            label="Mã danh mục"
+            rules={[{ required: true, message: 'Vui lòng nhập mã danh mục' }]}
+          >
+            <Input placeholder="Ví dụ: GYPSUM_BOARD" />
           </Form.Item>
 
           <Form.Item name="description" label="Mô tả">
