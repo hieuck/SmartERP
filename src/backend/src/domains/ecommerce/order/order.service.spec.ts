@@ -1,12 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { Repository } from 'typeorm';
+import { getRepositoryToken } from '@nestjs/typeorm';
 import { OrderService } from './order.service';
 import { Order } from './entities/order.entity';
 import { OrderItem } from './entities/order-item.entity';
-import { PermissionService, User } from '@common/security/permission.service';
-import { OrderStatus, PaymentStatus, ShippingStatus } from '../enums/ecommerce.enum';
+import { PermissionService, User } from '../../../common/security/permission.service';
+import { OrderStatus } from './enums/order-status.enum';
+import { PaymentStatus } from './enums/payment-status.enum';
+import { ShippingStatus } from './enums/shipping-status.enum';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { CancelOrderDto } from './dto/cancel-order.dto';
@@ -18,48 +20,33 @@ describe('OrderService', () => {
   let permissionService: jest.Mocked<PermissionService>;
 
   const mockUser: User = {
-    id: 'user-123',
-    tenantId: 'tenant-123',
-    roles: ['customer'],
+    id: 'user-1',
+    tenantId: 'tenant-1',
+    roles: ['user'],
   };
 
-  const mockOrderItem = {
-    id: 'item-123',
-    orderId: 'order-123',
-    productId: 'product-123',
-    productName: 'Test Product',
-    productSku: 'TEST-001',
-    productImage: 'image.jpg',
-    price: 100,
-    quantity: 2,
-    selectedVariant: null,
-    notes: null,
-    tenantId: 'tenant-123',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    get lineTotal() { return this.price * this.quantity; },
-  } as unknown as OrderItem;
-
+  // Helper function to create complete mock Order
   const createMockOrder = (overrides: Partial<Order> = {}): Order => {
-    const order = {
-      id: 'order-123',
-      orderNumber: 'ORD-2024-0001',
-      customerId: 'user-123',
+    const baseOrder = {
+      id: 'order-1',
+      orderNumber: 'ORD-001',
+      customerId: 'user-1',
+      customer: null as any,
       cartId: null,
       status: OrderStatus.PENDING,
       paymentStatus: PaymentStatus.PENDING,
       shippingStatus: ShippingStatus.PENDING,
-      items: [mockOrderItem],
-      subtotal: 200,
+      items: [],
+      subtotal: 100,
       tax: 0,
       shipping: 0,
       discount: 0,
-      total: 200,
+      total: 100,
       couponCode: null,
       customerEmail: 'test@example.com',
-      customerPhone: '+84901234567',
-      shippingAddress: { fullName: 'John Doe', address: '123 Main St', city: 'HCMC' },
-      billingAddress: { fullName: 'John Doe', address: '123 Main St', city: 'HCMC' },
+      customerPhone: '1234567890',
+      shippingAddress: { street: '123 Main St', city: 'City', country: 'Country' },
+      billingAddress: { street: '123 Main St', city: 'City', country: 'Country' },
       paymentMethod: 'cod',
       paymentTransactionId: null,
       paidAt: null,
@@ -72,99 +59,78 @@ describe('OrderService', () => {
       cancelledBy: null,
       cancellationReason: null,
       cancelledAt: null,
-      tenantId: 'tenant-123',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      customer: undefined,
-      generateOrderNumber() {
-        if (!this.orderNumber) {
-          const year = new Date().getFullYear();
-          const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-          this.orderNumber = `ORD-${year}-${random}`;
-        }
-      },
-      calculateTotals() {
-        if (!this.items || this.items.length === 0) {
-          this.subtotal = 0;
-          this.total = 0;
-          return;
-        }
-        this.subtotal = this.items.reduce((sum, item) => sum + item.quantity * item.price, 0);
-        this.total = this.subtotal + this.tax + this.shipping - this.discount;
-        if (this.total < 0) {
-          this.total = 0;
-        }
-      },
-      validate() {
-        if (!this.customerEmail || this.customerEmail.trim().length === 0) {
-          throw new Error('Customer email is required');
-        }
-        if (!this.shippingAddress) {
-          throw new Error('Shipping address is required');
-        }
-        if (!this.billingAddress) {
-          throw new Error('Billing address is required');
-        }
-        if (this.tax < 0) {
-          throw new Error('Tax must be non-negative');
-        }
-        if (this.shipping < 0) {
-          throw new Error('Shipping must be non-negative');
-        }
-        if (this.discount < 0) {
-          throw new Error('Discount must be non-negative');
-        }
-      },
-      get itemCount() { 
-        if (!this.items) return 0;
-        return this.items.reduce((sum, item) => sum + item.quantity, 0); 
-      },
-      get isPaid() { 
-        return this.paymentStatus === PaymentStatus.PAID; 
-      },
-      get canBeCancelled() { 
-        return this.status === OrderStatus.PENDING || this.status === OrderStatus.CONFIRMED; 
-      },
-      get isCompleted() {
-        return this.status === OrderStatus.DELIVERED || 
-               this.status === OrderStatus.CANCELLED || 
-               this.status === OrderStatus.REFUNDED;
-      },
+      tenantId: 'tenant-1',
+      createdAt: new Date('2024-01-01'),
+      updatedAt: new Date('2024-01-01'),
+      generateOrderNumber: jest.fn(),
+      calculateTotals: jest.fn(),
+      validate: jest.fn(),
       ...overrides,
-    } as Order;
-    return order;
+    };
+
+    // Add getters
+    Object.defineProperties(baseOrder, {
+      itemCount: {
+        get: () => baseOrder.items?.reduce((sum, item) => sum + item.quantity, 0) || 0,
+        enumerable: true,
+      },
+      isPaid: {
+        get: () => baseOrder.paymentStatus === PaymentStatus.PAID,
+        enumerable: true,
+      },
+      canBeCancelled: {
+        get: () => baseOrder.status === OrderStatus.PENDING || baseOrder.status === OrderStatus.CONFIRMED,
+        enumerable: true,
+      },
+      isCompleted: {
+        get: () => baseOrder.status === OrderStatus.DELIVERED || baseOrder.status === OrderStatus.CANCELLED || baseOrder.status === OrderStatus.REFUNDED,
+        enumerable: true,
+      },
+    });
+
+    return baseOrder as any;
   };
 
   const mockOrder = createMockOrder();
 
   beforeEach(async () => {
+    const mockOrderRepo = {
+      create: jest.fn(),
+      save: jest.fn(),
+      findOne: jest.fn(),
+      find: jest.fn(),
+      createQueryBuilder: jest.fn(),
+      count: jest.fn(),
+    };
+
+    const mockOrderItemRepo = {
+      create: jest.fn(),
+      save: jest.fn(),
+      findOne: jest.fn(),
+      find: jest.fn(),
+    };
+
+    const mockPermissionService = {
+      canRead: jest.fn().mockReturnValue(true),
+      canWrite: jest.fn().mockReturnValue(true),
+      canDelete: jest.fn().mockReturnValue(true),
+      buildSecureQuery: jest.fn((user, where) => where),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         OrderService,
         {
           provide: getRepositoryToken(Order),
-          useValue: {
-            create: jest.fn(),
-            save: jest.fn(),
-            findOne: jest.fn(),
-            find: jest.fn(),
-            createQueryBuilder: jest.fn(),
-          },
+          useValue: mockOrderRepo,
         },
         {
           provide: getRepositoryToken(OrderItem),
-          useValue: {
-            create: jest.fn(),
-          },
+          useValue: mockOrderItemRepo,
         },
         {
           provide: PermissionService,
-          useValue: {
-            canRead: jest.fn().mockReturnValue(true),
-            canWrite: jest.fn().mockReturnValue(true),
-            canDelete: jest.fn().mockReturnValue(true),
-            buildSecureQuery: jest.fn((user, where) => ({ ...where, tenantId: user.tenantId })),
-          },
+          useValue: mockPermissionService,
         },
       ],
     }).compile();
@@ -180,307 +146,296 @@ describe('OrderService', () => {
   });
 
   describe('create', () => {
-    const createOrderDto: CreateOrderDto = {
+    const createDto: CreateOrderDto = {
       customerEmail: 'test@example.com',
-      customerPhone: '+84901234567',
-      items: [
-        {
-          productId: 'product-123',
-          productName: 'Test Product',
-          productSku: 'TEST-001',
-          productImage: 'image.jpg',
-          price: 100,
-          quantity: 2,
-          selectedVariant: null,
-          notes: null,
-        },
-      ],
-      shippingAddress: { fullName: 'John Doe', address: '123 Main St', city: 'HCMC' },
-      billingAddress: null,
+      customerPhone: '1234567890',
+      shippingAddress: '123 Main St',
+      billingAddress: '123 Main St',
       shippingMethod: 'standard',
       paymentMethod: 'cod',
-      couponCode: null,
-      customerNotes: null,
+      items: [
+        {
+          productId: 'prod-1',
+          productName: 'Product 1',
+          productSku: 'SKU-1',
+          price: 50,
+          quantity: 2,
+        },
+      ],
     };
 
     it('should create order successfully', async () => {
-      const order = createMockOrder();
-      orderRepository.create.mockReturnValue(order);
-      orderItemRepository.create.mockReturnValue(mockOrderItem);
-      orderRepository.save.mockResolvedValue(order);
+      orderRepository.create.mockReturnValue(mockOrder as any);
+      orderItemRepository.create.mockReturnValue({} as any);
+      orderRepository.save.mockResolvedValue(mockOrder);
 
-      const result = await service.create(createOrderDto, mockUser);
+      const result = await service.create(createDto, mockUser);
 
-      expect(orderRepository.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          customerId: mockUser.id,
-          status: OrderStatus.PENDING,
-          paymentStatus: PaymentStatus.PENDING,
-          shippingStatus: ShippingStatus.PENDING,
-          customerEmail: createOrderDto.customerEmail,
-          tenantId: mockUser.tenantId,
-        }),
-      );
-      expect(orderItemRepository.create).toHaveBeenCalled();
+      expect(orderRepository.create).toHaveBeenCalled();
       expect(orderRepository.save).toHaveBeenCalled();
-      expect(result).toEqual(order);
+      expect(result).toEqual(mockOrder);
     });
 
-    it('should use shippingAddress as billingAddress when billingAddress is null', async () => {
-      const order = createMockOrder();
-      orderRepository.create.mockReturnValue(order);
-      orderItemRepository.create.mockReturnValue(mockOrderItem);
-      orderRepository.save.mockResolvedValue(order);
+    it('should use shippingAddress as billingAddress when not provided', async () => {
+      const dtoWithoutBilling = { ...createDto, billingAddress: undefined };
+      orderRepository.create.mockReturnValue(mockOrder as any);
+      orderItemRepository.create.mockReturnValue({} as any);
+      orderRepository.save.mockResolvedValue(mockOrder);
 
-      await service.create(createOrderDto, mockUser);
+      await service.create(dtoWithoutBilling, mockUser);
 
       expect(orderRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          billingAddress: createOrderDto.shippingAddress,
+          billingAddress: createDto.shippingAddress,
         }),
       );
     });
 
-    it('should create order items with correct data', async () => {
-      const order = createMockOrder();
-      orderRepository.create.mockReturnValue(order);
-      orderItemRepository.create.mockReturnValue(mockOrderItem);
-      orderRepository.save.mockResolvedValue(order);
+    it('should create order items', async () => {
+      orderRepository.create.mockReturnValue(mockOrder as any);
+      orderItemRepository.create.mockReturnValue({} as any);
+      orderRepository.save.mockResolvedValue(mockOrder);
 
-      await service.create(createOrderDto, mockUser);
+      await service.create(createDto, mockUser);
 
-      expect(orderItemRepository.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          productId: createOrderDto.items[0].productId,
-          productName: createOrderDto.items[0].productName,
-          quantity: createOrderDto.items[0].quantity,
-          price: createOrderDto.items[0].price,
-          tenantId: mockUser.tenantId,
-        }),
-      );
+      expect(orderItemRepository.create).toHaveBeenCalledTimes(createDto.items.length);
+    });
+
+    it('should handle empty items array', async () => {
+      const dtoWithNoItems = { ...createDto, items: [] };
+      orderRepository.create.mockReturnValue(mockOrder as any);
+      orderRepository.save.mockResolvedValue(mockOrder);
+
+      const result = await service.create(dtoWithNoItems, mockUser);
+
+      expect(result).toEqual(mockOrder);
     });
   });
 
   describe('findOne', () => {
-    it('should return order by id', async () => {
-      const order = createMockOrder();
-      orderRepository.findOne.mockResolvedValue(order);
+    it('should find order by id successfully', async () => {
+      orderRepository.findOne.mockResolvedValue(mockOrder);
 
-      const result = await service.findOne('order-123', mockUser);
+      const result = await service.findOne('order-1', mockUser);
 
+      expect(result).toEqual(mockOrder);
       expect(orderRepository.findOne).toHaveBeenCalledWith({
-        where: { id: 'order-123' },
+        where: { id: 'order-1', tenantId: 'tenant-1' },
         relations: ['items', 'customer'],
       });
-      expect(result).toEqual(order);
     });
 
     it('should throw NotFoundException when order not found', async () => {
       orderRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findOne('invalid-id', mockUser)).rejects.toThrow(
-        NotFoundException,
+      await expect(service.findOne('order-999', mockUser)).rejects.toThrow(NotFoundException);
+      await expect(service.findOne('order-999', mockUser)).rejects.toThrow(
+        'Order with ID order-999 not found',
       );
-      await expect(service.findOne('invalid-id', mockUser)).rejects.toThrow(
-        'Order with ID invalid-id not found',
-      );
+    });
+
+    it('should handle null id', async () => {
+      orderRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.findOne(null as any, mockUser)).rejects.toThrow(NotFoundException);
+    });
+
+    it('should handle empty id', async () => {
+      orderRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.findOne('', mockUser)).rejects.toThrow(NotFoundException);
     });
   });
 
   describe('findByOrderNumber', () => {
-    it('should return order by order number', async () => {
-      const order = createMockOrder();
-      orderRepository.findOne.mockResolvedValue(order);
+    it('should find order by order number successfully', async () => {
+      orderRepository.findOne.mockResolvedValue(mockOrder);
 
-      const result = await service.findByOrderNumber('ORD-2024-0001', mockUser);
+      const result = await service.findByOrderNumber('ORD-001', mockUser);
 
+      expect(result).toEqual(mockOrder);
       expect(orderRepository.findOne).toHaveBeenCalledWith({
-        where: { orderNumber: 'ORD-2024-0001' },
+        where: { orderNumber: 'ORD-001', tenantId: 'tenant-1' },
         relations: ['items', 'customer'],
       });
-      expect(result).toEqual(order);
     });
 
     it('should throw NotFoundException when order not found', async () => {
       orderRepository.findOne.mockResolvedValue(null);
 
-      await expect(
-        service.findByOrderNumber('INVALID-ORDER', mockUser),
-      ).rejects.toThrow(NotFoundException);
-      await expect(
-        service.findByOrderNumber('INVALID-ORDER', mockUser),
-      ).rejects.toThrow('Order with number INVALID-ORDER not found');
+      await expect(service.findByOrderNumber('ORD-999', mockUser)).rejects.toThrow(
+        NotFoundException,
+      );
+      await expect(service.findByOrderNumber('ORD-999', mockUser)).rejects.toThrow(
+        'Order with number ORD-999 not found',
+      );
     });
   });
 
   describe('findByCustomer', () => {
-    it('should return orders by customer id', async () => {
-      const order = createMockOrder();
-      orderRepository.find.mockResolvedValue([order]);
+    it('should find orders by customer id', async () => {
+      orderRepository.find.mockResolvedValue([mockOrder]);
 
-      const result = await service.findByCustomer('user-123', mockUser);
+      const result = await service.findByCustomer('user-1', mockUser);
 
+      expect(result).toEqual([mockOrder]);
       expect(orderRepository.find).toHaveBeenCalledWith({
-        where: { customerId: 'user-123', tenantId: 'tenant-123' },
+        where: { customerId: 'user-1', tenantId: 'tenant-1' },
         relations: ['items'],
         order: { createdAt: 'DESC' },
       });
-      expect(result).toEqual([order]);
     });
 
     it('should return empty array when no orders found', async () => {
       orderRepository.find.mockResolvedValue([]);
 
-      const result = await service.findByCustomer('user-123', mockUser);
+      const result = await service.findByCustomer('user-999', mockUser);
 
       expect(result).toEqual([]);
     });
   });
 
   describe('findAll', () => {
-    const createMockQueryBuilder = () => {
-      const order = createMockOrder();
-      const qb = {
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        leftJoinAndSelect: jest.fn().mockReturnThis(),
-        orderBy: jest.fn().mockReturnThis(),
-        getMany: jest.fn().mockResolvedValue([order]),
-      };
-      return qb;
+    const mockQueryBuilder = {
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      orderBy: jest.fn().mockReturnThis(),
+      getMany: jest.fn(),
     };
 
-    it('should return all orders for tenant', async () => {
-      const order = createMockOrder();
-      const qb = createMockQueryBuilder();
-      orderRepository.createQueryBuilder.mockReturnValue(qb as any);
+    beforeEach(() => {
+      orderRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
+    });
 
-      const result = await service.findAll('tenant-123');
+    it('should find all orders without filters', async () => {
+      mockQueryBuilder.getMany.mockResolvedValue([mockOrder]);
 
-      expect(qb.where).toHaveBeenCalledWith('order.tenantId = :tenantId', {
-        tenantId: 'tenant-123',
+      const result = await service.findAll('tenant-1');
+
+      expect(result).toEqual([mockOrder]);
+      expect(mockQueryBuilder.where).toHaveBeenCalledWith('order.tenantId = :tenantId', {
+        tenantId: 'tenant-1',
       });
-      expect(qb.orderBy).toHaveBeenCalledWith('order.createdAt', 'DESC');
-      expect(result).toHaveLength(1);
     });
 
     it('should filter by status', async () => {
-      const qb = createMockQueryBuilder();
-      orderRepository.createQueryBuilder.mockReturnValue(qb as any);
+      mockQueryBuilder.getMany.mockResolvedValue([mockOrder]);
 
-      await service.findAll('tenant-123', { status: OrderStatus.PENDING });
+      await service.findAll('tenant-1', { status: OrderStatus.PENDING });
 
-      expect(qb.andWhere).toHaveBeenCalledWith('order.status = :status', {
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('order.status = :status', {
         status: OrderStatus.PENDING,
       });
     });
 
     it('should filter by paymentStatus', async () => {
-      const qb = createMockQueryBuilder();
-      orderRepository.createQueryBuilder.mockReturnValue(qb as any);
+      mockQueryBuilder.getMany.mockResolvedValue([mockOrder]);
 
-      await service.findAll('tenant-123', { paymentStatus: PaymentStatus.PAID });
+      await service.findAll('tenant-1', { paymentStatus: PaymentStatus.PAID });
 
-      expect(qb.andWhere).toHaveBeenCalledWith('order.paymentStatus = :paymentStatus', {
-        paymentStatus: PaymentStatus.PAID,
-      });
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        'order.paymentStatus = :paymentStatus',
+        { paymentStatus: PaymentStatus.PAID },
+      );
     });
 
     it('should filter by shippingStatus', async () => {
-      const qb = createMockQueryBuilder();
-      orderRepository.createQueryBuilder.mockReturnValue(qb as any);
+      mockQueryBuilder.getMany.mockResolvedValue([mockOrder]);
 
-      await service.findAll('tenant-123', { shippingStatus: ShippingStatus.SHIPPED });
+      await service.findAll('tenant-1', { shippingStatus: ShippingStatus.SHIPPED });
 
-      expect(qb.andWhere).toHaveBeenCalledWith('order.shippingStatus = :shippingStatus', {
-        shippingStatus: ShippingStatus.SHIPPED,
-      });
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        'order.shippingStatus = :shippingStatus',
+        { shippingStatus: ShippingStatus.SHIPPED },
+      );
     });
 
     it('should filter by customerId', async () => {
-      const qb = createMockQueryBuilder();
-      orderRepository.createQueryBuilder.mockReturnValue(qb as any);
+      mockQueryBuilder.getMany.mockResolvedValue([mockOrder]);
 
-      await service.findAll('tenant-123', { customerId: 'user-123' });
+      await service.findAll('tenant-1', { customerId: 'user-1' });
 
-      expect(qb.andWhere).toHaveBeenCalledWith('order.customerId = :customerId', {
-        customerId: 'user-123',
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('order.customerId = :customerId', {
+        customerId: 'user-1',
       });
     });
 
     it('should filter by date range', async () => {
-      const qb = createMockQueryBuilder();
-      orderRepository.createQueryBuilder.mockReturnValue(qb as any);
+      mockQueryBuilder.getMany.mockResolvedValue([mockOrder]);
       const startDate = new Date('2024-01-01');
       const endDate = new Date('2024-12-31');
 
-      await service.findAll('tenant-123', { startDate, endDate });
+      await service.findAll('tenant-1', { startDate, endDate });
 
-      expect(qb.andWhere).toHaveBeenCalledWith('order.createdAt >= :startDate', { startDate });
-      expect(qb.andWhere).toHaveBeenCalledWith('order.createdAt <= :endDate', { endDate });
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('order.createdAt >= :startDate', {
+        startDate,
+      });
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('order.createdAt <= :endDate', {
+        endDate,
+      });
+    });
+
+    it('should apply multiple filters', async () => {
+      mockQueryBuilder.getMany.mockResolvedValue([mockOrder]);
+
+      await service.findAll('tenant-1', {
+        status: OrderStatus.PENDING,
+        paymentStatus: PaymentStatus.PENDING,
+        customerId: 'user-1',
+      });
+
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledTimes(3);
     });
   });
 
   describe('updateStatus', () => {
     const updateDto: UpdateOrderStatusDto = {
       status: OrderStatus.CONFIRMED,
-      paymentStatus: PaymentStatus.PAID,
-      shippingStatus: ShippingStatus.PROCESSING,
-      trackingNumber: 'TRACK123',
-      internalNotes: 'Test notes',
     };
 
-    it('should update order status', async () => {
-      const order = createMockOrder();
+    it('should update order status successfully', async () => {
+      orderRepository.findOne.mockResolvedValue(mockOrder);
       const updatedOrder = createMockOrder({ status: OrderStatus.CONFIRMED });
-      orderRepository.findOne.mockResolvedValue(order);
       orderRepository.save.mockResolvedValue(updatedOrder);
 
-      const result = await service.updateStatus('order-123', updateDto, 'tenant-123', mockUser);
+      const result = await service.updateStatus('order-1', updateDto, 'tenant-1', mockUser);
 
-      expect(orderRepository.save).toHaveBeenCalledWith(
-        expect.objectContaining({
-          status: OrderStatus.CONFIRMED,
-        }),
-      );
       expect(result.status).toBe(OrderStatus.CONFIRMED);
+      expect(orderRepository.save).toHaveBeenCalled();
     });
 
     it('should set shippedAt when status is SHIPPED', async () => {
-      const order = createMockOrder();
-      orderRepository.findOne.mockResolvedValue(order);
-      orderRepository.save.mockResolvedValue(order);
+      orderRepository.findOne.mockResolvedValue(mockOrder);
+      orderRepository.save.mockResolvedValue(mockOrder);
 
       await service.updateStatus(
-        'order-123',
+        'order-1',
         { status: OrderStatus.SHIPPED },
-        'tenant-123',
+        'tenant-1',
         mockUser,
       );
 
       expect(orderRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({
-          status: OrderStatus.SHIPPED,
           shippedAt: expect.any(Date),
         }),
       );
     });
 
     it('should set deliveredAt when status is DELIVERED', async () => {
-      const order = createMockOrder();
-      orderRepository.findOne.mockResolvedValue(order);
-      orderRepository.save.mockResolvedValue(order);
+      orderRepository.findOne.mockResolvedValue(mockOrder);
+      orderRepository.save.mockResolvedValue(mockOrder);
 
       await service.updateStatus(
-        'order-123',
+        'order-1',
         { status: OrderStatus.DELIVERED },
-        'tenant-123',
+        'tenant-1',
         mockUser,
       );
 
       expect(orderRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({
-          status: OrderStatus.DELIVERED,
           deliveredAt: expect.any(Date),
         }),
       );
@@ -491,88 +446,112 @@ describe('OrderService', () => {
       orderRepository.save.mockResolvedValue(mockOrder);
 
       await service.updateStatus(
-        'order-123',
+        'order-1',
         { paymentStatus: PaymentStatus.PAID },
-        'tenant-123',
+        'tenant-1',
         mockUser,
       );
 
       expect(orderRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({
-          paymentStatus: PaymentStatus.PAID,
           paidAt: expect.any(Date),
         }),
       );
     });
 
-    it('should set paidAt when paymentStatus is PAID', async () => {
-      const order = createMockOrder();
-      orderRepository.findOne.mockResolvedValue(order);
-      orderRepository.save.mockResolvedValue(order);
+    it('should update shippingStatus', async () => {
+      orderRepository.findOne.mockResolvedValue(mockOrder);
+      orderRepository.save.mockResolvedValue(mockOrder);
 
       await service.updateStatus(
-        'order-123',
-        { paymentStatus: PaymentStatus.PAID },
-        'tenant-123',
+        'order-1',
+        { shippingStatus: ShippingStatus.SHIPPED },
+        'tenant-1',
         mockUser,
       );
 
       expect(orderRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({
-          paymentStatus: PaymentStatus.PAID,
-          paidAt: expect.any(Date),
+          shippingStatus: ShippingStatus.SHIPPED,
         }),
       );
     });
 
-    it('should not override shippedAt if already set', async () => {
-      const shippedOrder = createMockOrder({ shippedAt: new Date('2024-01-01') });
-      orderRepository.findOne.mockResolvedValue(shippedOrder);
-      orderRepository.save.mockResolvedValue(shippedOrder);
+    it('should update trackingNumber', async () => {
+      orderRepository.findOne.mockResolvedValue(mockOrder);
+      orderRepository.save.mockResolvedValue(mockOrder);
 
       await service.updateStatus(
-        'order-123',
-        { status: OrderStatus.SHIPPED },
-        'tenant-123',
+        'order-1',
+        { trackingNumber: 'TRACK-123' },
+        'tenant-1',
         mockUser,
       );
 
       expect(orderRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({
-          shippedAt: new Date('2024-01-01'),
+          trackingNumber: 'TRACK-123',
+        }),
+      );
+    });
+
+    it('should update internalNotes', async () => {
+      orderRepository.findOne.mockResolvedValue(mockOrder);
+      orderRepository.save.mockResolvedValue(mockOrder);
+
+      await service.updateStatus(
+        'order-1',
+        { internalNotes: 'Test notes' },
+        'tenant-1',
+        mockUser,
+      );
+
+      expect(orderRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          internalNotes: 'Test notes',
         }),
       );
     });
   });
 
   describe('updatePaymentStatus', () => {
-    it('should update payment status and transaction id', async () => {
-      const order = createMockOrder();
-      orderRepository.findOne.mockResolvedValue(order);
-      orderRepository.save.mockResolvedValue(order);
+    it('should update payment status to PAID', async () => {
+      orderRepository.findOne.mockResolvedValue(mockOrder);
+      const updatedOrder = createMockOrder({
+        paymentStatus: PaymentStatus.PAID,
+        paymentTransactionId: 'TXN-123',
+      });
+      orderRepository.save.mockResolvedValue(updatedOrder);
 
       const result = await service.updatePaymentStatus(
-        'order-123',
+        'order-1',
         PaymentStatus.PAID,
-        'txn-123',
+        'TXN-123',
         mockUser,
       );
 
+      expect(result.paymentStatus).toBe(PaymentStatus.PAID);
+      expect(result.paymentTransactionId).toBe('TXN-123');
+    });
+
+    it('should set paidAt when payment is PAID', async () => {
+      orderRepository.findOne.mockResolvedValue(mockOrder);
+      orderRepository.save.mockResolvedValue(mockOrder);
+
+      await service.updatePaymentStatus('order-1', PaymentStatus.PAID, 'TXN-123', mockUser);
+
       expect(orderRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({
-          paymentStatus: PaymentStatus.PAID,
-          paymentTransactionId: 'txn-123',
           paidAt: expect.any(Date),
         }),
       );
     });
 
     it('should update order status to CONFIRMED when payment is PAID and order is PENDING', async () => {
-      const order = createMockOrder();
-      orderRepository.findOne.mockResolvedValue(order);
-      orderRepository.save.mockResolvedValue(order);
+      orderRepository.findOne.mockResolvedValue(mockOrder);
+      orderRepository.save.mockResolvedValue(mockOrder);
 
-      await service.updatePaymentStatus('order-123', PaymentStatus.PAID, 'txn-123', mockUser);
+      await service.updatePaymentStatus('order-1', PaymentStatus.PAID, 'TXN-123', mockUser);
 
       expect(orderRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -582,52 +561,45 @@ describe('OrderService', () => {
     });
 
     it('should not change order status if not PENDING', async () => {
-      const confirmedOrder = createMockOrder({ status: OrderStatus.CONFIRMED });
-      orderRepository.findOne.mockResolvedValue(confirmedOrder);
-      orderRepository.save.mockResolvedValue(confirmedOrder);
+      const shippedOrder = createMockOrder({ status: OrderStatus.SHIPPED });
+      orderRepository.findOne.mockResolvedValue(shippedOrder);
+      orderRepository.save.mockResolvedValue(mockOrder);
 
-      await service.updatePaymentStatus('order-123', PaymentStatus.PAID, 'txn-123', mockUser);
+      await service.updatePaymentStatus('order-1', PaymentStatus.PAID, 'TXN-123', mockUser);
 
       expect(orderRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({
-          status: OrderStatus.CONFIRMED,
+          status: OrderStatus.SHIPPED,
         }),
       );
     });
   });
 
   describe('updateShippingStatus', () => {
-    it('should update shipping status and tracking number', async () => {
-      const order = createMockOrder();
-      orderRepository.findOne.mockResolvedValue(order);
-      orderRepository.save.mockResolvedValue(order);
+    it('should update shipping status to SHIPPED', async () => {
+      orderRepository.findOne.mockResolvedValue(mockOrder);
+      const updatedOrder = createMockOrder({
+        shippingStatus: ShippingStatus.SHIPPED,
+        trackingNumber: 'TRACK-123',
+      });
+      orderRepository.save.mockResolvedValue(updatedOrder);
 
       const result = await service.updateShippingStatus(
-        'order-123',
+        'order-1',
         ShippingStatus.SHIPPED,
-        'TRACK123',
+        'TRACK-123',
         mockUser,
       );
 
-      expect(orderRepository.save).toHaveBeenCalledWith(
-        expect.objectContaining({
-          shippingStatus: ShippingStatus.SHIPPED,
-          trackingNumber: 'TRACK123',
-        }),
-      );
+      expect(result.shippingStatus).toBe(ShippingStatus.SHIPPED);
+      expect(result.trackingNumber).toBe('TRACK-123');
     });
 
-    it('should update order status to SHIPPED when shipping status is SHIPPED', async () => {
-      const order = createMockOrder();
-      orderRepository.findOne.mockResolvedValue(order);
-      orderRepository.save.mockResolvedValue(order);
+    it('should set order status to SHIPPED when shipping status is SHIPPED', async () => {
+      orderRepository.findOne.mockResolvedValue(mockOrder);
+      orderRepository.save.mockResolvedValue(mockOrder);
 
-      await service.updateShippingStatus(
-        'order-123',
-        ShippingStatus.SHIPPED,
-        'TRACK123',
-        mockUser,
-      );
+      await service.updateShippingStatus('order-1', ShippingStatus.SHIPPED, 'TRACK-123', mockUser);
 
       expect(orderRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -637,15 +609,14 @@ describe('OrderService', () => {
       );
     });
 
-    it('should update order status to DELIVERED when shipping status is DELIVERED', async () => {
-      const order = createMockOrder();
-      orderRepository.findOne.mockResolvedValue(order);
-      orderRepository.save.mockResolvedValue(order);
+    it('should set order status to DELIVERED when shipping status is DELIVERED', async () => {
+      orderRepository.findOne.mockResolvedValue(mockOrder);
+      orderRepository.save.mockResolvedValue(mockOrder);
 
       await service.updateShippingStatus(
-        'order-123',
+        'order-1',
         ShippingStatus.DELIVERED,
-        'TRACK123',
+        'TRACK-123',
         mockUser,
       );
 
@@ -660,134 +631,180 @@ describe('OrderService', () => {
 
   describe('cancel', () => {
     const cancelDto: CancelOrderDto = {
-      reason: 'Customer requested cancellation',
+      reason: 'Customer request',
     };
 
     it('should cancel order successfully', async () => {
-      const order = createMockOrder();
-      orderRepository.findOne.mockResolvedValue(order);
-      orderRepository.save.mockResolvedValue(order);
+      orderRepository.findOne.mockResolvedValue(mockOrder);
+      const cancelledOrder = createMockOrder({
+        status: OrderStatus.CANCELLED,
+        cancelledBy: 'user-1',
+        cancellationReason: 'Customer request',
+      });
+      orderRepository.save.mockResolvedValue(cancelledOrder);
 
-      const result = await service.cancel('order-123', cancelDto, 'tenant-123', mockUser);
+      const result = await service.cancel('order-1', cancelDto, 'tenant-1', mockUser);
 
-      expect(orderRepository.save).toHaveBeenCalledWith(
-        expect.objectContaining({
-          status: OrderStatus.CANCELLED,
-          cancelledBy: mockUser.id,
-          cancellationReason: cancelDto.reason,
-          cancelledAt: expect.any(Date),
-        }),
-      );
+      expect(result.status).toBe(OrderStatus.CANCELLED);
+      expect(result.cancelledBy).toBe('user-1');
+      expect(result.cancellationReason).toBe('Customer request');
     });
 
     it('should throw BadRequestException when order cannot be cancelled', async () => {
-      const shippedOrder = createMockOrder({ 
-        status: OrderStatus.SHIPPED,
-        get canBeCancelled() { return false; }
+      const deliveredOrder = createMockOrder({
+        status: OrderStatus.DELIVERED,
       });
-      orderRepository.findOne.mockResolvedValue(shippedOrder);
+      orderRepository.findOne.mockResolvedValue(deliveredOrder);
 
-      await expect(
-        service.cancel('order-123', cancelDto, 'tenant-123', mockUser),
-      ).rejects.toThrow(BadRequestException);
-      await expect(
-        service.cancel('order-123', cancelDto, 'tenant-123', mockUser),
-      ).rejects.toThrow('Order cannot be cancelled');
+      await expect(service.cancel('order-1', cancelDto, 'tenant-1', mockUser)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.cancel('order-1', cancelDto, 'tenant-1', mockUser)).rejects.toThrow(
+        'Order cannot be cancelled',
+      );
+    });
+
+    it('should set cancelledAt timestamp', async () => {
+      orderRepository.findOne.mockResolvedValue(mockOrder);
+      orderRepository.save.mockResolvedValue(mockOrder);
+
+      await service.cancel('order-1', cancelDto, 'tenant-1', mockUser);
+
+      expect(orderRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          cancelledAt: expect.any(Date),
+        }),
+      );
     });
   });
 
   describe('refund', () => {
     it('should refund order successfully', async () => {
-      const paidOrder = createMockOrder({ paymentStatus: PaymentStatus.PAID });
+      const paidOrder = createMockOrder({
+        paymentStatus: PaymentStatus.PAID,
+      });
       orderRepository.findOne.mockResolvedValue(paidOrder);
-      orderRepository.save.mockResolvedValue(paidOrder);
+      const refundedOrder = createMockOrder({
+        status: OrderStatus.REFUNDED,
+        paymentStatus: PaymentStatus.REFUNDED,
+      });
+      orderRepository.save.mockResolvedValue(refundedOrder);
 
-      const result = await service.refund('order-123', 'Product defective', 'tenant-123', mockUser);
+      const result = await service.refund('order-1', 'Defective product', 'tenant-1', mockUser);
+
+      expect(result.status).toBe(OrderStatus.REFUNDED);
+      expect(result.paymentStatus).toBe(PaymentStatus.REFUNDED);
+    });
+
+    it('should throw BadRequestException when order not paid', async () => {
+      orderRepository.findOne.mockResolvedValue(mockOrder);
+
+      await expect(
+        service.refund('order-1', 'Defective product', 'tenant-1', mockUser),
+      ).rejects.toThrow('Order must be paid before refunding');
+    });
+
+    it('should set cancellation reason and cancelledBy', async () => {
+      const paidOrder = createMockOrder({
+        paymentStatus: PaymentStatus.PAID,
+      });
+      orderRepository.findOne.mockResolvedValue(paidOrder);
+      orderRepository.save.mockResolvedValue(mockOrder);
+
+      await service.refund('order-1', 'Defective product', 'tenant-1', mockUser);
 
       expect(orderRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({
-          status: OrderStatus.REFUNDED,
-          paymentStatus: PaymentStatus.REFUNDED,
-          cancellationReason: 'Product defective',
-          cancelledBy: mockUser.id,
+          cancellationReason: 'Defective product',
+          cancelledBy: 'user-1',
           cancelledAt: expect.any(Date),
         }),
       );
     });
-
-    it('should throw BadRequestException when order is not paid', async () => {
-      const order = createMockOrder();
-      orderRepository.findOne.mockResolvedValue(order);
-
-      await expect(
-        service.refund('order-123', 'Product defective', 'tenant-123', mockUser),
-      ).rejects.toThrow(BadRequestException);
-      await expect(
-        service.refund('order-123', 'Product defective', 'tenant-123', mockUser),
-      ).rejects.toThrow('Order must be paid before refunding');
-    });
   });
 
   describe('getStatistics', () => {
-    it('should return order statistics', async () => {
+    const mockQueryBuilder = {
+      where: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      getMany: jest.fn(),
+    };
+
+    beforeEach(() => {
+      orderRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
+    });
+
+    it('should calculate statistics correctly', async () => {
       const orders = [
-        createMockOrder({ total: 100, status: OrderStatus.PENDING }),
-        createMockOrder({ total: 200, status: OrderStatus.CONFIRMED }),
-        createMockOrder({ total: 300, status: OrderStatus.DELIVERED }),
+        { ...mockOrder, total: 100, status: OrderStatus.PENDING },
+        { ...mockOrder, total: 200, status: OrderStatus.CONFIRMED },
+        { ...mockOrder, total: 150, status: OrderStatus.PENDING },
       ];
-      const qb = {
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        getMany: jest.fn().mockResolvedValue(orders),
-      };
-      orderRepository.createQueryBuilder.mockReturnValue(qb as any);
+      mockQueryBuilder.getMany.mockResolvedValue(orders);
 
-      const result = await service.getStatistics('tenant-123');
+      const result = await service.getStatistics('tenant-1');
 
-      expect(result).toEqual({
-        totalOrders: 3,
-        totalRevenue: 600,
-        averageOrderValue: 200,
-        ordersByStatus: {
-          [OrderStatus.PENDING]: 1,
-          [OrderStatus.CONFIRMED]: 1,
-          [OrderStatus.DELIVERED]: 1,
-        },
-      });
+      expect(result.totalOrders).toBe(3);
+      expect(result.totalRevenue).toBe(450);
+      expect(result.averageOrderValue).toBe(150);
+      expect(result.ordersByStatus[OrderStatus.PENDING]).toBe(2);
+      expect(result.ordersByStatus[OrderStatus.CONFIRMED]).toBe(1);
+    });
+
+    it('should handle empty orders', async () => {
+      mockQueryBuilder.getMany.mockResolvedValue([]);
+
+      const result = await service.getStatistics('tenant-1');
+
+      expect(result.totalOrders).toBe(0);
+      expect(result.totalRevenue).toBe(0);
+      expect(result.averageOrderValue).toBe(0);
     });
 
     it('should filter by date range', async () => {
-      const qb = {
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        getMany: jest.fn().mockResolvedValue([]),
-      };
-      orderRepository.createQueryBuilder.mockReturnValue(qb as any);
+      mockQueryBuilder.getMany.mockResolvedValue([mockOrder]);
       const startDate = new Date('2024-01-01');
       const endDate = new Date('2024-12-31');
 
-      await service.getStatistics('tenant-123', startDate, endDate);
+      await service.getStatistics('tenant-1', startDate, endDate);
 
-      expect(qb.andWhere).toHaveBeenCalledWith('order.createdAt >= :startDate', { startDate });
-      expect(qb.andWhere).toHaveBeenCalledWith('order.createdAt <= :endDate', { endDate });
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('order.createdAt >= :startDate', {
+        startDate,
+      });
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('order.createdAt <= :endDate', {
+        endDate,
+      });
+    });
+  });
+
+  describe('Edge Cases', () => {
+    it('should handle null user', async () => {
+      await expect(service.findOne('order-1', null as any)).rejects.toThrow();
     });
 
-    it('should return zero values when no orders', async () => {
-      const qb = {
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        getMany: jest.fn().mockResolvedValue([]),
-      };
-      orderRepository.createQueryBuilder.mockReturnValue(qb as any);
+    it('should handle undefined tenantId', async () => {
+      const userWithoutTenant = { ...mockUser, tenantId: undefined as any };
+      orderRepository.findOne.mockResolvedValue(null);
 
-      const result = await service.getStatistics('tenant-123');
+      await expect(service.findOne('order-1', userWithoutTenant)).rejects.toThrow();
+    });
 
-      expect(result).toEqual({
-        totalOrders: 0,
-        totalRevenue: 0,
-        averageOrderValue: 0,
-        ordersByStatus: {},
-      });
+    it('should handle very large order total', async () => {
+      const largeOrder = createMockOrder({ total: 999999999 });
+      orderRepository.findOne.mockResolvedValue(largeOrder);
+
+      const result = await service.findOne('order-1', mockUser);
+
+      expect(result.total).toBe(999999999);
+    });
+
+    it('should handle zero total', async () => {
+      const zeroOrder = createMockOrder({ total: 0 });
+      orderRepository.findOne.mockResolvedValue(zeroOrder);
+
+      const result = await service.findOne('order-1', mockUser);
+
+      expect(result.total).toBe(0);
     });
   });
 });

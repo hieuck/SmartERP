@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Repository } from 'typeorm';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { getRepositoryToken } from '@nestjs/typeorm';
 import { PayrollService } from './payroll.service';
 import { SalaryStructure } from './entities/salary-structure.entity';
 import { Payslip } from './entities/payslip.entity';
@@ -13,46 +13,28 @@ describe('PayrollService', () => {
   let salaryStructureRepository: jest.Mocked<Repository<SalaryStructure>>;
   let payslipRepository: jest.Mocked<Repository<Payslip>>;
 
-  const tenantId = 'tenant-1';
-  const employeeId = 'employee-1';
-
   const mockSalaryStructure: SalaryStructure = {
-    id: 'structure-1',
-    employeeId,
-    employee: null,
+    id: 'salary-1',
+    employeeId: 'emp-1',
     baseSalary: 5000,
-    allowances: 1500,
-    deductions: 700,
+    allowances: { housing: 1000, transport: 500 },
+    deductions: { tax: 500, insurance: 200 },
     effectiveFrom: new Date('2024-01-01'),
-    effectiveTo: null,
-    isActive: true,
-    tenantId,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    tenantId: 'tenant-1',
   } as SalaryStructure;
 
   const mockPayslip: Payslip = {
     id: 'payslip-1',
-    employeeId,
-    employee: null,
-    salaryStructureId: 'structure-1',
-    salaryStructure: null,
+    employeeId: 'emp-1',
+    salaryStructureId: 'salary-1',
     month: 1,
     year: 2024,
     baseSalary: 5000,
-    allowances: 1500,
-    deductions: 700,
-    taxAmount: 0,
-    grossSalary: 6500,
-    netSalary: 5800,
+    allowances: { housing: 1000, transport: 500 },
+    deductions: { tax: 500, insurance: 200 },
     status: PayslipStatus.DRAFT,
-    paymentDate: null,
-    tenantId,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    calculateSalary: jest.fn(),
-    validate: jest.fn(),
-  } as any;
+    tenantId: 'tenant-1',
+  } as Payslip;
 
   beforeEach(async () => {
     const mockSalaryRepo = {
@@ -93,83 +75,187 @@ describe('PayrollService', () => {
   });
 
   describe('createSalaryStructure', () => {
-    it('should create salary structure', async () => {
-      const dto: CreateSalaryStructureDto = {
-        employeeId,
-        baseSalary: 5000,
-        allowances: 1500,
-        deductions: 700,
-        effectiveFrom: new Date('2024-01-01'),
-      };
+    const createDto: CreateSalaryStructureDto = {
+      employeeId: 'emp-1',
+      baseSalary: 5000,
+      allowances: { housing: 1000, transport: 500 },
+      deductions: { tax: 500, insurance: 200 },
+      effectiveFrom: new Date('2024-01-01'),
+    };
 
-      salaryStructureRepository.create.mockReturnValue(mockSalaryStructure);
+    it('should create salary structure successfully', async () => {
+      salaryStructureRepository.create.mockReturnValue(mockSalaryStructure as any);
       salaryStructureRepository.save.mockResolvedValue(mockSalaryStructure);
 
-      const result = await service.createSalaryStructure(dto, tenantId);
+      const result = await service.createSalaryStructure(createDto, 'tenant-1');
 
-      expect(result).toEqual(mockSalaryStructure);
       expect(salaryStructureRepository.create).toHaveBeenCalledWith({
-        ...dto,
-        tenantId,
+        ...createDto,
+        tenantId: 'tenant-1',
       });
+      expect(salaryStructureRepository.save).toHaveBeenCalled();
+      expect(result).toEqual(mockSalaryStructure);
+    });
+
+    it('should handle zero base salary', async () => {
+      const zeroSalaryDto = { ...createDto, baseSalary: 0 };
+      salaryStructureRepository.create.mockReturnValue(mockSalaryStructure as any);
+      salaryStructureRepository.save.mockResolvedValue(mockSalaryStructure);
+
+      const result = await service.createSalaryStructure(zeroSalaryDto, 'tenant-1');
+
+      expect(result).toBeDefined();
+    });
+
+    it('should handle empty allowances', async () => {
+      const noAllowancesDto = { ...createDto, allowances: {} };
+      salaryStructureRepository.create.mockReturnValue(mockSalaryStructure as any);
+      salaryStructureRepository.save.mockResolvedValue(mockSalaryStructure);
+
+      const result = await service.createSalaryStructure(noAllowancesDto, 'tenant-1');
+
+      expect(result).toBeDefined();
+    });
+
+    it('should handle empty deductions', async () => {
+      const noDeductionsDto = { ...createDto, deductions: {} };
+      salaryStructureRepository.create.mockReturnValue(mockSalaryStructure as any);
+      salaryStructureRepository.save.mockResolvedValue(mockSalaryStructure);
+
+      const result = await service.createSalaryStructure(noDeductionsDto, 'tenant-1');
+
+      expect(result).toBeDefined();
+    });
+
+    it('should handle null allowances', async () => {
+      const nullAllowancesDto = { ...createDto, allowances: null as any };
+      salaryStructureRepository.create.mockReturnValue(mockSalaryStructure as any);
+      salaryStructureRepository.save.mockResolvedValue(mockSalaryStructure);
+
+      const result = await service.createSalaryStructure(nullAllowancesDto, 'tenant-1');
+
+      expect(result).toBeDefined();
+    });
+
+    it('should handle null deductions', async () => {
+      const nullDeductionsDto = { ...createDto, deductions: null as any };
+      salaryStructureRepository.create.mockReturnValue(mockSalaryStructure as any);
+      salaryStructureRepository.save.mockResolvedValue(mockSalaryStructure);
+
+      const result = await service.createSalaryStructure(nullDeductionsDto, 'tenant-1');
+
+      expect(result).toBeDefined();
     });
   });
 
   describe('getSalaryStructure', () => {
-    it('should return salary structure by id', async () => {
+    it('should get salary structure by id successfully', async () => {
       salaryStructureRepository.findOne.mockResolvedValue(mockSalaryStructure);
 
-      const result = await service.getSalaryStructure('structure-1', tenantId);
+      const result = await service.getSalaryStructure('salary-1', 'tenant-1');
 
       expect(result).toEqual(mockSalaryStructure);
       expect(salaryStructureRepository.findOne).toHaveBeenCalledWith({
-        where: { id: 'structure-1', tenantId },
+        where: { id: 'salary-1', tenantId: 'tenant-1' },
         relations: ['employee'],
       });
     });
 
-    it('should throw NotFoundException when structure not found', async () => {
+    it('should throw NotFoundException when not found', async () => {
       salaryStructureRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.getSalaryStructure('invalid-id', tenantId)).rejects.toThrow(
+      await expect(service.getSalaryStructure('salary-999', 'tenant-1')).rejects.toThrow(
+        NotFoundException,
+      );
+      await expect(service.getSalaryStructure('salary-999', 'tenant-1')).rejects.toThrow(
+        'Salary structure not found',
+      );
+    });
+
+    it('should handle null id', async () => {
+      salaryStructureRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.getSalaryStructure(null as any, 'tenant-1')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('should handle empty id', async () => {
+      salaryStructureRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.getSalaryStructure('', 'tenant-1')).rejects.toThrow(NotFoundException);
+    });
+
+    it('should handle undefined tenantId', async () => {
+      salaryStructureRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.getSalaryStructure('salary-1', undefined as any)).rejects.toThrow(
         NotFoundException,
       );
     });
   });
 
   describe('getSalaryStructuresByEmployee', () => {
-    it('should return all salary structures for employee', async () => {
-      const structures = [mockSalaryStructure];
-      salaryStructureRepository.find.mockResolvedValue(structures);
+    it('should get salary structures by employee id', async () => {
+      salaryStructureRepository.find.mockResolvedValue([mockSalaryStructure]);
 
-      const result = await service.getSalaryStructuresByEmployee(employeeId, tenantId);
+      const result = await service.getSalaryStructuresByEmployee('emp-1', 'tenant-1');
 
-      expect(result).toEqual(structures);
+      expect(result).toEqual([mockSalaryStructure]);
       expect(salaryStructureRepository.find).toHaveBeenCalledWith({
-        where: { employeeId, tenantId },
+        where: { employeeId: 'emp-1', tenantId: 'tenant-1' },
         order: { effectiveFrom: 'DESC' },
       });
+    });
+
+    it('should return empty array when no structures found', async () => {
+      salaryStructureRepository.find.mockResolvedValue([]);
+
+      const result = await service.getSalaryStructuresByEmployee('emp-999', 'tenant-1');
+
+      expect(result).toEqual([]);
+    });
+
+    it('should handle null employeeId', async () => {
+      salaryStructureRepository.find.mockResolvedValue([]);
+
+      const result = await service.getSalaryStructuresByEmployee(null as any, 'tenant-1');
+
+      expect(result).toEqual([]);
     });
   });
 
   describe('generatePayslip', () => {
-    it('should generate payslip for salary structure', async () => {
+    it('should generate payslip successfully', async () => {
       salaryStructureRepository.findOne.mockResolvedValue(mockSalaryStructure);
       payslipRepository.findOne.mockResolvedValue(null);
-      payslipRepository.create.mockReturnValue(mockPayslip);
+      payslipRepository.create.mockReturnValue(mockPayslip as any);
       payslipRepository.save.mockResolvedValue(mockPayslip);
 
-      const result = await service.generatePayslip('structure-1', 1, 2024, tenantId);
+      const result = await service.generatePayslip('salary-1', 1, 2024, 'tenant-1');
 
       expect(result).toEqual(mockPayslip);
-      expect(payslipRepository.create).toHaveBeenCalled();
+      expect(payslipRepository.create).toHaveBeenCalledWith({
+        tenantId: 'tenant-1',
+        employeeId: 'emp-1',
+        salaryStructureId: 'salary-1',
+        month: 1,
+        year: 2024,
+        baseSalary: 5000,
+        allowances: { housing: 1000, transport: 500 },
+        deductions: { tax: 500, insurance: 200 },
+        status: PayslipStatus.DRAFT,
+      });
     });
 
-    it('should throw NotFoundException when structure not found', async () => {
+    it('should throw NotFoundException when salary structure not found', async () => {
       salaryStructureRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.generatePayslip('invalid-id', 1, 2024, tenantId)).rejects.toThrow(
+      await expect(service.generatePayslip('salary-999', 1, 2024, 'tenant-1')).rejects.toThrow(
         NotFoundException,
+      );
+      await expect(service.generatePayslip('salary-999', 1, 2024, 'tenant-1')).rejects.toThrow(
+        'Salary structure not found',
       );
     });
 
@@ -177,134 +263,339 @@ describe('PayrollService', () => {
       salaryStructureRepository.findOne.mockResolvedValue(mockSalaryStructure);
       payslipRepository.findOne.mockResolvedValue(mockPayslip);
 
-      await expect(service.generatePayslip('structure-1', 1, 2024, tenantId)).rejects.toThrow(
+      await expect(service.generatePayslip('salary-1', 1, 2024, 'tenant-1')).rejects.toThrow(
         BadRequestException,
       );
+      await expect(service.generatePayslip('salary-1', 1, 2024, 'tenant-1')).rejects.toThrow(
+        'Payslip already exists for this month',
+      );
+    });
+
+    it('should handle month 12', async () => {
+      salaryStructureRepository.findOne.mockResolvedValue(mockSalaryStructure);
+      payslipRepository.findOne.mockResolvedValue(null);
+      payslipRepository.create.mockReturnValue(mockPayslip as any);
+      payslipRepository.save.mockResolvedValue(mockPayslip);
+
+      const result = await service.generatePayslip('salary-1', 12, 2024, 'tenant-1');
+
+      expect(result).toBeDefined();
+    });
+
+    it('should handle month 1', async () => {
+      salaryStructureRepository.findOne.mockResolvedValue(mockSalaryStructure);
+      payslipRepository.findOne.mockResolvedValue(null);
+      payslipRepository.create.mockReturnValue(mockPayslip as any);
+      payslipRepository.save.mockResolvedValue(mockPayslip);
+
+      const result = await service.generatePayslip('salary-1', 1, 2024, 'tenant-1');
+
+      expect(result).toBeDefined();
+    });
+
+    it('should handle invalid month 0', async () => {
+      salaryStructureRepository.findOne.mockResolvedValue(mockSalaryStructure);
+      payslipRepository.findOne.mockResolvedValue(null);
+      payslipRepository.create.mockReturnValue(mockPayslip as any);
+      payslipRepository.save.mockResolvedValue(mockPayslip);
+
+      const result = await service.generatePayslip('salary-1', 0, 2024, 'tenant-1');
+
+      expect(result).toBeDefined();
+    });
+
+    it('should handle invalid month 13', async () => {
+      salaryStructureRepository.findOne.mockResolvedValue(mockSalaryStructure);
+      payslipRepository.findOne.mockResolvedValue(null);
+      payslipRepository.create.mockReturnValue(mockPayslip as any);
+      payslipRepository.save.mockResolvedValue(mockPayslip);
+
+      const result = await service.generatePayslip('salary-1', 13, 2024, 'tenant-1');
+
+      expect(result).toBeDefined();
     });
   });
 
   describe('getPayslip', () => {
-    it('should return payslip by id', async () => {
+    it('should get payslip by id successfully', async () => {
       payslipRepository.findOne.mockResolvedValue(mockPayslip);
 
-      const result = await service.getPayslip('payslip-1', tenantId);
+      const result = await service.getPayslip('payslip-1', 'tenant-1');
 
       expect(result).toEqual(mockPayslip);
       expect(payslipRepository.findOne).toHaveBeenCalledWith({
-        where: { id: 'payslip-1', tenantId },
+        where: { id: 'payslip-1', tenantId: 'tenant-1' },
         relations: ['employee', 'salaryStructure'],
       });
+    });
+
+    it('should throw NotFoundException when not found', async () => {
+      payslipRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.getPayslip('payslip-999', 'tenant-1')).rejects.toThrow(
+        NotFoundException,
+      );
+      await expect(service.getPayslip('payslip-999', 'tenant-1')).rejects.toThrow(
+        'Payslip not found',
+      );
+    });
+
+    it('should handle null id', async () => {
+      payslipRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.getPayslip(null as any, 'tenant-1')).rejects.toThrow(NotFoundException);
+    });
+
+    it('should handle empty id', async () => {
+      payslipRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.getPayslip('', 'tenant-1')).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('getPayslipsByEmployee', () => {
+    it('should get payslips by employee id', async () => {
+      payslipRepository.find.mockResolvedValue([mockPayslip]);
+
+      const result = await service.getPayslipsByEmployee('emp-1', 'tenant-1');
+
+      expect(result).toEqual([mockPayslip]);
+      expect(payslipRepository.find).toHaveBeenCalledWith({
+        where: { employeeId: 'emp-1', tenantId: 'tenant-1' },
+        order: { year: 'DESC', month: 'DESC' },
+      });
+    });
+
+    it('should return empty array when no payslips found', async () => {
+      payslipRepository.find.mockResolvedValue([]);
+
+      const result = await service.getPayslipsByEmployee('emp-999', 'tenant-1');
+
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('getPayslipsByMonth', () => {
+    it('should get payslips by month and year', async () => {
+      payslipRepository.find.mockResolvedValue([mockPayslip]);
+
+      const result = await service.getPayslipsByMonth(1, 2024, 'tenant-1');
+
+      expect(result).toEqual([mockPayslip]);
+      expect(payslipRepository.find).toHaveBeenCalledWith({
+        where: { month: 1, year: 2024, tenantId: 'tenant-1' },
+        relations: ['employee'],
+      });
+    });
+
+    it('should return empty array when no payslips found', async () => {
+      payslipRepository.find.mockResolvedValue([]);
+
+      const result = await service.getPayslipsByMonth(12, 2025, 'tenant-1');
+
+      expect(result).toEqual([]);
+    });
+
+    it('should handle month 12', async () => {
+      payslipRepository.find.mockResolvedValue([mockPayslip]);
+
+      const result = await service.getPayslipsByMonth(12, 2024, 'tenant-1');
+
+      expect(result).toBeDefined();
+    });
+
+    it('should handle month 1', async () => {
+      payslipRepository.find.mockResolvedValue([mockPayslip]);
+
+      const result = await service.getPayslipsByMonth(1, 2024, 'tenant-1');
+
+      expect(result).toBeDefined();
+    });
+  });
+
+  describe('submitPayslip', () => {
+    it('should submit payslip successfully', async () => {
+      payslipRepository.findOne.mockResolvedValue(mockPayslip);
+      payslipRepository.save.mockResolvedValue({
+        ...mockPayslip,
+        status: PayslipStatus.SUBMITTED,
+      });
+
+      const result = await service.submitPayslip('payslip-1', 'tenant-1');
+
+      expect(result.status).toBe(PayslipStatus.SUBMITTED);
+      expect(payslipRepository.save).toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException when payslip not draft', async () => {
+      payslipRepository.findOne.mockResolvedValue({
+        ...mockPayslip,
+        status: PayslipStatus.PAID,
+      });
+
+      await expect(service.submitPayslip('payslip-1', 'tenant-1')).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.submitPayslip('payslip-1', 'tenant-1')).rejects.toThrow(
+        'Only draft payslips can be submitted',
+      );
     });
 
     it('should throw NotFoundException when payslip not found', async () => {
       payslipRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.getPayslip('invalid-id', tenantId)).rejects.toThrow(
+      await expect(service.submitPayslip('payslip-999', 'tenant-1')).rejects.toThrow(
         NotFoundException,
       );
     });
   });
 
-  describe('getPayslipsByEmployee', () => {
-    it('should return all payslips for employee', async () => {
-      const payslips = [mockPayslip];
-      payslipRepository.find.mockResolvedValue(payslips);
-
-      const result = await service.getPayslipsByEmployee(employeeId, tenantId);
-
-      expect(result).toEqual(payslips);
-      expect(payslipRepository.find).toHaveBeenCalledWith({
-        where: { employeeId, tenantId },
-        order: { year: 'DESC', month: 'DESC' },
-      });
-    });
-  });
-
-  describe('getPayslipsByMonth', () => {
-    it('should return all payslips for specific month', async () => {
-      const payslips = [mockPayslip];
-      payslipRepository.find.mockResolvedValue(payslips);
-
-      const result = await service.getPayslipsByMonth(1, 2024, tenantId);
-
-      expect(result).toEqual(payslips);
-      expect(payslipRepository.find).toHaveBeenCalledWith({
-        where: { month: 1, year: 2024, tenantId },
-        relations: ['employee'],
-      });
-    });
-  });
-
-  describe('submitPayslip', () => {
-    it('should submit draft payslip', async () => {
-      payslipRepository.findOne.mockResolvedValue(mockPayslip);
-      const submittedPayslip = { ...mockPayslip, status: PayslipStatus.SUBMITTED } as any;
-      payslipRepository.save.mockResolvedValue(submittedPayslip);
-
-      const result = await service.submitPayslip('payslip-1', tenantId);
-
-      expect(result.status).toBe(PayslipStatus.SUBMITTED);
-    });
-
-    it('should throw BadRequestException when payslip not draft', async () => {
-      const submittedPayslip = { ...mockPayslip, status: PayslipStatus.SUBMITTED } as any;
-      payslipRepository.findOne.mockResolvedValue(submittedPayslip);
-
-      await expect(service.submitPayslip('payslip-1', tenantId)).rejects.toThrow(
-        BadRequestException,
-      );
-    });
-  });
-
   describe('markAsPaid', () => {
-    it('should mark submitted payslip as paid', async () => {
-      const submittedPayslip = { ...mockPayslip, status: PayslipStatus.SUBMITTED } as any;
-      const paymentDate = new Date('2024-01-31');
-      payslipRepository.findOne.mockResolvedValue(submittedPayslip);
-      const paidPayslip = {
-        ...submittedPayslip,
+    const paymentDate = new Date('2024-01-31');
+
+    it('should mark payslip as paid successfully', async () => {
+      payslipRepository.findOne.mockResolvedValue({
+        ...mockPayslip,
+        status: PayslipStatus.SUBMITTED,
+      });
+      payslipRepository.save.mockResolvedValue({
+        ...mockPayslip,
         status: PayslipStatus.PAID,
         paymentDate,
-      } as any;
-      payslipRepository.save.mockResolvedValue(paidPayslip);
+      });
 
-      const result = await service.markAsPaid('payslip-1', paymentDate, tenantId);
+      const result = await service.markAsPaid('payslip-1', paymentDate, 'tenant-1');
 
       expect(result.status).toBe(PayslipStatus.PAID);
       expect(result.paymentDate).toEqual(paymentDate);
+      expect(payslipRepository.save).toHaveBeenCalled();
     });
 
     it('should throw BadRequestException when payslip not submitted', async () => {
-      // Mock payslip with DRAFT status (not SUBMITTED)
-      const draftPayslip = { ...mockPayslip, status: PayslipStatus.DRAFT } as any;
-      payslipRepository.findOne.mockResolvedValue(draftPayslip);
+      payslipRepository.findOne.mockResolvedValue(mockPayslip);
 
-      await expect(
-        service.markAsPaid('payslip-1', new Date(), tenantId),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.markAsPaid('payslip-1', paymentDate, 'tenant-1')).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.markAsPaid('payslip-1', paymentDate, 'tenant-1')).rejects.toThrow(
+        'Only submitted payslips can be marked as paid',
+      );
+    });
+
+    it('should throw NotFoundException when payslip not found', async () => {
+      payslipRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.markAsPaid('payslip-999', paymentDate, 'tenant-1')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('should handle null payment date', async () => {
+      payslipRepository.findOne.mockResolvedValue({
+        ...mockPayslip,
+        status: PayslipStatus.SUBMITTED,
+      });
+      payslipRepository.save.mockResolvedValue({
+        ...mockPayslip,
+        status: PayslipStatus.PAID,
+      });
+
+      const result = await service.markAsPaid('payslip-1', null as any, 'tenant-1');
+
+      expect(result.status).toBe(PayslipStatus.PAID);
     });
   });
 
   describe('cancelPayslip', () => {
-    it('should cancel draft payslip', async () => {
-      // Mock payslip with DRAFT status
-      const draftPayslip = { ...mockPayslip, status: PayslipStatus.DRAFT } as any;
-      payslipRepository.findOne.mockResolvedValue(draftPayslip);
-      const cancelledPayslip = { ...draftPayslip, status: PayslipStatus.CANCELLED } as any;
-      payslipRepository.save.mockResolvedValue(cancelledPayslip);
+    it('should cancel payslip successfully', async () => {
+      payslipRepository.findOne.mockResolvedValue(mockPayslip);
+      payslipRepository.save.mockResolvedValue({
+        ...mockPayslip,
+        status: PayslipStatus.CANCELLED,
+      });
 
-      const result = await service.cancelPayslip('payslip-1', tenantId);
+      const result = await service.cancelPayslip('payslip-1', 'tenant-1');
 
       expect(result.status).toBe(PayslipStatus.CANCELLED);
+      expect(payslipRepository.save).toHaveBeenCalled();
     });
 
     it('should throw BadRequestException when payslip is paid', async () => {
-      const paidPayslip = { ...mockPayslip, status: PayslipStatus.PAID } as any;
-      payslipRepository.findOne.mockResolvedValue(paidPayslip);
+      payslipRepository.findOne.mockResolvedValue({
+        ...mockPayslip,
+        status: PayslipStatus.PAID,
+      });
 
-      await expect(service.cancelPayslip('payslip-1', tenantId)).rejects.toThrow(
+      await expect(service.cancelPayslip('payslip-1', 'tenant-1')).rejects.toThrow(
         BadRequestException,
       );
+      await expect(service.cancelPayslip('payslip-1', 'tenant-1')).rejects.toThrow(
+        'Paid payslips cannot be cancelled',
+      );
+    });
+
+    it('should throw NotFoundException when payslip not found', async () => {
+      payslipRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.cancelPayslip('payslip-999', 'tenant-1')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('should cancel submitted payslip', async () => {
+      payslipRepository.findOne.mockResolvedValue({
+        ...mockPayslip,
+        status: PayslipStatus.SUBMITTED,
+      });
+      payslipRepository.save.mockResolvedValue({
+        ...mockPayslip,
+        status: PayslipStatus.CANCELLED,
+      });
+
+      const result = await service.cancelPayslip('payslip-1', 'tenant-1');
+
+      expect(result.status).toBe(PayslipStatus.CANCELLED);
+    });
+  });
+
+  describe('Edge Cases', () => {
+    it('should handle very large base salary', async () => {
+      const largeSalary = { ...mockSalaryStructure, baseSalary: 999999999 };
+      salaryStructureRepository.findOne.mockResolvedValue(largeSalary);
+
+      const result = await service.getSalaryStructure('salary-1', 'tenant-1');
+
+      expect(result.baseSalary).toBe(999999999);
+    });
+
+    it('should handle negative base salary', async () => {
+      const negativeSalary = { ...mockSalaryStructure, baseSalary: -1000 };
+      salaryStructureRepository.create.mockReturnValue(negativeSalary as any);
+      salaryStructureRepository.save.mockResolvedValue(negativeSalary);
+
+      const dto: CreateSalaryStructureDto = {
+        employeeId: 'emp-1',
+        baseSalary: -1000,
+        allowances: {},
+        deductions: {},
+        effectiveFrom: new Date(),
+      };
+
+      const result = await service.createSalaryStructure(dto, 'tenant-1');
+
+      expect(result).toBeDefined();
+    });
+
+    it('should handle undefined tenantId', async () => {
+      salaryStructureRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.getSalaryStructure('salary-1', undefined as any)).rejects.toThrow();
+    });
+
+    it('should handle null tenantId', async () => {
+      salaryStructureRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.getSalaryStructure('salary-1', null as any)).rejects.toThrow();
     });
   });
 });

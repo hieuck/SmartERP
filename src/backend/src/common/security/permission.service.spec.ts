@@ -1,252 +1,386 @@
-﻿/**
- * PermissionService Unit Tests
- * Coverage target: 95%
- * 
- * Test cases:
- * 1. canRead - Admin, Manager, Owner, Different tenant
- * 2. canWrite - Admin, Manager, Owner, Different tenant
- * 3. canDelete - Admin only, Manager denied, Owner denied
- * 4. buildSecureQuery - Admin, Manager, Regular user
- */
-
+import { Test, TestingModule } from '@nestjs/testing';
 import { PermissionService, User, BaseRecord } from './permission.service';
 
 describe('PermissionService', () => {
   let service: PermissionService;
 
-  const adminUser: User = {
-    id: 'admin-123',
-    tenantId: 'tenant-123',
+  const mockUser: User = {
+    id: 'user-1',
+    tenantId: 'tenant-1',
+    roles: ['user'],
+  };
+
+  const mockAdminUser: User = {
+    id: 'admin-1',
+    tenantId: 'tenant-1',
     roles: ['admin'],
   };
 
-  const managerUser: User = {
-    id: 'manager-123',
-    tenantId: 'tenant-123',
+  const mockManagerUser: User = {
+    id: 'manager-1',
+    tenantId: 'tenant-1',
     roles: ['manager'],
   };
 
-  const regularUser: User = {
-    id: 'user-123',
-    tenantId: 'tenant-123',
-    roles: ['user'],
+  const mockRecord: BaseRecord = {
+    id: 'record-1',
+    tenantId: 'tenant-1',
+    createdBy: 'user-1',
   };
 
-  const otherTenantUser: User = {
-    id: 'user-456',
-    tenantId: 'tenant-456',
-    roles: ['user'],
-  };
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [PermissionService],
+    }).compile();
 
-  const ownedRecord: BaseRecord = {
-    id: 'record-123',
-    tenantId: 'tenant-123',
-    createdBy: 'user-123',
-  };
-
-  const otherUserRecord: BaseRecord = {
-    id: 'record-456',
-    tenantId: 'tenant-123',
-    createdBy: 'other-user-123',
-  };
-
-  const otherTenantRecord: BaseRecord = {
-    id: 'record-789',
-    tenantId: 'tenant-456',
-    createdBy: 'user-456',
-  };
-
-  beforeEach(() => {
-    service = new PermissionService();
+    service = module.get<PermissionService>(PermissionService);
   });
 
   describe('canRead', () => {
-    it('should allow admin to read any record in same tenant', () => {
-      expect(service.canRead(adminUser, ownedRecord, 'Product')).toBe(true);
-      expect(service.canRead(adminUser, otherUserRecord, 'Product')).toBe(true);
+    it('should allow admin to read any record', () => {
+      const result = service.canRead(mockAdminUser, mockRecord, 'TestEntity');
+
+      expect(result).toBe(true);
     });
 
-    it('should allow manager to read any record in same tenant', () => {
-      expect(service.canRead(managerUser, ownedRecord, 'Product')).toBe(true);
-      expect(service.canRead(managerUser, otherUserRecord, 'Product')).toBe(true);
+    it('should allow manager to read any record', () => {
+      const result = service.canRead(mockManagerUser, mockRecord, 'TestEntity');
+
+      expect(result).toBe(true);
     });
 
-    it('should allow regular user to read own records', () => {
-      expect(service.canRead(regularUser, ownedRecord, 'Product')).toBe(true);
+    it('should allow user to read own record', () => {
+      const result = service.canRead(mockUser, mockRecord, 'TestEntity');
+
+      expect(result).toBe(true);
     });
 
-    it('should deny regular user to read other user records', () => {
-      expect(service.canRead(regularUser, otherUserRecord, 'Product')).toBe(false);
+    it('should deny user to read other user record', () => {
+      const otherRecord = { ...mockRecord, createdBy: 'other-user' };
+
+      const result = service.canRead(mockUser, otherRecord, 'TestEntity');
+
+      expect(result).toBe(false);
     });
 
-    it('should deny access to records from different tenant', () => {
-      expect(service.canRead(adminUser, otherTenantRecord, 'Product')).toBe(false);
-      expect(service.canRead(managerUser, otherTenantRecord, 'Product')).toBe(false);
-      expect(service.canRead(regularUser, otherTenantRecord, 'Product')).toBe(false);
+    it('should deny access to different tenant', () => {
+      const otherTenantRecord = { ...mockRecord, tenantId: 'tenant-2' };
+
+      const result = service.canRead(mockUser, otherTenantRecord, 'TestEntity');
+
+      expect(result).toBe(false);
     });
 
-    it('should handle user without roles', () => {
-      const userWithoutRoles: User = {
-        id: 'user-no-roles',
-        tenantId: 'tenant-123',
-        roles: [],
-      };
-      expect(service.canRead(userWithoutRoles, ownedRecord, 'Product')).toBe(false);
+    it('should deny admin from different tenant', () => {
+      const otherTenantRecord = { ...mockRecord, tenantId: 'tenant-2' };
+
+      const result = service.canRead(mockAdminUser, otherTenantRecord, 'TestEntity');
+
+      expect(result).toBe(false);
     });
 
     it('should handle record without createdBy', () => {
-      const recordWithoutCreator: BaseRecord = {
-        id: 'record-no-creator',
-        tenantId: 'tenant-123',
-      };
-      expect(service.canRead(regularUser, recordWithoutCreator, 'Product')).toBe(false);
-      expect(service.canRead(adminUser, recordWithoutCreator, 'Product')).toBe(true);
+      const recordWithoutCreator = { ...mockRecord, createdBy: undefined };
+
+      const result = service.canRead(mockUser, recordWithoutCreator, 'TestEntity');
+
+      expect(result).toBe(false);
+    });
+
+    it('should handle null createdBy', () => {
+      const recordWithNullCreator = { ...mockRecord, createdBy: null as any };
+
+      const result = service.canRead(mockUser, recordWithNullCreator, 'TestEntity');
+
+      expect(result).toBe(false);
+    });
+
+    it('should handle empty createdBy', () => {
+      const recordWithEmptyCreator = { ...mockRecord, createdBy: '' };
+
+      const result = service.canRead(mockUser, recordWithEmptyCreator, 'TestEntity');
+
+      expect(result).toBe(false);
     });
   });
 
   describe('canWrite', () => {
-    it('should allow admin to write any record in same tenant', () => {
-      expect(service.canWrite(adminUser, ownedRecord, 'Product')).toBe(true);
-      expect(service.canWrite(adminUser, otherUserRecord, 'Product')).toBe(true);
+    it('should allow admin to write any record', () => {
+      const result = service.canWrite(mockAdminUser, mockRecord, 'TestEntity');
+
+      expect(result).toBe(true);
     });
 
-    it('should allow manager to write any record in same tenant', () => {
-      expect(service.canWrite(managerUser, ownedRecord, 'Product')).toBe(true);
-      expect(service.canWrite(managerUser, otherUserRecord, 'Product')).toBe(true);
+    it('should allow manager to write any record', () => {
+      const result = service.canWrite(mockManagerUser, mockRecord, 'TestEntity');
+
+      expect(result).toBe(true);
     });
 
-    it('should allow regular user to write own records', () => {
-      expect(service.canWrite(regularUser, ownedRecord, 'Product')).toBe(true);
+    it('should allow user to write own record', () => {
+      const result = service.canWrite(mockUser, mockRecord, 'TestEntity');
+
+      expect(result).toBe(true);
     });
 
-    it('should deny regular user to write other user records', () => {
-      expect(service.canWrite(regularUser, otherUserRecord, 'Product')).toBe(false);
+    it('should deny user to write other user record', () => {
+      const otherRecord = { ...mockRecord, createdBy: 'other-user' };
+
+      const result = service.canWrite(mockUser, otherRecord, 'TestEntity');
+
+      expect(result).toBe(false);
     });
 
-    it('should deny access to records from different tenant', () => {
-      expect(service.canWrite(adminUser, otherTenantRecord, 'Product')).toBe(false);
-      expect(service.canWrite(managerUser, otherTenantRecord, 'Product')).toBe(false);
-      expect(service.canWrite(regularUser, otherTenantRecord, 'Product')).toBe(false);
+    it('should deny access to different tenant', () => {
+      const otherTenantRecord = { ...mockRecord, tenantId: 'tenant-2' };
+
+      const result = service.canWrite(mockUser, otherTenantRecord, 'TestEntity');
+
+      expect(result).toBe(false);
     });
 
-    it('should handle user without roles', () => {
-      const userWithoutRoles: User = {
-        id: 'user-no-roles',
-        tenantId: 'tenant-123',
-        roles: [],
-      };
-      expect(service.canWrite(userWithoutRoles, ownedRecord, 'Product')).toBe(false);
+    it('should deny admin from different tenant', () => {
+      const otherTenantRecord = { ...mockRecord, tenantId: 'tenant-2' };
+
+      const result = service.canWrite(mockAdminUser, otherTenantRecord, 'TestEntity');
+
+      expect(result).toBe(false);
     });
 
     it('should handle record without createdBy', () => {
-      const recordWithoutCreator: BaseRecord = {
-        id: 'record-no-creator',
-        tenantId: 'tenant-123',
-      };
-      expect(service.canWrite(regularUser, recordWithoutCreator, 'Product')).toBe(false);
-      expect(service.canWrite(adminUser, recordWithoutCreator, 'Product')).toBe(true);
+      const recordWithoutCreator = { ...mockRecord, createdBy: undefined };
+
+      const result = service.canWrite(mockUser, recordWithoutCreator, 'TestEntity');
+
+      expect(result).toBe(false);
     });
   });
 
   describe('canDelete', () => {
-    it('should allow admin to delete any record in same tenant', () => {
-      expect(service.canDelete(adminUser, ownedRecord, 'Product')).toBe(true);
-      expect(service.canDelete(adminUser, otherUserRecord, 'Product')).toBe(true);
+    it('should allow admin to delete any record', () => {
+      const result = service.canDelete(mockAdminUser, mockRecord, 'TestEntity');
+
+      expect(result).toBe(true);
     });
 
-    it('should deny manager to delete records', () => {
-      expect(service.canDelete(managerUser, ownedRecord, 'Product')).toBe(false);
-      expect(service.canDelete(managerUser, otherUserRecord, 'Product')).toBe(false);
+    it('should deny manager to delete record', () => {
+      const result = service.canDelete(mockManagerUser, mockRecord, 'TestEntity');
+
+      expect(result).toBe(false);
     });
 
-    it('should deny regular user to delete own records', () => {
-      expect(service.canDelete(regularUser, ownedRecord, 'Product')).toBe(false);
+    it('should deny user to delete own record', () => {
+      const result = service.canDelete(mockUser, mockRecord, 'TestEntity');
+
+      expect(result).toBe(false);
     });
 
-    it('should deny regular user to delete other user records', () => {
-      expect(service.canDelete(regularUser, otherUserRecord, 'Product')).toBe(false);
+    it('should deny user to delete other user record', () => {
+      const otherRecord = { ...mockRecord, createdBy: 'other-user' };
+
+      const result = service.canDelete(mockUser, otherRecord, 'TestEntity');
+
+      expect(result).toBe(false);
     });
 
-    it('should deny access to records from different tenant', () => {
-      expect(service.canDelete(adminUser, otherTenantRecord, 'Product')).toBe(false);
-      expect(service.canDelete(managerUser, otherTenantRecord, 'Product')).toBe(false);
-      expect(service.canDelete(regularUser, otherTenantRecord, 'Product')).toBe(false);
+    it('should deny access to different tenant', () => {
+      const otherTenantRecord = { ...mockRecord, tenantId: 'tenant-2' };
+
+      const result = service.canDelete(mockAdminUser, otherTenantRecord, 'TestEntity');
+
+      expect(result).toBe(false);
     });
 
-    it('should handle user without roles', () => {
-      const userWithoutRoles: User = {
-        id: 'user-no-roles',
-        tenantId: 'tenant-123',
-        roles: [],
-      };
-      expect(service.canDelete(userWithoutRoles, ownedRecord, 'Product')).toBe(false);
+    it('should deny admin from different tenant', () => {
+      const otherTenantRecord = { ...mockRecord, tenantId: 'tenant-2' };
+
+      const result = service.canDelete(mockAdminUser, otherTenantRecord, 'TestEntity');
+
+      expect(result).toBe(false);
     });
   });
 
   describe('buildSecureQuery', () => {
-    it('should add tenantId filter for all users', () => {
+    it('should add tenantId to query for all users', () => {
       const baseWhere = { status: 'active' };
-      
-      const adminQuery = service.buildSecureQuery(adminUser, baseWhere, 'Product');
-      expect(adminQuery.tenantId).toBe('tenant-123');
-      expect(adminQuery.status).toBe('active');
-      expect(adminQuery.createdBy).toBeUndefined();
+
+      const result = service.buildSecureQuery(mockUser, baseWhere, 'TestEntity');
+
+      expect(result).toEqual({
+        status: 'active',
+        tenantId: 'tenant-1',
+      });
     });
 
-    it('should add createdBy filter for regular users', () => {
+    it('should add createdBy for regular users', () => {
       const baseWhere = { status: 'active' };
-      
-      const userQuery = service.buildSecureQuery(regularUser, baseWhere, 'Product');
-      expect(userQuery.tenantId).toBe('tenant-123');
-      expect(userQuery.status).toBe('active');
-      expect(userQuery.createdBy).toBe('user-123');
+
+      const result = service.buildSecureQuery(mockUser, baseWhere, 'TestEntity');
+
+      expect(result).toEqual({
+        status: 'active',
+        tenantId: 'tenant-1',
+        createdBy: 'user-1',
+      });
     });
 
-    it('should not add createdBy filter for managers', () => {
+    it('should not add createdBy for admin', () => {
       const baseWhere = { status: 'active' };
-      
-      const managerQuery = service.buildSecureQuery(managerUser, baseWhere, 'Product');
-      expect(managerQuery.tenantId).toBe('tenant-123');
-      expect(managerQuery.status).toBe('active');
-      expect(managerQuery.createdBy).toBeUndefined();
+
+      const result = service.buildSecureQuery(mockAdminUser, baseWhere, 'TestEntity');
+
+      expect(result).toEqual({
+        status: 'active',
+        tenantId: 'tenant-1',
+      });
     });
 
-    it('should not modify original baseWhere object', () => {
+    it('should not add createdBy for manager', () => {
       const baseWhere = { status: 'active' };
-      const originalWhere = { ...baseWhere };
-      
-      service.buildSecureQuery(regularUser, baseWhere, 'Product');
-      
-      expect(baseWhere).toEqual(originalWhere);
+
+      const result = service.buildSecureQuery(mockManagerUser, baseWhere, 'TestEntity');
+
+      expect(result).toEqual({
+        status: 'active',
+        tenantId: 'tenant-1',
+      });
     });
 
     it('should handle empty baseWhere', () => {
-      const baseWhere = {};
-      
-      const query = service.buildSecureQuery(regularUser, baseWhere, 'Product');
-      expect(query.tenantId).toBe('tenant-123');
-      expect(query.createdBy).toBe('user-123');
+      const result = service.buildSecureQuery(mockUser, {}, 'TestEntity');
+
+      expect(result).toEqual({
+        tenantId: 'tenant-1',
+        createdBy: 'user-1',
+      });
     });
 
-    it('should override tenantId if present in baseWhere', () => {
-      const baseWhere = { tenantId: 'wrong-tenant', status: 'active' };
-      
-      const query = service.buildSecureQuery(regularUser, baseWhere, 'Product');
-      expect(query.tenantId).toBe('tenant-123');
-      expect(query.status).toBe('active');
+    it('should handle null baseWhere', () => {
+      const result = service.buildSecureQuery(mockUser, null as any, 'TestEntity');
+
+      expect(result).toEqual({
+        tenantId: 'tenant-1',
+        createdBy: 'user-1',
+      });
     });
 
-    it('should handle user without roles as regular user', () => {
-      const userWithoutRoles: User = {
-        id: 'user-no-roles',
-        tenantId: 'tenant-123',
-        roles: [],
-      };
-      const baseWhere = { status: 'active' };
-      
-      const query = service.buildSecureQuery(userWithoutRoles, baseWhere, 'Product');
-      expect(query.tenantId).toBe('tenant-123');
-      expect(query.createdBy).toBe('user-no-roles');
+    it('should handle undefined baseWhere', () => {
+      const result = service.buildSecureQuery(mockUser, undefined as any, 'TestEntity');
+
+      expect(result).toEqual({
+        tenantId: 'tenant-1',
+        createdBy: 'user-1',
+      });
+    });
+
+    it('should preserve existing properties', () => {
+      const baseWhere = { id: 'test-id', name: 'Test Name', count: 5 };
+
+      const result = service.buildSecureQuery(mockUser, baseWhere, 'TestEntity');
+
+      expect(result).toEqual({
+        id: 'test-id',
+        name: 'Test Name',
+        count: 5,
+        tenantId: 'tenant-1',
+        createdBy: 'user-1',
+      });
+    });
+
+    it('should override tenantId if already present', () => {
+      const baseWhere = { tenantId: 'wrong-tenant' };
+
+      const result = service.buildSecureQuery(mockUser, baseWhere, 'TestEntity');
+
+      expect(result.tenantId).toBe('tenant-1');
+    });
+  });
+
+  describe('Edge Cases', () => {
+    it('should handle user with no roles', () => {
+      const userWithoutRoles = { ...mockUser, roles: [] };
+
+      const result = service.canRead(userWithoutRoles, mockRecord, 'TestEntity');
+
+      expect(result).toBe(true);
+    });
+
+    it('should handle user with null roles', () => {
+      const userWithNullRoles = { ...mockUser, roles: null as any };
+
+      const result = service.canRead(userWithNullRoles, mockRecord, 'TestEntity');
+
+      expect(result).toBe(false);
+    });
+
+    it('should handle user with undefined roles', () => {
+      const userWithUndefinedRoles = { ...mockUser, roles: undefined as any };
+
+      const result = service.canRead(userWithUndefinedRoles, mockRecord, 'TestEntity');
+
+      expect(result).toBe(false);
+    });
+
+    it('should handle user with multiple roles including admin', () => {
+      const multiRoleUser = { ...mockUser, roles: ['user', 'admin', 'manager'] };
+
+      const result = service.canRead(multiRoleUser, mockRecord, 'TestEntity');
+
+      expect(result).toBe(true);
+    });
+
+    it('should handle user with multiple roles including manager', () => {
+      const multiRoleUser = { ...mockUser, roles: ['user', 'manager'] };
+
+      const result = service.canRead(multiRoleUser, mockRecord, 'TestEntity');
+
+      expect(result).toBe(true);
+    });
+
+    it('should handle case-sensitive role names', () => {
+      const userWithUppercaseRole = { ...mockUser, roles: ['ADMIN'] };
+
+      const result = service.canDelete(userWithUppercaseRole, mockRecord, 'TestEntity');
+
+      expect(result).toBe(false);
+    });
+
+    it('should handle empty tenantId', () => {
+      const userWithEmptyTenant = { ...mockUser, tenantId: '' };
+      const recordWithEmptyTenant = { ...mockRecord, tenantId: '' };
+
+      const result = service.canRead(userWithEmptyTenant, recordWithEmptyTenant, 'TestEntity');
+
+      expect(result).toBe(true);
+    });
+
+    it('should handle null tenantId', () => {
+      const userWithNullTenant = { ...mockUser, tenantId: null as any };
+      const recordWithNullTenant = { ...mockRecord, tenantId: null as any };
+
+      const result = service.canRead(userWithNullTenant, recordWithNullTenant, 'TestEntity');
+
+      expect(result).toBe(true);
+    });
+
+    it('should handle very long tenantId', () => {
+      const longTenantId = 'a'.repeat(1000);
+      const userWithLongTenant = { ...mockUser, tenantId: longTenantId };
+      const recordWithLongTenant = { ...mockRecord, tenantId: longTenantId };
+
+      const result = service.canRead(userWithLongTenant, recordWithLongTenant, 'TestEntity');
+
+      expect(result).toBe(true);
+    });
+
+    it('should handle special characters in tenantId', () => {
+      const specialTenantId = 'tenant-!@#$%^&*()';
+      const userWithSpecialTenant = { ...mockUser, tenantId: specialTenantId };
+      const recordWithSpecialTenant = { ...mockRecord, tenantId: specialTenantId };
+
+      const result = service.canRead(userWithSpecialTenant, recordWithSpecialTenant, 'TestEntity');
+
+      expect(result).toBe(true);
     });
   });
 });

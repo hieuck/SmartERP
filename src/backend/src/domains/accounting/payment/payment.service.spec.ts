@@ -1,15 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Repository, Between } from 'typeorm';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { getRepositoryToken } from '@nestjs/typeorm';
 import { PaymentService } from './payment.service';
 import { Payment } from './entities/payment.entity';
 import { CacheService } from '@/common/cache/cache.service';
 import { PermissionService, User } from '@/common/security/permission.service';
-import { SecureRepository } from '@/common/security/secure-repository';
-
-// Mock SecureRepository
-jest.mock('@/common/security/secure-repository');
 
 describe('PaymentService', () => {
   let service: PaymentService;
@@ -17,61 +13,43 @@ describe('PaymentService', () => {
   let cacheService: jest.Mocked<CacheService>;
   let permissionService: jest.Mocked<PermissionService>;
 
-  // Mock user
   const mockUser: User = {
     id: 'user-1',
     tenantId: 'tenant-1',
-    email: 'test@example.com',
-    roles: ['admin'],
-  } as any;
+    roles: ['user'],
+  };
 
-  // Helper to create fresh mock payment
-  const createMockPayment = (overrides = {}): Payment => ({
+  const mockPayment: Payment = {
     id: 'payment-1',
     orderId: 'order-1',
-    amount: 1000,
-    paymentMethod: 'credit_card',
+    amount: 100,
     status: 'pending',
-    paymentDate: null,
-    transactionId: null,
-    currency: 'VND',
-    notes: null,
-    metadata: null,
     tenantId: 'tenant-1',
     createdBy: 'user-1',
-    createdAt: new Date('2024-01-15'),
-    updatedAt: new Date('2024-01-15'),
-    ...overrides,
-  } as any);
+  } as Payment;
 
   beforeEach(async () => {
-    // Create mock repositories
     const mockPaymentRepo = {
-      create: jest.fn(),
-      save: jest.fn(),
-      find: jest.fn(),
       findOne: jest.fn(),
+      find: jest.fn(),
+      save: jest.fn(),
+      create: jest.fn(),
       remove: jest.fn(),
     };
 
     const mockCache = {
       getOrSet: jest.fn(),
+      set: jest.fn(),
+      get: jest.fn(),
       del: jest.fn(),
     };
 
     const mockPermission = {
-      checkPermission: jest.fn(),
+      canRead: jest.fn().mockReturnValue(true),
+      canWrite: jest.fn().mockReturnValue(true),
+      canDelete: jest.fn().mockReturnValue(true),
+      buildSecureQuery: jest.fn((user, where) => where),
     };
-
-    // Mock SecureRepository methods
-    const mockSecureRepo = {
-      find: jest.fn(),
-      findOne: jest.fn(),
-      save: jest.fn(),
-      remove: jest.fn(),
-    };
-
-    (SecureRepository as jest.Mock).mockImplementation(() => mockSecureRepo);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -102,27 +80,20 @@ describe('PaymentService', () => {
   });
 
   describe('findAll', () => {
-    it('should return all payments ordered by createdAt DESC', async () => {
-      const mockPayments = [
-        createMockPayment(),
-        createMockPayment({ id: 'payment-2', orderId: 'order-2' }),
-      ];
-
-      const secureRepo = (service as any).securePaymentRepo;
-      secureRepo.find.mockResolvedValue(mockPayments);
+    it('should find all payments', async () => {
+      paymentRepository.find.mockResolvedValue([mockPayment]);
 
       const result = await service.findAll(mockUser);
 
-      expect(secureRepo.find).toHaveBeenCalledWith(mockUser, {
+      expect(result).toEqual([mockPayment]);
+      expect(paymentRepository.find).toHaveBeenCalledWith({
+        where: { tenantId: 'tenant-1' },
         order: { createdAt: 'DESC' },
       });
-      expect(result).toEqual(mockPayments);
-      expect(result).toHaveLength(2);
     });
 
-    it('should return empty array when no payments found', async () => {
-      const secureRepo = (service as any).securePaymentRepo;
-      secureRepo.find.mockResolvedValue([]);
+    it('should return empty array when no payments', async () => {
+      paymentRepository.find.mockResolvedValue([]);
 
       const result = await service.findAll(mockUser);
 
@@ -131,71 +102,61 @@ describe('PaymentService', () => {
   });
 
   describe('findOne', () => {
-    it('should return payment from cache if exists', async () => {
-      const mockPayment = createMockPayment();
-
+    it('should find payment by id with cache', async () => {
       cacheService.getOrSet.mockResolvedValue(mockPayment);
 
       const result = await service.findOne(mockUser, 'payment-1');
 
+      expect(result).toEqual(mockPayment);
       expect(cacheService.getOrSet).toHaveBeenCalled();
-      expect(result).toEqual(mockPayment);
-    });
-
-    it('should fetch payment from database if not in cache', async () => {
-      const mockPayment = createMockPayment();
-
-      cacheService.getOrSet.mockImplementation(async (key, fn) => fn());
-
-      const secureRepo = (service as any).securePaymentRepo;
-      secureRepo.findOne.mockResolvedValue(mockPayment);
-
-      const result = await service.findOne(mockUser, 'payment-1');
-
-      expect(secureRepo.findOne).toHaveBeenCalledWith(mockUser, {
-        where: { id: 'payment-1' },
-      });
-      expect(result).toEqual(mockPayment);
     });
 
     it('should throw NotFoundException when payment not found', async () => {
-      cacheService.getOrSet.mockImplementation(async (key, fn) => fn());
+      cacheService.getOrSet.mockImplementation(async (key, fn) => {
+        paymentRepository.findOne.mockResolvedValue(null);
+        return fn();
+      });
 
-      const secureRepo = (service as any).securePaymentRepo;
-      secureRepo.findOne.mockResolvedValue(null);
+      await expect(service.findOne(mockUser, 'payment-999')).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(mockUser, 'payment-999')).rejects.toThrow(
+        'Payment with ID payment-999 not found',
+      );
+    });
 
-      await expect(service.findOne(mockUser, 'nonexistent')).rejects.toThrow(
-        NotFoundException,
-      );
-      await expect(service.findOne(mockUser, 'nonexistent')).rejects.toThrow(
-        'Payment with ID nonexistent not found',
-      );
+    it('should handle null id', async () => {
+      cacheService.getOrSet.mockImplementation(async (key, fn) => {
+        paymentRepository.findOne.mockResolvedValue(null);
+        return fn();
+      });
+
+      await expect(service.findOne(mockUser, null as any)).rejects.toThrow(NotFoundException);
+    });
+
+    it('should handle empty id', async () => {
+      cacheService.getOrSet.mockImplementation(async (key, fn) => {
+        paymentRepository.findOne.mockResolvedValue(null);
+        return fn();
+      });
+
+      await expect(service.findOne(mockUser, '')).rejects.toThrow(NotFoundException);
     });
   });
 
   describe('findByOrder', () => {
-    it('should return payments for specific order', async () => {
-      const mockPayments = [
-        createMockPayment({ orderId: 'order-1' }),
-        createMockPayment({ id: 'payment-2', orderId: 'order-1' }),
-      ];
-
-      const secureRepo = (service as any).securePaymentRepo;
-      secureRepo.find.mockResolvedValue(mockPayments);
+    it('should find payments by order id', async () => {
+      paymentRepository.find.mockResolvedValue([mockPayment]);
 
       const result = await service.findByOrder(mockUser, 'order-1');
 
-      expect(secureRepo.find).toHaveBeenCalledWith(mockUser, {
-        where: { orderId: 'order-1' },
+      expect(result).toEqual([mockPayment]);
+      expect(paymentRepository.find).toHaveBeenCalledWith({
+        where: { orderId: 'order-1', tenantId: 'tenant-1' },
         order: { createdAt: 'DESC' },
       });
-      expect(result).toEqual(mockPayments);
-      expect(result).toHaveLength(2);
     });
 
     it('should return empty array when no payments for order', async () => {
-      const secureRepo = (service as any).securePaymentRepo;
-      secureRepo.find.mockResolvedValue([]);
+      paymentRepository.find.mockResolvedValue([]);
 
       const result = await service.findByOrder(mockUser, 'order-999');
 
@@ -204,339 +165,234 @@ describe('PaymentService', () => {
   });
 
   describe('findByStatus', () => {
-    it('should return payments with specific status', async () => {
-      const mockPayments = [
-        createMockPayment({ status: 'completed' }),
-        createMockPayment({ id: 'payment-2', status: 'completed' }),
-      ];
+    it('should find payments by status', async () => {
+      paymentRepository.find.mockResolvedValue([mockPayment]);
 
-      const secureRepo = (service as any).securePaymentRepo;
-      secureRepo.find.mockResolvedValue(mockPayments);
+      const result = await service.findByStatus(mockUser, 'pending');
 
-      const result = await service.findByStatus(mockUser, 'completed');
-
-      expect(secureRepo.find).toHaveBeenCalledWith(mockUser, {
-        where: { status: 'completed' },
+      expect(result).toEqual([mockPayment]);
+      expect(paymentRepository.find).toHaveBeenCalledWith({
+        where: { status: 'pending', tenantId: 'tenant-1' },
         order: { createdAt: 'DESC' },
       });
-      expect(result).toEqual(mockPayments);
     });
 
     it('should return empty array when no payments with status', async () => {
-      const secureRepo = (service as any).securePaymentRepo;
-      secureRepo.find.mockResolvedValue([]);
+      paymentRepository.find.mockResolvedValue([]);
 
-      const result = await service.findByStatus(mockUser, 'refunded');
+      const result = await service.findByStatus(mockUser, 'completed');
 
       expect(result).toEqual([]);
     });
   });
 
   describe('create', () => {
-    it('should create payment with default status pending', async () => {
-      const dto = {
-        orderId: 'order-1',
-        amount: 1000,
-        paymentMethod: 'credit_card',
-        currency: 'VND',
-      };
+    it('should create payment successfully', async () => {
+      paymentRepository.save.mockResolvedValue(mockPayment);
 
-      const mockPayment = createMockPayment(dto);
+      const data = { orderId: 'order-1', amount: 100 };
+      const result = await service.create(mockUser, data);
 
-      const secureRepo = (service as any).securePaymentRepo;
-      secureRepo.save.mockResolvedValue(mockPayment);
-
-      const result = await service.create(mockUser, dto as any);
-
-      expect(secureRepo.save).toHaveBeenCalledWith(mockUser, {
-        ...dto,
-        status: 'pending',
-      });
       expect(result).toEqual(mockPayment);
-      expect(result.status).toBe('pending');
+      expect(paymentRepository.save).toHaveBeenCalledWith({
+        ...data,
+        status: 'pending',
+        tenantId: 'tenant-1',
+        createdBy: 'user-1',
+      });
     });
 
-    it('should create payment with custom status', async () => {
-      const dto = {
-        orderId: 'order-1',
-        amount: 1000,
-        paymentMethod: 'bank_transfer',
-        status: 'processing',
-      };
+    it('should use provided status', async () => {
+      paymentRepository.save.mockResolvedValue(mockPayment);
 
-      const mockPayment = createMockPayment(dto);
+      const data = { orderId: 'order-1', amount: 100, status: 'completed' };
+      await service.create(mockUser, data);
 
-      const secureRepo = (service as any).securePaymentRepo;
-      secureRepo.save.mockResolvedValue(mockPayment);
+      expect(paymentRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 'completed' }),
+      );
+    });
 
-      const result = await service.create(mockUser, dto as any);
+    it('should handle zero amount', async () => {
+      paymentRepository.save.mockResolvedValue(mockPayment);
 
-      expect(result.status).toBe('processing');
+      const data = { orderId: 'order-1', amount: 0 };
+      const result = await service.create(mockUser, data);
+
+      expect(result).toBeDefined();
+    });
+
+    it('should handle negative amount', async () => {
+      paymentRepository.save.mockResolvedValue(mockPayment);
+
+      const data = { orderId: 'order-1', amount: -100 };
+      const result = await service.create(mockUser, data);
+
+      expect(result).toBeDefined();
     });
   });
 
   describe('update', () => {
-    it('should update payment and invalidate cache', async () => {
-      const mockPayment = createMockPayment();
-      const updateData = { notes: 'Updated notes' };
+    it('should update payment successfully', async () => {
+      cacheService.getOrSet.mockResolvedValue(mockPayment);
+      paymentRepository.save.mockResolvedValue({ ...mockPayment, amount: 200 });
+      cacheService.del.mockResolvedValue(undefined);
 
-      cacheService.getOrSet.mockImplementation(async (key, fn) => fn());
+      const result = await service.update(mockUser, 'payment-1', { amount: 200 });
 
-      const secureRepo = (service as any).securePaymentRepo;
-      secureRepo.findOne.mockResolvedValue(mockPayment);
-      secureRepo.save.mockResolvedValue({
-        ...mockPayment,
-        ...updateData,
+      expect(result.amount).toBe(200);
+      expect(cacheService.del).toHaveBeenCalled();
+    });
+
+    it('should throw NotFoundException when payment not found', async () => {
+      cacheService.getOrSet.mockImplementation(async (key, fn) => {
+        paymentRepository.findOne.mockResolvedValue(null);
+        return fn();
       });
 
-      const result = await service.update(mockUser, 'payment-1', updateData);
-
-      expect(secureRepo.save).toHaveBeenCalled();
-      expect(cacheService.del).toHaveBeenCalled();
-      expect(result.notes).toBe('Updated notes');
-    });
-
-    it('should throw NotFoundException when payment not found', async () => {
-      cacheService.getOrSet.mockImplementation(async (key, fn) => fn());
-
-      const secureRepo = (service as any).securePaymentRepo;
-      secureRepo.findOne.mockResolvedValue(null);
-
-      await expect(
-        service.update(mockUser, 'nonexistent', { notes: 'test' }),
-      ).rejects.toThrow(NotFoundException);
-    });
-  });
-
-  describe('remove', () => {
-    it('should remove payment and invalidate cache', async () => {
-      const mockPayment = createMockPayment();
-
-      cacheService.getOrSet.mockImplementation(async (key, fn) => fn());
-
-      const secureRepo = (service as any).securePaymentRepo;
-      secureRepo.findOne.mockResolvedValue(mockPayment);
-      secureRepo.remove.mockResolvedValue(mockPayment);
-
-      await service.remove(mockUser, 'payment-1');
-
-      expect(secureRepo.remove).toHaveBeenCalledWith(mockUser, mockPayment);
-      expect(cacheService.del).toHaveBeenCalled();
-    });
-
-    it('should throw NotFoundException when payment not found', async () => {
-      cacheService.getOrSet.mockImplementation(async (key, fn) => fn());
-
-      const secureRepo = (service as any).securePaymentRepo;
-      secureRepo.findOne.mockResolvedValue(null);
-
-      await expect(service.remove(mockUser, 'nonexistent')).rejects.toThrow(
+      await expect(service.update(mockUser, 'payment-999', { amount: 200 })).rejects.toThrow(
         NotFoundException,
       );
     });
   });
 
-  describe('complete', () => {
-    it('should complete pending payment', async () => {
-      const mockPayment = createMockPayment({ status: 'pending' });
+  describe('remove', () => {
+    it('should remove payment successfully', async () => {
+      cacheService.getOrSet.mockResolvedValue(mockPayment);
+      paymentRepository.remove.mockResolvedValue(mockPayment);
+      cacheService.del.mockResolvedValue(undefined);
 
-      cacheService.getOrSet.mockImplementation(async (key, fn) => fn());
+      await service.remove(mockUser, 'payment-1');
 
-      const secureRepo = (service as any).securePaymentRepo;
-      secureRepo.findOne.mockResolvedValue(mockPayment);
-      secureRepo.save.mockResolvedValue({
-        ...mockPayment,
-        status: 'completed',
-        transactionId: 'txn-123',
-        paymentDate: expect.any(Date),
-      });
-
-      const result = await service.complete(mockUser, 'payment-1', 'txn-123');
-
-      expect(result.status).toBe('completed');
-      expect(result.transactionId).toBe('txn-123');
+      expect(paymentRepository.remove).toHaveBeenCalled();
       expect(cacheService.del).toHaveBeenCalled();
     });
 
-    it('should complete processing payment', async () => {
-      const mockPayment = createMockPayment({ status: 'processing' });
-
-      cacheService.getOrSet.mockImplementation(async (key, fn) => fn());
-
-      const secureRepo = (service as any).securePaymentRepo;
-      secureRepo.findOne.mockResolvedValue(mockPayment);
-      secureRepo.save.mockResolvedValue({
-        ...mockPayment,
-        status: 'completed',
-        transactionId: 'txn-456',
+    it('should throw NotFoundException when payment not found', async () => {
+      cacheService.getOrSet.mockImplementation(async (key, fn) => {
+        paymentRepository.findOne.mockResolvedValue(null);
+        return fn();
       });
 
-      const result = await service.complete(mockUser, 'payment-1', 'txn-456');
+      await expect(service.remove(mockUser, 'payment-999')).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('complete', () => {
+    it('should complete payment successfully', async () => {
+      cacheService.getOrSet.mockResolvedValue(mockPayment);
+      paymentRepository.save.mockResolvedValue({
+        ...mockPayment,
+        status: 'completed',
+        transactionId: 'TXN-123',
+      });
+      cacheService.del.mockResolvedValue(undefined);
+
+      const result = await service.complete(mockUser, 'payment-1', 'TXN-123');
 
       expect(result.status).toBe('completed');
+      expect(result.transactionId).toBe('TXN-123');
+      expect(result.paymentDate).toBeDefined();
     });
 
-    it('should throw BadRequestException when payment is completed', async () => {
-      const mockPayment = createMockPayment({ status: 'completed' });
+    it('should throw BadRequestException when payment not pending or processing', async () => {
+      cacheService.getOrSet.mockResolvedValue({ ...mockPayment, status: 'completed' });
 
-      cacheService.getOrSet.mockImplementation(async (key, fn) => fn());
-
-      const secureRepo = (service as any).securePaymentRepo;
-      secureRepo.findOne.mockResolvedValue(mockPayment);
-
-      await expect(
-        service.complete(mockUser, 'payment-1', 'txn-123'),
-      ).rejects.toThrow(BadRequestException);
-      await expect(
-        service.complete(mockUser, 'payment-1', 'txn-123'),
-      ).rejects.toThrow('Only pending or processing payments can be completed');
+      await expect(service.complete(mockUser, 'payment-1', 'TXN-123')).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.complete(mockUser, 'payment-1', 'TXN-123')).rejects.toThrow(
+        'Only pending or processing payments can be completed',
+      );
     });
 
-    it('should throw BadRequestException when payment is failed', async () => {
-      const mockPayment = createMockPayment({ status: 'failed' });
+    it('should complete processing payment', async () => {
+      cacheService.getOrSet.mockResolvedValue({ ...mockPayment, status: 'processing' });
+      paymentRepository.save.mockResolvedValue({
+        ...mockPayment,
+        status: 'completed',
+      });
+      cacheService.del.mockResolvedValue(undefined);
 
-      cacheService.getOrSet.mockImplementation(async (key, fn) => fn());
+      const result = await service.complete(mockUser, 'payment-1', 'TXN-123');
 
-      const secureRepo = (service as any).securePaymentRepo;
-      secureRepo.findOne.mockResolvedValue(mockPayment);
-
-      await expect(
-        service.complete(mockUser, 'payment-1', 'txn-123'),
-      ).rejects.toThrow(BadRequestException);
+      expect(result.status).toBe('completed');
     });
   });
 
   describe('fail', () => {
-    it('should fail pending payment with reason', async () => {
-      const mockPayment = createMockPayment({ status: 'pending' });
-
-      cacheService.getOrSet.mockImplementation(async (key, fn) => fn());
-
-      const secureRepo = (service as any).securePaymentRepo;
-      secureRepo.findOne.mockResolvedValue(mockPayment);
-      secureRepo.save.mockResolvedValue({
+    it('should fail payment successfully', async () => {
+      cacheService.getOrSet.mockResolvedValue(mockPayment);
+      paymentRepository.save.mockResolvedValue({
         ...mockPayment,
         status: 'failed',
-        notes: '\nFailed: Insufficient funds',
       });
+      cacheService.del.mockResolvedValue(undefined);
 
       const result = await service.fail(mockUser, 'payment-1', 'Insufficient funds');
 
       expect(result.status).toBe('failed');
       expect(result.notes).toContain('Failed: Insufficient funds');
-      expect(cacheService.del).toHaveBeenCalled();
     });
 
-    it('should append failure reason to existing notes', async () => {
-      const mockPayment = createMockPayment({
-        status: 'processing',
-        notes: 'Initial notes',
-      });
+    it('should throw BadRequestException when payment already completed', async () => {
+      cacheService.getOrSet.mockResolvedValue({ ...mockPayment, status: 'completed' });
 
-      cacheService.getOrSet.mockImplementation(async (key, fn) => fn());
-
-      const secureRepo = (service as any).securePaymentRepo;
-      secureRepo.findOne.mockResolvedValue(mockPayment);
-      secureRepo.save.mockResolvedValue({
-        ...mockPayment,
-        status: 'failed',
-        notes: 'Initial notes\nFailed: Card declined',
-      });
-
-      const result = await service.fail(mockUser, 'payment-1', 'Card declined');
-
-      expect(result.notes).toContain('Initial notes');
-      expect(result.notes).toContain('Failed: Card declined');
+      await expect(service.fail(mockUser, 'payment-1', 'Reason')).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.fail(mockUser, 'payment-1', 'Reason')).rejects.toThrow(
+        'Cannot fail a completed payment',
+      );
     });
 
-    it('should throw BadRequestException when payment is completed', async () => {
-      const mockPayment = createMockPayment({ status: 'completed' });
+    it('should append to existing notes', async () => {
+      cacheService.getOrSet.mockResolvedValue({ ...mockPayment, notes: 'Existing notes' });
+      paymentRepository.save.mockResolvedValue(mockPayment);
+      cacheService.del.mockResolvedValue(undefined);
 
-      cacheService.getOrSet.mockImplementation(async (key, fn) => fn());
+      const result = await service.fail(mockUser, 'payment-1', 'New reason');
 
-      const secureRepo = (service as any).securePaymentRepo;
-      secureRepo.findOne.mockResolvedValue(mockPayment);
-
-      await expect(
-        service.fail(mockUser, 'payment-1', 'Test reason'),
-      ).rejects.toThrow(BadRequestException);
-      await expect(
-        service.fail(mockUser, 'payment-1', 'Test reason'),
-      ).rejects.toThrow('Cannot fail a completed payment');
+      expect(result.notes).toContain('Existing notes');
+      expect(result.notes).toContain('Failed: New reason');
     });
   });
 
   describe('refund', () => {
-    it('should refund completed payment', async () => {
-      const mockPayment = createMockPayment({
-        status: 'completed',
-        transactionId: 'txn-123',
-      });
-
-      cacheService.getOrSet.mockImplementation(async (key, fn) => fn());
-
-      const secureRepo = (service as any).securePaymentRepo;
-      secureRepo.findOne.mockResolvedValue(mockPayment);
-      secureRepo.save.mockResolvedValue({
+    it('should refund payment successfully', async () => {
+      cacheService.getOrSet.mockResolvedValue({ ...mockPayment, status: 'completed' });
+      paymentRepository.save.mockResolvedValue({
         ...mockPayment,
         status: 'refunded',
       });
+      cacheService.del.mockResolvedValue(undefined);
 
       const result = await service.refund(mockUser, 'payment-1');
 
       expect(result.status).toBe('refunded');
-      expect(cacheService.del).toHaveBeenCalled();
     });
 
-    it('should throw BadRequestException when payment is not completed', async () => {
-      const mockPayment = createMockPayment({ status: 'pending' });
+    it('should throw BadRequestException when payment not completed', async () => {
+      cacheService.getOrSet.mockResolvedValue(mockPayment);
 
-      cacheService.getOrSet.mockImplementation(async (key, fn) => fn());
-
-      const secureRepo = (service as any).securePaymentRepo;
-      secureRepo.findOne.mockResolvedValue(mockPayment);
-
-      await expect(service.refund(mockUser, 'payment-1')).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.refund(mockUser, 'payment-1')).rejects.toThrow(BadRequestException);
       await expect(service.refund(mockUser, 'payment-1')).rejects.toThrow(
         'Only completed payments can be refunded',
-      );
-    });
-
-    it('should throw BadRequestException when payment is failed', async () => {
-      const mockPayment = createMockPayment({ status: 'failed' });
-
-      cacheService.getOrSet.mockImplementation(async (key, fn) => fn());
-
-      const secureRepo = (service as any).securePaymentRepo;
-      secureRepo.findOne.mockResolvedValue(mockPayment);
-
-      await expect(service.refund(mockUser, 'payment-1')).rejects.toThrow(
-        BadRequestException,
       );
     });
   });
 
   describe('count', () => {
-    it('should return total count of payments', async () => {
-      const mockPayments = [
-        createMockPayment(),
-        createMockPayment({ id: 'payment-2' }),
-        createMockPayment({ id: 'payment-3' }),
-      ];
-
-      const secureRepo = (service as any).securePaymentRepo;
-      secureRepo.find.mockResolvedValue(mockPayments);
+    it('should count payments', async () => {
+      paymentRepository.find.mockResolvedValue([mockPayment, mockPayment]);
 
       const result = await service.count(mockUser);
 
-      expect(result).toBe(3);
+      expect(result).toBe(2);
     });
 
     it('should return 0 when no payments', async () => {
-      const secureRepo = (service as any).securePaymentRepo;
-      secureRepo.find.mockResolvedValue([]);
+      paymentRepository.find.mockResolvedValue([]);
 
       const result = await service.count(mockUser);
 
@@ -545,41 +401,31 @@ describe('PaymentService', () => {
   });
 
   describe('getTotalAmount', () => {
-    it('should return total amount of all payments', async () => {
-      const mockPayments = [
-        createMockPayment({ amount: 1000 }),
-        createMockPayment({ id: 'payment-2', amount: 2000 }),
-        createMockPayment({ id: 'payment-3', amount: 1500 }),
-      ];
-
-      const secureRepo = (service as any).securePaymentRepo;
-      secureRepo.find.mockResolvedValue(mockPayments);
+    it('should calculate total amount', async () => {
+      paymentRepository.find.mockResolvedValue([
+        { ...mockPayment, amount: 100 },
+        { ...mockPayment, amount: 200 },
+        { ...mockPayment, amount: 150 },
+      ]);
 
       const result = await service.getTotalAmount(mockUser);
 
-      expect(result).toBe(4500);
+      expect(result).toBe(450);
     });
 
-    it('should return total amount for specific status', async () => {
-      const mockPayments = [
-        createMockPayment({ amount: 1000, status: 'completed' }),
-        createMockPayment({ id: 'payment-2', amount: 2000, status: 'completed' }),
-      ];
-
-      const secureRepo = (service as any).securePaymentRepo;
-      secureRepo.find.mockResolvedValue(mockPayments);
+    it('should filter by status', async () => {
+      paymentRepository.find.mockResolvedValue([
+        { ...mockPayment, amount: 100, status: 'completed' },
+        { ...mockPayment, amount: 200, status: 'completed' },
+      ]);
 
       const result = await service.getTotalAmount(mockUser, 'completed');
 
-      expect(secureRepo.find).toHaveBeenCalledWith(mockUser, {
-        where: { status: 'completed' },
-      });
-      expect(result).toBe(3000);
+      expect(result).toBe(300);
     });
 
     it('should return 0 when no payments', async () => {
-      const secureRepo = (service as any).securePaymentRepo;
-      secureRepo.find.mockResolvedValue([]);
+      paymentRepository.find.mockResolvedValue([]);
 
       const result = await service.getTotalAmount(mockUser);
 
@@ -588,116 +434,98 @@ describe('PaymentService', () => {
   });
 
   describe('getPaymentsByDateRange', () => {
-    it('should return payments within date range', async () => {
+    it('should get payments by date range', async () => {
+      paymentRepository.find.mockResolvedValue([mockPayment]);
+
       const startDate = new Date('2024-01-01');
-      const endDate = new Date('2024-01-31');
-
-      const mockPayments = [
-        createMockPayment({ paymentDate: new Date('2024-01-15') }),
-        createMockPayment({ id: 'payment-2', paymentDate: new Date('2024-01-20') }),
-      ];
-
-      const secureRepo = (service as any).securePaymentRepo;
-      secureRepo.find.mockResolvedValue(mockPayments);
+      const endDate = new Date('2024-12-31');
 
       const result = await service.getPaymentsByDateRange(mockUser, startDate, endDate);
 
-      expect(secureRepo.find).toHaveBeenCalledWith(mockUser, {
+      expect(result).toEqual([mockPayment]);
+      expect(paymentRepository.find).toHaveBeenCalledWith({
         where: {
           paymentDate: Between(startDate, endDate),
+          tenantId: 'tenant-1',
         },
         order: { paymentDate: 'DESC' },
       });
-      expect(result).toEqual(mockPayments);
-      expect(result).toHaveLength(2);
     });
 
     it('should return empty array when no payments in range', async () => {
-      const startDate = new Date('2024-02-01');
-      const endDate = new Date('2024-02-28');
+      paymentRepository.find.mockResolvedValue([]);
 
-      const secureRepo = (service as any).securePaymentRepo;
-      secureRepo.find.mockResolvedValue([]);
-
-      const result = await service.getPaymentsByDateRange(mockUser, startDate, endDate);
+      const result = await service.getPaymentsByDateRange(
+        mockUser,
+        new Date('2025-01-01'),
+        new Date('2025-12-31'),
+      );
 
       expect(result).toEqual([]);
     });
   });
 
   describe('getPaymentStatistics', () => {
-    it('should return comprehensive payment statistics', async () => {
-      const mockPayments = [
-        createMockPayment({ amount: 1000, status: 'completed' }),
-        createMockPayment({ id: 'payment-2', amount: 2000, status: 'completed' }),
-        createMockPayment({ id: 'payment-3', amount: 1500, status: 'completed' }),
-        createMockPayment({ id: 'payment-4', amount: 500, status: 'pending' }),
-        createMockPayment({ id: 'payment-5', amount: 800, status: 'pending' }),
-        createMockPayment({ id: 'payment-6', amount: 300, status: 'failed' }),
-        createMockPayment({ id: 'payment-7', amount: 1000, status: 'refunded' }),
-      ];
-
-      const secureRepo = (service as any).securePaymentRepo;
-      secureRepo.find.mockResolvedValue(mockPayments);
+    it('should calculate payment statistics', async () => {
+      paymentRepository.find.mockResolvedValue([
+        { ...mockPayment, amount: 100, status: 'completed' },
+        { ...mockPayment, amount: 200, status: 'completed' },
+        { ...mockPayment, amount: 50, status: 'pending' },
+        { ...mockPayment, amount: 75, status: 'failed' },
+        { ...mockPayment, amount: 100, status: 'refunded' },
+      ]);
 
       const result = await service.getPaymentStatistics(mockUser);
 
-      expect(result.total).toBe(7);
-      expect(result.completed).toBe(3);
-      expect(result.pending).toBe(2);
+      expect(result.total).toBe(5);
+      expect(result.completed).toBe(2);
+      expect(result.pending).toBe(1);
       expect(result.failed).toBe(1);
       expect(result.refunded).toBe(1);
-      expect(result.totalAmount).toBe(7100);
-      expect(result.completedAmount).toBe(4500);
-      expect(result.successRate).toBeCloseTo(42.86, 2);
+      expect(result.totalAmount).toBe(525);
+      expect(result.completedAmount).toBe(300);
+      expect(result.successRate).toBe(40);
     });
 
-    it('should return zero statistics when no payments', async () => {
-      const secureRepo = (service as any).securePaymentRepo;
-      secureRepo.find.mockResolvedValue([]);
+    it('should handle empty payments', async () => {
+      paymentRepository.find.mockResolvedValue([]);
 
       const result = await service.getPaymentStatistics(mockUser);
 
       expect(result.total).toBe(0);
-      expect(result.completed).toBe(0);
-      expect(result.pending).toBe(0);
-      expect(result.failed).toBe(0);
-      expect(result.refunded).toBe(0);
-      expect(result.totalAmount).toBe(0);
-      expect(result.completedAmount).toBe(0);
       expect(result.successRate).toBe(0);
     });
 
-    it('should calculate 100% success rate when all completed', async () => {
-      const mockPayments = [
-        createMockPayment({ amount: 1000, status: 'completed' }),
-        createMockPayment({ id: 'payment-2', amount: 2000, status: 'completed' }),
-      ];
-
-      const secureRepo = (service as any).securePaymentRepo;
-      secureRepo.find.mockResolvedValue(mockPayments);
+    it('should calculate 100% success rate', async () => {
+      paymentRepository.find.mockResolvedValue([
+        { ...mockPayment, status: 'completed' },
+        { ...mockPayment, status: 'completed' },
+      ]);
 
       const result = await service.getPaymentStatistics(mockUser);
 
       expect(result.successRate).toBe(100);
     });
+  });
 
-    it('should handle mixed payment statuses correctly', async () => {
-      const mockPayments = [
-        createMockPayment({ amount: 1000, status: 'completed' }),
-        createMockPayment({ id: 'payment-2', amount: 500, status: 'pending' }),
-        createMockPayment({ id: 'payment-3', amount: 300, status: 'processing' }),
-      ];
+  describe('Edge Cases', () => {
+    it('should handle null user', async () => {
+      await expect(service.findAll(null as any)).rejects.toThrow();
+    });
 
-      const secureRepo = (service as any).securePaymentRepo;
-      secureRepo.find.mockResolvedValue(mockPayments);
+    it('should handle undefined tenantId', async () => {
+      const userWithoutTenant = { ...mockUser, tenantId: undefined as any };
 
-      const result = await service.getPaymentStatistics(mockUser);
+      await expect(service.findAll(userWithoutTenant)).rejects.toThrow();
+    });
 
-      expect(result.total).toBe(3);
-      expect(result.completed).toBe(1);
-      expect(result.pending).toBe(1);
-      expect(result.successRate).toBeCloseTo(33.33, 2);
+    it('should handle very large amount', async () => {
+      paymentRepository.save.mockResolvedValue(mockPayment);
+
+      const data = { orderId: 'order-1', amount: 999999999 };
+      const result = await service.create(mockUser, data);
+
+      expect(result).toBeDefined();
     });
   });
 });

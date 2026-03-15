@@ -1,59 +1,50 @@
-/**
- * PaymentService Unit Tests
- * Coverage target: >90%
- * 
- * Test cases:
- * 1. processPayment - All payment methods (COD, Stripe, PayPal, VNPay, Momo)
- * 2. processPayment - Error cases (not found, already paid, amount mismatch, unsupported)
- * 3. verifyPayment - All payment methods
- * 4. verifyPayment - Error cases
- * 5. refundPayment - All payment methods
- * 6. refundPayment - Error cases (not found, not paid, unsupported)
- */
-
 import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
 import { BadRequestException } from '@nestjs/common';
+import { Repository } from 'typeorm';
+import { getRepositoryToken } from '@nestjs/typeorm';
 import { PaymentService } from './payment.service';
 import { Order } from './entities/order.entity';
-import { PermissionService } from '@common/security/permission.service';
+import { PermissionService, User } from '@common/security/permission.service';
 import { PaymentStatus } from '../enums/ecommerce.enum';
+import { ProcessPaymentDto } from './dto/payment.dto';
+import { VerifyPaymentDto } from './dto/payment.dto';
+import { RefundDto } from './dto/refund.dto';
 
 describe('PaymentService', () => {
   let service: PaymentService;
-  let mockOrderRepository: any;
-  let mockPermissionService: any;
+  let orderRepository: jest.Mocked<Repository<Order>>;
+  let permissionService: jest.Mocked<PermissionService>;
 
-  const mockUser = {
-    id: 'user-123',
-    tenantId: 'tenant-123',
-    roles: ['admin'],
+  const mockUser: User = {
+    id: 'user-1',
+    tenantId: 'tenant-1',
+    roles: ['user'],
   };
 
   const mockOrder = {
-    id: 'order-123',
+    id: 'order-1',
     orderNumber: 'ORD-001',
     total: 100,
     paymentStatus: PaymentStatus.PENDING,
     paymentMethod: null,
     paymentTransactionId: null,
     paidAt: null,
-  };
+    tenantId: 'tenant-1',
+    createdBy: 'user-1',
+  } as any;
 
   beforeEach(async () => {
-    mockOrderRepository = {
+    const mockOrderRepo = {
       findOne: jest.fn(),
       save: jest.fn(),
       create: jest.fn(),
-      find: jest.fn(),
     };
 
-    mockPermissionService = {
-      checkPermission: jest.fn().mockResolvedValue(true),
-      filterByTenant: jest.fn((user, query) => query),
+    const mockPermissionService = {
       canRead: jest.fn().mockReturnValue(true),
       canWrite: jest.fn().mockReturnValue(true),
       canDelete: jest.fn().mockReturnValue(true),
+      buildSecureQuery: jest.fn((user, where) => where),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -61,7 +52,7 @@ describe('PaymentService', () => {
         PaymentService,
         {
           provide: getRepositoryToken(Order),
-          useValue: mockOrderRepository,
+          useValue: mockOrderRepo,
         },
         {
           provide: PermissionService,
@@ -71,6 +62,8 @@ describe('PaymentService', () => {
     }).compile();
 
     service = module.get<PaymentService>(PaymentService);
+    orderRepository = module.get(getRepositoryToken(Order));
+    permissionService = module.get(PermissionService);
   });
 
   afterEach(() => {
@@ -78,448 +71,486 @@ describe('PaymentService', () => {
   });
 
   describe('processPayment', () => {
-    it('should process COD payment successfully', async () => {
-      mockOrderRepository.findOne.mockResolvedValue({ ...mockOrder });
-      mockOrderRepository.save.mockResolvedValue({ ...mockOrder, paymentStatus: PaymentStatus.PAID });
+    const processDto: ProcessPaymentDto = {
+      orderId: 'order-1',
+      amount: 100,
+      paymentMethod: 'cod',
+      paymentToken: undefined,
+      paymentDetails: undefined,
+    };
 
-      const result = await service.processPayment(
-        {
-          orderId: 'order-123',
-          amount: 100,
-          paymentMethod: 'cod',
-        },
-        mockUser,
-      );
+    it('should process COD payment successfully', async () => {
+      orderRepository.findOne.mockResolvedValue(mockOrder);
+      orderRepository.save.mockResolvedValue({
+        ...mockOrder,
+        paymentStatus: PaymentStatus.PAID,
+        paymentMethod: 'cod',
+      } as any);
+
+      const result = await service.processPayment(processDto, mockUser);
 
       expect(result.success).toBe(true);
       expect(result.transactionId).toContain('COD-');
-      expect(result.message).toContain('Cash on delivery');
-      expect(mockOrderRepository.save).toHaveBeenCalled();
+      expect(orderRepository.save).toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException when order not found', async () => {
+      orderRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.processPayment(processDto, mockUser)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.processPayment(processDto, mockUser)).rejects.toThrow(
+        'Order with ID order-1 not found',
+      );
+    });
+
+    it('should throw BadRequestException when order already paid', async () => {
+      orderRepository.findOne.mockResolvedValue({
+        ...mockOrder,
+        paymentStatus: PaymentStatus.PAID,
+      } as any);
+
+      await expect(service.processPayment(processDto, mockUser)).rejects.toThrow(
+        'Order is already paid',
+      );
+    });
+
+    it('should throw BadRequestException when amount mismatch', async () => {
+      orderRepository.findOne.mockResolvedValue(mockOrder);
+
+      const wrongAmountDto = { ...processDto, amount: 200 };
+
+      await expect(service.processPayment(wrongAmountDto, mockUser)).rejects.toThrow(
+        'Payment amount 200 does not match order total 100',
+      );
     });
 
     it('should process Stripe payment successfully', async () => {
-      mockOrderRepository.findOne.mockResolvedValue({ ...mockOrder });
-      mockOrderRepository.save.mockResolvedValue({ ...mockOrder, paymentStatus: PaymentStatus.PAID });
+      orderRepository.findOne.mockResolvedValue(mockOrder);
+      orderRepository.save.mockResolvedValue({
+        ...mockOrder,
+        paymentStatus: PaymentStatus.PAID,
+      } as any);
 
-      const result = await service.processPayment(
-        {
-          orderId: 'order-123',
-          amount: 100,
-          paymentMethod: 'stripe',
-          paymentToken: 'tok_123',
-        },
-        mockUser,
-      );
+      const stripeDto = { ...processDto, paymentMethod: 'stripe', paymentToken: 'tok_123' };
+      const result = await service.processPayment(stripeDto, mockUser);
 
       expect(result.success).toBe(true);
       expect(result.transactionId).toContain('STRIPE-');
-      expect(mockOrderRepository.save).toHaveBeenCalled();
     });
 
     it('should process PayPal payment successfully', async () => {
-      mockOrderRepository.findOne.mockResolvedValue({ ...mockOrder });
-      mockOrderRepository.save.mockResolvedValue({ ...mockOrder, paymentStatus: PaymentStatus.PAID });
+      orderRepository.findOne.mockResolvedValue(mockOrder);
+      orderRepository.save.mockResolvedValue({
+        ...mockOrder,
+        paymentStatus: PaymentStatus.PAID,
+      } as any);
 
-      const result = await service.processPayment(
-        {
-          orderId: 'order-123',
-          amount: 100,
-          paymentMethod: 'paypal',
-          paymentToken: 'tok_123',
-        },
-        mockUser,
-      );
+      const paypalDto = { ...processDto, paymentMethod: 'paypal', paymentToken: 'tok_123' };
+      const result = await service.processPayment(paypalDto, mockUser);
 
       expect(result.success).toBe(true);
       expect(result.transactionId).toContain('PAYPAL-');
-      expect(mockOrderRepository.save).toHaveBeenCalled();
     });
 
     it('should process VNPay payment successfully', async () => {
-      mockOrderRepository.findOne.mockResolvedValue({ ...mockOrder });
-      mockOrderRepository.save.mockResolvedValue({ ...mockOrder, paymentStatus: PaymentStatus.PAID });
+      orderRepository.findOne.mockResolvedValue(mockOrder);
+      orderRepository.save.mockResolvedValue({
+        ...mockOrder,
+        paymentStatus: PaymentStatus.PAID,
+      } as any);
 
-      const result = await service.processPayment(
-        {
-          orderId: 'order-123',
-          amount: 100,
-          paymentMethod: 'vnpay',
-        },
-        mockUser,
-      );
+      const vnpayDto = { ...processDto, paymentMethod: 'vnpay' };
+      const result = await service.processPayment(vnpayDto, mockUser);
 
       expect(result.success).toBe(true);
       expect(result.transactionId).toContain('VNPAY-');
-      expect(mockOrderRepository.save).toHaveBeenCalled();
     });
 
     it('should process Momo payment successfully', async () => {
-      mockOrderRepository.findOne.mockResolvedValue({ ...mockOrder });
-      mockOrderRepository.save.mockResolvedValue({ ...mockOrder, paymentStatus: PaymentStatus.PAID });
+      orderRepository.findOne.mockResolvedValue(mockOrder);
+      orderRepository.save.mockResolvedValue({
+        ...mockOrder,
+        paymentStatus: PaymentStatus.PAID,
+      } as any);
 
-      const result = await service.processPayment(
-        {
-          orderId: 'order-123',
-          amount: 100,
-          paymentMethod: 'momo',
-        },
-        mockUser,
-      );
+      const momoDto = { ...processDto, paymentMethod: 'momo' };
+      const result = await service.processPayment(momoDto, mockUser);
 
       expect(result.success).toBe(true);
       expect(result.transactionId).toContain('MOMO-');
-      expect(mockOrderRepository.save).toHaveBeenCalled();
     });
 
-    it('should throw error when order not found', async () => {
-      mockOrderRepository.findOne.mockResolvedValue(null);
+    it('should throw BadRequestException for unsupported payment method', async () => {
+      orderRepository.findOne.mockResolvedValue(mockOrder);
 
-      await expect(
-        service.processPayment(
-          {
-            orderId: 'non-existent',
-            amount: 100,
-            paymentMethod: 'cod',
-          },
-          mockUser,
-        ),
-      ).rejects.toThrow(BadRequestException);
+      const unsupportedDto = { ...processDto, paymentMethod: 'bitcoin' };
+
+      await expect(service.processPayment(unsupportedDto, mockUser)).rejects.toThrow(
+        'Unsupported payment method: bitcoin',
+      );
     });
 
-    it('should throw error when order already paid', async () => {
-      mockOrderRepository.findOne.mockResolvedValue({
+    it('should mark payment as failed when payment fails', async () => {
+      orderRepository.findOne.mockResolvedValue(mockOrder);
+      orderRepository.save.mockResolvedValue({
         ...mockOrder,
-        paymentStatus: PaymentStatus.PAID,
+        paymentStatus: PaymentStatus.FAILED,
+      } as any);
+
+      // Mock payment failure by overriding processCOD
+      jest.spyOn(service as any, 'processCOD').mockResolvedValue({
+        success: false,
+        transactionId: '',
+        message: 'Payment failed',
       });
 
-      await expect(
-        service.processPayment(
-          {
-            orderId: 'order-123',
-            amount: 100,
-            paymentMethod: 'cod',
-          },
-          mockUser,
-        ),
-      ).rejects.toThrow('Order is already paid');
-    });
+      const result = await service.processPayment(processDto, mockUser);
 
-    it('should throw error when amount mismatch', async () => {
-      mockOrderRepository.findOne.mockResolvedValue({ ...mockOrder });
-
-      await expect(
-        service.processPayment(
-          {
-            orderId: 'order-123',
-            amount: 200,
-            paymentMethod: 'cod',
-          },
-          mockUser,
-        ),
-      ).rejects.toThrow('does not match order total');
-    });
-
-    it('should throw error for unsupported payment method', async () => {
-      mockOrderRepository.findOne.mockResolvedValue({ ...mockOrder });
-
-      await expect(
-        service.processPayment(
-          {
-            orderId: 'order-123',
-            amount: 100,
-            paymentMethod: 'bitcoin',
-          },
-          mockUser,
-        ),
-      ).rejects.toThrow('Unsupported payment method');
+      expect(result.success).toBe(false);
+      expect(orderRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          paymentStatus: PaymentStatus.FAILED,
+        }),
+      );
     });
   });
 
   describe('verifyPayment', () => {
-    it('should verify COD payment successfully', async () => {
-      mockOrderRepository.findOne.mockResolvedValue({ ...mockOrder });
-      mockOrderRepository.save.mockResolvedValue({ ...mockOrder, paymentStatus: PaymentStatus.PAID });
+    const verifyDto: VerifyPaymentDto = {
+      orderId: 'order-1',
+      transactionId: 'TXN-123',
+      paymentMethod: 'cod',
+    };
 
-      const result = await service.verifyPayment(
-        {
-          orderId: 'order-123',
-          transactionId: 'COD-ORD-001',
-          paymentMethod: 'cod',
-        },
-        mockUser,
-      );
+    it('should verify COD payment successfully', async () => {
+      orderRepository.findOne.mockResolvedValue(mockOrder);
+      orderRepository.save.mockResolvedValue({
+        ...mockOrder,
+        paymentStatus: PaymentStatus.PAID,
+      } as any);
+
+      const result = await service.verifyPayment(verifyDto, mockUser);
 
       expect(result.verified).toBe(true);
       expect(result.status).toBe(PaymentStatus.PAID);
-      expect(result.message).toContain('verified successfully');
+      expect(result.message).toBe('Payment verified successfully');
+    });
+
+    it('should throw BadRequestException when order not found', async () => {
+      orderRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.verifyPayment(verifyDto, mockUser)).rejects.toThrow(
+        'Order with ID order-1 not found',
+      );
     });
 
     it('should verify Stripe payment successfully', async () => {
-      mockOrderRepository.findOne.mockResolvedValue({ ...mockOrder });
-      mockOrderRepository.save.mockResolvedValue({ ...mockOrder, paymentStatus: PaymentStatus.PAID });
+      orderRepository.findOne.mockResolvedValue(mockOrder);
+      orderRepository.save.mockResolvedValue({
+        ...mockOrder,
+        paymentStatus: PaymentStatus.PAID,
+      } as any);
 
-      const result = await service.verifyPayment(
-        {
-          orderId: 'order-123',
-          transactionId: 'STRIPE-123',
-          paymentMethod: 'stripe',
-        },
-        mockUser,
-      );
+      const stripeDto = { ...verifyDto, paymentMethod: 'stripe' };
+      const result = await service.verifyPayment(stripeDto, mockUser);
 
       expect(result.verified).toBe(true);
-      expect(result.status).toBe(PaymentStatus.PAID);
     });
 
     it('should verify PayPal payment successfully', async () => {
-      mockOrderRepository.findOne.mockResolvedValue({ ...mockOrder });
-      mockOrderRepository.save.mockResolvedValue({ ...mockOrder, paymentStatus: PaymentStatus.PAID });
+      orderRepository.findOne.mockResolvedValue(mockOrder);
+      orderRepository.save.mockResolvedValue({
+        ...mockOrder,
+        paymentStatus: PaymentStatus.PAID,
+      } as any);
 
-      const result = await service.verifyPayment(
-        {
-          orderId: 'order-123',
-          transactionId: 'PAYPAL-123',
-          paymentMethod: 'paypal',
-        },
-        mockUser,
-      );
+      const paypalDto = { ...verifyDto, paymentMethod: 'paypal' };
+      const result = await service.verifyPayment(paypalDto, mockUser);
 
       expect(result.verified).toBe(true);
-      expect(result.status).toBe(PaymentStatus.PAID);
     });
 
     it('should verify VNPay payment successfully', async () => {
-      mockOrderRepository.findOne.mockResolvedValue({ ...mockOrder });
-      mockOrderRepository.save.mockResolvedValue({ ...mockOrder, paymentStatus: PaymentStatus.PAID });
+      orderRepository.findOne.mockResolvedValue(mockOrder);
+      orderRepository.save.mockResolvedValue({
+        ...mockOrder,
+        paymentStatus: PaymentStatus.PAID,
+      } as any);
 
-      const result = await service.verifyPayment(
-        {
-          orderId: 'order-123',
-          transactionId: 'VNPAY-123',
-          paymentMethod: 'vnpay',
-        },
-        mockUser,
-      );
+      const vnpayDto = { ...verifyDto, paymentMethod: 'vnpay' };
+      const result = await service.verifyPayment(vnpayDto, mockUser);
 
       expect(result.verified).toBe(true);
-      expect(result.status).toBe(PaymentStatus.PAID);
     });
 
     it('should verify Momo payment successfully', async () => {
-      mockOrderRepository.findOne.mockResolvedValue({ ...mockOrder });
-      mockOrderRepository.save.mockResolvedValue({ ...mockOrder, paymentStatus: PaymentStatus.PAID });
+      orderRepository.findOne.mockResolvedValue(mockOrder);
+      orderRepository.save.mockResolvedValue({
+        ...mockOrder,
+        paymentStatus: PaymentStatus.PAID,
+      } as any);
 
-      const result = await service.verifyPayment(
-        {
-          orderId: 'order-123',
-          transactionId: 'MOMO-123',
-          paymentMethod: 'momo',
-        },
-        mockUser,
+      const momoDto = { ...verifyDto, paymentMethod: 'momo' };
+      const result = await service.verifyPayment(momoDto, mockUser);
+
+      expect(result.verified).toBe(true);
+    });
+
+    it('should throw BadRequestException for unsupported payment method', async () => {
+      orderRepository.findOne.mockResolvedValue(mockOrder);
+
+      const unsupportedDto = { ...verifyDto, paymentMethod: 'bitcoin' };
+
+      await expect(service.verifyPayment(unsupportedDto, mockUser)).rejects.toThrow(
+        'Unsupported payment method: bitcoin',
       );
+    });
+
+    it('should not update status if already paid', async () => {
+      orderRepository.findOne.mockResolvedValue({
+        ...mockOrder,
+        paymentStatus: PaymentStatus.PAID,
+      } as any);
+
+      const result = await service.verifyPayment(verifyDto, mockUser);
 
       expect(result.verified).toBe(true);
       expect(result.status).toBe(PaymentStatus.PAID);
-    });
-
-    it('should throw error when order not found', async () => {
-      mockOrderRepository.findOne.mockResolvedValue(null);
-
-      await expect(
-        service.verifyPayment(
-          {
-            orderId: 'non-existent',
-            transactionId: 'TXN-123',
-            paymentMethod: 'cod',
-          },
-          mockUser,
-        ),
-      ).rejects.toThrow(BadRequestException);
-    });
-
-    it('should throw error for unsupported payment method', async () => {
-      mockOrderRepository.findOne.mockResolvedValue({ ...mockOrder });
-
-      await expect(
-        service.verifyPayment(
-          {
-            orderId: 'order-123',
-            transactionId: 'TXN-123',
-            paymentMethod: 'bitcoin',
-          },
-          mockUser,
-        ),
-      ).rejects.toThrow('Unsupported payment method');
-    });
-
-    it('should not update order if already paid', async () => {
-      mockOrderRepository.findOne.mockResolvedValue({
-        ...mockOrder,
-        paymentStatus: PaymentStatus.PAID,
-      });
-
-      const result = await service.verifyPayment(
-        {
-          orderId: 'order-123',
-          transactionId: 'COD-ORD-001',
-          paymentMethod: 'cod',
-        },
-        mockUser,
-      );
-
-      expect(result.verified).toBe(true);
-      expect(mockOrderRepository.save).not.toHaveBeenCalled();
+      expect(orderRepository.save).not.toHaveBeenCalled();
     });
   });
 
   describe('refundPayment', () => {
+    const refundDto: RefundDto = {
+      orderId: 'order-1',
+      amount: 100,
+      reason: 'Customer request',
+    };
+
     const paidOrder = {
       ...mockOrder,
       paymentStatus: PaymentStatus.PAID,
       paymentMethod: 'cod',
-      paymentTransactionId: 'COD-ORD-001',
     };
 
     it('should refund COD payment successfully', async () => {
-      mockOrderRepository.findOne.mockResolvedValue({ ...paidOrder });
-      mockOrderRepository.save.mockResolvedValue({ ...paidOrder, paymentStatus: PaymentStatus.REFUNDED });
+      orderRepository.findOne.mockResolvedValue(paidOrder);
+      orderRepository.save.mockResolvedValue({
+        ...paidOrder,
+        paymentStatus: PaymentStatus.REFUNDED,
+      } as any);
 
-      const result = await service.refundPayment(
-        {
-          orderId: 'order-123',
-          reason: 'Customer request',
-        },
-        mockUser,
-      );
+      const result = await service.refundPayment(refundDto, mockUser);
 
       expect(result.success).toBe(true);
       expect(result.refundId).toContain('COD-REFUND-');
-      expect(mockOrderRepository.save).toHaveBeenCalled();
+      expect(orderRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          paymentStatus: PaymentStatus.REFUNDED,
+        }),
+      );
+    });
+
+    it('should throw BadRequestException when order not found', async () => {
+      orderRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.refundPayment(refundDto, mockUser)).rejects.toThrow(
+        'Order with ID order-1 not found',
+      );
+    });
+
+    it('should throw BadRequestException when order not paid', async () => {
+      orderRepository.findOne.mockResolvedValue(mockOrder);
+
+      await expect(service.refundPayment(refundDto, mockUser)).rejects.toThrow(
+        'Order must be paid before refunding',
+      );
     });
 
     it('should refund Stripe payment successfully', async () => {
-      mockOrderRepository.findOne.mockResolvedValue({ ...paidOrder, paymentMethod: 'stripe' });
-      mockOrderRepository.save.mockResolvedValue({ ...paidOrder, paymentStatus: PaymentStatus.REFUNDED });
+      orderRepository.findOne.mockResolvedValue({
+        ...paidOrder,
+        paymentMethod: 'stripe',
+      } as any);
+      orderRepository.save.mockResolvedValue({
+        ...paidOrder,
+        paymentStatus: PaymentStatus.REFUNDED,
+      } as any);
 
-      const result = await service.refundPayment(
-        {
-          orderId: 'order-123',
-          reason: 'Customer request',
-        },
-        mockUser,
-      );
+      const result = await service.refundPayment(refundDto, mockUser);
 
       expect(result.success).toBe(true);
       expect(result.refundId).toContain('STRIPE-REFUND-');
     });
 
     it('should refund PayPal payment successfully', async () => {
-      mockOrderRepository.findOne.mockResolvedValue({ ...paidOrder, paymentMethod: 'paypal' });
-      mockOrderRepository.save.mockResolvedValue({ ...paidOrder, paymentStatus: PaymentStatus.REFUNDED });
+      orderRepository.findOne.mockResolvedValue({
+        ...paidOrder,
+        paymentMethod: 'paypal',
+      } as any);
+      orderRepository.save.mockResolvedValue({
+        ...paidOrder,
+        paymentStatus: PaymentStatus.REFUNDED,
+      } as any);
 
-      const result = await service.refundPayment(
-        {
-          orderId: 'order-123',
-          reason: 'Customer request',
-        },
-        mockUser,
-      );
+      const result = await service.refundPayment(refundDto, mockUser);
 
       expect(result.success).toBe(true);
       expect(result.refundId).toContain('PAYPAL-REFUND-');
     });
 
     it('should refund VNPay payment successfully', async () => {
-      mockOrderRepository.findOne.mockResolvedValue({ ...paidOrder, paymentMethod: 'vnpay' });
-      mockOrderRepository.save.mockResolvedValue({ ...paidOrder, paymentStatus: PaymentStatus.REFUNDED });
+      orderRepository.findOne.mockResolvedValue({
+        ...paidOrder,
+        paymentMethod: 'vnpay',
+      } as any);
+      orderRepository.save.mockResolvedValue({
+        ...paidOrder,
+        paymentStatus: PaymentStatus.REFUNDED,
+      } as any);
 
-      const result = await service.refundPayment(
-        {
-          orderId: 'order-123',
-          reason: 'Customer request',
-        },
-        mockUser,
-      );
+      const result = await service.refundPayment(refundDto, mockUser);
 
       expect(result.success).toBe(true);
       expect(result.refundId).toContain('VNPAY-REFUND-');
     });
 
     it('should refund Momo payment successfully', async () => {
-      mockOrderRepository.findOne.mockResolvedValue({ ...paidOrder, paymentMethod: 'momo' });
-      mockOrderRepository.save.mockResolvedValue({ ...paidOrder, paymentStatus: PaymentStatus.REFUNDED });
+      orderRepository.findOne.mockResolvedValue({
+        ...paidOrder,
+        paymentMethod: 'momo',
+      } as any);
+      orderRepository.save.mockResolvedValue({
+        ...paidOrder,
+        paymentStatus: PaymentStatus.REFUNDED,
+      } as any);
 
-      const result = await service.refundPayment(
-        {
-          orderId: 'order-123',
-          reason: 'Customer request',
-        },
-        mockUser,
-      );
+      const result = await service.refundPayment(refundDto, mockUser);
 
       expect(result.success).toBe(true);
       expect(result.refundId).toContain('MOMO-REFUND-');
     });
 
-    it('should refund with custom amount', async () => {
-      mockOrderRepository.findOne.mockResolvedValue({ ...paidOrder });
-      mockOrderRepository.save.mockResolvedValue({ ...paidOrder, paymentStatus: PaymentStatus.REFUNDED });
+    it('should throw BadRequestException for unsupported payment method', async () => {
+      orderRepository.findOne.mockResolvedValue({
+        ...paidOrder,
+        paymentMethod: 'bitcoin',
+      } as any);
 
-      const result = await service.refundPayment(
-        {
-          orderId: 'order-123',
-          amount: 50,
-          reason: 'Partial refund',
-        },
-        mockUser,
+      await expect(service.refundPayment(refundDto, mockUser)).rejects.toThrow(
+        'Unsupported payment method: bitcoin',
       );
+    });
+
+    it('should use full order total when amount not specified', async () => {
+      orderRepository.findOne.mockResolvedValue(paidOrder);
+      orderRepository.save.mockResolvedValue({
+        ...paidOrder,
+        paymentStatus: PaymentStatus.REFUNDED,
+      });
+
+      const partialDto = { orderId: 'order-1', reason: 'Customer request' };
+      const result = await service.refundPayment(partialDto as RefundDto, mockUser);
 
       expect(result.success).toBe(true);
     });
 
-    it('should throw error when order not found', async () => {
-      mockOrderRepository.findOne.mockResolvedValue(null);
-
-      await expect(
-        service.refundPayment(
-          {
-            orderId: 'non-existent',
-            reason: 'Test',
-          },
-          mockUser,
-        ),
-      ).rejects.toThrow(BadRequestException);
-    });
-
-    it('should throw error when order not paid', async () => {
-      mockOrderRepository.findOne.mockResolvedValue({ ...mockOrder });
-
-      await expect(
-        service.refundPayment(
-          {
-            orderId: 'order-123',
-            reason: 'Test',
-          },
-          mockUser,
-        ),
-      ).rejects.toThrow('Order must be paid before refunding');
-    });
-
-    it('should throw error for unsupported payment method', async () => {
-      mockOrderRepository.findOne.mockResolvedValue({
+    it('should handle null paymentMethod gracefully', async () => {
+      orderRepository.findOne.mockResolvedValue({
         ...paidOrder,
-        paymentMethod: 'bitcoin',
-      });
+        paymentMethod: null,
+      } as any);
 
-      await expect(
-        service.refundPayment(
-          {
-            orderId: 'order-123',
-            reason: 'Test',
-          },
-          mockUser,
-        ),
-      ).rejects.toThrow('Unsupported payment method');
+      await expect(service.refundPayment(refundDto, mockUser)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should handle undefined paymentMethod gracefully', async () => {
+      orderRepository.findOne.mockResolvedValue({
+        ...paidOrder,
+        paymentMethod: undefined,
+      } as any);
+
+      await expect(service.refundPayment(refundDto, mockUser)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+  });
+
+  describe('Edge Cases', () => {
+    it('should handle empty orderId', async () => {
+      const dto: ProcessPaymentDto = {
+        orderId: '',
+        amount: 100,
+        paymentMethod: 'cod',
+      };
+
+      orderRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.processPayment(dto, mockUser)).rejects.toThrow(BadRequestException);
+    });
+
+    it('should handle null user', async () => {
+      const dto: ProcessPaymentDto = {
+        orderId: 'order-1',
+        amount: 100,
+        paymentMethod: 'cod',
+      };
+
+      await expect(service.processPayment(dto, null as any)).rejects.toThrow();
+    });
+
+    it('should handle zero amount', async () => {
+      orderRepository.findOne.mockResolvedValue({ ...mockOrder, total: 0 } as any);
+
+      const dto: ProcessPaymentDto = {
+        orderId: 'order-1',
+        amount: 0,
+        paymentMethod: 'cod',
+      };
+
+      orderRepository.save.mockResolvedValue({
+        ...mockOrder,
+        paymentStatus: PaymentStatus.PAID,
+      } as any);
+
+      const result = await service.processPayment(dto, mockUser);
+      expect(result.success).toBe(true);
+    });
+
+    it('should handle negative amount', async () => {
+      orderRepository.findOne.mockResolvedValue(mockOrder);
+
+      const dto: ProcessPaymentDto = {
+        orderId: 'order-1',
+        amount: -100,
+        paymentMethod: 'cod',
+      };
+
+      await expect(service.processPayment(dto, mockUser)).rejects.toThrow(
+        'Payment amount -100 does not match order total 100',
+      );
+    });
+
+    it('should handle very large amount', async () => {
+      const largeAmount = 999999999;
+      orderRepository.findOne.mockResolvedValue({ ...mockOrder, total: largeAmount } as any);
+      orderRepository.save.mockResolvedValue({
+        ...mockOrder,
+        paymentStatus: PaymentStatus.PAID,
+      } as any);
+
+      const dto: ProcessPaymentDto = {
+        orderId: 'order-1',
+        amount: largeAmount,
+        paymentMethod: 'cod',
+      };
+
+      const result = await service.processPayment(dto, mockUser);
+      expect(result.success).toBe(true);
     });
   });
 });

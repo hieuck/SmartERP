@@ -33,22 +33,34 @@ describe('ReportsController (Integration)', () => {
   const mockTrialBalance = {
     asOfDate: new Date('2024-01-31'),
     accounts: [
-      { accountId: 'acc-1', accountName: 'Cash', debit: 10000, credit: 0 },
-      { accountId: 'acc-2', accountName: 'Revenue', debit: 0, credit: 50000 },
+      { code: 'acc-1', name: 'Cash', debit: 10000, credit: 0 },
+      { code: 'acc-2', name: 'Revenue', debit: 0, credit: 50000 },
     ],
     totalDebit: 60000,
     totalCredit: 60000,
-    balanced: true,
+    isBalanced: true,
   };
 
   const mockGeneralLedger = {
-    accountId: 'acc-1',
-    accountName: 'Cash',
-    startDate: new Date('2024-01-01'),
-    endDate: new Date('2024-01-31'),
+    account: {
+      code: 'ACC-001',
+      name: 'Cash',
+      type: 'ASSET' as any,
+    },
+    period: {
+      startDate: new Date('2024-01-01'),
+      endDate: new Date('2024-01-31'),
+    },
     openingBalance: 10000,
-    entries: [
-      { date: new Date('2024-01-15'), description: 'Payment', debit: 5000, credit: 0 },
+    transactions: [
+      {
+        date: new Date('2024-01-15'),
+        reference: 'JE-001',
+        description: 'Payment',
+        debit: 5000,
+        credit: 0,
+        balance: 15000,
+      },
     ],
     closingBalance: 15000,
   };
@@ -201,11 +213,23 @@ describe('ReportsController (Integration)', () => {
   describe('GET /accounting/reports/sales-summary', () => {
     it('should return sales summary report', async () => {
       const mockSalesSummary = {
-        startDate: new Date('2024-01-01'),
-        endDate: new Date('2024-01-31'),
+        period: {
+          startDate: new Date('2024-01-01'),
+          endDate: new Date('2024-01-31'),
+        },
         totalSales: 100000,
-        totalOrders: 50,
+        totalInvoices: 50,
+        totalPaid: 80000,
+        totalOutstanding: 20000,
         averageOrderValue: 2000,
+        salesByCustomer: [
+          {
+            customerId: 'cust-1',
+            customerName: 'Customer A',
+            totalSales: 50000,
+            invoiceCount: 25,
+          },
+        ],
       };
 
       reportsService.getSalesSummary.mockResolvedValue(mockSalesSummary);
@@ -237,10 +261,35 @@ describe('ReportsController (Integration)', () => {
 
   describe('GET /accounting/reports/inventory-summary', () => {
     it('should return inventory summary report', async () => {
-      const mockInventorySummary = [
-        { productId: 'prod-1', productName: 'Product A', quantity: 100, value: 10000 },
-        { productId: 'prod-2', productName: 'Product B', quantity: 50, value: 5000 },
-      ];
+      const mockInventorySummary = {
+        products: [
+          {
+            productId: 'prod-1',
+            sku: 'SKU-001',
+            name: 'Product A',
+            quantity: 100,
+            cost: 100,
+            value: 10000,
+            minLevel: 10,
+            maxLevel: 200,
+            status: 'active',
+          },
+          {
+            productId: 'prod-2',
+            sku: 'SKU-002',
+            name: 'Product B',
+            quantity: 50,
+            cost: 100,
+            value: 5000,
+            minLevel: 5,
+            maxLevel: 100,
+            status: 'active',
+          },
+        ],
+        totalProducts: 2,
+        totalValue: 15000,
+        lowStockCount: 0,
+      };
 
       reportsService.getInventorySummary.mockResolvedValue(mockInventorySummary);
 
@@ -253,7 +302,13 @@ describe('ReportsController (Integration)', () => {
     });
 
     it('should accept optional filters', async () => {
-      reportsService.getInventorySummary.mockResolvedValue([]);
+      const emptyInventorySummary = {
+        products: [],
+        totalProducts: 0,
+        totalValue: 0,
+        lowStockCount: 0,
+      };
+      reportsService.getInventorySummary.mockResolvedValue(emptyInventorySummary);
 
       await request(app.getHttpServer())
         .get('/accounting/reports/inventory-summary?productId=prod-1&categoryId=cat-1&lowStockOnly=true')
@@ -272,10 +327,17 @@ describe('ReportsController (Integration)', () => {
   describe('GET /accounting/reports/inventory-valuation', () => {
     it('should return inventory valuation report', async () => {
       const mockValuation = {
-        totalValue: 50000,
-        items: [
-          { productId: 'prod-1', quantity: 100, unitCost: 100, totalValue: 10000 },
+        products: [
+          {
+            productId: 'prod-1',
+            sku: 'SKU-001',
+            name: 'Product A',
+            quantity: 100,
+            cost: 100,
+            totalValue: 10000,
+          },
         ],
+        totalValue: 10000,
       };
 
       reportsService.getInventoryValuation.mockResolvedValue(mockValuation);
@@ -307,11 +369,20 @@ describe('ReportsController (Integration)', () => {
   describe('GET /accounting/reports/inventory-movement', () => {
     it('should return inventory movement report', async () => {
       const mockMovement = {
-        startDate: new Date('2024-01-01'),
-        endDate: new Date('2024-01-31'),
         movements: [
-          { date: new Date('2024-01-15'), type: 'in', quantity: 50, productId: 'prod-1' },
+          {
+            productId: 'prod-1',
+            sku: 'SKU-001',
+            name: 'Product A',
+            movementType: 'in',
+            quantity: 50,
+            date: new Date('2024-01-15'),
+            reference: 'PO-001',
+          },
         ],
+        totalMovements: 1,
+        totalQuantityIn: 50,
+        totalQuantityOut: 0,
       };
 
       reportsService.getInventoryMovement.mockResolvedValue(mockMovement);

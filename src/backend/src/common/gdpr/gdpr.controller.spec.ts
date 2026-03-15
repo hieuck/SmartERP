@@ -24,8 +24,11 @@ import * as request from 'supertest';
 import { GdprController } from './gdpr.controller';
 import { GdprService } from './gdpr.service';
 import { JwtAuthGuard } from '../../core/auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../../guards/roles.guard';
+import { RolesGuard } from '../guards/roles.guard';
 import { ConsentType } from './enums';
+import { ExportStatus } from './enums/export-status.enum';
+import { ExportFormat } from './enums/export-format.enum';
+import { DeletionStatus } from './enums/deletion-status.enum';
 
 describe('GdprController (Integration)', () => {
   let app: INestApplication;
@@ -49,29 +52,65 @@ describe('GdprController (Integration)', () => {
     id: 'consent-123',
     userId: 'user-123',
     tenantId: 'tenant-123',
-    type: ConsentType.MARKETING,
+    type: ConsentType.MARKETING_EMAILS,
     granted: true,
+    version: '1.0',
+    ipAddress: '127.0.0.1',
+    userAgent: 'Mozilla/5.0',
     createdAt: new Date(),
     updatedAt: new Date(),
-  };
+    revokedAt: null,
+    user: null,
+    get isActive() {
+      return this.granted && !this.revokedAt;
+    },
+  } as any;
 
   const mockExportRequest = {
     id: 'export-123',
     userId: 'user-123',
     tenantId: 'tenant-123',
-    status: 'pending',
-    format: 'json',
+    status: ExportStatus.PENDING,
+    format: ExportFormat.JSON,
+    fileUrl: null,
+    fileSize: null,
+    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    errorMessage: null,
     createdAt: new Date(),
-  };
+    updatedAt: new Date(),
+    completedAt: null,
+    user: null,
+    setExpiryDate() {
+      const expiryDate = new Date();
+      expiryDate.setDate(expiryDate.getDate() + 7);
+      this.expiresAt = expiryDate;
+    },
+    get isExpired() {
+      return this.expiresAt && new Date() > this.expiresAt;
+    },
+  } as any;
 
   const mockDeletionRequest = {
     id: 'deletion-123',
     userId: 'user-123',
     tenantId: 'tenant-123',
-    status: 'pending',
+    status: DeletionStatus.PENDING,
     reason: 'No longer need account',
+    approvedBy: null,
+    approvedAt: null,
+    rejectionReason: null,
+    errorMessage: null,
     createdAt: new Date(),
-  };
+    updatedAt: new Date(),
+    completedAt: null,
+    user: null,
+    get isPending() {
+      return this.status === DeletionStatus.PENDING;
+    },
+    get isApproved() {
+      return this.status === DeletionStatus.APPROVED;
+    },
+  } as any;
 
   beforeAll(async () => {
     const mockGdprService = {
@@ -159,7 +198,7 @@ describe('GdprController (Integration)', () => {
   describe('POST /gdpr/consent', () => {
     it('should create consent successfully', async () => {
       const createDto = {
-        type: ConsentType.MARKETING,
+        type: ConsentType.MARKETING_EMAILS,
         granted: true,
       };
 
@@ -181,7 +220,7 @@ describe('GdprController (Integration)', () => {
 
     it('should update existing consent', async () => {
       const updateDto = {
-        type: ConsentType.MARKETING,
+        type: ConsentType.MARKETING_EMAILS,
         granted: false,
       };
 
@@ -200,7 +239,7 @@ describe('GdprController (Integration)', () => {
     it('should require authentication', async () => {
       await request(app.getHttpServer())
         .post('/gdpr/consent')
-        .send({ type: ConsentType.MARKETING, granted: true })
+        .send({ type: ConsentType.MARKETING_EMAILS, granted: true })
         .expect(401);
     });
   });
@@ -210,7 +249,7 @@ describe('GdprController (Integration)', () => {
       gdprService.revokeConsent.mockResolvedValue(undefined);
 
       const response = await request(app.getHttpServer())
-        .post(`/gdpr/consent/${ConsentType.MARKETING}/revoke`)
+        .post(`/gdpr/consent/${ConsentType.MARKETING_EMAILS}/revoke`)
         .set('Authorization', 'Bearer valid-token')
         .expect(201);
 
@@ -218,7 +257,7 @@ describe('GdprController (Integration)', () => {
       expect(gdprService.revokeConsent).toHaveBeenCalledWith(
         mockUser.id,
         mockUser.tenantId,
-        ConsentType.MARKETING,
+        ConsentType.MARKETING_EMAILS,
       );
     });
 
@@ -228,7 +267,7 @@ describe('GdprController (Integration)', () => {
       );
 
       await request(app.getHttpServer())
-        .post(`/gdpr/consent/${ConsentType.ANALYTICS}/revoke`)
+        .post(`/gdpr/consent/${ConsentType.DATA_PROCESSING}/revoke`)
         .set('Authorization', 'Bearer valid-token')
         .expect(404);
     });
@@ -268,12 +307,12 @@ describe('GdprController (Integration)', () => {
       gdprService.hasActiveConsent.mockResolvedValue(true);
 
       const response = await request(app.getHttpServer())
-        .get(`/gdpr/consent/${ConsentType.MARKETING}/status`)
+        .get(`/gdpr/consent/${ConsentType.MARKETING_EMAILS}/status`)
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
       expect(response.body).toEqual({
-        type: ConsentType.MARKETING,
+        type: ConsentType.MARKETING_EMAILS,
         hasConsent: true,
       });
     });
@@ -282,12 +321,12 @@ describe('GdprController (Integration)', () => {
       gdprService.hasActiveConsent.mockResolvedValue(false);
 
       const response = await request(app.getHttpServer())
-        .get(`/gdpr/consent/${ConsentType.ANALYTICS}/status`)
+        .get(`/gdpr/consent/${ConsentType.DATA_PROCESSING}/status`)
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
       expect(response.body).toEqual({
-        type: ConsentType.ANALYTICS,
+        type: ConsentType.DATA_PROCESSING,
         hasConsent: false,
       });
     });
@@ -502,7 +541,7 @@ describe('GdprController (Integration)', () => {
         notes: 'Approved by admin',
       };
 
-      const approvedRequest = { ...mockDeletionRequest, status: 'approved' };
+      const approvedRequest = { ...mockDeletionRequest, status: DeletionStatus.APPROVED };
       gdprService.approveDeletionRequest.mockResolvedValue(approvedRequest);
 
       const response = await request(app.getHttpServer())
@@ -511,7 +550,7 @@ describe('GdprController (Integration)', () => {
         .send(approveDto)
         .expect(200);
 
-      expect(response.body.status).toBe('approved');
+      expect(response.body.status).toBe(DeletionStatus.APPROVED);
       expect(gdprService.approveDeletionRequest).toHaveBeenCalledWith(
         'deletion-123',
         mockAdminUser.id,
@@ -525,7 +564,7 @@ describe('GdprController (Integration)', () => {
         notes: 'Rejected - pending transactions',
       };
 
-      const rejectedRequest = { ...mockDeletionRequest, status: 'rejected' };
+      const rejectedRequest = { ...mockDeletionRequest, status: DeletionStatus.REJECTED };
       gdprService.approveDeletionRequest.mockResolvedValue(rejectedRequest);
 
       const response = await request(app.getHttpServer())
@@ -534,7 +573,7 @@ describe('GdprController (Integration)', () => {
         .send(rejectDto)
         .expect(200);
 
-      expect(response.body.status).toBe('rejected');
+      expect(response.body.status).toBe(DeletionStatus.REJECTED);
     });
 
     it('should return 403 for non-admin users', async () => {
