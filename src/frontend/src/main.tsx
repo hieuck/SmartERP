@@ -8,9 +8,14 @@ import viVN from 'antd/locale/vi_VN';
 import App from './App';
 import { store } from './store';
 import { registerServiceWorker } from './lib/offline/register-sw';
+import { initSentry } from './lib/monitoring/sentry';
+import ErrorBoundary from './components/error/ErrorBoundary';
 import { theme } from './theme';
 import './i18n/config'; // Initialize i18n
 import './index.css';
+
+// Initialize Sentry for error tracking (Day 4-7: Add Monitoring)
+initSentry();
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -23,15 +28,17 @@ const queryClient = new QueryClient({
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <HelmetProvider>
-      <Provider store={store}>
-        <QueryClientProvider client={queryClient}>
-          <ConfigProvider locale={viVN} theme={theme}>
-            <App />
-          </ConfigProvider>
-        </QueryClientProvider>
-      </Provider>
-    </HelmetProvider>
+    <ErrorBoundary>
+      <HelmetProvider>
+        <Provider store={store}>
+          <QueryClientProvider client={queryClient}>
+            <ConfigProvider locale={viVN} theme={theme}>
+              <App />
+            </ConfigProvider>
+          </QueryClientProvider>
+        </Provider>
+      </HelmetProvider>
+    </ErrorBoundary>
   </React.StrictMode>,
 );
 
