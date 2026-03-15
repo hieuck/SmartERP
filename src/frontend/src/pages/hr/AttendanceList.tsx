@@ -65,7 +65,7 @@ export default function AttendanceList() {
     setLoading(true);
     try {
       logger.debug('AttendanceList', 'Loading attendances from offline storage');
-      let allAttendances = await offlineServices.attendances.getAll();
+      const allAttendances = await offlineServices.attendances.getAll();
       
       // Apply filters
       let filtered = allAttendances;

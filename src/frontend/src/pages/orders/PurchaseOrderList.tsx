@@ -82,7 +82,7 @@ export default function PurchaseOrderList() {
     setLoading(true);
     try {
       logger.debug('PurchaseOrderList', 'Loading purchase orders from offline storage');
-      let allOrders = await offlineServices.purchaseOrders.getAll();
+      const allOrders = await offlineServices.purchaseOrders.getAll();
       
       // Apply filters
       let filtered = allOrders;

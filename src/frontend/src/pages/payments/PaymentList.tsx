@@ -98,7 +98,7 @@ export default function PaymentList() {
     setLoading(true);
     try {
       logger.debug('PaymentList', 'Loading payments from offline storage');
-      let allPayments = await offlineServices.payments.getAll();
+      const allPayments = await offlineServices.payments.getAll();
       
       // Apply filters
       let filtered = allPayments;

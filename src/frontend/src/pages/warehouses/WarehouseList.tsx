@@ -61,7 +61,7 @@ export default function WarehouseList() {
     setLoading(true);
     try {
       logger.debug('WarehouseList', 'Loading warehouses from offline storage');
-      let allWarehouses = await offlineServices.warehouses.getAll();
+      const allWarehouses = await offlineServices.warehouses.getAll();
       
       // Filter by search term
       let filtered = allWarehouses;

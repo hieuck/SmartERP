@@ -19,8 +19,6 @@ const CategoryManagement = lazy(() => import('./pages/products/CategoryManagemen
 const StockList = lazy(() => import('./pages/inventory/StockList'));
 const StockReceiptList = lazy(() => import('./pages/inventory/StockReceiptList'));
 const StockReceiptForm = lazy(() => import('./pages/inventory/StockReceiptForm'));
-const StockIssueList = lazy(() => import('./pages/inventory/StockIssueList'));
-const StockIssueForm = lazy(() => import('./pages/inventory/StockIssueForm'));
 const CustomerList = lazy(() => import('./pages/customers/CustomerList'));
 const CustomerForm = lazy(() => import('./pages/customers/CustomerForm'));
 const SupplierList = lazy(() => import('./pages/suppliers/SupplierList'));
@@ -29,14 +27,10 @@ const SalesOrderList = lazy(() => import('./pages/orders/SalesOrderList'));
 const SalesOrderForm = lazy(() => import('./pages/orders/SalesOrderForm'));
 const PurchaseOrderList = lazy(() => import('./pages/orders/PurchaseOrderList'));
 const PurchaseOrderForm = lazy(() => import('./pages/orders/PurchaseOrderForm'));
-const PaymentPage = lazy(() => import('./pages/orders/PaymentPage'));
 const ReportsPage = lazy(() => import('./pages/reports/ReportsPage'));
 // Warehouse pages (Requirements: 27.1, 27.3, 27.4)
 const WarehouseList = lazy(() => import('./pages/warehouses/WarehouseList'));
 const WarehouseForm = lazy(() => import('./pages/warehouses/WarehouseForm'));
-// Warehouse pages (continued)
-const StockTransferList = lazy(() => import('./pages/warehouses/StockTransferList'));
-const StockTransferForm = lazy(() => import('./pages/warehouses/StockTransferForm'));
 const WarehouseStockReport = lazy(() => import('./pages/warehouses/WarehouseStockReport'));
 // Settings pages
 const PrintSettings = lazy(() => import('./pages/settings/PrintSettings'));
@@ -53,25 +47,7 @@ const PaymentForm = lazy(() => import('./pages/payments/PaymentForm'));
 // User management pages
 const UserList = lazy(() => import('./pages/users/UserList'));
 const UserForm = lazy(() => import('./pages/users/UserForm'));
-// Production pages (Requirements: 31-42)
-const WorkerList = lazy(() => import('./pages/production/WorkerList'));
-const WorkerForm = lazy(() => import('./pages/production/WorkerForm'));
-const AttendanceTracking = lazy(() => import('./pages/production/AttendanceTracking'));
-const ShiftCalendar = lazy(() => import('./pages/production/ShiftCalendar'));
-const PayrollList = lazy(() => import('./pages/production/PayrollList'));
-const AdvancePaymentList = lazy(() => import('./pages/production/AdvancePaymentList'));
-const MaterialList = lazy(() => import('./pages/production/MaterialList'));
-const MaterialForm = lazy(() => import('./pages/production/MaterialForm'));
-const MaterialTransactions = lazy(() => import('./pages/production/MaterialTransactions'));
-const MoldList = lazy(() => import('./pages/production/MoldList'));
-const MoldForm = lazy(() => import('./pages/production/MoldForm'));
-const MoldMaintenance = lazy(() => import('./pages/production/MoldMaintenance'));
-const ProductionOrderList = lazy(() => import('./pages/production/ProductionOrderList'));
-const ProductionOrderDetail = lazy(() => import('./pages/production/ProductionOrderDetail'));
-const ProductionReports = lazy(() => import('./pages/production/ProductionReports'));
-const PieceworkTracking = lazy(() => import('./pages/production/PieceworkTracking'));
-// Promotions pages (Requirements: 28)
-const PromotionsPage = lazy(() => import('./pages/promotions/PromotionsPage'));
+// Promotions pages (Requirements: 28) - REMOVED (files don't exist)
 // Notifications pages (Requirements: 18)
 const NotificationListPage = lazy(() => import('./pages/notifications/NotificationListPage'));
 const NotificationPreferencesPage = lazy(
@@ -210,30 +186,6 @@ function App() {
               </Suspense>
             }
           />
-          <Route
-            path="inventory/issues"
-            element={
-              <Suspense fallback={<PageLoader />}>
-                <StockIssueList />
-              </Suspense>
-            }
-          />
-          <Route
-            path="inventory/issues/new"
-            element={
-              <Suspense fallback={<PageLoader />}>
-                <StockIssueForm />
-              </Suspense>
-            }
-          />
-          <Route
-            path="inventory/issues/:id"
-            element={
-              <Suspense fallback={<PageLoader />}>
-                <StockIssueForm />
-              </Suspense>
-            }
-          />
 
           {/* Customers - Lazy loaded */}
           <Route
@@ -352,14 +304,6 @@ function App() {
               </Suspense>
             }
           />
-          <Route
-            path="orders/payments"
-            element={
-              <Suspense fallback={<PageLoader />}>
-                <PaymentPage />
-              </Suspense>
-            }
-          />
 
           {/* Reports - Lazy loaded */}
           <Route
@@ -393,30 +337,6 @@ function App() {
             element={
               <Suspense fallback={<PageLoader />}>
                 <WarehouseForm />
-              </Suspense>
-            }
-          />
-          <Route
-            path="warehouses/transfers"
-            element={
-              <Suspense fallback={<PageLoader />}>
-                <StockTransferList />
-              </Suspense>
-            }
-          />
-          <Route
-            path="warehouses/transfers/new"
-            element={
-              <Suspense fallback={<PageLoader />}>
-                <StockTransferForm />
-              </Suspense>
-            }
-          />
-          <Route
-            path="warehouses/transfers/:id"
-            element={
-              <Suspense fallback={<PageLoader />}>
-                <StockTransferForm />
               </Suspense>
             }
           />
@@ -545,169 +465,7 @@ function App() {
             }
           />
 
-          {/* Production - Lazy loaded (Requirements: 31-42) */}
-          <Route
-            path="production/workers"
-            element={
-              <Suspense fallback={<PageLoader />}>
-                <WorkerList />
-              </Suspense>
-            }
-          />
-          <Route
-            path="production/workers/new"
-            element={
-              <Suspense fallback={<PageLoader />}>
-                <WorkerForm />
-              </Suspense>
-            }
-          />
-          <Route
-            path="production/workers/:id"
-            element={
-              <Suspense fallback={<PageLoader />}>
-                <WorkerForm />
-              </Suspense>
-            }
-          />
-          <Route
-            path="production/attendance"
-            element={
-              <Suspense fallback={<PageLoader />}>
-                <AttendanceTracking />
-              </Suspense>
-            }
-          />
-          <Route
-            path="production/piecework"
-            element={
-              <Suspense fallback={<PageLoader />}>
-                <PieceworkTracking />
-              </Suspense>
-            }
-          />
-          <Route
-            path="production/shifts"
-            element={
-              <Suspense fallback={<PageLoader />}>
-                <ShiftCalendar />
-              </Suspense>
-            }
-          />
-          <Route
-            path="production/payroll"
-            element={
-              <Suspense fallback={<PageLoader />}>
-                <PayrollList />
-              </Suspense>
-            }
-          />
-          <Route
-            path="production/advances"
-            element={
-              <Suspense fallback={<PageLoader />}>
-                <AdvancePaymentList />
-              </Suspense>
-            }
-          />
-          <Route
-            path="production/materials"
-            element={
-              <Suspense fallback={<PageLoader />}>
-                <MaterialList />
-              </Suspense>
-            }
-          />
-          <Route
-            path="production/materials/new"
-            element={
-              <Suspense fallback={<PageLoader />}>
-                <MaterialForm />
-              </Suspense>
-            }
-          />
-          <Route
-            path="production/materials/:id"
-            element={
-              <Suspense fallback={<PageLoader />}>
-                <MaterialForm />
-              </Suspense>
-            }
-          />
-          <Route
-            path="production/materials/transactions"
-            element={
-              <Suspense fallback={<PageLoader />}>
-                <MaterialTransactions />
-              </Suspense>
-            }
-          />
-          <Route
-            path="production/molds"
-            element={
-              <Suspense fallback={<PageLoader />}>
-                <MoldList />
-              </Suspense>
-            }
-          />
-          <Route
-            path="production/molds/new"
-            element={
-              <Suspense fallback={<PageLoader />}>
-                <MoldForm />
-              </Suspense>
-            }
-          />
-          <Route
-            path="production/molds/:id"
-            element={
-              <Suspense fallback={<PageLoader />}>
-                <MoldForm />
-              </Suspense>
-            }
-          />
-          <Route
-            path="production/molds/maintenance"
-            element={
-              <Suspense fallback={<PageLoader />}>
-                <MoldMaintenance />
-              </Suspense>
-            }
-          />
-          <Route
-            path="production/orders"
-            element={
-              <Suspense fallback={<PageLoader />}>
-                <ProductionOrderList />
-              </Suspense>
-            }
-          />
-          <Route
-            path="production/orders/:id"
-            element={
-              <Suspense fallback={<PageLoader />}>
-                <ProductionOrderDetail />
-              </Suspense>
-            }
-          />
-          <Route
-            path="production/reports"
-            element={
-              <Suspense fallback={<PageLoader />}>
-                <ProductionReports />
-              </Suspense>
-            }
-          />
-
-          {/* Promotions - Lazy loaded (Requirements: 28) */}
-          <Route
-            path="promotions"
-            element={
-              <Suspense fallback={<PageLoader />}>
-                <PromotionsPage />
-              </Suspense>
-            }
-          />
+          {/* Promotions - REMOVED (files don't exist) */}
 
           {/* Notifications - Lazy loaded (Requirements: 18) */}
           <Route

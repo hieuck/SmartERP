@@ -70,7 +70,7 @@ export default function NotificationList() {
     setLoading(true);
     try {
       logger.debug('NotificationList', 'Loading notifications from offline storage');
-      let allNotifications = await offlineServices.notifications.getAll();
+      const allNotifications = await offlineServices.notifications.getAll();
       
       // Apply filters
       let filtered = allNotifications;

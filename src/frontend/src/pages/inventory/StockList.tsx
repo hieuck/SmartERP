@@ -79,7 +79,7 @@ export default function StockList() {
     setLoading(true);
     try {
       logger.debug('StockList', 'Loading stocks from offline storage');
-      let allStocks = await offlineServices.stocks.getAll();
+      const allStocks = await offlineServices.stocks.getAll();
       
       // Apply filters
       let filtered = allStocks;

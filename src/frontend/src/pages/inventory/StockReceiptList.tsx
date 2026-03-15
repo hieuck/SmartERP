@@ -67,7 +67,7 @@ export default function StockReceiptList() {
     setLoading(true);
     try {
       logger.debug('StockReceiptList', 'Loading stock receipts from offline storage');
-      let allReceipts = await offlineServices.stockReceipts.getAll();
+      const allReceipts = await offlineServices.stockReceipts.getAll();
       
       // Filter by search term
       let filtered = allReceipts;
