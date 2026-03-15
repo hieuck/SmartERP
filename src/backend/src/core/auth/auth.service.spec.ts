@@ -14,9 +14,9 @@ import { TenantStatus } from '../tenant/enums/tenant-status.enum';
 describe('AuthService', () => {
   let service: AuthService;
   let userRepository: any;
-  let _tenantRepository: any;
+  let tenantRepository: any;
   let jwtService: any;
-  let _cacheService: any;
+  let cacheService: any;
   let tokenBlacklistService: any;
   let accountLockoutService: any;
 

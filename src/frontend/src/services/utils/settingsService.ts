@@ -58,6 +58,11 @@ export const settingsService = {
     return response.data;
   },
 
+  getByCategory: async (category: SettingCategory): Promise<Setting[]> => {
+    const response = await api.get('/settings', { params: { category } });
+    return response.data;
+  },
+
   getByKey: async (key: string): Promise<Setting> => {
     const response = await api.get(`/settings/${key}`);
     return response.data;

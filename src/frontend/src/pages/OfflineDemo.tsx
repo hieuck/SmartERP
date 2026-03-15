@@ -21,7 +21,7 @@ import { db, User, SyncStatus, syncManager } from '../lib/offline';
 
 const { Title, Paragraph } = Typography;
 
-export const OfflineDemo: React.FC = () => {
+const OfflineDemo: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
@@ -257,3 +257,5 @@ export const OfflineDemo: React.FC = () => {
     </div>
   );
 };
+
+export default OfflineDemo;

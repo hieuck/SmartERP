@@ -4,9 +4,12 @@ import { logger } from '@/lib/logger/logger.service';
 export interface RegisterRequest {
   email: string;
   password: string;
-  fullName: string;
-  companyName: string;
-  phone: string;
+  fullName?: string;
+  firstName?: string;
+  lastName?: string;
+  companyName?: string;
+  phone?: string;
+  tenantId?: number;
 }
 
 export interface LoginRequest {

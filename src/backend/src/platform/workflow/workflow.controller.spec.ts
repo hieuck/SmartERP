@@ -6,6 +6,8 @@ import { Workflow, WorkflowStatus } from './entities/workflow.entity';
 import { WorkflowInstance, WorkflowInstanceStatus } from './entities/workflow-instance.entity';
 
 describe('WorkflowController', () => {
+  let result: any;
+  let service: jest.Mocked<WorkflowService>;
   let controller: WorkflowController;
   let _service: WorkflowService;
 
@@ -43,7 +45,7 @@ describe('WorkflowController', () => {
     }).compile();
 
     controller = module.get<WorkflowController>(WorkflowController);
-    service = module.get<WorkflowService>(WorkflowService);
+    service = module.get<WorkflowService>(WorkflowService) as any;
 
     jest.clearAllMocks();
   });

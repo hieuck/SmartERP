@@ -15,6 +15,7 @@ import { SecureRepository } from '@common/security/secure-repository';
 jest.mock('@common/security/secure-repository');
 
 describe('BankReconciliationService', () => {
+  let permissionService: jest.Mocked<PermissionService>;
   let service: BankReconciliationService;
   let statementRepository: jest.Mocked<Repository<BankStatement>>;
   let transactionRepository: jest.Mocked<Repository<BankTransaction>>;

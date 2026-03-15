@@ -4,7 +4,7 @@
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe, _HttpException, HttpStatus } from '@nestjs/common';
+import { INestApplication, ValidationPipe, HttpException, HttpStatus } from '@nestjs/common';
 import * as request from 'supertest';
 import { ValuationController } from './valuation.controller';
 import { ValuationService } from './valuation.service';

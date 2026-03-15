@@ -98,5 +98,3 @@ const importExportService = {
 };
 
 export default importExportService;
-
-export default importExportService;

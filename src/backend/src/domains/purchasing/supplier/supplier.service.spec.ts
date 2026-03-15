@@ -11,6 +11,7 @@ import { UpdateSupplierDto } from './dto/update-supplier.dto';
 import { SyncStatus } from '@/common/enums/sync-status.enum';
 
 describe('SupplierService', () => {
+  let permissionService: jest.Mocked<PermissionService>;
   let service: SupplierService;
   let supplierRepository: jest.Mocked<Repository<Supplier>>;
   let cacheService: jest.Mocked<CacheService>;

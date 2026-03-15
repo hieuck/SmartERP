@@ -13,6 +13,9 @@ import { AccountType } from '../account/enums/account-type.enum';
 import { JournalEntryStatus } from '../account/enums/journal-entry-status.enum';
 
 describe('ReportsService', () => {
+  let accountRepository: jest.Mocked<Repository<Account>>;
+  let result: any;
+  let permissionService: jest.Mocked<PermissionService>;
   let service: ReportsService;
   let _accountRepository: jest.Mocked<Repository<Account>>;
   let journalLineRepository: jest.Mocked<Repository<JournalLine>>;

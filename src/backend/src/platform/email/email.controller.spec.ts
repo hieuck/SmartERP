@@ -27,6 +27,7 @@ import { TemplateType } from './enums/template-type.enum';
 import { EmailStatus } from './enums/email-status.enum';
 
 describe('EmailController (Integration)', () => {
+  let response: any;
   let app: INestApplication;
   let emailService: jest.Mocked<EmailService>;
 

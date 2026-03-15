@@ -48,7 +48,7 @@ export class CacheInvalidationHelper {
    *
    * Use with caution - this will clear all cached data for a tenant
    */
-  static async invalidateTenant(cacheManager: Cache, _tenantId: string): Promise<void> {
+  static async invalidateTenant(cacheManager: Cache, tenantId: string): Promise<void> {
     // Note: This is a simplified implementation
     // In production, you might want to use Redis SCAN command
     // or maintain a separate index of cache keys per tenant

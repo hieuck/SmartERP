@@ -12,6 +12,7 @@ import { EmailStatus } from './enums/email-status.enum';
 import { TemplateType } from './enums/template-type.enum';
 
 describe('EmailService', () => {
+  let permissionService: jest.Mocked<PermissionService>;
   let service: EmailService;
   let templateRepository: jest.Mocked<Repository<EmailTemplate>>;
   let logRepository: jest.Mocked<Repository<EmailLog>>;

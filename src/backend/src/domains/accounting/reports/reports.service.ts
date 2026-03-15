@@ -43,8 +43,8 @@ export interface GeneralLedgerReport {
     type: AccountType;
   };
   period: {
-    _startDate: Date;
-    _endDate: Date;
+    startDate: Date;
+    endDate: Date;
   };
   openingBalance: number;
   transactions: GeneralLedgerTransaction[];
@@ -53,8 +53,8 @@ export interface GeneralLedgerReport {
 
 export interface SalesSummary {
   period: {
-    _startDate: Date;
-    _endDate: Date;
+    startDate: Date;
+    endDate: Date;
   };
   totalSales: number;
   totalInvoices: number;
@@ -71,7 +71,7 @@ export interface SalesSummary {
 
 export interface InventorySummary {
   products: {
-    _productId: string;
+    productId: string;
     sku: string;
     name: string;
     quantity: number;
@@ -88,7 +88,7 @@ export interface InventorySummary {
 
 export interface InventoryValuation {
   products: {
-    _productId: string;
+    productId: string;
     sku: string;
     name: string;
     quantity: number;
@@ -100,7 +100,7 @@ export interface InventoryValuation {
 
 export interface InventoryMovement {
   movements: {
-    _productId: string;
+    productId: string;
     sku: string;
     name: string;
     movementType: string;
@@ -219,11 +219,11 @@ export class ReportsService {
       .createQueryBuilder('line')
       .leftJoinAndSelect('line.journalEntry', 'entry')
       .where('line.accountId = :accountId', { accountId })
-      .andWhere('line.tenantId = :tenantId', { tenantId: user.tenantId })
+      .andWhere('line.tenantId = :tenantId', { tenantId: _user.tenantId })
       .andWhere('entry.status = :status', { status: JournalEntryStatus.POSTED })
       .andWhere('entry.entryDate BETWEEN :startDate AND :endDate', {
-        _startDate,
-        _endDate,
+        startDate: _startDate,
+        endDate: _endDate,
       })
       .orderBy('entry.entryDate', 'ASC')
       .addOrderBy('entry.number', 'ASC')
@@ -261,8 +261,8 @@ export class ReportsService {
         type: account.type,
       },
       period: {
-        _startDate,
-        _endDate,
+        startDate: _startDate,
+        endDate: _endDate,
       },
       openingBalance,
       transactions,
@@ -273,7 +273,7 @@ export class ReportsService {
   async getCashFlowStatement(_user: User, _startDate: Date, _endDate: Date): Promise<any> {
     // TODO: Implement cash flow statement logic
     return {
-      period: { _startDate, endDate },
+      period: { startDate: _startDate, endDate: _endDate },
       operating: { activities: [], total: 0 },
       investing: { activities: [], total: 0 },
       financing: { activities: [], total: 0 },
@@ -290,10 +290,10 @@ export class ReportsService {
     // Query invoices within date range
     const invoiceQuery = this.invoiceRepository
       .createQueryBuilder('invoice')
-      .where('invoice.tenantId = :tenantId', { tenantId: user.tenantId })
+      .where('invoice.tenantId = :tenantId', { tenantId: _user.tenantId })
       .andWhere('invoice.invoiceDate BETWEEN :startDate AND :endDate', {
-        _startDate,
-        _endDate,
+        startDate: _startDate,
+        endDate: _endDate,
       })
       .andWhere('invoice.status IN (:...statuses)', {
         statuses: ['sent', 'paid', 'overdue'],
@@ -335,7 +335,7 @@ export class ReportsService {
     const salesByCustomer = Array.from(salesByCustomerMap.values());
 
     return {
-      period: { _startDate, endDate },
+      period: { startDate: _startDate, endDate: _endDate },
       totalSales,
       totalInvoices: invoices.length,
       totalPaid,
@@ -353,9 +353,9 @@ export class ReportsService {
   ): Promise<InventorySummary> {
     const productQuery = this.productRepository
       .createQueryBuilder('product')
-      .where('product.tenantId = :tenantId', { tenantId: user.tenantId });
+      .where('product.tenantId = :tenantId', { tenantId: _user.tenantId });
 
-    if (_productId) {
+    if (productId) {
       productQuery.andWhere('product.id = :productId', { productId });
     }
 
@@ -370,7 +370,7 @@ export class ReportsService {
     const products = await productQuery.getMany();
 
     const productSummaries = products.map((product) => ({
-      _productId: product.id,
+      productId: product.id,
       sku: product.sku,
       name: product.name,
       quantity: product.stockQuantity,
@@ -399,16 +399,16 @@ export class ReportsService {
   ): Promise<InventoryValuation> {
     const productQuery = this.productRepository
       .createQueryBuilder('product')
-      .where('product.tenantId = :tenantId', { tenantId: user.tenantId });
+      .where('product.tenantId = :tenantId', { tenantId: _user.tenantId });
 
-    if (_productId) {
+    if (productId) {
       productQuery.andWhere('product.id = :productId', { productId });
     }
 
     const products = await productQuery.getMany();
 
     const productValuations = products.map((product) => ({
-      _productId: product.id,
+      productId: product.id,
       sku: product.sku,
       name: product.name,
       quantity: product.stockQuantity,

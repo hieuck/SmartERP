@@ -84,13 +84,13 @@ export class CheckoutService {
     await this.validateCart(cart);
 
     // Convert address
-    const _shippingAddress = this.convertToAddress(dto._shippingAddress);
+    const shippingAddress = this.convertToAddress(dto.shippingAddress);
 
     // Calculate tax
-    const tax = await this.calculateTax(cart, _shippingAddress);
+    const tax = await this.calculateTax(cart, shippingAddress);
 
     // Calculate shipping
-    const shipping = await this.calculateShipping(cart, _shippingAddress, dto.shippingMethod);
+    const shipping = await this.calculateShipping(cart, shippingAddress, dto.shippingMethod);
 
     // Calculate total
     const total = cart.subtotal + tax + shipping - (cart.discount || 0);
@@ -106,7 +106,7 @@ export class CheckoutService {
     const { cart, tax, shipping, total } = await this.initiateCheckout(dto, user);
 
     // Convert addresses
-    const _shippingAddress = this.convertToAddress(dto._shippingAddress);
+    const shippingAddress = this.convertToAddress(dto.shippingAddress);
     const billingAddress = dto.billingAddress
       ? this.convertToAddress(dto.billingAddress)
       : shippingAddress;
@@ -120,7 +120,7 @@ export class CheckoutService {
       shippingStatus: ShippingStatus.PENDING,
       customerEmail: dto.customerEmail,
       customerPhone: dto.customerPhone,
-      _shippingAddress,
+      shippingAddress,
       billingAddress,
       shippingMethod: dto.shippingMethod,
       paymentMethod: dto.paymentMethod,

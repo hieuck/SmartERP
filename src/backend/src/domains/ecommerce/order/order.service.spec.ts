@@ -13,6 +13,7 @@ import { CancelOrderDto } from './dto/cancel-order.dto';
 import { SyncStatus } from '../../../common/enums/sync-status.enum';
 
 describe('OrderService', () => {
+  let permissionService: jest.Mocked<PermissionService>;
   let service: OrderService;
   let orderRepository: jest.Mocked<Repository<Order>>;
   let orderItemRepository: jest.Mocked<Repository<OrderItem>>;

@@ -13,7 +13,7 @@ describe('OnboardingService', () => {
   let service: OnboardingService;
   let tenantRepository: jest.Mocked<Repository<Tenant>>;
   let userRepository: jest.Mocked<Repository<UserEntity>>;
-  let _permissionService: jest.Mocked<PermissionService>;
+  let permissionService: jest.Mocked<PermissionService>;
 
   const mockUser: User = {
     id: 'user-1',

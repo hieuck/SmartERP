@@ -12,6 +12,9 @@ import { PermissionService, User } from '@/common/security/permission.service';
 import { BadRequestException } from '@nestjs/common';
 
 describe('PaymentGatewayService', () => {
+  let paymentWebhookRepo: jest.Mocked<Repository<PaymentWebhook>>;
+  let result: any;
+  let permissionService: jest.Mocked<PermissionService>;
   let service: PaymentGatewayService;
   let paymentTransactionRepo: jest.Mocked<Repository<PaymentTransaction>>;
   let _paymentWebhookRepo: jest.Mocked<Repository<PaymentWebhook>>;

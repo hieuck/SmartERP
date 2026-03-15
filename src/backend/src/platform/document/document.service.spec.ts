@@ -9,6 +9,7 @@ import { CacheService } from '@common/cache/cache.service';
 import { PermissionService, User } from '@common/security/permission.service';
 
 describe('DocumentService', () => {
+  let permissionService: jest.Mocked<PermissionService>;
   let service: DocumentService;
   let documentRepository: jest.Mocked<Repository<Document>>;
   let cacheService: jest.Mocked<CacheService>;

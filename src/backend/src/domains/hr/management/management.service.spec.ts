@@ -13,6 +13,7 @@ import { CacheService } from '@/common/cache/cache.service';
 import { PermissionService, User } from '@/common/security/permission.service';
 
 describe('ManagementService', () => {
+  let permissionService: jest.Mocked<PermissionService>;
   let service: ManagementService;
   let employeeRepository: jest.Mocked<Repository<Employee>>;
   let attendanceRepository: jest.Mocked<Repository<Attendance>>;

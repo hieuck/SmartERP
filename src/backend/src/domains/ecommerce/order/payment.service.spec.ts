@@ -11,6 +11,7 @@ import { VerifyPaymentDto } from './dto/payment.dto';
 import { RefundDto } from './dto/refund.dto';
 
 describe('PaymentService', () => {
+  let permissionService: jest.Mocked<PermissionService>;
   let service: PaymentService;
   let orderRepository: jest.Mocked<Repository<Order>>;
   let _permissionService: jest.Mocked<PermissionService>;

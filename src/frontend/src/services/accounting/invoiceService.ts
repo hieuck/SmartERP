@@ -22,16 +22,21 @@ export interface Invoice {
   id: string;
   invoiceNumber: string;
   customerId: string;
+  customerName?: string;
   orderId?: string;
   issueDate: string;
+  invoiceDate?: string; // Alias for issueDate
   dueDate: string;
   status: InvoiceStatus;
   items: InvoiceItem[];
   subtotal: number;
   tax: number;
   discount: number;
+  discountAmount?: number; // Alias for discount
   total: number;
   paidAmount: number;
+  type?: string;
+  currency?: string;
   notes?: string;
   createdAt: string;
   updatedAt: string;

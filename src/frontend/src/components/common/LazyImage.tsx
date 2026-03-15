@@ -118,3 +118,5 @@ export const LazyBackgroundImage: React.FC<LazyBackgroundImageProps> = ({
     </div>
   );
 };
+
+export default LazyImage;

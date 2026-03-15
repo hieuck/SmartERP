@@ -71,6 +71,11 @@ export const paymentService = {
     return response.data;
   },
 
+  getPayments: async (params: PaymentQueryParams) => {
+    const response = await api.get('/payments', { params });
+    return response.data;
+  },
+
   getById: async (id: string): Promise<Payment> => {
     const response = await api.get(`/payments/${id}`);
     return response.data;

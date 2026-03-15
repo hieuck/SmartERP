@@ -12,6 +12,7 @@ import { PermissionService, User } from '@/common/security/permission.service';
 import { BadRequestException } from '@nestjs/common';
 
 describe('ShippingService', () => {
+  let permissionService: jest.Mocked<PermissionService>;
   let service: ShippingService;
   let shipmentRepo: jest.Mocked<Repository<Shipment>>;
   let ghnService: jest.Mocked<GHNService>;

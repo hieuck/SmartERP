@@ -3,7 +3,7 @@ import { Provider } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ConfigProvider } from 'antd';
-import { ProductList } from './ProductList';
+import ProductList from './ProductList';
 import { store } from '@/store';
 import { vi } from 'vitest';
 

@@ -34,6 +34,7 @@ import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
 import { TenantGuard } from '../../../common/guards/tenant.guard';
 
 describe('OrderController (Integration)', () => {
+  let response: any;
   let app: INestApplication;
   let orderService: jest.Mocked<OrderService>;
 

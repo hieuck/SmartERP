@@ -17,6 +17,8 @@ import { CacheService } from '@/common/cache/cache.service';
 import { PermissionService, User } from '@/common/security/permission.service';
 
 describe('ProductionService', () => {
+  let result: any;
+  let permissionService: jest.Mocked<PermissionService>;
   let service: ProductionService;
   let materialRepository: jest.Mocked<Repository<Material>>;
   let moldRepository: jest.Mocked<Repository<Mold>>;

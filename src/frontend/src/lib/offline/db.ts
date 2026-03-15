@@ -102,7 +102,18 @@ export interface Supplier extends BaseEntity {
 export interface SalesOrder extends BaseEntity {
   orderNumber: string;
   customerId: string;
+  customerName?: string;
+  orderDate?: string;
+  deliveryDate?: string;
+  expectedDeliveryDate?: string;
   totalAmount: number;
+  subtotal?: number;
+  tax?: number;
+  taxAmount?: number;
+  discount?: number;
+  discountAmount?: number;
+  shippingFee?: number;
+  paidAmount?: number;
   status: string;
   items?: Record<string, unknown>;
   notes?: string;
@@ -129,6 +140,7 @@ export interface Invoice extends BaseEntity {
 // Payment entity (matches backend Payment entity)
 export interface Payment extends BaseEntity {
   orderId: string;
+  invoiceId?: string;
   amount: number;
   paymentMethod: string;
   status: string; // pending, processing, completed, failed, refunded
@@ -145,6 +157,11 @@ export interface PurchaseOrder extends BaseEntity {
   supplierId: string;
   orderDate: Date;
   expectedDate?: Date;
+  expectedDeliveryDate?: Date;
+  shippingFee?: number;
+  discountAmount?: number;
+  deliveryAddress?: string;
+  paymentTerms?: string;
   status: string; // draft, pending, approved, ordered, received, cancelled
   totalAmount: number;
   items: Record<string, unknown>[];

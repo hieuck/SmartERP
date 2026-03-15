@@ -22,6 +22,7 @@ import { JwtAuthGuard } from '../../core/auth/guards/jwt-auth.guard';
 import { AuditAction } from './enums/audit-action.enum';
 
 describe('AuditController (Integration)', () => {
+  let response: any;
   let app: INestApplication;
   let auditService: jest.Mocked<AuditService>;
 

@@ -11,6 +11,7 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 
 describe('OrderService', () => {
+  let permissionService: jest.Mocked<PermissionService>;
   let service: OrderService;
   let _orderRepository: jest.Mocked<Repository<Order>>;
   let cacheService: jest.Mocked<CacheService>;

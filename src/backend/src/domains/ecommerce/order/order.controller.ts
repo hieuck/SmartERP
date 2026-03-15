@@ -62,7 +62,7 @@ export class OrderController {
       startDate: startDate ? new Date(startDate) : undefined,
       endDate: endDate ? new Date(endDate) : undefined,
     };
-    return this.orderService.findAll(user._tenantId, filters);
+    return this.orderService.findAll(user.tenantId, filters);
   }
 
   @Get('statistics')

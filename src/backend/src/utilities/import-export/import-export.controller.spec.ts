@@ -5,6 +5,7 @@ import { User } from '@/common/security/permission.service';
 import { Response } from 'express';
 
 describe('ImportExportController', () => {
+  let service: jest.Mocked<ImportExportService>;
   let controller: ImportExportController;
   let _service: ImportExportService;
 
@@ -36,7 +37,7 @@ describe('ImportExportController', () => {
     }).compile();
 
     controller = module.get<ImportExportController>(ImportExportController);
-    service = module.get<ImportExportService>(ImportExportService);
+    service = module.get<ImportExportService>(ImportExportService) as any;
 
     jest.clearAllMocks();
   });

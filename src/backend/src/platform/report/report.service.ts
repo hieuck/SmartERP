@@ -4,7 +4,7 @@ import { Repository, DataSource } from 'typeorm';
 import { Report } from './entities/report.entity';
 import { ReportColumn } from './entities/report-column.entity';
 import { ReportExecution } from './entities/report-execution.entity';
-import { _ReportType, AggregationType } from '../enums/platform.enum';
+import { ReportType, AggregationType } from '../enums/platform.enum';
 import { ExecutionStatus } from './enums/execution-status.enum';
 import { User } from '@/common/security/permission.service';
 
@@ -29,7 +29,7 @@ export class ReportService {
   /**
    * Create a new report definition
    */
-  async create(data: Partial<Report>, tenantId: string, _user: User): Promise<Report> {
+  async create(data: Partial<Report>, tenantId: string, user: User): Promise<Report> {
     const report = this.reportRepository.create({
       ...data,
       tenantId,
@@ -80,7 +80,7 @@ export class ReportService {
   /**
    * Update report definition
    */
-  async update(id: string, data: Partial<Report>, tenantId: string, _user: User): Promise<Report> {
+  async update(id: string, data: Partial<Report>, tenantId: string, user: User): Promise<Report> {
     const report = await this.findOne(id, tenantId);
 
     Object.assign(report, data);
@@ -90,7 +90,7 @@ export class ReportService {
   /**
    * Delete report
    */
-  async remove(id: string, tenantId: string, _user: User): Promise<void> {
+  async remove(id: string, tenantId: string, user: User): Promise<void> {
     const report = await this.findOne(id, tenantId);
     await this.reportRepository.remove(report);
   }
@@ -102,7 +102,7 @@ export class ReportService {
     reportId: string,
     columnData: Partial<ReportColumn>,
     tenantId: string,
-    _user: User,
+    user: User,
   ): Promise<ReportColumn> {
     const report = await this.findOne(reportId, tenantId);
 
@@ -122,7 +122,7 @@ export class ReportService {
     reportId: string,
     columnId: string,
     tenantId: string,
-    _user: User,
+    user: User,
   ): Promise<void> {
     await this.findOne(reportId, tenantId); // Verify report exists
 
@@ -145,7 +145,7 @@ export class ReportService {
     reportId: string,
     parameters: any,
     tenantId: string,
-    _user: User,
+    user: User,
   ): Promise<ReportExecution> {
     const report = await this.findOne(reportId, tenantId);
 

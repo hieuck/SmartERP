@@ -58,6 +58,11 @@ const reportService = {
     return response.data;
   },
 
+  getInventoryMovements: async (params: DateRangeParams) => {
+    const response = await api.get('/reports/inventory/stock-movement', { params });
+    return response.data;
+  },
+
   getLowStockProducts: async () => {
     const response = await api.get('/reports/inventory/low-stock');
     return response.data;

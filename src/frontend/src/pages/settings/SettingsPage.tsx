@@ -20,20 +20,20 @@ import {
   useSettingsByCategory,
   useUpdateSetting,
 } from '@/hooks/useSettings';
-import { Setting, SettingCategory } from '@/services/utils/settingsService';
+import { Setting, SettingCategory, SettingDataType } from '@/services/utils/settingsService';
 
 const { TabPane } = Tabs;
 const { TextArea } = Input;
 
 const categoryLabels: Record<SettingCategory, string> = {
   [SettingCategory.GENERAL]: 'Chung',
-  [SettingCategory.BUSINESS]: 'Kinh doanh',
-  [SettingCategory.INVENTORY]: 'Kho hàng',
-  [SettingCategory.SALES]: 'Bán hàng',
-  [SettingCategory.PURCHASE]: 'Mua hàng',
-  [SettingCategory.FINANCIAL]: 'Tài chính',
   [SettingCategory.NOTIFICATION]: 'Thông báo',
   [SettingCategory.SECURITY]: 'Bảo mật',
+  [SettingCategory.PAYMENT]: 'Thanh toán',
+  [SettingCategory.SHIPPING]: 'Vận chuyển',
+  [SettingCategory.TAX]: 'Thuế',
+  [SettingCategory.EMAIL]: 'Email',
+  [SettingCategory.INTEGRATION]: 'Tích hợp',
 };
 
 const typeLabels: Record<SettingDataType, string> = {

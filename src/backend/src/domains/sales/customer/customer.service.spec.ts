@@ -11,6 +11,9 @@ import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 
 describe('CustomerService', () => {
+  let customerRepository: jest.Mocked<Repository<Customer>>;
+  let result: any;
+  let permissionService: jest.Mocked<PermissionService>;
   let service: CustomerService;
   let _customerRepository: jest.Mocked<Repository<Customer>>;
   let cacheService: jest.Mocked<CacheService>;

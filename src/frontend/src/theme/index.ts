@@ -69,7 +69,6 @@ export const theme: ThemeConfig = {
     paddingMD: 20,
     paddingLG: 24,
     paddingXL: 32,
-    paddingXXL: 48,
 
     // Border Radius
     borderRadius: 6,
@@ -260,14 +259,6 @@ export const theme: ThemeConfig = {
 
     // DatePicker Component
     DatePicker: {
-      controlHeight: 32,
-      controlHeightLG: 40,
-      controlHeightSM: 24,
-      borderRadius: 6,
-    },
-
-    // TimePicker Component
-    TimePicker: {
       controlHeight: 32,
       controlHeightLG: 40,
       controlHeightSM: 24,

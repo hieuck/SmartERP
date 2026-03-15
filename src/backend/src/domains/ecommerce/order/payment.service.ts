@@ -30,7 +30,7 @@ export class PaymentService {
     user: User,
   ): Promise<{
     success: boolean;
-    _transactionId: string;
+    transactionId: string;
     message: string;
   }> {
     const _order = await this.secureOrderRepo.findOne(user, {
@@ -41,17 +41,17 @@ export class PaymentService {
       throw new BadRequestException(`Order with ID ${dto.orderId} not found`);
     }
 
-    if (order.paymentStatus === PaymentStatus.PAID) {
+    if (_order.paymentStatus === PaymentStatus.PAID) {
       throw new BadRequestException('Order is already paid');
     }
 
-    if (dto.amount !== Number(order.total)) {
+    if (dto.amount !== Number(_order.total)) {
       throw new BadRequestException(
-        `Payment amount ${dto.amount} does not match order total ${order.total}`,
+        `Payment amount ${dto.amount} does not match order total ${_order.total}`,
       );
     }
 
-    let result: { success: boolean; _transactionId: string; message: string };
+    let result: { success: boolean; transactionId: string; message: string };
 
     switch (dto.paymentMethod.toLowerCase()) {
       case 'cod':
@@ -74,13 +74,13 @@ export class PaymentService {
     }
 
     if (result.success) {
-      order.paymentStatus = PaymentStatus.PAID;
-      order.paymentMethod = dto.paymentMethod;
-      order.paymentTransactionId = result.transactionId;
-      order.paidAt = new Date();
+      _order.paymentStatus = PaymentStatus.PAID;
+      _order.paymentMethod = dto.paymentMethod;
+      _order.paymentTransactionId = result.transactionId;
+      _order.paidAt = new Date();
       await this.secureOrderRepo.save(user, _order);
     } else {
-      order.paymentStatus = PaymentStatus.FAILED;
+      _order.paymentStatus = PaymentStatus.FAILED;
       await this.secureOrderRepo.save(user, _order);
     }
 
@@ -104,32 +104,32 @@ export class PaymentService {
     }
 
     let verified = false;
-    let status = order.paymentStatus;
+    let status = _order.paymentStatus;
 
     switch (dto.paymentMethod.toLowerCase()) {
       case 'cod':
         verified = true;
         break;
       case 'stripe':
-        verified = await this.verifyStripe(dto._transactionId);
+        verified = await this.verifyStripe(dto.transactionId);
         break;
       case 'paypal':
-        verified = await this.verifyPayPal(dto._transactionId);
+        verified = await this.verifyPayPal(dto.transactionId);
         break;
       case 'vnpay':
-        verified = await this.verifyVNPay(dto._transactionId);
+        verified = await this.verifyVNPay(dto.transactionId);
         break;
       case 'momo':
-        verified = await this.verifyMomo(dto._transactionId);
+        verified = await this.verifyMomo(dto.transactionId);
         break;
       default:
         throw new BadRequestException(`Unsupported payment method: ${dto.paymentMethod}`);
     }
 
-    if (verified && order.paymentStatus !== PaymentStatus.PAID) {
-      order.paymentStatus = PaymentStatus.PAID;
-      order.paymentTransactionId = dto.transactionId;
-      order.paidAt = new Date();
+    if (verified && _order.paymentStatus !== PaymentStatus.PAID) {
+      _order.paymentStatus = PaymentStatus.PAID;
+      _order.paymentTransactionId = dto.transactionId;
+      _order.paidAt = new Date();
       await this.secureOrderRepo.save(user, _order);
       status = PaymentStatus.PAID;
     }
@@ -157,36 +157,36 @@ export class PaymentService {
       throw new BadRequestException(`Order with ID ${dto.orderId} not found`);
     }
 
-    if (order.paymentStatus !== PaymentStatus.PAID) {
+    if (_order.paymentStatus !== PaymentStatus.PAID) {
       throw new BadRequestException('Order must be paid before refunding');
     }
 
-    const refundAmount = dto.amount || Number(order.total);
+    const refundAmount = dto.amount || Number(_order.total);
 
     let result: { success: boolean; refundId: string; message: string };
 
-    switch (order.paymentMethod?.toLowerCase()) {
+    switch (_order.paymentMethod?.toLowerCase()) {
       case 'cod':
-        result = await this.refundCOD(_order, refundAmount, dto._reason);
+        result = await this.refundCOD(_order, refundAmount, dto.reason);
         break;
       case 'stripe':
-        result = await this.refundStripe(_order, refundAmount, dto._reason);
+        result = await this.refundStripe(_order, refundAmount, dto.reason);
         break;
       case 'paypal':
-        result = await this.refundPayPal(_order, refundAmount, dto._reason);
+        result = await this.refundPayPal(_order, refundAmount, dto.reason);
         break;
       case 'vnpay':
-        result = await this.refundVNPay(_order, refundAmount, dto._reason);
+        result = await this.refundVNPay(_order, refundAmount, dto.reason);
         break;
       case 'momo':
-        result = await this.refundMomo(_order, refundAmount, dto._reason);
+        result = await this.refundMomo(_order, refundAmount, dto.reason);
         break;
       default:
-        throw new BadRequestException(`Unsupported payment method: ${order.paymentMethod}`);
+        throw new BadRequestException(`Unsupported payment method: ${_order.paymentMethod}`);
     }
 
     if (result.success) {
-      order.paymentStatus = PaymentStatus.REFUNDED;
+      _order.paymentStatus = PaymentStatus.REFUNDED;
       await this.secureOrderRepo.save(user, _order);
     }
 
@@ -197,12 +197,12 @@ export class PaymentService {
 
   private async processCOD(_order: Order): Promise<{
     success: boolean;
-    _transactionId: string;
+    transactionId: string;
     message: string;
   }> {
     return {
       success: true,
-      _transactionId: `COD-${order.orderNumber}`,
+      transactionId: `COD-${_order.orderNumber}`,
       message: 'Cash on delivery order created',
     };
   }
@@ -211,11 +211,11 @@ export class PaymentService {
     _order: Order,
     token?: string,
     details?: PaymentDetails,
-  ): Promise<{ success: boolean; _transactionId: string; message: string }> {
+  ): Promise<{ success: boolean; transactionId: string; message: string }> {
     // TODO: Implement Stripe integration
     return {
       success: true,
-      _transactionId: `STRIPE-${Date.now()}`,
+      transactionId: `STRIPE-${Date.now()}`,
       message: 'Stripe payment processed (stub)',
     };
   }
@@ -224,11 +224,11 @@ export class PaymentService {
     _order: Order,
     token?: string,
     details?: PaymentDetails,
-  ): Promise<{ success: boolean; _transactionId: string; message: string }> {
+  ): Promise<{ success: boolean; transactionId: string; message: string }> {
     // TODO: Implement PayPal integration
     return {
       success: true,
-      _transactionId: `PAYPAL-${Date.now()}`,
+      transactionId: `PAYPAL-${Date.now()}`,
       message: 'PayPal payment processed (stub)',
     };
   }
@@ -236,11 +236,11 @@ export class PaymentService {
   private async processVNPay(
     _order: Order,
     details?: PaymentDetails,
-  ): Promise<{ success: boolean; _transactionId: string; message: string }> {
+  ): Promise<{ success: boolean; transactionId: string; message: string }> {
     // TODO: Implement VNPay integration
     return {
       success: true,
-      _transactionId: `VNPAY-${Date.now()}`,
+      transactionId: `VNPAY-${Date.now()}`,
       message: 'VNPay payment processed (stub)',
     };
   }
@@ -248,11 +248,11 @@ export class PaymentService {
   private async processMomo(
     _order: Order,
     details?: PaymentDetails,
-  ): Promise<{ success: boolean; _transactionId: string; message: string }> {
+  ): Promise<{ success: boolean; transactionId: string; message: string }> {
     // TODO: Implement Momo integration
     return {
       success: true,
-      _transactionId: `MOMO-${Date.now()}`,
+      transactionId: `MOMO-${Date.now()}`,
       message: 'Momo payment processed (stub)',
     };
   }
@@ -284,7 +284,7 @@ export class PaymentService {
   ): Promise<{ success: boolean; refundId: string; message: string }> {
     return {
       success: true,
-      refundId: `COD-REFUND-${order.orderNumber}`,
+      refundId: `COD-REFUND-${_order.orderNumber}`,
       message: 'COD refund initiated (manual process)',
     };
   }

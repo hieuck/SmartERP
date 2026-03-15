@@ -10,6 +10,10 @@ import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 
 describe('CategoryService', () => {
+  let categoryRepository: jest.Mocked<Repository<Category>>;
+  let result: any;
+  let cacheService: jest.Mocked<CacheService>;
+  let permissionService: jest.Mocked<PermissionService>;
   let service: CategoryService;
   let _categoryRepository: Repository<Category>;
   let _cacheService: CacheService;

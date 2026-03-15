@@ -10,7 +10,7 @@ import { PermissionService, User } from '@/common/security/permission.service';
 describe('ProjectService', () => {
   let service: ProjectService;
   let projectRepository: jest.Mocked<Repository<Project>>;
-  let _permissionService: jest.Mocked<PermissionService>;
+  let permissionService: jest.Mocked<PermissionService>;
 
   const mockUser: User = {
     id: 'user-1',

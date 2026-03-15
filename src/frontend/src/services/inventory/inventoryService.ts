@@ -105,6 +105,21 @@ export const inventoryService = {
     return response.data;
   },
 
+  getStockReceipt: async (id: string): Promise<StockReceipt> => {
+    const response = await api.get(`/inventory/stock-receipts/${id}`);
+    return response.data;
+  },
+
+  createStockReceipt: async (data: Partial<StockReceipt>): Promise<StockReceipt> => {
+    const response = await api.post('/inventory/stock-receipts', data);
+    return response.data;
+  },
+
+  updateStockReceipt: async (id: string, data: Partial<StockReceipt>): Promise<StockReceipt> => {
+    const response = await api.put(`/inventory/stock-receipts/${id}`, data);
+    return response.data;
+  },
+
   create: async (data: CreateInventoryDto): Promise<Inventory> => {
     const response = await api.post('/inventory', data);
     return response.data;

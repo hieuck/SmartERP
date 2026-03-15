@@ -145,3 +145,5 @@ export function InfiniteScroll<T>({
     </>
   );
 }
+
+export default LazyDataLoader;

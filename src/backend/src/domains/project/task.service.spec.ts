@@ -15,6 +15,7 @@ import { CreateTaskDependencyDto } from './dto/create-task-dependency.dto';
 import { User } from '@/common/security/permission.service';
 
 describe('TaskService', () => {
+  let result: any;
   let service: TaskService;
   let taskRepository: jest.Mocked<Repository<Task>>;
   let dependencyRepository: jest.Mocked<Repository<TaskDependency>>;

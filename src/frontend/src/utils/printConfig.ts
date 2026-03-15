@@ -111,6 +111,7 @@ export function getDefaultConfig(): PrintConfig {
         showTax: true,
         taxRate: 0,
         showAmountInWords: true,
+        showNotes: true,
         showSignatures: true,
         signatures: ['Người mua hàng', 'Người bán hàng', 'Thủ trưởng đơn vị'],
       },
