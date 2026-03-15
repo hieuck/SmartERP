@@ -245,6 +245,7 @@ export class SyncManager {
       { 
         since, 
         entities: [
+          // Existing entities (14)
           'users', 
           'products', 
           'customers', 
@@ -258,7 +259,40 @@ export class SyncManager {
           'stockReceipts',
           'attendances',
           'notifications',
-          'categories'
+          'categories',
+          // Accounting (4)
+          'accounts',
+          'journalEntries',
+          'ledgers',
+          'taxRates',
+          // Purchasing (2)
+          'purchaseReceipts',
+          'supplierInvoices',
+          // Sales (2)
+          'quotations',
+          'deliveryNotes',
+          // Inventory (3)
+          'stockAdjustments',
+          'stockTransfers',
+          'binLocations',
+          // Manufacturing (3)
+          'boms',
+          'workOrders',
+          'productionPlans',
+          // HR (4)
+          'employees',
+          'departments',
+          'positions',
+          'shifts',
+          // Project (3)
+          'projects',
+          'tasks',
+          'timeEntries',
+          // Platform (4)
+          'documents',
+          'reports',
+          'workflows',
+          'settings'
         ]
       },
       { headers: { Authorization: `Bearer ${token}` } }
@@ -318,6 +352,7 @@ export class SyncManager {
 
     // Entity to table mapping
     const tableMap: Record<string, keyof typeof db> = {
+      // Existing entities (14)
       users: 'users',
       products: 'products',
       customers: 'customers',
@@ -332,6 +367,39 @@ export class SyncManager {
       attendances: 'attendances',
       notifications: 'notifications',
       categories: 'categories',
+      // Accounting (4)
+      accounts: 'accounts',
+      journalEntries: 'journalEntries',
+      ledgers: 'ledgers',
+      taxRates: 'taxRates',
+      // Purchasing (2)
+      purchaseReceipts: 'purchaseReceipts',
+      supplierInvoices: 'supplierInvoices',
+      // Sales (2)
+      quotations: 'quotations',
+      deliveryNotes: 'deliveryNotes',
+      // Inventory (3)
+      stockAdjustments: 'stockAdjustments',
+      stockTransfers: 'stockTransfers',
+      binLocations: 'binLocations',
+      // Manufacturing (3)
+      boms: 'boms',
+      workOrders: 'workOrders',
+      productionPlans: 'productionPlans',
+      // HR (4)
+      employees: 'employees',
+      departments: 'departments',
+      positions: 'positions',
+      shifts: 'shifts',
+      // Project (3)
+      projects: 'projects',
+      tasks: 'tasks',
+      timeEntries: 'timeEntries',
+      // Platform (4)
+      documents: 'documents',
+      reports: 'reports',
+      workflows: 'workflows',
+      settings: 'settings',
     };
 
     const tableName = tableMap[entity];
