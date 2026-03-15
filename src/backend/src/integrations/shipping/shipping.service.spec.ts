@@ -12,7 +12,7 @@ import { PermissionService, User } from '@/common/security/permission.service';
 import { BadRequestException } from '@nestjs/common';
 
 describe('ShippingService', () => {
-  let _permissionService: jest.Mocked<PermissionService>;
+  let permissionService: jest.Mocked<PermissionService>;
   let service: ShippingService;
   let shipmentRepo: jest.Mocked<Repository<Shipment>>;
   let ghnService: jest.Mocked<GHNService>;
@@ -20,7 +20,6 @@ describe('ShippingService', () => {
   let viettelPostService: jest.Mocked<ViettelPostService>;
   let vnPostService: jest.Mocked<VNPostService>;
   let cacheService: jest.Mocked<CacheService>;
-  let __permissionService: jest.Mocked<PermissionService>;
 
   const mockUser: User = {
     id: 'user-123',

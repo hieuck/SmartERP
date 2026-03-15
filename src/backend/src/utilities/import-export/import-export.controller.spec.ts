@@ -5,7 +5,7 @@ import { User } from '@/common/security/permission.service';
 import { Response } from 'express';
 
 describe('ImportExportController', () => {
-  let _service: jest.Mocked<ImportExportService>;
+  let service: jest.Mocked<ImportExportService>;
   let controller: ImportExportController;
   let __service: ImportExportService;
 

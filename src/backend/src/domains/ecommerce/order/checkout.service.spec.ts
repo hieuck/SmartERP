@@ -12,12 +12,11 @@ import { CartStatus } from '@domains/ecommerce/shopping-cart/enums/cart-status.e
 import { CheckoutDto } from './dto/checkout.dto';
 
 describe('CheckoutService', () => {
-  let _permissionService: jest.Mocked<PermissionService>;
+  let permissionService: jest.Mocked<PermissionService>;
   let service: CheckoutService;
   let orderRepository: jest.Mocked<Repository<Order>>;
   let orderItemRepository: jest.Mocked<Repository<OrderItem>>;
   let cartRepository: jest.Mocked<Repository<ShoppingCart>>;
-  let __permissionService: jest.Mocked<PermissionService>;
 
   const mockUser: User = {
     id: 'user-123',

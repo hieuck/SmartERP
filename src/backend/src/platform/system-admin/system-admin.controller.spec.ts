@@ -9,8 +9,7 @@ import { CreateBackgroundJobDto } from './dto/create-background-job.dto';
 import { UpdateErrorLogDto } from './dto/update-error-log.dto';
 
 describe('SystemAdminController', () => {
-  let _result: unknown;
-  let _service: jest.Mocked<SystemAdminService>;
+  let service: jest.Mocked<SystemAdminService>;
   let controller: SystemAdminController;
   let __service: SystemAdminService;
 

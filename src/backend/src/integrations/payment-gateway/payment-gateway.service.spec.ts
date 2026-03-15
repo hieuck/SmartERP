@@ -13,8 +13,7 @@ import { BadRequestException } from '@nestjs/common';
 
 describe('PaymentGatewayService', () => {
   let _paymentWebhookRepo: jest.Mocked<Repository<PaymentWebhook>>;
-  let _result: unknown;
-  let _permissionService: jest.Mocked<PermissionService>;
+  let permissionService: jest.Mocked<PermissionService>;
   let service: PaymentGatewayService;
   let paymentTransactionRepo: jest.Mocked<Repository<PaymentTransaction>>;
   let __paymentWebhookRepo: jest.Mocked<Repository<PaymentWebhook>>;
@@ -22,7 +21,6 @@ describe('PaymentGatewayService', () => {
   let momoService: jest.Mocked<MomoService>;
   let stripeService: jest.Mocked<StripeService>;
   let paypalService: jest.Mocked<PayPalService>;
-  let __permissionService: jest.Mocked<PermissionService>;
 
   const mockUser: User = {
     id: 'user-123',

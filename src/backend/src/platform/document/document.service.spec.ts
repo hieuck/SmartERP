@@ -9,11 +9,10 @@ import { CacheService } from '@common/cache/cache.service';
 import { PermissionService, User } from '@common/security/permission.service';
 
 describe('DocumentService', () => {
-  let _permissionService: jest.Mocked<PermissionService>;
+  let permissionService: jest.Mocked<PermissionService>;
   let service: DocumentService;
   let documentRepository: jest.Mocked<Repository<Document>>;
   let cacheService: jest.Mocked<CacheService>;
-  let __permissionService: jest.Mocked<PermissionService>;
 
   const mockUser: User = {
     id: 'user-1',
@@ -93,7 +92,7 @@ describe('DocumentService', () => {
       };
       (service as any).secureDocumentRepo = mockSecureRepo;
 
-      const _result = await service.findAll(mockUser);
+      const result = await service.findAll(mockUser);
 
       expect(_result).toEqual([mockDocument]);
       expect(mockSecureRepo.find).toHaveBeenCalledWith(
@@ -129,7 +128,7 @@ describe('DocumentService', () => {
       (service as any).secureDocumentRepo = mockSecureRepo;
       cacheService.getOrSet.mockImplementation(async (_key, fn) => fn());
 
-      const _result = await service.findById(mockUser, 'doc-1');
+      const result = await service.findById(mockUser, 'doc-1');
 
       expect(_result).toEqual(mockDocument);
     });
@@ -150,7 +149,7 @@ describe('DocumentService', () => {
       documentRepository.create.mockReturnValue(mockDocument as any);
       documentRepository.save.mockResolvedValue(mockDocument);
 
-      const _result = await service.createFolder(mockUser, 'New Folder', null);
+      const result = await service.createFolder(mockUser, 'New Folder', null);
 
       expect(_result).toEqual(mockDocument);
       expect(documentRepository.create).toHaveBeenCalledWith(
@@ -167,7 +166,7 @@ describe('DocumentService', () => {
       documentRepository.create.mockReturnValue(mockDocument as any);
       documentRepository.save.mockResolvedValue(mockDocument);
 
-      const _result = await service.createFile(mockUser, {
+      const result = await service.createFile(mockUser, {
         name: 'test.pdf',
         filePath: '/uploads/test.pdf',
       });
@@ -185,7 +184,7 @@ describe('DocumentService', () => {
       cacheService.getOrSet.mockImplementation(async (_key, fn) => fn());
       documentRepository.update.mockResolvedValue({ affected: 1 } as any);
 
-      const __result = await service.update(mockUser, 'doc-1', { name: 'Updated' });
+      const result = await service.update(mockUser, 'doc-1', { name: 'Updated' });
 
       expect(documentRepository.update).toHaveBeenCalled();
       expect(cacheService.del).toHaveBeenCalled();
@@ -217,7 +216,7 @@ describe('DocumentService', () => {
       (service as any).secureDocumentRepo = mockSecureRepo;
       cacheService.getOrSet.mockImplementation(async (_key, fn) => fn());
 
-      const __result = await service.createVersion(mockUser, 'doc-1', '/uploads/test-v2.pdf');
+      const result = await service.createVersion(mockUser, 'doc-1', '/uploads/test-v2.pdf');
 
       expect(result.version).toBe(2);
     });
@@ -233,7 +232,7 @@ describe('DocumentService', () => {
       };
       documentRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
 
-      const _result = await service.search(mockUser, 'test');
+      const result = await service.search(mockUser, 'test');
 
       expect(_result).toEqual([mockDocument]);
     });

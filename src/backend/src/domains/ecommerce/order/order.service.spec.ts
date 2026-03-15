@@ -13,11 +13,10 @@ import { CancelOrderDto } from './dto/cancel-order.dto';
 import { SyncStatus } from '../../../common/enums/sync-status.enum';
 
 describe('OrderService', () => {
-  let _permissionService: jest.Mocked<PermissionService>;
+  let permissionService: jest.Mocked<PermissionService>;
   let service: OrderService;
   let orderRepository: jest.Mocked<Repository<Order>>;
   let orderItemRepository: jest.Mocked<Repository<OrderItem>>;
-  let __permissionService: jest.Mocked<PermissionService>;
 
   const mockUser: User = {
     id: 'user-1',

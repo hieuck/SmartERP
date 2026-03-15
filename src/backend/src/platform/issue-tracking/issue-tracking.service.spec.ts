@@ -13,7 +13,6 @@ import { User } from '@/common/security/permission.service';
 
 describe('IssueTrackingService', () => {
   let _attachmentRepository: jest.Mocked<Repository<IssueAttachment>>;
-  let _result: unknown;
   let service: IssueTrackingService;
   let issueRepository: jest.Mocked<Repository<Issue>>;
   let commentRepository: jest.Mocked<Repository<IssueComment>>;

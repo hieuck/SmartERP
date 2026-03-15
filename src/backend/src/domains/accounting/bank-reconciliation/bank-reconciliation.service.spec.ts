@@ -15,13 +15,12 @@ import { SecureRepository } from '@common/security/secure-repository';
 jest.mock('@common/security/secure-repository');
 
 describe('BankReconciliationService', () => {
-  let _permissionService: jest.Mocked<PermissionService>;
+  let permissionService: jest.Mocked<PermissionService>;
   let service: BankReconciliationService;
   let statementRepository: jest.Mocked<Repository<BankStatement>>;
   let transactionRepository: jest.Mocked<Repository<BankTransaction>>;
   let journalEntryRepository: jest.Mocked<Repository<JournalEntry>>;
   let accountRepository: jest.Mocked<Repository<Account>>;
-  let __permissionService: jest.Mocked<PermissionService>;
 
   // Mock user
   const mockUser: User = {

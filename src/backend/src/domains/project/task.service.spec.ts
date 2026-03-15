@@ -15,7 +15,6 @@ import { CreateTaskDependencyDto } from './dto/create-task-dependency.dto';
 import { User } from '@/common/security/permission.service';
 
 describe('TaskService', () => {
-  let result: unknown;
   let service: TaskService;
   let taskRepository: jest.Mocked<Repository<Task>>;
   let dependencyRepository: jest.Mocked<Repository<TaskDependency>>;
@@ -152,7 +151,7 @@ describe('TaskService', () => {
       taskRepository.create.mockReturnValue(mockTask);
       taskRepository.save.mockResolvedValue(mockTask);
 
-      const _result = await service.create(createDto, tenantId, mockUser);
+      const result = await service.create(createDto, tenantId, mockUser);
 
       expect(projectRepository.findOne).toHaveBeenCalledWith({
         where: { id: projectId, tenantId },
@@ -208,7 +207,7 @@ describe('TaskService', () => {
     it('should return task by id', async () => {
       taskRepository.findOne.mockResolvedValue(mockTask);
 
-      const _result = await service.findOne(taskId, tenantId);
+      const result = await service.findOne(taskId, tenantId);
 
       expect(taskRepository.findOne).toHaveBeenCalledWith({
         where: { id: taskId, tenantId },
@@ -228,7 +227,7 @@ describe('TaskService', () => {
     it('should return task by code', async () => {
       taskRepository.findOne.mockResolvedValue(mockTask);
 
-      const _result = await service.findByCode('TSK-2026-0001', tenantId);
+      const result = await service.findByCode('TSK-2026-0001', tenantId);
 
       expect(taskRepository.findOne).toHaveBeenCalledWith({
         where: { code: 'TSK-2026-0001', tenantId },
@@ -250,7 +249,7 @@ describe('TaskService', () => {
       (qb.getMany as jest.Mock).mockResolvedValue([mockTask]);
       taskRepository.createQueryBuilder.mockReturnValue(qb);
 
-      const _result = await service.findAll(tenantId);
+      const result = await service.findAll(tenantId);
 
       expect(qb.where).toHaveBeenCalledWith('task.tenantId = :tenantId', { tenantId });
       expect(qb.orderBy).toHaveBeenCalledWith('task.createdAt', 'DESC');
@@ -329,7 +328,7 @@ describe('TaskService', () => {
       taskRepository.findOne.mockResolvedValue(mockTask);
       taskRepository.save.mockResolvedValue(updatedTask as Task);
 
-      const _result = await service.update(taskId, updateDto, tenantId, mockUser);
+      const result = await service.update(taskId, updateDto, tenantId, mockUser);
 
       expect(taskRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -356,7 +355,7 @@ describe('TaskService', () => {
       taskRepository.findOne.mockResolvedValue(mockTask);
       taskRepository.save.mockResolvedValue(updatedTask as Task);
 
-      const _result = await service.updateStatus(
+      const result = await service.updateStatus(
         taskId,
         TaskStatus.IN_PROGRESS,
         tenantId,
@@ -376,7 +375,7 @@ describe('TaskService', () => {
       taskRepository.findOne.mockResolvedValue(mockTask);
       taskRepository.save.mockResolvedValue(completedTask as Task);
 
-      const _result = await service.updateStatus(taskId, TaskStatus.COMPLETED, tenantId, mockUser);
+      const result = await service.updateStatus(taskId, TaskStatus.COMPLETED, tenantId, mockUser);
 
       expect(taskRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -448,7 +447,7 @@ describe('TaskService', () => {
       dependencyRepository.create.mockReturnValue(mockDependency);
       dependencyRepository.save.mockResolvedValue(mockDependency);
 
-      const _result = await service.addDependency(dependencyDto, tenantId, mockUser);
+      const result = await service.addDependency(dependencyDto, tenantId, mockUser);
 
       expect(_result).toEqual(mockDependency);
     });
@@ -547,7 +546,7 @@ describe('TaskService', () => {
       ];
       dependencyRepository.find.mockResolvedValue(dependencies);
 
-      const _result = await service.getDependencies(taskId, tenantId);
+      const result = await service.getDependencies(taskId, tenantId);
 
       expect(dependencyRepository.find).toHaveBeenCalledWith({
         where: { taskId, tenantId },
@@ -559,7 +558,7 @@ describe('TaskService', () => {
     it('should return empty array when no dependencies', async () => {
       dependencyRepository.find.mockResolvedValue([]);
 
-      const _result = await service.getDependencies(taskId, tenantId);
+      const result = await service.getDependencies(taskId, tenantId);
 
       expect(_result).toEqual([]);
     });
@@ -587,7 +586,7 @@ describe('TaskService', () => {
       } as Task;
       taskRepository.find.mockResolvedValue([freshTask]);
 
-      const _result = await service.getGanttData(projectId, tenantId);
+      const result = await service.getGanttData(projectId, tenantId);
 
       expect(taskRepository.find).toHaveBeenCalledWith({
         where: { projectId, tenantId },
@@ -617,7 +616,7 @@ describe('TaskService', () => {
       const taskWithoutAssignee = { ...mockTask, assignee: null };
       taskRepository.find.mockResolvedValue([taskWithoutAssignee as Task]);
 
-      const _result = await service.getGanttData(projectId, tenantId);
+      const result = await service.getGanttData(projectId, tenantId);
 
       expect(result.tasks[0].assignee).toBeNull();
     });
@@ -625,7 +624,7 @@ describe('TaskService', () => {
     it('should return empty array when no tasks', async () => {
       taskRepository.find.mockResolvedValue([]);
 
-      const _result = await service.getGanttData(projectId, tenantId);
+      const result = await service.getGanttData(projectId, tenantId);
 
       expect(result.tasks).toEqual([]);
     });

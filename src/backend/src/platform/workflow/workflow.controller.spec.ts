@@ -6,8 +6,7 @@ import { Workflow, WorkflowStatus } from './entities/workflow.entity';
 import { WorkflowInstance, WorkflowInstanceStatus } from './entities/workflow-instance.entity';
 
 describe('WorkflowController', () => {
-  let _result: unknown;
-  let _service: jest.Mocked<WorkflowService>;
+  let service: jest.Mocked<WorkflowService>;
   let controller: WorkflowController;
   let __service: WorkflowService;
 

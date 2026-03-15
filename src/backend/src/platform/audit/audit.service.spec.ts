@@ -8,11 +8,10 @@ import { CacheService } from '@/common/cache/cache.service';
 import { PermissionService, User } from '@/common/security/permission.service';
 
 describe('AuditService', () => {
-  let _permissionService: jest.Mocked<PermissionService>;
+  let permissionService: jest.Mocked<PermissionService>;
   let service: AuditService;
   let auditRepository: jest.Mocked<Repository<AuditLog>>;
   let cacheService: jest.Mocked<CacheService>;
-  let __permissionService: jest.Mocked<PermissionService>;
 
   const mockUser: User = {
     id: 'user-1',

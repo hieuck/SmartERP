@@ -11,13 +11,12 @@ import { UpdateCategoryDto } from './dto/update-category.dto';
 
 describe('CategoryService', () => {
   let _categoryRepository: jest.Mocked<Repository<Category>>;
-  let _result: unknown;
   let _cacheService: jest.Mocked<CacheService>;
-  let _permissionService: jest.Mocked<PermissionService>;
+  let permissionService: jest.Mocked<PermissionService>;
   let service: CategoryService;
   let __categoryRepository: Repository<Category>;
   let __cacheService: CacheService;
-  let __permissionService: PermissionService;
+  let permissionService: PermissionService;
   let secureCategoryRepo: unknown;
 
   const mockUser: User = {
