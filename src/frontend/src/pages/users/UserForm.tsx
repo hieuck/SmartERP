@@ -1,8 +1,10 @@
-import React, { useEffect } from 'react';
-import { Form, Input, Button, Card, message, Select, Switch, Space, Typography } from 'antd';
-import { SaveOutlined, ArrowLeftOutlined, UserOutlined } from '@ant-design/icons';
+import React, { useEffect, useState } from 'react';
+import { Form, Input, Button, Card, message, Select, Switch, Space, Typography, Badge } from 'antd';
+import { SaveOutlined, ArrowLeftOutlined, UserOutlined, SyncOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { offlineServices } from '@/services/offline-services';
+import { syncManager } from '@/lib/offline/sync-manager';
+import { logger } from '@/lib/logger/logger.service';
 import authService from '@/services/auth/authService';
 
 const { Title } = Typography;
@@ -13,51 +15,117 @@ const UserForm: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const isEdit = !!id;
   const [form] = Form.useForm();
-  const queryClient = useQueryClient();
+  const [loading, setLoading] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [queueSize, setQueueSize] = useState(0);
 
-  const { data: user, isLoading } = useQuery({
-    queryKey: ['user', id],
-    queryFn: async () => {
-      // Mock data - implement when backend ready
-      return null;
-    },
-    enabled: isEdit,
-  });
-
+  // Monitor network status
   useEffect(() => {
-    if (user) {
-      form.setFieldsValue(user);
-    }
-  }, [user, form]);
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
 
-  const saveMutation = useMutation({
-    mutationFn: async (values: any) => {
-      if (isEdit) {
-        // Mock update - implement when backend ready
-        throw new Error('Not implemented');
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  // Load user data for edit
+  const loadUser = async () => {
+    if (!isEdit || !id) return;
+
+    try {
+      const user = await offlineServices.users.getById(id);
+      if (user) {
+        form.setFieldsValue({
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role,
+          status: user.status,
+        });
+        logger.info('UserForm', 'Loaded user from IndexedDB', { id });
+      }
+    } catch (error) {
+      logger.error('UserForm', 'Failed to load user', error as Error);
+      message.error('Không thể tải người dùng');
+    }
+  };
+
+  // Load queue size
+  const loadQueueSize = async () => {
+    const size = await syncManager.getQueueSize();
+    setQueueSize(size);
+  };
+
+  // Initial load
+  useEffect(() => {
+    loadUser();
+    loadQueueSize();
+  }, [id]);
+
+  // Auto-sync when online
+  useEffect(() => {
+    if (isOnline) {
+      handleSync();
+    }
+  }, [isOnline]);
+
+  // Manual sync
+  const handleSync = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    try {
+      setSyncing(true);
+      const result = await syncManager.sync(token);
+      
+      if (result.success) {
+        await loadQueueSize();
+        if (isEdit) await loadUser();
+      }
+    } catch (error) {
+      logger.error('UserForm', 'Sync failed', error as Error);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const handleSubmit = async (values: any) => {
+    try {
+      setLoading(true);
+
+      if (isEdit && id) {
+        // Update existing user
+        await offlineServices.users.update(id, values);
+        message.success('Cập nhật người dùng thành công');
+        logger.info('UserForm', 'User updated', { id });
       } else {
-        // Use register endpoint for creating new user
-        return authService.register({
+        // Create new user via register endpoint (requires password)
+        // Note: This uses authService.register which creates user + auth
+        await authService.register({
           email: values.email,
           password: values.password,
           firstName: values.firstName,
           lastName: values.lastName,
           tenantId: 1, // Default tenant
         });
+        message.success('Tạo người dùng thành công');
+        logger.info('UserForm', 'User created via register');
       }
-    },
-    onSuccess: () => {
-      message.success(isEdit ? 'Cập nhật người dùng thành công' : 'Tạo người dùng thành công');
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-      navigate('/dashboard/users');
-    },
-    onError: (error: any) => {
-      message.error(error.response?.data?.message || 'Có lỗi xảy ra');
-    },
-  });
 
-  const handleSubmit = (values: any) => {
-    saveMutation.mutate(values);
+      await loadQueueSize();
+      navigate('/dashboard/users');
+    } catch (error) {
+      logger.error('UserForm', 'Failed to save user', error as Error);
+      message.error('Có lỗi xảy ra');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -68,9 +136,22 @@ const UserForm: React.FC = () => {
             <Title level={3}>
               <UserOutlined /> {isEdit ? 'Chỉnh sửa người dùng' : 'Thêm người dùng mới'}
             </Title>
-            <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/dashboard/users')}>
-              Quay lại
-            </Button>
+            <Space>
+              <Badge count={queueSize} offset={[-5, 5]}>
+                <Button
+                  icon={<SyncOutlined spin={syncing} />}
+                  onClick={handleSync}
+                  loading={syncing}
+                  disabled={!isOnline}
+                >
+                  Đồng bộ
+                </Button>
+              </Badge>
+              <Badge status={isOnline ? 'success' : 'error'} text={isOnline ? 'Online' : 'Offline'} />
+              <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/dashboard/users')}>
+                Quay lại
+              </Button>
+            </Space>
           </div>
 
           <Form
@@ -79,7 +160,7 @@ const UserForm: React.FC = () => {
             onFinish={handleSubmit}
             initialValues={{
               role: 'USER',
-              isActive: true,
+              status: 'active',
             }}
           >
             <Form.Item
@@ -157,8 +238,11 @@ const UserForm: React.FC = () => {
             </Form.Item>
 
             {isEdit && (
-              <Form.Item label="Trạng thái" name="isActive" valuePropName="checked">
-                <Switch checkedChildren="Hoạt động" unCheckedChildren="Vô hiệu" />
+              <Form.Item label="Trạng thái" name="status">
+                <Select placeholder="Chọn trạng thái">
+                  <Option value="active">Hoạt động</Option>
+                  <Option value="inactive">Vô hiệu</Option>
+                </Select>
               </Form.Item>
             )}
 
@@ -168,7 +252,7 @@ const UserForm: React.FC = () => {
                   type="primary"
                   htmlType="submit"
                   icon={<SaveOutlined />}
-                  loading={saveMutation.isPending}
+                  loading={loading}
                 >
                   {isEdit ? 'Cập nhật' : 'Tạo mới'}
                 </Button>
