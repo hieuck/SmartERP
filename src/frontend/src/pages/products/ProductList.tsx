@@ -1,59 +1,175 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Table, Button, Input, Space, Card, Tag, Popconfirm, message, Typography } from 'antd';
+import { Table, Button, Input, Space, Card, Tag, Popconfirm, message, Typography, Badge } from 'antd';
 import {
   PlusOutlined,
   EditOutlined,
   DeleteOutlined,
   SearchOutlined,
   AppstoreOutlined,
+  SyncOutlined,
+  CloudOutlined,
+  DisconnectOutlined,
 } from '@ant-design/icons';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useResponsive } from '@/hooks/useResponsive';
-import { productService } from '@/services/inventory/productService';
+import { offlineServices } from '@/services/offline-services';
+import { syncManager } from '@/lib/offline/sync-manager';
+import { logger } from '@/lib/logger/logger.service';
+import { Product, SyncStatus } from '@/lib/offline/db';
 import type { ColumnsType } from 'antd/es/table';
 
 const { Title } = Typography;
 
-interface Product {
-  id: number;
-  name: string;
-  sku: string;
-  description: string;
-  price: number;
-  cost: number;
-  stock: number;
-  lowStockThreshold: number;
-  categoryId: number;
-  category?: { id: number; name: string };
-  createdAt: string;
-}
-
 export default function ProductList() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const { t, i18n } = useTranslation(['products', 'common']);
   const { isMobile, isTablet } = useResponsive();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [queueSize, setQueueSize] = useState(0);
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['products', { page, pageSize, search }],
-    queryFn: () => productService.getAll({ page, limit: pageSize, search }),
-  });
+  // Monitor network status
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      logger.info('ProductList', 'Network connection restored');
+      message.success(t('common:messages.networkRestored'));
+    };
 
-  const deleteMutation = useMutation({
-    mutationFn: (id: number) => productService.delete(id),
-    onSuccess: () => {
+    const handleOffline = () => {
+      setIsOnline(false);
+      logger.warn('ProductList', 'Network connection lost');
+      message.warning(t('common:messages.networkLost'));
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [t]);
+
+  // Load products from offline storage
+  const loadProducts = async () => {
+    setLoading(true);
+    try {
+      logger.debug('ProductList', 'Loading products from offline storage');
+      const allProducts = await offlineServices.products.getAll();
+      
+      // Filter by search term
+      let filtered = allProducts;
+      if (search) {
+        const searchLower = search.toLowerCase();
+        filtered = allProducts.filter(
+          (p) =>
+            p.name.toLowerCase().includes(searchLower) ||
+            p.sku.toLowerCase().includes(searchLower) ||
+            p.description?.toLowerCase().includes(searchLower)
+        );
+      }
+
+      setProducts(filtered);
+      logger.info('ProductList', `Loaded ${filtered.length} products`);
+    } catch (error) {
+      logger.error('ProductList', 'Failed to load products', error as Error);
+      message.error(t('products:messages.loadError'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Update queue size
+  const updateQueueSize = async () => {
+    try {
+      const size = await syncManager.getQueueSize();
+      setQueueSize(size);
+    } catch (error) {
+      logger.error('ProductList', 'Failed to get queue size', error as Error);
+    }
+  };
+
+  // Auto-sync on mount if online
+  useEffect(() => {
+    const initializeData = async () => {
+      await loadProducts();
+      await updateQueueSize();
+
+      // Auto-sync if online and has token
+      if (isOnline) {
+        const token = localStorage.getItem('token');
+        if (token && !syncManager.isSyncing()) {
+          handleSync();
+        }
+      }
+    };
+
+    initializeData();
+  }, []);
+
+  // Reload products when search changes
+  useEffect(() => {
+    loadProducts();
+  }, [search]);
+
+  // Handle sync
+  const handleSync = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      message.error(t('common:messages.loginRequired'));
+      return;
+    }
+
+    if (!isOnline) {
+      message.warning(t('common:messages.offlineMode'));
+      return;
+    }
+
+    setSyncing(true);
+    try {
+      logger.info('ProductList', 'Starting manual sync');
+      const result = await syncManager.sync(token);
+      
+      if (result.success) {
+        message.success(
+          t('common:messages.syncSuccess', {
+            pulled: result.pulled,
+            pushed: result.pushed,
+          })
+        );
+        await loadProducts();
+        await updateQueueSize();
+      } else {
+        message.error(t('common:messages.syncError', { errors: result.errors.join(', ') }));
+      }
+    } catch (error) {
+      logger.error('ProductList', 'Sync failed', error as Error);
+      message.error(t('common:messages.syncError', { errors: (error as Error).message }));
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  // Handle delete
+  const handleDelete = async (product: Product) => {
+    try {
+      logger.info('ProductList', `Deleting product: ${product.id}`);
+      await offlineServices.products.delete(product.id);
       message.success(t('common:messages.deleteSuccess'));
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-    },
-    onError: () => {
+      await loadProducts();
+      await updateQueueSize();
+    } catch (error) {
+      logger.error('ProductList', 'Failed to delete product', error as Error);
       message.error(t('products:messages.deleteError'));
-    },
-  });
+    }
+  };
 
   // Format currency based on locale
   const formatCurrency = (value: number) => {
@@ -64,6 +180,9 @@ export default function ProductList() {
       maximumFractionDigits: 0,
     }).format(value);
   };
+
+  // Get paginated data
+  const paginatedProducts = products.slice((page - 1) * pageSize, page * pageSize);
 
   const columns: ColumnsType<Product> = [
     {
@@ -79,13 +198,6 @@ export default function ProductList() {
       ellipsis: true,
     },
     {
-      title: t('products:form.category'),
-      dataIndex: ['category', 'name'],
-      key: 'category',
-      width: isMobile ? 100 : 150,
-      render: (name: string) => name || '-',
-    },
-    {
       title: t('products:form.price'),
       dataIndex: 'price',
       key: 'price',
@@ -97,16 +209,41 @@ export default function ProductList() {
       dataIndex: 'cost',
       key: 'cost',
       width: isMobile ? 100 : 120,
-      render: (value: number) => formatCurrency(value),
+      render: (value: number) => (value ? formatCurrency(value) : '-'),
     },
     {
-      title: t('products:form.stock'),
-      dataIndex: 'stock',
-      key: 'stock',
+      title: 'Status',
+      dataIndex: 'status',
+      key: 'status',
       width: isMobile ? 80 : 100,
-      render: (stock: number, record: Product) => (
-        <Tag color={stock <= record.lowStockThreshold ? 'red' : 'green'}>{stock}</Tag>
+      render: (status: string) => (
+        <Tag color={status === 'active' ? 'green' : 'red'}>
+          {status?.toUpperCase() || 'ACTIVE'}
+        </Tag>
       ),
+    },
+    {
+      title: 'Sync',
+      dataIndex: 'syncStatus',
+      key: 'syncStatus',
+      width: isMobile ? 80 : 100,
+      render: (syncStatus: SyncStatus) => {
+        const colors = {
+          [SyncStatus.SYNCED]: 'success',
+          [SyncStatus.PENDING]: 'warning',
+          [SyncStatus.CONFLICT]: 'error',
+        };
+        const labels = {
+          [SyncStatus.SYNCED]: 'Synced',
+          [SyncStatus.PENDING]: 'Pending',
+          [SyncStatus.CONFLICT]: 'Conflict',
+        };
+        return (
+          <Tag color={colors[syncStatus] || 'default'}>
+            {labels[syncStatus] || 'Unknown'}
+          </Tag>
+        );
+      },
     },
     {
       title: t('common:labels.actions'),
@@ -126,7 +263,7 @@ export default function ProductList() {
           <Popconfirm
             title={t('products:messages.deleteConfirm')}
             description={t('products:messages.deleteDescription')}
-            onConfirm={() => deleteMutation.mutate(record.id)}
+            onConfirm={() => handleDelete(record)}
             okText={t('common:buttons.delete')}
             cancelText={t('common:buttons.cancel')}
           >
@@ -161,6 +298,35 @@ export default function ProductList() {
               <AppstoreOutlined /> {t('products:list.title')}
             </Title>
             <Space direction={isMobile ? 'vertical' : 'horizontal'} style={{ width: isMobile ? '100%' : 'auto' }}>
+              {/* Network Status Badge */}
+              <Badge
+                status={isOnline ? 'success' : 'error'}
+                text={
+                  <Space size="small">
+                    {isOnline ? <CloudOutlined /> : <DisconnectOutlined />}
+                    {isOnline ? 'Online' : 'Offline'}
+                  </Space>
+                }
+              />
+              
+              {/* Sync Queue Indicator */}
+              {queueSize > 0 && (
+                <Badge count={queueSize} showZero={false}>
+                  <Tag color="warning">Pending Sync</Tag>
+                </Badge>
+              )}
+
+              {/* Sync Button */}
+              <Button
+                icon={<SyncOutlined spin={syncing} />}
+                onClick={handleSync}
+                loading={syncing}
+                disabled={!isOnline}
+                style={{ width: isMobile ? '100%' : 'auto' }}
+              >
+                {syncing ? 'Syncing...' : 'Sync Now'}
+              </Button>
+
               <Button
                 style={{ width: isMobile ? '100%' : 'auto' }}
                 onClick={() => navigate('/dashboard/products/categories')}
@@ -190,14 +356,14 @@ export default function ProductList() {
 
           <Table
             columns={columns}
-            dataSource={data?.data || []}
-            loading={isLoading}
+            dataSource={paginatedProducts}
+            loading={loading}
             rowKey="id"
             size={isMobile ? 'small' : 'middle'}
             pagination={{
               current: page,
               pageSize,
-              total: data?.meta?.total || 0,
+              total: products.length,
               showSizeChanger: !isMobile,
               showTotal: (total) => t('products:list.total', { total }),
               onChange: (newPage, newPageSize) => {

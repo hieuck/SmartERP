@@ -1,4 +1,5 @@
 import { db, SyncStatus } from './db';
+import { logger } from '../logger/logger.service';
 import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -12,12 +13,13 @@ export interface SyncResult {
 }
 
 export class SyncManager {
+  private readonly context = 'SyncManager';
   private syncing = false;
   private lastSyncTime: Date | null = null;
   private autoSyncEnabled = true;
   private retryCount = 0;
-  private maxRetries = 5;
-  private baseRetryDelay = 1000; // 1 second
+  private readonly maxRetries = 5;
+  private readonly baseRetryDelay = 1000; // 1 second
   private syncPaused = false;
   private onlineListener: (() => void) | null = null;
 
@@ -41,6 +43,7 @@ export class SyncManager {
   enableAutoSync() {
     this.autoSyncEnabled = true;
     this.setupAutoSync();
+    logger.info(this.context, 'Auto-sync enabled');
   }
 
   /**
@@ -52,6 +55,7 @@ export class SyncManager {
       window.removeEventListener('online', this.onlineListener);
       this.onlineListener = null;
     }
+    logger.info(this.context, 'Auto-sync disabled');
   }
 
   /**
@@ -67,7 +71,7 @@ export class SyncManager {
       if (this.autoSyncEnabled && !this.syncing) {
         const token = localStorage.getItem('token');
         if (token) {
-          console.log('[AutoSync] Network detected, starting sync...');
+          logger.info(this.context, 'Network detected, starting auto-sync');
           await this.syncWithRetry(token);
         }
       }
@@ -94,13 +98,15 @@ export class SyncManager {
 
         if (attempt < this.maxRetries) {
           const delay = this.baseRetryDelay * Math.pow(2, attempt);
-          console.log(`[Sync] Retry ${attempt + 1}/${this.maxRetries} after ${delay}ms`);
+          logger.warn(this.context, `Sync failed, retry ${attempt + 1}/${this.maxRetries} after ${delay}ms`, { error: error.message });
           await this.sleep(delay);
         }
       }
     }
 
-    throw lastError || new Error('Sync failed after max retries');
+    const error = lastError || new Error('Sync failed after max retries');
+    logger.error(this.context, 'Sync failed after max retries', error);
+    throw error;
   }
 
   /**
@@ -116,7 +122,7 @@ export class SyncManager {
    */
   pauseSync() {
     this.syncPaused = true;
-    console.log('[Sync] Paused due to network loss');
+    logger.warn(this.context, 'Sync paused due to network loss');
   }
 
   /**
@@ -126,7 +132,7 @@ export class SyncManager {
   async resumeSync(token: string) {
     if (this.syncPaused) {
       this.syncPaused = false;
-      console.log('[Sync] Resuming...');
+      logger.info(this.context, 'Resuming sync');
       await this.syncWithRetry(token);
     }
   }
@@ -142,10 +148,14 @@ export class SyncManager {
 
     // Requirement 1.5: Check if offline storage available
     if (!this.isIndexedDBAvailable()) {
-      throw new Error('Offline storage unavailable. Please use a modern browser.');
+      const error = new Error('Offline storage unavailable. Please use a modern browser.');
+      logger.error(this.context, error.message, error);
+      throw error;
     }
 
     this.syncing = true;
+    logger.info(this.context, 'Starting sync');
+    
     const result: SyncResult = {
       success: true,
       pulled: 0,
@@ -169,6 +179,7 @@ export class SyncManager {
       // Pull changes from server
       const pullResult = await this.pull(token);
       result.pulled = pullResult.count;
+      logger.info(this.context, `Pulled ${result.pulled} changes from server`);
 
       // Check if paused after pull
       if (this.syncPaused) {
@@ -179,8 +190,10 @@ export class SyncManager {
       const pushResult = await this.push(token);
       result.pushed = pushResult.applied;
       result.conflicts = pushResult.conflicts.length;
+      logger.info(this.context, `Pushed ${result.pushed} changes to server, ${result.conflicts} conflicts`);
 
       this.lastSyncTime = new Date();
+      logger.info(this.context, 'Sync completed successfully');
     } catch (error: any) {
       result.success = false;
       result.errors.push(error.message);
@@ -213,27 +226,10 @@ export class SyncManager {
    * Requirement 3.5: IF conflict resolution fails, log error and notify admin
    */
   private logSyncError(error: Error) {
-    const errorLog = {
-      timestamp: new Date().toISOString(),
-      error: error.message,
-      stack: error.stack,
+    logger.error(this.context, 'Sync error occurred', error, {
       retryCount: this.retryCount,
-    };
-    
-    console.error('[Sync Error]', errorLog);
-    
-    // Store error in IndexedDB for admin review
-    try {
-      const errors = JSON.parse(localStorage.getItem('sync_errors') || '[]');
-      errors.push(errorLog);
-      // Keep only last 100 errors
-      if (errors.length > 100) {
-        errors.shift();
-      }
-      localStorage.setItem('sync_errors', JSON.stringify(errors));
-    } catch (e) {
-      console.error('[Sync Error] Failed to store error log', e);
-    }
+      lastSyncTime: this.lastSyncTime,
+    });
   }
 
   /**
@@ -241,6 +237,8 @@ export class SyncManager {
    */
   private async pull(token: string) {
     const since = this.lastSyncTime?.toISOString();
+    
+    logger.debug(this.context, 'Pulling changes from server', { since });
     
     const response = await axios.post(
       `${API_BASE_URL}/api/sync/pull`,
@@ -268,8 +266,11 @@ export class SyncManager {
     const queue = await db.syncQueue.toArray();
     
     if (queue.length === 0) {
+      logger.debug(this.context, 'No changes to push');
       return { applied: 0, conflicts: [] };
     }
+
+    logger.debug(this.context, `Pushing ${queue.length} changes to server`);
 
     const changes = queue.map(item => ({
       entity: item.entity,
@@ -295,73 +296,40 @@ export class SyncManager {
   }
 
   /**
-   * Apply changes to local database
+   * Apply changes to local database (DRY - no duplication)
    */
   private async applyChanges(entity: string, records: any[]) {
-    switch (entity) {
-      case 'users':
-        for (const record of records) {
-          await db.users.put({
-            ...record,
-            syncStatus: SyncStatus.SYNCED,
-            lastSyncedAt: new Date(),
-          });
-        }
-        break;
+    logger.debug(this.context, `Applying ${records.length} changes for ${entity}`);
 
-      case 'products':
-        for (const record of records) {
-          await db.products.put({
-            ...record,
-            syncStatus: SyncStatus.SYNCED,
-            lastSyncedAt: new Date(),
-          });
-        }
-        break;
+    // Entity to table mapping
+    const tableMap: Record<string, keyof typeof db> = {
+      users: 'users',
+      products: 'products',
+      customers: 'customers',
+      suppliers: 'suppliers',
+      salesOrders: 'salesOrders',
+      invoices: 'invoices',
+    };
 
-      case 'customers':
-        for (const record of records) {
-          await db.customers.put({
-            ...record,
-            syncStatus: SyncStatus.SYNCED,
-            lastSyncedAt: new Date(),
-          });
-        }
-        break;
-
-      case 'suppliers':
-        for (const record of records) {
-          await db.suppliers.put({
-            ...record,
-            syncStatus: SyncStatus.SYNCED,
-            lastSyncedAt: new Date(),
-          });
-        }
-        break;
-
-      case 'salesOrders':
-        for (const record of records) {
-          await db.salesOrders.put({
-            ...record,
-            syncStatus: SyncStatus.SYNCED,
-            lastSyncedAt: new Date(),
-          });
-        }
-        break;
-
-      case 'invoices':
-        for (const record of records) {
-          await db.invoices.put({
-            ...record,
-            syncStatus: SyncStatus.SYNCED,
-            lastSyncedAt: new Date(),
-          });
-        }
-        break;
-
-      default:
-        console.warn(`[Sync] Unknown entity: ${entity}`);
+    const tableName = tableMap[entity];
+    
+    if (!tableName) {
+      logger.warn(this.context, `Unknown entity: ${entity}`);
+      return;
     }
+
+    const table = db[tableName];
+
+    // Apply all records
+    for (const record of records) {
+      await table.put({
+        ...record,
+        syncStatus: SyncStatus.SYNCED,
+        lastSyncedAt: new Date(),
+      });
+    }
+
+    logger.debug(this.context, `Applied ${records.length} changes for ${entity}`);
   }
 
   /**
@@ -383,6 +351,8 @@ export class SyncManager {
       createdAt: new Date(),
       retryCount: 0,
     });
+    
+    logger.debug(this.context, `Queued ${operation} operation for ${entity}`);
   }
 
   /**
@@ -396,6 +366,7 @@ export class SyncManager {
    * Clear sync queue (use with caution)
    */
   async clearQueue() {
+    logger.warn(this.context, 'Clearing sync queue');
     await db.syncQueue.clear();
   }
 }
