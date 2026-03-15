@@ -244,7 +244,10 @@ export class SyncManager {
     
     const response = await axios.post(
       `${API_BASE_URL}/api/sync/pull`,
-      { since, entities: ['users'] },
+      { 
+        since, 
+        entities: ['users', 'products', 'customers', 'suppliers', 'salesOrders', 'invoices']
+      },
       { headers: { Authorization: `Bearer ${token}` } }
     );
 
@@ -305,7 +308,59 @@ export class SyncManager {
           });
         }
         break;
-      // Add more entities as needed
+
+      case 'products':
+        for (const record of records) {
+          await db.products.put({
+            ...record,
+            syncStatus: SyncStatus.SYNCED,
+            lastSyncedAt: new Date(),
+          });
+        }
+        break;
+
+      case 'customers':
+        for (const record of records) {
+          await db.customers.put({
+            ...record,
+            syncStatus: SyncStatus.SYNCED,
+            lastSyncedAt: new Date(),
+          });
+        }
+        break;
+
+      case 'suppliers':
+        for (const record of records) {
+          await db.suppliers.put({
+            ...record,
+            syncStatus: SyncStatus.SYNCED,
+            lastSyncedAt: new Date(),
+          });
+        }
+        break;
+
+      case 'salesOrders':
+        for (const record of records) {
+          await db.salesOrders.put({
+            ...record,
+            syncStatus: SyncStatus.SYNCED,
+            lastSyncedAt: new Date(),
+          });
+        }
+        break;
+
+      case 'invoices':
+        for (const record of records) {
+          await db.invoices.put({
+            ...record,
+            syncStatus: SyncStatus.SYNCED,
+            lastSyncedAt: new Date(),
+          });
+        }
+        break;
+
+      default:
+        console.warn(`[Sync] Unknown entity: ${entity}`);
     }
   }
 

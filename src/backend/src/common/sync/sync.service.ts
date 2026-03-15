@@ -255,7 +255,11 @@ export class SyncService {
     // Map entity names to actual entities
     const entityMap = {
       users: 'User',
-      // Add more entities as needed
+      products: 'Product',
+      customers: 'Customer',
+      suppliers: 'Supplier',
+      salesOrders: 'Order', // Backend entity is named 'Order', not 'SalesOrder'
+      invoices: 'Invoice',
     };
 
     const entityClass = entityMap[entityName];
