@@ -242,11 +242,19 @@ export default function NotificationList() {
       dataIndex: 'type',
       key: 'type',
       width: 100,
-      render: (type: string) => (
-        <Tag color={typeColors[type] || 'default'} icon={typeIcons[type]}>
-          {type?.toUpperCase() || 'INFO'}
-        </Tag>
-      ),
+      render: (type: string) => {
+        const typeLabels: Record<string, string> = {
+          info: t('notifications:types.info'),
+          warning: t('notifications:types.warning'),
+          success: t('notifications:types.success'),
+          error: t('notifications:types.error'),
+        };
+        return (
+          <Tag color={typeColors[type] || 'default'} icon={typeIcons[type]}>
+            {typeLabels[type] || t('notifications:types.info')}
+          </Tag>
+        );
+      },
     },
     {
       title: t('notifications:notification.title'),
@@ -281,7 +289,7 @@ export default function NotificationList() {
       width: 100,
       render: (status: string) => (
         <Tag color={statusColors[status] || 'default'}>
-          {status?.toUpperCase() || 'UNREAD'}
+          {status === 'read' ? t('notifications:status.read') : t('notifications:status.unread')}
         </Tag>
       ),
     },
@@ -297,13 +305,13 @@ export default function NotificationList() {
           [SyncStatus.CONFLICT]: 'error',
         };
         const labels = {
-          [SyncStatus.SYNCED]: 'Synced',
-          [SyncStatus.PENDING]: 'Pending',
-          [SyncStatus.CONFLICT]: 'Conflict',
+          [SyncStatus.SYNCED]: t('notifications:notification.syncStatusSynced'),
+          [SyncStatus.PENDING]: t('notifications:notification.syncStatusPending'),
+          [SyncStatus.CONFLICT]: t('notifications:notification.syncStatusConflict'),
         };
         return (
           <Tag color={colors[syncStatus] || 'default'}>
-            {labels[syncStatus] || 'Unknown'}
+            {labels[syncStatus] || t('notifications:notification.syncStatusUnknown')}
           </Tag>
         );
       },
@@ -320,7 +328,7 @@ export default function NotificationList() {
               size="small"
               onClick={() => handleMarkAsRead(record)}
             >
-              Mark Read
+              {t('notifications:notification.markRead')}
             </Button>
           )}
           {record.link && (
@@ -329,7 +337,7 @@ export default function NotificationList() {
               size="small"
               onClick={() => navigate(record.link!)}
             >
-              View
+              {t('notifications:notification.view')}
             </Button>
           )}
         </Space>
@@ -346,8 +354,8 @@ export default function NotificationList() {
         value={statusFilter}
         onChange={setStatusFilter}
       >
-        <Option value="unread">UNREAD</Option>
-        <Option value="read">READ</Option>
+        <Option value="unread">{t('notifications:status.unread')}</Option>
+        <Option value="read">{t('notifications:status.read')}</Option>
       </Select>
       <Select
         placeholder={t('notifications:filters.type')}
@@ -356,10 +364,10 @@ export default function NotificationList() {
         value={typeFilter}
         onChange={setTypeFilter}
       >
-        <Option value="info">INFO</Option>
-        <Option value="warning">WARNING</Option>
-        <Option value="success">SUCCESS</Option>
-        <Option value="error">ERROR</Option>
+        <Option value="info">{t('notifications:types.info')}</Option>
+        <Option value="warning">{t('notifications:types.warning')}</Option>
+        <Option value="success">{t('notifications:types.success')}</Option>
+        <Option value="error">{t('notifications:types.error')}</Option>
       </Select>
     </Space>
   );
@@ -372,7 +380,7 @@ export default function NotificationList() {
           <span>{t('notifications:notification.list')}</span>
           {unreadCount > 0 && (
             <Badge count={unreadCount} showZero={false}>
-              <Tag color="warning">Unread</Tag>
+              <Tag color="warning">{t('notifications:networkStatus.unreadBadge')}</Tag>
             </Badge>
           )}
         </Space>
@@ -391,7 +399,7 @@ export default function NotificationList() {
             text={
               <Space size="small">
                 {isOnline ? <CloudOutlined /> : <DisconnectOutlined />}
-                {isOnline ? 'Online' : 'Offline'}
+                {isOnline ? t('notifications:networkStatus.online') : t('notifications:networkStatus.offline')}
               </Space>
             }
           />
@@ -399,7 +407,7 @@ export default function NotificationList() {
           {/* Sync Queue Indicator */}
           {queueSize > 0 && (
             <Badge count={queueSize} showZero={false}>
-              <Tag color="warning">Pending Sync</Tag>
+              <Tag color="warning">{t('notifications:networkStatus.pendingSync')}</Tag>
             </Badge>
           )}
 
@@ -410,7 +418,7 @@ export default function NotificationList() {
             loading={syncing}
             disabled={!isOnline}
           >
-            {syncing ? 'Syncing...' : 'Sync Now'}
+            {syncing ? t('notifications:networkStatus.syncing') : t('notifications:networkStatus.syncNow')}
           </Button>
         </Space>
       }
@@ -424,7 +432,7 @@ export default function NotificationList() {
         current: page,
         pageSize,
         total: notifications.length,
-        showTotal: (total) => `Total ${total} notifications`,
+        showTotal: (total) => t('notifications:pagination.total', { total }),
         onChange: (newPage, newPageSize) => {
           setPage(newPage);
           setPageSize(newPageSize);
