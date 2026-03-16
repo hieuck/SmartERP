@@ -77,11 +77,11 @@ test.describe('Offline-First Sync', () => {
 
     // Go offline
     await context.setOffline(true);
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('networkidle');
 
     // Search and edit product
     await productsPage.searchProduct(productData.name);
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('networkidle');
     await productsPage.clickEditFirstProduct();
 
     // Update product
@@ -112,16 +112,16 @@ test.describe('Offline-First Sync', () => {
 
     // Go offline
     await context.setOffline(true);
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('networkidle');
 
     // Search and delete product
     await productsPage.searchProduct(productData.name);
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('networkidle');
     await productsPage.clickDeleteFirstProduct();
     await productsPage.confirmDelete();
 
     // Verify product removed locally
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('networkidle');
     expect(await productsPage.productExists(productData.name)).toBe(false);
   });
 
@@ -132,7 +132,7 @@ test.describe('Offline-First Sync', () => {
 
     // Go offline
     await context.setOffline(true);
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('networkidle');
 
     // Create product while offline
     await productsPage.clickCreateProduct();
@@ -150,7 +150,7 @@ test.describe('Offline-First Sync', () => {
 
     // Go back online
     await context.setOffline(false);
-    await page.waitForTimeout(2000);
+    await page.waitForLoadState('networkidle');
 
     // Verify sync starts automatically
     const syncingIndicator = page.locator('[data-testid="syncing"], .sync-in-progress');
@@ -158,8 +158,9 @@ test.describe('Offline-First Sync', () => {
       // Sync might be too fast
     });
 
-    // Wait for sync to complete
-    await page.waitForTimeout(3000);
+    // Wait for sync to complete (wait for online indicator)
+    const onlineIndicator = page.locator('[data-testid="online-indicator"], .online-badge');
+    await expect(onlineIndicator).toBeVisible({ timeout: 10000 });
 
     // Verify online indicator
     const onlineIndicator = page.locator('[data-testid="online-indicator"], .online-badge');
@@ -200,7 +201,7 @@ test.describe('Offline-First Sync', () => {
 
     // Go online and trigger sync
     await context.setOffline(false);
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
 
     // Verify conflict resolution dialog appears
     const conflictDialog = page.locator('[data-testid="conflict-dialog"], .conflict-resolution');
@@ -245,7 +246,7 @@ test.describe('Offline-First Sync', () => {
 
     // Go offline
     await context.setOffline(true);
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('networkidle');
 
     // Verify offline indicator appears
     const offlineIndicator = page.locator('[data-testid="offline-indicator"], .offline-badge, .offline-status');
@@ -262,7 +263,7 @@ test.describe('Offline-First Sync', () => {
 
     // Go offline and create product
     await context.setOffline(true);
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('networkidle');
 
     await productsPage.clickCreateProduct();
     const productData = {

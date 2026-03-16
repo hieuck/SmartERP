@@ -119,9 +119,12 @@ export class BasePage {
   }
 
   /**
-   * Wait for specific time (use sparingly, prefer waitForApiResponse)
+   * Wait for specific time
+   * @deprecated Use waitForApiResponse or waitForLoadState instead
+   * Arbitrary timeouts cause flaky tests
    */
   async wait(ms: number) {
+    console.warn('⚠️ Using arbitrary timeout - prefer waitForApiResponse or waitForLoadState');
     await this.page.waitForTimeout(ms);
   }
 }

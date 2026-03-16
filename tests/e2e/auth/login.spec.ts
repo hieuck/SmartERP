@@ -177,8 +177,8 @@ test.describe('Authentication Flow', () => {
     await loginPage.passwordInput.fill('admin123');
     await loginPage.submitButton.click();
 
-    // Wait a bit for error to show
-    await page.waitForTimeout(2000);
+    // Wait for error message to appear (not arbitrary timeout)
+    await loginPage.errorMessage.waitFor({ state: 'visible', timeout: 5000 });
 
     // Verify error message is shown
     expect(await loginPage.hasError()).toBe(true);

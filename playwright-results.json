@@ -3,9 +3,9 @@
     "configFile": "E:\\GitHub\\Kiro AI Team\\smart-erp\\playwright.config.ts",
     "rootDir": "E:/GitHub/Kiro AI Team/smart-erp/tests/e2e",
     "forbidOnly": false,
-    "fullyParallel": true,
+    "fullyParallel": false,
     "globalSetup": null,
-    "globalTeardown": null,
+    "globalTeardown": "E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\global-teardown.ts",
     "globalTimeout": 0,
     "grep": {},
     "grepInvert": null,
@@ -171,7 +171,7 @@
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 13032,
+                      "duration": 13478,
                       "error": {
                         "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('[data-testid=\"email-input\"]')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]')\u001b[22m\n",
                         "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('[data-testid=\"email-input\"]')\nExpected: visible\nTimeout: 10000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]')\u001b[22m\n\n    at E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\e2e\\auth\\login.spec.ts:32:40",
@@ -195,7 +195,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-16T10:32:50.709Z",
+                      "startTime": "2026-03-16T16:53:42.971Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -245,7 +245,7 @@
                       "workerIndex": 1,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 12862,
+                      "duration": 13404,
                       "error": {
                         "message": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n",
                         "stack": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n\n    at LoginPage.fillInput (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\BasePage.ts:53:19)\n    at LoginPage.login (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\LoginPage.ts:51:16)\n    at E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\e2e\\auth\\login.spec.ts:39:21",
@@ -269,7 +269,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-16T10:33:06.337Z",
+                      "startTime": "2026-03-16T16:53:59.052Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -319,7 +319,7 @@
                       "workerIndex": 2,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 12860,
+                      "duration": 13403,
                       "error": {
                         "message": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n",
                         "stack": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n\n    at LoginPage.fillInput (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\BasePage.ts:53:19)\n    at LoginPage.login (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\LoginPage.ts:51:16)\n    at E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\e2e\\auth\\login.spec.ts:54:21",
@@ -343,7 +343,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-16T10:33:21.828Z",
+                      "startTime": "2026-03-16T16:54:14.964Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -393,7 +393,7 @@
                       "workerIndex": 3,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 12944,
+                      "duration": 13372,
                       "error": {
                         "message": "TimeoutError: locator.fill: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]')\u001b[22m\n",
                         "stack": "TimeoutError: locator.fill: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]')\u001b[22m\n\n    at E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\e2e\\auth\\login.spec.ts:68:32",
@@ -417,7 +417,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-16T10:33:37.278Z",
+                      "startTime": "2026-03-16T16:54:30.886Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -467,7 +467,7 @@
                       "workerIndex": 4,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 12856,
+                      "duration": 13371,
                       "error": {
                         "message": "TimeoutError: locator.fill: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]')\u001b[22m\n",
                         "stack": "TimeoutError: locator.fill: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]')\u001b[22m\n\n    at E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\e2e\\auth\\login.spec.ts:80:32",
@@ -491,7 +491,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-16T10:33:52.725Z",
+                      "startTime": "2026-03-16T16:54:46.813Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -541,7 +541,7 @@
                       "workerIndex": 5,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 12894,
+                      "duration": 13367,
                       "error": {
                         "message": "TimeoutError: locator.fill: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]')\u001b[22m\n",
                         "stack": "TimeoutError: locator.fill: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]')\u001b[22m\n\n    at E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\e2e\\auth\\login.spec.ts:90:32",
@@ -565,7 +565,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-16T10:34:08.027Z",
+                      "startTime": "2026-03-16T16:55:02.711Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -615,7 +615,7 @@
                       "workerIndex": 6,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 12980,
+                      "duration": 13369,
                       "error": {
                         "message": "TimeoutError: locator.fill: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]')\u001b[22m\n",
                         "stack": "TimeoutError: locator.fill: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]')\u001b[22m\n\n    at E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\e2e\\auth\\login.spec.ts:101:32",
@@ -639,7 +639,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-16T10:34:23.475Z",
+                      "startTime": "2026-03-16T16:55:18.493Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -689,7 +689,7 @@
                       "workerIndex": 7,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 12944,
+                      "duration": 13391,
                       "error": {
                         "message": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n",
                         "stack": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n\n    at LoginPage.fillInput (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\BasePage.ts:53:19)\n    at LoginPage.login (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\LoginPage.ts:51:16)\n    at E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\e2e\\auth\\login.spec.ts:115:21",
@@ -713,7 +713,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-16T10:34:38.969Z",
+                      "startTime": "2026-03-16T16:55:34.360Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -763,7 +763,7 @@
                       "workerIndex": 8,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 12915,
+                      "duration": 13336,
                       "error": {
                         "message": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n",
                         "stack": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n\n    at LoginPage.fillInput (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\BasePage.ts:53:19)\n    at LoginPage.login (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\LoginPage.ts:51:16)\n    at E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\e2e\\auth\\login.spec.ts:133:21",
@@ -787,7 +787,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-16T10:34:54.385Z",
+                      "startTime": "2026-03-16T16:55:50.258Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -837,7 +837,7 @@
                       "workerIndex": 9,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 12871,
+                      "duration": 13214,
                       "error": {
                         "message": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n",
                         "stack": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n\n    at LoginPage.fillInput (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\BasePage.ts:53:19)\n    at LoginPage.login (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\LoginPage.ts:51:16)\n    at E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\e2e\\auth\\login.spec.ts:148:21",
@@ -861,7 +861,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-16T10:35:09.788Z",
+                      "startTime": "2026-03-16T16:56:06.149Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -911,12 +911,12 @@
                       "workerIndex": 10,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2282,
+                      "duration": 2918,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-16T10:35:25.180Z",
+                      "startTime": "2026-03-16T16:56:21.804Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -945,7 +945,7 @@
                       "workerIndex": 10,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 12871,
+                      "duration": 13397,
                       "error": {
                         "message": "TimeoutError: locator.fill: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]')\u001b[22m\n",
                         "stack": "TimeoutError: locator.fill: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]')\u001b[22m\n\n    at E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\e2e\\auth\\login.spec.ts:176:32",
@@ -969,7 +969,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-16T10:35:27.682Z",
+                      "startTime": "2026-03-16T16:56:24.949Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1036,7 +1036,7 @@
                       "workerIndex": 11,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 12863,
+                      "duration": 13404,
                       "error": {
                         "message": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n",
                         "stack": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n\n    at LoginPage.fillInput (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\BasePage.ts:53:19)\n    at LoginPage.login (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\LoginPage.ts:51:16)\n    at E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\e2e\\offline\\sync.spec.ts:30:21",
@@ -1060,7 +1060,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-16T10:35:42.897Z",
+                      "startTime": "2026-03-16T16:56:40.639Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1110,7 +1110,7 @@
                       "workerIndex": 12,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 12893,
+                      "duration": 13415,
                       "error": {
                         "message": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n",
                         "stack": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n\n    at LoginPage.fillInput (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\BasePage.ts:53:19)\n    at LoginPage.login (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\LoginPage.ts:51:16)\n    at E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\e2e\\offline\\sync.spec.ts:30:21",
@@ -1134,7 +1134,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-16T10:35:58.246Z",
+                      "startTime": "2026-03-16T16:56:56.626Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1184,7 +1184,7 @@
                       "workerIndex": 13,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 12970,
+                      "duration": 13392,
                       "error": {
                         "message": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n",
                         "stack": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n\n    at LoginPage.fillInput (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\BasePage.ts:53:19)\n    at LoginPage.login (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\LoginPage.ts:51:16)\n    at E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\e2e\\offline\\sync.spec.ts:30:21",
@@ -1208,7 +1208,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-16T10:36:13.604Z",
+                      "startTime": "2026-03-16T16:57:12.607Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1258,7 +1258,7 @@
                       "workerIndex": 14,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 12879,
+                      "duration": 13347,
                       "error": {
                         "message": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n",
                         "stack": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n\n    at LoginPage.fillInput (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\BasePage.ts:53:19)\n    at LoginPage.login (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\LoginPage.ts:51:16)\n    at E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\e2e\\offline\\sync.spec.ts:30:21",
@@ -1282,7 +1282,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-16T10:36:29.069Z",
+                      "startTime": "2026-03-16T16:57:28.630Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1332,7 +1332,7 @@
                       "workerIndex": 15,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 13010,
+                      "duration": 13466,
                       "error": {
                         "message": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n",
                         "stack": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n\n    at LoginPage.fillInput (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\BasePage.ts:53:19)\n    at LoginPage.login (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\LoginPage.ts:51:16)\n    at E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\e2e\\offline\\sync.spec.ts:30:21",
@@ -1356,7 +1356,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-16T10:36:44.502Z",
+                      "startTime": "2026-03-16T16:57:44.618Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1406,7 +1406,7 @@
                       "workerIndex": 16,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 12940,
+                      "duration": 13427,
                       "error": {
                         "message": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n",
                         "stack": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n\n    at LoginPage.fillInput (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\BasePage.ts:53:19)\n    at LoginPage.login (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\LoginPage.ts:51:16)\n    at E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\e2e\\offline\\sync.spec.ts:30:21",
@@ -1430,7 +1430,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-16T10:37:00.066Z",
+                      "startTime": "2026-03-16T16:58:00.679Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1480,7 +1480,7 @@
                       "workerIndex": 17,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 12801,
+                      "duration": 13234,
                       "error": {
                         "message": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n",
                         "stack": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n\n    at LoginPage.fillInput (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\BasePage.ts:53:19)\n    at LoginPage.login (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\LoginPage.ts:51:16)\n    at E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\e2e\\offline\\sync.spec.ts:30:21",
@@ -1504,7 +1504,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-16T10:37:15.444Z",
+                      "startTime": "2026-03-16T16:58:16.748Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1554,7 +1554,7 @@
                       "workerIndex": 18,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 12775,
+                      "duration": 13338,
                       "error": {
                         "message": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n",
                         "stack": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n\n    at LoginPage.fillInput (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\BasePage.ts:53:19)\n    at LoginPage.login (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\LoginPage.ts:51:16)\n    at E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\e2e\\offline\\sync.spec.ts:30:21",
@@ -1578,7 +1578,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-16T10:37:30.735Z",
+                      "startTime": "2026-03-16T16:58:32.627Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1628,7 +1628,7 @@
                       "workerIndex": 19,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 12827,
+                      "duration": 13321,
                       "error": {
                         "message": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n",
                         "stack": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n\n    at LoginPage.fillInput (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\BasePage.ts:53:19)\n    at LoginPage.login (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\LoginPage.ts:51:16)\n    at E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\e2e\\offline\\sync.spec.ts:30:21",
@@ -1652,7 +1652,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-16T10:37:45.897Z",
+                      "startTime": "2026-03-16T16:58:48.545Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1719,7 +1719,7 @@
                       "workerIndex": 20,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 12790,
+                      "duration": 13424,
                       "error": {
                         "message": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n",
                         "stack": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n\n    at LoginPage.fillInput (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\BasePage.ts:53:19)\n    at LoginPage.login (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\LoginPage.ts:51:16)\n    at E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\e2e\\products\\product-list.spec.ts:30:21",
@@ -1743,7 +1743,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-16T10:38:01.270Z",
+                      "startTime": "2026-03-16T16:59:04.519Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1793,7 +1793,7 @@
                       "workerIndex": 21,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 12845,
+                      "duration": 13245,
                       "error": {
                         "message": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n",
                         "stack": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n\n    at LoginPage.fillInput (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\BasePage.ts:53:19)\n    at LoginPage.login (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\LoginPage.ts:51:16)\n    at E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\e2e\\products\\product-list.spec.ts:30:21",
@@ -1817,7 +1817,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-16T10:38:16.517Z",
+                      "startTime": "2026-03-16T16:59:20.396Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1867,7 +1867,7 @@
                       "workerIndex": 22,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 12940,
+                      "duration": 13307,
                       "error": {
                         "message": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n",
                         "stack": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n\n    at LoginPage.fillInput (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\BasePage.ts:53:19)\n    at LoginPage.login (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\LoginPage.ts:51:16)\n    at E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\e2e\\products\\product-list.spec.ts:30:21",
@@ -1891,7 +1891,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-16T10:38:31.877Z",
+                      "startTime": "2026-03-16T16:59:36.045Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1941,7 +1941,7 @@
                       "workerIndex": 23,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 12961,
+                      "duration": 13225,
                       "error": {
                         "message": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n",
                         "stack": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n\n    at LoginPage.fillInput (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\BasePage.ts:53:19)\n    at LoginPage.login (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\LoginPage.ts:51:16)\n    at E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\e2e\\products\\product-list.spec.ts:30:21",
@@ -1965,7 +1965,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-16T10:38:47.367Z",
+                      "startTime": "2026-03-16T16:59:51.900Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2015,7 +2015,7 @@
                       "workerIndex": 24,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 12858,
+                      "duration": 13330,
                       "error": {
                         "message": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n",
                         "stack": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n\n    at LoginPage.fillInput (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\BasePage.ts:53:19)\n    at LoginPage.login (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\LoginPage.ts:51:16)\n    at E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\e2e\\products\\product-list.spec.ts:30:21",
@@ -2039,7 +2039,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-16T10:39:02.877Z",
+                      "startTime": "2026-03-16T17:00:07.526Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2089,7 +2089,7 @@
                       "workerIndex": 25,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 12908,
+                      "duration": 13385,
                       "error": {
                         "message": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n",
                         "stack": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n\n    at LoginPage.fillInput (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\BasePage.ts:53:19)\n    at LoginPage.login (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\LoginPage.ts:51:16)\n    at E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\e2e\\products\\product-list.spec.ts:30:21",
@@ -2113,7 +2113,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-16T10:39:18.341Z",
+                      "startTime": "2026-03-16T17:00:23.281Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2163,7 +2163,7 @@
                       "workerIndex": 26,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 12867,
+                      "duration": 13357,
                       "error": {
                         "message": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n",
                         "stack": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n\n    at LoginPage.fillInput (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\BasePage.ts:53:19)\n    at LoginPage.login (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\LoginPage.ts:51:16)\n    at E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\e2e\\products\\product-list.spec.ts:30:21",
@@ -2187,7 +2187,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-16T10:39:33.932Z",
+                      "startTime": "2026-03-16T17:00:39.237Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2237,7 +2237,7 @@
                       "workerIndex": 27,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 12870,
+                      "duration": 13366,
                       "error": {
                         "message": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n",
                         "stack": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n\n    at LoginPage.fillInput (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\BasePage.ts:53:19)\n    at LoginPage.login (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\LoginPage.ts:51:16)\n    at E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\e2e\\products\\product-list.spec.ts:30:21",
@@ -2261,7 +2261,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-16T10:39:49.243Z",
+                      "startTime": "2026-03-16T17:00:54.932Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2311,7 +2311,7 @@
                       "workerIndex": 28,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 12882,
+                      "duration": 13478,
                       "error": {
                         "message": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n",
                         "stack": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n\n    at LoginPage.fillInput (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\BasePage.ts:53:19)\n    at LoginPage.login (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\LoginPage.ts:51:16)\n    at E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\e2e\\products\\product-list.spec.ts:30:21",
@@ -2335,7 +2335,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-16T10:40:04.598Z",
+                      "startTime": "2026-03-16T17:01:10.794Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2385,7 +2385,7 @@
                       "workerIndex": 29,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 13001,
+                      "duration": 13339,
                       "error": {
                         "message": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n",
                         "stack": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n\n    at LoginPage.fillInput (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\BasePage.ts:53:19)\n    at LoginPage.login (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\LoginPage.ts:51:16)\n    at E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\e2e\\products\\product-list.spec.ts:30:21",
@@ -2409,7 +2409,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-16T10:40:20.097Z",
+                      "startTime": "2026-03-16T17:01:26.547Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2476,7 +2476,7 @@
                       "workerIndex": 30,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 12846,
+                      "duration": 13361,
                       "error": {
                         "message": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n",
                         "stack": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n\n    at LoginPage.fillInput (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\BasePage.ts:53:19)\n    at LoginPage.login (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\LoginPage.ts:51:16)\n    at E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\e2e\\products\\product-management.spec.ts:26:21",
@@ -2500,7 +2500,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-16T10:40:35.606Z",
+                      "startTime": "2026-03-16T17:01:42.338Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2550,7 +2550,7 @@
                       "workerIndex": 31,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 12915,
+                      "duration": 13312,
                       "error": {
                         "message": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n",
                         "stack": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n\n    at LoginPage.fillInput (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\BasePage.ts:53:19)\n    at LoginPage.login (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\LoginPage.ts:51:16)\n    at E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\e2e\\products\\product-management.spec.ts:26:21",
@@ -2574,7 +2574,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-16T10:40:50.914Z",
+                      "startTime": "2026-03-16T17:01:57.991Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2624,7 +2624,7 @@
                       "workerIndex": 32,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 12840,
+                      "duration": 13364,
                       "error": {
                         "message": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n",
                         "stack": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n\n    at LoginPage.fillInput (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\BasePage.ts:53:19)\n    at LoginPage.login (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\LoginPage.ts:51:16)\n    at E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\e2e\\products\\product-management.spec.ts:26:21",
@@ -2648,7 +2648,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-16T10:41:06.452Z",
+                      "startTime": "2026-03-16T17:02:13.874Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2698,7 +2698,7 @@
                       "workerIndex": 33,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 12865,
+                      "duration": 13419,
                       "error": {
                         "message": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n",
                         "stack": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n\n    at LoginPage.fillInput (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\BasePage.ts:53:19)\n    at LoginPage.login (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\LoginPage.ts:51:16)\n    at E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\e2e\\products\\product-management.spec.ts:26:21",
@@ -2722,7 +2722,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-16T10:41:21.741Z",
+                      "startTime": "2026-03-16T17:02:29.751Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2772,7 +2772,7 @@
                       "workerIndex": 34,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 12933,
+                      "duration": 13359,
                       "error": {
                         "message": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n",
                         "stack": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n\n    at LoginPage.fillInput (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\BasePage.ts:53:19)\n    at LoginPage.login (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\LoginPage.ts:51:16)\n    at E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\e2e\\products\\product-management.spec.ts:26:21",
@@ -2796,7 +2796,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-16T10:41:37.046Z",
+                      "startTime": "2026-03-16T17:02:45.692Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2846,7 +2846,7 @@
                       "workerIndex": 35,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 12853,
+                      "duration": 13413,
                       "error": {
                         "message": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n",
                         "stack": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n\n    at LoginPage.fillInput (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\BasePage.ts:53:19)\n    at LoginPage.login (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\LoginPage.ts:51:16)\n    at E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\e2e\\products\\product-management.spec.ts:26:21",
@@ -2870,7 +2870,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-16T10:41:52.459Z",
+                      "startTime": "2026-03-16T17:03:01.738Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2920,7 +2920,7 @@
                       "workerIndex": 36,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 12867,
+                      "duration": 13367,
                       "error": {
                         "message": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n",
                         "stack": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n\n    at LoginPage.fillInput (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\BasePage.ts:53:19)\n    at LoginPage.login (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\LoginPage.ts:51:16)\n    at E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\e2e\\products\\product-management.spec.ts:26:21",
@@ -2944,7 +2944,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-16T10:42:07.837Z",
+                      "startTime": "2026-03-16T17:03:17.676Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2994,7 +2994,7 @@
                       "workerIndex": 37,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 12911,
+                      "duration": 13419,
                       "error": {
                         "message": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n",
                         "stack": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n\n    at LoginPage.fillInput (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\BasePage.ts:53:19)\n    at LoginPage.login (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\LoginPage.ts:51:16)\n    at E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\e2e\\products\\product-management.spec.ts:26:21",
@@ -3018,7 +3018,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-16T10:42:23.237Z",
+                      "startTime": "2026-03-16T17:03:33.720Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -3068,7 +3068,7 @@
                       "workerIndex": 38,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 12887,
+                      "duration": 13354,
                       "error": {
                         "message": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n",
                         "stack": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"email-input\"]') to be visible\u001b[22m\n\n    at LoginPage.fillInput (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\BasePage.ts:53:19)\n    at LoginPage.login (E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\pages\\LoginPage.ts:51:16)\n    at E:\\GitHub\\Kiro AI Team\\smart-erp\\tests\\e2e\\products\\product-management.spec.ts:26:21",
@@ -3092,7 +3092,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-03-16T10:42:38.656Z",
+                      "startTime": "2026-03-16T17:03:49.687Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -3133,8 +3133,8 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-03-16T10:32:48.323Z",
-    "duration": 603609.094,
+    "startTime": "2026-03-16T16:53:38.887Z",
+    "duration": 624965.03,
     "expected": 1,
     "skipped": 0,
     "unexpected": 39,

@@ -22,8 +22,8 @@ export default defineConfig({
     timeout: 10_000,
   },
   
-  // Run tests in parallel
-  fullyParallel: true,
+  // Run tests sequentially to prevent worker hanging (e2e-testing best practice)
+  fullyParallel: false,
   
   // Fail the build on CI if you accidentally left test.only
   forbidOnly: !!process.env.CI,
@@ -31,8 +31,11 @@ export default defineConfig({
   // Retry on CI only
   retries: process.env.CI ? 2 : 0,
   
-  // Opt out of parallel tests on CI
-  workers: process.env.CI ? 1 : undefined,
+  // Single worker for clean exit (e2e-testing best practice)
+  workers: 1,
+  
+  // Global teardown for cleanup
+  globalTeardown: './tests/global-teardown.ts',
   
   // Reporter configuration
   reporter: [

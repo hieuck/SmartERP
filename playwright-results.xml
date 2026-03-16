@@ -1,6 +1,6 @@
-<testsuites id="" name="" tests="40" failures="39" skipped="0" errors="0" time="603.609094">
-<testsuite name="auth\login.spec.ts" timestamp="2026-03-16T10:32:48.528Z" hostname="chromium" tests="12" failures="11" skipped="0" time="144.311" errors="0">
-<testcase name="Authentication Flow › should display login page correctly" classname="auth\login.spec.ts" time="13.032">
+<testsuites id="" name="" tests="40" failures="39" skipped="0" errors="0" time="624.9650300000001">
+<testsuite name="auth\login.spec.ts" timestamp="2026-03-16T16:53:40.797Z" hostname="chromium" tests="12" failures="11" skipped="0" time="150.02" errors="0">
+<testcase name="Authentication Flow › should display login page correctly" classname="auth\login.spec.ts" time="13.478">
 <failure message="login.spec.ts:26:7 should display login page correctly" type="FAILURE">
 <![CDATA[  [chromium] › auth\login.spec.ts:26:7 › Authentication Flow › should display login page correctly ─
 
@@ -46,7 +46,7 @@
 ]]>
 </system-out>
 </testcase>
-<testcase name="Authentication Flow › should login successfully with valid credentials" classname="auth\login.spec.ts" time="12.862">
+<testcase name="Authentication Flow › should login successfully with valid credentials" classname="auth\login.spec.ts" time="13.404">
 <failure message="login.spec.ts:37:7 should login successfully with valid credentials" type="FAILURE">
 <![CDATA[  [chromium] › auth\login.spec.ts:37:7 › Authentication Flow › should login successfully with valid credentials 
 
@@ -89,7 +89,7 @@
 ]]>
 </system-out>
 </testcase>
-<testcase name="Authentication Flow › should show error for invalid credentials" classname="auth\login.spec.ts" time="12.86">
+<testcase name="Authentication Flow › should show error for invalid credentials" classname="auth\login.spec.ts" time="13.403">
 <failure message="login.spec.ts:52:7 should show error for invalid credentials" type="FAILURE">
 <![CDATA[  [chromium] › auth\login.spec.ts:52:7 › Authentication Flow › should show error for invalid credentials 
 
@@ -132,7 +132,7 @@
 ]]>
 </system-out>
 </testcase>
-<testcase name="Authentication Flow › should show error for invalid email format" classname="auth\login.spec.ts" time="12.944">
+<testcase name="Authentication Flow › should show error for invalid email format" classname="auth\login.spec.ts" time="13.372">
 <failure message="login.spec.ts:66:7 should show error for invalid email format" type="FAILURE">
 <![CDATA[  [chromium] › auth\login.spec.ts:66:7 › Authentication Flow › should show error for invalid email format 
 
@@ -171,7 +171,7 @@
 ]]>
 </system-out>
 </testcase>
-<testcase name="Authentication Flow › should show error for missing password" classname="auth\login.spec.ts" time="12.856">
+<testcase name="Authentication Flow › should show error for missing password" classname="auth\login.spec.ts" time="13.371">
 <failure message="login.spec.ts:78:7 should show error for missing password" type="FAILURE">
 <![CDATA[  [chromium] › auth\login.spec.ts:78:7 › Authentication Flow › should show error for missing password 
 
@@ -210,7 +210,7 @@
 ]]>
 </system-out>
 </testcase>
-<testcase name="Authentication Flow › should show error for short password" classname="auth\login.spec.ts" time="12.894">
+<testcase name="Authentication Flow › should show error for short password" classname="auth\login.spec.ts" time="13.367">
 <failure message="login.spec.ts:88:7 should show error for short password" type="FAILURE">
 <![CDATA[  [chromium] › auth\login.spec.ts:88:7 › Authentication Flow › should show error for short password 
 
@@ -249,7 +249,7 @@
 ]]>
 </system-out>
 </testcase>
-<testcase name="Authentication Flow › should disable submit button while loading" classname="auth\login.spec.ts" time="12.98">
+<testcase name="Authentication Flow › should disable submit button while loading" classname="auth\login.spec.ts" time="13.369">
 <failure message="login.spec.ts:99:7 should disable submit button while loading" type="FAILURE">
 <![CDATA[  [chromium] › auth\login.spec.ts:99:7 › Authentication Flow › should disable submit button while loading 
 
@@ -288,7 +288,7 @@
 ]]>
 </system-out>
 </testcase>
-<testcase name="Authentication Flow › should remember email when remember me is checked" classname="auth\login.spec.ts" time="12.944">
+<testcase name="Authentication Flow › should remember email when remember me is checked" classname="auth\login.spec.ts" time="13.391">
 <failure message="login.spec.ts:113:7 should remember email when remember me is checked" type="FAILURE">
 <![CDATA[  [chromium] › auth\login.spec.ts:113:7 › Authentication Flow › should remember email when remember me is checked 
 
@@ -331,7 +331,7 @@
 ]]>
 </system-out>
 </testcase>
-<testcase name="Authentication Flow › should not remember email when remember me is unchecked" classname="auth\login.spec.ts" time="12.915">
+<testcase name="Authentication Flow › should not remember email when remember me is unchecked" classname="auth\login.spec.ts" time="13.336">
 <failure message="login.spec.ts:128:7 should not remember email when remember me is unchecked" type="FAILURE">
 <![CDATA[  [chromium] › auth\login.spec.ts:128:7 › Authentication Flow › should not remember email when remember me is unchecked 
 
@@ -374,7 +374,7 @@
 ]]>
 </system-out>
 </testcase>
-<testcase name="Authentication Flow › should logout successfully" classname="auth\login.spec.ts" time="12.871">
+<testcase name="Authentication Flow › should logout successfully" classname="auth\login.spec.ts" time="13.214">
 <failure message="login.spec.ts:146:7 should logout successfully" type="FAILURE">
 <![CDATA[  [chromium] › auth\login.spec.ts:146:7 › Authentication Flow › should logout successfully ─────────
 
@@ -417,9 +417,9 @@
 ]]>
 </system-out>
 </testcase>
-<testcase name="Authentication Flow › should redirect to login when accessing protected route without auth" classname="auth\login.spec.ts" time="2.282">
+<testcase name="Authentication Flow › should redirect to login when accessing protected route without auth" classname="auth\login.spec.ts" time="2.918">
 </testcase>
-<testcase name="Authentication Flow › should handle network error gracefully" classname="auth\login.spec.ts" time="12.871">
+<testcase name="Authentication Flow › should handle network error gracefully" classname="auth\login.spec.ts" time="13.397">
 <failure message="login.spec.ts:171:7 should handle network error gracefully" type="FAILURE">
 <![CDATA[  [chromium] › auth\login.spec.ts:171:7 › Authentication Flow › should handle network error gracefully 
 
@@ -459,8 +459,8 @@
 </system-out>
 </testcase>
 </testsuite>
-<testsuite name="offline\sync.spec.ts" timestamp="2026-03-16T10:32:48.528Z" hostname="chromium" tests="9" failures="9" skipped="0" time="115.958" errors="0">
-<testcase name="Offline-First Sync › should create product while offline" classname="offline\sync.spec.ts" time="12.863">
+<testsuite name="offline\sync.spec.ts" timestamp="2026-03-16T16:53:40.797Z" hostname="chromium" tests="9" failures="9" skipped="0" time="120.344" errors="0">
+<testcase name="Offline-First Sync › should create product while offline" classname="offline\sync.spec.ts" time="13.404">
 <failure message="sync.spec.ts:34:7 should create product while offline" type="FAILURE">
 <![CDATA[  [chromium] › offline\sync.spec.ts:34:7 › Offline-First Sync › should create product while offline 
 
@@ -503,7 +503,7 @@
 ]]>
 </system-out>
 </testcase>
-<testcase name="Offline-First Sync › should update product while offline" classname="offline\sync.spec.ts" time="12.893">
+<testcase name="Offline-First Sync › should update product while offline" classname="offline\sync.spec.ts" time="13.415">
 <failure message="sync.spec.ts:64:7 should update product while offline" type="FAILURE">
 <![CDATA[  [chromium] › offline\sync.spec.ts:64:7 › Offline-First Sync › should update product while offline 
 
@@ -546,7 +546,7 @@
 ]]>
 </system-out>
 </testcase>
-<testcase name="Offline-First Sync › should delete product while offline" classname="offline\sync.spec.ts" time="12.97">
+<testcase name="Offline-First Sync › should delete product while offline" classname="offline\sync.spec.ts" time="13.392">
 <failure message="sync.spec.ts:99:7 should delete product while offline" type="FAILURE">
 <![CDATA[  [chromium] › offline\sync.spec.ts:99:7 › Offline-First Sync › should delete product while offline 
 
@@ -589,7 +589,7 @@
 ]]>
 </system-out>
 </testcase>
-<testcase name="Offline-First Sync › should sync changes when going online" classname="offline\sync.spec.ts" time="12.879">
+<testcase name="Offline-First Sync › should sync changes when going online" classname="offline\sync.spec.ts" time="13.347">
 <failure message="sync.spec.ts:128:7 should sync changes when going online" type="FAILURE">
 <![CDATA[  [chromium] › offline\sync.spec.ts:128:7 › Offline-First Sync › should sync changes when going online 
 
@@ -632,7 +632,7 @@
 ]]>
 </system-out>
 </testcase>
-<testcase name="Offline-First Sync › should handle conflict resolution" classname="offline\sync.spec.ts" time="13.01">
+<testcase name="Offline-First Sync › should handle conflict resolution" classname="offline\sync.spec.ts" time="13.466">
 <failure message="sync.spec.ts:174:7 should handle conflict resolution" type="FAILURE">
 <![CDATA[  [chromium] › offline\sync.spec.ts:174:7 › Offline-First Sync › should handle conflict resolution ─
 
@@ -675,7 +675,7 @@
 ]]>
 </system-out>
 </testcase>
-<testcase name="Offline-First Sync › should handle network interruption during sync" classname="offline\sync.spec.ts" time="12.94">
+<testcase name="Offline-First Sync › should handle network interruption during sync" classname="offline\sync.spec.ts" time="13.427">
 <failure message="sync.spec.ts:210:7 should handle network interruption during sync" type="FAILURE">
 <![CDATA[  [chromium] › offline\sync.spec.ts:210:7 › Offline-First Sync › should handle network interruption during sync 
 
@@ -718,7 +718,7 @@
 ]]>
 </system-out>
 </testcase>
-<testcase name="Offline-First Sync › should display offline indicator when offline" classname="offline\sync.spec.ts" time="12.801">
+<testcase name="Offline-First Sync › should display offline indicator when offline" classname="offline\sync.spec.ts" time="13.234">
 <failure message="sync.spec.ts:241:7 should display offline indicator when offline" type="FAILURE">
 <![CDATA[  [chromium] › offline\sync.spec.ts:241:7 › Offline-First Sync › should display offline indicator when offline 
 
@@ -761,7 +761,7 @@
 ]]>
 </system-out>
 </testcase>
-<testcase name="Offline-First Sync › should display sync status" classname="offline\sync.spec.ts" time="12.775">
+<testcase name="Offline-First Sync › should display sync status" classname="offline\sync.spec.ts" time="13.338">
 <failure message="sync.spec.ts:258:7 should display sync status" type="FAILURE">
 <![CDATA[  [chromium] › offline\sync.spec.ts:258:7 › Offline-First Sync › should display sync status ────────
 
@@ -804,7 +804,7 @@
 ]]>
 </system-out>
 </testcase>
-<testcase name="Offline-First Sync › should persist data across sessions" classname="offline\sync.spec.ts" time="12.827">
+<testcase name="Offline-First Sync › should persist data across sessions" classname="offline\sync.spec.ts" time="13.321">
 <failure message="sync.spec.ts:293:7 should persist data across sessions" type="FAILURE">
 <![CDATA[  [chromium] › offline\sync.spec.ts:293:7 › Offline-First Sync › should persist data across sessions 
 
@@ -848,8 +848,8 @@
 </system-out>
 </testcase>
 </testsuite>
-<testsuite name="products\product-list.spec.ts" timestamp="2026-03-16T10:32:48.528Z" hostname="chromium" tests="10" failures="10" skipped="0" time="128.922" errors="0">
-<testcase name="Product List Operations › should display products list with pagination" classname="products\product-list.spec.ts" time="12.79">
+<testsuite name="products\product-list.spec.ts" timestamp="2026-03-16T16:53:40.797Z" hostname="chromium" tests="10" failures="10" skipped="0" time="133.456" errors="0">
+<testcase name="Product List Operations › should display products list with pagination" classname="products\product-list.spec.ts" time="13.424">
 <failure message="product-list.spec.ts:38:7 should display products list with pagination" type="FAILURE">
 <![CDATA[  [chromium] › products\product-list.spec.ts:38:7 › Product List Operations › should display products list with pagination 
 
@@ -892,7 +892,7 @@
 ]]>
 </system-out>
 </testcase>
-<testcase name="Product List Operations › should search products by name" classname="products\product-list.spec.ts" time="12.845">
+<testcase name="Product List Operations › should search products by name" classname="products\product-list.spec.ts" time="13.245">
 <failure message="product-list.spec.ts:58:7 should search products by name" type="FAILURE">
 <![CDATA[  [chromium] › products\product-list.spec.ts:58:7 › Product List Operations › should search products by name 
 
@@ -935,7 +935,7 @@
 ]]>
 </system-out>
 </testcase>
-<testcase name="Product List Operations › should search products by SKU" classname="products\product-list.spec.ts" time="12.94">
+<testcase name="Product List Operations › should search products by SKU" classname="products\product-list.spec.ts" time="13.307">
 <failure message="product-list.spec.ts:79:7 should search products by SKU" type="FAILURE">
 <![CDATA[  [chromium] › products\product-list.spec.ts:79:7 › Product List Operations › should search products by SKU 
 
@@ -978,7 +978,7 @@
 ]]>
 </system-out>
 </testcase>
-<testcase name="Product List Operations › should filter products by category" classname="products\product-list.spec.ts" time="12.961">
+<testcase name="Product List Operations › should filter products by category" classname="products\product-list.spec.ts" time="13.225">
 <failure message="product-list.spec.ts:99:7 should filter products by category" type="FAILURE">
 <![CDATA[  [chromium] › products\product-list.spec.ts:99:7 › Product List Operations › should filter products by category 
 
@@ -1021,7 +1021,7 @@
 ]]>
 </system-out>
 </testcase>
-<testcase name="Product List Operations › should filter products by status" classname="products\product-list.spec.ts" time="12.858">
+<testcase name="Product List Operations › should filter products by status" classname="products\product-list.spec.ts" time="13.33">
 <failure message="product-list.spec.ts:120:7 should filter products by status" type="FAILURE">
 <![CDATA[  [chromium] › products\product-list.spec.ts:120:7 › Product List Operations › should filter products by status 
 
@@ -1064,7 +1064,7 @@
 ]]>
 </system-out>
 </testcase>
-<testcase name="Product List Operations › should sort products by name" classname="products\product-list.spec.ts" time="12.908">
+<testcase name="Product List Operations › should sort products by name" classname="products\product-list.spec.ts" time="13.385">
 <failure message="product-list.spec.ts:141:7 should sort products by name" type="FAILURE">
 <![CDATA[  [chromium] › products\product-list.spec.ts:141:7 › Product List Operations › should sort products by name 
 
@@ -1107,7 +1107,7 @@
 ]]>
 </system-out>
 </testcase>
-<testcase name="Product List Operations › should sort products by price" classname="products\product-list.spec.ts" time="12.867">
+<testcase name="Product List Operations › should sort products by price" classname="products\product-list.spec.ts" time="13.357">
 <failure message="product-list.spec.ts:157:7 should sort products by price" type="FAILURE">
 <![CDATA[  [chromium] › products\product-list.spec.ts:157:7 › Product List Operations › should sort products by price 
 
@@ -1150,7 +1150,7 @@
 ]]>
 </system-out>
 </testcase>
-<testcase name="Product List Operations › should handle empty search results" classname="products\product-list.spec.ts" time="12.87">
+<testcase name="Product List Operations › should handle empty search results" classname="products\product-list.spec.ts" time="13.366">
 <failure message="product-list.spec.ts:173:7 should handle empty search results" type="FAILURE">
 <![CDATA[  [chromium] › products\product-list.spec.ts:173:7 › Product List Operations › should handle empty search results 
 
@@ -1193,7 +1193,7 @@
 ]]>
 </system-out>
 </testcase>
-<testcase name="Product List Operations › should show loading state while fetching products" classname="products\product-list.spec.ts" time="12.882">
+<testcase name="Product List Operations › should show loading state while fetching products" classname="products\product-list.spec.ts" time="13.478">
 <failure message="product-list.spec.ts:187:7 should show loading state while fetching products" type="FAILURE">
 <![CDATA[  [chromium] › products\product-list.spec.ts:187:7 › Product List Operations › should show loading state while fetching products 
 
@@ -1236,7 +1236,7 @@
 ]]>
 </system-out>
 </testcase>
-<testcase name="Product List Operations › should handle API errors gracefully" classname="products\product-list.spec.ts" time="13.001">
+<testcase name="Product List Operations › should handle API errors gracefully" classname="products\product-list.spec.ts" time="13.339">
 <failure message="product-list.spec.ts:204:7 should handle API errors gracefully" type="FAILURE">
 <![CDATA[  [chromium] › products\product-list.spec.ts:204:7 › Product List Operations › should handle API errors gracefully 
 
@@ -1280,8 +1280,8 @@
 </system-out>
 </testcase>
 </testsuite>
-<testsuite name="products\product-management.spec.ts" timestamp="2026-03-16T10:32:48.528Z" hostname="chromium" tests="9" failures="9" skipped="0" time="115.917" errors="0">
-<testcase name="Product Management › should display products list" classname="products\product-management.spec.ts" time="12.846">
+<testsuite name="products\product-management.spec.ts" timestamp="2026-03-16T16:53:40.797Z" hostname="chromium" tests="9" failures="9" skipped="0" time="120.368" errors="0">
+<testcase name="Product Management › should display products list" classname="products\product-management.spec.ts" time="13.361">
 <failure message="product-management.spec.ts:34:7 should display products list" type="FAILURE">
 <![CDATA[  [chromium] › products\product-management.spec.ts:34:7 › Product Management › should display products list 
 
@@ -1324,7 +1324,7 @@
 ]]>
 </system-out>
 </testcase>
-<testcase name="Product Management › should create new product successfully" classname="products\product-management.spec.ts" time="12.915">
+<testcase name="Product Management › should create new product successfully" classname="products\product-management.spec.ts" time="13.312">
 <failure message="product-management.spec.ts:45:7 should create new product successfully" type="FAILURE">
 <![CDATA[  [chromium] › products\product-management.spec.ts:45:7 › Product Management › should create new product successfully 
 
@@ -1367,7 +1367,7 @@
 ]]>
 </system-out>
 </testcase>
-<testcase name="Product Management › should validate required fields" classname="products\product-management.spec.ts" time="12.84">
+<testcase name="Product Management › should validate required fields" classname="products\product-management.spec.ts" time="13.364">
 <failure message="product-management.spec.ts:69:7 should validate required fields" type="FAILURE">
 <![CDATA[  [chromium] › products\product-management.spec.ts:69:7 › Product Management › should validate required fields 
 
@@ -1410,7 +1410,7 @@
 ]]>
 </system-out>
 </testcase>
-<testcase name="Product Management › should search products" classname="products\product-management.spec.ts" time="12.865">
+<testcase name="Product Management › should search products" classname="products\product-management.spec.ts" time="13.419">
 <failure message="product-management.spec.ts:81:7 should search products" type="FAILURE">
 <![CDATA[  [chromium] › products\product-management.spec.ts:81:7 › Product Management › should search products 
 
@@ -1453,7 +1453,7 @@
 ]]>
 </system-out>
 </testcase>
-<testcase name="Product Management › should edit product successfully" classname="products\product-management.spec.ts" time="12.933">
+<testcase name="Product Management › should edit product successfully" classname="products\product-management.spec.ts" time="13.359">
 <failure message="product-management.spec.ts:96:7 should edit product successfully" type="FAILURE">
 <![CDATA[  [chromium] › products\product-management.spec.ts:96:7 › Product Management › should edit product successfully 
 
@@ -1496,7 +1496,7 @@
 ]]>
 </system-out>
 </testcase>
-<testcase name="Product Management › should delete product successfully" classname="products\product-management.spec.ts" time="12.853">
+<testcase name="Product Management › should delete product successfully" classname="products\product-management.spec.ts" time="13.413">
 <failure message="product-management.spec.ts:128:7 should delete product successfully" type="FAILURE">
 <![CDATA[  [chromium] › products\product-management.spec.ts:128:7 › Product Management › should delete product successfully 
 
@@ -1539,7 +1539,7 @@
 ]]>
 </system-out>
 </testcase>
-<testcase name="Product Management › should validate price is positive number" classname="products\product-management.spec.ts" time="12.867">
+<testcase name="Product Management › should validate price is positive number" classname="products\product-management.spec.ts" time="13.367">
 <failure message="product-management.spec.ts:163:7 should validate price is positive number" type="FAILURE">
 <![CDATA[  [chromium] › products\product-management.spec.ts:163:7 › Product Management › should validate price is positive number 
 
@@ -1582,7 +1582,7 @@
 ]]>
 </system-out>
 </testcase>
-<testcase name="Product Management › should handle duplicate SKU error" classname="products\product-management.spec.ts" time="12.911">
+<testcase name="Product Management › should handle duplicate SKU error" classname="products\product-management.spec.ts" time="13.419">
 <failure message="product-management.spec.ts:180:7 should handle duplicate SKU error" type="FAILURE">
 <![CDATA[  [chromium] › products\product-management.spec.ts:180:7 › Product Management › should handle duplicate SKU error 
 
@@ -1625,7 +1625,7 @@
 ]]>
 </system-out>
 </testcase>
-<testcase name="Product Management › should cancel product creation" classname="products\product-management.spec.ts" time="12.887">
+<testcase name="Product Management › should cancel product creation" classname="products\product-management.spec.ts" time="13.354">
 <failure message="product-management.spec.ts:206:7 should cancel product creation" type="FAILURE">
 <![CDATA[  [chromium] › products\product-management.spec.ts:206:7 › Product Management › should cancel product creation 
 
