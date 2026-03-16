@@ -113,7 +113,7 @@ npm run dev
 
 ### Access
 
-- Frontend: http://localhost:5175
+- Frontend: http://localhost:5173 (dev) or http://localhost:5175 (portable)
 - Backend API: http://localhost:3000
 - API Docs: http://localhost:3000/api/docs
 - Health Check: http://localhost:3000/api/health

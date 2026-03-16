@@ -283,7 +283,7 @@ if ($healthCheckPassed) {
     Write-Host ""
     Write-Log "Services accessible at:"
     Write-Log "  - Landing Page: http://localhost:3016"
-    Write-Log "  - Frontend App: http://localhost:5175"
+    Write-Log "  - Frontend App: http://localhost:80 (production)"
     Write-Log "  - API Gateway:  http://localhost:3000"
     Write-Host ""
     Write-Log "Next steps:"

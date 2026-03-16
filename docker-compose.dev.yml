@@ -1,0 +1,65 @@
+# Development environment with hot reload
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  # Backend Service (NestJS) - Development mode
+  backend:
+    build:
+      context: ./src/backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: smart-erp-backend-dev
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB:-erp_production}
+      DB_USER: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-key-change-in-production}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-15m}
+      REFRESH_TOKEN_EXPIRES_IN: ${REFRESH_TOKEN_EXPIRES_IN:-7d}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
+    ports:
+      - '${BACKEND_PORT:-3000}:3000'
+      - '9229:9229'  # Debug port
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./src/backend/src:/app/src:ro  # Hot reload
+      - /app/node_modules  # Protect container's node_modules
+    networks:
+      - smart-erp-network
+    restart: unless-stopped
+
+  # Frontend Service (React) - Development mode
+  frontend:
+    build:
+      context: ./src/frontend
+      dockerfile: Dockerfile
+      target: development
+    container_name: smart-erp-frontend-dev
+    environment:
+      VITE_PORT: ${VITE_PORT:-5173}
+      PORT: ${VITE_PORT:-5173}
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:3000/api}
+      VITE_WS_URL: ${VITE_WS_URL:-ws://localhost:3000}
+    ports:
+      - '${FRONTEND_PORT:-5173}:${VITE_PORT:-5173}'
+    depends_on:
+      - backend
+    volumes:
+      - ./src/frontend/src:/app/src:ro  # Hot reload
+      - ./src/frontend/public:/app/public:ro
+      - ./src/frontend/vite.config.ts:/app/vite.config.ts:ro  # Mount vite config
+      - ./src/frontend/tsconfig.json:/app/tsconfig.json:ro  # Mount tsconfig
+      - /app/node_modules  # Protect container's node_modules
+    networks:
+      - smart-erp-network
+    restart: unless-stopped
