@@ -10,6 +10,7 @@ import {
   CloseCircleOutlined,
   MoreOutlined,
 } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import notificationService, {
   NotificationType,
   NotificationPriority,
@@ -43,18 +44,23 @@ const priorityColors: Record<NotificationPriority, string> = {
   [NotificationPriority.URGENT]: 'error',
 };
 
-const priorityLabels: Record<NotificationPriority, string> = {
-  [NotificationPriority.LOW]: 'Thấp',
-  [NotificationPriority.MEDIUM]: 'Trung bình',
-  [NotificationPriority.HIGH]: 'Cao',
-  [NotificationPriority.URGENT]: 'Khẩn cấp',
-};
-
 export default function NotificationCenter() {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
+
+  // Priority labels using i18n
+  const getPriorityLabel = (priority: NotificationPriority): string => {
+    const labels: Record<NotificationPriority, string> = {
+      [NotificationPriority.LOW]: t('notifications.priority.low'),
+      [NotificationPriority.MEDIUM]: t('notifications.priority.medium'),
+      [NotificationPriority.HIGH]: t('notifications.priority.high'),
+      [NotificationPriority.URGENT]: t('notifications.priority.urgent'),
+    };
+    return labels[priority];
+  };
 
   useEffect(() => {
     fetchNotifications();
@@ -71,7 +77,7 @@ export default function NotificationCenter() {
       });
       setNotifications(response.data || []);
     } catch (error: any) {
-      message.error('Không thể tải thông báo: ' + (error.message || 'Lỗi không xác định'));
+      message.error(t('notifications.messages.cannotLoad') + ': ' + (error.message || t('notifications.messages.unknownError')));
     } finally {
       setLoading(false);
     }
@@ -89,33 +95,33 @@ export default function NotificationCenter() {
   const handleMarkAsRead = async (id: string) => {
     try {
       await notificationService.markAsRead(id);
-      message.success('Đã đánh dấu đã đọc');
+      message.success(t('notifications.messages.markedAsRead'));
       fetchNotifications();
       fetchUnreadCount();
     } catch (error: any) {
-      message.error('Không thể đánh dấu đã đọc: ' + (error.message || 'Lỗi không xác định'));
+      message.error(t('notifications.messages.markReadError') + ': ' + (error.message || t('notifications.messages.unknownError')));
     }
   };
 
   const handleMarkAllAsRead = async () => {
     try {
       await notificationService.markAllAsRead();
-      message.success('Đã đánh dấu tất cả đã đọc');
+      message.success(t('notifications.messages.allMarkedAsRead'));
       fetchNotifications();
       fetchUnreadCount();
     } catch (error: any) {
-      message.error('Không thể đánh dấu tất cả đã đọc: ' + (error.message || 'Lỗi không xác định'));
+      message.error(t('notifications.messages.markAllReadError') + ': ' + (error.message || t('notifications.messages.unknownError')));
     }
   };
 
   const handleDelete = async (id: string) => {
     try {
       await notificationService.delete(id);
-      message.success('Đã xóa thông báo');
+      message.success(t('notifications.messages.deleteSuccess'));
       fetchNotifications();
       fetchUnreadCount();
     } catch (error: any) {
-      message.error('Không thể xóa thông báo: ' + (error.message || 'Lỗi không xác định'));
+      message.error(t('notifications.messages.deleteError') + ': ' + (error.message || t('notifications.messages.unknownError')));
     }
   };
 
@@ -123,7 +129,7 @@ export default function NotificationCenter() {
     <Menu>
       {!item.isRead && (
         <Menu.Item key="read" icon={<CheckOutlined />} onClick={() => handleMarkAsRead(item.id)}>
-          Đánh dấu đã đọc
+          {t('notifications.center.markAsRead')}
         </Menu.Item>
       )}
       <Menu.Item
@@ -132,7 +138,7 @@ export default function NotificationCenter() {
         danger
         onClick={() => handleDelete(item.id)}
       >
-        Xóa
+        {t('notifications.center.delete')}
       </Menu.Item>
     </Menu>
   );
@@ -143,7 +149,7 @@ export default function NotificationCenter() {
         title={
           <Space>
             <BellOutlined />
-            <span>Trung tâm thông báo</span>
+            <span>{t('notifications.center.title')}</span>
             {unreadCount > 0 && <Badge count={unreadCount} />}
           </Space>
         }
@@ -154,18 +160,18 @@ export default function NotificationCenter() {
                 type={filter === 'all' ? 'primary' : 'default'}
                 onClick={() => setFilter('all')}
               >
-                Tất cả
+                {t('notifications.center.all')}
               </Button>
               <Button
                 type={filter === 'unread' ? 'primary' : 'default'}
                 onClick={() => setFilter('unread')}
               >
-                Chưa đọc ({unreadCount})
+                {t('notifications.center.unread')} ({unreadCount})
               </Button>
             </Button.Group>
             {unreadCount > 0 && (
               <Button icon={<CheckOutlined />} onClick={handleMarkAllAsRead}>
-                Đánh dấu tất cả đã đọc
+                {t('notifications.center.markAllRead')}
               </Button>
             )}
           </Space>
@@ -173,7 +179,7 @@ export default function NotificationCenter() {
       >
         <Spin spinning={loading}>
           {notifications.length === 0 ? (
-            <Empty description="Không có thông báo" />
+            <Empty description={t('notifications.center.noNotifications')} />
           ) : (
             <List
               itemLayout="horizontal"
@@ -200,9 +206,9 @@ export default function NotificationCenter() {
                           {item.title}
                         </span>
                         <Tag color={priorityColors[item.priority as NotificationPriority]}>
-                          {priorityLabels[item.priority as NotificationPriority]}
+                          {getPriorityLabel(item.priority as NotificationPriority)}
                         </Tag>
-                        {!item.isRead && <Badge status="processing" text="Mới" />}
+                        {!item.isRead && <Badge status="processing" text={t('notifications.center.new')} />}
                       </Space>
                     }
                     description={
@@ -214,7 +220,7 @@ export default function NotificationCenter() {
                           </span>
                           {item.link && (
                             <a href={item.link} style={{ fontSize: 12 }}>
-                              Xem chi tiết →
+                              {t('notifications.center.viewDetail')} →
                             </a>
                           )}
                         </Space>

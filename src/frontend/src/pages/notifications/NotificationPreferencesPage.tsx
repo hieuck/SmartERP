@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Form, Switch, Button, Space, Typography, Divider, message, Spin, Alert } from 'antd';
 import { SaveOutlined, BellOutlined, MailOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18n';
 import notificationService, {
   NotificationPreferences,
 } from '@/services/notification/notificationService';
@@ -9,6 +10,7 @@ import { logger } from '@/lib/logger/logger.service';
 const { Title, Text, Paragraph } = Typography;
 
 const NotificationPreferencesPage: React.FC = () => {
+  const { t } = useTranslation();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -27,7 +29,7 @@ const NotificationPreferencesPage: React.FC = () => {
       form.setFieldsValue(preferences);
     } catch (error) {
       logger.error('NotificationPreferencesPage', 'Failed to load preferences', error as Error);
-      message.error('Failed to load notification preferences');
+      message.error(t('notifications.messages.preferencesLoadError'));
     } finally {
       setLoading(false);
     }
@@ -50,10 +52,10 @@ const NotificationPreferencesPage: React.FC = () => {
     try {
       const values = form.getFieldsValue();
       await notificationService.updatePreferences(values);
-      message.success('Notification preferences saved successfully');
+      message.success(t('notifications.messages.preferencesSaveSuccess'));
     } catch (error) {
       logger.error('NotificationPreferencesPage', 'Failed to save preferences', error as Error);
-      message.error('Failed to save notification preferences');
+      message.error(t('notifications.messages.preferencesSaveError'));
     } finally {
       setSaving(false);
     }
@@ -73,15 +75,15 @@ const NotificationPreferencesPage: React.FC = () => {
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
           <div>
             <Title level={3}>
-              <BellOutlined /> Notification Preferences
+              <BellOutlined /> {t('notifications.preferences.title')}
             </Title>
-            <Paragraph type="secondary">Configure how you want to receive notifications</Paragraph>
+            <Paragraph type="secondary">{t('notifications.preferences.description')}</Paragraph>
           </div>
 
           {!emailConnected && (
             <Alert
-              message="Email Service Not Configured"
-              description="Email notifications are currently unavailable. Please contact your administrator to configure the email service."
+              message={t('notifications.preferences.emailServiceNotConfigured')}
+              description={t('notifications.preferences.emailServiceNotConfiguredDescription')}
               type="warning"
               showIcon
               icon={<MailOutlined />}
@@ -89,80 +91,80 @@ const NotificationPreferencesPage: React.FC = () => {
           )}
 
           <Form form={form} layout="vertical" onFinish={handleSave}>
-            <Divider orientation="left">Notification Channels</Divider>
+            <Divider orientation="left">{t('notifications.preferences.channels')}</Divider>
 
-            <Form.Item name="inAppEnabled" label="In-App Notifications" valuePropName="checked">
+            <Form.Item name="inAppEnabled" label={t('notifications.preferences.inApp')} valuePropName="checked">
               <Switch />
             </Form.Item>
 
             <Form.Item
               name="emailEnabled"
-              label="Email Notifications"
+              label={t('notifications.preferences.email')}
               valuePropName="checked"
               extra={
                 emailConnected
-                  ? 'Receive notifications via email'
-                  : 'Email service is not configured'
+                  ? t('notifications.preferences.emailDescription')
+                  : t('notifications.preferences.emailNotConfigured')
               }
             >
               <Switch disabled={!emailConnected} />
             </Form.Item>
 
-            <Divider orientation="left">Notification Types</Divider>
+            <Divider orientation="left">{t('notifications.preferences.types')}</Divider>
 
             <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
-              Choose which types of notifications you want to receive
+              {t('notifications.preferences.typesDescription')}
             </Text>
 
             <Form.Item
               name={['types', 'lowStock']}
-              label="Low Stock Alerts"
+              label={t('notifications.preferences.lowStock')}
               valuePropName="checked"
             >
               <Switch />
             </Form.Item>
             <Paragraph type="secondary" style={{ marginTop: -16, marginBottom: 16 }}>
-              Get notified when product stock falls below minimum level
+              {t('notifications.preferences.lowStockDescription')}
             </Paragraph>
 
-            <Form.Item name={['types', 'newOrder']} label="New Orders" valuePropName="checked">
+            <Form.Item name={['types', 'newOrder']} label={t('notifications.preferences.newOrder')} valuePropName="checked">
               <Switch />
             </Form.Item>
             <Paragraph type="secondary" style={{ marginTop: -16, marginBottom: 16 }}>
-              Get notified when a new order is created
+              {t('notifications.preferences.newOrderDescription')}
             </Paragraph>
 
             <Form.Item
               name={['types', 'orderStatusChange']}
-              label="Order Status Changes"
+              label={t('notifications.preferences.orderStatusChange')}
               valuePropName="checked"
             >
               <Switch />
             </Form.Item>
             <Paragraph type="secondary" style={{ marginTop: -16, marginBottom: 16 }}>
-              Get notified when order status is updated
+              {t('notifications.preferences.orderStatusChangeDescription')}
             </Paragraph>
 
             <Form.Item
               name={['types', 'overdueDebt']}
-              label="Overdue Debt Alerts"
+              label={t('notifications.preferences.overdueDebt')}
               valuePropName="checked"
             >
               <Switch />
             </Form.Item>
             <Paragraph type="secondary" style={{ marginTop: -16, marginBottom: 16 }}>
-              Get notified about overdue payments
+              {t('notifications.preferences.overdueDebtDescription')}
             </Paragraph>
 
             <Form.Item
               name={['types', 'deliveryDate']}
-              label="Delivery Date Reminders"
+              label={t('notifications.preferences.deliveryDate')}
               valuePropName="checked"
             >
               <Switch />
             </Form.Item>
             <Paragraph type="secondary" style={{ marginTop: -16, marginBottom: 16 }}>
-              Get notified when purchase orders reach expected delivery date
+              {t('notifications.preferences.deliveryDateDescription')}
             </Paragraph>
 
             <Divider />
@@ -170,9 +172,9 @@ const NotificationPreferencesPage: React.FC = () => {
             <Form.Item>
               <Space>
                 <Button type="primary" htmlType="submit" icon={<SaveOutlined />} loading={saving}>
-                  Save Preferences
+                  {t('notifications.preferences.savePreferences')}
                 </Button>
-                <Button onClick={() => form.resetFields()}>Reset</Button>
+                <Button onClick={() => form.resetFields()}>{t('notifications.preferences.reset')}</Button>
               </Space>
             </Form.Item>
           </Form>
