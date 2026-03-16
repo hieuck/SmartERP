@@ -61,12 +61,12 @@
     "@types/node": "^20.10.5",
     "@types/react": "^18.2.43",
     "@types/react-dom": "^18.2.17",
-    "@typescript-eslint/eslint-plugin": "^6.21.0",
-    "@typescript-eslint/parser": "^6.21.0",
+    "@typescript-eslint/eslint-plugin": "^8.57.0",
+    "@typescript-eslint/parser": "^8.57.0",
     "@vitejs/plugin-react": "^4.2.1",
-    "@vitest/browser": "^1.0.4",
-    "@vitest/coverage-v8": "^1.0.4",
-    "@vitest/ui": "^1.0.4",
+    "@vitest/browser": "^4.1.0",
+    "@vitest/coverage-v8": "^4.1.0",
+    "@vitest/ui": "^4.1.0",
     "eslint": "^8.55.0",
     "eslint-plugin-prettier": "^5.5.5",
     "eslint-plugin-react-hooks": "^4.6.0",
@@ -79,8 +79,8 @@
     "storybook": "^10.2.19",
     "terser": "^5.46.0",
     "typescript": "^5.2.2",
-    "vite": "^5.0.8",
+    "vite": "^8.0.0",
     "vite-tsconfig-paths": "^6.1.1",
-    "vitest": "^1.0.4"
+    "vitest": "^4.1.0"
   }
 }
