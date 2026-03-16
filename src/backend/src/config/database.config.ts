@@ -23,8 +23,8 @@ export default new DataSource({
   // Migrations - relative to backend root
   migrations: isProduction ? ['dist/migrations/*.js'] : ['src/migrations/*.ts'],
 
-  // Disable synchronize - use migrations
-  synchronize: false,
+  // Temporarily enable synchronize to create tables from entities
+  synchronize: true,
 
   // Logging
   logging: process.env.NODE_ENV === 'development',
