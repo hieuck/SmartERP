@@ -1,5 +1,4 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { SchedulerRegistry } from '@nestjs/schedule';
 import { CronJob } from 'cron';
 
 export interface ScheduledJob {
@@ -28,8 +27,9 @@ export interface ScheduledJob {
 export class ScheduledJobsService {
   private readonly logger = new Logger(ScheduledJobsService.name);
   private jobs: Map<string, ScheduledJob> = new Map();
+  private cronJobs: Map<string, CronJob> = new Map();
 
-  constructor(private schedulerRegistry: SchedulerRegistry) {}
+  constructor() {}
 
   async createJob(tenantId: string, job: Omit<ScheduledJob, 'id'>): Promise<ScheduledJob> {
     const id = `${tenantId}:${Date.now()}`;
@@ -114,7 +114,7 @@ export class ScheduledJobsService {
   }
 
   /**
-   * Register a cron job with NestJS scheduler
+   * Register a cron job
    */
   private registerCronJob(job: ScheduledJob): void {
     try {
@@ -127,7 +127,7 @@ export class ScheduledJobsService {
         this.jobs.set(job.id, job);
       });
 
-      this.schedulerRegistry.addCronJob(job.id, cronJob);
+      this.cronJobs.set(job.id, cronJob);
       cronJob.start();
 
       this.logger.log(`Registered cron job ${job.id} with schedule ${job.schedule}`);
@@ -138,12 +138,14 @@ export class ScheduledJobsService {
   }
 
   /**
-   * Unregister a cron job from NestJS scheduler
+   * Unregister a cron job
    */
   private unregisterCronJob(jobId: string): void {
     try {
-      if (this.schedulerRegistry.doesExist('cron', jobId)) {
-        this.schedulerRegistry.deleteCronJob(jobId);
+      const cronJob = this.cronJobs.get(jobId);
+      if (cronJob) {
+        cronJob.stop();
+        this.cronJobs.delete(jobId);
         this.logger.log(`Unregistered cron job ${jobId}`);
       }
     } catch (error) {
