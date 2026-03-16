@@ -1,44 +1,44 @@
 import { useState, useEffect } from 'react';
 import { Card, Form, Input, Button, Switch, message, Tabs, Space, Upload, Divider } from 'antd';
+import type { FormInstance } from 'antd';
 import { SaveOutlined, ReloadOutlined, UploadOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import { loadPrintConfig, clearConfigCache, PrintConfig } from '@/utils/printConfig';
 
 const { TabPane } = Tabs;
 
 export default function PrintSettings() {
-  const [form] = Form.useForm();
+  const { t } = useTranslation(['settings', 'common']);
+  const [form] = Form.useForm<PrintConfig>();
   const [loading, setLoading] = useState(false);
   const [config, setConfig] = useState<PrintConfig | null>(null);
 
   useEffect(() => {
-    loadConfig();
+    loadConfigData();
   }, []);
 
-  const loadConfig = async () => {
+  const loadConfigData = async () => {
     setLoading(true);
     try {
       const cfg = await loadPrintConfig();
       setConfig(cfg);
       form.setFieldsValue(cfg);
     } catch (error) {
-      message.error('Không thể tải cấu hình in');
+      message.error(t('print.messages.loadError'));
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSave = async (values: any) => {
+  const handleSave = async (values: PrintConfig) => {
     setLoading(true);
     try {
-      // Save to localStorage (simple approach)
       localStorage.setItem('printConfig', JSON.stringify(values));
       clearConfigCache();
-      message.success('Đã lưu cấu hình in!');
-
-      // Reload config
-      await loadConfig();
+      message.success(t('print.messages.saveSuccess'));
+      await loadConfigData();
     } catch (error) {
-      message.error('Không thể lưu cấu hình');
+      message.error(t('print.messages.saveError'));
     } finally {
       setLoading(false);
     }
@@ -47,16 +47,23 @@ export default function PrintSettings() {
   const handleReset = () => {
     localStorage.removeItem('printConfig');
     clearConfigCache();
-    loadConfig();
-    message.success('Đã khôi phục cấu hình mặc định');
+    loadConfigData();
+    message.success(t('print.messages.resetSuccess'));
   };
 
   const handleLogoUpload = (info: any) => {
     if (info.file.status === 'done') {
       const reader = new FileReader();
       reader.onload = (e) => {
-        form.setFieldValue(['company', 'logo'], e.target?.result);
-        message.success('Đã tải logo lên');
+        const currentValues = form.getFieldsValue();
+        form.setFieldsValue({
+          ...currentValues,
+          company: {
+            ...currentValues.company,
+            logo: e.target?.result as string,
+          },
+        });
+        message.success(t('print.messages.logoUploadSuccess'));
       };
       reader.readAsDataURL(info.file.originFileObj);
     }
@@ -65,12 +72,12 @@ export default function PrintSettings() {
   return (
     <div>
       <Card
-        title="Cài Đặt Mẫu In"
+        title={t('print.title')}
         bordered={false}
         extra={
           <Space>
             <Button icon={<ReloadOutlined />} onClick={handleReset}>
-              Khôi phục mặc định
+              {t('print.actions.resetDefault')}
             </Button>
             <Button
               type="primary"
@@ -78,7 +85,7 @@ export default function PrintSettings() {
               onClick={() => form.submit()}
               loading={loading}
             >
-              Lưu cấu hình
+              {t('print.actions.saveConfig')}
             </Button>
           </Space>
         }
@@ -90,47 +97,47 @@ export default function PrintSettings() {
           initialValues={config || undefined}
         >
           <Tabs defaultActiveKey="company">
-            <TabPane tab="Thông Tin Công Ty" key="company">
+            <TabPane tab={t('print.tabs.companyInfo')} key="company">
               <Form.Item
                 name={['company', 'name']}
-                label="Tên Công Ty"
-                rules={[{ required: true, message: 'Vui lòng nhập tên công ty' }]}
+                label={t('print.company.name')}
+                rules={[{ required: true, message: t('print.company.nameRequired') }]}
               >
-                <Input placeholder="VD: CÔNG TY TNHH ABC" />
+                <Input placeholder={t('print.company.namePlaceholder')} />
               </Form.Item>
 
               <Form.Item
                 name={['company', 'address']}
-                label="Địa Chỉ"
-                rules={[{ required: true, message: 'Vui lòng nhập địa chỉ' }]}
+                label={t('print.company.address')}
+                rules={[{ required: true, message: t('print.company.addressRequired') }]}
               >
-                <Input placeholder="VD: 123 Đường ABC, Quận XYZ, TP.HCM" />
+                <Input placeholder={t('print.company.addressPlaceholder')} />
               </Form.Item>
 
               <Form.Item
                 name={['company', 'phone']}
-                label="Số Điện Thoại"
-                rules={[{ required: true, message: 'Vui lòng nhập số điện thoại' }]}
+                label={t('print.company.phone')}
+                rules={[{ required: true, message: t('print.company.phoneRequired') }]}
               >
-                <Input placeholder="VD: (028) 1234 5678" />
+                <Input placeholder={t('print.company.phonePlaceholder')} />
               </Form.Item>
 
               <Form.Item
                 name={['company', 'taxCode']}
-                label="Mã Số Thuế"
-                rules={[{ required: true, message: 'Vui lòng nhập mã số thuế' }]}
+                label={t('print.company.taxCode')}
+                rules={[{ required: true, message: t('print.company.taxCodeRequired') }]}
               >
-                <Input placeholder="VD: 0123456789" />
+                <Input placeholder={t('print.company.taxCodePlaceholder')} />
               </Form.Item>
 
               <Form.Item
                 name={['company', 'logo']}
-                label="Logo Công Ty"
-                extra="Tải lên file ảnh logo (PNG, JPG). Logo sẽ hiển thị ở đầu phiếu in."
+                label={t('print.company.logo')}
+                extra={t('print.company.logoExtra')}
               >
                 <Input.TextArea
                   rows={3}
-                  placeholder="Base64 hoặc URL của logo"
+                  placeholder={t('print.company.logoPlaceholder')}
                   style={{ fontFamily: 'monospace', fontSize: '11px' }}
                 />
               </Form.Item>
@@ -138,23 +145,23 @@ export default function PrintSettings() {
               <Upload
                 accept="image/*"
                 showUploadList={false}
-                customRequest={({ file, onSuccess }: any) => {
-                  setTimeout(() => onSuccess('ok'), 0);
+                customRequest={({ onSuccess }: any) => {
+                  setTimeout(() => onSuccess && onSuccess('ok'), 0);
                 }}
                 onChange={handleLogoUpload}
               >
-                <Button icon={<UploadOutlined />}>Tải Logo Lên</Button>
+                <Button icon={<UploadOutlined />}>{t('print.company.uploadLogo')}</Button>
               </Upload>
             </TabPane>
 
-            <TabPane tab="Phiếu Nhập Kho" key="stockReceipt">
-              <Form.Item name={['templates', 'stockReceipt', 'title']} label="Tiêu Đề Phiếu">
-                <Input placeholder="VD: PHIẾU NHẬP KHO" />
+            <TabPane tab={t('print.tabs.stockReceipt')} key="stockReceipt">
+              <Form.Item name={['templates', 'stockReceipt', 'title']} label={t('print.stockReceipt.title')}>
+                <Input placeholder={t('print.stockReceipt.titlePlaceholder')} />
               </Form.Item>
 
               <Form.Item
                 name={['templates', 'stockReceipt', 'showLogo']}
-                label="Hiển thị Logo"
+                label={t('print.stockReceipt.showLogo')}
                 valuePropName="checked"
               >
                 <Switch />
@@ -162,7 +169,7 @@ export default function PrintSettings() {
 
               <Form.Item
                 name={['templates', 'stockReceipt', 'showCompanyInfo']}
-                label="Hiển thị Thông Tin Công Ty"
+                label={t('print.stockReceipt.showCompanyInfo')}
                 valuePropName="checked"
               >
                 <Switch />
@@ -170,7 +177,7 @@ export default function PrintSettings() {
 
               <Form.Item
                 name={['templates', 'stockReceipt', 'showNotes']}
-                label="Hiển thị Ghi Chú"
+                label={t('print.stockReceipt.showNotes')}
                 valuePropName="checked"
               >
                 <Switch />
@@ -178,35 +185,35 @@ export default function PrintSettings() {
 
               <Form.Item
                 name={['templates', 'stockReceipt', 'showSignatures']}
-                label="Hiển thị Chữ Ký"
+                label={t('print.stockReceipt.showSignatures')}
                 valuePropName="checked"
               >
                 <Switch />
               </Form.Item>
 
-              <Divider>Chữ Ký</Divider>
+              <Divider>{t('print.stockReceipt.signatures')}</Divider>
 
-              <Form.Item name={['templates', 'stockReceipt', 'signatures', 0]} label="Chữ Ký 1">
-                <Input placeholder="VD: Người lập phiếu" />
+              <Form.Item name={['templates', 'stockReceipt', 'signatures', 0]} label={t('print.stockReceipt.signature1')}>
+                <Input placeholder={t('print.stockReceipt.signature1Placeholder')} />
               </Form.Item>
 
-              <Form.Item name={['templates', 'stockReceipt', 'signatures', 1]} label="Chữ Ký 2">
-                <Input placeholder="VD: Thủ kho" />
+              <Form.Item name={['templates', 'stockReceipt', 'signatures', 1]} label={t('print.stockReceipt.signature2')}>
+                <Input placeholder={t('print.stockReceipt.signature2Placeholder')} />
               </Form.Item>
 
-              <Form.Item name={['templates', 'stockReceipt', 'signatures', 2]} label="Chữ Ký 3">
-                <Input placeholder="VD: Giám đốc" />
+              <Form.Item name={['templates', 'stockReceipt', 'signatures', 2]} label={t('print.stockReceipt.signature3')}>
+                <Input placeholder={t('print.stockReceipt.signature3Placeholder')} />
               </Form.Item>
             </TabPane>
 
-            <TabPane tab="Phiếu Xuất Kho" key="stockIssue">
-              <Form.Item name={['templates', 'stockIssue', 'title']} label="Tiêu Đề Phiếu">
-                <Input placeholder="VD: PHIẾU XUẤT KHO" />
+            <TabPane tab={t('print.tabs.stockIssue')} key="stockIssue">
+              <Form.Item name={['templates', 'stockIssue', 'title']} label={t('print.stockIssue.title')}>
+                <Input placeholder={t('print.stockIssue.titlePlaceholder')} />
               </Form.Item>
 
               <Form.Item
                 name={['templates', 'stockIssue', 'showLogo']}
-                label="Hiển thị Logo"
+                label={t('print.stockIssue.showLogo')}
                 valuePropName="checked"
               >
                 <Switch />
@@ -214,7 +221,7 @@ export default function PrintSettings() {
 
               <Form.Item
                 name={['templates', 'stockIssue', 'showCompanyInfo']}
-                label="Hiển thị Thông Tin Công Ty"
+                label={t('print.stockIssue.showCompanyInfo')}
                 valuePropName="checked"
               >
                 <Switch />
@@ -222,7 +229,7 @@ export default function PrintSettings() {
 
               <Form.Item
                 name={['templates', 'stockIssue', 'showNotes']}
-                label="Hiển thị Ghi Chú"
+                label={t('print.stockIssue.showNotes')}
                 valuePropName="checked"
               >
                 <Switch />
@@ -230,36 +237,36 @@ export default function PrintSettings() {
 
               <Form.Item
                 name={['templates', 'stockIssue', 'showSignatures']}
-                label="Hiển thị Chữ Ký"
+                label={t('print.stockIssue.showSignatures')}
                 valuePropName="checked"
               >
                 <Switch />
               </Form.Item>
 
-              <Divider>Chữ Ký</Divider>
+              <Divider>{t('print.stockIssue.signatures')}</Divider>
 
-              <Form.Item name={['templates', 'stockIssue', 'signatures', 0]} label="Chữ Ký 1">
-                <Input placeholder="VD: Người lập phiếu" />
+              <Form.Item name={['templates', 'stockIssue', 'signatures', 0]} label={t('print.stockIssue.signature1')}>
+                <Input placeholder={t('print.stockIssue.signature1Placeholder')} />
               </Form.Item>
 
-              <Form.Item name={['templates', 'stockIssue', 'signatures', 1]} label="Chữ Ký 2">
-                <Input placeholder="VD: Thủ kho" />
+              <Form.Item name={['templates', 'stockIssue', 'signatures', 1]} label={t('print.stockIssue.signature2')}>
+                <Input placeholder={t('print.stockIssue.signature2Placeholder')} />
               </Form.Item>
 
-              <Form.Item name={['templates', 'stockIssue', 'signatures', 2]} label="Chữ Ký 3">
-                <Input placeholder="VD: Giám đốc" />
+              <Form.Item name={['templates', 'stockIssue', 'signatures', 2]} label={t('print.stockIssue.signature3')}>
+                <Input placeholder={t('print.stockIssue.signature3Placeholder')} />
               </Form.Item>
             </TabPane>
 
-            <TabPane tab="Đơn Hàng & Hóa Đơn" key="orders">
-              <h3>Đơn Hàng Bán</h3>
-              <Form.Item name={['templates', 'salesOrder', 'title']} label="Tiêu Đề">
-                <Input placeholder="VD: ĐƠN HÀNG BÁN" />
+            <TabPane tab={t('print.tabs.ordersInvoices')} key="orders">
+              <h3>{t('print.orders.salesOrderTitle')}</h3>
+              <Form.Item name={['templates', 'salesOrder', 'title']} label={t('print.orders.title')}>
+                <Input placeholder={t('print.orders.salesOrderPlaceholder')} />
               </Form.Item>
 
               <Form.Item
                 name={['templates', 'salesOrder', 'showCustomerInfo']}
-                label="Hiển thị Thông Tin Khách Hàng"
+                label={t('print.orders.showCustomerInfo')}
                 valuePropName="checked"
               >
                 <Switch />
@@ -267,55 +274,55 @@ export default function PrintSettings() {
 
               <Divider />
 
-              <h3>Hóa Đơn</h3>
-              <Form.Item name={['templates', 'invoice', 'title']} label="Tiêu Đề">
-                <Input placeholder="VD: HÓA ĐƠN BÁN HÀNG" />
+              <h3>{t('print.orders.invoiceTitle')}</h3>
+              <Form.Item name={['templates', 'invoice', 'title']} label={t('print.orders.title')}>
+                <Input placeholder={t('print.orders.invoicePlaceholder')} />
               </Form.Item>
 
               <Form.Item
                 name={['templates', 'invoice', 'showTax']}
-                label="Hiển thị Thuế"
+                label={t('print.orders.showTax')}
                 valuePropName="checked"
               >
                 <Switch />
               </Form.Item>
 
-              <Form.Item name={['templates', 'invoice', 'taxRate']} label="Thuế Suất (%)">
-                <Input type="number" placeholder="VD: 10" />
+              <Form.Item name={['templates', 'invoice', 'taxRate']} label={t('print.orders.taxRate')}>
+                <Input type="number" placeholder={t('print.orders.taxRatePlaceholder')} />
               </Form.Item>
 
               <Form.Item
                 name={['templates', 'invoice', 'showAmountInWords']}
-                label="Hiển thị Số Tiền Bằng Chữ"
+                label={t('print.orders.showAmountInWords')}
                 valuePropName="checked"
               >
                 <Switch />
               </Form.Item>
             </TabPane>
 
-            <TabPane tab="Kiểu Chữ & Màu Sắc" key="styles">
-              <Form.Item name={['styles', 'fontFamily']} label="Font Chữ">
-                <Input placeholder="VD: Arial, sans-serif" />
+            <TabPane tab={t('print.tabs.styles')} key="styles">
+              <Form.Item name={['styles', 'fontFamily']} label={t('print.styles.fontFamily')}>
+                <Input placeholder={t('print.styles.fontFamilyPlaceholder')} />
               </Form.Item>
 
-              <Form.Item name={['styles', 'fontSize']} label="Cỡ Chữ Nội Dung">
-                <Input placeholder="VD: 12pt" />
+              <Form.Item name={['styles', 'fontSize']} label={t('print.styles.fontSize')}>
+                <Input placeholder={t('print.styles.fontSizePlaceholder')} />
               </Form.Item>
 
-              <Form.Item name={['styles', 'headerFontSize']} label="Cỡ Chữ Tiêu Đề">
-                <Input placeholder="VD: 18pt" />
+              <Form.Item name={['styles', 'headerFontSize']} label={t('print.styles.headerFontSize')}>
+                <Input placeholder={t('print.styles.headerFontSizePlaceholder')} />
               </Form.Item>
 
-              <Form.Item name={['styles', 'companyFontSize']} label="Cỡ Chữ Tên Công Ty">
-                <Input placeholder="VD: 16pt" />
+              <Form.Item name={['styles', 'companyFontSize']} label={t('print.styles.companyFontSize')}>
+                <Input placeholder={t('print.styles.companyFontSizePlaceholder')} />
               </Form.Item>
 
-              <Form.Item name={['styles', 'lineHeight']} label="Khoảng Cách Dòng">
-                <Input placeholder="VD: 1.6" />
+              <Form.Item name={['styles', 'lineHeight']} label={t('print.styles.lineHeight')}>
+                <Input placeholder={t('print.styles.lineHeightPlaceholder')} />
               </Form.Item>
 
-              <Form.Item name={['styles', 'padding']} label="Lề Trang">
-                <Input placeholder="VD: 20mm" />
+              <Form.Item name={['styles', 'padding']} label={t('print.styles.padding')}>
+                <Input placeholder={t('print.styles.paddingPlaceholder')} />
               </Form.Item>
             </TabPane>
           </Tabs>
