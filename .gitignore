@@ -81,6 +81,12 @@ test-results/
 test-results.txt
 *.test-results.xml
 
+# Playwright
+playwright-report/
+playwright-results.json
+playwright-results.xml
+playwright/.cache/
+
 # Docker
 .docker/
 docker-compose.override.yml
