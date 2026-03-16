@@ -1,0 +1,72 @@
+{
+  "title": "Demo Offline-First",
+  "productTitle": "Demo Sản phẩm Offline-First",
+  "instructions": {
+    "intro": "Trang này minh họa chức năng offline-first. Hãy thử các bước sau:",
+    "productIntro": "Trang này minh họa chức năng offline-first với Sản phẩm sử dụng OfflineService tổng quát. Hãy thử các bước sau:",
+    "step1": "Tạo/Sửa/Xóa {{entity}} khi đang online",
+    "step2": "Tắt kết nối internet",
+    "step3": "Tiếp tục tạo/sửa/xóa {{entity}} (sẽ được xếp hàng đợi)",
+    "step4": "Bật lại internet và nhấn \"Đồng bộ\" để đẩy thay đổi"
+  },
+  "buttons": {
+    "addUser": "Thêm người dùng",
+    "addProduct": "Thêm sản phẩm",
+    "syncNow": "Đồng bộ ngay",
+    "edit": "Sửa",
+    "delete": "Xóa"
+  },
+  "table": {
+    "email": "Email",
+    "name": "Tên",
+    "sku": "Mã SKU",
+    "price": "Giá",
+    "status": "Trạng thái",
+    "version": "Phiên bản",
+    "actions": "Thao tác"
+  },
+  "modal": {
+    "addUser": "Thêm người dùng",
+    "editUser": "Sửa người dùng",
+    "addProduct": "Thêm sản phẩm",
+    "editProduct": "Sửa sản phẩm"
+  },
+  "form": {
+    "email": "Email",
+    "emailRequired": "Vui lòng nhập email",
+    "emailInvalid": "Email không hợp lệ",
+    "firstName": "Tên",
+    "lastName": "Họ",
+    "sku": "Mã SKU",
+    "skuRequired": "Vui lòng nhập mã SKU",
+    "productName": "Tên sản phẩm",
+    "nameRequired": "Vui lòng nhập tên",
+    "description": "Mô tả",
+    "price": "Giá bán",
+    "priceRequired": "Vui lòng nhập giá",
+    "cost": "Giá vốn"
+  },
+  "messages": {
+    "loadFailed": "Không thể tải {{entity}}",
+    "deletedSuccess": "Đã xóa {{entity}} (sẽ đồng bộ khi online)",
+    "deleteFailed": "Không thể xóa {{entity}}",
+    "updatedSuccess": "Đã cập nhật {{entity}} (sẽ đồng bộ khi online)",
+    "createdSuccess": "Đã tạo {{entity}} (sẽ đồng bộ khi online)",
+    "saveFailed": "Không thể lưu {{entity}}",
+    "loginRequired": "Vui lòng đăng nhập trước",
+    "syncSuccess": "Đồng bộ hoàn tất: {{pulled}} đã kéo, {{pushed}} đã đẩy",
+    "syncFailed": "Đồng bộ thất bại: {{errors}}",
+    "syncError": "Lỗi đồng bộ: {{message}}"
+  },
+  "syncStatus": {
+    "synced": "ĐÃ ĐỒNG BỘ",
+    "pending": "CHỜ XỬ LÝ",
+    "conflict": "XUNG ĐỘT"
+  },
+  "entities": {
+    "users": "người dùng",
+    "user": "người dùng",
+    "products": "sản phẩm",
+    "product": "sản phẩm"
+  }
+}

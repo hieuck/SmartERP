@@ -17,16 +17,18 @@ import {
   DeleteOutlined,
   SyncOutlined,
 } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import { db, User, SyncStatus, syncManager } from '../lib/offline';
 
 const { Title, Paragraph } = Typography;
 
 const OfflineDemo: React.FC = () => {
+  const { t } = useTranslation();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [form] = Form.useForm();
+  const [form] = Form.useForm() as any;
 
   useEffect(() => {
     loadUsers();
@@ -38,7 +40,7 @@ const OfflineDemo: React.FC = () => {
       const allUsers = await db.users.toArray();
       setUsers(allUsers);
     } catch (error) {
-      message.error('Failed to load users');
+      message.error(t('offline:messages.loadFailed', { entity: t('offline:entities.users') }));
     } finally {
       setLoading(false);
     }
@@ -60,14 +62,14 @@ const OfflineDemo: React.FC = () => {
     try {
       await db.users.delete(user.id);
       await syncManager.queueOperation('users', 'delete', { id: user.id });
-      message.success('User deleted (will sync when online)');
+      message.success(t('offline:messages.deletedSuccess', { entity: t('offline:entities.user') }));
       loadUsers();
     } catch (error) {
-      message.error('Failed to delete user');
+      message.error(t('offline:messages.deleteFailed', { entity: t('offline:entities.user') }));
     }
   };
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: Partial<User>) => {
     try {
       if (editingUser) {
         // Update existing user
@@ -85,15 +87,15 @@ const OfflineDemo: React.FC = () => {
           updated,
           editingUser.version
         );
-        message.success('User updated (will sync when online)');
+        message.success(t('offline:messages.updatedSuccess', { entity: t('offline:entities.user') }));
       } else {
         // Create new user
         const newUser: User = {
           id: crypto.randomUUID(),
           tenantId: 'demo-tenant',
-          email: values.email,
-          firstName: values.firstName,
-          lastName: values.lastName,
+          email: values.email || '',
+          firstName: values.firstName || '',
+          lastName: values.lastName || '',
           role: 'user',
           status: 'active',
           version: 1,
@@ -104,19 +106,19 @@ const OfflineDemo: React.FC = () => {
         };
         await db.users.add(newUser);
         await syncManager.queueOperation('users', 'create', newUser);
-        message.success('User created (will sync when online)');
+        message.success(t('offline:messages.createdSuccess', { entity: t('offline:entities.user') }));
       }
       setModalVisible(false);
       loadUsers();
     } catch (error) {
-      message.error('Failed to save user');
+      message.error(t('offline:messages.saveFailed', { entity: t('offline:entities.user') }));
     }
   };
 
   const handleSync = async () => {
     const token = localStorage.getItem('token');
     if (!token) {
-      message.error('Please login first');
+      message.error(t('offline:messages.loginRequired'));
       return;
     }
 
@@ -125,14 +127,26 @@ const OfflineDemo: React.FC = () => {
       const result = await syncManager.sync(token);
       if (result.success) {
         message.success(
-          `Sync completed: ${result.pulled} pulled, ${result.pushed} pushed`
+          t('offline:messages.syncSuccess', { 
+            pulled: result.pulled, 
+            pushed: result.pushed 
+          })
         );
         loadUsers();
       } else {
-        message.error(`Sync failed: ${result.errors.join(', ')}`);
+        message.error(
+          t('offline:messages.syncFailed', { 
+            errors: result.errors.join(', ') 
+          })
+        );
       }
-    } catch (error: any) {
-      message.error(`Sync error: ${error.message}`);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      message.error(
+        t('offline:messages.syncError', { 
+          message: errorMessage 
+        })
+      );
     } finally {
       setLoading(false);
     }
@@ -140,18 +154,18 @@ const OfflineDemo: React.FC = () => {
 
   const columns = [
     {
-      title: 'Email',
+      title: t('offline:table.email'),
       dataIndex: 'email',
       key: 'email',
     },
     {
-      title: 'Name',
+      title: t('offline:table.name'),
       key: 'name',
       render: (record: User) =>
         `${record.firstName || ''} ${record.lastName || ''}`.trim() || '-',
     },
     {
-      title: 'Status',
+      title: t('offline:table.status'),
       dataIndex: 'syncStatus',
       key: 'syncStatus',
       render: (status: SyncStatus) => {
@@ -160,16 +174,16 @@ const OfflineDemo: React.FC = () => {
           [SyncStatus.PENDING]: 'warning',
           [SyncStatus.CONFLICT]: 'error',
         };
-        return <Tag color={colors[status]}>{status.toUpperCase()}</Tag>;
+        return <Tag color={colors[status]}>{t(`offline:syncStatus.${status.toLowerCase()}`)}</Tag>;
       },
     },
     {
-      title: 'Version',
+      title: t('offline:table.version'),
       dataIndex: 'version',
       key: 'version',
     },
     {
-      title: 'Actions',
+      title: t('offline:table.actions'),
       key: 'actions',
       render: (record: User) => (
         <Space>
@@ -178,7 +192,7 @@ const OfflineDemo: React.FC = () => {
             icon={<EditOutlined />}
             onClick={() => handleEdit(record)}
           >
-            Edit
+            {t('offline:buttons.edit')}
           </Button>
           <Button
             type="link"
@@ -186,7 +200,7 @@ const OfflineDemo: React.FC = () => {
             icon={<DeleteOutlined />}
             onClick={() => handleDelete(record)}
           >
-            Delete
+            {t('offline:buttons.delete')}
           </Button>
         </Space>
       ),
@@ -196,27 +210,27 @@ const OfflineDemo: React.FC = () => {
   return (
     <div style={{ padding: '24px' }}>
       <Card>
-        <Title level={2}>Offline-First Demo</Title>
+        <Title level={2}>{t('offline:title')}</Title>
         <Paragraph>
-          This page demonstrates offline-first functionality. Try the following:
+          {t('offline:instructions.intro')}
         </Paragraph>
         <ul>
-          <li>Create/Edit/Delete users while online</li>
-          <li>Turn off your internet connection</li>
-          <li>Continue creating/editing/deleting users (they'll be queued)</li>
-          <li>Turn internet back on and click "Sync" to push changes</li>
+          <li>{t('offline:instructions.step1', { entity: t('offline:entities.users') })}</li>
+          <li>{t('offline:instructions.step2')}</li>
+          <li>{t('offline:instructions.step3', { entity: t('offline:entities.users') })}</li>
+          <li>{t('offline:instructions.step4')}</li>
         </ul>
 
         <Space style={{ marginBottom: 16 }}>
           <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-            Add User
+            {t('offline:buttons.addUser')}
           </Button>
           <Button
             icon={<SyncOutlined spin={loading} />}
             onClick={handleSync}
             loading={loading}
           >
-            Sync Now
+            {t('offline:buttons.syncNow')}
           </Button>
         </Space>
 
@@ -230,7 +244,7 @@ const OfflineDemo: React.FC = () => {
       </Card>
 
       <Modal
-        title={editingUser ? 'Edit User' : 'Add User'}
+        title={editingUser ? t('offline:modal.editUser') : t('offline:modal.addUser')}
         open={modalVisible}
         onCancel={() => setModalVisible(false)}
         onOk={() => form.submit()}
@@ -238,18 +252,18 @@ const OfflineDemo: React.FC = () => {
         <Form form={form} layout="vertical" onFinish={handleSubmit}>
           <Form.Item
             name="email"
-            label="Email"
+            label={t('offline:form.email')}
             rules={[
-              { required: true, message: 'Please input email' },
-              { type: 'email', message: 'Invalid email' },
+              { required: true, message: t('offline:form.emailRequired') },
+              { type: 'email', message: t('offline:form.emailInvalid') },
             ]}
           >
             <Input />
           </Form.Item>
-          <Form.Item name="firstName" label="First Name">
+          <Form.Item name="firstName" label={t('offline:form.firstName')}>
             <Input />
           </Form.Item>
-          <Form.Item name="lastName" label="Last Name">
+          <Form.Item name="lastName" label={t('offline:form.lastName')}>
             <Input />
           </Form.Item>
         </Form>

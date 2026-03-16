@@ -1,0 +1,72 @@
+{
+  "title": "Offline-First Demo",
+  "productTitle": "Product Offline-First Demo",
+  "instructions": {
+    "intro": "This page demonstrates offline-first functionality. Try the following:",
+    "productIntro": "This page demonstrates offline-first functionality with Products using the generic OfflineService. Try the following:",
+    "step1": "Create/Edit/Delete {{entity}} while online",
+    "step2": "Turn off your internet connection",
+    "step3": "Continue creating/editing/deleting {{entity}} (they'll be queued)",
+    "step4": "Turn internet back on and click \"Sync\" to push changes"
+  },
+  "buttons": {
+    "addUser": "Add User",
+    "addProduct": "Add Product",
+    "syncNow": "Sync Now",
+    "edit": "Edit",
+    "delete": "Delete"
+  },
+  "table": {
+    "email": "Email",
+    "name": "Name",
+    "sku": "SKU",
+    "price": "Price",
+    "status": "Status",
+    "version": "Version",
+    "actions": "Actions"
+  },
+  "modal": {
+    "addUser": "Add User",
+    "editUser": "Edit User",
+    "addProduct": "Add Product",
+    "editProduct": "Edit Product"
+  },
+  "form": {
+    "email": "Email",
+    "emailRequired": "Please input email",
+    "emailInvalid": "Invalid email",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "sku": "SKU",
+    "skuRequired": "Please input SKU",
+    "productName": "Name",
+    "nameRequired": "Please input name",
+    "description": "Description",
+    "price": "Price",
+    "priceRequired": "Please input price",
+    "cost": "Cost"
+  },
+  "messages": {
+    "loadFailed": "Failed to load {{entity}}",
+    "deletedSuccess": "{{entity}} deleted (will sync when online)",
+    "deleteFailed": "Failed to delete {{entity}}",
+    "updatedSuccess": "{{entity}} updated (will sync when online)",
+    "createdSuccess": "{{entity}} created (will sync when online)",
+    "saveFailed": "Failed to save {{entity}}",
+    "loginRequired": "Please login first",
+    "syncSuccess": "Sync completed: {{pulled}} pulled, {{pushed}} pushed",
+    "syncFailed": "Sync failed: {{errors}}",
+    "syncError": "Sync error: {{message}}"
+  },
+  "syncStatus": {
+    "synced": "SYNCED",
+    "pending": "PENDING",
+    "conflict": "CONFLICT"
+  },
+  "entities": {
+    "users": "users",
+    "user": "User",
+    "products": "products",
+    "product": "Product"
+  }
+}
