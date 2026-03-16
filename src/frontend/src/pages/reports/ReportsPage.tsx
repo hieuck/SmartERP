@@ -13,6 +13,7 @@ import {
   Typography,
 } from 'antd';
 import { FilePdfOutlined, FileExcelOutlined, BarChartOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import {
   useSalesReport,
@@ -34,6 +35,8 @@ const { RangePicker } = DatePicker;
 const { Title } = Typography;
 
 const ReportsPage: React.FC = () => {
+  const { t } = useTranslation(['reports', 'common']);
+  
   const [dateRange, setDateRange] = useState<[string, string]>([
     dayjs().startOf('month').format('YYYY-MM-DD'),
     dayjs().endOf('month').format('YYYY-MM-DD'),
@@ -118,10 +121,10 @@ const ReportsPage: React.FC = () => {
 
       setReportData(data);
       if (data) {
-        message.success('Tải báo cáo thành công');
+        message.success(t('reports:messages.loadSuccess'));
       }
     } catch (error) {
-      message.error('Không thể tải báo cáo');
+      message.error(t('reports:messages.loadError'));
     }
   };
 
@@ -131,9 +134,9 @@ const ReportsPage: React.FC = () => {
         startDate: dateRange[0],
         endDate: dateRange[1],
       });
-      message.success('Đã xuất báo cáo PDF');
+      message.success(t('reports:messages.exportPDFSuccess'));
     } catch (error) {
-      message.error('Không thể xuất báo cáo PDF');
+      message.error(t('reports:messages.exportPDFError'));
     }
   };
 
@@ -143,9 +146,9 @@ const ReportsPage: React.FC = () => {
         startDate: dateRange[0],
         endDate: dateRange[1],
       });
-      message.success('Đã xuất báo cáo Excel');
+      message.success(t('reports:messages.exportExcelSuccess'));
     } catch (error) {
-      message.error('Không thể xuất báo cáo Excel');
+      message.error(t('reports:messages.exportExcelError'));
     }
   };
 
@@ -153,7 +156,7 @@ const ReportsPage: React.FC = () => {
 
   const renderSalesReports = () => (
     <Space direction="vertical" style={{ width: '100%' }} size="large">
-      <Card title="Báo cáo doanh thu">
+      <Card title={t('reports:sales.revenue')}>
         <Space direction="vertical" style={{ width: '100%' }}>
           <Space>
             <RangePicker
@@ -165,70 +168,70 @@ const ReportsPage: React.FC = () => {
               onClick={() => fetchReport('sales')}
               loading={salesReport.isLoading}
             >
-              Xem báo cáo
+              {t('reports:actions.viewReport')}
             </Button>
             <Button icon={<FilePdfOutlined />} onClick={() => handleExportPDF('sales')}>
-              PDF
+              {t('reports:actions.exportPDF')}
             </Button>
             <Button icon={<FileExcelOutlined />} onClick={() => handleExportExcel('sales')}>
-              Excel
+              {t('reports:actions.exportExcel')}
             </Button>
           </Space>
           {salesReport.error && (
-            <div style={{ color: 'red' }}>Lỗi: {salesReport.error.message}</div>
+            <div style={{ color: 'red' }}>{t('common:messages.error')}: {salesReport.error.message}</div>
           )}
           {reportData && (
             <Row gutter={16}>
               <Col span={8}>
-                <Statistic title="Tổng doanh thu" value={reportData.totalRevenue} suffix="₫" />
+                <Statistic title={t('reports:sales.totalRevenue')} value={reportData.totalRevenue} suffix="₫" />
               </Col>
               <Col span={8}>
-                <Statistic title="Số đơn hàng" value={reportData.totalOrders} />
+                <Statistic title={t('reports:sales.totalOrders')} value={reportData.totalOrders} />
               </Col>
               <Col span={8}>
-                <Statistic title="Giá trị TB" value={reportData.averageOrderValue} suffix="₫" />
+                <Statistic title={t('reports:sales.averageOrderValue')} value={reportData.averageOrderValue} suffix="₫" />
               </Col>
             </Row>
           )}
         </Space>
       </Card>
 
-      <Card title="Doanh thu theo ngày">
+      <Card title={t('reports:sales.dailySales')}>
         <Space>
           <Button
             type="primary"
             onClick={() => fetchReport('daily-sales')}
             loading={dailySalesReport.isLoading}
           >
-            Xem báo cáo
+            {t('reports:actions.viewReport')}
           </Button>
           <Button icon={<FilePdfOutlined />} onClick={() => handleExportPDF('daily-sales')}>
-            PDF
+            {t('reports:actions.exportPDF')}
           </Button>
         </Space>
         {dailySalesReport.error && (
-          <div style={{ color: 'red' }}>Lỗi: {dailySalesReport.error.message}</div>
+          <div style={{ color: 'red' }}>{t('common:messages.error')}: {dailySalesReport.error.message}</div>
         )}
       </Card>
 
-      <Card title="Hiệu suất sản phẩm">
+      <Card title={t('reports:sales.productPerformance')}>
         <Space>
           <Button
             type="primary"
             onClick={() => fetchReport('product-performance')}
             loading={productPerformanceReport.isLoading}
           >
-            Xem báo cáo
+            {t('reports:actions.viewReport')}
           </Button>
           <Button
             icon={<FileExcelOutlined />}
             onClick={() => handleExportExcel('product-performance')}
           >
-            Excel
+            {t('reports:actions.exportExcel')}
           </Button>
         </Space>
         {productPerformanceReport.error && (
-          <div style={{ color: 'red' }}>Lỗi: {productPerformanceReport.error.message}</div>
+          <div style={{ color: 'red' }}>{t('common:messages.error')}: {productPerformanceReport.error.message}</div>
         )}
       </Card>
     </Space>
@@ -236,39 +239,39 @@ const ReportsPage: React.FC = () => {
 
   const renderInventoryReports = () => (
     <Space direction="vertical" style={{ width: '100%' }} size="large">
-      <Card title="Báo cáo tồn kho">
+      <Card title={t('reports:inventory.stock')}>
         <Space>
-          <Button type="primary" onClick={() => fetchReport('inventory')} loading={loading}>
-            Xem báo cáo
+          <Button type="primary" onClick={() => fetchReport('inventory')} loading={isLoading}>
+            {t('reports:actions.viewReport')}
           </Button>
           <Button icon={<FilePdfOutlined />} onClick={() => handleExportPDF('inventory')}>
-            PDF
+            {t('reports:actions.exportPDF')}
           </Button>
           <Button icon={<FileExcelOutlined />} onClick={() => handleExportExcel('inventory')}>
-            Excel
+            {t('reports:actions.exportExcel')}
           </Button>
         </Space>
       </Card>
 
-      <Card title="Cảnh báo tồn thấp">
+      <Card title={t('reports:inventory.lowStock')}>
         <Space>
           <Button
             type="primary"
             onClick={() => fetchReport('inventory-low-stock')}
-            loading={loading}
+            loading={isLoading}
           >
-            Xem báo cáo
+            {t('reports:actions.viewReport')}
           </Button>
           <Button
             icon={<FileExcelOutlined />}
             onClick={() => handleExportExcel('inventory-low-stock')}
           >
-            Excel
+            {t('reports:actions.exportExcel')}
           </Button>
         </Space>
       </Card>
 
-      <Card title="Lịch sử xuất nhập">
+      <Card title={t('reports:inventory.movements')}>
         <Space direction="vertical" style={{ width: '100%' }}>
           <Space>
             <RangePicker
@@ -278,15 +281,15 @@ const ReportsPage: React.FC = () => {
             <Button
               type="primary"
               onClick={() => fetchReport('inventory-movements')}
-              loading={loading}
+              loading={isLoading}
             >
-              Xem báo cáo
+              {t('reports:actions.viewReport')}
             </Button>
             <Button
               icon={<FileExcelOutlined />}
               onClick={() => handleExportExcel('inventory-movements')}
             >
-              Excel
+              {t('reports:actions.exportExcel')}
             </Button>
           </Space>
         </Space>
@@ -296,30 +299,30 @@ const ReportsPage: React.FC = () => {
 
   const renderCustomerReports = () => (
     <Space direction="vertical" style={{ width: '100%' }} size="large">
-      <Card title="Báo cáo khách hàng">
+      <Card title={t('reports:customers.report')}>
         <Space direction="vertical" style={{ width: '100%' }}>
           <Space>
             <RangePicker
               value={[dayjs(dateRange[0]), dayjs(dateRange[1])]}
               onChange={handleDateRangeChange}
             />
-            <Button type="primary" onClick={() => fetchReport('customers')} loading={loading}>
-              Xem báo cáo
+            <Button type="primary" onClick={() => fetchReport('customers')} loading={isLoading}>
+              {t('reports:actions.viewReport')}
             </Button>
             <Button icon={<FileExcelOutlined />} onClick={() => handleExportExcel('customers')}>
-              Excel
+              {t('reports:actions.exportExcel')}
             </Button>
           </Space>
         </Space>
       </Card>
 
-      <Card title="Top khách hàng">
+      <Card title={t('reports:customers.topCustomers')}>
         <Space>
-          <Button type="primary" onClick={() => fetchReport('top-customers')} loading={loading}>
-            Xem báo cáo
+          <Button type="primary" onClick={() => fetchReport('top-customers')} loading={isLoading}>
+            {t('reports:actions.viewReport')}
           </Button>
           <Button icon={<FileExcelOutlined />} onClick={() => handleExportExcel('top-customers')}>
-            Excel
+            {t('reports:actions.exportExcel')}
           </Button>
         </Space>
       </Card>
@@ -328,41 +331,41 @@ const ReportsPage: React.FC = () => {
 
   const renderFinancialReports = () => (
     <Space direction="vertical" style={{ width: '100%' }} size="large">
-      <Card title="Báo cáo tài chính">
+      <Card title={t('reports:financial.report')}>
         <Space direction="vertical" style={{ width: '100%' }}>
           <Space>
             <RangePicker
               value={[dayjs(dateRange[0]), dayjs(dateRange[1])]}
               onChange={handleDateRangeChange}
             />
-            <Button type="primary" onClick={() => fetchReport('financial')} loading={loading}>
-              Xem báo cáo
+            <Button type="primary" onClick={() => fetchReport('financial')} loading={isLoading}>
+              {t('reports:actions.viewReport')}
             </Button>
             <Button icon={<FilePdfOutlined />} onClick={() => handleExportPDF('financial')}>
-              PDF
+              {t('reports:actions.exportPDF')}
             </Button>
           </Space>
         </Space>
       </Card>
 
-      <Card title="Báo cáo lãi lỗ">
+      <Card title={t('reports:financial.profitLoss')}>
         <Space>
-          <Button type="primary" onClick={() => fetchReport('profit-loss')} loading={loading}>
-            Xem báo cáo
+          <Button type="primary" onClick={() => fetchReport('profit-loss')} loading={isLoading}>
+            {t('reports:actions.viewReport')}
           </Button>
           <Button icon={<FilePdfOutlined />} onClick={() => handleExportPDF('profit-loss')}>
-            PDF
+            {t('reports:actions.exportPDF')}
           </Button>
         </Space>
       </Card>
 
-      <Card title="Báo cáo dòng tiền">
+      <Card title={t('reports:financial.cashFlow')}>
         <Space>
-          <Button type="primary" onClick={() => fetchReport('cash-flow')} loading={loading}>
-            Xem báo cáo
+          <Button type="primary" onClick={() => fetchReport('cash-flow')} loading={isLoading}>
+            {t('reports:actions.viewReport')}
           </Button>
           <Button icon={<FileExcelOutlined />} onClick={() => handleExportExcel('cash-flow')}>
-            Excel
+            {t('reports:actions.exportExcel')}
           </Button>
         </Space>
       </Card>
@@ -373,19 +376,19 @@ const ReportsPage: React.FC = () => {
     <div style={{ padding: '24px' }}>
       <Card>
         <Title level={3}>
-          <BarChartOutlined /> Báo cáo
+          <BarChartOutlined /> {t('reports:title')}
         </Title>
         <Tabs activeKey={activeTab} onChange={setActiveTab}>
-          <Tabs.TabPane tab="Bán hàng" key="sales">
+          <Tabs.TabPane tab={t('reports:tabs.sales')} key="sales">
             {renderSalesReports()}
           </Tabs.TabPane>
-          <Tabs.TabPane tab="Tồn kho" key="inventory">
+          <Tabs.TabPane tab={t('reports:tabs.inventory')} key="inventory">
             {renderInventoryReports()}
           </Tabs.TabPane>
-          <Tabs.TabPane tab="Khách hàng" key="customers">
+          <Tabs.TabPane tab={t('reports:tabs.customers')} key="customers">
             {renderCustomerReports()}
           </Tabs.TabPane>
-          <Tabs.TabPane tab="Tài chính" key="financial">
+          <Tabs.TabPane tab={t('reports:tabs.financial')} key="financial">
             {renderFinancialReports()}
           </Tabs.TabPane>
         </Tabs>

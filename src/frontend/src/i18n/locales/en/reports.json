@@ -1,23 +1,44 @@
 {
   "title": "Reports",
-  "types": {
-    "sales": "Sales Report",
-    "inventory": "Inventory Report",
-    "financial": "Financial Report",
-    "production": "Production Report",
-    "customer": "Customer Report"
+  "tabs": {
+    "sales": "Sales",
+    "inventory": "Inventory",
+    "customers": "Customers",
+    "financial": "Financial"
   },
-  "filters": {
-    "dateRange": "Date Range",
-    "startDate": "Start Date",
-    "endDate": "End Date",
-    "warehouse": "Warehouse",
-    "category": "Category",
-    "product": "Product"
+  "sales": {
+    "revenue": "Revenue Report",
+    "dailySales": "Daily Sales",
+    "productPerformance": "Product Performance",
+    "totalRevenue": "Total Revenue",
+    "totalOrders": "Total Orders",
+    "averageOrderValue": "Average Order Value"
+  },
+  "inventory": {
+    "stock": "Inventory Report",
+    "lowStock": "Low Stock Alert",
+    "movements": "Inventory Movements"
+  },
+  "customers": {
+    "report": "Customer Report",
+    "topCustomers": "Top Customers"
+  },
+  "financial": {
+    "report": "Financial Report",
+    "profitLoss": "Profit & Loss",
+    "cashFlow": "Cash Flow"
   },
   "actions": {
-    "generate": "Generate Report",
-    "export": "Export Report",
-    "print": "Print Report"
+    "viewReport": "View Report",
+    "exportPDF": "PDF",
+    "exportExcel": "Excel"
+  },
+  "messages": {
+    "loadSuccess": "Report loaded successfully",
+    "loadError": "Unable to load report",
+    "exportPDFSuccess": "PDF report exported",
+    "exportPDFError": "Unable to export PDF report",
+    "exportExcelSuccess": "Excel report exported",
+    "exportExcelError": "Unable to export Excel report"
   }
 }

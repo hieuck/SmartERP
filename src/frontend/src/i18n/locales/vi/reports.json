@@ -1,23 +1,44 @@
 {
-  "title": "Báo Cáo",
-  "types": {
-    "sales": "Báo Cáo Bán Hàng",
-    "inventory": "Báo Cáo Tồn Kho",
-    "financial": "Báo Cáo Tài Chính",
-    "production": "Báo Cáo Sản Xuất",
-    "customer": "Báo Cáo Khách Hàng"
+  "title": "Báo cáo",
+  "tabs": {
+    "sales": "Bán hàng",
+    "inventory": "Tồn kho",
+    "customers": "Khách hàng",
+    "financial": "Tài chính"
   },
-  "filters": {
-    "dateRange": "Khoảng Thời Gian",
-    "startDate": "Từ Ngày",
-    "endDate": "Đến Ngày",
-    "warehouse": "Kho",
-    "category": "Danh Mục",
-    "product": "Sản Phẩm"
+  "sales": {
+    "revenue": "Báo cáo doanh thu",
+    "dailySales": "Doanh thu theo ngày",
+    "productPerformance": "Hiệu suất sản phẩm",
+    "totalRevenue": "Tổng doanh thu",
+    "totalOrders": "Số đơn hàng",
+    "averageOrderValue": "Giá trị TB"
+  },
+  "inventory": {
+    "stock": "Báo cáo tồn kho",
+    "lowStock": "Cảnh báo tồn thấp",
+    "movements": "Lịch sử xuất nhập"
+  },
+  "customers": {
+    "report": "Báo cáo khách hàng",
+    "topCustomers": "Top khách hàng"
+  },
+  "financial": {
+    "report": "Báo cáo tài chính",
+    "profitLoss": "Báo cáo lãi lỗ",
+    "cashFlow": "Báo cáo dòng tiền"
   },
   "actions": {
-    "generate": "Tạo Báo Cáo",
-    "export": "Xuất Báo Cáo",
-    "print": "In Báo Cáo"
+    "viewReport": "Xem báo cáo",
+    "exportPDF": "PDF",
+    "exportExcel": "Excel"
+  },
+  "messages": {
+    "loadSuccess": "Tải báo cáo thành công",
+    "loadError": "Không thể tải báo cáo",
+    "exportPDFSuccess": "Đã xuất báo cáo PDF",
+    "exportPDFError": "Không thể xuất báo cáo PDF",
+    "exportExcelSuccess": "Đã xuất báo cáo Excel",
+    "exportExcelError": "Không thể xuất báo cáo Excel"
   }
 }
