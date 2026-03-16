@@ -290,4 +290,52 @@ describe('TwoFactorAuthService', () => {
       );
     });
   });
+
+  describe('Error Handling', () => {
+    it('should handle errors in generateSecret', async () => {
+      const email = 'test@example.com';
+
+      // Should not throw even if QRCode generation fails
+      const result = await service.generateSecret(email);
+
+      expect(result).toHaveProperty('secret');
+      expect(result).toHaveProperty('qrCode');
+    });
+
+    it('should handle cache errors in storeBackupCodes', async () => {
+      const userId = 'user-123';
+      const codes = ['CODE1', 'CODE2'];
+
+      cacheService.set.mockRejectedValue(new Error('Cache error'));
+
+      await expect(service.storeBackupCodes(userId, codes)).rejects.toThrow('Cache error');
+    });
+
+    it('should handle cache errors in useBackupCode', async () => {
+      const userId = 'user-123';
+      const code = 'CODE1';
+
+      cacheService.get.mockRejectedValue(new Error('Cache error'));
+
+      await expect(service.useBackupCode(userId, code)).rejects.toThrow('Cache error');
+    });
+
+    it('should return false for null token in verifyToken', () => {
+      const secret = 'JBSWY3DPEHPK3PXP';
+      const token = null as any;
+
+      const result = service.verifyToken(secret, token);
+
+      expect(result).toBe(false);
+    });
+
+    it('should return false for undefined token in verifyToken', () => {
+      const secret = 'JBSWY3DPEHPK3PXP';
+      const token = undefined as any;
+
+      const result = service.verifyToken(secret, token);
+
+      expect(result).toBe(false);
+    });
+  });
 });
