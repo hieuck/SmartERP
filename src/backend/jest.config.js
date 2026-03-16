@@ -38,4 +38,7 @@ module.exports = {
   testTimeout: 10000,
   verbose: true,
   maxWorkers: '50%',
+  transformIgnorePatterns: [
+    'node_modules/(?!(uuid)/)',
+  ],
 };

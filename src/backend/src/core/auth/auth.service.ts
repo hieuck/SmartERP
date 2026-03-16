@@ -12,8 +12,8 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
+import { randomUUID } from 'crypto';
 import { DataSource, Repository } from 'typeorm';
-import { v4 as uuidv4 } from 'uuid';
 import { SubscriptionPlan } from '../tenant/enums/subscription-plan.enum';
 import { TenantStatus } from '../tenant/enums/tenant-status.enum';
 import { Tenant } from '../tenant/entities/tenant.entity';
@@ -436,7 +436,7 @@ export class AuthService {
       const hashedPassword = await this.hashPassword(registerTenantDto.password);
 
       // Generate email verification token
-      const emailVerificationToken = uuidv4();
+      const emailVerificationToken = randomUUID();
 
       // Create admin user
       const user = queryRunner.manager.create(UserEntity, {
@@ -566,7 +566,7 @@ export class AuthService {
 
     if (user) {
       // Generate reset token
-      const resetToken = uuidv4();
+      const resetToken = randomUUID();
       const resetExpires = new Date();
       resetExpires.setHours(resetExpires.getHours() + 1); // 1 hour expiry
 
