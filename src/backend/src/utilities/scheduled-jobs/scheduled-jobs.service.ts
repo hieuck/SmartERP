@@ -1,4 +1,5 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { SchedulerRegistry } from '@nestjs/schedule';
 import { CronJob } from 'cron';
 
 export interface ScheduledJob {
@@ -27,9 +28,8 @@ export interface ScheduledJob {
 export class ScheduledJobsService {
   private readonly logger = new Logger(ScheduledJobsService.name);
   private jobs: Map<string, ScheduledJob> = new Map();
-  private cronJobs: Map<string, CronJob> = new Map();
 
-  constructor() {}
+  constructor(private schedulerRegistry: SchedulerRegistry) {}
 
   async createJob(tenantId: string, job: Omit<ScheduledJob, 'id'>): Promise<ScheduledJob> {
     const id = `${tenantId}:${Date.now()}`;
@@ -118,16 +118,20 @@ export class ScheduledJobsService {
    */
   private registerCronJob(job: ScheduledJob): void {
     try {
-      const cronJob = new CronJob(job.schedule, async () => {
-        this.logger.log(`Executing scheduled job: ${job.name}`);
-        await this.executeJobHandler(job);
+      const cronJob = CronJob.from({
+        cronTime: job.schedule,
+        onTick: async () => {
+          this.logger.log(`Executing scheduled job: ${job.name}`);
+          await this.executeJobHandler(job);
 
-        // Update last run time
-        job.lastRun = new Date();
-        this.jobs.set(job.id, job);
+          // Update last run time
+          job.lastRun = new Date();
+          this.jobs.set(job.id, job);
+        },
+        start: false,
       });
 
-      this.cronJobs.set(job.id, cronJob);
+      this.schedulerRegistry.addCronJob(job.id, cronJob as any);
       cronJob.start();
 
       this.logger.log(`Registered cron job ${job.id} with schedule ${job.schedule}`);
@@ -142,10 +146,8 @@ export class ScheduledJobsService {
    */
   private unregisterCronJob(jobId: string): void {
     try {
-      const cronJob = this.cronJobs.get(jobId);
-      if (cronJob) {
-        cronJob.stop();
-        this.cronJobs.delete(jobId);
+      if (this.schedulerRegistry.doesExist('cron', jobId)) {
+        this.schedulerRegistry.deleteCronJob(jobId);
         this.logger.log(`Unregistered cron job ${jobId}`);
       }
     } catch (error) {

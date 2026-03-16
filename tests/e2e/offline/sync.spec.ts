@@ -279,7 +279,11 @@ test.describe('Offline-First Sync', () => {
 
     // Go online
     await context.setOffline(false);
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
+
+    // Wait for online indicator to confirm sync completion
+    const onlineIndicator = page.locator('[data-testid="online-indicator"], .online-badge');
+    await expect(onlineIndicator).toBeVisible({ timeout: 10000 });
 
     // Verify sync status updates
     if (await syncStatus.isVisible()) {
@@ -293,7 +297,11 @@ test.describe('Offline-First Sync', () => {
     await productsPage.waitForProductsLoad();
 
     await context.setOffline(true);
-    await page.waitForTimeout(1000);
+    await page.waitForLoadState('networkidle');
+
+    // Wait for offline indicator to confirm offline state
+    const offlineIndicator = page.locator('[data-testid="offline-indicator"], .offline-badge');
+    await expect(offlineIndicator).toBeVisible({ timeout: 5000 });
 
     await productsPage.clickCreateProduct();
     const productData = {

@@ -39,11 +39,11 @@ describe('ScheduledJobsController (Integration)', () => {
     schedule: '0 2 * * *',
     handler: 'backupDatabase',
     enabled: true,
-    lastRun: new Date('2024-01-15T02:00:00Z'),
-    nextRun: new Date('2024-01-16T02:00:00Z'),
+    lastRun: '2024-01-15T02:00:00.000Z',
+    nextRun: '2024-01-16T02:00:00.000Z',
     tenantId: 'tenant-123',
-    createdAt: new Date('2024-01-01T00:00:00Z'),
-    updatedAt: new Date('2024-01-15T02:00:00Z'),
+    createdAt: '2024-01-01T00:00:00.000Z',
+    updatedAt: '2024-01-15T02:00:00.000Z',
   };
 
   beforeAll(async () => {
@@ -160,7 +160,7 @@ describe('ScheduledJobsController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toBeUndefined();
+      expect(response.body).toEqual({});
     });
 
     it('should require authentication', async () => {
@@ -302,7 +302,7 @@ describe('ScheduledJobsController (Integration)', () => {
         .send({ enabled: false })
         .expect(200);
 
-      expect(response.body).toBeUndefined();
+      expect(response.body).toEqual({});
     });
 
     it('should require authentication', async () => {
