@@ -1,0 +1,40 @@
+{
+  "attendance": {
+    "list": "Attendance List",
+    "create": "New Attendance",
+    "searchPlaceholder": "Search by employee ID or notes...",
+    "employeeId": "Employee ID",
+    "date": "Date",
+    "checkIn": "Check In",
+    "checkOut": "Check Out",
+    "hoursWorked": "Hours Worked",
+    "status": "Status",
+    "notes": "Notes",
+    "statusComplete": "Complete",
+    "statusInProgress": "In Progress",
+    "syncStatus": "Sync Status",
+    "syncStatusSynced": "Synced",
+    "syncStatusPending": "Pending",
+    "syncStatusConflict": "Conflict",
+    "syncStatusUnknown": "Unknown"
+  },
+  "filters": {
+    "selectDate": "Select date"
+  },
+  "networkStatus": {
+    "online": "Online",
+    "offline": "Offline",
+    "pendingSync": "Pending Sync",
+    "syncing": "Syncing...",
+    "syncNow": "Sync Now"
+  },
+  "messages": {
+    "loadError": "Failed to load attendances",
+    "deleteSuccess": "Attendance deleted successfully",
+    "deleteError": "Failed to delete attendance",
+    "deleteConfirm": "Are you sure you want to delete this attendance?"
+  },
+  "pagination": {
+    "total": "Total {{total}} attendances"
+  }
+}

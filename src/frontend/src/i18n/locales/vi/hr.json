@@ -1,0 +1,40 @@
+{
+  "attendance": {
+    "list": "Danh sách chấm công",
+    "create": "Thêm chấm công",
+    "searchPlaceholder": "Tìm theo mã nhân viên hoặc ghi chú...",
+    "employeeId": "Mã nhân viên",
+    "date": "Ngày",
+    "checkIn": "Giờ vào",
+    "checkOut": "Giờ ra",
+    "hoursWorked": "Giờ làm việc",
+    "status": "Trạng thái",
+    "notes": "Ghi chú",
+    "statusComplete": "Hoàn thành",
+    "statusInProgress": "Đang làm",
+    "syncStatus": "Trạng thái đồng bộ",
+    "syncStatusSynced": "Đã đồng bộ",
+    "syncStatusPending": "Chờ đồng bộ",
+    "syncStatusConflict": "Xung đột",
+    "syncStatusUnknown": "Không rõ"
+  },
+  "filters": {
+    "selectDate": "Chọn ngày"
+  },
+  "networkStatus": {
+    "online": "Trực tuyến",
+    "offline": "Ngoại tuyến",
+    "pendingSync": "Chờ đồng bộ",
+    "syncing": "Đang đồng bộ...",
+    "syncNow": "Đồng bộ ngay"
+  },
+  "messages": {
+    "loadError": "Không thể tải dữ liệu chấm công",
+    "deleteSuccess": "Đã xóa chấm công thành công",
+    "deleteError": "Không thể xóa chấm công",
+    "deleteConfirm": "Bạn có chắc muốn xóa chấm công này?"
+  },
+  "pagination": {
+    "total": "Tổng {{total}} chấm công"
+  }
+}

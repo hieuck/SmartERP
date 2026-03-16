@@ -230,7 +230,7 @@ export default function AttendanceList() {
         const isComplete = !!record.checkOut;
         return (
           <Tag color={isComplete ? 'success' : 'warning'} icon={isComplete ? <CheckCircleOutlined /> : <CloseCircleOutlined />}>
-            {isComplete ? 'Complete' : 'In Progress'}
+            {isComplete ? t('hr:attendance.statusComplete') : t('hr:attendance.statusInProgress')}
           </Tag>
         );
       },
@@ -243,7 +243,7 @@ export default function AttendanceList() {
       render: (notes: string | null) => notes || '-',
     },
     {
-      title: 'Sync',
+      title: t('hr:attendance.syncStatus'),
       dataIndex: 'syncStatus',
       key: 'syncStatus',
       width: 100,
@@ -254,13 +254,13 @@ export default function AttendanceList() {
           [SyncStatus.CONFLICT]: 'error',
         };
         const labels = {
-          [SyncStatus.SYNCED]: 'Synced',
-          [SyncStatus.PENDING]: 'Pending',
-          [SyncStatus.CONFLICT]: 'Conflict',
+          [SyncStatus.SYNCED]: t('hr:attendance.syncStatusSynced'),
+          [SyncStatus.PENDING]: t('hr:attendance.syncStatusPending'),
+          [SyncStatus.CONFLICT]: t('hr:attendance.syncStatusConflict'),
         };
         return (
           <Tag color={colors[syncStatus] || 'default'}>
-            {labels[syncStatus] || 'Unknown'}
+            {labels[syncStatus] || t('hr:attendance.syncStatusUnknown')}
           </Tag>
         );
       },
@@ -294,7 +294,7 @@ export default function AttendanceList() {
             text={
               <Space size="small">
                 {isOnline ? <CloudOutlined /> : <DisconnectOutlined />}
-                {isOnline ? 'Online' : 'Offline'}
+                {isOnline ? t('hr:networkStatus.online') : t('hr:networkStatus.offline')}
               </Space>
             }
           />
@@ -302,7 +302,7 @@ export default function AttendanceList() {
           {/* Sync Queue Indicator */}
           {queueSize > 0 && (
             <Badge count={queueSize} showZero={false}>
-              <Tag color="warning">Pending Sync</Tag>
+              <Tag color="warning">{t('hr:networkStatus.pendingSync')}</Tag>
             </Badge>
           )}
 
@@ -313,7 +313,7 @@ export default function AttendanceList() {
             loading={syncing}
             disabled={!isOnline}
           >
-            {syncing ? 'Syncing...' : 'Sync Now'}
+            {syncing ? t('hr:networkStatus.syncing') : t('hr:networkStatus.syncNow')}
           </Button>
         </Space>
       }
@@ -327,7 +327,7 @@ export default function AttendanceList() {
         current: page,
         pageSize,
         total: attendances.length,
-        showTotal: (total) => `Total ${total} attendances`,
+        showTotal: (total) => t('hr:pagination.total', { total }),
         onChange: (newPage, newPageSize) => {
           setPage(newPage);
           setPageSize(newPageSize);
