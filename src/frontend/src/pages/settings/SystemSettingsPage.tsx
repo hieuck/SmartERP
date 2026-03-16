@@ -11,10 +11,8 @@ import {
   Typography,
   message,
   Spin,
-  Upload,
   Switch,
   TimePicker,
-  Divider,
   Alert,
 } from 'antd';
 import {
@@ -24,13 +22,8 @@ import {
   DatabaseOutlined,
   CheckCircleOutlined,
 } from '@ant-design/icons';
-import configService, {
-  CompanyInfo,
-  CodeFormats,
-  GeneralConfig,
-  EmailConfig,
-  BackupConfig,
-} from '@/services/utils/configService';
+import { useTranslation } from 'react-i18next';
+import configService from '@/services/utils/configService';
 import dayjs from 'dayjs';
 import { logger } from '@/lib/logger/logger.service';
 
@@ -39,12 +32,55 @@ const { TabPane } = Tabs;
 const { Option } = Select;
 const { TextArea } = Input;
 
+interface CompanyFormValues {
+  name: string;
+  address: string;
+  phone: string;
+  email: string;
+  taxCode?: string;
+}
+
+interface CodeFormValues {
+  productPrefix?: string;
+  customerPrefix?: string;
+  supplierPrefix?: string;
+  salesOrderPrefix?: string;
+  purchaseOrderPrefix?: string;
+  receiptPrefix?: string;
+  issuePrefix?: string;
+}
+
+interface GeneralFormValues {
+  defaultTaxRate: number;
+  currency: string;
+  timezone: string;
+  language: string;
+  dateFormat: string;
+}
+
+interface EmailFormValues {
+  host: string;
+  port: number;
+  secure?: boolean;
+  user: string;
+  password: string;
+  from: string;
+}
+
+interface BackupFormValues {
+  enabled?: boolean;
+  frequency: string;
+  time: any;
+  retention: number;
+}
+
 const SystemSettingsPage: React.FC = () => {
-  const [companyForm] = Form.useForm();
-  const [codeForm] = Form.useForm();
-  const [generalForm] = Form.useForm();
-  const [emailForm] = Form.useForm();
-  const [backupForm] = Form.useForm();
+  const { t } = useTranslation(['settings', 'common']);
+  const [companyForm] = Form.useForm<CompanyFormValues>();
+  const [codeForm] = Form.useForm<CodeFormValues>();
+  const [generalForm] = Form.useForm<GeneralFormValues>();
+  const [emailForm] = Form.useForm<EmailFormValues>();
+  const [backupForm] = Form.useForm<BackupFormValues>();
 
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -66,17 +102,19 @@ const SystemSettingsPage: React.FC = () => {
         configService.getBackupConfig(),
       ]);
 
-      companyForm.setFieldsValue(company);
-      codeForm.setFieldsValue(codes);
-      generalForm.setFieldsValue(general);
-      emailForm.setFieldsValue(email);
-      backupForm.setFieldsValue({
-        ...backup,
-        time: backup.time ? dayjs(backup.time, 'HH:mm') : null,
-      });
+      if (company) (companyForm as any).setFieldsValue(company);
+      if (codes) (codeForm as any).setFieldsValue(codes);
+      if (general) (generalForm as any).setFieldsValue(general);
+      if (email) (emailForm as any).setFieldsValue(email);
+      if (backup) {
+        (backupForm as any).setFieldsValue({
+          ...backup,
+          time: backup.time ? dayjs(backup.time, 'HH:mm') : null,
+        });
+      }
     } catch (error) {
       logger.error('SystemSettingsPage', 'Failed to load configurations', error as Error);
-      message.error('Failed to load system settings');
+      message.error(t('company.messages.loadError'));
     } finally {
       setLoading(false);
     }
@@ -85,11 +123,11 @@ const SystemSettingsPage: React.FC = () => {
   const handleSaveCompanyInfo = async () => {
     setSaving(true);
     try {
-      const values = await companyForm.validateFields();
+      const values = await (companyForm as any).validateFields();
       await configService.updateCompanyInfo(values);
-      message.success('Company information saved successfully');
+      message.success(t('company.messages.saveSuccess'));
     } catch (error) {
-      message.error('Failed to save company information');
+      message.error(t('company.messages.saveError'));
     } finally {
       setSaving(false);
     }
@@ -98,11 +136,11 @@ const SystemSettingsPage: React.FC = () => {
   const handleSaveCodeFormats = async () => {
     setSaving(true);
     try {
-      const values = await codeForm.validateFields();
+      const values = await (codeForm as any).validateFields();
       await configService.updateCodeFormats(values);
-      message.success('Code formats saved successfully');
+      message.success(t('codes.messages.saveSuccess'));
     } catch (error) {
-      message.error('Failed to save code formats');
+      message.error(t('codes.messages.saveError'));
     } finally {
       setSaving(false);
     }
@@ -111,11 +149,11 @@ const SystemSettingsPage: React.FC = () => {
   const handleSaveGeneralConfig = async () => {
     setSaving(true);
     try {
-      const values = await generalForm.validateFields();
+      const values = await (generalForm as any).validateFields();
       await configService.updateGeneralConfig(values);
-      message.success('General configuration saved successfully');
+      message.success(t('general.messages.saveSuccess'));
     } catch (error) {
-      message.error('Failed to save general configuration');
+      message.error(t('general.messages.saveError'));
     } finally {
       setSaving(false);
     }
@@ -124,11 +162,11 @@ const SystemSettingsPage: React.FC = () => {
   const handleSaveEmailConfig = async () => {
     setSaving(true);
     try {
-      const values = await emailForm.validateFields();
+      const values = await (emailForm as any).validateFields();
       await configService.updateEmailConfig(values);
-      message.success('Email configuration saved successfully');
+      message.success(t('email.messages.saveSuccess'));
     } catch (error) {
-      message.error('Failed to save email configuration');
+      message.error(t('email.messages.saveError'));
     } finally {
       setSaving(false);
     }
@@ -137,15 +175,15 @@ const SystemSettingsPage: React.FC = () => {
   const handleTestEmailConnection = async () => {
     setTestingEmail(true);
     try {
-      const values = await emailForm.validateFields();
+      const values = await (emailForm as any).validateFields();
       const result = await configService.testEmailConnection(values);
       if (result.success) {
-        message.success('Email connection successful!');
+        message.success(t('email.messages.testSuccess'));
       } else {
-        message.error(`Email connection failed: ${result.message}`);
+        message.error(t('email.messages.testError', { message: result.message }));
       }
     } catch (error) {
-      message.error('Failed to test email connection');
+      message.error(t('email.messages.testError', { message: 'Unknown error' }));
     } finally {
       setTestingEmail(false);
     }
@@ -154,15 +192,15 @@ const SystemSettingsPage: React.FC = () => {
   const handleSaveBackupConfig = async () => {
     setSaving(true);
     try {
-      const values = await backupForm.validateFields();
+      const values = await (backupForm as any).validateFields();
       const backupData = {
         ...values,
         time: values.time ? values.time.format('HH:mm') : '00:00',
       };
       await configService.updateBackupConfig(backupData);
-      message.success('Backup configuration saved successfully');
+      message.success(t('backup.messages.saveSuccess'));
     } catch (error) {
-      message.error('Failed to save backup configuration');
+      message.error(t('backup.messages.saveError'));
     } finally {
       setSaving(false);
     }
@@ -180,51 +218,51 @@ const SystemSettingsPage: React.FC = () => {
     <div style={{ padding: '24px' }}>
       <Card>
         <Title level={3}>
-          <SettingOutlined /> System Settings
+          <SettingOutlined /> {t('systemSettings.title')}
         </Title>
-        <Paragraph type="secondary">Configure system-wide settings and preferences</Paragraph>
+        <Paragraph type="secondary">{t('systemSettings.description')}</Paragraph>
 
         <Tabs activeKey={activeTab} onChange={setActiveTab}>
           {/* Company Information Tab */}
-          <TabPane tab="Company Info" key="company">
+          <TabPane tab={t('company.tab')} key="company">
             <Form form={companyForm} layout="vertical">
               <Form.Item
                 name="name"
-                label="Company Name"
-                rules={[{ required: true, message: 'Please enter company name' }]}
+                label={t('company.name')}
+                rules={[{ required: true, message: t('company.nameRequired') }]}
               >
-                <Input placeholder="Enter company name" />
+                <Input placeholder={t('company.namePlaceholder')} />
               </Form.Item>
 
               <Form.Item
                 name="address"
-                label="Address"
-                rules={[{ required: true, message: 'Please enter address' }]}
+                label={t('company.address')}
+                rules={[{ required: true, message: t('company.addressRequired') }]}
               >
-                <TextArea rows={3} placeholder="Enter company address" />
+                <TextArea rows={3} placeholder={t('company.addressPlaceholder')} />
               </Form.Item>
 
               <Form.Item
                 name="phone"
-                label="Phone"
-                rules={[{ required: true, message: 'Please enter phone number' }]}
+                label={t('company.phone')}
+                rules={[{ required: true, message: t('company.phoneRequired') }]}
               >
-                <Input placeholder="Enter phone number" />
+                <Input placeholder={t('company.phonePlaceholder')} />
               </Form.Item>
 
               <Form.Item
                 name="email"
-                label="Email"
+                label={t('company.email')}
                 rules={[
-                  { required: true, message: 'Please enter email' },
-                  { type: 'email', message: 'Please enter a valid email' },
+                  { required: true, message: t('company.emailRequired') },
+                  { type: 'email', message: t('company.emailInvalid') },
                 ]}
               >
-                <Input placeholder="Enter email address" />
+                <Input placeholder={t('company.emailPlaceholder')} />
               </Form.Item>
 
-              <Form.Item name="taxCode" label="Tax Code">
-                <Input placeholder="Enter tax code" />
+              <Form.Item name="taxCode" label={t('company.taxCode')}>
+                <Input placeholder={t('company.taxCodePlaceholder')} />
               </Form.Item>
 
               <Form.Item>
@@ -234,49 +272,49 @@ const SystemSettingsPage: React.FC = () => {
                   onClick={handleSaveCompanyInfo}
                   loading={saving}
                 >
-                  Save Company Info
+                  {t('company.saveButton')}
                 </Button>
               </Form.Item>
             </Form>
           </TabPane>
 
           {/* Code Formats Tab */}
-          <TabPane tab="Code Formats" key="codes">
+          <TabPane tab={t('codes.tab')} key="codes">
             <Alert
-              message="Auto-generated Code Prefixes"
-              description="Configure prefixes for automatically generated codes"
+              message={t('codes.alertTitle')}
+              description={t('codes.alertDescription')}
               type="info"
               showIcon
               style={{ marginBottom: 24 }}
             />
 
             <Form form={codeForm} layout="vertical">
-              <Form.Item name="productPrefix" label="Product Code Prefix">
-                <Input placeholder="e.g., PRD" />
+              <Form.Item name="productPrefix" label={t('codes.productPrefix')}>
+                <Input placeholder={t('codes.productPrefixPlaceholder')} />
               </Form.Item>
 
-              <Form.Item name="customerPrefix" label="Customer Code Prefix">
-                <Input placeholder="e.g., CUS" />
+              <Form.Item name="customerPrefix" label={t('codes.customerPrefix')}>
+                <Input placeholder={t('codes.customerPrefixPlaceholder')} />
               </Form.Item>
 
-              <Form.Item name="supplierPrefix" label="Supplier Code Prefix">
-                <Input placeholder="e.g., SUP" />
+              <Form.Item name="supplierPrefix" label={t('codes.supplierPrefix')}>
+                <Input placeholder={t('codes.supplierPrefixPlaceholder')} />
               </Form.Item>
 
-              <Form.Item name="salesOrderPrefix" label="Sales Order Prefix">
-                <Input placeholder="e.g., SO" />
+              <Form.Item name="salesOrderPrefix" label={t('codes.salesOrderPrefix')}>
+                <Input placeholder={t('codes.salesOrderPrefixPlaceholder')} />
               </Form.Item>
 
-              <Form.Item name="purchaseOrderPrefix" label="Purchase Order Prefix">
-                <Input placeholder="e.g., PO" />
+              <Form.Item name="purchaseOrderPrefix" label={t('codes.purchaseOrderPrefix')}>
+                <Input placeholder={t('codes.purchaseOrderPrefixPlaceholder')} />
               </Form.Item>
 
-              <Form.Item name="receiptPrefix" label="Receipt Prefix">
-                <Input placeholder="e.g., RCP" />
+              <Form.Item name="receiptPrefix" label={t('codes.receiptPrefix')}>
+                <Input placeholder={t('codes.receiptPrefixPlaceholder')} />
               </Form.Item>
 
-              <Form.Item name="issuePrefix" label="Issue Prefix">
-                <Input placeholder="e.g., ISS" />
+              <Form.Item name="issuePrefix" label={t('codes.issuePrefix')}>
+                <Input placeholder={t('codes.issuePrefixPlaceholder')} />
               </Form.Item>
 
               <Form.Item>
@@ -286,62 +324,62 @@ const SystemSettingsPage: React.FC = () => {
                   onClick={handleSaveCodeFormats}
                   loading={saving}
                 >
-                  Save Code Formats
+                  {t('codes.saveButton')}
                 </Button>
               </Form.Item>
             </Form>
           </TabPane>
 
           {/* General Configuration Tab */}
-          <TabPane tab="General" key="general">
+          <TabPane tab={t('general.tab')} key="general">
             <Form form={generalForm} layout="vertical">
               <Form.Item
                 name="defaultTaxRate"
-                label="Default Tax Rate (%)"
-                rules={[{ required: true, message: 'Please enter tax rate' }]}
+                label={t('general.defaultTaxRate')}
+                rules={[{ required: true, message: t('general.defaultTaxRateRequired') }]}
               >
                 <InputNumber min={0} max={100} style={{ width: '100%' }} />
               </Form.Item>
 
               <Form.Item
                 name="currency"
-                label="Currency"
-                rules={[{ required: true, message: 'Please select currency' }]}
+                label={t('general.currency')}
+                rules={[{ required: true, message: t('general.currencyRequired') }]}
               >
                 <Select>
-                  <Option value="VND">Vietnamese Dong (VND)</Option>
-                  <Option value="USD">US Dollar (USD)</Option>
-                  <Option value="EUR">Euro (EUR)</Option>
+                  <Option value="VND">{t('general.currencyVND')}</Option>
+                  <Option value="USD">{t('general.currencyUSD')}</Option>
+                  <Option value="EUR">{t('general.currencyEUR')}</Option>
                 </Select>
               </Form.Item>
 
               <Form.Item
                 name="timezone"
-                label="Timezone"
-                rules={[{ required: true, message: 'Please select timezone' }]}
+                label={t('general.timezone')}
+                rules={[{ required: true, message: t('general.timezoneRequired') }]}
               >
                 <Select>
-                  <Option value="Asia/Ho_Chi_Minh">Asia/Ho Chi Minh (GMT+7)</Option>
-                  <Option value="Asia/Bangkok">Asia/Bangkok (GMT+7)</Option>
-                  <Option value="Asia/Singapore">Asia/Singapore (GMT+8)</Option>
+                  <Option value="Asia/Ho_Chi_Minh">{t('general.timezoneHCM')}</Option>
+                  <Option value="Asia/Bangkok">{t('general.timezoneBangkok')}</Option>
+                  <Option value="Asia/Singapore">{t('general.timezoneSingapore')}</Option>
                 </Select>
               </Form.Item>
 
               <Form.Item
                 name="language"
-                label="Language"
-                rules={[{ required: true, message: 'Please select language' }]}
+                label={t('general.language')}
+                rules={[{ required: true, message: t('general.languageRequired') }]}
               >
                 <Select>
-                  <Option value="vi">Tiếng Việt</Option>
-                  <Option value="en">English</Option>
+                  <Option value="vi">{t('general.languageVi')}</Option>
+                  <Option value="en">{t('general.languageEn')}</Option>
                 </Select>
               </Form.Item>
 
               <Form.Item
                 name="dateFormat"
-                label="Date Format"
-                rules={[{ required: true, message: 'Please select date format' }]}
+                label={t('general.dateFormat')}
+                rules={[{ required: true, message: t('general.dateFormatRequired') }]}
               >
                 <Select>
                   <Option value="DD/MM/YYYY">DD/MM/YYYY</Option>
@@ -357,7 +395,7 @@ const SystemSettingsPage: React.FC = () => {
                   onClick={handleSaveGeneralConfig}
                   loading={saving}
                 >
-                  Save General Config
+                  {t('general.saveButton')}
                 </Button>
               </Form.Item>
             </Form>
@@ -367,14 +405,14 @@ const SystemSettingsPage: React.FC = () => {
           <TabPane
             tab={
               <span>
-                <MailOutlined /> Email
+                <MailOutlined /> {t('email.tab')}
               </span>
             }
             key="email"
           >
             <Alert
-              message="Email Server Configuration"
-              description="Configure SMTP settings for sending email notifications"
+              message={t('email.alertTitle')}
+              description={t('email.alertDescription')}
               type="info"
               showIcon
               style={{ marginBottom: 24 }}
@@ -383,49 +421,49 @@ const SystemSettingsPage: React.FC = () => {
             <Form form={emailForm} layout="vertical">
               <Form.Item
                 name="host"
-                label="SMTP Host"
-                rules={[{ required: true, message: 'Please enter SMTP host' }]}
+                label={t('email.host')}
+                rules={[{ required: true, message: t('email.hostRequired') }]}
               >
-                <Input placeholder="e.g., smtp.gmail.com" />
+                <Input placeholder={t('email.hostPlaceholder')} />
               </Form.Item>
 
               <Form.Item
                 name="port"
-                label="SMTP Port"
-                rules={[{ required: true, message: 'Please enter SMTP port' }]}
+                label={t('email.port')}
+                rules={[{ required: true, message: t('email.portRequired') }]}
               >
                 <InputNumber min={1} max={65535} style={{ width: '100%' }} />
               </Form.Item>
 
-              <Form.Item name="secure" label="Use SSL/TLS" valuePropName="checked">
+              <Form.Item name="secure" label={t('email.secure')} valuePropName="checked">
                 <Switch />
               </Form.Item>
 
               <Form.Item
                 name="user"
-                label="Username"
-                rules={[{ required: true, message: 'Please enter username' }]}
+                label={t('email.user')}
+                rules={[{ required: true, message: t('email.userRequired') }]}
               >
-                <Input placeholder="Enter SMTP username" />
+                <Input placeholder={t('email.userPlaceholder')} />
               </Form.Item>
 
               <Form.Item
                 name="password"
-                label="Password"
-                rules={[{ required: true, message: 'Please enter password' }]}
+                label={t('email.password')}
+                rules={[{ required: true, message: t('email.passwordRequired') }]}
               >
-                <Input.Password placeholder="Enter SMTP password" />
+                <Input.Password placeholder={t('email.passwordPlaceholder')} />
               </Form.Item>
 
               <Form.Item
                 name="from"
-                label="From Email"
+                label={t('email.from')}
                 rules={[
-                  { required: true, message: 'Please enter from email' },
-                  { type: 'email', message: 'Please enter a valid email' },
+                  { required: true, message: t('email.fromRequired') },
+                  { type: 'email', message: t('email.fromInvalid') },
                 ]}
               >
-                <Input placeholder="e.g., noreply@company.com" />
+                <Input placeholder={t('email.fromPlaceholder')} />
               </Form.Item>
 
               <Form.Item>
@@ -436,14 +474,14 @@ const SystemSettingsPage: React.FC = () => {
                     onClick={handleSaveEmailConfig}
                     loading={saving}
                   >
-                    Save Email Config
+                    {t('email.saveButton')}
                   </Button>
                   <Button
                     icon={<CheckCircleOutlined />}
                     onClick={handleTestEmailConnection}
                     loading={testingEmail}
                   >
-                    Test Connection
+                    {t('email.testButton')}
                   </Button>
                 </Space>
               </Form.Item>
@@ -454,48 +492,48 @@ const SystemSettingsPage: React.FC = () => {
           <TabPane
             tab={
               <span>
-                <DatabaseOutlined /> Backup
+                <DatabaseOutlined /> {t('backup.tab')}
               </span>
             }
             key="backup"
           >
             <Alert
-              message="Automatic Backup Configuration"
-              description="Configure automatic database backup schedule"
+              message={t('backup.alertTitle')}
+              description={t('backup.alertDescription')}
               type="info"
               showIcon
               style={{ marginBottom: 24 }}
             />
 
             <Form form={backupForm} layout="vertical">
-              <Form.Item name="enabled" label="Enable Automatic Backup" valuePropName="checked">
+              <Form.Item name="enabled" label={t('backup.enabled')} valuePropName="checked">
                 <Switch />
               </Form.Item>
 
               <Form.Item
                 name="frequency"
-                label="Backup Frequency"
-                rules={[{ required: true, message: 'Please select frequency' }]}
+                label={t('backup.frequency')}
+                rules={[{ required: true, message: t('backup.frequencyRequired') }]}
               >
                 <Select>
-                  <Option value="daily">Daily</Option>
-                  <Option value="weekly">Weekly</Option>
-                  <Option value="monthly">Monthly</Option>
+                  <Option value="daily">{t('backup.frequencyDaily')}</Option>
+                  <Option value="weekly">{t('backup.frequencyWeekly')}</Option>
+                  <Option value="monthly">{t('backup.frequencyMonthly')}</Option>
                 </Select>
               </Form.Item>
 
               <Form.Item
                 name="time"
-                label="Backup Time"
-                rules={[{ required: true, message: 'Please select time' }]}
+                label={t('backup.time')}
+                rules={[{ required: true, message: t('backup.timeRequired') }]}
               >
                 <TimePicker format="HH:mm" style={{ width: '100%' }} />
               </Form.Item>
 
               <Form.Item
                 name="retention"
-                label="Retention Period (days)"
-                rules={[{ required: true, message: 'Please enter retention period' }]}
+                label={t('backup.retention')}
+                rules={[{ required: true, message: t('backup.retentionRequired') }]}
               >
                 <InputNumber min={1} max={365} style={{ width: '100%' }} />
               </Form.Item>
@@ -507,7 +545,7 @@ const SystemSettingsPage: React.FC = () => {
                   onClick={handleSaveBackupConfig}
                   loading={saving}
                 >
-                  Save Backup Config
+                  {t('backup.saveButton')}
                 </Button>
               </Form.Item>
             </Form>
