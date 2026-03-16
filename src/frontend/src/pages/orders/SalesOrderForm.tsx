@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Form,
@@ -14,11 +14,13 @@ import {
   Badge,
 } from 'antd';
 import { PlusOutlined, DeleteOutlined, ArrowLeftOutlined, SyncOutlined, WifiOutlined, DisconnectOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import { logger } from '@/lib/logger/logger.service';
 import { offlineServices } from '@/services/offline-services';
 import { syncManager } from '@/lib/offline/sync-manager';
 import { useResponsive } from '@/hooks/useResponsive';
 import MobileFormItemCard from '@/components/common/MobileFormItemCard';
+import { formatCurrency } from '@/utils/responsive';
 import dayjs from 'dayjs';
 
 const { Option } = Select;
@@ -36,6 +38,7 @@ interface OrderItem {
 
 export default function SalesOrderForm() {
   const { isMobile } = useResponsive();
+  const { t, i18n } = useTranslation(['orders', 'commonUi']);
   const [form] = Form.useForm();
   const navigate = useNavigate();
   const { id } = useParams();
@@ -47,6 +50,13 @@ export default function SalesOrderForm() {
   const [syncing, setSyncing] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [queueSize, setQueueSize] = useState(0);
+
+  // Memoize currency symbol
+  const currencySymbol = useMemo(() => (i18n.language === 'vi' ? 'đ' : '$'), [i18n.language]);
+  const memoizedFormatCurrency = useCallback(
+    (value: number) => formatCurrency(value, i18n.language),
+    [i18n.language]
+  );
 
   // Monitor network status
   useEffect(() => {
@@ -113,7 +123,7 @@ export default function SalesOrderForm() {
       logger.info('SalesOrderForm', 'Loaded products from IndexedDB', { count: allProducts.length });
     } catch (error) {
       logger.error('SalesOrderForm', 'Failed to load products', error as Error);
-      message.error('Không thể tải danh sách sản phẩm');
+      message.error(t('orders:messages.loadProductsError'));
     }
   };
 
@@ -124,7 +134,7 @@ export default function SalesOrderForm() {
       logger.info('SalesOrderForm', 'Loaded customers from IndexedDB', { count: allCustomers.length });
     } catch (error) {
       logger.error('SalesOrderForm', 'Failed to load customers', error as Error);
-      message.error('Không thể tải danh sách khách hàng');
+      message.error(t('orders:messages.loadCustomersError'));
     }
   };
 
@@ -168,7 +178,7 @@ export default function SalesOrderForm() {
       }
     } catch (error) {
       logger.error('SalesOrderForm', 'Error loading sales order', error as Error);
-      message.error('Không thể tải đơn hàng');
+      message.error(t('orders:messages.loadError'));
     } finally {
       setLoading(false);
     }
@@ -228,13 +238,13 @@ export default function SalesOrderForm() {
 
   const handleSubmit = async (values: any) => {
     if (items.length === 0) {
-      message.error('Vui lòng thêm ít nhất một sản phẩm');
+      message.error(t('orders:form.validation.itemsRequired'));
       return;
     }
 
     const invalidItems = items.filter((item) => !item.productId || item.quantity <= 0);
     if (invalidItems.length > 0) {
-      message.error('Vui lòng điền đầy đủ thông tin sản phẩm');
+      message.error(t('orders:form.validation.itemsInvalid'));
       return;
     }
 
@@ -265,11 +275,11 @@ export default function SalesOrderForm() {
 
       if (id) {
         await offlineServices.salesOrders.update(id, orderData);
-        message.success('Cập nhật đơn hàng thành công');
+        message.success(t('orders:form.messages.updateSuccess'));
         logger.info('SalesOrderForm', 'Updated sales order', { id });
       } else {
         await offlineServices.salesOrders.create(orderData);
-        message.success('Tạo đơn hàng thành công');
+        message.success(t('orders:form.messages.createSuccess'));
         logger.info('SalesOrderForm', 'Created sales order');
       }
 
@@ -286,7 +296,7 @@ export default function SalesOrderForm() {
       navigate('/orders/sales');
     } catch (error: any) {
       logger.error('SalesOrderForm', 'Failed to save order', error);
-      message.error(error.message || 'Có lỗi xảy ra');
+      message.error(error.message || t('orders:form.messages.saveError'));
     } finally {
       setLoading(false);
     }
@@ -296,7 +306,7 @@ export default function SalesOrderForm() {
   const handleSync = async () => {
     const token = localStorage.getItem('token');
     if (!token) {
-      message.error('Vui lòng đăng nhập');
+      message.error(t('commonUi:messages.loginRequired'));
       return;
     }
 
@@ -305,7 +315,12 @@ export default function SalesOrderForm() {
       const result = await syncManager.sync(token);
       
       if (result.success) {
-        message.success(`Đồng bộ thành công: ${result.pulled} pulled, ${result.pushed} pushed`);
+        message.success(
+          t('commonUi:messages.syncSuccess', {
+            pulled: result.pulled,
+            pushed: result.pushed,
+          })
+        );
         // Reload data after sync
         await loadProducts();
         await loadCustomers();
@@ -313,26 +328,26 @@ export default function SalesOrderForm() {
           await loadOrder();
         }
       } else {
-        message.error(`Đồng bộ thất bại: ${result.errors.join(', ')}`);
+        message.error(t('commonUi:messages.syncError', { errors: result.errors.join(', ') }));
       }
     } catch (error) {
       logger.error('SalesOrderForm', 'Sync failed', error as Error);
-      message.error('Đồng bộ thất bại');
+      message.error(t('commonUi:messages.syncError', { errors: (error as Error).message }));
     } finally {
       setSyncing(false);
     }
   };
 
-  const columns = [
+  const columns = useMemo(() => [
     {
-      title: 'Sản phẩm',
+      title: t('orders:form.table.product'),
       dataIndex: 'productId',
       width: '30%',
       render: (value: string, record: OrderItem) => (
         <Select
           value={value}
           onChange={(val) => updateItem(record.key, 'productId', val)}
-          placeholder="Chọn sản phẩm"
+          placeholder={t('orders:form.placeholders.selectProduct')}
           showSearch
           filterOption={(input, option) =>
             (option?.children as string).toLowerCase().includes(input.toLowerCase())
@@ -348,7 +363,7 @@ export default function SalesOrderForm() {
       ),
     },
     {
-      title: 'Số lượng',
+      title: t('orders:form.table.quantity'),
       dataIndex: 'quantity',
       width: '15%',
       render: (value: number, record: OrderItem) => (
@@ -361,7 +376,7 @@ export default function SalesOrderForm() {
       ),
     },
     {
-      title: 'Đơn giá',
+      title: t('orders:form.table.unitPrice'),
       dataIndex: 'unitPrice',
       width: '15%',
       render: (value: number, record: OrderItem) => (
@@ -375,7 +390,7 @@ export default function SalesOrderForm() {
       ),
     },
     {
-      title: 'Giảm giá',
+      title: t('orders:form.table.discount'),
       dataIndex: 'discount',
       width: '15%',
       render: (value: number, record: OrderItem) => (
@@ -390,10 +405,10 @@ export default function SalesOrderForm() {
       ),
     },
     {
-      title: 'Thành tiền',
+      title: t('orders:form.table.subtotal'),
       dataIndex: 'subtotal',
       width: '15%',
-      render: (value: number) => (value || 0).toLocaleString('vi-VN'),
+      render: (value: number) => memoizedFormatCurrency(value || 0),
     },
     {
       title: '',
@@ -407,22 +422,24 @@ export default function SalesOrderForm() {
         />
       ),
     },
-  ];
+  ], [t, products, memoizedFormatCurrency]);
 
   return (
     <div style={{ padding: '24px' }}>
       <div style={{ marginBottom: 16 }}>
         <Space>
           <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/orders/sales')}>
-            Quay Lại
+            {t('orders:form.buttons.back')}
           </Button>
           <Badge status={isOnline ? 'success' : 'error'} />
           <span>{isOnline ? <WifiOutlined /> : <DisconnectOutlined />}</span>
-          <span>{isOnline ? 'Online' : 'Offline'}</span>
+          <span>{isOnline ? t('orders:sync.online') : t('orders:sync.offline')}</span>
           {queueSize > 0 && (
             <>
               <span>|</span>
-              <span style={{ color: '#faad14' }}>{queueSize} thay đổi chưa đồng bộ</span>
+              <span style={{ color: '#faad14' }}>
+                {t('orders:sync.queueSize', { count: queueSize })}
+              </span>
             </>
           )}
           <Button
@@ -432,11 +449,11 @@ export default function SalesOrderForm() {
             disabled={!isOnline}
             size="small"
           >
-            Đồng bộ
+            {t('orders:sync.syncButton')}
           </Button>
         </Space>
       </div>
-      <Card title={id ? 'Sửa đơn hàng' : 'Tạo đơn hàng mới'}>
+      <Card title={id ? t('orders:form.title.edit') : t('orders:form.title.create')}>
         <Form
           form={form}
           layout="vertical"
@@ -449,12 +466,12 @@ export default function SalesOrderForm() {
           }}
         >
           <Form.Item
-            label="Khách hàng"
+            label={t('orders:form.fields.customer')}
             name="customerId"
-            rules={[{ required: true, message: 'Vui lòng chọn khách hàng' }]}
+            rules={[{ required: true, message: t('orders:form.validation.customerRequired') }]}
           >
             <Select
-              placeholder="Chọn khách hàng"
+              placeholder={t('orders:form.placeholders.selectCustomer')}
               showSearch
               filterOption={(input, option) =>
                 (option?.children as string).toLowerCase().includes(input.toLowerCase())
@@ -470,21 +487,21 @@ export default function SalesOrderForm() {
 
           <Space size="large" style={{ width: '100%' }}>
             <Form.Item
-              label="Ngày đặt hàng"
+              label={t('orders:form.fields.orderDate')}
               name="orderDate"
-              rules={[{ required: true, message: 'Vui lòng chọn ngày' }]}
+              rules={[{ required: true, message: t('orders:form.validation.orderDateRequired') }]}
             >
               <DatePicker format="DD/MM/YYYY" />
             </Form.Item>
 
-            <Form.Item label="Ngày giao hàng" name="deliveryDate">
+            <Form.Item label={t('orders:form.fields.deliveryDate')} name="deliveryDate">
               <DatePicker format="DD/MM/YYYY" />
             </Form.Item>
           </Space>
 
           <div style={{ marginBottom: 16 }}>
             <Button type="dashed" onClick={addItem} icon={<PlusOutlined />} block>
-              Thêm sản phẩm
+              {t('orders:form.buttons.addProduct')}
             </Button>
           </div>
 
@@ -498,11 +515,13 @@ export default function SalesOrderForm() {
                   onRemove={() => removeItem(item.key)}
                 >
                   <div>
-                    <div style={{ marginBottom: 4, fontSize: 12, color: '#666' }}>Sản phẩm</div>
+                    <div style={{ marginBottom: 4, fontSize: 12, color: '#666' }}>
+                      {t('orders:form.table.product')}
+                    </div>
                     <Select
                       value={item.productId}
                       onChange={(val) => updateItem(item.key, 'productId', val)}
-                      placeholder="Chọn sản phẩm"
+                      placeholder={t('orders:form.placeholders.selectProduct')}
                       showSearch
                       filterOption={(input, option) =>
                         (option?.children as string).toLowerCase().includes(input.toLowerCase())
@@ -519,7 +538,9 @@ export default function SalesOrderForm() {
 
                   <div style={{ display: 'flex', gap: 8 }}>
                     <div style={{ flex: 1 }}>
-                      <div style={{ marginBottom: 4, fontSize: 12, color: '#666' }}>Số lượng</div>
+                      <div style={{ marginBottom: 4, fontSize: 12, color: '#666' }}>
+                        {t('orders:form.table.quantity')}
+                      </div>
                       <InputNumber
                         min={1}
                         value={item.quantity ?? 1}
@@ -528,7 +549,9 @@ export default function SalesOrderForm() {
                       />
                     </div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ marginBottom: 4, fontSize: 12, color: '#666' }}>Đơn giá</div>
+                      <div style={{ marginBottom: 4, fontSize: 12, color: '#666' }}>
+                        {t('orders:form.table.unitPrice')}
+                      </div>
                       <InputNumber
                         min={0}
                         value={item.unitPrice ?? 0}
@@ -541,7 +564,9 @@ export default function SalesOrderForm() {
 
                   <div style={{ display: 'flex', gap: 8 }}>
                     <div style={{ flex: 1 }}>
-                      <div style={{ marginBottom: 4, fontSize: 12, color: '#666' }}>Giảm giá</div>
+                      <div style={{ marginBottom: 4, fontSize: 12, color: '#666' }}>
+                        {t('orders:form.table.discount')}
+                      </div>
                       <InputNumber
                         min={0}
                         value={item.discount ?? 0}
@@ -552,7 +577,9 @@ export default function SalesOrderForm() {
                       />
                     </div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ marginBottom: 4, fontSize: 12, color: '#666' }}>Thành tiền</div>
+                      <div style={{ marginBottom: 4, fontSize: 12, color: '#666' }}>
+                        {t('orders:form.table.subtotal')}
+                      </div>
                       <div
                         style={{
                           padding: '4px 11px',
@@ -563,7 +590,7 @@ export default function SalesOrderForm() {
                           fontWeight: 500,
                         }}
                       >
-                        {(item.subtotal || 0).toLocaleString('vi-VN')} đ
+                        {memoizedFormatCurrency(item.subtotal || 0)}
                       </div>
                     </div>
                   </div>
@@ -585,53 +612,58 @@ export default function SalesOrderForm() {
           <div style={{ marginTop: 24, textAlign: 'right' }}>
             <Space direction="vertical" style={{ width: 300 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span>Tạm tính:</span>
-                <strong>{totals.subtotal.toLocaleString('vi-VN')} đ</strong>
+                <span>{t('orders:form.totals.subtotal')}:</span>
+                <strong>{memoizedFormatCurrency(totals.subtotal)}</strong>
               </div>
 
-              <Form.Item label="Thuế" name="tax" style={{ marginBottom: 8 }}>
+              <Form.Item label={t('orders:form.fields.tax')} name="tax" style={{ marginBottom: 8 }}>
                 <InputNumber
                   min={0}
                   formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                   style={{ width: '100%' }}
+                  onChange={calculateTotals}
                 />
               </Form.Item>
 
-              <Form.Item label="Phí vận chuyển" name="shippingFee" style={{ marginBottom: 8 }}>
+              <Form.Item label={t('orders:form.fields.shippingFee')} name="shippingFee" style={{ marginBottom: 8 }}>
                 <InputNumber
                   min={0}
                   formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                   style={{ width: '100%' }}
+                  onChange={calculateTotals}
                 />
               </Form.Item>
 
-              <Form.Item label="Giảm giá" name="discount" style={{ marginBottom: 8 }}>
+              <Form.Item label={t('orders:form.fields.discount')} name="discount" style={{ marginBottom: 8 }}>
                 <InputNumber
                   min={0}
                   formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                   style={{ width: '100%' }}
+                  onChange={calculateTotals}
                 />
               </Form.Item>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 18 }}>
-                <span>Tổng cộng:</span>
+                <span>{t('orders:form.totals.total')}:</span>
                 <strong style={{ color: '#1890ff' }}>
-                  {totals.total.toLocaleString('vi-VN')} đ
+                  {memoizedFormatCurrency(totals.total)}
                 </strong>
               </div>
             </Space>
           </div>
 
-          <Form.Item label="Ghi chú" name="notes">
-            <TextArea rows={3} placeholder="Ghi chú đơn hàng" />
+          <Form.Item label={t('orders:form.fields.notes')} name="notes">
+            <TextArea rows={3} placeholder={t('orders:form.placeholders.notes')} />
           </Form.Item>
 
           <Form.Item>
             <Space>
               <Button type="primary" htmlType="submit" loading={loading}>
-                {id ? 'Cập nhật' : 'Tạo đơn hàng'}
+                {id ? t('orders:form.buttons.update') : t('orders:form.buttons.create')}
               </Button>
-              <Button onClick={() => navigate('/orders/sales')}>Hủy</Button>
+              <Button onClick={() => navigate('/orders/sales')}>
+                {t('orders:form.buttons.cancel')}
+              </Button>
             </Space>
           </Form.Item>
         </Form>

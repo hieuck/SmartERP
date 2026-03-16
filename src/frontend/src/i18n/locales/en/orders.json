@@ -8,7 +8,8 @@
     "orderDate": "Order Date",
     "totalAmount": "Total Amount",
     "paidAmount": "Paid Amount",
-    "status": "Status"
+    "status": "Status",
+    "sync": "Sync"
   },
   "status": {
     "draft": "Draft",
@@ -27,10 +28,95 @@
   "messages": {
     "deleteSuccess": "Order deleted successfully",
     "deleteError": "Cannot delete order",
+    "loadError": "Failed to load orders",
     "total": "Total {{total}} orders"
   },
   "filters": {
     "status": "Status",
     "allStatus": "All Status"
+  },
+  "sync": {
+    "synced": "Synced",
+    "pending": "Pending",
+    "conflict": "Conflict",
+    "unknown": "Unknown",
+    "online": "Online",
+    "offline": "Offline",
+    "syncNow": "Sync Now",
+    "syncing": "Syncing...",
+    "pendingSync": "Pending Sync",
+    "queueSize": "{{count}} changes pending sync",
+    "syncButton": "Sync"
+  },
+  "form": {
+    "title": {
+      "create": "Create New Order",
+      "edit": "Edit Order"
+    },
+    "fields": {
+      "customer": "Customer",
+      "orderDate": "Order Date",
+      "deliveryDate": "Delivery Date",
+      "product": "Product",
+      "quantity": "Quantity",
+      "unitPrice": "Unit Price",
+      "discount": "Discount",
+      "subtotal": "Subtotal",
+      "tax": "Tax",
+      "shippingFee": "Shipping Fee",
+      "total": "Total",
+      "notes": "Notes"
+    },
+    "placeholders": {
+      "selectCustomer": "Select customer",
+      "selectProduct": "Select product",
+      "enterNotes": "Enter order notes",
+      "notes": "Enter order notes"
+    },
+    "validation": {
+      "customerRequired": "Please select customer",
+      "orderDateRequired": "Please select date",
+      "dateRequired": "Please select date",
+      "productRequired": "Please add at least one product",
+      "itemsRequired": "Please add at least one product",
+      "productInfoRequired": "Please fill in product information",
+      "itemsInvalid": "Please fill in product information"
+    },
+    "buttons": {
+      "back": "Back",
+      "addProduct": "Add Product",
+      "create": "Create Order",
+      "update": "Update",
+      "cancel": "Cancel",
+      "sync": "Sync"
+    },
+    "messages": {
+      "createSuccess": "Order created successfully",
+      "updateSuccess": "Order updated successfully",
+      "loadError": "Failed to load order",
+      "saveError": "An error occurred",
+      "loadProductsError": "Failed to load products",
+      "loadCustomersError": "Failed to load customers",
+      "syncSuccess": "Sync successful: {{pulled}} pulled, {{pushed}} pushed",
+      "syncError": "Sync failed: {{errors}}",
+      "loginRequired": "Please login",
+      "offlineMode": "Offline mode"
+    },
+    "labels": {
+      "subtotalLabel": "Subtotal:",
+      "totalLabel": "Total:",
+      "pendingChanges": "{{count}} pending changes"
+    },
+    "table": {
+      "product": "Product",
+      "quantity": "Quantity",
+      "unitPrice": "Unit Price",
+      "discount": "Discount",
+      "subtotal": "Subtotal"
+    },
+    "totals": {
+      "subtotal": "Subtotal",
+      "total": "Total"
+    }
   }
 }

@@ -8,7 +8,8 @@
     "orderDate": "Ngày Đặt",
     "totalAmount": "Tổng Tiền",
     "paidAmount": "Đã Thanh Toán",
-    "status": "Trạng Thái"
+    "status": "Trạng Thái",
+    "sync": "Đồng Bộ"
   },
   "status": {
     "draft": "Nháp",
@@ -27,10 +28,95 @@
   "messages": {
     "deleteSuccess": "Xóa đơn hàng thành công",
     "deleteError": "Không thể xóa đơn hàng",
+    "loadError": "Không thể tải danh sách đơn hàng",
     "total": "Tổng {{total}} đơn hàng"
   },
   "filters": {
     "status": "Trạng Thái",
     "allStatus": "Tất Cả Trạng Thái"
+  },
+  "sync": {
+    "synced": "Đã Đồng Bộ",
+    "pending": "Chờ Đồng Bộ",
+    "conflict": "Xung Đột",
+    "unknown": "Không Xác Định",
+    "online": "Trực Tuyến",
+    "offline": "Ngoại Tuyến",
+    "syncNow": "Đồng Bộ Ngay",
+    "syncing": "Đang Đồng Bộ...",
+    "pendingSync": "Chờ Đồng Bộ",
+    "queueSize": "{{count}} thay đổi chưa đồng bộ",
+    "syncButton": "Đồng Bộ"
+  },
+  "form": {
+    "title": {
+      "create": "Tạo Đơn Hàng Mới",
+      "edit": "Sửa Đơn Hàng"
+    },
+    "fields": {
+      "customer": "Khách Hàng",
+      "orderDate": "Ngày Đặt Hàng",
+      "deliveryDate": "Ngày Giao Hàng",
+      "product": "Sản Phẩm",
+      "quantity": "Số Lượng",
+      "unitPrice": "Đơn Giá",
+      "discount": "Giảm Giá",
+      "subtotal": "Thành Tiền",
+      "tax": "Thuế",
+      "shippingFee": "Phí Vận Chuyển",
+      "total": "Tổng Cộng",
+      "notes": "Ghi Chú"
+    },
+    "placeholders": {
+      "selectCustomer": "Chọn khách hàng",
+      "selectProduct": "Chọn sản phẩm",
+      "enterNotes": "Ghi chú đơn hàng",
+      "notes": "Ghi chú đơn hàng"
+    },
+    "validation": {
+      "customerRequired": "Vui lòng chọn khách hàng",
+      "orderDateRequired": "Vui lòng chọn ngày",
+      "dateRequired": "Vui lòng chọn ngày",
+      "productRequired": "Vui lòng thêm ít nhất một sản phẩm",
+      "itemsRequired": "Vui lòng thêm ít nhất một sản phẩm",
+      "productInfoRequired": "Vui lòng điền đầy đủ thông tin sản phẩm",
+      "itemsInvalid": "Vui lòng điền đầy đủ thông tin sản phẩm"
+    },
+    "buttons": {
+      "back": "Quay Lại",
+      "addProduct": "Thêm Sản Phẩm",
+      "create": "Tạo Đơn Hàng",
+      "update": "Cập Nhật",
+      "cancel": "Hủy",
+      "sync": "Đồng Bộ"
+    },
+    "messages": {
+      "createSuccess": "Tạo đơn hàng thành công",
+      "updateSuccess": "Cập nhật đơn hàng thành công",
+      "loadError": "Không thể tải đơn hàng",
+      "saveError": "Có lỗi xảy ra",
+      "loadProductsError": "Không thể tải danh sách sản phẩm",
+      "loadCustomersError": "Không thể tải danh sách khách hàng",
+      "syncSuccess": "Đồng bộ thành công: {{pulled}} pulled, {{pushed}} pushed",
+      "syncError": "Đồng bộ thất bại: {{errors}}",
+      "loginRequired": "Vui lòng đăng nhập",
+      "offlineMode": "Chế độ ngoại tuyến"
+    },
+    "labels": {
+      "subtotalLabel": "Tạm Tính:",
+      "totalLabel": "Tổng Cộng:",
+      "pendingChanges": "{{count}} thay đổi chưa đồng bộ"
+    },
+    "table": {
+      "product": "Sản Phẩm",
+      "quantity": "Số Lượng",
+      "unitPrice": "Đơn Giá",
+      "discount": "Giảm Giá",
+      "subtotal": "Thành Tiền"
+    },
+    "totals": {
+      "subtotal": "Tạm Tính",
+      "total": "Tổng Cộng"
+    }
   }
 }
