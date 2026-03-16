@@ -93,7 +93,14 @@
     "syncSuccess": "Payment synced successfully",
     "syncError": "Failed to sync payment",
     "fetchError": "Failed to fetch payments",
-    "fetchDetailError": "Failed to fetch payment detail"
+    "fetchDetailError": "Failed to fetch payment detail",
+    "completeConfirm": "Are you sure you want to mark this payment as completed?",
+    "refundConfirm": "Are you sure you want to refund {{amount}} ₫?",
+    "reconcileConfirm": "Are you sure you want to reconcile this payment?",
+    "paymentFailed": "Payment failed",
+    "paymentFailedDesc": "This payment transaction has failed. Please check the information and try again.",
+    "refunded": "Refunded",
+    "refundedDesc": "Amount {{amount}} ₫ has been refunded to the customer."
   },
   
   "detail": {

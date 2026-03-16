@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Form,
@@ -18,6 +18,7 @@ import {
   Badge,
 } from 'antd';
 import { SaveOutlined, ArrowLeftOutlined, DollarOutlined, SyncOutlined, WifiOutlined, DisconnectOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import {
   PaymentMethod,
@@ -32,6 +33,7 @@ const { Option } = Select;
 const { TextArea } = Input;
 
 const PaymentForm: React.FC = () => {
+  const { t } = useTranslation(['payments', 'common']);
   const [form] = Form.useForm();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
@@ -43,6 +45,32 @@ const PaymentForm: React.FC = () => {
   const [syncing, setSyncing] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [queueSize, setQueueSize] = useState(0);
+
+  // Memoized translation functions
+  const getStatusLabel = useMemo(() => {
+    return (status: PaymentStatus) => {
+      const labels: Record<PaymentStatus, string> = {
+        [PaymentStatus.PENDING]: t('payments:status.pending'),
+        [PaymentStatus.COMPLETED]: t('payments:status.completed'),
+        [PaymentStatus.FAILED]: t('payments:status.failed'),
+        [PaymentStatus.REFUNDED]: t('payments:status.refunded'),
+      };
+      return labels[status] || status;
+    };
+  }, [t]);
+
+  const getMethodLabel = useMemo(() => {
+    return (method: PaymentMethod) => {
+      const labels: Record<PaymentMethod, string> = {
+        [PaymentMethod.CASH]: t('payments:paymentMethod.cash'),
+        [PaymentMethod.CARD]: t('payments:paymentMethod.card'),
+        [PaymentMethod.BANK_TRANSFER]: t('payments:paymentMethod.bankTransfer'),
+        [PaymentMethod.CHEQUE]: t('payments:paymentMethod.cheque'),
+        [PaymentMethod.E_WALLET]: t('payments:paymentMethod.eWallet'),
+      };
+      return labels[method] || method;
+    };
+  }, [t]);
 
   // Monitor network status
   useEffect(() => {
@@ -105,7 +133,7 @@ const PaymentForm: React.FC = () => {
       logger.info('PaymentForm', 'Loaded invoices from IndexedDB', { count: allInvoices.length });
     } catch (error) {
       logger.error('PaymentForm', 'Failed to load invoices', error as Error);
-      message.error('Không thể tải danh sách hóa đơn');
+      message.error(t('common:messages.fetchError'));
     }
   };
 
@@ -116,7 +144,7 @@ const PaymentForm: React.FC = () => {
       logger.info('PaymentForm', 'Loaded orders from IndexedDB', { count: allOrders.length });
     } catch (error) {
       logger.error('PaymentForm', 'Failed to load orders', error as Error);
-      message.error('Không thể tải danh sách đơn hàng');
+      message.error(t('common:messages.fetchError'));
     }
   };
 
@@ -151,7 +179,7 @@ const PaymentForm: React.FC = () => {
       }
     } catch (error) {
       logger.error('PaymentForm', 'Failed to load payment', error as Error);
-      message.error('Không thể tải thông tin thanh toán');
+      message.error(t('payments:messages.fetchDetailError'));
     } finally {
       setLoading(false);
     }
@@ -168,7 +196,7 @@ const PaymentForm: React.FC = () => {
       }
     } catch (error) {
       logger.error('PaymentForm', 'Failed to load invoice', error as Error);
-      message.error('Không thể tải thông tin hóa đơn');
+      message.error(t('common:messages.fetchError'));
     }
   };
 
@@ -183,7 +211,7 @@ const PaymentForm: React.FC = () => {
       }
     } catch (error) {
       logger.error('PaymentForm', 'Failed to load order', error as Error);
-      message.error('Không thể tải thông tin đơn hàng');
+      message.error(t('common:messages.fetchError'));
     }
   };
 
@@ -204,11 +232,11 @@ const PaymentForm: React.FC = () => {
 
       if (id) {
         await offlineServices.payments.update(id, paymentData);
-        message.success('Cập nhật thanh toán thành công');
+        message.success(t('payments:messages.updateSuccess'));
         logger.info('PaymentForm', 'Updated payment', { id });
       } else {
         await offlineServices.payments.create(paymentData);
-        message.success('Tạo thanh toán thành công');
+        message.success(t('payments:messages.createSuccess'));
         logger.info('PaymentForm', 'Created payment');
       }
 
@@ -225,7 +253,7 @@ const PaymentForm: React.FC = () => {
       navigate('/dashboard/payments');
     } catch (error: any) {
       logger.error('PaymentForm', 'Failed to save payment', error);
-      message.error(error.message || 'Có lỗi xảy ra');
+      message.error(error.message || t('common:messages.error'));
     } finally {
       setLoading(false);
     }
@@ -235,7 +263,7 @@ const PaymentForm: React.FC = () => {
   const handleSync = async () => {
     const token = localStorage.getItem('token');
     if (!token) {
-      message.error('Vui lòng đăng nhập');
+      message.error(t('common:messages.loginRequired'));
       return;
     }
 
@@ -244,7 +272,7 @@ const PaymentForm: React.FC = () => {
       const result = await syncManager.sync(token);
       
       if (result.success) {
-        message.success(`Đồng bộ thành công: ${result.pulled} pulled, ${result.pushed} pushed`);
+        message.success(t('common:sync.syncSuccess', { pulled: result.pulled, pushed: result.pushed }));
         // Reload data after sync
         await loadInvoices();
         await loadOrders();
@@ -252,11 +280,11 @@ const PaymentForm: React.FC = () => {
           await loadPayment();
         }
       } else {
-        message.error(`Đồng bộ thất bại: ${result.errors.join(', ')}`);
+        message.error(t('common:sync.syncFailed', { errors: result.errors.join(', ') }));
       }
     } catch (error) {
       logger.error('PaymentForm', 'Sync failed', error as Error);
-      message.error('Đồng bộ thất bại');
+      message.error(t('common:sync.syncFailed'));
     } finally {
       setSyncing(false);
     }
@@ -278,15 +306,15 @@ const PaymentForm: React.FC = () => {
       <Card>
         <Space style={{ marginBottom: 16 }}>
           <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/dashboard/payments')}>
-            Quay lại
+            {t('common:actions.back')}
           </Button>
           <Badge status={isOnline ? 'success' : 'error'} />
           <span>{isOnline ? <WifiOutlined /> : <DisconnectOutlined />}</span>
-          <span>{isOnline ? 'Online' : 'Offline'}</span>
+          <span>{isOnline ? t('common:network.online') : t('common:network.offline')}</span>
           {queueSize > 0 && (
             <>
               <span>|</span>
-              <span style={{ color: '#faad14' }}>{queueSize} thay đổi chưa đồng bộ</span>
+              <span style={{ color: '#faad14' }}>{t('common:sync.pendingChanges', { count: queueSize })}</span>
             </>
           )}
           <Button
@@ -296,12 +324,12 @@ const PaymentForm: React.FC = () => {
             disabled={!isOnline}
             size="small"
           >
-            Đồng bộ
+            {t('common:sync.syncNow')}
           </Button>
         </Space>
 
         <Title level={3}>
-          <DollarOutlined /> {id ? 'Chỉnh sửa thanh toán' : 'Tạo thanh toán mới'}
+          <DollarOutlined /> {id ? t('payments:editPayment') : t('payments:createPayment')}
         </Title>
 
         <Form
@@ -316,10 +344,10 @@ const PaymentForm: React.FC = () => {
         >
           <Row gutter={16}>
             <Col xs={24} md={12}>
-              <Form.Item name="invoiceId" label="Hóa đơn (tùy chọn)">
+              <Form.Item name="invoiceId" label={t('invoices:title')}>
                 <Select
                   showSearch
-                  placeholder="Chọn hóa đơn"
+                  placeholder={t('common:actions.select')}
                   allowClear
                   onChange={handleInvoiceChange}
                   optionFilterProp="children"
@@ -337,10 +365,10 @@ const PaymentForm: React.FC = () => {
             </Col>
 
             <Col xs={24} md={12}>
-              <Form.Item name="orderId" label="Đơn hàng (tùy chọn)">
+              <Form.Item name="orderId" label={t('orders:title')}>
                 <Select
                   showSearch
-                  placeholder="Chọn đơn hàng"
+                  placeholder={t('common:actions.select')}
                   allowClear
                   onChange={handleOrderChange}
                   optionFilterProp="children"
@@ -360,20 +388,20 @@ const PaymentForm: React.FC = () => {
 
           {(selectedInvoice || selectedOrder) && (
             <Alert
-              message="Thông tin thanh toán"
+              message={t('payments:paymentInfo')}
               description={
                 <Space direction="vertical" style={{ width: '100%' }}>
                   {selectedInvoice && (
                     <>
-                      <Text>Hóa đơn: {selectedInvoice.invoiceNumber}</Text>
+                      <Text>{t('invoices:invoiceNumber')}: {selectedInvoice.invoiceNumber}</Text>
                       <Text>
-                        Tổng tiền: {selectedInvoice.totalAmount.toLocaleString('vi-VN')} ₫
+                        {t('common:totalAmount')}: {selectedInvoice.totalAmount.toLocaleString('vi-VN')} ₫
                       </Text>
                       <Text>
-                        Đã thanh toán: {selectedInvoice.paidAmount.toLocaleString('vi-VN')} ₫
+                        {t('common:paidAmount')}: {selectedInvoice.paidAmount.toLocaleString('vi-VN')} ₫
                       </Text>
                       <Text strong>
-                        Còn lại:{' '}
+                        {t('common:remainingAmount')}:{' '}
                         {(selectedInvoice.totalAmount - selectedInvoice.paidAmount).toLocaleString(
                           'vi-VN',
                         )}{' '}
@@ -383,13 +411,13 @@ const PaymentForm: React.FC = () => {
                   )}
                   {selectedOrder && (
                     <>
-                      <Text>Đơn hàng: {selectedOrder.orderNumber}</Text>
-                      <Text>Tổng tiền: {selectedOrder.totalAmount.toLocaleString('vi-VN')} ₫</Text>
+                      <Text>{t('orders:orderNumber')}: {selectedOrder.orderNumber}</Text>
+                      <Text>{t('common:totalAmount')}: {selectedOrder.totalAmount.toLocaleString('vi-VN')} ₫</Text>
                       <Text>
-                        Đã thanh toán: {selectedOrder.paidAmount.toLocaleString('vi-VN')} ₫
+                        {t('common:paidAmount')}: {selectedOrder.paidAmount.toLocaleString('vi-VN')} ₫
                       </Text>
                       <Text strong>
-                        Còn lại:{' '}
+                        {t('common:remainingAmount')}:{' '}
                         {(selectedOrder.totalAmount - selectedOrder.paidAmount).toLocaleString(
                           'vi-VN',
                         )}{' '}
@@ -409,10 +437,10 @@ const PaymentForm: React.FC = () => {
             <Col xs={24} md={8}>
               <Form.Item
                 name="amount"
-                label="Số tiền"
+                label={t('payments:amount')}
                 rules={[
-                  { required: true, message: 'Vui lòng nhập số tiền' },
-                  { type: 'number', min: 0, message: 'Số tiền phải lớn hơn 0' },
+                  { required: true, message: t('payments:form.amountRequired') },
+                  { type: 'number', min: 0, message: t('payments:form.amountMin') },
                 ]}
               >
                 <InputNumber
@@ -428,24 +456,24 @@ const PaymentForm: React.FC = () => {
             <Col xs={24} md={8}>
               <Form.Item
                 name="paymentMethod"
-                label="Phương thức thanh toán"
-                rules={[{ required: true, message: 'Vui lòng chọn phương thức' }]}
+                label={t('payments:paymentMethod')}
+                rules={[{ required: true, message: t('payments:form.paymentMethodRequired') }]}
               >
                 <Select>
                   <Option value={PaymentMethod.CASH}>
-                    {getPaymentMethodIcon(PaymentMethod.CASH)} Tiền mặt
+                    {getPaymentMethodIcon(PaymentMethod.CASH)} {getMethodLabel(PaymentMethod.CASH)}
                   </Option>
                   <Option value={PaymentMethod.CARD}>
-                    {getPaymentMethodIcon(PaymentMethod.CARD)} Thẻ
+                    {getPaymentMethodIcon(PaymentMethod.CARD)} {getMethodLabel(PaymentMethod.CARD)}
                   </Option>
                   <Option value={PaymentMethod.BANK_TRANSFER}>
-                    {getPaymentMethodIcon(PaymentMethod.BANK_TRANSFER)} Chuyển khoản
+                    {getPaymentMethodIcon(PaymentMethod.BANK_TRANSFER)} {getMethodLabel(PaymentMethod.BANK_TRANSFER)}
                   </Option>
                   <Option value={PaymentMethod.CHEQUE}>
-                    {getPaymentMethodIcon(PaymentMethod.CHEQUE)} Séc
+                    {getPaymentMethodIcon(PaymentMethod.CHEQUE)} {getMethodLabel(PaymentMethod.CHEQUE)}
                   </Option>
                   <Option value={PaymentMethod.E_WALLET}>
-                    {getPaymentMethodIcon(PaymentMethod.E_WALLET)} Ví điện tử
+                    {getPaymentMethodIcon(PaymentMethod.E_WALLET)} {getMethodLabel(PaymentMethod.E_WALLET)}
                   </Option>
                 </Select>
               </Form.Item>
@@ -454,8 +482,8 @@ const PaymentForm: React.FC = () => {
             <Col xs={24} md={8}>
               <Form.Item
                 name="paymentDate"
-                label="Ngày thanh toán"
-                rules={[{ required: true, message: 'Vui lòng chọn ngày thanh toán' }]}
+                label={t('payments:paymentDate')}
+                rules={[{ required: true, message: t('payments:form.paymentDateRequired') }]}
               >
                 <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY HH:mm" showTime />
               </Form.Item>
@@ -464,25 +492,25 @@ const PaymentForm: React.FC = () => {
 
           <Row gutter={16}>
             <Col xs={24} md={12}>
-              <Form.Item name="transactionId" label="Mã giao dịch">
-                <Input placeholder="Nhập mã giao dịch (nếu có)" />
+              <Form.Item name="transactionId" label={t('payments:reference')}>
+                <Input placeholder={t('payments:form.referencePlaceholder')} />
               </Form.Item>
             </Col>
 
             <Col xs={24} md={12}>
-              <Form.Item name="status" label="Trạng thái">
+              <Form.Item name="status" label={t('payments:status')}>
                 <Select>
-                  <Option value={PaymentStatus.PENDING}>Chờ xử lý</Option>
-                  <Option value={PaymentStatus.COMPLETED}>Hoàn thành</Option>
-                  <Option value={PaymentStatus.FAILED}>Thất bại</Option>
-                  <Option value={PaymentStatus.REFUNDED}>Đã hoàn tiền</Option>
+                  <Option value={PaymentStatus.PENDING}>{getStatusLabel(PaymentStatus.PENDING)}</Option>
+                  <Option value={PaymentStatus.COMPLETED}>{getStatusLabel(PaymentStatus.COMPLETED)}</Option>
+                  <Option value={PaymentStatus.FAILED}>{getStatusLabel(PaymentStatus.FAILED)}</Option>
+                  <Option value={PaymentStatus.REFUNDED}>{getStatusLabel(PaymentStatus.REFUNDED)}</Option>
                 </Select>
               </Form.Item>
             </Col>
           </Row>
 
-          <Form.Item name="notes" label="Ghi chú">
-            <TextArea rows={4} placeholder="Nhập ghi chú" />
+          <Form.Item name="notes" label={t('payments:notes')}>
+            <TextArea rows={4} placeholder={t('payments:form.notesPlaceholder')} />
           </Form.Item>
 
           <Divider />
@@ -490,9 +518,9 @@ const PaymentForm: React.FC = () => {
           <Form.Item>
             <Space>
               <Button type="primary" htmlType="submit" icon={<SaveOutlined />} loading={loading}>
-                {id ? 'Cập nhật' : 'Tạo thanh toán'}
+                {id ? t('common:actions.update') : t('payments:createPayment')}
               </Button>
-              <Button onClick={() => navigate('/dashboard/payments')}>Hủy</Button>
+              <Button onClick={() => navigate('/dashboard/payments')}>{t('common:actions.cancel')}</Button>
             </Space>
           </Form.Item>
         </Form>

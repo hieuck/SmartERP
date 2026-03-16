@@ -93,7 +93,14 @@
     "syncSuccess": "Đồng bộ thanh toán thành công",
     "syncError": "Đồng bộ thanh toán thất bại",
     "fetchError": "Lấy danh sách thanh toán thất bại",
-    "fetchDetailError": "Lấy chi tiết thanh toán thất bại"
+    "fetchDetailError": "Lấy chi tiết thanh toán thất bại",
+    "completeConfirm": "Bạn có chắc chắn muốn đánh dấu thanh toán này là hoàn thành?",
+    "refundConfirm": "Bạn có chắc chắn muốn hoàn tiền {{amount}} ₫?",
+    "reconcileConfirm": "Bạn có chắc chắn muốn đối soát thanh toán này?",
+    "paymentFailed": "Thanh toán thất bại",
+    "paymentFailedDesc": "Giao dịch thanh toán này đã thất bại. Vui lòng kiểm tra lại thông tin và thử lại.",
+    "refunded": "Đã hoàn tiền",
+    "refundedDesc": "Số tiền {{amount}} ₫ đã được hoàn trả cho khách hàng."
   },
   
   "detail": {

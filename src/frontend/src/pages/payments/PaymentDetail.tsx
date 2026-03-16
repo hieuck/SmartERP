@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   Card,
   Descriptions,
@@ -24,6 +24,7 @@ import {
   DisconnectOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   PaymentStatus,
   PaymentMethod,
@@ -36,29 +37,8 @@ import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
 
-const statusColors: Record<PaymentStatus, string> = {
-  [PaymentStatus.PENDING]: 'blue',
-  [PaymentStatus.COMPLETED]: 'green',
-  [PaymentStatus.FAILED]: 'red',
-  [PaymentStatus.REFUNDED]: 'orange',
-};
-
-const statusLabels: Record<PaymentStatus, string> = {
-  [PaymentStatus.PENDING]: 'Chờ xử lý',
-  [PaymentStatus.COMPLETED]: 'Hoàn thành',
-  [PaymentStatus.FAILED]: 'Thất bại',
-  [PaymentStatus.REFUNDED]: 'Đã hoàn tiền',
-};
-
-const methodLabels: Record<PaymentMethod, string> = {
-  [PaymentMethod.CASH]: 'Tiền mặt',
-  [PaymentMethod.CARD]: 'Thẻ',
-  [PaymentMethod.BANK_TRANSFER]: 'Chuyển khoản',
-  [PaymentMethod.CHEQUE]: 'Séc',
-  [PaymentMethod.E_WALLET]: 'Ví điện tử',
-};
-
 const PaymentDetail: React.FC = () => {
+  const { t } = useTranslation(['payments', 'common', 'invoices', 'orders']);
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const [payment, setPayment] = useState<Payment | null>(null);
@@ -66,6 +46,50 @@ const PaymentDetail: React.FC = () => {
   const [syncing, setSyncing] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [syncQueueSize, setSyncQueueSize] = useState(0);
+
+  // Memoized translation functions
+  const statusColors: Record<PaymentStatus, string> = useMemo(() => ({
+    [PaymentStatus.PENDING]: 'blue',
+    [PaymentStatus.COMPLETED]: 'green',
+    [PaymentStatus.FAILED]: 'red',
+    [PaymentStatus.REFUNDED]: 'orange',
+  }), []);
+
+  const getStatusLabel = useMemo(() => {
+    return (status: PaymentStatus) => {
+      const labels: Record<PaymentStatus, string> = {
+        [PaymentStatus.PENDING]: t('payments:status.pending'),
+        [PaymentStatus.COMPLETED]: t('payments:status.completed'),
+        [PaymentStatus.FAILED]: t('payments:status.failed'),
+        [PaymentStatus.REFUNDED]: t('payments:status.refunded'),
+      };
+      return labels[status] || status;
+    };
+  }, [t]);
+
+  const getMethodLabel = useMemo(() => {
+    return (method: PaymentMethod) => {
+      const labels: Record<PaymentMethod, string> = {
+        [PaymentMethod.CASH]: t('payments:paymentMethod.cash'),
+        [PaymentMethod.CARD]: t('payments:paymentMethod.card'),
+        [PaymentMethod.BANK_TRANSFER]: t('payments:paymentMethod.bankTransfer'),
+        [PaymentMethod.CHEQUE]: t('payments:paymentMethod.cheque'),
+        [PaymentMethod.E_WALLET]: t('payments:paymentMethod.eWallet'),
+      };
+      return labels[method] || method;
+    };
+  }, [t]);
+
+  const getSyncStatusLabel = useMemo(() => {
+    return (status: string) => {
+      const labels: Record<string, string> = {
+        'synced': t('payments:syncStatus.synced'),
+        'pending': t('payments:syncStatus.pending'),
+        'failed': t('payments:syncStatus.failed'),
+      };
+      return labels[status] || status;
+    };
+  }, [t]);
 
   // Load payment from IndexedDB
   const loadPayment = async () => {
@@ -78,7 +102,7 @@ const PaymentDetail: React.FC = () => {
       logger.info('PaymentDetail', 'Loaded payment from IndexedDB', { id });
     } catch (error) {
       logger.error('PaymentDetail', 'Failed to load payment', error as Error);
-      message.error('Không thể tải thông tin thanh toán');
+      message.error(t('payments:messages.fetchDetailError'));
     } finally {
       setLoading(false);
     }
@@ -135,7 +159,7 @@ const PaymentDetail: React.FC = () => {
   const handleSync = async () => {
     const token = localStorage.getItem('token');
     if (!token) {
-      message.error('Vui lòng đăng nhập');
+      message.error(t('common:messages.loginRequired'));
       return;
     }
 
@@ -144,14 +168,14 @@ const PaymentDetail: React.FC = () => {
       const result = await syncManager.sync(token);
       
       if (result.success) {
-        message.success(`Đồng bộ thành công: ${result.pulled} pulled, ${result.pushed} pushed`);
+        message.success(t('common:sync.syncSuccess', { pulled: result.pulled, pushed: result.pushed }));
         await loadPayment();
       } else {
-        message.error(`Đồng bộ thất bại: ${result.errors.join(', ')}`);
+        message.error(t('common:sync.syncFailed', { errors: result.errors.join(', ') }));
       }
     } catch (error) {
       logger.error('PaymentDetail', 'Sync failed', error as Error);
-      message.error('Đồng bộ thất bại');
+      message.error(t('common:sync.syncFailed'));
     } finally {
       setSyncing(false);
     }
@@ -161,19 +185,19 @@ const PaymentDetail: React.FC = () => {
     if (!payment) return;
 
     Modal.confirm({
-      title: 'Hoàn thành thanh toán',
-      content: 'Bạn có chắc chắn muốn đánh dấu thanh toán này là hoàn thành?',
+      title: t('common:actions.complete'),
+      content: t('payments:messages.completeConfirm'),
       onOk: async () => {
         try {
           await offlineServices.payments.update(payment.id, {
             ...payment,
             status: PaymentStatus.COMPLETED,
           });
-          message.success('Hoàn thành thanh toán thành công');
+          message.success(t('payments:messages.updateSuccess'));
           await loadPayment();
         } catch (error) {
           logger.error('PaymentDetail', 'Failed to complete payment', error as Error);
-          message.error('Không thể hoàn thành thanh toán');
+          message.error(t('payments:messages.updateError'));
         }
       },
     });
@@ -183,19 +207,19 @@ const PaymentDetail: React.FC = () => {
     if (!payment) return;
 
     Modal.confirm({
-      title: 'Hoàn tiền',
-      content: `Bạn có chắc chắn muốn hoàn tiền ${payment.amount.toLocaleString('vi-VN')} ₫?`,
+      title: t('common:actions.refund'),
+      content: t('payments:messages.refundConfirm', { amount: payment.amount.toLocaleString('vi-VN') }),
       onOk: async () => {
         try {
           await offlineServices.payments.update(payment.id, {
             ...payment,
             status: PaymentStatus.REFUNDED,
           });
-          message.success('Hoàn tiền thành công');
+          message.success(t('payments:messages.updateSuccess'));
           await loadPayment();
         } catch (error) {
           logger.error('PaymentDetail', 'Failed to refund payment', error as Error);
-          message.error('Không thể hoàn tiền');
+          message.error(t('payments:messages.updateError'));
         }
       },
     });
@@ -205,8 +229,8 @@ const PaymentDetail: React.FC = () => {
     if (!payment) return;
 
     Modal.confirm({
-      title: 'Đối soát thanh toán',
-      content: 'Bạn có chắc chắn muốn đối soát thanh toán này?',
+      title: t('payments:actions.reconcile'),
+      content: t('payments:messages.reconcileConfirm'),
       onOk: async () => {
         try {
           // Just mark as reconciled in metadata
@@ -218,11 +242,11 @@ const PaymentDetail: React.FC = () => {
               reconciledAt: new Date().toISOString(),
             },
           });
-          message.success('Đối soát thành công');
+          message.success(t('payments:messages.updateSuccess'));
           await loadPayment();
         } catch (error) {
           logger.error('PaymentDetail', 'Failed to reconcile payment', error as Error);
-          message.error('Không thể đối soát');
+          message.error(t('payments:messages.updateError'));
         }
       },
     });
@@ -240,7 +264,7 @@ const PaymentDetail: React.FC = () => {
     return (
       <div style={{ padding: '24px' }}>
         <Card>
-          <Text>Không tìm thấy thanh toán</Text>
+          <Text>{t('payments:empty.title')}</Text>
         </Card>
       </div>
     );
@@ -259,11 +283,11 @@ const PaymentDetail: React.FC = () => {
           <Space>
             <Badge status={isOnline ? 'success' : 'error'} />
             <Text>{isOnline ? <WifiOutlined /> : <DisconnectOutlined />}</Text>
-            <Text>{isOnline ? 'Online' : 'Offline'}</Text>
+            <Text>{isOnline ? t('common:network.online') : t('common:network.offline')}</Text>
             {syncQueueSize > 0 && (
               <>
                 <Text>|</Text>
-                <Text type="warning">{syncQueueSize} thay đổi chưa đồng bộ</Text>
+                <Text type="warning">{t('common:sync.pendingChanges', { count: syncQueueSize })}</Text>
               </>
             )}
             <Button
@@ -273,7 +297,7 @@ const PaymentDetail: React.FC = () => {
               disabled={!isOnline}
               size="small"
             >
-              Đồng bộ
+              {t('common:sync.syncNow')}
             </Button>
           </Space>
         </Card>
@@ -288,33 +312,33 @@ const PaymentDetail: React.FC = () => {
             }}
           >
             <Title level={3}>
-              <DollarCircleOutlined /> Chi tiết thanh toán: {payment.id}
+              <DollarCircleOutlined /> {t('payments:paymentDetail')}: {payment.id}
             </Title>
             <Space>
               <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/dashboard/payments')}>
-                Quay lại
+                {t('common:actions.back')}
               </Button>
               {canEdit && (
                 <Button
                   icon={<EditOutlined />}
                   onClick={() => navigate(`/dashboard/payments/${id}`)}
                 >
-                  Chỉnh sửa
+                  {t('common:actions.edit')}
                 </Button>
               )}
               {canComplete && (
                 <Button type="primary" icon={<CheckOutlined />} onClick={handleComplete}>
-                  Hoàn thành
+                  {t('common:actions.complete')}
                 </Button>
               )}
               {canRefund && (
                 <Button danger icon={<RollbackOutlined />} onClick={handleRefund}>
-                  Hoàn tiền
+                  {t('common:actions.refund')}
                 </Button>
               )}
               {canReconcile && (
                 <Button icon={<ReconciliationOutlined />} onClick={handleReconcile}>
-                  Đối soát
+                  {t('payments:actions.reconcile')}
                 </Button>
               )}
             </Space>
@@ -322,8 +346,8 @@ const PaymentDetail: React.FC = () => {
 
           {payment.status === PaymentStatus.FAILED && (
             <Alert
-              message="Thanh toán thất bại"
-              description="Giao dịch thanh toán này đã thất bại. Vui lòng kiểm tra lại thông tin và thử lại."
+              message={t('payments:messages.paymentFailed')}
+              description={t('payments:messages.paymentFailedDesc')}
               type="error"
               showIcon
               style={{ marginBottom: 16 }}
@@ -332,8 +356,8 @@ const PaymentDetail: React.FC = () => {
 
           {payment.status === PaymentStatus.REFUNDED && (
             <Alert
-              message="Đã hoàn tiền"
-              description={`Số tiền ${payment.amount.toLocaleString('vi-VN')} ₫ đã được hoàn trả cho khách hàng.`}
+              message={t('payments:messages.refunded')}
+              description={t('payments:messages.refundedDesc', { amount: payment.amount.toLocaleString('vi-VN') })}
               type="warning"
               showIcon
               style={{ marginBottom: 16 }}
@@ -341,40 +365,40 @@ const PaymentDetail: React.FC = () => {
           )}
 
           <Descriptions bordered column={2}>
-            <Descriptions.Item label="Mã thanh toán">{payment.id}</Descriptions.Item>
-            <Descriptions.Item label="Trạng thái">
+            <Descriptions.Item label={t('payments:paymentCode')}>{payment.id}</Descriptions.Item>
+            <Descriptions.Item label={t('payments:status')}>
               <Tag color={statusColors[payment.status as PaymentStatus]}>
-                {statusLabels[payment.status as PaymentStatus]}
+                {getStatusLabel(payment.status as PaymentStatus)}
               </Tag>
             </Descriptions.Item>
-            <Descriptions.Item label="Đơn hàng">{payment.orderId || '-'}</Descriptions.Item>
-            <Descriptions.Item label="Phương thức">
-              <Tag>{methodLabels[payment.paymentMethod as PaymentMethod]}</Tag>
+            <Descriptions.Item label={t('orders:orderNumber')}>{payment.orderId || '-'}</Descriptions.Item>
+            <Descriptions.Item label={t('payments:paymentMethod')}>
+              <Tag>{getMethodLabel(payment.paymentMethod as PaymentMethod)}</Tag>
             </Descriptions.Item>
-            <Descriptions.Item label="Số tiền">
+            <Descriptions.Item label={t('payments:amount')}>
               <Text strong style={{ fontSize: 18, color: '#52c41a' }}>
                 {payment.amount.toLocaleString('vi-VN')} {payment.currency}
               </Text>
             </Descriptions.Item>
-            <Descriptions.Item label="Ngày thanh toán">
+            <Descriptions.Item label={t('payments:paymentDate')}>
               {payment.paymentDate ? dayjs(payment.paymentDate).format('DD/MM/YYYY HH:mm') : '-'}
             </Descriptions.Item>
             {payment.transactionId && (
-              <Descriptions.Item label="Mã giao dịch" span={2}>
+              <Descriptions.Item label={t('payments:reference')} span={2}>
                 <Text code>{payment.transactionId}</Text>
               </Descriptions.Item>
             )}
             {payment.notes && (
-              <Descriptions.Item label="Ghi chú" span={2}>
+              <Descriptions.Item label={t('payments:notes')} span={2}>
                 {payment.notes}
               </Descriptions.Item>
             )}
-            <Descriptions.Item label="Ngày tạo">
+            <Descriptions.Item label={t('payments:createdAt')}>
               {dayjs(payment.createdAt).format('DD/MM/YYYY HH:mm')}
             </Descriptions.Item>
-            <Descriptions.Item label="Trạng thái đồng bộ">
+            <Descriptions.Item label={t('payments:syncStatus')}>
               <Tag color={payment.syncStatus === 'synced' ? 'green' : 'orange'}>
-                {payment.syncStatus === 'synced' ? 'Đã đồng bộ' : 'Chưa đồng bộ'}
+                {getSyncStatusLabel(payment.syncStatus)}
               </Tag>
             </Descriptions.Item>
           </Descriptions>
