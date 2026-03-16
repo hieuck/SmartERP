@@ -11,64 +11,61 @@
     "leadTime": "Lead Time",
     "leadTimeDays": "{{days}} days"
   },
-  "messages": {
-    "deleteSuccess": "Supplier deleted successfully",
-    "deleteError": "Cannot delete supplier",
-    "total": "Total {{total}} suppliers",
-    "loadError": "Cannot load supplier",
-    "updateSuccess": "Supplier updated successfully",
-    "createSuccess": "Supplier created successfully",
-    "saveError": "An error occurred",
-    "syncError": "Sync failed"
-  },
-  "list": {
-    "title": "Supplier List",
-    "empty": "No suppliers found",
-    "search": "Search suppliers..."
+  "sync": {
+    "status": "Sync",
+    "synced": "Synced",
+    "pending": "Pending",
+    "conflict": "Conflict",
+    "unknown": "Unknown",
+    "online": "Online",
+    "offline": "Offline",
+    "syncNow": "Sync Now",
+    "syncing": "Syncing...",
+    "pendingSync": "Pending Sync"
   },
   "form": {
-    "create": "Add Supplier",
+    "create": "Add New Supplier",
     "edit": "Edit Supplier",
-    "title": "Supplier",
     "name": "Supplier Name",
-    "code": "Supplier Code",
-    "contact": "Contact Person",
-    "phone": "Phone",
     "email": "Email",
+    "phone": "Phone Number",
     "address": "Address",
-    "taxCode": "Tax Code",
-    "bankAccount": "Bank Account",
-    "notes": "Notes",
-    "paymentTerms": "Payment Terms",
-    "paymentTermsDays": "days",
-    "paymentTermsPlaceholder": "Number of payment days"
+    "paymentTerms": "Payment Terms (days)",
+    "paymentTermsPlaceholder": "Enter payment terms",
+    "paymentTermsDays": "days"
+  },
+  "validation": {
+    "nameRequired": "Please enter supplier name",
+    "namePlaceholder": "Enter supplier name",
+    "emailRequired": "Please enter email",
+    "emailInvalid": "Invalid email format",
+    "emailPlaceholder": "Enter email",
+    "phoneRequired": "Please enter phone number",
+    "phoneInvalid": "Invalid phone number format (10-11 digits)",
+    "phonePlaceholder": "Enter phone number",
+    "addressRequired": "Please enter address",
+    "addressPlaceholder": "Enter address"
   },
   "buttons": {
     "back": "Back",
-    "sync": "Sync",
-    "syncing": "Syncing...",
-    "update": "Update",
+    "save": "Save",
     "create": "Create",
-    "cancel": "Cancel"
+    "update": "Update",
+    "cancel": "Cancel",
+    "sync": "Sync Now",
+    "syncing": "Syncing..."
   },
   "labels": {
     "online": "Online",
     "offline": "Offline"
   },
-  "validation": {
-    "nameRequired": "Please enter supplier name",
-    "emailRequired": "Please enter email",
-    "emailInvalid": "Invalid email",
-    "phoneRequired": "Please enter phone number",
-    "phoneInvalid": "Invalid phone number",
-    "addressRequired": "Please enter address",
-    "namePlaceholder": "Enter supplier name",
-    "emailPlaceholder": "Enter email",
-    "phonePlaceholder": "Enter phone number",
-    "addressPlaceholder": "Enter address"
-  },
-  "status": {
-    "active": "Active",
-    "inactive": "Inactive"
+  "messages": {
+    "createSuccess": "Supplier created successfully",
+    "updateSuccess": "Supplier updated successfully",
+    "deleteSuccess": "Supplier deleted successfully",
+    "deleteError": "Cannot delete supplier",
+    "loadError": "Failed to load suppliers",
+    "saveError": "An error occurred",
+    "total": "Total {{total}} suppliers"
   }
 }

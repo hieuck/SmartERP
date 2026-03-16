@@ -11,59 +11,61 @@
     "leadTime": "Thời Gian Giao Hàng",
     "leadTimeDays": "{{days}} ngày"
   },
-  "messages": {
-    "deleteSuccess": "Xóa nhà cung cấp thành công",
-    "deleteError": "Không thể xóa nhà cung cấp",
-    "total": "Tổng {{total}} nhà cung cấp",
-    "loadError": "Không thể tải nhà cung cấp",
-    "updateSuccess": "Cập nhật nhà cung cấp thành công",
-    "createSuccess": "Tạo nhà cung cấp thành công",
-    "saveError": "Có lỗi xảy ra",
-    "syncError": "Đồng bộ thất bại"
+  "sync": {
+    "status": "Đồng bộ",
+    "synced": "Đã đồng bộ",
+    "pending": "Chờ đồng bộ",
+    "conflict": "Xung đột",
+    "unknown": "Không xác định",
+    "online": "Trực tuyến",
+    "offline": "Ngoại tuyến",
+    "syncNow": "Đồng bộ ngay",
+    "syncing": "Đang đồng bộ...",
+    "pendingSync": "Chờ đồng bộ"
   },
   "form": {
-    "create": "Thêm Nhà Cung Cấp",
+    "create": "Thêm Nhà Cung Cấp Mới",
     "edit": "Chỉnh Sửa Nhà Cung Cấp",
-    "title": "Nhà Cung Cấp",
-    "name": "Tên Nhà Cung Cấp",
-    "code": "Mã NCC",
-    "contact": "Người Liên Hệ",
-    "phone": "Số Điện Thoại",
+    "name": "Tên nhà cung cấp",
     "email": "Email",
-    "address": "Địa Chỉ",
-    "taxCode": "Mã Số Thuế",
-    "bankAccount": "Tài Khoản Ngân Hàng",
-    "notes": "Ghi Chú",
-    "paymentTerms": "Điều khoản thanh toán",
-    "paymentTermsDays": "ngày",
-    "paymentTermsPlaceholder": "Số ngày thanh toán"
-  },
-  "buttons": {
-    "back": "Quay lại",
-    "sync": "Đồng bộ",
-    "syncing": "Đang đồng bộ...",
-    "update": "Cập nhật",
-    "create": "Tạo mới",
-    "cancel": "Hủy"
-  },
-  "labels": {
-    "online": "Online",
-    "offline": "Offline"
+    "phone": "Số điện thoại",
+    "address": "Địa chỉ",
+    "paymentTerms": "Điều khoản thanh toán (ngày)",
+    "paymentTermsPlaceholder": "Nhập điều khoản thanh toán",
+    "paymentTermsDays": "ngày"
   },
   "validation": {
     "nameRequired": "Vui lòng nhập tên nhà cung cấp",
+    "namePlaceholder": "Nhập tên nhà cung cấp",
     "emailRequired": "Vui lòng nhập email",
     "emailInvalid": "Email không hợp lệ",
-    "phoneRequired": "Vui lòng nhập số điện thoại",
-    "phoneInvalid": "Số điện thoại không hợp lệ",
-    "addressRequired": "Vui lòng nhập địa chỉ",
-    "namePlaceholder": "Nhập tên nhà cung cấp",
     "emailPlaceholder": "Nhập email",
+    "phoneRequired": "Vui lòng nhập số điện thoại",
+    "phoneInvalid": "Số điện thoại không hợp lệ (10-11 số)",
     "phonePlaceholder": "Nhập số điện thoại",
+    "addressRequired": "Vui lòng nhập địa chỉ",
     "addressPlaceholder": "Nhập địa chỉ"
   },
-  "status": {
-    "active": "Hoạt Động",
-    "inactive": "Không Hoạt Động"
+  "buttons": {
+    "back": "Quay lại",
+    "save": "Lưu",
+    "create": "Tạo mới",
+    "update": "Cập nhật",
+    "cancel": "Hủy",
+    "sync": "Đồng bộ ngay",
+    "syncing": "Đang đồng bộ..."
+  },
+  "labels": {
+    "online": "Trực tuyến",
+    "offline": "Ngoại tuyến"
+  },
+  "messages": {
+    "createSuccess": "Tạo nhà cung cấp thành công",
+    "updateSuccess": "Cập nhật nhà cung cấp thành công",
+    "deleteSuccess": "Xóa nhà cung cấp thành công",
+    "deleteError": "Xóa nhà cung cấp thất bại",
+    "loadError": "Không thể tải danh sách nhà cung cấp",
+    "saveError": "Có lỗi xảy ra",
+    "total": "Tổng {{total}} nhà cung cấp"
   }
 }

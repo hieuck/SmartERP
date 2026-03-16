@@ -216,7 +216,7 @@ export default function SupplierList() {
       render: (days: number) => (days ? t('suppliers:columns.leadTimeDays', { days }) : '-'),
     },
     {
-      title: 'Sync',
+      title: t('suppliers:sync.status'),
       dataIndex: 'syncStatus',
       key: 'syncStatus',
       width: 100,
@@ -227,13 +227,13 @@ export default function SupplierList() {
           [SyncStatus.CONFLICT]: 'error',
         };
         const labels = {
-          [SyncStatus.SYNCED]: 'Synced',
-          [SyncStatus.PENDING]: 'Pending',
-          [SyncStatus.CONFLICT]: 'Conflict',
+          [SyncStatus.SYNCED]: t('suppliers:sync.synced'),
+          [SyncStatus.PENDING]: t('suppliers:sync.pending'),
+          [SyncStatus.CONFLICT]: t('suppliers:sync.conflict'),
         };
         return (
           <Tag color={colors[syncStatus] || 'default'}>
-            {labels[syncStatus] || 'Unknown'}
+            {labels[syncStatus] || t('suppliers:sync.unknown')}
           </Tag>
         );
       },
@@ -257,14 +257,14 @@ export default function SupplierList() {
             text={
               <Space size="small">
                 {isOnline ? <CloudOutlined /> : <DisconnectOutlined />}
-                {isOnline ? 'Online' : 'Offline'}
+                {isOnline ? t('suppliers:sync.online') : t('suppliers:sync.offline')}
               </Space>
             }
           />
           
           {queueSize > 0 && (
             <Badge count={queueSize} showZero={false}>
-              <Tag color="warning">Pending Sync</Tag>
+              <Tag color="warning">{t('suppliers:sync.pendingSync')}</Tag>
             </Badge>
           )}
 
@@ -275,7 +275,7 @@ export default function SupplierList() {
             disabled={!isOnline}
             style={{ width: isMobile ? '100%' : 'auto' }}
           >
-            {syncing ? 'Syncing...' : 'Sync Now'}
+            {syncing ? t('suppliers:sync.syncing') : t('suppliers:sync.syncNow')}
           </Button>
         </Space>
       }
