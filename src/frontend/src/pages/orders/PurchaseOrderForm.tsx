@@ -14,6 +14,7 @@ import {
   Badge,
 } from 'antd';
 import { PlusOutlined, DeleteOutlined, ArrowLeftOutlined, SyncOutlined, WifiOutlined, DisconnectOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import { logger } from '@/lib/logger/logger.service';
 import { offlineServices } from '@/services/offline-services';
 import { syncManager } from '@/lib/offline/sync-manager';
@@ -35,6 +36,7 @@ interface OrderItem {
 }
 
 export default function PurchaseOrderForm() {
+  const { t } = useTranslation(['purchaseOrders', 'common']);
   const { isMobile } = useResponsive();
   const [form] = Form.useForm();
   const navigate = useNavigate();
@@ -113,7 +115,7 @@ export default function PurchaseOrderForm() {
       logger.info('PurchaseOrderForm', 'Loaded products from IndexedDB', { count: allProducts.length });
     } catch (error) {
       logger.error('PurchaseOrderForm', 'Failed to load products', error as Error);
-      message.error('Không thể tải danh sách sản phẩm');
+      message.error(t('purchaseOrders:messages.loadProductsError'));
     }
   };
 
@@ -124,7 +126,7 @@ export default function PurchaseOrderForm() {
       logger.info('PurchaseOrderForm', 'Loaded suppliers from IndexedDB', { count: allSuppliers.length });
     } catch (error) {
       logger.error('PurchaseOrderForm', 'Failed to load suppliers', error as Error);
-      message.error('Không thể tải danh sách nhà cung cấp');
+      message.error(t('purchaseOrders:messages.loadSuppliersError'));
     }
   };
 
@@ -170,7 +172,7 @@ export default function PurchaseOrderForm() {
       }
     } catch (error: any) {
       logger.error('PurchaseOrderForm', 'Failed to load order', error);
-      message.error(`Không thể tải đơn mua hàng: ${error.message || 'Unknown error'}`);
+      message.error(`${t('purchaseOrders:messages.loadOrderError')}: ${error.message || 'Unknown error'}`);
     } finally {
       setLoading(false);
     }
@@ -230,13 +232,13 @@ export default function PurchaseOrderForm() {
 
   const handleSubmit = async (values: any) => {
     if (items.length === 0) {
-      message.error('Vui lòng thêm ít nhất một sản phẩm');
+      message.error(t('purchaseOrders:messages.addProductError'));
       return;
     }
 
     const invalidItems = items.filter((item) => !item.productId || item.quantity <= 0);
     if (invalidItems.length > 0) {
-      message.error('Vui lòng điền đầy đủ thông tin sản phẩm');
+      message.error(t('purchaseOrders:messages.invalidProductError'));
       return;
     }
 
@@ -266,11 +268,11 @@ export default function PurchaseOrderForm() {
 
       if (id) {
         await offlineServices.purchaseOrders.update(id, orderData);
-        message.success('Cập nhật đơn mua hàng thành công');
+        message.success(t('purchaseOrders:messages.updateSuccess'));
         logger.info('PurchaseOrderForm', 'Updated purchase order', { id });
       } else {
         await offlineServices.purchaseOrders.create(orderData);
-        message.success('Tạo đơn mua hàng thành công');
+        message.success(t('purchaseOrders:messages.createSuccess'));
         logger.info('PurchaseOrderForm', 'Created purchase order');
       }
 
@@ -287,7 +289,7 @@ export default function PurchaseOrderForm() {
       navigate('/orders/purchase');
     } catch (error: any) {
       logger.error('PurchaseOrderForm', 'Failed to save order', error);
-      message.error(error.message || 'Có lỗi xảy ra');
+      message.error(error.message || t('purchaseOrders:messages.saveError'));
     } finally {
       setLoading(false);
     }
@@ -297,7 +299,7 @@ export default function PurchaseOrderForm() {
   const handleSync = async () => {
     const token = localStorage.getItem('token');
     if (!token) {
-      message.error('Vui lòng đăng nhập');
+      message.error(t('purchaseOrders:messages.loginRequired'));
       return;
     }
 
@@ -306,7 +308,7 @@ export default function PurchaseOrderForm() {
       const result = await syncManager.sync(token);
       
       if (result.success) {
-        message.success(`Đồng bộ thành công: ${result.pulled} pulled, ${result.pushed} pushed`);
+        message.success(`${t('purchaseOrders:messages.syncSuccess')}: ${result.pulled} pulled, ${result.pushed} pushed`);
         // Reload data after sync
         await loadProducts();
         await loadSuppliers();
@@ -314,11 +316,11 @@ export default function PurchaseOrderForm() {
           await loadOrder();
         }
       } else {
-        message.error(`Đồng bộ thất bại: ${result.errors.join(', ')}`);
+        message.error(`${t('purchaseOrders:messages.syncError')}: ${result.errors.join(', ')}`);
       }
     } catch (error) {
       logger.error('PurchaseOrderForm', 'Sync failed', error as Error);
-      message.error('Đồng bộ thất bại');
+      message.error(t('purchaseOrders:messages.syncError'));
     } finally {
       setSyncing(false);
     }
@@ -326,14 +328,14 @@ export default function PurchaseOrderForm() {
 
   const columns = [
     {
-      title: 'Sản phẩm',
+      title: t('purchaseOrders:columns.product'),
       dataIndex: 'productId',
       width: '30%',
       render: (value: string, record: OrderItem) => (
         <Select
           value={value}
           onChange={(val) => updateItem(record.key, 'productId', val)}
-          placeholder="Chọn sản phẩm"
+          placeholder={t('purchaseOrders:form.selectProduct')}
           showSearch
           filterOption={(input, option) =>
             (option?.children as string).toLowerCase().includes(input.toLowerCase())
@@ -349,7 +351,7 @@ export default function PurchaseOrderForm() {
       ),
     },
     {
-      title: 'Số lượng',
+      title: t('purchaseOrders:columns.quantity'),
       dataIndex: 'quantity',
       width: '15%',
       render: (value: number, record: OrderItem) => (
@@ -362,7 +364,7 @@ export default function PurchaseOrderForm() {
       ),
     },
     {
-      title: 'Đơn giá',
+      title: t('purchaseOrders:columns.unitPrice'),
       dataIndex: 'unitPrice',
       width: '15%',
       render: (value: number, record: OrderItem) => (
@@ -376,7 +378,7 @@ export default function PurchaseOrderForm() {
       ),
     },
     {
-      title: 'Giảm giá',
+      title: t('purchaseOrders:columns.discount'),
       dataIndex: 'discount',
       width: '15%',
       render: (value: number, record: OrderItem) => (
@@ -391,7 +393,7 @@ export default function PurchaseOrderForm() {
       ),
     },
     {
-      title: 'Thành tiền',
+      title: t('purchaseOrders:columns.subtotal'),
       dataIndex: 'subtotal',
       width: '15%',
       render: (value: number) => (value || 0).toLocaleString('vi-VN'),
@@ -415,15 +417,15 @@ export default function PurchaseOrderForm() {
       <div style={{ marginBottom: 16 }}>
         <Space>
           <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/orders/purchase')}>
-            Quay Lại
+            {t('purchaseOrders:form.back')}
           </Button>
           <Badge status={isOnline ? 'success' : 'error'} />
           <span>{isOnline ? <WifiOutlined /> : <DisconnectOutlined />}</span>
-          <span>{isOnline ? 'Online' : 'Offline'}</span>
+          <span>{isOnline ? t('purchaseOrders:sync.online') : t('purchaseOrders:sync.offline')}</span>
           {queueSize > 0 && (
             <>
               <span>|</span>
-              <span style={{ color: '#faad14' }}>{queueSize} thay đổi chưa đồng bộ</span>
+              <span style={{ color: '#faad14' }}>{queueSize} {t('purchaseOrders:sync.pendingChanges')}</span>
             </>
           )}
           <Button
@@ -433,11 +435,11 @@ export default function PurchaseOrderForm() {
             disabled={!isOnline}
             size="small"
           >
-            Đồng bộ
+            {t('purchaseOrders:sync.syncNow')}
           </Button>
         </Space>
       </div>
-      <Card title={id ? 'Sửa đơn mua hàng' : 'Tạo đơn mua hàng mới'}>
+      <Card title={id ? t('purchaseOrders:form.editTitle') : t('purchaseOrders:form.createTitle')}>
         <Form
           form={form}
           layout="vertical"
@@ -450,12 +452,12 @@ export default function PurchaseOrderForm() {
           }}
         >
           <Form.Item
-            label="Nhà cung cấp"
+            label={t('purchaseOrders:form.supplier')}
             name="supplierId"
-            rules={[{ required: true, message: 'Vui lòng chọn nhà cung cấp' }]}
+            rules={[{ required: true, message: t('purchaseOrders:form.supplierRequired') }]}
           >
             <Select
-              placeholder="Chọn nhà cung cấp"
+              placeholder={t('purchaseOrders:form.selectSupplier')}
               showSearch
               filterOption={(input, option) =>
                 (option?.children as string).toLowerCase().includes(input.toLowerCase())
@@ -471,21 +473,21 @@ export default function PurchaseOrderForm() {
 
           <Space size="large" style={{ width: '100%' }}>
             <Form.Item
-              label="Ngày đặt hàng"
+              label={t('purchaseOrders:form.orderDate')}
               name="orderDate"
-              rules={[{ required: true, message: 'Vui lòng chọn ngày' }]}
+              rules={[{ required: true, message: t('purchaseOrders:form.orderDateRequired') }]}
             >
               <DatePicker format="DD/MM/YYYY" />
             </Form.Item>
 
-            <Form.Item label="Ngày giao dự kiến" name="expectedDate">
+            <Form.Item label={t('purchaseOrders:form.expectedDate')} name="expectedDate">
               <DatePicker format="DD/MM/YYYY" />
             </Form.Item>
           </Space>
 
           <div style={{ marginBottom: 16 }}>
             <Button type="dashed" onClick={addItem} icon={<PlusOutlined />} block>
-              Thêm sản phẩm
+              {t('purchaseOrders:actions.addProduct')}
             </Button>
           </div>
 
@@ -499,11 +501,11 @@ export default function PurchaseOrderForm() {
                   onRemove={() => removeItem(item.key)}
                 >
                   <div>
-                    <div style={{ marginBottom: 4, fontSize: 12, color: '#666' }}>Sản phẩm</div>
+                    <div style={{ marginBottom: 4, fontSize: 12, color: '#666' }}>{t('purchaseOrders:columns.product')}</div>
                     <Select
                       value={item.productId}
                       onChange={(val) => updateItem(item.key, 'productId', val)}
-                      placeholder="Chọn sản phẩm"
+                      placeholder={t('purchaseOrders:form.selectProduct')}
                       showSearch
                       filterOption={(input, option) =>
                         (option?.children as string).toLowerCase().includes(input.toLowerCase())
@@ -520,7 +522,7 @@ export default function PurchaseOrderForm() {
 
                   <div style={{ display: 'flex', gap: 8 }}>
                     <div style={{ flex: 1 }}>
-                      <div style={{ marginBottom: 4, fontSize: 12, color: '#666' }}>Số lượng</div>
+                      <div style={{ marginBottom: 4, fontSize: 12, color: '#666' }}>{t('purchaseOrders:columns.quantity')}</div>
                       <InputNumber
                         min={1}
                         value={item.quantity ?? 1}
@@ -529,7 +531,7 @@ export default function PurchaseOrderForm() {
                       />
                     </div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ marginBottom: 4, fontSize: 12, color: '#666' }}>Đơn giá</div>
+                      <div style={{ marginBottom: 4, fontSize: 12, color: '#666' }}>{t('purchaseOrders:columns.unitPrice')}</div>
                       <InputNumber
                         min={0}
                         value={item.unitPrice ?? 0}
@@ -542,7 +544,7 @@ export default function PurchaseOrderForm() {
 
                   <div style={{ display: 'flex', gap: 8 }}>
                     <div style={{ flex: 1 }}>
-                      <div style={{ marginBottom: 4, fontSize: 12, color: '#666' }}>Giảm giá</div>
+                      <div style={{ marginBottom: 4, fontSize: 12, color: '#666' }}>{t('purchaseOrders:columns.discount')}</div>
                       <InputNumber
                         min={0}
                         value={item.discount ?? 0}
@@ -553,7 +555,7 @@ export default function PurchaseOrderForm() {
                       />
                     </div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ marginBottom: 4, fontSize: 12, color: '#666' }}>Thành tiền</div>
+                      <div style={{ marginBottom: 4, fontSize: 12, color: '#666' }}>{t('purchaseOrders:columns.subtotal')}</div>
                       <div
                         style={{
                           padding: '4px 11px',
@@ -586,11 +588,11 @@ export default function PurchaseOrderForm() {
           <div style={{ marginTop: 24, textAlign: 'right' }}>
             <Space direction="vertical" style={{ width: 300 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span>Tạm tính:</span>
+                <span>{t('purchaseOrders:form.subtotalLabel')}:</span>
                 <strong>{totals.subtotal.toLocaleString('vi-VN')} đ</strong>
               </div>
 
-              <Form.Item label="Thuế" name="tax" style={{ marginBottom: 8 }}>
+              <Form.Item label={t('purchaseOrders:form.tax')} name="tax" style={{ marginBottom: 8 }}>
                 <InputNumber
                   min={0}
                   formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
@@ -598,7 +600,7 @@ export default function PurchaseOrderForm() {
                 />
               </Form.Item>
 
-              <Form.Item label="Phí vận chuyển" name="shippingFee" style={{ marginBottom: 8 }}>
+              <Form.Item label={t('purchaseOrders:form.shippingFee')} name="shippingFee" style={{ marginBottom: 8 }}>
                 <InputNumber
                   min={0}
                   formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
@@ -606,7 +608,7 @@ export default function PurchaseOrderForm() {
                 />
               </Form.Item>
 
-              <Form.Item label="Giảm giá" name="discount" style={{ marginBottom: 8 }}>
+              <Form.Item label={t('purchaseOrders:form.discount')} name="discount" style={{ marginBottom: 8 }}>
                 <InputNumber
                   min={0}
                   formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
@@ -615,7 +617,7 @@ export default function PurchaseOrderForm() {
               </Form.Item>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 18 }}>
-                <span>Tổng cộng:</span>
+                <span>{t('purchaseOrders:form.totalLabel')}:</span>
                 <strong style={{ color: '#1890ff' }}>
                   {totals.total.toLocaleString('vi-VN')} đ
                 </strong>
@@ -623,16 +625,16 @@ export default function PurchaseOrderForm() {
             </Space>
           </div>
 
-          <Form.Item label="Ghi chú" name="notes">
-            <TextArea rows={3} placeholder="Ghi chú đơn mua hàng" />
+          <Form.Item label={t('purchaseOrders:form.notes')} name="notes">
+            <TextArea rows={3} placeholder={t('purchaseOrders:form.notesPlaceholder')} />
           </Form.Item>
 
           <Form.Item>
             <Space>
               <Button type="primary" htmlType="submit" loading={loading}>
-                {id ? 'Cập nhật' : 'Tạo đơn mua hàng'}
+                {id ? t('purchaseOrders:form.update') : t('purchaseOrders:form.create')}
               </Button>
-              <Button onClick={() => navigate('/orders/purchase')}>Hủy</Button>
+              <Button onClick={() => navigate('/orders/purchase')}>{t('purchaseOrders:form.cancel')}</Button>
             </Space>
           </Form.Item>
         </Form>

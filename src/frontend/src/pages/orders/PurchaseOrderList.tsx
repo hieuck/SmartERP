@@ -342,7 +342,7 @@ export default function PurchaseOrderList() {
       ),
     },
     {
-      title: 'Sync',
+      title: t('purchaseOrders:sync.status'),
       dataIndex: 'syncStatus',
       key: 'syncStatus',
       width: 100,
@@ -353,13 +353,13 @@ export default function PurchaseOrderList() {
           [SyncStatus.CONFLICT]: 'error',
         };
         const labels = {
-          [SyncStatus.SYNCED]: 'Synced',
-          [SyncStatus.PENDING]: 'Pending',
-          [SyncStatus.CONFLICT]: 'Conflict',
+          [SyncStatus.SYNCED]: t('purchaseOrders:sync.synced'),
+          [SyncStatus.PENDING]: t('purchaseOrders:sync.pending'),
+          [SyncStatus.CONFLICT]: t('purchaseOrders:sync.conflict'),
         };
         return (
           <Tag color={colors[syncStatus] || 'default'}>
-            {labels[syncStatus] || 'Unknown'}
+            {labels[syncStatus] || t('purchaseOrders:sync.unknown')}
           </Tag>
         );
       },
@@ -414,7 +414,7 @@ export default function PurchaseOrderList() {
             text={
               <Space size="small">
                 {isOnline ? <CloudOutlined /> : <DisconnectOutlined />}
-                {isOnline ? 'Online' : 'Offline'}
+                {isOnline ? t('purchaseOrders:sync.online') : t('purchaseOrders:sync.offline')}
               </Space>
             }
           />
@@ -422,7 +422,7 @@ export default function PurchaseOrderList() {
           {/* Sync Queue Indicator */}
           {queueSize > 0 && (
             <Badge count={queueSize} showZero={false}>
-              <Tag color="warning">Pending Sync</Tag>
+              <Tag color="warning">{t('purchaseOrders:sync.pendingSync')}</Tag>
             </Badge>
           )}
 
@@ -433,7 +433,7 @@ export default function PurchaseOrderList() {
             loading={syncing}
             disabled={!isOnline}
           >
-            {syncing ? 'Syncing...' : 'Sync Now'}
+            {syncing ? t('purchaseOrders:sync.syncing') : t('purchaseOrders:sync.syncNow')}
           </Button>
         </Space>
       }
