@@ -4,6 +4,7 @@ import { Layout, Drawer } from 'antd';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import { useResponsive } from '@/hooks/useResponsive';
+import { useTheme } from '@/hooks/useTheme';
 import './MainLayout.css';
 
 const { Content } = Layout;
@@ -12,6 +13,7 @@ export default function MainLayout() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const { isMobile, isTablet } = useResponsive();
+  const { theme } = useTheme();
 
   // Auto-collapse sidebar on tablet/mobile
   useEffect(() => {
@@ -51,7 +53,11 @@ export default function MainLayout() {
         <Content
           className="main-content"
           style={{
-            padding: isMobile ? '12px' : isTablet ? '16px' : '24px',
+            padding: isMobile
+              ? theme.token?.paddingSM
+              : isTablet
+                ? theme.token?.padding
+                : theme.token?.paddingLG,
             margin: 0,
           }}
         >

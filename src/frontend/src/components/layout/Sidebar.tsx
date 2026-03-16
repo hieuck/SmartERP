@@ -1,6 +1,7 @@
 import { Layout, Menu } from 'antd';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '@/hooks/useTheme';
 import {
   DashboardOutlined,
   ShoppingOutlined,
@@ -33,6 +34,7 @@ export default function Sidebar({ collapsed }: SidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation('layout');
+  const { theme } = useTheme();
 
   const items: MenuItem[] = [
     {
@@ -228,8 +230,8 @@ export default function Sidebar({ collapsed }: SidebarProps) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          color: '#fff',
-          fontSize: collapsed ? 16 : 20,
+          color: theme.token?.colorTextLightSolid,
+          fontSize: collapsed ? theme.token?.fontSize : theme.token?.fontSizeHeading5,
           fontWeight: 'bold',
         }}
       >

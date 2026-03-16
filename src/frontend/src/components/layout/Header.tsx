@@ -8,9 +8,11 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '@/hooks/useTheme';
 import { logout } from '@/store/slices/authSlice';
 import { RootState } from '@/store';
 import LanguageSwitcher from '@/components/common/LanguageSwitcher';
+import ThemeToggle from '@/components/common/ThemeToggle';
 import { OfflineStatus } from '@/components/OfflineStatus';
 import type { MenuProps } from 'antd';
 
@@ -23,6 +25,7 @@ interface HeaderProps {
 
 export default function Header({ collapsed, onToggle }: HeaderProps) {
   const { t } = useTranslation(['layout', 'common']);
+  const { theme } = useTheme();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const location = useLocation();
@@ -91,12 +94,12 @@ export default function Header({ collapsed, onToggle }: HeaderProps) {
   return (
     <AntHeader
       style={{
-        padding: '0 24px',
-        background: '#fff',
+        padding: `0 ${theme.token?.paddingLG}px`,
+        background: theme.token?.colorBgContainer,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        boxShadow: '0 1px 4px rgba(0,21,41,.08)',
+        boxShadow: theme.token?.boxShadowTertiary,
       }}
     >
       <Space>
@@ -104,13 +107,18 @@ export default function Header({ collapsed, onToggle }: HeaderProps) {
           type="text"
           icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
           onClick={onToggle}
-          style={{ fontSize: 16, width: 64, height: 64 }}
+          style={{
+            fontSize: theme.token?.fontSizeLG,
+            width: 64,
+            height: 64,
+          }}
         />
         <Breadcrumb items={getBreadcrumbItems()} />
       </Space>
 
       <Space>
         <OfflineStatus />
+        <ThemeToggle />
         <LanguageSwitcher />
         <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
           <Space style={{ cursor: 'pointer' }}>
