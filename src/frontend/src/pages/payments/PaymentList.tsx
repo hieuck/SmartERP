@@ -4,7 +4,7 @@
  * Integrated with offline storage for offline-first functionality
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Button,
   Space,
@@ -31,6 +31,7 @@ import {
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useResponsive } from '@/hooks/useResponsive';
 import StandardListPage from '@/components/common/StandardListPage';
 import { formatCurrency, formatDate } from '@/utils/responsive';
 import { offlineServices } from '@/services/offline-services';
@@ -54,6 +55,7 @@ export default function PaymentList() {
   const navigate = useNavigate();
   const { t } = useTranslation(['payments', 'common']);
   const [form] = Form.useForm();
+  const { isMobile } = useResponsive();
   const [refundModalVisible, setRefundModalVisible] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -69,6 +71,18 @@ export default function PaymentList() {
     startDate: undefined as string | undefined,
     endDate: undefined as string | undefined,
   });
+
+  // Memoize formatCurrency function
+  const memoizedFormatCurrency = useCallback(
+    (value: number) => formatCurrency(value),
+    []
+  );
+
+  // Memoize formatDate function
+  const memoizedFormatDate = useCallback(
+    (date: Date | string) => formatDate(date.toString()),
+    []
+  );
 
   // Monitor network status
   useEffect(() => {
@@ -267,17 +281,19 @@ export default function PaymentList() {
   };
 
   // Get paginated data
-  const paginatedPayments = payments.slice(
-    (filters.page - 1) * filters.limit,
-    filters.page * filters.limit
+  const paginatedPayments = useMemo(
+    () => payments.slice(
+      (filters.page - 1) * filters.limit,
+      filters.page * filters.limit
+    ),
+    [payments, filters.page, filters.limit]
   );
 
-  const columns = [
+  const columns = useMemo(() => [
     {
       title: t('payments:columns.orderId'),
       dataIndex: 'orderId',
       key: 'orderId',
-      width: 150,
       render: (orderId: string, record: Payment) => (
         <Button
           type="link"
@@ -292,29 +308,25 @@ export default function PaymentList() {
       title: t('payments:columns.paymentDate'),
       dataIndex: 'paymentDate',
       key: 'paymentDate',
-      width: 120,
-      render: (date: Date) => date ? formatDate(date.toString()) : '-',
+      render: (date: Date) => date ? memoizedFormatDate(date) : '-',
     },
     {
       title: t('payments:columns.amount'),
       dataIndex: 'amount',
       key: 'amount',
-      width: 150,
       align: 'right' as const,
-      render: (val: number) => formatCurrency(val),
+      render: (val: number) => memoizedFormatCurrency(val),
     },
     {
       title: t('payments:columns.method'),
       dataIndex: 'paymentMethod',
       key: 'paymentMethod',
-      width: 130,
       render: (method: string) => method?.toUpperCase() || '-',
     },
     {
       title: t('payments:columns.status'),
       dataIndex: 'status',
       key: 'status',
-      width: 120,
       render: (status: string) => (
         <Tag color={statusColors[status] || 'default'}>
           {status?.toUpperCase() || 'PENDING'}
@@ -325,7 +337,6 @@ export default function PaymentList() {
       title: t('payments:columns.reference'),
       dataIndex: 'transactionId',
       key: 'transactionId',
-      width: 150,
       ellipsis: true,
       render: (ref: string) => ref || '-',
     },
@@ -333,7 +344,6 @@ export default function PaymentList() {
       title: 'Sync',
       dataIndex: 'syncStatus',
       key: 'syncStatus',
-      width: 100,
       render: (syncStatus: SyncStatus) => {
         const colors = {
           [SyncStatus.SYNCED]: 'success',
@@ -355,7 +365,6 @@ export default function PaymentList() {
     {
       title: t('common:actions.title'),
       key: 'action',
-      width: 200,
       fixed: 'right' as const,
       render: (_: unknown, record: Payment) => (
         <Space size="small">
@@ -404,48 +413,51 @@ export default function PaymentList() {
         </Space>
       ),
     },
-  ];
+  ], [t, navigate, memoizedFormatCurrency, memoizedFormatDate, form]);
 
-  const filterComponents = (
-    <Space wrap>
-      <Select
-        placeholder={t('payments:filters.status')}
-        style={{ width: 150 }}
-        allowClear
-        value={filters.status}
-        onChange={(value) => setFilters({ ...filters, status: value, page: 1 })}
-      >
-        <Select.Option value="pending">PENDING</Select.Option>
-        <Select.Option value="processing">PROCESSING</Select.Option>
-        <Select.Option value="completed">COMPLETED</Select.Option>
-        <Select.Option value="failed">FAILED</Select.Option>
-        <Select.Option value="refunded">REFUNDED</Select.Option>
-      </Select>
-      <Select
-        placeholder={t('payments:filters.method')}
-        style={{ width: 150 }}
-        allowClear
-        value={filters.method}
-        onChange={(value) => setFilters({ ...filters, method: value, page: 1 })}
-      >
-        <Select.Option value="cash">CASH</Select.Option>
-        <Select.Option value="card">CARD</Select.Option>
-        <Select.Option value="bank_transfer">BANK TRANSFER</Select.Option>
-        <Select.Option value="e_wallet">E-WALLET</Select.Option>
-      </Select>
-      <RangePicker
-        format="DD/MM/YYYY"
-        placeholder={[t('payments:filters.fromDate'), t('payments:filters.toDate')]}
-        onChange={(dates) => {
-          setFilters({
-            ...filters,
-            startDate: dates?.[0]?.format('YYYY-MM-DD'),
-            endDate: dates?.[1]?.format('YYYY-MM-DD'),
-            page: 1,
-          });
-        }}
-      />
-    </Space>
+  const filterComponents = useMemo(
+    () => (
+      <Space wrap>
+        <Select
+          placeholder={t('payments:filters.status')}
+          style={{ width: isMobile ? '100%' : 150 }}
+          allowClear
+          value={filters.status}
+          onChange={(value) => setFilters({ ...filters, status: value, page: 1 })}
+        >
+          <Select.Option value="pending">PENDING</Select.Option>
+          <Select.Option value="processing">PROCESSING</Select.Option>
+          <Select.Option value="completed">COMPLETED</Select.Option>
+          <Select.Option value="failed">FAILED</Select.Option>
+          <Select.Option value="refunded">REFUNDED</Select.Option>
+        </Select>
+        <Select
+          placeholder={t('payments:filters.method')}
+          style={{ width: isMobile ? '100%' : 150 }}
+          allowClear
+          value={filters.method}
+          onChange={(value) => setFilters({ ...filters, method: value, page: 1 })}
+        >
+          <Select.Option value="cash">CASH</Select.Option>
+          <Select.Option value="card">CARD</Select.Option>
+          <Select.Option value="bank_transfer">BANK TRANSFER</Select.Option>
+          <Select.Option value="e_wallet">E-WALLET</Select.Option>
+        </Select>
+        <RangePicker
+          format="DD/MM/YYYY"
+          placeholder={[t('payments:filters.fromDate'), t('payments:filters.toDate')]}
+          onChange={(dates) => {
+            setFilters({
+              ...filters,
+              startDate: dates?.[0]?.format('YYYY-MM-DD'),
+              endDate: dates?.[1]?.format('YYYY-MM-DD'),
+              page: 1,
+            });
+          }}
+        />
+      </Space>
+    ),
+    [t, isMobile, filters]
   );
 
   return (
@@ -497,11 +509,14 @@ export default function PaymentList() {
           current: filters.page,
           pageSize: filters.limit,
           total: payments.length,
+          showSizeChanger: true,
           showTotal: (total: number) => t('payments:messages.total', { total }),
           onChange: (page: number, pageSize: number) => {
             setFilters({ ...filters, page, limit: pageSize });
           },
         }}
+        scroll={{ x: 1100 }}
+        onMobileItemClick={(record) => navigate(`/dashboard/payments/${record.id}`)}
       />
 
       <Modal

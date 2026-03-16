@@ -4,32 +4,22 @@
  * Features: auto-sync, manual sync, network status, sync queue, status & date filtering
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Table,
   Button,
-  Input,
   Space,
-  Card,
   Tag,
-  Popconfirm,
   message,
-  Typography,
   Badge,
   Select,
   DatePicker,
 } from 'antd';
 import {
-  PlusOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  SearchOutlined,
   FileTextOutlined,
   SyncOutlined,
   CloudOutlined,
   DisconnectOutlined,
-  EyeOutlined,
   SendOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -40,9 +30,9 @@ import { logger } from '@/lib/logger/logger.service';
 import { Invoice, SyncStatus } from '@/lib/offline/db';
 import { formatCurrency, formatDate } from '@/utils/responsive';
 import dayjs from 'dayjs';
+import StandardListPage from '@/components/common/StandardListPage';
 import type { ColumnsType } from 'antd/es/table';
 
-const { Title } = Typography;
 const { RangePicker } = DatePicker;
 
 // Invoice status enum (matching backend)
@@ -65,7 +55,7 @@ const statusColors: Record<InvoiceStatus, string> = {
 export default function InvoiceList() {
   const navigate = useNavigate();
   const { t } = useTranslation(['invoices', 'common']);
-  const { isMobile, isTablet } = useResponsive();
+  const { isMobile } = useResponsive();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<InvoiceStatus | undefined>();
   const [dateRange, setDateRange] = useState<[string | undefined, string | undefined]>([undefined, undefined]);
@@ -76,6 +66,17 @@ export default function InvoiceList() {
   const [syncing, setSyncing] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [queueSize, setQueueSize] = useState(0);
+
+  // Memoize format functions
+  const memoizedFormatCurrency = useCallback(
+    (value: number) => formatCurrency(value),
+    []
+  );
+
+  const memoizedFormatDate = useCallback(
+    (date: string) => formatDate(date),
+    []
+  );
 
   // Monitor network status
   useEffect(() => {
@@ -241,14 +242,25 @@ export default function InvoiceList() {
   };
 
   // Get paginated data
-  const paginatedInvoices = invoices.slice((page - 1) * pageSize, page * pageSize);
+  const paginatedInvoices = useMemo(
+    () => invoices.slice((page - 1) * pageSize, page * pageSize),
+    [invoices, page, pageSize]
+  );
 
-  const columns: ColumnsType<Invoice> = [
+  const columns: ColumnsType<Invoice> = useMemo(() => [
     {
       title: t('invoices:columns.invoiceNumber'),
       dataIndex: 'invoiceNumber',
       key: 'invoiceNumber',
-      width: 150,
+      render: (text: string, record: Invoice) => (
+        <Button
+          type="link"
+          onClick={() => navigate(`/dashboard/invoices/${record.id}`)}
+          style={{ padding: 0 }}
+        >
+          {text}
+        </Button>
+      ),
     },
     {
       title: t('invoices:columns.customer'),
@@ -261,37 +273,32 @@ export default function InvoiceList() {
       title: t('invoices:columns.issueDate'),
       dataIndex: 'issueDate',
       key: 'issueDate',
-      width: 120,
-      render: (date: string) => (date ? formatDate(date) : '-'),
+      render: (date: string) => (date ? memoizedFormatDate(date) : '-'),
     },
     {
       title: t('invoices:columns.dueDate'),
       dataIndex: 'dueDate',
       key: 'dueDate',
-      width: 120,
-      render: (date: string) => (date ? formatDate(date) : '-'),
+      render: (date: string) => (date ? memoizedFormatDate(date) : '-'),
     },
     {
       title: t('invoices:columns.total'),
       dataIndex: 'totalAmount',
       key: 'totalAmount',
-      width: 150,
       align: 'right',
-      render: (val: number) => (val ? formatCurrency(val) : '-'),
+      render: (val: number) => (val ? memoizedFormatCurrency(val) : '-'),
     },
     {
       title: t('invoices:columns.paidAmount'),
       dataIndex: 'paidAmount',
       key: 'paidAmount',
-      width: 150,
       align: 'right',
-      render: (val: number) => (val ? formatCurrency(val) : '-'),
+      render: (val: number) => (val ? memoizedFormatCurrency(val) : '-'),
     },
     {
       title: t('invoices:columns.status'),
       dataIndex: 'status',
       key: 'status',
-      width: 120,
       render: (status: string) => (
         <Tag color={statusColors[status as InvoiceStatus] || 'default'}>
           {t(`invoices:status.${status}`)}
@@ -302,7 +309,6 @@ export default function InvoiceList() {
       title: 'Sync',
       dataIndex: 'syncStatus',
       key: 'syncStatus',
-      width: isMobile ? 80 : 100,
       render: (syncStatus: SyncStatus) => {
         const colors = {
           [SyncStatus.SYNCED]: 'success',
@@ -321,172 +327,115 @@ export default function InvoiceList() {
         );
       },
     },
-    {
-      title: t('common:actions.title'),
-      key: 'action',
-      width: isMobile ? 150 : 200,
-      fixed: isMobile ? undefined : 'right',
-      render: (_: any, record: Invoice) => (
-        <Space size="small" direction={isMobile ? 'vertical' : 'horizontal'}>
-          <Button
-            type="link"
-            size="small"
-            icon={<EyeOutlined />}
-            onClick={() => navigate(`/dashboard/invoices/${record.id}`)}
-          >
-            {!isMobile && t('invoices:actions.view')}
-          </Button>
-          {record.status === InvoiceStatus.DRAFT && (
-            <>
-              <Button
-                type="link"
-                size="small"
-                icon={<SendOutlined />}
-                onClick={() => handleSend(record)}
-              >
-                {!isMobile && t('invoices:actions.send')}
-              </Button>
-              <Button
-                type="link"
-                size="small"
-                icon={<EditOutlined />}
-                onClick={() => navigate(`/dashboard/invoices/${record.id}/edit`)}
-              >
-                {!isMobile && t('invoices:actions.edit')}
-              </Button>
-            </>
-          )}
-          <Popconfirm
-            title={t('invoices:messages.deleteConfirm')}
-            onConfirm={() => handleDelete(record)}
-            okText={t('common:actions.delete')}
-            cancelText={t('common:actions.cancel')}
-          >
-            <Button type="link" size="small" danger icon={<DeleteOutlined />}>
-              {!isMobile && t('invoices:actions.delete')}
-            </Button>
-          </Popconfirm>
-        </Space>
-      ),
-    },
-  ];
+  ], [t, navigate, memoizedFormatCurrency, memoizedFormatDate]);
+
+  // Custom action for send button (only for draft invoices)
+  const handleSendClick = useCallback((record: Invoice) => {
+    if (record.status === InvoiceStatus.DRAFT) {
+      handleSend(record);
+    }
+  }, []);
+
+  const filterComponents = useMemo(
+    () => (
+      <Space wrap>
+        <Select
+          placeholder={t('invoices:filters.status')}
+          style={{ width: isMobile ? '100%' : 150 }}
+          allowClear
+          value={statusFilter}
+          onChange={setStatusFilter}
+        >
+          {Object.values(InvoiceStatus).map((status) => (
+            <Select.Option key={status} value={status}>
+              {t(`invoices:status.${status}`)}
+            </Select.Option>
+          ))}
+        </Select>
+        
+        <RangePicker
+          format="DD/MM/YYYY"
+          placeholder={[t('invoices:filters.fromDate'), t('invoices:filters.toDate')]}
+          style={{ width: isMobile ? '100%' : 'auto' }}
+          onChange={(dates) => {
+            setDateRange([
+              dates?.[0]?.format('YYYY-MM-DD'),
+              dates?.[1]?.format('YYYY-MM-DD'),
+            ]);
+          }}
+        />
+      </Space>
+    ),
+    [t, isMobile, statusFilter, dateRange]
+  );
 
   return (
-    <div style={{ padding: isMobile ? 12 : isTablet ? 16 : 24 }}>
-      <Card size={isMobile ? 'small' : 'default'}>
-        <Space direction="vertical" style={{ width: '100%' }} size={isMobile ? 'small' : 'large'}>
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: isMobile ? 'column' : 'row',
-              justifyContent: 'space-between',
-              alignItems: isMobile ? 'flex-start' : 'center',
-              gap: isMobile ? 12 : 0,
-            }}
-          >
-            <Title level={isMobile ? 4 : 3} style={{ margin: 0 }}>
-              <FileTextOutlined /> {t('invoices:title')}
-            </Title>
-            <Space direction={isMobile ? 'vertical' : 'horizontal'} style={{ width: isMobile ? '100%' : 'auto' }}>
-              <Badge
-                status={isOnline ? 'success' : 'error'}
-                text={
-                  <Space size="small">
-                    {isOnline ? <CloudOutlined /> : <DisconnectOutlined />}
-                    {isOnline ? 'Online' : 'Offline'}
-                  </Space>
-                }
-              />
-              
-              {queueSize > 0 && (
-                <Badge count={queueSize} showZero={false}>
-                  <Tag color="warning">Pending Sync</Tag>
-                </Badge>
-              )}
-
-              <Button
-                icon={<SyncOutlined spin={syncing} />}
-                onClick={handleSync}
-                loading={syncing}
-                disabled={!isOnline}
-                style={{ width: isMobile ? '100%' : 'auto' }}
-              >
-                {syncing ? 'Syncing...' : 'Sync Now'}
-              </Button>
-
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                style={{ width: isMobile ? '100%' : 'auto' }}
-                onClick={() => navigate('/dashboard/invoices/new')}
-              >
-                {t('invoices:createButton')}
-              </Button>
-            </Space>
-          </div>
-
-          <Space direction={isMobile ? 'vertical' : 'horizontal'} wrap style={{ width: isMobile ? '100%' : 'auto' }}>
-            <Input
-              placeholder={t('invoices:searchPlaceholder')}
-              prefix={<SearchOutlined />}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              style={{ width: isMobile ? '100%' : 250 }}
-              allowClear
-              size={isMobile ? 'middle' : 'large'}
-            />
-            
-            <Select
-              placeholder={t('invoices:filters.status')}
-              style={{ width: isMobile ? '100%' : 150 }}
-              allowClear
-              value={statusFilter}
-              onChange={setStatusFilter}
-              size={isMobile ? 'middle' : 'large'}
-            >
-              {Object.values(InvoiceStatus).map((status) => (
-                <Select.Option key={status} value={status}>
-                  {t(`invoices:status.${status}`)}
-                </Select.Option>
-              ))}
-            </Select>
-            
-            <RangePicker
-              format="DD/MM/YYYY"
-              placeholder={[t('invoices:filters.fromDate'), t('invoices:filters.toDate')]}
-              style={{ width: isMobile ? '100%' : 'auto' }}
-              size={isMobile ? 'middle' : 'large'}
-              onChange={(dates) => {
-                setDateRange([
-                  dates?.[0]?.format('YYYY-MM-DD'),
-                  dates?.[1]?.format('YYYY-MM-DD'),
-                ]);
-              }}
-            />
-          </Space>
-
-          <Table
-            columns={columns}
-            dataSource={paginatedInvoices}
-            loading={loading}
-            rowKey="id"
-            size={isMobile ? 'small' : 'middle'}
-            pagination={{
-              current: page,
-              pageSize,
-              total: invoices.length,
-              showSizeChanger: !isMobile,
-              showTotal: (total) => t('invoices:messages.total', { total }),
-              onChange: (newPage, newPageSize) => {
-                setPage(newPage);
-                setPageSize(newPageSize);
-              },
-              simple: isMobile,
-            }}
-            scroll={{ x: isMobile ? 1200 : 1400 }}
-          />
+    <StandardListPage
+      title={
+        <Space>
+          <FileTextOutlined />
+          {t('invoices:title')}
         </Space>
-      </Card>
-    </div>
+      }
+      createButtonText={t('invoices:createButton')}
+      onCreateClick={() => navigate('/dashboard/invoices/new')}
+      extraActions={
+        <Space direction={isMobile ? 'vertical' : 'horizontal'} style={{ width: isMobile ? '100%' : 'auto' }}>
+          <Badge
+            status={isOnline ? 'success' : 'error'}
+            text={
+              <Space size="small">
+                {isOnline ? <CloudOutlined /> : <DisconnectOutlined />}
+                {isOnline ? 'Online' : 'Offline'}
+              </Space>
+            }
+          />
+          
+          {queueSize > 0 && (
+            <Badge count={queueSize} showZero={false}>
+              <Tag color="warning">Pending Sync</Tag>
+            </Badge>
+          )}
+
+          <Button
+            icon={<SyncOutlined spin={syncing} />}
+            onClick={handleSync}
+            loading={syncing}
+            disabled={!isOnline}
+            style={{ width: isMobile ? '100%' : 'auto' }}
+          >
+            {syncing ? 'Syncing...' : 'Sync Now'}
+          </Button>
+        </Space>
+      }
+      searchPlaceholder={t('invoices:searchPlaceholder')}
+      searchValue={search}
+      onSearchChange={setSearch}
+      filters={filterComponents}
+      columns={columns}
+      dataSource={paginatedInvoices}
+      loading={loading}
+      rowKey="id"
+      scroll={{ x: 1200 }}
+      pagination={{
+        current: page,
+        pageSize,
+        total: invoices.length,
+        showSizeChanger: true,
+        showTotal: (total) => t('invoices:messages.total', { total }),
+        onChange: (newPage, newPageSize) => {
+          setPage(newPage);
+          setPageSize(newPageSize);
+        },
+      }}
+      onEdit={(record) => {
+        if (record.status === InvoiceStatus.DRAFT) {
+          navigate(`/dashboard/invoices/${record.id}/edit`);
+        }
+      }}
+      onDelete={handleDelete}
+      deleteConfirmTitle={t('invoices:messages.deleteConfirm')}
+      onMobileItemClick={(record) => navigate(`/dashboard/invoices/${record.id}`)}
+    />
   );
 }
