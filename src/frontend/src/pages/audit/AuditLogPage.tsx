@@ -28,6 +28,7 @@ import {
 import { logger } from '@/lib/logger/logger.service';
 import dayjs from 'dayjs';
 import { useResponsive } from '@/hooks/useResponsive';
+import { useTranslation } from 'react-i18next';
 import {
   LineChart,
   Line,
@@ -53,31 +54,9 @@ const actionColors: Record<AuditAction, string> = {
   [AuditAction.IMPORT]: 'orange',
 };
 
-const actionLabels: Record<AuditAction, string> = {
-  [AuditAction.CREATE]: 'Tạo mới',
-  [AuditAction.UPDATE]: 'Cập nhật',
-  [AuditAction.DELETE]: 'Xóa',
-  [AuditAction.LOGIN]: 'Đăng nhập',
-  [AuditAction.LOGOUT]: 'Đăng xuất',
-  [AuditAction.EXPORT]: 'Xuất dữ liệu',
-  [AuditAction.IMPORT]: 'Nhập dữ liệu',
-};
-
-const entityLabels: Record<AuditEntity, string> = {
-  [AuditEntity.USER]: 'Người dùng',
-  [AuditEntity.PRODUCT]: 'Sản phẩm',
-  [AuditEntity.INVENTORY]: 'Kho hàng',
-  [AuditEntity.ORDER]: 'Đơn hàng',
-  [AuditEntity.CUSTOMER]: 'Khách hàng',
-  [AuditEntity.SUPPLIER]: 'Nhà cung cấp',
-  [AuditEntity.PURCHASE_ORDER]: 'Đơn mua hàng',
-  [AuditEntity.INVOICE]: 'Hóa đơn',
-  [AuditEntity.PAYMENT]: 'Thanh toán',
-  [AuditEntity.SETTINGS]: 'Cài đặt',
-};
-
 export default function AuditLogPage() {
   const { isMobile } = useResponsive();
+  const { t } = useTranslation(['audit', 'common']);
   const [loading, setLoading] = useState(false);
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [total, setTotal] = useState(0);
@@ -144,52 +123,62 @@ export default function AuditLogPage() {
     return String(value);
   };
 
+  const getActionLabel = (action: AuditAction): string => {
+    const actionKey = action.toLowerCase();
+    return t(`audit:actions.${actionKey}`);
+  };
+
+  const getEntityLabel = (entity: AuditEntity): string => {
+    const entityKey = entity.toLowerCase().replace(/_/g, '');
+    return t(`audit:entities.${entityKey}`);
+  };
+
   const columns = [
     {
-      title: 'Thời gian',
+      title: t('audit:columns.time'),
       dataIndex: 'createdAt',
       key: 'createdAt',
       width: 160,
       render: (date: string) => dayjs(date).format('DD/MM/YYYY HH:mm:ss'),
     },
     {
-      title: 'Người dùng',
+      title: t('audit:columns.user'),
       dataIndex: 'userId',
       key: 'userId',
       width: 150,
       ellipsis: true,
     },
     {
-      title: 'Hành động',
+      title: t('audit:columns.action'),
       dataIndex: 'action',
       key: 'action',
       width: 120,
       render: (action: AuditAction) => (
-        <Tag color={actionColors[action]}>{actionLabels[action]}</Tag>
+        <Tag color={actionColors[action]}>{getActionLabel(action)}</Tag>
       ),
     },
     {
-      title: 'Đối tượng',
+      title: t('audit:columns.entity'),
       dataIndex: 'entity',
       key: 'entity',
       width: 130,
-      render: (entity: AuditEntity) => entityLabels[entity],
+      render: (entity: AuditEntity) => getEntityLabel(entity),
     },
     {
-      title: 'ID đối tượng',
+      title: t('audit:columns.entityId'),
       dataIndex: 'entityId',
       key: 'entityId',
       width: 150,
       ellipsis: true,
     },
     {
-      title: 'IP',
+      title: t('audit:columns.ip'),
       dataIndex: 'ipAddress',
       key: 'ipAddress',
       width: 130,
     },
     {
-      title: 'Thao tác',
+      title: t('audit:columns.operations'),
       key: 'action',
       width: 100,
       fixed: 'right' as const,
@@ -200,7 +189,7 @@ export default function AuditLogPage() {
           icon={<EyeOutlined />}
           onClick={() => handleViewDetails(record)}
         >
-          Xem
+          {t('audit:columns.view')}
         </Button>
       ),
     },
@@ -212,7 +201,7 @@ export default function AuditLogPage() {
         <Col xs={24} sm={12} lg={6}>
           <Card>
             <Statistic
-              title="Tổng hoạt động"
+              title={t('audit:statistics.totalActivities')}
               value={statistics?.totalLogs || 0}
               prefix={<FileTextOutlined />}
             />
@@ -221,7 +210,7 @@ export default function AuditLogPage() {
         <Col xs={24} sm={12} lg={6}>
           <Card>
             <Statistic
-              title="Người dùng hoạt động"
+              title={t('audit:statistics.activeUsers')}
               value={statistics?.topUsers?.length || 0}
               prefix={<UserOutlined />}
             />
@@ -230,7 +219,7 @@ export default function AuditLogPage() {
         <Col xs={24} sm={12} lg={6}>
           <Card>
             <Statistic
-              title="Tạo mới"
+              title={t('audit:statistics.creates')}
               value={statistics?.byAction?.[AuditAction.CREATE] || 0}
               valueStyle={{ color: '#52c41a' }}
             />
@@ -239,7 +228,7 @@ export default function AuditLogPage() {
         <Col xs={24} sm={12} lg={6}>
           <Card>
             <Statistic
-              title="Xóa"
+              title={t('audit:statistics.deletes')}
               value={statistics?.byAction?.[AuditAction.DELETE] || 0}
               valueStyle={{ color: '#cf1322' }}
             />
@@ -249,7 +238,7 @@ export default function AuditLogPage() {
 
       <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
         <Col xs={24} lg={16}>
-          <Card title="Hoạt động 30 ngày gần nhất">
+          <Card title={t('audit:charts.last30Days')}>
             <ResponsiveContainer width="100%" height={250}>
               <LineChart data={timeline}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -260,7 +249,7 @@ export default function AuditLogPage() {
                 <Line
                   type="monotone"
                   dataKey="count"
-                  name="Số hoạt động"
+                  name={t('audit:charts.activityCount')}
                   stroke="#1890ff"
                   strokeWidth={2}
                 />
@@ -269,11 +258,11 @@ export default function AuditLogPage() {
           </Card>
         </Col>
         <Col xs={24} lg={8}>
-          <Card title="Hoạt động theo loại">
+          <Card title={t('audit:charts.byType')}>
             <ResponsiveContainer width="100%" height={250}>
               <BarChart
                 data={Object.entries(statistics?.byAction || {}).map(([action, count]) => ({
-                  action: actionLabels[action as AuditAction],
+                  action: getActionLabel(action as AuditAction),
                   count,
                 }))}
               >
@@ -288,38 +277,38 @@ export default function AuditLogPage() {
         </Col>
       </Row>
 
-      <Card title="Nhật ký hoạt động">
+      <Card title={t('audit:title')}>
         <Space direction="vertical" size="middle" style={{ width: '100%' }}>
           <Space wrap>
             <Select
-              placeholder="Hành động"
+              placeholder={t('audit:filters.action')}
               style={{ width: 150 }}
               allowClear
               value={filters.action}
               onChange={(value) => setFilters({ ...filters, action: value, page: 1 })}
             >
-              {Object.entries(actionLabels).map(([key, label]) => (
-                <Select.Option key={key} value={key}>
-                  {label}
+              {Object.values(AuditAction).map((action) => (
+                <Select.Option key={action} value={action}>
+                  {getActionLabel(action)}
                 </Select.Option>
               ))}
             </Select>
             <Select
-              placeholder="Đối tượng"
+              placeholder={t('audit:filters.entity')}
               style={{ width: 150 }}
               allowClear
               value={filters.entity}
               onChange={(value) => setFilters({ ...filters, entity: value, page: 1 })}
             >
-              {Object.entries(entityLabels).map(([key, label]) => (
-                <Select.Option key={key} value={key}>
-                  {label}
+              {Object.values(AuditEntity).map((entity) => (
+                <Select.Option key={entity} value={entity}>
+                  {getEntityLabel(entity)}
                 </Select.Option>
               ))}
             </Select>
             <RangePicker
               format="DD/MM/YYYY"
-              placeholder={['Từ ngày', 'Đến ngày']}
+              placeholder={[t('audit:filters.startDate'), t('audit:filters.endDate')]}
               onChange={(dates) => {
                 setFilters({
                   ...filters,
@@ -343,7 +332,7 @@ export default function AuditLogPage() {
               pageSize: filters.limit,
               total,
               showSizeChanger: true,
-              showTotal: (total) => `Tổng ${total} hoạt động`,
+              showTotal: (total) => t('audit:pagination.total', { count: total }),
               onChange: (page, pageSize) => {
                 setFilters({ ...filters, page, limit: pageSize });
               },
@@ -353,7 +342,7 @@ export default function AuditLogPage() {
       </Card>
 
       <Drawer
-        title="Chi tiết hoạt động"
+        title={t('audit:details.title')}
         placement="right"
         width={isMobile ? '100%' : 600}
         onClose={() => setDrawerVisible(false)}
@@ -361,27 +350,27 @@ export default function AuditLogPage() {
       >
         {selectedLog && (
           <Descriptions column={1} bordered>
-            <Descriptions.Item label="ID">{selectedLog.id}</Descriptions.Item>
-            <Descriptions.Item label="Người dùng">{selectedLog.userId}</Descriptions.Item>
-            <Descriptions.Item label="Hành động">
-              <Tag color={actionColors[selectedLog.action]}>{actionLabels[selectedLog.action]}</Tag>
+            <Descriptions.Item label={t('audit:details.id')}>{selectedLog.id}</Descriptions.Item>
+            <Descriptions.Item label={t('audit:details.user')}>{selectedLog.userId}</Descriptions.Item>
+            <Descriptions.Item label={t('audit:details.action')}>
+              <Tag color={actionColors[selectedLog.action]}>{getActionLabel(selectedLog.action)}</Tag>
             </Descriptions.Item>
-            <Descriptions.Item label="Đối tượng">
-              {entityLabels[selectedLog.entity]}
+            <Descriptions.Item label={t('audit:details.entity')}>
+              {getEntityLabel(selectedLog.entity)}
             </Descriptions.Item>
-            <Descriptions.Item label="ID đối tượng">{selectedLog.entityId}</Descriptions.Item>
-            <Descriptions.Item label="Thời gian">
+            <Descriptions.Item label={t('audit:details.entityId')}>{selectedLog.entityId}</Descriptions.Item>
+            <Descriptions.Item label={t('audit:details.time')}>
               {dayjs(selectedLog.createdAt).format('DD/MM/YYYY HH:mm:ss')}
             </Descriptions.Item>
-            <Descriptions.Item label="IP">{selectedLog.ipAddress || '-'}</Descriptions.Item>
-            <Descriptions.Item label="User Agent">{selectedLog.userAgent || '-'}</Descriptions.Item>
+            <Descriptions.Item label={t('audit:details.ip')}>{selectedLog.ipAddress || '-'}</Descriptions.Item>
+            <Descriptions.Item label={t('audit:details.userAgent')}>{selectedLog.userAgent || '-'}</Descriptions.Item>
             {selectedLog.oldValue && (
-              <Descriptions.Item label="Giá trị cũ">
+              <Descriptions.Item label={t('audit:details.oldValue')}>
                 {renderValue(selectedLog.oldValue)}
               </Descriptions.Item>
             )}
             {selectedLog.newValue && (
-              <Descriptions.Item label="Giá trị mới">
+              <Descriptions.Item label={t('audit:details.newValue')}>
                 {renderValue(selectedLog.newValue)}
               </Descriptions.Item>
             )}

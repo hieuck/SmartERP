@@ -1,0 +1,67 @@
+{
+  "title": "Audit Log",
+  "actions": {
+    "create": "Create",
+    "update": "Update",
+    "delete": "Delete",
+    "login": "Login",
+    "logout": "Logout",
+    "export": "Export",
+    "import": "Import"
+  },
+  "entities": {
+    "user": "User",
+    "product": "Product",
+    "inventory": "Inventory",
+    "order": "Order",
+    "customer": "Customer",
+    "supplier": "Supplier",
+    "purchaseOrder": "Purchase Order",
+    "invoice": "Invoice",
+    "payment": "Payment",
+    "settings": "Settings"
+  },
+  "columns": {
+    "time": "Time",
+    "user": "User",
+    "action": "Action",
+    "entity": "Entity",
+    "entityId": "Entity ID",
+    "ip": "IP",
+    "operations": "Operations",
+    "view": "View"
+  },
+  "statistics": {
+    "totalActivities": "Total Activities",
+    "activeUsers": "Active Users",
+    "creates": "Creates",
+    "deletes": "Deletes"
+  },
+  "charts": {
+    "last30Days": "Activities Last 30 Days",
+    "byType": "Activities by Type",
+    "activityCount": "Activity Count"
+  },
+  "filters": {
+    "action": "Action",
+    "entity": "Entity",
+    "startDate": "From Date",
+    "endDate": "To Date"
+  },
+  "details": {
+    "title": "Activity Details",
+    "id": "ID",
+    "user": "User",
+    "action": "Action",
+    "entity": "Entity",
+    "entityId": "Entity ID",
+    "time": "Time",
+    "ip": "IP",
+    "userAgent": "User Agent",
+    "oldValue": "Old Value",
+    "newValue": "New Value"
+  },
+  "pagination": {
+    "total": "Total {{count}} activities"
+  }
+}

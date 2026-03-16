@@ -1,0 +1,67 @@
+{
+  "title": "Nhật ký hoạt động",
+  "actions": {
+    "create": "Tạo mới",
+    "update": "Cập nhật",
+    "delete": "Xóa",
+    "login": "Đăng nhập",
+    "logout": "Đăng xuất",
+    "export": "Xuất dữ liệu",
+    "import": "Nhập dữ liệu"
+  },
+  "entities": {
+    "user": "Người dùng",
+    "product": "Sản phẩm",
+    "inventory": "Kho hàng",
+    "order": "Đơn hàng",
+    "customer": "Khách hàng",
+    "supplier": "Nhà cung cấp",
+    "purchaseOrder": "Đơn mua hàng",
+    "invoice": "Hóa đơn",
+    "payment": "Thanh toán",
+    "settings": "Cài đặt"
+  },
+  "columns": {
+    "time": "Thời gian",
+    "user": "Người dùng",
+    "action": "Hành động",
+    "entity": "Đối tượng",
+    "entityId": "ID đối tượng",
+    "ip": "IP",
+    "operations": "Thao tác",
+    "view": "Xem"
+  },
+  "statistics": {
+    "totalActivities": "Tổng hoạt động",
+    "activeUsers": "Người dùng hoạt động",
+    "creates": "Tạo mới",
+    "deletes": "Xóa"
+  },
+  "charts": {
+    "last30Days": "Hoạt động 30 ngày gần nhất",
+    "byType": "Hoạt động theo loại",
+    "activityCount": "Số hoạt động"
+  },
+  "filters": {
+    "action": "Hành động",
+    "entity": "Đối tượng",
+    "startDate": "Từ ngày",
+    "endDate": "Đến ngày"
+  },
+  "details": {
+    "title": "Chi tiết hoạt động",
+    "id": "ID",
+    "user": "Người dùng",
+    "action": "Hành động",
+    "entity": "Đối tượng",
+    "entityId": "ID đối tượng",
+    "time": "Thời gian",
+    "ip": "IP",
+    "userAgent": "User Agent",
+    "oldValue": "Giá trị cũ",
+    "newValue": "Giá trị mới"
+  },
+  "pagination": {
+    "total": "Tổng {{count}} hoạt động"
+  }
+}
