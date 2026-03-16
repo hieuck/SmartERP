@@ -1,51 +1,119 @@
 {
-  "title": "Payment List",
-  "createButton": "Create Payment",
-  "searchPlaceholder": "Search payments...",
-  "columns": {
-    "paymentNumber": "Payment No.",
-    "customer": "Customer",
-    "paymentDate": "Payment Date",
-    "amount": "Amount",
-    "method": "Method",
+  "title": "Payments",
+  "createPayment": "Create Payment",
+  "editPayment": "Edit Payment",
+  "paymentDetail": "Payment Detail",
+  "paymentInfo": "Payment Information",
+  "paymentCode": "Payment Code",
+  "paymentDate": "Payment Date",
+  "amount": "Amount",
+  "paymentMethod": "Payment Method",
+  "reference": "Reference",
+  "notes": "Notes",
+  "status": "Status",
+  "syncStatus": "Sync Status",
+  "createdAt": "Created At",
+  "updatedAt": "Updated At",
+  "actions": "Actions",
+  
+  "filters": {
+    "searchPlaceholder": "Search by payment code, reference...",
     "status": "Status",
-    "reference": "Reference"
+    "allStatuses": "All Statuses",
+    "paymentMethod": "Payment Method",
+    "allMethods": "All Methods",
+    "dateRange": "Date Range"
   },
+  
+  "form": {
+    "paymentCodePlaceholder": "Auto-generated",
+    "selectPaymentMethod": "Select payment method",
+    "selectStatus": "Select status",
+    "amountPlaceholder": "Enter amount",
+    "referencePlaceholder": "Enter reference number",
+    "notesPlaceholder": "Enter notes",
+    "paymentDateRequired": "Payment date is required",
+    "amountRequired": "Amount is required",
+    "amountMin": "Amount must be greater than 0",
+    "paymentMethodRequired": "Payment method is required",
+    "statusRequired": "Status is required"
+  },
+  
   "status": {
     "pending": "Pending",
     "completed": "Completed",
     "failed": "Failed",
-    "refunded": "Refunded"
+    "cancelled": "Cancelled"
   },
-  "methods": {
+  
+  "paymentMethod": {
     "cash": "Cash",
-    "card": "Card",
-    "bankTransfer": "Bank Transfer",
-    "cheque": "Cheque",
-    "eWallet": "E-Wallet"
+    "bank_transfer": "Bank Transfer",
+    "credit_card": "Credit Card",
+    "e_wallet": "E-Wallet",
+    "check": "Check"
   },
+  
+  "syncStatus": {
+    "synced": "Synced",
+    "pending": "Pending Sync",
+    "failed": "Sync Failed"
+  },
+  
+  "table": {
+    "columns": {
+      "paymentCode": "Payment Code",
+      "paymentDate": "Payment Date",
+      "amount": "Amount",
+      "paymentMethod": "Payment Method",
+      "reference": "Reference",
+      "status": "Status",
+      "syncStatus": "Sync Status",
+      "actions": "Actions"
+    }
+  },
+  
   "actions": {
     "view": "View",
-    "confirm": "Confirm",
-    "refund": "Refund",
-    "delete": "Delete"
+    "edit": "Edit",
+    "delete": "Delete",
+    "print": "Print",
+    "export": "Export",
+    "sync": "Sync to Odoo"
   },
+  
   "messages": {
-    "loadError": "Cannot load payment list",
+    "createSuccess": "Payment created successfully",
+    "createError": "Failed to create payment",
+    "updateSuccess": "Payment updated successfully",
+    "updateError": "Failed to update payment",
     "deleteSuccess": "Payment deleted successfully",
-    "deleteError": "Cannot delete payment",
-    "completeSuccess": "Payment confirmed successfully",
-    "completeError": "Cannot confirm payment",
-    "refundSuccess": "Refund processed successfully",
-    "refundError": "Cannot process refund",
+    "deleteError": "Failed to delete payment",
     "deleteConfirm": "Are you sure you want to delete this payment?",
-    "total": "Total {{total}} payments"
+    "syncSuccess": "Payment synced successfully",
+    "syncError": "Failed to sync payment",
+    "fetchError": "Failed to fetch payments",
+    "fetchDetailError": "Failed to fetch payment detail"
   },
-  "filters": {
-    "status": "Status",
-    "method": "Method",
-    "dateRange": "Date Range",
-    "fromDate": "From date",
-    "toDate": "To date"
+  
+  "detail": {
+    "basicInfo": "Basic Information",
+    "paymentDetails": "Payment Details",
+    "additionalInfo": "Additional Information",
+    "syncInfo": "Sync Information",
+    "odooId": "Odoo ID",
+    "lastSyncAt": "Last Synced At"
+  },
+  
+  "empty": {
+    "title": "No payments found",
+    "description": "Create your first payment to get started"
+  },
+  
+  "statistics": {
+    "totalPayments": "Total Payments",
+    "totalAmount": "Total Amount",
+    "pendingPayments": "Pending Payments",
+    "completedPayments": "Completed Payments"
   }
 }

@@ -72,30 +72,44 @@ export default function PaymentList() {
     endDate: undefined as string | undefined,
   });
 
-  // Memoize formatCurrency function
+  const getStatusLabel = useCallback((status: string) => {
+    return t(`payments:status.${status}`, status.toUpperCase());
+  }, [t]);
+
+  const getMethodLabel = useCallback((method: string) => {
+    return t(`payments:paymentMethod.${method}`, method.toUpperCase());
+  }, [t]);
+
+  const getSyncStatusLabel = useCallback((syncStatus: SyncStatus) => {
+    const labels = {
+      [SyncStatus.SYNCED]: t('payments:syncStatus.synced'),
+      [SyncStatus.PENDING]: t('payments:syncStatus.pending'),
+      [SyncStatus.CONFLICT]: t('payments:syncStatus.failed'),
+    };
+    return labels[syncStatus] || 'Unknown';
+  }, [t]);
+
   const memoizedFormatCurrency = useCallback(
     (value: number) => formatCurrency(value),
     []
   );
 
-  // Memoize formatDate function
   const memoizedFormatDate = useCallback(
     (date: Date | string) => formatDate(date.toString()),
     []
   );
 
-  // Monitor network status
   useEffect(() => {
     const handleOnline = () => {
       setIsOnline(true);
       logger.info('PaymentList', 'Network connection restored');
-      message.success(t('common:messages.networkRestored'));
+      message.success(t('common:network.restored'));
     };
 
     const handleOffline = () => {
       setIsOnline(false);
       logger.warn('PaymentList', 'Network connection lost');
-      message.warning(t('common:messages.networkLost'));
+      message.warning(t('common:network.lost'));
     };
 
     window.addEventListener('online', handleOnline);
@@ -107,27 +121,22 @@ export default function PaymentList() {
     };
   }, [t]);
 
-  // Load payments from offline storage
   const loadPayments = async () => {
     setLoading(true);
     try {
       logger.debug('PaymentList', 'Loading payments from offline storage');
       const allPayments = await offlineServices.payments.getAll();
       
-      // Apply filters
       let filtered = allPayments;
       
-      // Status filter
       if (filters.status) {
         filtered = filtered.filter(p => p.status === filters.status);
       }
       
-      // Method filter
       if (filters.method) {
         filtered = filtered.filter(p => p.paymentMethod === filters.method);
       }
       
-      // Date range filter
       if (filters.startDate && filters.endDate) {
         const start = dayjs(filters.startDate);
         const end = dayjs(filters.endDate);
@@ -141,13 +150,12 @@ export default function PaymentList() {
       logger.info('PaymentList', `Loaded ${filtered.length} payments`);
     } catch (error) {
       logger.error('PaymentList', 'Failed to load payments', error as Error);
-      message.error(t('payments:messages.loadError'));
+      message.error(t('payments:messages.fetchError'));
     } finally {
       setLoading(false);
     }
   };
 
-  // Update queue size
   const updateQueueSize = async () => {
     try {
       const size = await syncManager.getQueueSize();
@@ -157,13 +165,11 @@ export default function PaymentList() {
     }
   };
 
-  // Auto-sync on mount if online
   useEffect(() => {
     const initializeData = async () => {
       await loadPayments();
       await updateQueueSize();
 
-      // Auto-sync if online and has token
       if (isOnline) {
         const token = localStorage.getItem('token');
         if (token && !syncManager.isSyncing()) {
@@ -175,21 +181,19 @@ export default function PaymentList() {
     initializeData();
   }, []);
 
-  // Reload payments when filters change
   useEffect(() => {
     loadPayments();
   }, [filters.status, filters.method, filters.startDate, filters.endDate]);
 
-  // Handle sync
   const handleSync = async () => {
     const token = localStorage.getItem('token');
     if (!token) {
-      message.error(t('common:messages.loginRequired'));
+      message.error(t('common:auth.loginRequired'));
       return;
     }
 
     if (!isOnline) {
-      message.warning(t('common:messages.offlineMode'));
+      message.warning(t('common:network.offlineMode'));
       return;
     }
 
@@ -200,7 +204,7 @@ export default function PaymentList() {
       
       if (result.success) {
         message.success(
-          t('common:messages.syncSuccess', {
+          t('common:sync.success', {
             pulled: result.pulled,
             pushed: result.pushed,
           })
@@ -208,17 +212,16 @@ export default function PaymentList() {
         await loadPayments();
         await updateQueueSize();
       } else {
-        message.error(t('common:messages.syncError', { errors: result.errors.join(', ') }));
+        message.error(t('common:sync.error', { errors: result.errors.join(', ') }));
       }
     } catch (error) {
       logger.error('PaymentList', 'Sync failed', error as Error);
-      message.error(t('common:messages.syncError', { errors: (error as Error).message }));
+      message.error(t('common:sync.error', { errors: (error as Error).message }));
     } finally {
       setSyncing(false);
     }
   };
 
-  // Handle delete
   const handleDelete = async (payment: Payment) => {
     try {
       logger.info('PaymentList', `Deleting payment: ${payment.id}`);
@@ -232,7 +235,6 @@ export default function PaymentList() {
     }
   };
 
-  // Handle complete payment
   const handleComplete = async (payment: Payment) => {
     try {
       logger.info('PaymentList', `Completing payment: ${payment.id}`);
@@ -240,16 +242,15 @@ export default function PaymentList() {
         status: 'completed',
         paymentDate: new Date()
       });
-      message.success(t('payments:messages.completeSuccess'));
+      message.success(t('payments:messages.updateSuccess'));
       await loadPayments();
       await updateQueueSize();
     } catch (error) {
       logger.error('PaymentList', 'Failed to complete payment', error as Error);
-      message.error(t('payments:messages.completeError'));
+      message.error(t('payments:messages.updateError'));
     }
   };
 
-  // Handle refund
   const handleRefund = async () => {
     if (!selectedPayment) return;
     try {
@@ -267,7 +268,7 @@ export default function PaymentList() {
         }
       });
       
-      message.success(t('payments:messages.refundSuccess'));
+      message.success(t('payments:messages.updateSuccess'));
       setRefundModalVisible(false);
       setSelectedPayment(null);
       form.resetFields();
@@ -276,11 +277,10 @@ export default function PaymentList() {
     } catch (error: unknown) {
       if ((error as { errorFields?: unknown }).errorFields) return;
       logger.error('PaymentList', 'Failed to process refund', error as Error);
-      message.error(t('payments:messages.refundError'));
+      message.error(t('payments:messages.updateError'));
     }
   };
 
-  // Get paginated data
   const paginatedPayments = useMemo(
     () => payments.slice(
       (filters.page - 1) * filters.limit,
@@ -291,57 +291,57 @@ export default function PaymentList() {
 
   const columns = useMemo(() => [
     {
-      title: t('payments:columns.orderId'),
-      dataIndex: 'orderId',
-      key: 'orderId',
-      render: (orderId: string, record: Payment) => (
+      title: t('payments:table.columns.paymentCode'),
+      dataIndex: 'id',
+      key: 'id',
+      render: (id: string, record: Payment) => (
         <Button
           type="link"
           onClick={() => navigate(`/dashboard/payments/${record.id}`)}
           style={{ padding: 0 }}
         >
-          {orderId}
+          {id}
         </Button>
       ),
     },
     {
-      title: t('payments:columns.paymentDate'),
+      title: t('payments:table.columns.paymentDate'),
       dataIndex: 'paymentDate',
       key: 'paymentDate',
       render: (date: Date) => date ? memoizedFormatDate(date) : '-',
     },
     {
-      title: t('payments:columns.amount'),
+      title: t('payments:table.columns.amount'),
       dataIndex: 'amount',
       key: 'amount',
       align: 'right' as const,
       render: (val: number) => memoizedFormatCurrency(val),
     },
     {
-      title: t('payments:columns.method'),
+      title: t('payments:table.columns.paymentMethod'),
       dataIndex: 'paymentMethod',
       key: 'paymentMethod',
-      render: (method: string) => method?.toUpperCase() || '-',
+      render: (method: string) => getMethodLabel(method),
     },
     {
-      title: t('payments:columns.status'),
+      title: t('payments:table.columns.status'),
       dataIndex: 'status',
       key: 'status',
       render: (status: string) => (
         <Tag color={statusColors[status] || 'default'}>
-          {status?.toUpperCase() || 'PENDING'}
+          {getStatusLabel(status)}
         </Tag>
       ),
     },
     {
-      title: t('payments:columns.reference'),
+      title: t('payments:table.columns.reference'),
       dataIndex: 'transactionId',
       key: 'transactionId',
       ellipsis: true,
       render: (ref: string) => ref || '-',
     },
     {
-      title: 'Sync',
+      title: t('payments:table.columns.syncStatus'),
       dataIndex: 'syncStatus',
       key: 'syncStatus',
       render: (syncStatus: SyncStatus) => {
@@ -350,20 +350,15 @@ export default function PaymentList() {
           [SyncStatus.PENDING]: 'warning',
           [SyncStatus.CONFLICT]: 'error',
         };
-        const labels = {
-          [SyncStatus.SYNCED]: 'Synced',
-          [SyncStatus.PENDING]: 'Pending',
-          [SyncStatus.CONFLICT]: 'Conflict',
-        };
         return (
           <Tag color={colors[syncStatus] || 'default'}>
-            {labels[syncStatus] || 'Unknown'}
+            {getSyncStatusLabel(syncStatus)}
           </Tag>
         );
       },
     },
     {
-      title: t('common:actions.title'),
+      title: t('payments:table.columns.actions'),
       key: 'action',
       fixed: 'right' as const,
       render: (_: unknown, record: Payment) => (
@@ -383,7 +378,7 @@ export default function PaymentList() {
               icon={<CheckOutlined />}
               onClick={() => handleComplete(record)}
             >
-              {t('payments:actions.confirm')}
+              {t('common:actions.confirm')}
             </Button>
           )}
           {record.status === 'completed' && (
@@ -397,7 +392,7 @@ export default function PaymentList() {
                 setRefundModalVisible(true);
               }}
             >
-              {t('payments:actions.refund')}
+              {t('common:actions.refund')}
             </Button>
           )}
           <Popconfirm
@@ -413,7 +408,7 @@ export default function PaymentList() {
         </Space>
       ),
     },
-  ], [t, navigate, memoizedFormatCurrency, memoizedFormatDate, form]);
+  ], [t, navigate, memoizedFormatCurrency, memoizedFormatDate, form, getStatusLabel, getMethodLabel, getSyncStatusLabel]);
 
   const filterComponents = useMemo(
     () => (
@@ -425,27 +420,27 @@ export default function PaymentList() {
           value={filters.status}
           onChange={(value) => setFilters({ ...filters, status: value, page: 1 })}
         >
-          <Select.Option value="pending">PENDING</Select.Option>
-          <Select.Option value="processing">PROCESSING</Select.Option>
-          <Select.Option value="completed">COMPLETED</Select.Option>
-          <Select.Option value="failed">FAILED</Select.Option>
-          <Select.Option value="refunded">REFUNDED</Select.Option>
+          <Select.Option value="pending">{t('payments:status.pending')}</Select.Option>
+          <Select.Option value="processing">{t('payments:status.processing', 'PROCESSING')}</Select.Option>
+          <Select.Option value="completed">{t('payments:status.completed')}</Select.Option>
+          <Select.Option value="failed">{t('payments:status.failed')}</Select.Option>
+          <Select.Option value="refunded">{t('payments:status.refunded', 'REFUNDED')}</Select.Option>
         </Select>
         <Select
-          placeholder={t('payments:filters.method')}
+          placeholder={t('payments:filters.paymentMethod')}
           style={{ width: isMobile ? '100%' : 150 }}
           allowClear
           value={filters.method}
           onChange={(value) => setFilters({ ...filters, method: value, page: 1 })}
         >
-          <Select.Option value="cash">CASH</Select.Option>
-          <Select.Option value="card">CARD</Select.Option>
-          <Select.Option value="bank_transfer">BANK TRANSFER</Select.Option>
-          <Select.Option value="e_wallet">E-WALLET</Select.Option>
+          <Select.Option value="cash">{t('payments:paymentMethod.cash')}</Select.Option>
+          <Select.Option value="card">{t('payments:paymentMethod.credit_card')}</Select.Option>
+          <Select.Option value="bank_transfer">{t('payments:paymentMethod.bank_transfer')}</Select.Option>
+          <Select.Option value="e_wallet">{t('payments:paymentMethod.e_wallet')}</Select.Option>
         </Select>
         <RangePicker
           format="DD/MM/YYYY"
-          placeholder={[t('payments:filters.fromDate'), t('payments:filters.toDate')]}
+          placeholder={[t('common:filters.startDate'), t('common:filters.endDate')]}
           onChange={(dates) => {
             setFilters({
               ...filters,
@@ -468,7 +463,7 @@ export default function PaymentList() {
             <DollarOutlined /> {t('payments:title')}
           </>
         }
-        createButtonText={t('payments:createButton')}
+        createButtonText={t('payments:createPayment')}
         onCreateClick={() => navigate('/dashboard/payments/new')}
         loading={loading}
         dataSource={paginatedPayments}
@@ -476,32 +471,29 @@ export default function PaymentList() {
         filters={filterComponents}
         extraActions={
           <Space>
-            {/* Network Status Badge */}
             <Badge
               status={isOnline ? 'success' : 'error'}
               text={
                 <Space size="small">
                   {isOnline ? <CloudOutlined /> : <DisconnectOutlined />}
-                  {isOnline ? 'Online' : 'Offline'}
+                  {isOnline ? t('common:network.online') : t('common:network.offline')}
                 </Space>
               }
             />
             
-            {/* Sync Queue Indicator */}
             {queueSize > 0 && (
               <Badge count={queueSize} showZero={false}>
-                <Tag color="warning">Pending Sync</Tag>
+                <Tag color="warning">{t('common:sync.pending')}</Tag>
               </Badge>
             )}
 
-            {/* Sync Button */}
             <Button
               icon={<SyncOutlined spin={syncing} />}
               onClick={handleSync}
               loading={syncing}
               disabled={!isOnline}
             >
-              {syncing ? 'Syncing...' : 'Sync Now'}
+              {syncing ? t('common:sync.syncing') : t('common:sync.syncNow')}
             </Button>
           </Space>
         }
@@ -510,7 +502,7 @@ export default function PaymentList() {
           pageSize: filters.limit,
           total: payments.length,
           showSizeChanger: true,
-          showTotal: (total: number) => t('payments:messages.total', { total }),
+          showTotal: (total: number) => t('common:pagination.total', { total }),
           onChange: (page: number, pageSize: number) => {
             setFilters({ ...filters, page, limit: pageSize });
           },
@@ -520,7 +512,7 @@ export default function PaymentList() {
       />
 
       <Modal
-        title={t('payments:actions.refund')}
+        title={t('common:actions.refund')}
         open={refundModalVisible}
         onOk={handleRefund}
         onCancel={() => {
@@ -533,15 +525,15 @@ export default function PaymentList() {
       >
         <Form form={form} layout="vertical">
           <Form.Item
-            label={t('payments:columns.amount')}
+            label={t('payments:amount')}
             name="amount"
             rules={[
-              { required: true, message: t('common:validation.required') },
+              { required: true, message: t('payments:form.amountRequired') },
               {
                 type: 'number',
                 min: 0,
                 max: selectedPayment?.amount || 0,
-                message: t('common:validation.invalidAmount'),
+                message: t('payments:form.amountMin'),
               },
             ]}
           >
@@ -549,15 +541,15 @@ export default function PaymentList() {
               style={{ width: '100%' }}
               formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
               parser={(value) => value!.replace(/\$\s?|(,*)/g, '')}
-              placeholder={t('payments:columns.amount')}
+              placeholder={t('payments:form.amountPlaceholder')}
             />
           </Form.Item>
           <Form.Item
-            label={t('common:fields.reason')}
+            label={t('payments:notes')}
             name="reason"
             rules={[{ required: true, message: t('common:validation.required') }]}
           >
-            <TextArea rows={4} placeholder={t('common:fields.reason')} />
+            <TextArea rows={4} placeholder={t('payments:form.notesPlaceholder')} />
           </Form.Item>
         </Form>
       </Modal>

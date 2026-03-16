@@ -130,7 +130,7 @@ const InvoiceForm: React.FC = () => {
       logger.info('InvoiceForm', 'Loaded orders from IndexedDB', { count: customerOrders.length });
     } catch (error) {
       logger.error('InvoiceForm', 'Failed to load orders', error as Error);
-      message.error(t('invoices:messages.loadOrdersError'));
+      message.error('Không thể tải danh sách đơn hàng');
     }
   };
 
@@ -197,7 +197,7 @@ const InvoiceForm: React.FC = () => {
       }
     } catch (error) {
       logger.error('InvoiceForm', 'Failed to load order', error as Error);
-      message.error(t('invoices:messages.loadOrdersError'));
+      message.error('Không thể tải thông tin đơn hàng');
     }
   };
 
@@ -302,11 +302,11 @@ const InvoiceForm: React.FC = () => {
           await loadInvoice();
         }
       } else {
-        message.error(t('common:messages.syncError', { errors: result.errors.join(', ') }));
+        message.error(`Đồng bộ thất bại: ${result.errors.join(', ')}`);
       }
     } catch (error) {
       logger.error('InvoiceForm', 'Sync failed', error as Error);
-      message.error(t('common:messages.syncError', { errors: (error as Error).message }));
+      message.error('Đồng bộ thất bại');
     } finally {
       setSyncing(false);
     }
@@ -442,8 +442,8 @@ const InvoiceForm: React.FC = () => {
             </Col>
 
             <Col xs={24} md={12}>
-              <Form.Item name="orderId" label={t('invoices:form.order')}>
-                <Select placeholder={t('invoices:form.selectOrder')} allowClear onChange={handleOrderChange}>
+              <Form.Item name="orderId" label="Đơn hàng (tùy chọn)">
+                <Select placeholder="Chọn đơn hàng" allowClear onChange={handleOrderChange}>
                   {orders.map((order) => (
                     <Option key={order.id} value={order.id}>
                       {order.orderNumber} - {order.totalAmount.toLocaleString('vi-VN')} ₫
@@ -458,8 +458,8 @@ const InvoiceForm: React.FC = () => {
             <Col xs={24} md={8}>
               <Form.Item
                 name="issueDate"
-                label={t('invoices:form.issueDate')}
-                rules={[{ required: true, message: t('invoices:form.issueDateRequired') }]}
+                label="Ngày phát hành"
+                rules={[{ required: true, message: 'Vui lòng chọn ngày phát hành' }]}
               >
                 <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" />
               </Form.Item>
@@ -468,27 +468,27 @@ const InvoiceForm: React.FC = () => {
             <Col xs={24} md={8}>
               <Form.Item
                 name="dueDate"
-                label={t('invoices:form.dueDate')}
-                rules={[{ required: true, message: t('invoices:form.dueDateRequired') }]}
+                label="Ngày đáo hạn"
+                rules={[{ required: true, message: 'Vui lòng chọn ngày đáo hạn' }]}
               >
                 <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" />
               </Form.Item>
             </Col>
 
             <Col xs={24} md={8}>
-              <Form.Item name="status" label={t('invoices:form.status')}>
+              <Form.Item name="status" label="Trạng thái">
                 <Select>
-                  <Option value={InvoiceStatus.DRAFT}>{t('invoices:status.draft')}</Option>
-                  <Option value={InvoiceStatus.SENT}>{t('invoices:status.sent')}</Option>
-                  <Option value={InvoiceStatus.PAID}>{t('invoices:status.paid')}</Option>
-                  <Option value={InvoiceStatus.OVERDUE}>{t('invoices:status.overdue')}</Option>
-                  <Option value={InvoiceStatus.CANCELLED}>{t('invoices:status.cancelled')}</Option>
+                  <Option value={InvoiceStatus.DRAFT}>Nháp</Option>
+                  <Option value={InvoiceStatus.SENT}>Đã gửi</Option>
+                  <Option value={InvoiceStatus.PAID}>Đã thanh toán</Option>
+                  <Option value={InvoiceStatus.OVERDUE}>Quá hạn</Option>
+                  <Option value={InvoiceStatus.CANCELLED}>Đã hủy</Option>
                 </Select>
               </Form.Item>
             </Col>
           </Row>
 
-          <Divider>{t('invoices:form.invoiceDetails')}</Divider>
+          <Divider>Chi tiết hóa đơn</Divider>
 
           <Button
             type="dashed"
@@ -496,15 +496,15 @@ const InvoiceForm: React.FC = () => {
             icon={<PlusOutlined />}
             style={{ marginBottom: 16, width: '100%' }}
           >
-            {t('invoices:form.addItem')}
+            Thêm mục hàng
           </Button>
 
           <Table columns={columns} dataSource={items} pagination={false} bordered size="small" />
 
           <Row gutter={16} style={{ marginTop: 24 }}>
             <Col xs={24} md={12}>
-              <Form.Item name="notes" label={t('invoices:form.notes')}>
-                <TextArea rows={4} placeholder={t('invoices:form.notesPlaceholder')} />
+              <Form.Item name="notes" label="Ghi chú">
+                <TextArea rows={4} placeholder="Nhập ghi chú" />
               </Form.Item>
             </Col>
 
@@ -512,12 +512,12 @@ const InvoiceForm: React.FC = () => {
               <Card size="small">
                 <Space direction="vertical" style={{ width: '100%' }}>
                   <Row justify="space-between">
-                    <Text>{t('invoices:form.subtotal')}:</Text>
+                    <Text>Tạm tính:</Text>
                     <Text strong>{subtotal.toLocaleString('vi-VN')} ₫</Text>
                   </Row>
 
                   <Row justify="space-between" align="middle">
-                    <Text>{t('invoices:form.tax')}:</Text>
+                    <Text>Thuế:</Text>
                     <InputNumber
                       min={0}
                       value={tax}
@@ -529,7 +529,7 @@ const InvoiceForm: React.FC = () => {
                   </Row>
 
                   <Row justify="space-between" align="middle">
-                    <Text>{t('invoices:form.discount')}:</Text>
+                    <Text>Giảm giá:</Text>
                     <InputNumber
                       min={0}
                       value={discount}
@@ -543,7 +543,7 @@ const InvoiceForm: React.FC = () => {
                   <Divider style={{ margin: '12px 0' }} />
 
                   <Row justify="space-between">
-                    <Title level={5}>{t('invoices:form.total')}:</Title>
+                    <Title level={5}>Tổng cộng:</Title>
                     <Title level={5} type="danger">
                       {total.toLocaleString('vi-VN')} ₫
                     </Title>
@@ -556,9 +556,9 @@ const InvoiceForm: React.FC = () => {
           <Form.Item style={{ marginTop: 24 }}>
             <Space>
               <Button type="primary" htmlType="submit" icon={<SaveOutlined />} loading={loading}>
-                {id ? t('invoices:form.update') : t('invoices:form.create')}
+                {id ? 'Cập nhật' : 'Tạo hóa đơn'}
               </Button>
-              <Button onClick={() => navigate('/dashboard/invoices')}>{t('invoices:form.cancel')}</Button>
+              <Button onClick={() => navigate('/dashboard/invoices')}>Hủy</Button>
             </Space>
           </Form.Item>
         </Form>
