@@ -6,24 +6,8 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Button, Space, Tag, message, Badge, Rate } from 'antd';
 import {
-  Table,
-  Button,
-  Input,
-  Space,
-  Card,
-  Tag,
-  Popconfirm,
-  message,
-  Typography,
-  Badge,
-  Rate,
-} from 'antd';
-import {
-  PlusOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  SearchOutlined,
   ShopOutlined,
   SyncOutlined,
   CloudOutlined,
@@ -35,14 +19,13 @@ import { offlineServices } from '@/services/offline-services';
 import { syncManager } from '@/lib/offline/sync-manager';
 import { logger } from '@/lib/logger/logger.service';
 import { Supplier, SyncStatus } from '@/lib/offline/db';
+import StandardListPage from '@/components/common/StandardListPage';
 import type { ColumnsType } from 'antd/es/table';
-
-const { Title } = Typography;
 
 export default function SupplierList() {
   const navigate = useNavigate();
   const { t } = useTranslation(['suppliers', 'commonUi']);
-  const { isMobile, isTablet } = useResponsive();
+  const { isMobile } = useResponsive();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -236,7 +219,7 @@ export default function SupplierList() {
       title: 'Sync',
       dataIndex: 'syncStatus',
       key: 'syncStatus',
-      width: isMobile ? 80 : 100,
+      width: 100,
       render: (syncStatus: SyncStatus) => {
         const colors = {
           [SyncStatus.SYNCED]: 'success',
@@ -255,128 +238,70 @@ export default function SupplierList() {
         );
       },
     },
-    {
-      title: t('commonUi:labels.actions'),
-      key: 'action',
-      width: isMobile ? 100 : 120,
-      fixed: isMobile ? undefined : 'right',
-      render: (_: any, record: Supplier) => (
-        <Space size="small" direction={isMobile ? 'vertical' : 'horizontal'}>
-          <Button
-            type="link"
-            size={isMobile ? 'small' : 'middle'}
-            icon={<EditOutlined />}
-            onClick={() => navigate(`/dashboard/suppliers/${record.id}`)}
-          >
-            {!isMobile && t('commonUi:buttons.edit')}
-          </Button>
-          <Popconfirm
-            title={t('commonUi:messages.deleteConfirm')}
-            description={t('suppliers:messages.deleteDescription')}
-            onConfirm={() => handleDelete(record)}
-            okText={t('commonUi:buttons.delete')}
-            cancelText={t('commonUi:buttons.cancel')}
-          >
-            <Button
-              type="link"
-              danger
-              size={isMobile ? 'small' : 'middle'}
-              icon={<DeleteOutlined />}
-            >
-              {!isMobile && t('commonUi:buttons.delete')}
-            </Button>
-          </Popconfirm>
-        </Space>
-      ),
-    },
   ];
 
   return (
-    <div style={{ padding: isMobile ? 12 : isTablet ? 16 : 24 }}>
-      <Card size={isMobile ? 'small' : 'default'}>
-        <Space direction="vertical" style={{ width: '100%' }} size={isMobile ? 'small' : 'large'}>
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: isMobile ? 'column' : 'row',
-              justifyContent: 'space-between',
-              alignItems: isMobile ? 'flex-start' : 'center',
-              gap: isMobile ? 12 : 0,
-            }}
-          >
-            <Title level={isMobile ? 4 : 3} style={{ margin: 0 }}>
-              <ShopOutlined /> {t('suppliers:title')}
-            </Title>
-            <Space direction={isMobile ? 'vertical' : 'horizontal'} style={{ width: isMobile ? '100%' : 'auto' }}>
-              <Badge
-                status={isOnline ? 'success' : 'error'}
-                text={
-                  <Space size="small">
-                    {isOnline ? <CloudOutlined /> : <DisconnectOutlined />}
-                    {isOnline ? 'Online' : 'Offline'}
-                  </Space>
-                }
-              />
-              
-              {queueSize > 0 && (
-                <Badge count={queueSize} showZero={false}>
-                  <Tag color="warning">Pending Sync</Tag>
-                </Badge>
-              )}
-
-              <Button
-                icon={<SyncOutlined spin={syncing} />}
-                onClick={handleSync}
-                loading={syncing}
-                disabled={!isOnline}
-                style={{ width: isMobile ? '100%' : 'auto' }}
-              >
-                {syncing ? 'Syncing...' : 'Sync Now'}
-              </Button>
-
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                style={{ width: isMobile ? '100%' : 'auto' }}
-                onClick={() => navigate('/dashboard/suppliers/new')}
-              >
-                {t('suppliers:createButton')}
-              </Button>
-            </Space>
-          </div>
-
-          <Input
-            placeholder={t('suppliers:searchPlaceholder')}
-            prefix={<SearchOutlined />}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{ width: isMobile ? '100%' : 300 }}
-            allowClear
-            size={isMobile ? 'middle' : 'large'}
-          />
-
-          <Table
-            columns={columns}
-            dataSource={paginatedSuppliers}
-            loading={loading}
-            rowKey="id"
-            size={isMobile ? 'small' : 'middle'}
-            pagination={{
-              current: page,
-              pageSize,
-              total: suppliers.length,
-              showSizeChanger: !isMobile,
-              showTotal: (total) => t('suppliers:messages.total', { total }),
-              onChange: (newPage, newPageSize) => {
-                setPage(newPage);
-                setPageSize(newPageSize);
-              },
-              simple: isMobile,
-            }}
-            scroll={{ x: isMobile ? 1000 : 1200 }}
-          />
+    <StandardListPage
+      title={
+        <Space>
+          <ShopOutlined />
+          {t('suppliers:title')}
         </Space>
-      </Card>
-    </div>
+      }
+      createButtonText={t('suppliers:createButton')}
+      onCreateClick={() => navigate('/dashboard/suppliers/new')}
+      extraActions={
+        <Space direction={isMobile ? 'vertical' : 'horizontal'} style={{ width: isMobile ? '100%' : 'auto' }}>
+          <Badge
+            status={isOnline ? 'success' : 'error'}
+            text={
+              <Space size="small">
+                {isOnline ? <CloudOutlined /> : <DisconnectOutlined />}
+                {isOnline ? 'Online' : 'Offline'}
+              </Space>
+            }
+          />
+          
+          {queueSize > 0 && (
+            <Badge count={queueSize} showZero={false}>
+              <Tag color="warning">Pending Sync</Tag>
+            </Badge>
+          )}
+
+          <Button
+            icon={<SyncOutlined spin={syncing} />}
+            onClick={handleSync}
+            loading={syncing}
+            disabled={!isOnline}
+            style={{ width: isMobile ? '100%' : 'auto' }}
+          >
+            {syncing ? 'Syncing...' : 'Sync Now'}
+          </Button>
+        </Space>
+      }
+      searchPlaceholder={t('suppliers:searchPlaceholder')}
+      searchValue={search}
+      onSearchChange={setSearch}
+      columns={columns}
+      dataSource={paginatedSuppliers}
+      loading={loading}
+      rowKey="id"
+      scroll={{ x: 1200 }}
+      pagination={{
+        current: page,
+        pageSize,
+        total: suppliers.length,
+        showSizeChanger: true,
+        showTotal: (total) => t('suppliers:messages.total', { total }),
+        onChange: (newPage, newPageSize) => {
+          setPage(newPage);
+          setPageSize(newPageSize);
+        },
+      }}
+      onEdit={(record) => navigate(`/dashboard/suppliers/${record.id}`)}
+      onDelete={handleDelete}
+      deleteConfirmTitle={t('commonUi:messages.deleteConfirm')}
+      onMobileItemClick={(record) => navigate(`/dashboard/suppliers/${record.id}`)}
+    />
   );
 }
