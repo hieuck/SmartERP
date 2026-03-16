@@ -145,7 +145,7 @@ export default function RegisterPage() {
                 requiredMark={false}
               >
                 <Title level={4} style={{ marginBottom: 16 }}>
-                  Thông tin công ty
+                  {t('auth:register.companyInfo')}
                 </Title>
 
                 <Form.Item
@@ -304,14 +304,14 @@ export default function RegisterPage() {
 
             <Card style={{ marginTop: 24, borderRadius: 16, background: '#f6f8fa' }}>
               <Title level={5} style={{ marginBottom: 16 }}>
-                Bạn sẽ nhận được:
+                {t('auth:register.benefits.title')}
               </Title>
               <Space direction="vertical" size="small">
-                <Text>✓ 14 ngày dùng thử miễn phí</Text>
-                <Text>✓ Không cần thẻ tín dụng</Text>
-                <Text>✓ Hỗ trợ 24/7</Text>
-                <Text>✓ Đào tạo miễn phí</Text>
-                <Text>✓ Hủy bất cứ lúc nào</Text>
+                <Text>✓ {t('auth:register.benefits.trial')}</Text>
+                <Text>✓ {t('auth:register.benefits.noCard')}</Text>
+                <Text>✓ {t('auth:register.benefits.support')}</Text>
+                <Text>✓ {t('auth:register.benefits.training')}</Text>
+                <Text>✓ {t('auth:register.benefits.cancel')}</Text>
               </Space>
             </Card>
           </Col>
