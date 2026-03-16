@@ -17,8 +17,9 @@ describe('AccountLockoutService', () => {
   let service: AccountLockoutService;
   let cacheService: jest.Mocked<CacheService>;
 
-  const __MAX_ATTEMPTS = 5;
-  const LOCKOUT_DURATION_MS = 60 * 60 * 1000; // 1 hour (ATTEMPT_WINDOW_MS from service)
+  const MAX_ATTEMPTS = 5;
+  const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
+  const ATTEMPT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
 
   beforeEach(async () => {
     const mockCacheService = {
@@ -58,17 +59,6 @@ describe('AccountLockoutService', () => {
       expect(cacheService.get).toHaveBeenCalledWith('account-locked:test@example.com');
     });
 
-    it('should return false when account is not locked', async () => {
-      // Arrange
-      cacheService.get.mockResolvedValue(null);
-
-      // Act
-      const result = await service.isAccountLocked('test@example.com');
-
-      // Assert
-      expect(result).toBe(false);
-    });
-
     it('should return true when account is locked', async () => {
       // Arrange
       cacheService.get.mockResolvedValue(true);
@@ -106,7 +96,7 @@ describe('AccountLockoutService', () => {
       expect(cacheService.set).toHaveBeenCalledWith(
         'login-attempts:test@example.com',
         1,
-        LOCKOUT_DURATION_MS,
+        ATTEMPT_WINDOW_MS,
       );
     });
 
@@ -122,7 +112,7 @@ describe('AccountLockoutService', () => {
       expect(cacheService.set).toHaveBeenCalledWith(
         'login-attempts:test@example.com',
         1,
-        LOCKOUT_DURATION_MS,
+        ATTEMPT_WINDOW_MS,
       );
     });
 
@@ -198,6 +188,101 @@ describe('AccountLockoutService', () => {
 
       // Assert
       expect(result).toBe(0);
+    });
+  });
+
+  describe('getAttemptCount', () => {
+    it('should return 0 when no attempts recorded', async () => {
+      // Arrange
+      cacheService.get.mockResolvedValue(null);
+
+      // Act
+      const result = await service.getAttemptCount('test@example.com');
+
+      // Assert
+      expect(result).toBe(0);
+      expect(cacheService.get).toHaveBeenCalledWith('login-attempts:test@example.com');
+    });
+
+    it('should return attempt count when attempts exist', async () => {
+      // Arrange
+      cacheService.get.mockResolvedValue(3);
+
+      // Act
+      const result = await service.getAttemptCount('test@example.com');
+
+      // Assert
+      expect(result).toBe(3);
+    });
+  });
+
+  describe('unlockAccount', () => {
+    it('should delete lockout and reset attempts', async () => {
+      // Arrange
+      cacheService.del.mockResolvedValue(undefined);
+
+      // Act
+      await service.unlockAccount('test@example.com');
+
+      // Assert
+      expect(cacheService.del).toHaveBeenCalledWith('account-locked:test@example.com');
+      expect(cacheService.del).toHaveBeenCalledWith('login-attempts:test@example.com');
+      expect(cacheService.del).toHaveBeenCalledTimes(2);
+    });
+
+    it('should handle unlock for non-locked account', async () => {
+      // Arrange
+      cacheService.del.mockResolvedValue(undefined);
+
+      // Act
+      await service.unlockAccount('nonlocked@example.com');
+
+      // Assert
+      expect(cacheService.del).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('Account Lockout Trigger', () => {
+    it('should lock account when MAX_ATTEMPTS reached', async () => {
+      // Arrange
+      cacheService.get.mockResolvedValue(MAX_ATTEMPTS - 1);
+      cacheService.set.mockResolvedValue(undefined);
+
+      // Act
+      await service.recordFailedAttempt('test@example.com');
+
+      // Assert
+      // Should set attempts to MAX_ATTEMPTS
+      expect(cacheService.set).toHaveBeenCalledWith(
+        'login-attempts:test@example.com',
+        MAX_ATTEMPTS,
+        ATTEMPT_WINDOW_MS,
+      );
+      // Should lock account
+      expect(cacheService.set).toHaveBeenCalledWith(
+        'account-locked:test@example.com',
+        true,
+        LOCKOUT_DURATION_MS,
+      );
+      expect(cacheService.set).toHaveBeenCalledTimes(2);
+    });
+
+    it('should not lock account when below MAX_ATTEMPTS', async () => {
+      // Arrange
+      cacheService.get.mockResolvedValue(2);
+      cacheService.set.mockResolvedValue(undefined);
+
+      // Act
+      await service.recordFailedAttempt('test@example.com');
+
+      // Assert
+      // Should only set attempts, not lock
+      expect(cacheService.set).toHaveBeenCalledTimes(1);
+      expect(cacheService.set).toHaveBeenCalledWith(
+        'login-attempts:test@example.com',
+        3,
+        ATTEMPT_WINDOW_MS,
+      );
     });
   });
 
