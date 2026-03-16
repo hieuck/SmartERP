@@ -63,6 +63,10 @@ CREATE TABLE IF NOT EXISTS "users" (
   "created_at" TIMESTAMP NOT NULL DEFAULT now(),
   "updated_at" TIMESTAMP NOT NULL DEFAULT now(),
   "deleted_at" TIMESTAMP,
+  "version" integer NOT NULL DEFAULT 1,
+  "last_synced_at" TIMESTAMP,
+  "sync_status" character varying NOT NULL DEFAULT 'synced',
+  "offline_id" uuid,
   CONSTRAINT "PK_users" PRIMARY KEY ("id"),
   CONSTRAINT "UQ_users_tenant_email" UNIQUE ("tenant_id", "email")
 );
