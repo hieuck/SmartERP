@@ -1,34 +1,166 @@
 {
-  "title": "Cài Đặt",
+  "title": "Cài đặt hệ thống",
+  "tabs": {
+    "company": "Thông tin công ty",
+    "codes": "Định dạng mã",
+    "general": "Cài đặt chung",
+    "email": "Email",
+    "backup": "Sao lưu",
+    "print": "Mẫu in"
+  },
+  "company": {
+    "title": "Thông tin công ty",
+    "name": "Tên công ty",
+    "address": "Địa chỉ",
+    "phone": "Số điện thoại",
+    "email": "Email",
+    "taxCode": "Mã số thuế",
+    "logo": "Logo công ty"
+  },
+  "codes": {
+    "title": "Định dạng mã tự động",
+    "description": "Cấu hình tiền tố cho mã tự động",
+    "productPrefix": "Tiền tố mã sản phẩm",
+    "customerPrefix": "Tiền tố mã khách hàng",
+    "supplierPrefix": "Tiền tố mã nhà cung cấp",
+    "salesOrderPrefix": "Tiền tố đơn bán",
+    "purchaseOrderPrefix": "Tiền tố đơn mua",
+    "receiptPrefix": "Tiền tố phiếu nhập",
+    "issuePrefix": "Tiền tố phiếu xuất"
+  },
   "general": {
-    "title": "Cài Đặt Chung",
-    "companyName": "Tên Công Ty",
-    "companyAddress": "Địa Chỉ Công Ty",
-    "companyPhone": "Số Điện Thoại",
-    "companyEmail": "Email Công Ty",
-    "timezone": "Múi Giờ",
-    "currency": "Tiền Tệ",
-    "language": "Ngôn Ngữ"
+    "title": "Cài đặt chung",
+    "defaultTaxRate": "Thuế suất mặc định (%)",
+    "currency": "Tiền tệ",
+    "timezone": "Múi giờ",
+    "language": "Ngôn ngữ",
+    "dateFormat": "Định dạng ngày"
+  },
+  "email": {
+    "title": "Cấu hình máy chủ Email",
+    "description": "Cấu hình SMTP để gửi thông báo email",
+    "host": "SMTP Host",
+    "port": "SMTP Port",
+    "secure": "Sử dụng SSL/TLS",
+    "user": "Tên đăng nhập",
+    "password": "Mật khẩu",
+    "from": "Email gửi",
+    "testConnection": "Kiểm tra kết nối"
+  },
+  "backup": {
+    "title": "Cấu hình sao lưu tự động",
+    "description": "Cấu hình lịch sao lưu cơ sở dữ liệu tự động",
+    "enabled": "Bật sao lưu tự động",
+    "frequency": "Tần suất sao lưu",
+    "time": "Thời gian sao lưu",
+    "retention": "Thời gian lưu trữ (ngày)",
+    "daily": "Hàng ngày",
+    "weekly": "Hàng tuần",
+    "monthly": "Hàng tháng"
   },
   "print": {
-    "title": "Mẫu In",
-    "invoice": "Mẫu Hóa Đơn",
-    "receipt": "Mẫu Phiếu Thu",
-    "order": "Mẫu Đơn Hàng",
-    "header": "Đầu Trang",
-    "footer": "Chân Trang",
-    "logo": "Logo Công Ty"
+    "title": "Cài đặt mẫu in",
+    "companyInfo": "Thông tin công ty",
+    "companyName": "Tên công ty",
+    "companyAddress": "Địa chỉ",
+    "companyPhone": "Số điện thoại",
+    "companyTaxCode": "Mã số thuế",
+    "companyLogo": "Logo công ty",
+    "uploadLogo": "Tải logo lên",
+    "stockReceipt": "Phiếu nhập kho",
+    "stockIssue": "Phiếu xuất kho",
+    "salesOrder": "Đơn hàng bán",
+    "invoice": "Hóa đơn",
+    "documentTitle": "Tiêu đề phiếu",
+    "showLogo": "Hiển thị logo",
+    "showCompanyInfo": "Hiển thị thông tin công ty",
+    "showNotes": "Hiển thị ghi chú",
+    "showSignatures": "Hiển thị chữ ký",
+    "showCustomerInfo": "Hiển thị thông tin khách hàng",
+    "showTax": "Hiển thị thuế",
+    "showAmountInWords": "Hiển thị số tiền bằng chữ",
+    "taxRate": "Thuế suất (%)",
+    "signatures": "Chữ ký",
+    "signature1": "Chữ ký 1",
+    "signature2": "Chữ ký 2",
+    "signature3": "Chữ ký 3",
+    "styles": "Kiểu chữ & màu sắc",
+    "fontFamily": "Font chữ",
+    "fontSize": "Cỡ chữ nội dung",
+    "headerFontSize": "Cỡ chữ tiêu đề",
+    "companyFontSize": "Cỡ chữ tên công ty",
+    "lineHeight": "Khoảng cách dòng",
+    "padding": "Lề trang"
   },
-  "notifications": {
-    "title": "Cài Đặt Thông Báo",
-    "email": "Thông Báo Email",
-    "sms": "Thông Báo SMS",
-    "push": "Thông Báo Đẩy"
+  "systemSettings": {
+    "title": "Cài đặt hệ thống",
+    "description": "Cấu hình cài đặt toàn hệ thống",
+    "key": "Khóa",
+    "value": "Giá trị",
+    "type": "Loại",
+    "description": "Mô tả",
+    "isPublic": "Công khai",
+    "category": "Danh mục",
+    "categories": {
+      "general": "Chung",
+      "notification": "Thông báo",
+      "security": "Bảo mật",
+      "payment": "Thanh toán",
+      "shipping": "Vận chuyển",
+      "tax": "Thuế",
+      "email": "Email",
+      "integration": "Tích hợp"
+    },
+    "types": {
+      "string": "Chuỗi",
+      "number": "Số",
+      "boolean": "Đúng/Sai",
+      "json": "JSON"
+    }
   },
-  "security": {
-    "title": "Cài Đặt Bảo Mật",
-    "changePassword": "Đổi Mật Khẩu",
-    "twoFactor": "Xác Thực Hai Yếu Tố",
-    "sessionTimeout": "Thời Gian Hết Phiên"
+  "actions": {
+    "save": "Lưu",
+    "cancel": "Hủy",
+    "reset": "Khôi phục mặc định",
+    "add": "Thêm cài đặt",
+    "edit": "Sửa",
+    "delete": "Xóa",
+    "saveCompanyInfo": "Lưu thông tin công ty",
+    "saveCodeFormats": "Lưu định dạng mã",
+    "saveGeneralConfig": "Lưu cài đặt chung",
+    "saveEmailConfig": "Lưu cấu hình email",
+    "saveBackupConfig": "Lưu cấu hình sao lưu",
+    "savePrintConfig": "Lưu cấu hình in"
+  },
+  "messages": {
+    "saveSuccess": "Đã lưu cài đặt thành công",
+    "saveError": "Không thể lưu cài đặt",
+    "loadError": "Không thể tải cấu hình in",
+    "resetSuccess": "Đã khôi phục cấu hình mặc định",
+    "uploadSuccess": "Đã tải logo lên",
+    "emailTestSuccess": "Kết nối email thành công!",
+    "emailTestError": "Kết nối email thất bại",
+    "deleteConfirm": "Bạn có chắc muốn xóa cài đặt này?",
+    "invalidJSON": "JSON không hợp lệ"
+  },
+  "placeholders": {
+    "companyName": "VD: CÔNG TY TNHH ABC",
+    "address": "VD: 123 Đường ABC, Quận XYZ, TP.HCM",
+    "phone": "VD: (028) 1234 5678",
+    "taxCode": "VD: 0123456789",
+    "logo": "Base64 hoặc URL của logo",
+    "prefix": "VD: PRD",
+    "email": "VD: noreply@company.com",
+    "signature": "VD: Người lập phiếu",
+    "fontFamily": "VD: Arial, sans-serif",
+    "fontSize": "VD: 12pt",
+    "key": "VD: company_name",
+    "value": "Nhập giá trị",
+    "json": "{\"key\": \"value\"}"
+  },
+  "validation": {
+    "required": "Vui lòng nhập {field}",
+    "email": "Vui lòng nhập email hợp lệ",
+    "invalidJSON": "JSON không hợp lệ"
   }
 }
