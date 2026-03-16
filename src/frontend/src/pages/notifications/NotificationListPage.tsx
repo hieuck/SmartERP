@@ -14,6 +14,7 @@ import {
 } from 'antd';
 import { CheckOutlined, DeleteOutlined, SettingOutlined, BellOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import notificationService, { Notification } from '@/services/notification/notificationService';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -25,6 +26,7 @@ const { Title, Text } = Typography;
 const { TabPane } = Tabs;
 
 const NotificationListPage: React.FC = () => {
+  const { t } = useTranslation(['notifications', 'common']);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'all' | 'unread'>('all');
@@ -48,7 +50,7 @@ const NotificationListPage: React.FC = () => {
       setTotal(result.total);
     } catch (error) {
       logger.error('NotificationListPage', 'Failed to load notifications', error as Error);
-      message.error('Failed to load notifications');
+      message.error(t('notifications:messages.loadError'));
     } finally {
       setLoading(false);
     }
@@ -58,9 +60,9 @@ const NotificationListPage: React.FC = () => {
     try {
       await notificationService.markAsRead(id);
       setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
-      message.success('Marked as read');
+      message.success(t('notifications:messages.markedAsRead'));
     } catch (error) {
-      message.error('Failed to mark as read');
+      message.error(t('notifications:messages.markReadError'));
     }
   };
 
@@ -68,9 +70,9 @@ const NotificationListPage: React.FC = () => {
     try {
       await notificationService.markAllAsRead();
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-      message.success('All notifications marked as read');
+      message.success(t('notifications:messages.allMarkedAsRead'));
     } catch (error) {
-      message.error('Failed to mark all as read');
+      message.error(t('notifications:messages.markAllReadError'));
     }
   };
 
@@ -79,9 +81,9 @@ const NotificationListPage: React.FC = () => {
       await notificationService.deleteNotification(id);
       setNotifications((prev) => prev.filter((n) => n.id !== id));
       setTotal((prev) => prev - 1);
-      message.success('Notification deleted');
+      message.success(t('notifications:messages.deleteSuccess'));
     } catch (error) {
-      message.error('Failed to delete notification');
+      message.error(t('notifications:messages.deleteError'));
     }
   };
 
@@ -108,11 +110,11 @@ const NotificationListPage: React.FC = () => {
 
   const getNotificationTypeLabel = (type: string): string => {
     const labelMap: Record<string, string> = {
-      lowStock: 'Low Stock',
-      newOrder: 'New Order',
-      orderStatusChange: 'Order Update',
-      overdueDebt: 'Overdue Debt',
-      deliveryDate: 'Delivery Date',
+      lowStock: t('notifications:types.lowStock'),
+      newOrder: t('notifications:types.newOrder'),
+      orderStatusChange: t('notifications:types.orderUpdate'),
+      overdueDebt: t('notifications:types.overdueDebt'),
+      deliveryDate: t('notifications:types.deliveryDate'),
     };
     return labelMap[type] || type;
   };
@@ -123,7 +125,7 @@ const NotificationListPage: React.FC = () => {
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Title level={3}>
-              <BellOutlined /> Notifications
+              <BellOutlined /> {t('notifications:notification.list')}
             </Title>
             <Space>
               <Button
@@ -131,13 +133,13 @@ const NotificationListPage: React.FC = () => {
                 onClick={handleMarkAllAsRead}
                 disabled={notifications.every((n) => n.isRead)}
               >
-                Mark All Read
+                {t('notifications:center.markAllRead')}
               </Button>
               <Button
                 icon={<SettingOutlined />}
                 onClick={() => navigate('/settings/notifications')}
               >
-                Settings
+                {t('notifications:center.settings')}
               </Button>
             </Space>
           </div>
@@ -149,8 +151,8 @@ const NotificationListPage: React.FC = () => {
               setPage(1);
             }}
           >
-            <TabPane tab="All" key="all" />
-            <TabPane tab="Unread" key="unread" />
+            <TabPane tab={t('notifications:center.all')} key="all" />
+            <TabPane tab={t('notifications:center.unread')} key="unread" />
           </Tabs>
 
           {loading ? (
@@ -167,7 +169,7 @@ const NotificationListPage: React.FC = () => {
                 total,
                 onChange: setPage,
                 showSizeChanger: false,
-                showTotal: (total) => `Total ${total} notifications`,
+                showTotal: (total) => t('notifications:pagination.total', { total }),
               }}
               renderItem={(notification) => (
                 <List.Item
@@ -190,17 +192,17 @@ const NotificationListPage: React.FC = () => {
                           handleMarkAsRead(notification.id);
                         }}
                       >
-                        Mark Read
+                        {t('notifications:notification.markRead')}
                       </Button>
                     ),
                     <Popconfirm
-                      title="Delete this notification?"
+                      title={t('notifications:messages.deleteConfirmTitle')}
                       onConfirm={(e) => {
                         e?.stopPropagation();
                         handleDelete(notification.id);
                       }}
-                      okText="Yes"
-                      cancelText="No"
+                      okText={t('notifications:messages.yes')}
+                      cancelText={t('notifications:messages.no')}
                     >
                       <Button
                         type="link"
@@ -208,7 +210,7 @@ const NotificationListPage: React.FC = () => {
                         icon={<DeleteOutlined />}
                         onClick={(e) => e.stopPropagation()}
                       >
-                        Delete
+                        {t('notifications:center.delete')}
                       </Button>
                     </Popconfirm>,
                   ].filter(Boolean)}
@@ -220,7 +222,7 @@ const NotificationListPage: React.FC = () => {
                         <Tag color={getNotificationTypeColor(notification.type)}>
                           {getNotificationTypeLabel(notification.type)}
                         </Tag>
-                        {!notification.isRead && <Tag color="blue">New</Tag>}
+                        {!notification.isRead && <Tag color="blue">{t('notifications:center.new')}</Tag>}
                       </Space>
                     }
                     description={
@@ -237,7 +239,7 @@ const NotificationListPage: React.FC = () => {
               )}
             />
           ) : (
-            <Empty description="No notifications" />
+            <Empty description={t('notifications:center.noNotifications')} />
           )}
         </Space>
       </Card>
