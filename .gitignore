@@ -86,6 +86,7 @@ playwright-report/
 playwright-results.json
 playwright-results.xml
 playwright/.cache/
+test-screenshots/
 
 # Docker
 .docker/
