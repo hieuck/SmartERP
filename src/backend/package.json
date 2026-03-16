@@ -23,6 +23,7 @@
     "migration:generate": "typeorm migration:generate -d src/config/database.config.ts",
     "migration:run": "typeorm migration:run -d src/config/database.config.ts",
     "migration:revert": "typeorm migration:revert -d src/config/database.config.ts",
+    "db:migrate": "ts-node -r tsconfig-paths/register scripts/run-migrations.ts",
     "seed:test-users": "ts-node scripts/seed-test-users.ts",
     "db:init": "ts-node -r tsconfig-paths/register scripts/init-db-schema.ts",
     "db:drop-create": "ts-node -r tsconfig-paths/register scripts/drop-create-db.ts",
