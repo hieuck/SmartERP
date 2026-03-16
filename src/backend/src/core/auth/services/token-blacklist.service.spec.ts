@@ -172,6 +172,79 @@ describe('TokenBlacklistService', () => {
     });
   });
 
+  describe('areUserTokensRevoked', () => {
+    it('should return false when user tokens are not revoked', async () => {
+      // Arrange
+      cacheService.get.mockResolvedValue(null);
+
+      // Act
+      const result = await service.areUserTokensRevoked('user-123');
+
+      // Assert
+      expect(result).toBe(false);
+      expect(cacheService.get).toHaveBeenCalledWith('revoked-user:user-123');
+    });
+
+    it('should return true when user tokens are revoked', async () => {
+      // Arrange
+      cacheService.get.mockResolvedValue(true);
+
+      // Act
+      const result = await service.areUserTokensRevoked('user-123');
+
+      // Assert
+      expect(result).toBe(true);
+      expect(cacheService.get).toHaveBeenCalledWith('revoked-user:user-123');
+    });
+
+    it('should handle empty userId', async () => {
+      // Arrange
+      cacheService.get.mockResolvedValue(null);
+
+      // Act
+      const result = await service.areUserTokensRevoked('');
+
+      // Assert
+      expect(result).toBe(false);
+      expect(cacheService.get).toHaveBeenCalledWith('revoked-user:');
+    });
+  });
+
+  describe('clearUserRevocation', () => {
+    it('should clear user revocation', async () => {
+      // Arrange
+      cacheService.del.mockResolvedValue(undefined);
+
+      // Act
+      await service.clearUserRevocation('user-123');
+
+      // Assert
+      expect(cacheService.del).toHaveBeenCalledWith('revoked-user:user-123');
+    });
+
+    it('should handle clearing revocation for non-existent user', async () => {
+      // Arrange
+      cacheService.del.mockResolvedValue(undefined);
+
+      // Act
+      await service.clearUserRevocation('non-existent-user');
+
+      // Assert
+      expect(cacheService.del).toHaveBeenCalledWith('revoked-user:non-existent-user');
+    });
+
+    it('should handle empty userId', async () => {
+      // Arrange
+      cacheService.del.mockResolvedValue(undefined);
+
+      // Act
+      await service.clearUserRevocation('');
+
+      // Assert
+      expect(cacheService.del).toHaveBeenCalledWith('revoked-user:');
+    });
+  });
+
   describe('Error Handling', () => {
     it('should handle cache service errors in isTokenRevoked', async () => {
       // Arrange
@@ -195,6 +268,22 @@ describe('TokenBlacklistService', () => {
 
       // Act & Assert
       await expect(service.revokeUserTokens('user-123')).rejects.toThrow('Cache error');
+    });
+
+    it('should handle cache service errors in areUserTokensRevoked', async () => {
+      // Arrange
+      cacheService.get.mockRejectedValue(new Error('Cache error'));
+
+      // Act & Assert
+      await expect(service.areUserTokensRevoked('user-123')).rejects.toThrow('Cache error');
+    });
+
+    it('should handle cache service errors in clearUserRevocation', async () => {
+      // Arrange
+      cacheService.del.mockRejectedValue(new Error('Cache error'));
+
+      // Act & Assert
+      await expect(service.clearUserRevocation('user-123')).rejects.toThrow('Cache error');
     });
   });
 });
