@@ -234,9 +234,9 @@ export default function CustomerList() {
           [SyncStatus.CONFLICT]: 'error',
         };
         const labels = {
-          [SyncStatus.SYNCED]: 'Synced',
-          [SyncStatus.PENDING]: 'Pending',
-          [SyncStatus.CONFLICT]: 'Conflict',
+          [SyncStatus.SYNCED]: t('customers:sync.synced'),
+          [SyncStatus.PENDING]: t('customers:sync.pending'),
+          [SyncStatus.CONFLICT]: t('customers:sync.conflict'),
         };
         return (
           <Tag color={colors[syncStatus] || 'default'}>
@@ -264,14 +264,14 @@ export default function CustomerList() {
             text={
               <Space size="small">
                 {isOnline ? <CloudOutlined /> : <DisconnectOutlined />}
-                {isOnline ? 'Online' : 'Offline'}
+                {isOnline ? t('customers:sync.online') : t('customers:sync.offline')}
               </Space>
             }
           />
           
           {queueSize > 0 && (
             <Badge count={queueSize} showZero={false}>
-              <Tag color="warning">Pending Sync</Tag>
+              <Tag color="warning">{t('customers:sync.pendingSync')}</Tag>
             </Badge>
           )}
 
@@ -282,7 +282,7 @@ export default function CustomerList() {
             disabled={!isOnline}
             style={{ width: isMobile ? '100%' : 'auto' }}
           >
-            {syncing ? 'Syncing...' : 'Sync Now'}
+            {syncing ? t('customers:sync.syncing') : t('customers:sync.syncNow')}
           </Button>
         </Space>
       }

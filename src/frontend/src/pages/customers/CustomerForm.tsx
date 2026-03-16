@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeftOutlined, SaveOutlined, UserOutlined, SyncOutlined } from '@ant-design/icons';
 import { Button, Card, Col, Form, Input, InputNumber, message, Row, Space, Typography, Badge } from 'antd';
+import { useTranslation } from 'react-i18next';
 import { offlineServices } from '@/services/offline-services';
 import { syncManager } from '@/lib/offline/sync-manager';
 import { logger } from '@/lib/logger/logger.service';
@@ -12,6 +13,7 @@ const { TextArea } = Input;
 export default function CustomerForm() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { t, i18n } = useTranslation(['customers', 'commonUi']);
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
@@ -51,7 +53,7 @@ export default function CustomerForm() {
       }
     } catch (error) {
       logger.error('CustomerForm', 'Failed to load customer', error as Error);
-      message.error('Không thể tải khách hàng');
+      message.error(t('customers:form.messages.loadError'));
     }
   };
 
@@ -100,11 +102,11 @@ export default function CustomerForm() {
 
       if (isEdit && id) {
         await offlineServices.customers.update(id, values);
-        message.success('Cập nhật khách hàng thành công');
+        message.success(t('customers:form.messages.updateSuccess'));
         logger.info('CustomerForm', 'Customer updated', { id });
       } else {
         await offlineServices.customers.create(values);
-        message.success('Tạo khách hàng thành công');
+        message.success(t('customers:form.messages.createSuccess'));
         logger.info('CustomerForm', 'Customer created');
       }
 
@@ -112,7 +114,7 @@ export default function CustomerForm() {
       navigate('/dashboard/customers');
     } catch (error) {
       logger.error('CustomerForm', 'Failed to save customer', error as Error);
-      message.error('Có lỗi xảy ra');
+      message.error(t('customers:form.messages.saveError'));
     } finally {
       setLoading(false);
     }
@@ -123,7 +125,7 @@ export default function CustomerForm() {
       <Card>
         <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
           <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/dashboard/customers')}>
-            Quay lại
+            {t('customers:form.buttons.back')}
           </Button>
           <Space>
             <Badge count={queueSize} offset={[-5, 5]}>
@@ -133,15 +135,18 @@ export default function CustomerForm() {
                 loading={syncing}
                 disabled={!isOnline}
               >
-                Đồng bộ
+                {syncing ? t('customers:sync.syncing') : t('customers:sync.syncNow')}
               </Button>
             </Badge>
-            <Badge status={isOnline ? 'success' : 'error'} text={isOnline ? 'Online' : 'Offline'} />
+            <Badge 
+              status={isOnline ? 'success' : 'error'} 
+              text={isOnline ? t('customers:sync.online') : t('customers:sync.offline')} 
+            />
           </Space>
         </Space>
 
         <Title level={3}>
-          <UserOutlined /> {isEdit ? 'Chỉnh sửa khách hàng' : 'Thêm khách hàng mới'}
+          <UserOutlined /> {isEdit ? t('customers:form.title.edit') : t('customers:form.title.create')}
         </Title>
 
         <Form
@@ -156,23 +161,23 @@ export default function CustomerForm() {
             <Col xs={24} md={12}>
               <Form.Item
                 name="name"
-                label="Tên khách hàng"
-                rules={[{ required: true, message: 'Vui lòng nhập tên khách hàng' }]}
+                label={t('customers:form.fields.name')}
+                rules={[{ required: true, message: t('customers:form.validation.nameRequired') }]}
               >
-                <Input placeholder="Nhập tên khách hàng" />
+                <Input placeholder={t('customers:form.placeholders.name')} />
               </Form.Item>
             </Col>
 
             <Col xs={24} md={12}>
               <Form.Item
                 name="email"
-                label="Email"
+                label={t('customers:form.fields.email')}
                 rules={[
-                  { required: true, message: 'Vui lòng nhập email' },
-                  { type: 'email', message: 'Email không hợp lệ' },
+                  { required: true, message: t('customers:form.validation.emailRequired') },
+                  { type: 'email', message: t('customers:form.validation.emailInvalid') },
                 ]}
               >
-                <Input placeholder="Nhập email" />
+                <Input placeholder={t('customers:form.placeholders.email')} />
               </Form.Item>
             </Col>
           </Row>
@@ -181,28 +186,28 @@ export default function CustomerForm() {
             <Col xs={24} md={12}>
               <Form.Item
                 name="phone"
-                label="Số điện thoại"
+                label={t('customers:form.fields.phone')}
                 rules={[
-                  { required: true, message: 'Vui lòng nhập số điện thoại' },
-                  { pattern: /^[0-9]{10,11}$/, message: 'Số điện thoại không hợp lệ' },
+                  { required: true, message: t('customers:form.validation.phoneRequired') },
+                  { pattern: /^[0-9]{10,11}$/, message: t('customers:form.validation.phoneInvalid') },
                 ]}
               >
-                <Input placeholder="Nhập số điện thoại" />
+                <Input placeholder={t('customers:form.placeholders.phone')} />
               </Form.Item>
             </Col>
 
             <Col xs={24} md={12}>
               <Form.Item
                 name="creditLimit"
-                label="Hạn mức tín dụng"
-                rules={[{ required: true, message: 'Vui lòng nhập hạn mức' }]}
+                label={t('customers:form.fields.creditLimit')}
+                rules={[{ required: true, message: t('customers:form.validation.creditLimitRequired') }]}
               >
                 <InputNumber
                   min={0}
                   style={{ width: '100%' }}
                   formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                   parser={(value) => value!.replace(/\$\s?|(,*)/g, '')}
-                  addonAfter="₫"
+                  addonAfter={i18n.language === 'vi' ? '₫' : '$'}
                 />
               </Form.Item>
             </Col>
@@ -210,18 +215,20 @@ export default function CustomerForm() {
 
           <Form.Item
             name="address"
-            label="Địa chỉ"
-            rules={[{ required: true, message: 'Vui lòng nhập địa chỉ' }]}
+            label={t('customers:form.fields.address')}
+            rules={[{ required: true, message: t('customers:form.validation.addressRequired') }]}
           >
-            <TextArea rows={3} placeholder="Nhập địa chỉ" />
+            <TextArea rows={3} placeholder={t('customers:form.placeholders.address')} />
           </Form.Item>
 
           <Form.Item>
             <Space>
               <Button type="primary" htmlType="submit" icon={<SaveOutlined />} loading={loading}>
-                {isEdit ? 'Cập nhật' : 'Tạo mới'}
+                {isEdit ? t('customers:form.buttons.update') : t('customers:form.buttons.create')}
               </Button>
-              <Button onClick={() => navigate('/dashboard/customers')}>Hủy</Button>
+              <Button onClick={() => navigate('/dashboard/customers')}>
+                {t('customers:form.buttons.cancel')}
+              </Button>
             </Space>
           </Form.Item>
         </Form>

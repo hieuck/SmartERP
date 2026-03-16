@@ -10,9 +10,53 @@
     "creditLimit": "Hạn Mức",
     "balance": "Công Nợ"
   },
+  "sync": {
+    "status": "Đồng bộ",
+    "synced": "Đã đồng bộ",
+    "pending": "Chờ đồng bộ",
+    "conflict": "Xung đột",
+    "syncing": "Đang đồng bộ...",
+    "syncNow": "Đồng bộ ngay",
+    "pendingSync": "Chờ đồng bộ",
+    "online": "Trực tuyến",
+    "offline": "Ngoại tuyến"
+  },
+  "form": {
+    "createTitle": "Thêm khách hàng mới",
+    "editTitle": "Chỉnh sửa khách hàng",
+    "backButton": "Quay lại",
+    "saveButton": "Lưu",
+    "updateButton": "Cập nhật",
+    "createButton": "Tạo mới",
+    "cancelButton": "Hủy",
+    "name": "Tên khách hàng",
+    "email": "Email",
+    "phone": "Số điện thoại",
+    "address": "Địa chỉ",
+    "creditLimit": "Hạn mức tín dụng",
+    "validation": {
+      "nameRequired": "Vui lòng nhập tên khách hàng",
+      "emailRequired": "Vui lòng nhập email",
+      "emailInvalid": "Email không hợp lệ",
+      "phoneRequired": "Vui lòng nhập số điện thoại",
+      "phoneInvalid": "Số điện thoại không hợp lệ (10-11 số)",
+      "addressRequired": "Vui lòng nhập địa chỉ",
+      "creditLimitRequired": "Vui lòng nhập hạn mức"
+    },
+    "placeholders": {
+      "name": "Nhập tên khách hàng",
+      "email": "Nhập email",
+      "phone": "Nhập số điện thoại",
+      "address": "Nhập địa chỉ"
+    }
+  },
   "messages": {
+    "createSuccess": "Tạo khách hàng thành công",
+    "updateSuccess": "Cập nhật khách hàng thành công",
     "deleteSuccess": "Xóa khách hàng thành công",
-    "deleteError": "Không thể xóa khách hàng",
+    "deleteError": "Xóa khách hàng thất bại",
+    "loadError": "Không thể tải danh sách khách hàng",
+    "saveError": "Có lỗi xảy ra",
     "total": "Tổng {{total}} khách hàng"
   }
 }

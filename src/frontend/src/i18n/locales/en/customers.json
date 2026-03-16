@@ -13,6 +13,58 @@
   "messages": {
     "deleteSuccess": "Customer deleted successfully",
     "deleteError": "Cannot delete customer",
+    "loadError": "Failed to load customers",
     "total": "Total {{total}} customers"
+  },
+  "form": {
+    "title": {
+      "create": "Add New Customer",
+      "edit": "Edit Customer"
+    },
+    "fields": {
+      "name": "Customer Name",
+      "email": "Email",
+      "phone": "Phone Number",
+      "address": "Address",
+      "creditLimit": "Credit Limit"
+    },
+    "placeholders": {
+      "name": "Enter customer name",
+      "email": "Enter email",
+      "phone": "Enter phone number",
+      "address": "Enter address"
+    },
+    "validation": {
+      "nameRequired": "Please enter customer name",
+      "emailRequired": "Please enter email",
+      "emailInvalid": "Invalid email format",
+      "phoneRequired": "Please enter phone number",
+      "phoneInvalid": "Invalid phone number format",
+      "addressRequired": "Please enter address",
+      "creditLimitRequired": "Please enter credit limit"
+    },
+    "buttons": {
+      "back": "Back",
+      "save": "Save",
+      "create": "Create",
+      "update": "Update",
+      "cancel": "Cancel"
+    },
+    "messages": {
+      "createSuccess": "Customer created successfully",
+      "updateSuccess": "Customer updated successfully",
+      "loadError": "Failed to load customer",
+      "saveError": "An error occurred"
+    }
+  },
+  "sync": {
+    "synced": "Synced",
+    "pending": "Pending",
+    "conflict": "Conflict",
+    "online": "Online",
+    "offline": "Offline",
+    "syncNow": "Sync Now",
+    "syncing": "Syncing...",
+    "pendingSync": "Pending Sync"
   }
 }
