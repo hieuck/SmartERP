@@ -31,6 +31,7 @@ interface JwtPayload {
   email: string;
   tenantId: string;
   exp: number;
+  [key: string]: any; // Index signature for compatibility
 }
 
 describe('AuthController (Integration)', () => {
@@ -38,7 +39,6 @@ describe('AuthController (Integration)', () => {
   let authService: jest.Mocked<AuthService>;
   let tokenBlacklistService: jest.Mocked<TokenBlacklistService>;
   let accountLockoutService: jest.Mocked<AccountLockoutService>;
-  let _jwtService: jest.Mocked<JwtService>;
 
   const mockUser = {
     id: 'user-123',
@@ -155,7 +155,6 @@ describe('AuthController (Integration)', () => {
     authService = moduleFixture.get(AuthService);
     tokenBlacklistService = moduleFixture.get(TokenBlacklistService);
     accountLockoutService = moduleFixture.get(AccountLockoutService);
-    jwtService = moduleFixture.get(JwtService);
   });
 
   afterAll(async () => {
