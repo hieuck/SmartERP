@@ -14,6 +14,7 @@ import {
   Tabs,
 } from 'antd';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   useCreateSetting,
   useDeleteSetting,
@@ -25,25 +26,8 @@ import { Setting, SettingCategory, SettingDataType } from '@/services/utils/sett
 const { TabPane } = Tabs;
 const { TextArea } = Input;
 
-const categoryLabels: Record<SettingCategory, string> = {
-  [SettingCategory.GENERAL]: 'Chung',
-  [SettingCategory.NOTIFICATION]: 'Thông báo',
-  [SettingCategory.SECURITY]: 'Bảo mật',
-  [SettingCategory.PAYMENT]: 'Thanh toán',
-  [SettingCategory.SHIPPING]: 'Vận chuyển',
-  [SettingCategory.TAX]: 'Thuế',
-  [SettingCategory.EMAIL]: 'Email',
-  [SettingCategory.INTEGRATION]: 'Tích hợp',
-};
-
-const typeLabels: Record<SettingDataType, string> = {
-  [SettingDataType.STRING]: 'Chuỗi',
-  [SettingDataType.NUMBER]: 'Số',
-  [SettingDataType.BOOLEAN]: 'Đúng/Sai',
-  [SettingDataType.JSON]: 'JSON',
-};
-
 export default function SettingsPage() {
+  const { t } = useTranslation(['settings', 'common']);
   const [activeCategory, setActiveCategory] = useState<SettingCategory>(SettingCategory.GENERAL);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingSetting, setEditingSetting] = useState<Setting | null>(null);
@@ -55,7 +39,31 @@ export default function SettingsPage() {
   const updateMutation = useUpdateSetting();
   const deleteMutation = useDeleteSetting();
 
-  const handleSave = async (values: any) => {
+  const categoryLabels: Record<SettingCategory, string> = {
+    [SettingCategory.GENERAL]: t('systemSettings.categories.general'),
+    [SettingCategory.NOTIFICATION]: t('systemSettings.categories.notification'),
+    [SettingCategory.SECURITY]: t('systemSettings.categories.security'),
+    [SettingCategory.PAYMENT]: t('systemSettings.categories.payment'),
+    [SettingCategory.SHIPPING]: t('systemSettings.categories.shipping'),
+    [SettingCategory.TAX]: t('systemSettings.categories.tax'),
+    [SettingCategory.EMAIL]: t('systemSettings.categories.email'),
+    [SettingCategory.INTEGRATION]: t('systemSettings.categories.integration'),
+  };
+
+  const typeLabels: Record<SettingDataType, string> = {
+    [SettingDataType.STRING]: t('systemSettings.types.string'),
+    [SettingDataType.NUMBER]: t('systemSettings.types.number'),
+    [SettingDataType.BOOLEAN]: t('systemSettings.types.boolean'),
+    [SettingDataType.JSON]: t('systemSettings.types.json'),
+  };
+
+  const handleSave = async (values: {
+    key: string;
+    value: string;
+    type: SettingDataType;
+    description?: string;
+    isPublic: boolean;
+  }) => {
     try {
       if (editingSetting) {
         await updateMutation.mutateAsync({
@@ -66,7 +74,7 @@ export default function SettingsPage() {
             isPublic: values.isPublic,
           },
         });
-        message.success('Cập nhật cài đặt thành công');
+        message.success(t('systemSettings.messages.updateSuccess'));
       } else {
         await createMutation.mutateAsync({
           key: values.key,
@@ -76,13 +84,18 @@ export default function SettingsPage() {
           description: values.description,
           isPublic: values.isPublic,
         });
-        message.success('Tạo cài đặt thành công');
+        message.success(t('systemSettings.messages.createSuccess'));
       }
       setModalVisible(false);
       setEditingSetting(null);
       form.resetFields();
-    } catch (error: any) {
-      message.error('Không thể lưu cài đặt: ' + (error.message || 'Lỗi không xác định'));
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : t('systemSettings.messages.unknownError');
+      message.error(
+        t('systemSettings.messages.saveError', {
+          error: errorMessage,
+        })
+      );
     }
   };
 
@@ -92,9 +105,14 @@ export default function SettingsPage() {
         key,
         category: activeCategory,
       });
-      message.success('Xóa cài đặt thành công');
-    } catch (error: any) {
-      message.error('Không thể xóa cài đặt: ' + (error.message || 'Lỗi không xác định'));
+      message.success(t('systemSettings.messages.deleteSuccess'));
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : t('systemSettings.messages.unknownError');
+      message.error(
+        t('systemSettings.messages.deleteError', {
+          error: errorMessage,
+        })
+      );
     }
   };
 
@@ -114,7 +132,7 @@ export default function SettingsPage() {
     setEditingSetting(null);
     form.resetFields();
     form.setFieldsValue({
-      dataType: SettingDataType.STRING,
+      type: SettingDataType.STRING,
       isPublic: false,
     });
     setModalVisible(true);
@@ -122,7 +140,7 @@ export default function SettingsPage() {
 
   const renderValue = (value: string, type: SettingDataType) => {
     if (type === SettingDataType.BOOLEAN) {
-      return value === 'true' ? 'Có' : 'Không';
+      return value === 'true' ? t('common.yes') : t('common.no');
     }
     if (type === SettingDataType.JSON) {
       try {
@@ -136,44 +154,44 @@ export default function SettingsPage() {
 
   const columns = [
     {
-      title: 'Khóa',
+      title: t('systemSettings.table.key'),
       dataIndex: 'key',
       key: 'key',
       width: 200,
     },
     {
-      title: 'Giá trị',
+      title: t('systemSettings.table.value'),
       dataIndex: 'value',
       key: 'value',
       ellipsis: true,
       render: (value: string, record: Setting) => renderValue(value, record.type),
     },
     {
-      title: 'Loại',
+      title: t('systemSettings.table.type'),
       dataIndex: 'type',
-      key: 'dataType',
+      key: 'type',
       width: 100,
       render: (type: SettingDataType) => typeLabels[type],
     },
     {
-      title: 'Mô tả',
+      title: t('systemSettings.table.description'),
       dataIndex: 'description',
       key: 'description',
       ellipsis: true,
     },
     {
-      title: 'Công khai',
+      title: t('systemSettings.table.isPublic'),
       dataIndex: 'isPublic',
       key: 'isPublic',
       width: 100,
-      render: (isPublic: boolean) => (isPublic ? 'Có' : 'Không'),
+      render: (isPublic: boolean) => (isPublic ? t('common.yes') : t('common.no')),
     },
     {
-      title: 'Thao tác',
+      title: t('systemSettings.table.actions'),
       key: 'action',
       width: 150,
       fixed: 'right' as const,
-      render: (_: any, record: Setting) => (
+      render: (_: unknown, record: Setting) => (
         <Space size="small">
           <Button
             type="link"
@@ -181,16 +199,16 @@ export default function SettingsPage() {
             icon={<EditOutlined />}
             onClick={() => handleEdit(record)}
           >
-            Sửa
+            {t('common.edit')}
           </Button>
           <Popconfirm
-            title="Bạn có chắc muốn xóa cài đặt này?"
+            title={t('systemSettings.deleteConfirm')}
             onConfirm={() => handleDelete(record.key)}
-            okText="Xóa"
-            cancelText="Hủy"
+            okText={t('common.delete')}
+            cancelText={t('common.cancel')}
           >
             <Button type="link" size="small" danger icon={<DeleteOutlined />}>
-              Xóa
+              {t('common.delete')}
             </Button>
           </Popconfirm>
         </Space>
@@ -201,10 +219,10 @@ export default function SettingsPage() {
   return (
     <div>
       <Card
-        title="Cài đặt hệ thống"
+        title={t('systemSettings.title')}
         extra={
           <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-            Thêm cài đặt
+            {t('systemSettings.addButton')}
           </Button>
         }
       >
@@ -233,7 +251,7 @@ export default function SettingsPage() {
       </Card>
 
       <Modal
-        title={editingSetting ? 'Sửa cài đặt' : 'Thêm cài đặt'}
+        title={editingSetting ? t('systemSettings.editTitle') : t('systemSettings.addTitle')}
         open={modalVisible}
         onCancel={() => {
           setModalVisible(false);
@@ -245,17 +263,17 @@ export default function SettingsPage() {
       >
         <Form form={form} layout="vertical" onFinish={handleSave}>
           <Form.Item
-            label="Khóa"
+            label={t('systemSettings.form.key')}
             name="key"
-            rules={[{ required: true, message: 'Vui lòng nhập khóa' }]}
+            rules={[{ required: true, message: t('systemSettings.form.keyRequired') }]}
           >
-            <Input placeholder="VD: company_name" disabled={!!editingSetting} />
+            <Input placeholder={t('systemSettings.form.keyPlaceholder')} disabled={!!editingSetting} />
           </Form.Item>
 
           <Form.Item
-            label="Loại"
+            label={t('systemSettings.form.type')}
             name="type"
-            rules={[{ required: true, message: 'Vui lòng chọn loại' }]}
+            rules={[{ required: true, message: t('systemSettings.form.typeRequired') }]}
           >
             <Select disabled={!!editingSetting}>
               {Object.entries(typeLabels).map(([key, label]) => (
@@ -268,63 +286,65 @@ export default function SettingsPage() {
 
           <Form.Item
             noStyle
-            shouldUpdate={(prevValues, currentValues) => prevValues.type !== currentValues.type}
+            shouldUpdate={(prevValues: { type?: SettingDataType }, currentValues: { type?: SettingDataType }) => 
+              prevValues.type !== currentValues.type
+            }
           >
-            {({ getFieldValue }) => {
+            {({ getFieldValue }: { getFieldValue: (name: string) => SettingDataType }) => {
               const type = getFieldValue('type');
-              if (type === SettingType.BOOLEAN) {
+              if (type === SettingDataType.BOOLEAN) {
                 return (
                   <Form.Item
-                    label="Giá trị"
+                    label={t('systemSettings.form.value')}
                     name="value"
                     valuePropName="checked"
                     rules={[{ required: true }]}
                   >
-                    <Switch checkedChildren="Có" unCheckedChildren="Không" />
+                    <Switch checkedChildren={t('common.yes')} unCheckedChildren={t('common.no')} />
                   </Form.Item>
                 );
               }
-              if (type === SettingType.JSON) {
+              if (type === SettingDataType.JSON) {
                 return (
                   <Form.Item
-                    label="Giá trị (JSON)"
+                    label={t('systemSettings.form.valueJson')}
                     name="value"
                     rules={[
-                      { required: true, message: 'Vui lòng nhập giá trị' },
+                      { required: true, message: t('systemSettings.form.valueRequired') },
                       {
-                        validator: (_, value) => {
+                        validator: (_: unknown, value: string) => {
                           try {
                             JSON.parse(value);
                             return Promise.resolve();
                           } catch {
-                            return Promise.reject('JSON không hợp lệ');
+                            return Promise.reject(new Error(t('systemSettings.form.jsonInvalid')));
                           }
                         },
                       },
                     ]}
                   >
-                    <TextArea rows={6} placeholder='{"key": "value"}' />
+                    <TextArea rows={6} placeholder={t('systemSettings.form.jsonPlaceholder')} />
                   </Form.Item>
                 );
               }
               return (
                 <Form.Item
-                  label="Giá trị"
+                  label={t('systemSettings.form.value')}
                   name="value"
-                  rules={[{ required: true, message: 'Vui lòng nhập giá trị' }]}
+                  rules={[{ required: true, message: t('systemSettings.form.valueRequired') }]}
                 >
-                  <Input placeholder="Nhập giá trị" />
+                  <Input placeholder={t('systemSettings.form.valuePlaceholder')} />
                 </Form.Item>
               );
             }}
           </Form.Item>
 
-          <Form.Item label="Mô tả" name="description">
-            <TextArea rows={3} placeholder="Mô tả cài đặt" />
+          <Form.Item label={t('systemSettings.form.description')} name="description">
+            <TextArea rows={3} placeholder={t('systemSettings.form.descriptionPlaceholder')} />
           </Form.Item>
 
-          <Form.Item label="Công khai" name="isPublic" valuePropName="checked">
-            <Switch checkedChildren="Có" unCheckedChildren="Không" />
+          <Form.Item label={t('systemSettings.form.isPublic')} name="isPublic" valuePropName="checked">
+            <Switch checkedChildren={t('common.yes')} unCheckedChildren={t('common.no')} />
           </Form.Item>
 
           <Form.Item>
@@ -335,7 +355,7 @@ export default function SettingsPage() {
                 icon={<SaveOutlined />}
                 loading={createMutation.isPending || updateMutation.isPending}
               >
-                Lưu
+                {t('common.save')}
               </Button>
               <Button
                 onClick={() => {
@@ -344,7 +364,7 @@ export default function SettingsPage() {
                   form.resetFields();
                 }}
               >
-                Hủy
+                {t('common.cancel')}
               </Button>
             </Space>
           </Form.Item>
