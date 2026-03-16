@@ -1,11 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Table, Button, Input, Space, Card, Tag, Popconfirm, message, Typography, Badge } from 'antd';
+import { Button, Space, Tag, message, Badge } from 'antd';
 import {
-  PlusOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  SearchOutlined,
   AppstoreOutlined,
   SyncOutlined,
   CloudOutlined,
@@ -17,14 +13,13 @@ import { offlineServices } from '@/services/offline-services';
 import { syncManager } from '@/lib/offline/sync-manager';
 import { logger } from '@/lib/logger/logger.service';
 import { Product, SyncStatus } from '@/lib/offline/db';
+import StandardListPage from '@/components/common/StandardListPage';
 import type { ColumnsType } from 'antd/es/table';
-
-const { Title } = Typography;
 
 export default function ProductList() {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation(['products', 'common']);
-  const { isMobile, isTablet } = useResponsive();
+  const { isMobile } = useResponsive();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -189,7 +184,7 @@ export default function ProductList() {
       title: t('products:form.sku'),
       dataIndex: 'sku',
       key: 'sku',
-      width: isMobile ? 100 : 120,
+      width: 120,
     },
     {
       title: t('products:form.name'),
@@ -201,21 +196,21 @@ export default function ProductList() {
       title: t('products:form.price'),
       dataIndex: 'price',
       key: 'price',
-      width: isMobile ? 100 : 120,
+      width: 120,
       render: (value: number) => formatCurrency(value),
     },
     {
       title: t('products:form.cost'),
       dataIndex: 'cost',
       key: 'cost',
-      width: isMobile ? 100 : 120,
+      width: 120,
       render: (value: number) => (value ? formatCurrency(value) : '-'),
     },
     {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
-      width: isMobile ? 80 : 100,
+      width: 100,
       render: (status: string) => (
         <Tag color={status === 'active' ? 'green' : 'red'}>
           {status?.toUpperCase() || 'ACTIVE'}
@@ -226,7 +221,7 @@ export default function ProductList() {
       title: 'Sync',
       dataIndex: 'syncStatus',
       key: 'syncStatus',
-      width: isMobile ? 80 : 100,
+      width: 100,
       render: (syncStatus: SyncStatus) => {
         const colors = {
           [SyncStatus.SYNCED]: 'success',
@@ -245,137 +240,77 @@ export default function ProductList() {
         );
       },
     },
-    {
-      title: t('common:labels.actions'),
-      key: 'action',
-      width: isMobile ? 100 : 120,
-      fixed: isMobile ? undefined : 'right',
-      render: (_: any, record: Product) => (
-        <Space size="small" direction={isMobile ? 'vertical' : 'horizontal'}>
-          <Button
-            type="link"
-            size={isMobile ? 'small' : 'middle'}
-            icon={<EditOutlined />}
-            onClick={() => navigate(`/dashboard/products/${record.id}`)}
-          >
-            {!isMobile && t('common:buttons.edit')}
-          </Button>
-          <Popconfirm
-            title={t('products:messages.deleteConfirm')}
-            description={t('products:messages.deleteDescription')}
-            onConfirm={() => handleDelete(record)}
-            okText={t('common:buttons.delete')}
-            cancelText={t('common:buttons.cancel')}
-          >
-            <Button
-              type="link"
-              danger
-              size={isMobile ? 'small' : 'middle'}
-              icon={<DeleteOutlined />}
-            >
-              {!isMobile && t('common:buttons.delete')}
-            </Button>
-          </Popconfirm>
-        </Space>
-      ),
-    },
   ];
 
   return (
-    <div style={{ padding: isMobile ? 12 : isTablet ? 16 : 24 }}>
-      <Card size={isMobile ? 'small' : 'default'}>
-        <Space direction="vertical" style={{ width: '100%' }} size={isMobile ? 'small' : 'large'}>
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: isMobile ? 'column' : 'row',
-              justifyContent: 'space-between',
-              alignItems: isMobile ? 'flex-start' : 'center',
-              gap: isMobile ? 12 : 0,
-            }}
-          >
-            <Title level={isMobile ? 4 : 3} style={{ margin: 0 }}>
-              <AppstoreOutlined /> {t('products:list.title')}
-            </Title>
-            <Space direction={isMobile ? 'vertical' : 'horizontal'} style={{ width: isMobile ? '100%' : 'auto' }}>
-              {/* Network Status Badge */}
-              <Badge
-                status={isOnline ? 'success' : 'error'}
-                text={
-                  <Space size="small">
-                    {isOnline ? <CloudOutlined /> : <DisconnectOutlined />}
-                    {isOnline ? 'Online' : 'Offline'}
-                  </Space>
-                }
-              />
-              
-              {/* Sync Queue Indicator */}
-              {queueSize > 0 && (
-                <Badge count={queueSize} showZero={false}>
-                  <Tag color="warning">Pending Sync</Tag>
-                </Badge>
-              )}
-
-              {/* Sync Button */}
-              <Button
-                icon={<SyncOutlined spin={syncing} />}
-                onClick={handleSync}
-                loading={syncing}
-                disabled={!isOnline}
-                style={{ width: isMobile ? '100%' : 'auto' }}
-              >
-                {syncing ? 'Syncing...' : 'Sync Now'}
-              </Button>
-
-              <Button
-                style={{ width: isMobile ? '100%' : 'auto' }}
-                onClick={() => navigate('/dashboard/products/categories')}
-              >
-                {t('products:categories.manage')}
-              </Button>
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                style={{ width: isMobile ? '100%' : 'auto' }}
-                onClick={() => navigate('/dashboard/products/new')}
-              >
-                {t('products:form.create')}
-              </Button>
-            </Space>
-          </div>
-
-          <Input
-            placeholder={t('products:list.search')}
-            prefix={<SearchOutlined />}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{ width: isMobile ? '100%' : 300 }}
-            allowClear
-            size={isMobile ? 'middle' : 'large'}
-          />
-
-          <Table
-            columns={columns}
-            dataSource={paginatedProducts}
-            loading={loading}
-            rowKey="id"
-            size={isMobile ? 'small' : 'middle'}
-            pagination={{
-              current: page,
-              pageSize,
-              total: products.length,
-              showSizeChanger: !isMobile,
-              showTotal: (total) => t('products:list.total', { total }),
-              onChange: (newPage, newPageSize) => {
-                setPage(newPage);
-                setPageSize(newPageSize);
-              },
-              simple: isMobile,
-            }}
-            scroll={{ x: isMobile ? 800 : 1000 }}
-          />
+    <StandardListPage
+      title={
+        <Space>
+          <AppstoreOutlined />
+          {t('products:list.title')}
         </Space>
-      </Card>
-    </div>
+      }
+      createButtonText={t('products:form.create')}
+      onCreateClick={() => navigate('/dashboard/products/new')}
+      extraActions={
+        <Space direction={isMobile ? 'vertical' : 'horizontal'} style={{ width: isMobile ? '100%' : 'auto' }}>
+          <Badge
+            status={isOnline ? 'success' : 'error'}
+            text={
+              <Space size="small">
+                {isOnline ? <CloudOutlined /> : <DisconnectOutlined />}
+                {isOnline ? 'Online' : 'Offline'}
+              </Space>
+            }
+          />
+          
+          {queueSize > 0 && (
+            <Badge count={queueSize} showZero={false}>
+              <Tag color="warning">Pending Sync</Tag>
+            </Badge>
+          )}
+
+          <Button
+            icon={<SyncOutlined spin={syncing} />}
+            onClick={handleSync}
+            loading={syncing}
+            disabled={!isOnline}
+            style={{ width: isMobile ? '100%' : 'auto' }}
+          >
+            {syncing ? 'Syncing...' : 'Sync Now'}
+          </Button>
+
+          <Button
+            style={{ width: isMobile ? '100%' : 'auto' }}
+            onClick={() => navigate('/dashboard/products/categories')}
+          >
+            {t('products:categories.manage')}
+          </Button>
+        </Space>
+      }
+      searchPlaceholder={t('products:list.search')}
+      searchValue={search}
+      onSearchChange={setSearch}
+      columns={columns}
+      dataSource={paginatedProducts}
+      loading={loading}
+      rowKey="id"
+      scroll={{ x: 1000 }}
+      pagination={{
+        current: page,
+        pageSize,
+        total: products.length,
+        showSizeChanger: true,
+        showTotal: (total) => t('products:list.total', { total }),
+        onChange: (newPage, newPageSize) => {
+          setPage(newPage);
+          setPageSize(newPageSize);
+        },
+      }}
+      onEdit={(record) => navigate(`/dashboard/products/${record.id}`)}
+      onDelete={handleDelete}
+      deleteConfirmTitle={t('products:messages.deleteConfirm')}
+      onMobileItemClick={(record) => navigate(`/dashboard/products/${record.id}`)}
+    />
   );
 }

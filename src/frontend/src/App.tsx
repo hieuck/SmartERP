@@ -1,10 +1,11 @@
-import { Spin } from 'antd';
+import { App as AntApp, ConfigProvider, Spin } from 'antd';
 import { lazy, Suspense } from 'react';
 import { useSelector } from 'react-redux';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import MainLayout from './components/layout/MainLayout';
 import { useInactivityLogout } from './hooks/useInactivityLogout';
 import { RootState } from './store';
+import { theme } from './theme';
 
 // Eager load critical pages
 import LoginPage from './pages/auth/LoginPage';
@@ -91,7 +92,9 @@ function App() {
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
 
   return (
-    <BrowserRouter>
+    <ConfigProvider theme={theme}>
+      <AntApp>
+        <BrowserRouter>
       <Routes>
         {/* Public routes */}
         <Route
@@ -183,6 +186,14 @@ function App() {
             element={
               <Suspense fallback={<PageLoader />}>
                 <StockReceiptForm />
+              </Suspense>
+            }
+          />
+          <Route
+            path="inventory/low-stock"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <StockList />
               </Suspense>
             }
           />
@@ -318,6 +329,22 @@ function App() {
           {/* Warehouses - Lazy loaded (Requirements: 27.1, 27.3, 27.4) */}
           <Route
             path="warehouses"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <WarehouseList />
+              </Suspense>
+            }
+          />
+          <Route
+            path="warehouses/list"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <WarehouseList />
+              </Suspense>
+            }
+          />
+          <Route
+            path="warehouses/transfers"
             element={
               <Suspense fallback={<PageLoader />}>
                 <WarehouseList />
@@ -477,6 +504,14 @@ function App() {
             }
           />
           <Route
+            path="notifications/list"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <NotificationListPage />
+              </Suspense>
+            }
+          />
+          <Route
             path="notifications/preferences"
             element={
               <Suspense fallback={<PageLoader />}>
@@ -516,7 +551,9 @@ function App() {
           />
         </Route>
       </Routes>
-    </BrowserRouter>
+        </BrowserRouter>
+      </AntApp>
+    </ConfigProvider>
   );
 }
 
