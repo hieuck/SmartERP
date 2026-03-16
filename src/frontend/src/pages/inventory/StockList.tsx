@@ -260,7 +260,7 @@ export default function StockList() {
       },
     },
     {
-      title: 'Sync',
+      title: t('inventory:sync.status'),
       dataIndex: 'syncStatus',
       key: 'syncStatus',
       width: 100,
@@ -271,13 +271,13 @@ export default function StockList() {
           [SyncStatus.CONFLICT]: 'error',
         };
         const labels = {
-          [SyncStatus.SYNCED]: 'Synced',
-          [SyncStatus.PENDING]: 'Pending',
-          [SyncStatus.CONFLICT]: 'Conflict',
+          [SyncStatus.SYNCED]: t('inventory:sync.synced'),
+          [SyncStatus.PENDING]: t('inventory:sync.pending'),
+          [SyncStatus.CONFLICT]: t('inventory:sync.conflict'),
         };
         return (
           <Tag color={colors[syncStatus] || 'default'}>
-            {labels[syncStatus] || 'Unknown'}
+            {labels[syncStatus] || t('inventory:sync.unknown')}
           </Tag>
         );
       },
@@ -310,7 +310,7 @@ export default function StockList() {
             text={
               <Space size="small">
                 {isOnline ? <CloudOutlined /> : <DisconnectOutlined />}
-                {isOnline ? 'Online' : 'Offline'}
+                {isOnline ? t('inventory:sync.online') : t('inventory:sync.offline')}
               </Space>
             }
           />
@@ -318,7 +318,7 @@ export default function StockList() {
           {/* Sync Queue Indicator */}
           {queueSize > 0 && (
             <Badge count={queueSize} showZero={false}>
-              <Tag color="warning">Pending Sync</Tag>
+              <Tag color="warning">{t('inventory:sync.pendingSync')}</Tag>
             </Badge>
           )}
 
@@ -329,7 +329,7 @@ export default function StockList() {
             loading={syncing}
             disabled={!isOnline}
           >
-            {syncing ? 'Syncing...' : 'Sync Now'}
+            {syncing ? t('inventory:sync.syncing') : t('inventory:sync.syncNow')}
           </Button>
         </Space>
       }

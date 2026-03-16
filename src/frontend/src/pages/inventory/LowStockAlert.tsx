@@ -65,7 +65,7 @@ export default function LowStockAlert() {
       logger.info('LowStockAlert', 'Loaded low stocks from IndexedDB', { count: lowStockItems.length });
     } catch (error) {
       logger.error('LowStockAlert', 'Failed to load low stocks', error as Error);
-      message.error('Không thể tải danh sách tồn kho thấp');
+      message.error(t('inventory:messages.loadError'));
     } finally {
       setLoading(false);
     }
@@ -122,7 +122,7 @@ export default function LowStockAlert() {
   const handleSync = async () => {
     const token = localStorage.getItem('token');
     if (!token) {
-      message.error('Vui lòng đăng nhập');
+      message.error(t('inventory:messages.loginRequired'));
       return;
     }
 
@@ -131,14 +131,14 @@ export default function LowStockAlert() {
       const result = await syncManager.sync(token);
       
       if (result.success) {
-        message.success(`Đồng bộ thành công: ${result.pulled} pulled, ${result.pushed} pushed`);
+        message.success(t('common:messages.syncSuccess', { pulled: result.pulled, pushed: result.pushed }));
         await loadLowStocks();
       } else {
-        message.error(`Đồng bộ thất bại: ${result.errors.join(', ')}`);
+        message.error(t('common:messages.syncError', { errors: result.errors.join(', ') }));
       }
     } catch (error) {
       logger.error('LowStockAlert', 'Sync failed', error as Error);
-      message.error('Đồng bộ thất bại');
+      message.error(t('common:messages.syncError', { errors: (error as Error).message }));
     } finally {
       setSyncing(false);
     }
@@ -275,11 +275,11 @@ export default function LowStockAlert() {
         <Space>
           <Badge status={isOnline ? 'success' : 'error'} />
           <span>{isOnline ? <WifiOutlined /> : <DisconnectOutlined />}</span>
-          <span>{isOnline ? 'Online' : 'Offline'}</span>
+          <span>{isOnline ? t('inventory:sync.online') : t('inventory:sync.offline')}</span>
           {syncQueueSize > 0 && (
             <>
               <span>|</span>
-              <span style={{ color: '#faad14' }}>{syncQueueSize} thay đổi chưa đồng bộ</span>
+              <span style={{ color: '#faad14' }}>{syncQueueSize} {t('inventory:sync.pendingChanges')}</span>
             </>
           )}
           <Button
@@ -289,7 +289,7 @@ export default function LowStockAlert() {
             disabled={!isOnline}
             size="small"
           >
-            Đồng bộ
+            {t('inventory:buttons.sync')}
           </Button>
           <Button onClick={() => navigate('/dashboard/inventory/stock')}>
             {t('inventory:lowStock.backToStock')}
