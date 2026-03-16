@@ -319,13 +319,13 @@ export default function UserList() {
           [SyncStatus.CONFLICT]: 'error',
         };
         const labels = {
-          [SyncStatus.SYNCED]: 'Synced',
-          [SyncStatus.PENDING]: 'Pending',
-          [SyncStatus.CONFLICT]: 'Conflict',
+          [SyncStatus.SYNCED]: t('users:sync.synced'),
+          [SyncStatus.PENDING]: t('users:sync.pending'),
+          [SyncStatus.CONFLICT]: t('users:sync.conflict'),
         };
         return (
           <Tag color={colors[syncStatus] || 'default'}>
-            {labels[syncStatus] || 'Unknown'}
+            {labels[syncStatus] || t('users:sync.unknown')}
           </Tag>
         );
       },
@@ -371,7 +371,7 @@ export default function UserList() {
             text={
               <Space size="small">
                 {isOnline ? <CloudOutlined /> : <DisconnectOutlined />}
-                {isOnline ? 'Online' : 'Offline'}
+                {isOnline ? t('users:sync.online') : t('users:sync.offline')}
               </Space>
             }
           />
@@ -379,7 +379,7 @@ export default function UserList() {
           {/* Sync Queue Indicator */}
           {queueSize > 0 && (
             <Badge count={queueSize} showZero={false}>
-              <Tag color="warning">Pending Sync</Tag>
+              <Tag color="warning">{t('users:sync.pendingSync')}</Tag>
             </Badge>
           )}
 
@@ -390,7 +390,7 @@ export default function UserList() {
             loading={syncing}
             disabled={!isOnline}
           >
-            {syncing ? 'Syncing...' : 'Sync Now'}
+            {syncing ? t('users:sync.syncing') : t('users:sync.syncNow')}
           </Button>
         </Space>
       }

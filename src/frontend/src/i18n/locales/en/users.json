@@ -1,17 +1,16 @@
 {
   "title": "User Management",
   "createButton": "Add User",
-  "searchPlaceholder": "Search users...",
+  "searchPlaceholder": "Search by email, name...",
   "columns": {
     "email": "Email",
     "fullName": "Full Name",
     "role": "Role",
     "status": "Status",
-    "lastLogin": "Last Login",
-    "createdAt": "Created At"
+    "createdAt": "Created Date"
   },
   "roles": {
-    "admin": "Administrator",
+    "admin": "Admin",
     "manager": "Manager",
     "user": "User",
     "staff": "Staff",
@@ -19,46 +18,39 @@
   },
   "status": {
     "active": "Active",
-    "inactive": "Inactive",
-    "suspended": "Suspended"
+    "inactive": "Inactive"
+  },
+  "sync": {
+    "online": "Online",
+    "offline": "Offline",
+    "synced": "Synced",
+    "pending": "Pending",
+    "conflict": "Conflict",
+    "unknown": "Unknown",
+    "pendingSync": "Pending Sync",
+    "syncing": "Syncing...",
+    "syncNow": "Sync Now"
   },
   "actions": {
     "viewDetail": "View Details",
     "edit": "Edit",
+    "delete": "Delete",
     "resetPassword": "Reset Password",
-    "toggleActive": "Activate/Deactivate",
     "activate": "Activate",
-    "deactivate": "Deactivate",
-    "delete": "Delete"
+    "deactivate": "Deactivate"
   },
   "messages": {
-    "deleteSuccess": "User deleted successfully",
-    "deleteError": "Cannot delete user",
-    "updateStatusSuccess": "Status updated successfully",
-    "updateStatusError": "Cannot update status",
-    "resetPasswordSuccess": "Password reset email sent",
-    "resetPasswordError": "Cannot reset password",
     "total": "Total {{total}} users",
-    "deleteConfirm": "Confirm Delete",
-    "deleteDescription": "Are you sure you want to delete this user?",
+    "loadError": "Failed to load users",
+    "deleteSuccess": "User deleted successfully",
+    "deleteError": "Failed to delete user",
+    "deleteConfirm": "Delete User",
+    "deleteDescription": "Are you sure you want to delete this user? This action cannot be undone.",
+    "updateStatusSuccess": "User status updated successfully",
+    "updateStatusError": "Failed to update user status",
     "resetPasswordConfirm": "Reset Password",
-    "resetPasswordDescription": "Are you sure you want to reset password for this user?"
-  },
-  "list": {
-    "title": "User List",
-    "empty": "No users found",
-    "search": "Search users..."
-  },
-  "form": {
-    "create": "Create User",
-    "edit": "Edit User",
-    "firstName": "First Name",
-    "lastName": "Last Name",
-    "email": "Email",
-    "phone": "Phone",
-    "role": "Role",
-    "department": "Department",
-    "password": "Password",
-    "confirmPassword": "Confirm Password"
+    "resetPasswordDescription": "Are you sure you want to reset password for this user?",
+    "resetPasswordError": "Failed to reset password",
+    "featureNotAvailable": "This feature is not yet available"
   }
 }

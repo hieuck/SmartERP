@@ -1,64 +1,56 @@
 {
-  "title": "Quản Lý Người Dùng",
-  "createButton": "Thêm Người Dùng",
-  "searchPlaceholder": "Tìm kiếm người dùng...",
+  "title": "Quản lý người dùng",
+  "createButton": "Thêm người dùng",
+  "searchPlaceholder": "Tìm kiếm theo email, tên...",
   "columns": {
     "email": "Email",
-    "fullName": "Họ Tên",
-    "role": "Vai Trò",
-    "status": "Trạng Thái",
-    "lastLogin": "Đăng Nhập Cuối",
-    "createdAt": "Ngày Tạo"
+    "fullName": "Họ và tên",
+    "role": "Vai trò",
+    "status": "Trạng thái",
+    "createdAt": "Ngày tạo"
   },
   "roles": {
-    "admin": "Quản Trị Viên",
-    "manager": "Quản Lý",
-    "user": "Người Dùng",
-    "staff": "Nhân Viên",
-    "viewer": "Người Xem"
+    "admin": "Quản trị viên",
+    "manager": "Quản lý",
+    "user": "Người dùng",
+    "staff": "Nhân viên",
+    "viewer": "Người xem"
   },
   "status": {
-    "active": "Hoạt Động",
-    "inactive": "Vô Hiệu",
-    "suspended": "Tạm Khóa"
+    "active": "Hoạt động",
+    "inactive": "Không hoạt động"
+  },
+  "sync": {
+    "online": "Trực tuyến",
+    "offline": "Ngoại tuyến",
+    "synced": "Đã đồng bộ",
+    "pending": "Chờ đồng bộ",
+    "conflict": "Xung đột",
+    "unknown": "Không xác định",
+    "pendingSync": "Chờ đồng bộ",
+    "syncing": "Đang đồng bộ...",
+    "syncNow": "Đồng bộ ngay"
   },
   "actions": {
-    "viewDetail": "Xem Chi Tiết",
-    "edit": "Chỉnh Sửa",
-    "resetPassword": "Đặt Lại Mật Khẩu",
-    "toggleActive": "Kích Hoạt/Vô Hiệu Hóa",
-    "activate": "Kích Hoạt",
-    "deactivate": "Vô Hiệu Hóa",
-    "delete": "Xóa"
+    "viewDetail": "Xem chi tiết",
+    "edit": "Chỉnh sửa",
+    "delete": "Xóa",
+    "resetPassword": "Đặt lại mật khẩu",
+    "activate": "Kích hoạt",
+    "deactivate": "Vô hiệu hóa"
   },
   "messages": {
+    "total": "Tổng {{total}} người dùng",
+    "loadError": "Không thể tải danh sách người dùng",
     "deleteSuccess": "Xóa người dùng thành công",
     "deleteError": "Không thể xóa người dùng",
-    "updateStatusSuccess": "Cập nhật trạng thái thành công",
-    "updateStatusError": "Không thể cập nhật trạng thái",
-    "resetPasswordSuccess": "Đã gửi email đặt lại mật khẩu",
-    "resetPasswordError": "Không thể đặt lại mật khẩu",
-    "total": "Tổng {{total}} người dùng",
-    "deleteConfirm": "Xác nhận xóa",
-    "deleteDescription": "Bạn có chắc chắn muốn xóa người dùng này?",
+    "deleteConfirm": "Xóa người dùng",
+    "deleteDescription": "Bạn có chắc chắn muốn xóa người dùng này? Hành động này không thể hoàn tác.",
+    "updateStatusSuccess": "Cập nhật trạng thái người dùng thành công",
+    "updateStatusError": "Không thể cập nhật trạng thái người dùng",
     "resetPasswordConfirm": "Đặt lại mật khẩu",
-    "resetPasswordDescription": "Bạn có chắc chắn muốn đặt lại mật khẩu cho người dùng này?"
-  },
-  "list": {
-    "title": "Danh Sách Người Dùng",
-    "empty": "Không tìm thấy người dùng nào",
-    "search": "Tìm kiếm người dùng..."
-  },
-  "form": {
-    "create": "Tạo Người Dùng",
-    "edit": "Chỉnh Sửa Người Dùng",
-    "firstName": "Tên",
-    "lastName": "Họ",
-    "email": "Email",
-    "phone": "Số Điện Thoại",
-    "role": "Vai Trò",
-    "department": "Phòng Ban",
-    "password": "Mật Khẩu",
-    "confirmPassword": "Xác Nhận Mật Khẩu"
+    "resetPasswordDescription": "Bạn có chắc chắn muốn đặt lại mật khẩu cho người dùng này?",
+    "resetPasswordError": "Không thể đặt lại mật khẩu",
+    "featureNotAvailable": "Tính năng này chưa khả dụng"
   }
 }
