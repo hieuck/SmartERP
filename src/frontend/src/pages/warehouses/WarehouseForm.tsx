@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Form, Input, Button, Card, Space, Switch, message, Badge } from 'antd';
 import { SaveOutlined, ArrowLeftOutlined, SyncOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import { offlineServices } from '@/services/offline-services';
 import { syncManager } from '@/lib/offline/sync-manager';
 import { logger } from '@/lib/logger/logger.service';
@@ -15,6 +16,7 @@ import { logger } from '@/lib/logger/logger.service';
 const WarehouseForm = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { t } = useTranslation(['warehouses', 'commonUi']);
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
@@ -58,7 +60,7 @@ const WarehouseForm = () => {
       }
     } catch (error) {
       logger.error('WarehouseForm', 'Failed to load warehouse', error as Error);
-      message.error('Không thể tải kho');
+      message.error(t('warehouses:messages.loadError'));
     }
   };
 
@@ -107,11 +109,11 @@ const WarehouseForm = () => {
 
       if (isEdit && id) {
         await offlineServices.warehouses.update(id, values);
-        message.success('Cập nhật kho thành công');
+        message.success(t('warehouses:messages.updateSuccess'));
         logger.info('WarehouseForm', 'Warehouse updated', { id });
       } else {
         await offlineServices.warehouses.create(values);
-        message.success('Tạo kho thành công');
+        message.success(t('warehouses:messages.createSuccess'));
         logger.info('WarehouseForm', 'Warehouse created');
       }
 
@@ -119,7 +121,7 @@ const WarehouseForm = () => {
       navigate('/warehouses');
     } catch (error) {
       logger.error('WarehouseForm', 'Failed to save warehouse', error as Error);
-      message.error('Có lỗi xảy ra');
+      message.error(t('warehouses:messages.saveError'));
     } finally {
       setLoading(false);
     }
@@ -127,7 +129,7 @@ const WarehouseForm = () => {
 
   return (
     <Card
-      title={isEdit ? 'Chỉnh sửa kho' : 'Thêm kho mới'}
+      title={isEdit ? t('warehouses:form.editTitle') : t('warehouses:form.createTitle')}
       extra={
         <Space>
           <Badge count={queueSize} offset={[-5, 5]}>
@@ -137,12 +139,15 @@ const WarehouseForm = () => {
               loading={syncing}
               disabled={!isOnline}
             >
-              Đồng bộ
+              {syncing ? t('warehouses:sync.syncing') : t('warehouses:buttons.sync')}
             </Button>
           </Badge>
-          <Badge status={isOnline ? 'success' : 'error'} text={isOnline ? 'Online' : 'Offline'} />
+          <Badge 
+            status={isOnline ? 'success' : 'error'} 
+            text={isOnline ? t('warehouses:sync.online') : t('warehouses:sync.offline')} 
+          />
           <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/warehouses')}>
-            Quay lại
+            {t('warehouses:buttons.back')}
           </Button>
         </Space>
       }
@@ -157,58 +162,58 @@ const WarehouseForm = () => {
         }}
       >
         <Form.Item
-          label="Mã kho"
+          label={t('warehouses:form.code')}
           name="code"
-          rules={[{ required: true, message: 'Vui lòng nhập mã kho' }]}
+          rules={[{ required: true, message: t('warehouses:validation.codeRequired') }]}
         >
-          <Input placeholder="Nhập mã kho" />
+          <Input placeholder={t('warehouses:validation.codePlaceholder')} />
         </Form.Item>
 
         <Form.Item
-          label="Tên kho"
+          label={t('warehouses:form.name')}
           name="name"
-          rules={[{ required: true, message: 'Vui lòng nhập tên kho' }]}
+          rules={[{ required: true, message: t('warehouses:validation.nameRequired') }]}
         >
-          <Input placeholder="Nhập tên kho" />
+          <Input placeholder={t('warehouses:validation.namePlaceholder')} />
         </Form.Item>
 
         <Form.Item
-          label="Địa chỉ"
+          label={t('warehouses:form.address')}
           name="address"
-          rules={[{ required: true, message: 'Vui lòng nhập địa chỉ' }]}
+          rules={[{ required: true, message: t('warehouses:validation.addressRequired') }]}
         >
-          <Input placeholder="Nhập địa chỉ" />
+          <Input placeholder={t('warehouses:validation.addressPlaceholder')} />
         </Form.Item>
 
-        <Form.Item label="Phường/Xã" name="ward">
-          <Input placeholder="Nhập phường/xã" />
+        <Form.Item label={t('warehouses:form.ward')} name="ward">
+          <Input placeholder={t('warehouses:validation.wardPlaceholder')} />
         </Form.Item>
 
-        <Form.Item label="Quận/Huyện" name="district">
-          <Input placeholder="Nhập quận/huyện" />
+        <Form.Item label={t('warehouses:form.district')} name="district">
+          <Input placeholder={t('warehouses:validation.districtPlaceholder')} />
         </Form.Item>
 
         <Form.Item
-          label="Tỉnh/Thành phố"
+          label={t('warehouses:form.city')}
           name="city"
-          rules={[{ required: true, message: 'Vui lòng nhập tỉnh/thành phố' }]}
+          rules={[{ required: true, message: t('warehouses:validation.cityRequired') }]}
         >
-          <Input placeholder="Nhập tỉnh/thành phố" />
+          <Input placeholder={t('warehouses:validation.cityPlaceholder')} />
         </Form.Item>
 
-        <Form.Item label="Điện thoại" name="phone">
-          <Input placeholder="Nhập số điện thoại" />
+        <Form.Item label={t('warehouses:form.phone')} name="phone">
+          <Input placeholder={t('warehouses:validation.phonePlaceholder')} />
         </Form.Item>
 
-        <Form.Item label="Trạng thái" name="status" valuePropName="checked">
+        <Form.Item label={t('warehouses:form.status')} name="status" valuePropName="checked">
           <Switch
-            checkedChildren="Hoạt động"
-            unCheckedChildren="Ngừng"
+            checkedChildren={t('warehouses:form.statusActive')}
+            unCheckedChildren={t('warehouses:form.statusInactive')}
             onChange={(checked) => form.setFieldValue('status', checked ? 'active' : 'inactive')}
           />
         </Form.Item>
 
-        <Form.Item label="Đặt làm kho mặc định" name="isDefault" valuePropName="checked">
+        <Form.Item label={t('warehouses:form.isDefault')} name="isDefault" valuePropName="checked">
           <Switch />
         </Form.Item>
 
@@ -220,9 +225,9 @@ const WarehouseForm = () => {
               icon={<SaveOutlined />}
               loading={loading}
             >
-              Lưu
+              {t('warehouses:buttons.save')}
             </Button>
-            <Button onClick={() => navigate('/warehouses')}>Hủy</Button>
+            <Button onClick={() => navigate('/warehouses')}>{t('warehouses:buttons.cancel')}</Button>
           </Space>
         </Form.Item>
       </Form>

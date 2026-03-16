@@ -15,6 +15,7 @@ import {
   SyncOutlined,
   WifiOutlined,
 } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import { useResponsive } from '@/hooks/useResponsive';
 import { offlineServices } from '@/services/offline-services';
 import { syncManager } from '@/lib/offline/sync-manager';
@@ -25,6 +26,7 @@ const { Option } = Select;
 
 const WarehouseStockReport = () => {
   const context = 'WarehouseStockReport';
+  const { t } = useTranslation(['warehouses', 'commonUi']);
   const { isMobile } = useResponsive();
   const [selectedWarehouse, setSelectedWarehouse] = useState<string>();
   const [search, setSearch] = useState('');
@@ -147,12 +149,12 @@ const WarehouseStockReport = () => {
 
   const columns = [
     {
-      title: 'Sản phẩm',
+      title: t('warehouses:report.product'),
       dataIndex: 'productId',
       key: 'productId',
     },
     {
-      title: 'Kho',
+      title: t('warehouses:report.warehouse'),
       dataIndex: 'warehouseId',
       key: 'warehouseId',
       render: (warehouseId: string) => {
@@ -161,7 +163,7 @@ const WarehouseStockReport = () => {
       },
     },
     {
-      title: 'Tồn kho',
+      title: t('warehouses:report.quantity'),
       dataIndex: 'quantity',
       key: 'quantity',
       align: 'right' as const,
@@ -175,23 +177,23 @@ const WarehouseStockReport = () => {
       },
     },
     {
-      title: 'Tối thiểu',
+      title: t('warehouses:report.minStock'),
       dataIndex: 'minStockLevel',
       key: 'minStockLevel',
       align: 'right' as const,
       render: (v: number) => v?.toLocaleString('vi-VN') || '-',
     },
     {
-      title: 'Trạng thái',
+      title: t('warehouses:report.status'),
       key: 'status',
       render: (_: any, record: Stock) => {
         const isLow = record.quantity <= record.minStockLevel;
         return isLow ? (
           <Tag color="red" icon={<WarningOutlined />}>
-            Sắp hết
+            {t('warehouses:report.lowStockStatus')}
           </Tag>
         ) : (
-          <Tag color="green">Đủ hàng</Tag>
+          <Tag color="green">{t('warehouses:report.inStockStatus')}</Tag>
         );
       },
     },
@@ -203,7 +205,7 @@ const WarehouseStockReport = () => {
         <Col span={isMobile ? 12 : 8}>
           <Card>
             <Statistic
-              title="Tổng mặt hàng"
+              title={t('warehouses:report.totalItems')}
               value={totalItems}
               prefix={<InboxOutlined />}
             />
@@ -212,7 +214,7 @@ const WarehouseStockReport = () => {
         <Col span={isMobile ? 12 : 8}>
           <Card>
             <Statistic
-              title="Sắp hết hàng"
+              title={t('warehouses:report.lowStock')}
               value={lowStockItems.length}
               valueStyle={{ color: '#cf1322' }}
               prefix={<WarningOutlined />}
@@ -222,11 +224,11 @@ const WarehouseStockReport = () => {
         <Col span={isMobile ? 24 : 8}>
           <Card>
             <Statistic
-              title="Kho đang xem"
+              title={t('warehouses:report.currentWarehouse')}
               value={
                 selectedWarehouse
                   ? warehouses.find((w) => w.id === selectedWarehouse)?.name || 'N/A'
-                  : 'Tất cả'
+                  : t('warehouses:report.allWarehouses')
               }
               prefix={<BarChartOutlined />}
             />
@@ -235,7 +237,7 @@ const WarehouseStockReport = () => {
       </Row>
 
       <Card
-        title="Báo cáo tồn kho"
+        title={t('warehouses:report.title')}
         extra={
           <Space>
             <Badge count={queueSize} offset={[-5, 5]}>
@@ -245,11 +247,11 @@ const WarehouseStockReport = () => {
                 loading={isSyncing}
                 disabled={!isOnline}
               >
-                Đồng bộ
+                {isSyncing ? t('warehouses:sync.syncing') : t('warehouses:buttons.sync')}
               </Button>
             </Badge>
             <Tag icon={<WifiOutlined />} color={isOnline ? 'success' : 'error'}>
-              {isOnline ? 'Online' : 'Offline'}
+              {isOnline ? t('warehouses:sync.online') : t('warehouses:sync.offline')}
             </Tag>
           </Space>
         }
@@ -257,7 +259,7 @@ const WarehouseStockReport = () => {
         <Space direction="vertical" style={{ width: '100%', marginBottom: 16 }}>
           <Space wrap>
             <Select
-              placeholder="Chọn kho"
+              placeholder={t('warehouses:report.selectWarehouse')}
               style={{ width: isMobile ? '100%' : 200 }}
               allowClear
               value={selectedWarehouse}
@@ -270,7 +272,7 @@ const WarehouseStockReport = () => {
               ))}
             </Select>
             <Input
-              placeholder="Tìm sản phẩm..."
+              placeholder={t('warehouses:report.searchProduct')}
               prefix={<SearchOutlined />}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -288,7 +290,7 @@ const WarehouseStockReport = () => {
           scroll={{ x: 'max-content' }}
           pagination={{
             showSizeChanger: true,
-            showTotal: (total) => `Tổng ${total} mặt hàng`,
+            showTotal: (total) => t('warehouses:report.totalLabel', { total }),
           }}
         />
       </Card>

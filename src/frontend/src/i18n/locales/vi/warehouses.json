@@ -1,141 +1,88 @@
 {
-  "title": "Quản Lý Kho",
+  "title": "Danh Sách Kho",
   "createButton": "Thêm Kho",
   "searchPlaceholder": "Tìm kiếm kho...",
   "columns": {
-    "code": "Mã",
+    "code": "Mã Kho",
     "name": "Tên Kho",
     "address": "Địa Chỉ",
-    "phone": "Điện Thoại",
+    "phone": "Số Điện Thoại",
     "status": "Trạng Thái",
-    "isDefault": "Mặc Định",
-    "fromWarehouse": "Từ Kho",
-    "toWarehouse": "Đến Kho",
-    "transferDate": "Ngày Chuyển",
-    "items": "Số Mặt Hàng",
-    "createdBy": "Người Tạo",
-    "sku": "SKU",
-    "product": "Sản Phẩm",
-    "warehouse": "Kho",
-    "quantity": "Tồn Kho",
-    "minQuantity": "Tối Thiểu",
-    "stockStatus": "Trạng Thái"
-  },
-  "status": {
-    "active": "Hoạt Động",
-    "inactive": "Ngừng",
-    "pending": "Chờ Xử Lý",
-    "in_transit": "Đang Chuyển",
-    "completed": "Hoàn Thành",
-    "cancelled": "Đã Hủy",
-    "draft": "Nháp"
+    "isDefault": "Mặc Định"
   },
   "labels": {
     "default": "Mặc định"
   },
-  "messages": {
-    "deleteSuccess": "Xóa kho thành công",
-    "deleteError": "Không thể xóa kho",
-    "total": "Tổng {{total}} kho",
-    "totalTransfers": "Tổng {{total}} phiếu chuyển",
-    "createSuccess": "Tạo phiếu chuyển kho thành công",
-    "createError": "Tạo phiếu chuyển kho thất bại",
-    "updateSuccess": "Cập nhật kho thành công",
-    "updateError": "Cập nhật kho thất bại",
-    "warehouseCreateSuccess": "Tạo kho thành công",
-    "warehouseCreateError": "Không thể tạo kho"
-  },
-  "list": {
-    "title": "Danh Sách Kho",
-    "empty": "Không tìm thấy kho nào",
-    "search": "Tìm kiếm kho..."
+  "sync": {
+    "status": "Đồng bộ",
+    "synced": "Đã đồng bộ",
+    "pending": "Chờ đồng bộ",
+    "conflict": "Xung đột",
+    "unknown": "Không xác định",
+    "online": "Trực tuyến",
+    "offline": "Ngoại tuyến",
+    "syncNow": "Đồng bộ ngay",
+    "syncing": "Đang đồng bộ...",
+    "pendingSync": "Chờ đồng bộ"
   },
   "form": {
-    "create": "Tạo Kho Mới",
-    "edit": "Chỉnh Sửa Kho",
-    "name": "Tên Kho",
-    "code": "Mã Kho",
-    "address": "Địa Chỉ",
+    "createTitle": "Thêm Kho Mới",
+    "editTitle": "Chỉnh Sửa Kho",
+    "code": "Mã kho",
+    "name": "Tên kho",
+    "address": "Địa chỉ",
     "ward": "Phường/Xã",
     "district": "Quận/Huyện",
-    "city": "Tỉnh/Thành Phố",
-    "phone": "Điện Thoại",
-    "email": "Email",
-    "manager": "Quản Lý",
-    "capacity": "Sức Chứa",
-    "status": "Trạng Thái",
-    "statusActive": "Hoạt Động",
-    "statusInactive": "Ngừng",
-    "isDefault": "Đặt Làm Kho Mặc Định",
+    "city": "Tỉnh/Thành phố",
+    "phone": "Điện thoại",
+    "status": "Trạng thái",
+    "isDefault": "Đặt làm kho mặc định",
+    "statusActive": "Hoạt động",
+    "statusInactive": "Ngừng"
+  },
+  "validation": {
+    "codeRequired": "Vui lòng nhập mã kho",
+    "codePlaceholder": "Nhập mã kho",
+    "nameRequired": "Vui lòng nhập tên kho",
+    "namePlaceholder": "Nhập tên kho",
+    "addressRequired": "Vui lòng nhập địa chỉ",
+    "addressPlaceholder": "Nhập địa chỉ",
+    "wardPlaceholder": "Nhập phường/xã",
+    "districtPlaceholder": "Nhập quận/huyện",
+    "cityRequired": "Vui lòng nhập tỉnh/thành phố",
+    "cityPlaceholder": "Nhập tỉnh/thành phố",
+    "phonePlaceholder": "Nhập số điện thoại"
+  },
+  "buttons": {
+    "back": "Quay lại",
     "save": "Lưu",
     "cancel": "Hủy",
-    "back": "Quay Lại",
-    "required": {
-      "code": "Vui lòng nhập mã kho",
-      "name": "Vui lòng nhập tên kho",
-      "address": "Vui lòng nhập địa chỉ",
-      "city": "Vui lòng nhập tỉnh/thành phố"
-    }
+    "sync": "Đồng bộ"
   },
-  "transfer": {
-    "title": "Phiếu Chuyển Kho",
-    "list": "Danh Sách Chuyển Kho",
-    "create": "Tạo Phiếu Chuyển",
-    "createTitle": "Tạo Phiếu Chuyển Kho",
-    "viewTitle": "Chi Tiết Phiếu Chuyển Kho",
-    "from": "Từ Kho",
-    "to": "Đến Kho",
-    "product": "Sản Phẩm",
-    "quantity": "Số Lượng",
-    "transferDate": "Ngày Chuyển",
-    "notes": "Ghi Chú",
-    "notesPlaceholder": "Nhập ghi chú",
-    "productList": "Sản Phẩm Chuyển",
-    "addProduct": "Thêm",
-    "productId": "Mã Sản Phẩm",
-    "productIdPlaceholder": "Mã sản phẩm",
-    "quantityPlaceholder": "Số lượng",
-    "back": "Quay Lại",
-    "save": "Tạo Phiếu",
-    "cancel": "Hủy",
-    "status": "Trạng Thái",
-    "code": "Mã Phiếu",
-    "fromWarehouse": "Kho Nguồn",
-    "toWarehouse": "Kho Đích",
-    "required": {
-      "fromWarehouse": "Vui lòng chọn kho nguồn",
-      "toWarehouse": "Vui lòng chọn kho đích",
-      "transferDate": "Vui lòng chọn ngày"
-    },
-    "filters": {
-      "status": "Lọc Theo Trạng Thái",
-      "draft": "Nháp",
-      "pending": "Chờ Xử Lý",
-      "in_transit": "Đang Chuyển",
-      "completed": "Hoàn Thành",
-      "cancelled": "Đã Hủy"
-    }
+  "messages": {
+    "createSuccess": "Tạo kho thành công",
+    "updateSuccess": "Cập nhật kho thành công",
+    "deleteSuccess": "Xóa kho thành công",
+    "deleteError": "Xóa kho thất bại",
+    "loadError": "Không thể tải danh sách kho",
+    "saveError": "Có lỗi xảy ra",
+    "total": "Tổng {{total}} kho"
   },
   "report": {
     "title": "Báo Cáo Tồn Kho",
-    "byWarehouse": "Theo Kho",
-    "byProduct": "Theo Sản Phẩm",
-    "totalValue": "Tổng Giá Trị",
-    "totalItems": "Tổng Mặt Hàng",
-    "lowStock": "Sắp Hết Hàng",
-    "viewingWarehouse": "Kho Đang Xem",
-    "allWarehouses": "Tất Cả",
-    "selectWarehouse": "Chọn Kho",
+    "totalItems": "Tổng mặt hàng",
+    "lowStock": "Sắp hết hàng",
+    "currentWarehouse": "Kho đang xem",
+    "allWarehouses": "Tất cả",
+    "selectWarehouse": "Chọn kho",
     "searchProduct": "Tìm sản phẩm...",
-    "stock": "Tồn Kho",
-    "minStock": "Tối Thiểu",
-    "status": {
-      "lowStock": "Sắp Hết",
-      "inStock": "Đủ Hàng"
-    }
-  },
-  "actions": {
-    "view": "Xem",
-    "viewDetail": "Xem Chi Tiết"
+    "product": "Sản phẩm",
+    "warehouse": "Kho",
+    "quantity": "Tồn kho",
+    "minStock": "Tối thiểu",
+    "status": "Trạng thái",
+    "lowStockStatus": "Sắp hết",
+    "inStockStatus": "Đủ hàng",
+    "totalLabel": "Tổng {{total}} mặt hàng"
   }
 }

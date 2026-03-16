@@ -1,141 +1,88 @@
 {
-  "title": "Warehouse Management",
+  "title": "Warehouse List",
   "createButton": "Add Warehouse",
   "searchPlaceholder": "Search warehouses...",
   "columns": {
     "code": "Code",
     "name": "Warehouse Name",
     "address": "Address",
-    "phone": "Phone",
+    "phone": "Phone Number",
     "status": "Status",
-    "isDefault": "Default",
-    "fromWarehouse": "From Warehouse",
-    "toWarehouse": "To Warehouse",
-    "transferDate": "Transfer Date",
-    "items": "Items",
-    "createdBy": "Created By",
-    "sku": "SKU",
-    "product": "Product",
-    "warehouse": "Warehouse",
-    "quantity": "Stock",
-    "minQuantity": "Min Quantity",
-    "stockStatus": "Status"
-  },
-  "status": {
-    "active": "Active",
-    "inactive": "Inactive",
-    "pending": "Pending",
-    "in_transit": "In Transit",
-    "completed": "Completed",
-    "cancelled": "Cancelled",
-    "draft": "Draft"
+    "isDefault": "Default"
   },
   "labels": {
     "default": "Default"
   },
-  "messages": {
-    "deleteSuccess": "Warehouse deleted successfully",
-    "deleteError": "Cannot delete warehouse",
-    "total": "Total {{total}} warehouses",
-    "totalTransfers": "Total {{total}} transfers",
-    "createSuccess": "Transfer created successfully",
-    "createError": "Failed to create transfer",
-    "updateSuccess": "Warehouse updated successfully",
-    "updateError": "Failed to update warehouse",
-    "warehouseCreateSuccess": "Warehouse created successfully",
-    "warehouseCreateError": "Failed to create warehouse"
-  },
-  "list": {
-    "title": "Warehouse List",
-    "empty": "No warehouses found",
-    "search": "Search warehouses..."
+  "sync": {
+    "status": "Sync",
+    "synced": "Synced",
+    "pending": "Pending",
+    "conflict": "Conflict",
+    "unknown": "Unknown",
+    "online": "Online",
+    "offline": "Offline",
+    "syncNow": "Sync Now",
+    "syncing": "Syncing...",
+    "pendingSync": "Pending Sync"
   },
   "form": {
-    "create": "Create Warehouse",
-    "edit": "Edit Warehouse",
-    "name": "Warehouse Name",
+    "createTitle": "Add New Warehouse",
+    "editTitle": "Edit Warehouse",
     "code": "Warehouse Code",
+    "name": "Warehouse Name",
     "address": "Address",
     "ward": "Ward",
     "district": "District",
     "city": "City/Province",
-    "phone": "Phone",
-    "email": "Email",
-    "manager": "Manager",
-    "capacity": "Capacity",
+    "phone": "Phone Number",
     "status": "Status",
-    "statusActive": "Active",
-    "statusInactive": "Inactive",
     "isDefault": "Set as Default Warehouse",
+    "statusActive": "Active",
+    "statusInactive": "Inactive"
+  },
+  "validation": {
+    "codeRequired": "Please enter warehouse code",
+    "codePlaceholder": "Enter warehouse code",
+    "nameRequired": "Please enter warehouse name",
+    "namePlaceholder": "Enter warehouse name",
+    "addressRequired": "Please enter address",
+    "addressPlaceholder": "Enter address",
+    "wardPlaceholder": "Enter ward",
+    "districtPlaceholder": "Enter district",
+    "cityRequired": "Please enter city/province",
+    "cityPlaceholder": "Enter city/province",
+    "phonePlaceholder": "Enter phone number"
+  },
+  "buttons": {
+    "back": "Back",
     "save": "Save",
     "cancel": "Cancel",
-    "back": "Back",
-    "required": {
-      "code": "Please enter warehouse code",
-      "name": "Please enter warehouse name",
-      "address": "Please enter address",
-      "city": "Please enter city/province"
-    }
+    "sync": "Sync"
   },
-  "transfer": {
-    "title": "Stock Transfers",
-    "list": "Transfer List",
-    "create": "Create Transfer",
-    "createTitle": "Create Stock Transfer",
-    "viewTitle": "Transfer Details",
-    "from": "From Warehouse",
-    "to": "To Warehouse",
-    "product": "Product",
-    "quantity": "Quantity",
-    "transferDate": "Transfer Date",
-    "notes": "Notes",
-    "notesPlaceholder": "Enter notes",
-    "productList": "Products to Transfer",
-    "addProduct": "Add",
-    "productId": "Product Code",
-    "productIdPlaceholder": "Product code",
-    "quantityPlaceholder": "Quantity",
-    "back": "Back",
-    "save": "Create Transfer",
-    "cancel": "Cancel",
-    "status": "Status",
-    "code": "Transfer Code",
-    "fromWarehouse": "From Warehouse",
-    "toWarehouse": "To Warehouse",
-    "required": {
-      "fromWarehouse": "Please select source warehouse",
-      "toWarehouse": "Please select destination warehouse",
-      "transferDate": "Please select date"
-    },
-    "filters": {
-      "status": "Filter by Status",
-      "draft": "Draft",
-      "pending": "Pending",
-      "in_transit": "In Transit",
-      "completed": "Completed",
-      "cancelled": "Cancelled"
-    }
+  "messages": {
+    "createSuccess": "Warehouse created successfully",
+    "updateSuccess": "Warehouse updated successfully",
+    "deleteSuccess": "Warehouse deleted successfully",
+    "deleteError": "Cannot delete warehouse",
+    "loadError": "Failed to load warehouses",
+    "saveError": "An error occurred",
+    "total": "Total {{total}} warehouses"
   },
   "report": {
-    "title": "Stock Report",
-    "byWarehouse": "By Warehouse",
-    "byProduct": "By Product",
-    "totalValue": "Total Value",
+    "title": "Warehouse Stock Report",
     "totalItems": "Total Items",
     "lowStock": "Low Stock",
-    "viewingWarehouse": "Viewing Warehouse",
-    "allWarehouses": "All",
-    "selectWarehouse": "Select Warehouse",
+    "currentWarehouse": "Current Warehouse",
+    "allWarehouses": "All Warehouses",
+    "selectWarehouse": "Select warehouse",
     "searchProduct": "Search product...",
-    "stock": "Stock",
-    "minStock": "Min Stock",
-    "status": {
-      "lowStock": "Low Stock",
-      "inStock": "In Stock"
-    }
-  },
-  "actions": {
-    "view": "View",
-    "viewDetail": "View Details"
+    "product": "Product",
+    "warehouse": "Warehouse",
+    "quantity": "Stock",
+    "minStock": "Minimum",
+    "status": "Status",
+    "lowStockStatus": "Low Stock",
+    "inStockStatus": "In Stock",
+    "totalLabel": "Total {{total}} items"
   }
 }

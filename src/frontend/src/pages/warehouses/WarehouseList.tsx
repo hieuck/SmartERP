@@ -228,7 +228,7 @@ export default function WarehouseList() {
         isDefault ? <Tag color="blue">{t('warehouses:labels.default')}</Tag> : null,
     },
     {
-      title: 'Sync',
+      title: t('warehouses:sync.status'),
       dataIndex: 'syncStatus',
       key: 'syncStatus',
       width: 100,
@@ -239,13 +239,13 @@ export default function WarehouseList() {
           [SyncStatus.CONFLICT]: 'error',
         };
         const labels = {
-          [SyncStatus.SYNCED]: 'Synced',
-          [SyncStatus.PENDING]: 'Pending',
-          [SyncStatus.CONFLICT]: 'Conflict',
+          [SyncStatus.SYNCED]: t('warehouses:sync.synced'),
+          [SyncStatus.PENDING]: t('warehouses:sync.pending'),
+          [SyncStatus.CONFLICT]: t('warehouses:sync.conflict'),
         };
         return (
           <Tag color={colors[syncStatus] || 'default'}>
-            {labels[syncStatus] || 'Unknown'}
+            {labels[syncStatus] || t('warehouses:sync.unknown')}
           </Tag>
         );
       },
@@ -272,7 +272,7 @@ export default function WarehouseList() {
             text={
               <Space size="small">
                 {isOnline ? <CloudOutlined /> : <DisconnectOutlined />}
-                {isOnline ? 'Online' : 'Offline'}
+                {isOnline ? t('warehouses:sync.online') : t('warehouses:sync.offline')}
               </Space>
             }
           />
@@ -280,7 +280,7 @@ export default function WarehouseList() {
           {/* Sync Queue Indicator */}
           {queueSize > 0 && (
             <Badge count={queueSize} showZero={false}>
-              <Tag color="warning">Pending Sync</Tag>
+              <Tag color="warning">{t('warehouses:sync.pendingSync')}</Tag>
             </Badge>
           )}
 
@@ -291,7 +291,7 @@ export default function WarehouseList() {
             loading={syncing}
             disabled={!isOnline}
           >
-            {syncing ? 'Syncing...' : 'Sync Now'}
+            {syncing ? t('warehouses:sync.syncing') : t('warehouses:sync.syncNow')}
           </Button>
         </Space>
       }
