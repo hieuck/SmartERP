@@ -496,26 +496,115 @@ export const theme: ThemeConfig = {
 
 /**
  * Dark Theme Configuration
- * For dark mode support
+ * Enhanced dark mode with better contrast and modern aesthetics
  */
 export const darkTheme: ThemeConfig = {
   ...theme,
   token: {
     ...theme.token,
-    // Dark mode color overrides
+    // Dark mode color palette
+    colorPrimary: '#1890ff',
+    colorSuccess: '#52c41a',
+    colorWarning: '#faad14',
+    colorError: '#ff4d4f',
+    colorInfo: '#1890ff',
+
+    // Text colors - optimized for dark backgrounds
     colorTextBase: '#ffffff',
     colorText: 'rgba(255, 255, 255, 0.85)',
     colorTextSecondary: 'rgba(255, 255, 255, 0.65)',
     colorTextTertiary: 'rgba(255, 255, 255, 0.45)',
     colorTextQuaternary: 'rgba(255, 255, 255, 0.25)',
 
+    // Background colors - modern dark palette
     colorBgBase: '#141414',
     colorBgContainer: '#1f1f1f',
     colorBgElevated: '#262626',
     colorBgLayout: '#000000',
+    colorBgSpotlight: '#424242',
 
+    // Border colors
     colorBorder: '#434343',
     colorBorderSecondary: '#303030',
+
+    // Link colors
+    colorLink: '#1890ff',
+    colorLinkHover: '#40a9ff',
+    colorLinkActive: '#096dd9',
+  },
+  components: {
+    ...theme.components,
+    // Layout dark mode
+    Layout: {
+      ...theme.components?.Layout,
+      headerBg: '#141414',
+      siderBg: '#1f1f1f',
+      bodyBg: '#000000',
+      footerBg: '#141414',
+      triggerBg: '#1f1f1f',
+    },
+    // Table dark mode
+    Table: {
+      ...theme.components?.Table,
+      headerBg: '#1f1f1f',
+      headerColor: 'rgba(255, 255, 255, 0.85)',
+      headerSortActiveBg: '#262626',
+      headerSortHoverBg: '#262626',
+      bodySortBg: '#1a1a1a',
+      rowHoverBg: '#262626',
+    },
+    // Card dark mode
+    Card: {
+      ...theme.components?.Card,
+      colorBgContainer: '#1f1f1f',
+      colorBorderSecondary: '#303030',
+    },
+    // Menu dark mode
+    Menu: {
+      ...theme.components?.Menu,
+      itemBg: 'transparent',
+      itemSelectedBg: '#1890ff',
+      itemSelectedColor: '#ffffff',
+      itemHoverBg: 'rgba(255, 255, 255, 0.08)',
+      itemHoverColor: 'rgba(255, 255, 255, 0.85)',
+      itemActiveBg: '#096dd9',
+      darkItemBg: '#1f1f1f',
+      darkItemSelectedBg: '#1890ff',
+      darkItemHoverBg: 'rgba(255, 255, 255, 0.08)',
+    },
+    // Modal dark mode
+    Modal: {
+      ...theme.components?.Modal,
+      headerBg: '#1f1f1f',
+      contentBg: '#1f1f1f',
+      footerBg: '#1f1f1f',
+    },
+    // Input dark mode
+    Input: {
+      ...theme.components?.Input,
+      colorBgContainer: '#1f1f1f',
+      colorBorder: '#434343',
+      colorTextPlaceholder: 'rgba(255, 255, 255, 0.45)',
+    },
+    // Select dark mode
+    Select: {
+      ...theme.components?.Select,
+      colorBgContainer: '#1f1f1f',
+      colorBgElevated: '#262626',
+      colorBorder: '#434343',
+    },
+    // Button dark mode
+    Button: {
+      ...theme.components?.Button,
+      colorBgContainer: '#1f1f1f',
+      colorBorder: '#434343',
+      defaultBg: '#1f1f1f',
+      defaultBorderColor: '#434343',
+      defaultColor: 'rgba(255, 255, 255, 0.85)',
+      defaultHoverBg: '#262626',
+      defaultHoverBorderColor: '#595959',
+      defaultHoverColor: 'rgba(255, 255, 255, 0.85)',
+    },
   },
 };
 

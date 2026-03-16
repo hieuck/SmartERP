@@ -12,9 +12,12 @@
     "category": "Danh mục",
     "description": "Mô tả",
     "price": "Giá bán",
+    "cost": "Giá vốn",
     "costPrice": "Giá vốn",
     "stock": "Tồn kho",
+    "stockQuantity": "Số lượng tồn kho",
     "minStock": "Tồn kho tối thiểu",
+    "minStockLevel": "Ngưỡng cảnh báo tồn kho",
     "unit": "Đơn vị",
     "status": "Trạng thái",
     "image": "Hình ảnh",
@@ -27,14 +30,27 @@
     "outOfStock": "Hết hàng",
     "lowStock": "Sắp hết hàng"
   },
+  "sync": {
+    "status": "Đồng bộ",
+    "synced": "Đã đồng bộ",
+    "pending": "Chờ đồng bộ",
+    "conflict": "Xung đột",
+    "syncing": "Đang đồng bộ...",
+    "syncNow": "Đồng bộ ngay",
+    "pendingSync": "Chờ đồng bộ",
+    "online": "Trực tuyến",
+    "offline": "Ngoại tuyến"
+  },
   "messages": {
     "createSuccess": "Tạo sản phẩm thành công",
     "updateSuccess": "Cập nhật sản phẩm thành công",
     "deleteSuccess": "Xóa sản phẩm thành công",
     "deleteConfirm": "Xóa sản phẩm",
     "deleteDescription": "Bạn có chắc muốn xóa sản phẩm này?",
-    "deleteError": "Không thể xóa sản phẩm",
-    "lowStockAlert": "Sản phẩm này sắp hết hàng"
+    "deleteError": "Xóa sản phẩm thất bại",
+    "loadError": "Không thể tải danh sách sản phẩm",
+    "lowStockAlert": "Sản phẩm này sắp hết hàng",
+    "saveError": "Có lỗi xảy ra"
   },
   "filters": {
     "all": "Tất cả sản phẩm",
@@ -51,9 +67,51 @@
   },
   "form": {
     "create": "Thêm Sản Phẩm",
-    "edit": "Chỉnh Sửa Sản Phẩm"
+    "edit": "Chỉnh Sửa Sản Phẩm",
+    "createTitle": "Thêm sản phẩm mới",
+    "editTitle": "Chỉnh sửa sản phẩm",
+    "backButton": "Quay lại",
+    "saveButton": "Lưu",
+    "updateButton": "Cập nhật",
+    "createButton": "Tạo mới",
+    "cancelButton": "Hủy",
+    "sku": "Mã SKU",
+    "name": "Tên sản phẩm",
+    "price": "Giá bán",
+    "cost": "Giá vốn",
+    "validation": {
+      "nameRequired": "Vui lòng nhập tên sản phẩm",
+      "skuRequired": "Vui lòng nhập mã SKU",
+      "categoryRequired": "Vui lòng chọn danh mục",
+      "priceRequired": "Vui lòng nhập giá bán",
+      "costRequired": "Vui lòng nhập giá vốn",
+      "stockRequired": "Vui lòng nhập số lượng",
+      "minStockRequired": "Vui lòng nhập ngưỡng cảnh báo"
+    },
+    "placeholders": {
+      "name": "Nhập tên sản phẩm",
+      "sku": "Nhập mã SKU",
+      "description": "Nhập mô tả sản phẩm",
+      "category": "Chọn danh mục"
+    }
   },
   "categories": {
-    "manage": "Quản Lý Danh Mục"
+    "manage": "Quản Lý Danh Mục",
+    "create": "Thêm danh mục mới",
+    "createButton": "Tạo danh mục",
+    "name": "Tên danh mục",
+    "code": "Mã danh mục",
+    "description": "Mô tả",
+    "createSuccess": "Tạo danh mục thành công",
+    "createError": "Tạo danh mục thất bại",
+    "validation": {
+      "nameRequired": "Vui lòng nhập tên danh mục",
+      "codeRequired": "Vui lòng nhập mã danh mục"
+    },
+    "placeholders": {
+      "name": "Nhập tên danh mục",
+      "code": "Ví dụ: GYPSUM_BOARD",
+      "description": "Nhập mô tả danh mục"
+    }
   }
 }

@@ -16,6 +16,7 @@ import {
   Badge,
 } from 'antd';
 import { SaveOutlined, ArrowLeftOutlined, AppstoreOutlined, PlusOutlined, SyncOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import { offlineServices } from '@/services/offline-services';
 import { syncManager } from '@/lib/offline/sync-manager';
 import { logger } from '@/lib/logger/logger.service';
@@ -27,6 +28,7 @@ const { TextArea } = Input;
 export default function ProductForm() {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { t, i18n } = useTranslation(['products', 'common']);
   const [form] = Form.useForm();
   const [categoryForm] = Form.useForm();
   const [loading, setLoading] = useState(false);
@@ -73,7 +75,7 @@ export default function ProductForm() {
       }
     } catch (error) {
       logger.error('ProductForm', 'Failed to load product', error as Error);
-      message.error('Không thể tải sản phẩm');
+      message.error(t('products:messages.loadError'));
     }
   };
 
@@ -85,7 +87,7 @@ export default function ProductForm() {
       logger.info('ProductForm', 'Loaded categories from IndexedDB', { count: data.length });
     } catch (error) {
       logger.error('ProductForm', 'Failed to load categories', error as Error);
-      message.error('Không thể tải danh mục');
+      message.error(t('products:messages.loadError'));
     }
   };
 
@@ -134,7 +136,7 @@ export default function ProductForm() {
     try {
       setCreatingCategory(true);
       const newCategory = await offlineServices.categories.create(values);
-      message.success('Tạo danh mục thành công');
+      message.success(t('products:categories.createSuccess'));
       logger.info('ProductForm', 'Category created', { id: newCategory.id });
       
       categoryForm.resetFields();
@@ -145,7 +147,7 @@ export default function ProductForm() {
       await loadQueueSize();
     } catch (error) {
       logger.error('ProductForm', 'Failed to create category', error as Error);
-      message.error('Tạo danh mục thất bại');
+      message.error(t('products:categories.createError'));
     } finally {
       setCreatingCategory(false);
     }
@@ -157,11 +159,11 @@ export default function ProductForm() {
       
       if (isEdit && id) {
         await offlineServices.products.update(id, values);
-        message.success('Cập nhật sản phẩm thành công');
+        message.success(t('products:messages.updateSuccess'));
         logger.info('ProductForm', 'Product updated', { id });
       } else {
         await offlineServices.products.create(values);
-        message.success('Tạo sản phẩm thành công');
+        message.success(t('products:messages.createSuccess'));
         logger.info('ProductForm', 'Product created');
       }
       
@@ -169,11 +171,14 @@ export default function ProductForm() {
       navigate('/dashboard/products');
     } catch (error) {
       logger.error('ProductForm', 'Failed to save product', error as Error);
-      message.error('Có lỗi xảy ra');
+      message.error(t('products:messages.saveError'));
     } finally {
       setLoading(false);
     }
   };
+
+  // Currency symbol based on locale
+  const currencySymbol = i18n.language === 'vi' ? '₫' : '$';
 
   return (
     <>
@@ -181,7 +186,7 @@ export default function ProductForm() {
         <Card>
           <Space style={{ marginBottom: 16, width: '100%', justifyContent: 'space-between' }}>
             <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/dashboard/products')}>
-              Quay lại
+              {t('products:form.backButton')}
             </Button>
             <Space>
               <Badge count={queueSize} offset={[-5, 5]}>
@@ -191,15 +196,15 @@ export default function ProductForm() {
                   loading={syncing}
                   disabled={!isOnline}
                 >
-                  Đồng bộ
+                  {t('products:sync.syncNow')}
                 </Button>
               </Badge>
-              <Badge status={isOnline ? 'success' : 'error'} text={isOnline ? 'Online' : 'Offline'} />
+              <Badge status={isOnline ? 'success' : 'error'} text={t(isOnline ? 'products:sync.online' : 'products:sync.offline')} />
             </Space>
           </Space>
 
           <Title level={3}>
-            <AppstoreOutlined /> {isEdit ? 'Chỉnh sửa sản phẩm' : 'Thêm sản phẩm mới'}
+            <AppstoreOutlined /> {isEdit ? t('products:form.editTitle') : t('products:form.createTitle')}
           </Title>
 
           <Form
@@ -215,31 +220,31 @@ export default function ProductForm() {
               <Col xs={24} md={12}>
                 <Form.Item
                   name="name"
-                  label="Tên sản phẩm"
-                  rules={[{ required: true, message: 'Vui lòng nhập tên sản phẩm' }]}
+                  label={t('products:form.name')}
+                  rules={[{ required: true, message: t('products:form.validation.nameRequired') }]}
                 >
-                  <Input placeholder="Nhập tên sản phẩm" />
+                  <Input placeholder={t('products:form.placeholders.name')} />
                 </Form.Item>
               </Col>
 
               <Col xs={24} md={12}>
                 <Form.Item
                   name="sku"
-                  label="Mã SKU"
-                  rules={[{ required: true, message: 'Vui lòng nhập mã SKU' }]}
+                  label={t('products:form.sku')}
+                  rules={[{ required: true, message: t('products:form.validation.skuRequired') }]}
                 >
-                  <Input placeholder="Nhập mã SKU" />
+                  <Input placeholder={t('products:form.placeholders.sku')} />
                 </Form.Item>
               </Col>
             </Row>
 
             <Form.Item
               name="categoryId"
-              label="Danh mục"
-              rules={[{ required: true, message: 'Vui lòng chọn danh mục' }]}
+              label={t('products:fields.category')}
+              rules={[{ required: true, message: t('products:form.validation.categoryRequired') }]}
             >
               <Select
-                placeholder="Chọn danh mục"
+                placeholder={t('products:form.placeholders.category')}
                 dropdownRender={(menu) => (
                   <>
                     {menu}
@@ -250,7 +255,7 @@ export default function ProductForm() {
                         onClick={() => setShowCategoryModal(true)}
                         style={{ width: '100%', textAlign: 'left' }}
                       >
-                        Thêm danh mục mới
+                        {t('products:categories.create')}
                       </Button>
                     </div>
                   </>
@@ -264,23 +269,23 @@ export default function ProductForm() {
               </Select>
             </Form.Item>
 
-            <Form.Item name="description" label="Mô tả">
-              <TextArea rows={3} placeholder="Nhập mô tả sản phẩm" />
+            <Form.Item name="description" label={t('products:fields.description')}>
+              <TextArea rows={3} placeholder={t('products:form.placeholders.description')} />
             </Form.Item>
 
             <Row gutter={16}>
               <Col xs={24} md={12}>
                 <Form.Item
                   name="price"
-                  label="Giá bán"
-                  rules={[{ required: true, message: 'Vui lòng nhập giá bán' }]}
+                  label={t('products:form.price')}
+                  rules={[{ required: true, message: t('products:form.validation.priceRequired') }]}
                 >
                   <InputNumber
                     min={0}
                     style={{ width: '100%' }}
                     formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                     parser={(value) => value!.replace(/\$\s?|(,*)/g, '')}
-                    addonAfter="₫"
+                    addonAfter={currencySymbol}
                   />
                 </Form.Item>
               </Col>
@@ -288,15 +293,15 @@ export default function ProductForm() {
               <Col xs={24} md={12}>
                 <Form.Item
                   name="cost"
-                  label="Giá vốn"
-                  rules={[{ required: true, message: 'Vui lòng nhập giá vốn' }]}
+                  label={t('products:form.cost')}
+                  rules={[{ required: true, message: t('products:form.validation.costRequired') }]}
                 >
                   <InputNumber
                     min={0}
                     style={{ width: '100%' }}
                     formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                     parser={(value) => value!.replace(/\$\s?|(,*)/g, '')}
-                    addonAfter="₫"
+                    addonAfter={currencySymbol}
                   />
                 </Form.Item>
               </Col>
@@ -306,8 +311,8 @@ export default function ProductForm() {
               <Col xs={24} md={12}>
                 <Form.Item
                   name="stockQuantity"
-                  label="Số lượng tồn kho"
-                  rules={[{ required: true, message: 'Vui lòng nhập số lượng' }]}
+                  label={t('products:fields.stockQuantity')}
+                  rules={[{ required: true, message: t('products:form.validation.stockRequired') }]}
                 >
                   <InputNumber min={0} style={{ width: '100%' }} />
                 </Form.Item>
@@ -316,8 +321,8 @@ export default function ProductForm() {
               <Col xs={24} md={12}>
                 <Form.Item
                   name="minStockLevel"
-                  label="Ngưỡng cảnh báo tồn kho"
-                  rules={[{ required: true, message: 'Vui lòng nhập ngưỡng cảnh báo' }]}
+                  label={t('products:fields.minStockLevel')}
+                  rules={[{ required: true, message: t('products:form.validation.minStockRequired') }]}
                 >
                   <InputNumber min={0} style={{ width: '100%' }} />
                 </Form.Item>
@@ -327,9 +332,11 @@ export default function ProductForm() {
             <Form.Item>
               <Space>
                 <Button type="primary" htmlType="submit" icon={<SaveOutlined />} loading={loading}>
-                  {isEdit ? 'Cập nhật' : 'Tạo mới'}
+                  {isEdit ? t('products:form.updateButton') : t('products:form.createButton')}
                 </Button>
-                <Button onClick={() => navigate('/dashboard/products')}>Hủy</Button>
+                <Button onClick={() => navigate('/dashboard/products')}>
+                  {t('products:form.cancelButton')}
+                </Button>
               </Space>
             </Form.Item>
           </Form>
@@ -337,7 +344,7 @@ export default function ProductForm() {
       </div>
 
       <Modal
-        title="Thêm danh mục mới"
+        title={t('products:categories.create')}
         open={showCategoryModal}
         onCancel={() => setShowCategoryModal(false)}
         footer={null}
@@ -345,27 +352,27 @@ export default function ProductForm() {
         <Form form={categoryForm} layout="vertical" onFinish={handleCreateCategory}>
           <Form.Item
             name="name"
-            label="Tên danh mục"
-            rules={[{ required: true, message: 'Vui lòng nhập tên danh mục' }]}
+            label={t('products:categories.name')}
+            rules={[{ required: true, message: t('products:categories.validation.nameRequired') }]}
           >
-            <Input placeholder="Nhập tên danh mục" />
+            <Input placeholder={t('products:categories.placeholders.name')} />
           </Form.Item>
 
           <Form.Item
             name="code"
-            label="Mã danh mục"
-            rules={[{ required: true, message: 'Vui lòng nhập mã danh mục' }]}
+            label={t('products:categories.code')}
+            rules={[{ required: true, message: t('products:categories.validation.codeRequired') }]}
           >
-            <Input placeholder="Ví dụ: GYPSUM_BOARD" />
+            <Input placeholder={t('products:categories.placeholders.code')} />
           </Form.Item>
 
-          <Form.Item name="description" label="Mô tả">
-            <TextArea rows={3} placeholder="Nhập mô tả danh mục" />
+          <Form.Item name="description" label={t('products:categories.description')}>
+            <TextArea rows={3} placeholder={t('products:categories.placeholders.description')} />
           </Form.Item>
 
           <Form.Item>
             <Button type="primary" htmlType="submit" loading={creatingCategory} block>
-              Tạo danh mục
+              {t('products:categories.createButton')}
             </Button>
           </Form.Item>
         </Form>

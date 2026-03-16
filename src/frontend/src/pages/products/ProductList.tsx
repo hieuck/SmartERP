@@ -207,18 +207,18 @@ export default function ProductList() {
       render: (value: number) => (value ? formatCurrency(value) : '-'),
     },
     {
-      title: 'Status',
+      title: t('products:fields.status'),
       dataIndex: 'status',
       key: 'status',
       width: 100,
       render: (status: string) => (
         <Tag color={status === 'active' ? 'green' : 'red'}>
-          {status?.toUpperCase() || 'ACTIVE'}
+          {status === 'active' ? t('products:status.active').toUpperCase() : t('products:status.inactive').toUpperCase()}
         </Tag>
       ),
     },
     {
-      title: 'Sync',
+      title: t('products:sync.status'),
       dataIndex: 'syncStatus',
       key: 'syncStatus',
       width: 100,
@@ -229,9 +229,9 @@ export default function ProductList() {
           [SyncStatus.CONFLICT]: 'error',
         };
         const labels = {
-          [SyncStatus.SYNCED]: 'Synced',
-          [SyncStatus.PENDING]: 'Pending',
-          [SyncStatus.CONFLICT]: 'Conflict',
+          [SyncStatus.SYNCED]: t('products:sync.synced'),
+          [SyncStatus.PENDING]: t('products:sync.pending'),
+          [SyncStatus.CONFLICT]: t('products:sync.conflict'),
         };
         return (
           <Tag color={colors[syncStatus] || 'default'}>
@@ -259,14 +259,14 @@ export default function ProductList() {
             text={
               <Space size="small">
                 {isOnline ? <CloudOutlined /> : <DisconnectOutlined />}
-                {isOnline ? 'Online' : 'Offline'}
+                {t(isOnline ? 'products:sync.online' : 'products:sync.offline')}
               </Space>
             }
           />
           
           {queueSize > 0 && (
             <Badge count={queueSize} showZero={false}>
-              <Tag color="warning">Pending Sync</Tag>
+              <Tag color="warning">{t('products:sync.pendingSync')}</Tag>
             </Badge>
           )}
 
@@ -277,7 +277,7 @@ export default function ProductList() {
             disabled={!isOnline}
             style={{ width: isMobile ? '100%' : 'auto' }}
           >
-            {syncing ? 'Syncing...' : 'Sync Now'}
+            {syncing ? t('products:sync.syncing') : t('products:sync.syncNow')}
           </Button>
 
           <Button
