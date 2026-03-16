@@ -1,20 +1,110 @@
 {
-  "title": "Notifications",
-  "list": {
-    "title": "Notification List",
-    "empty": "No notifications",
-    "markAllRead": "Mark All as Read"
+  "notification": {
+    "list": "Notifications",
+    "create": "New Notification",
+    "searchPlaceholder": "Search notifications...",
+    "title": "Title",
+    "message": "Message",
+    "type": "Type",
+    "status": "Status",
+    "createdAt": "Created At",
+    "actions": "Actions",
+    "markRead": "Mark Read",
+    "view": "View",
+    "syncStatus": "Sync Status",
+    "syncStatusSynced": "Synced",
+    "syncStatusPending": "Pending",
+    "syncStatusConflict": "Conflict",
+    "syncStatusUnknown": "Unknown"
   },
-  "types": {
-    "order": "Order",
-    "payment": "Payment",
-    "inventory": "Inventory",
-    "system": "System"
+  "center": {
+    "title": "Notification Center",
+    "markAllRead": "Mark All Read",
+    "settings": "Settings",
+    "all": "All",
+    "unread": "Unread",
+    "noNotifications": "No notifications",
+    "new": "New",
+    "viewDetails": "View details",
+    "delete": "Delete",
+    "markAsRead": "Mark as read"
   },
   "preferences": {
     "title": "Notification Preferences",
-    "email": "Email",
-    "push": "Push Notifications",
-    "sms": "SMS"
+    "description": "Configure how you want to receive notifications",
+    "channels": "Notification Channels",
+    "types": "Notification Types",
+    "typesDescription": "Choose which types of notifications you want to receive",
+    "inApp": "In-App Notifications",
+    "email": "Email Notifications",
+    "emailDescription": "Receive notifications via email",
+    "emailNotConfigured": "Email service is not configured",
+    "emailServiceNotConfigured": "Email Service Not Configured",
+    "emailServiceNotConfiguredDescription": "Email notifications are currently unavailable. Please contact your administrator to configure the email service.",
+    "lowStock": "Low Stock Alerts",
+    "lowStockDescription": "Get notified when product stock falls below minimum level",
+    "newOrder": "New Orders",
+    "newOrderDescription": "Get notified when a new order is created",
+    "orderStatusChange": "Order Status Changes",
+    "orderStatusChangeDescription": "Get notified when order status is updated",
+    "overdueDebt": "Overdue Debt Alerts",
+    "overdueDebtDescription": "Get notified about overdue payments",
+    "deliveryDate": "Delivery Date Reminders",
+    "deliveryDateDescription": "Get notified when purchase orders reach expected delivery date",
+    "savePreferences": "Save Preferences",
+    "reset": "Reset"
+  },
+  "types": {
+    "info": "INFO",
+    "warning": "WARNING",
+    "success": "SUCCESS",
+    "error": "ERROR",
+    "lowStock": "Low Stock",
+    "newOrder": "New Order",
+    "orderUpdate": "Order Update",
+    "overdueDebt": "Overdue Debt",
+    "deliveryDate": "Delivery Date"
+  },
+  "priority": {
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High",
+    "urgent": "Urgent"
+  },
+  "status": {
+    "unread": "UNREAD",
+    "read": "READ"
+  },
+  "filters": {
+    "status": "Filter by status",
+    "type": "Filter by type"
+  },
+  "networkStatus": {
+    "online": "Online",
+    "offline": "Offline",
+    "pendingSync": "Pending Sync",
+    "syncing": "Syncing...",
+    "syncNow": "Sync Now",
+    "unreadBadge": "Unread"
+  },
+  "messages": {
+    "loadError": "Failed to load notifications",
+    "cannotLoad": "Cannot load notifications",
+    "markedAsRead": "Marked as read",
+    "markReadError": "Cannot mark as read",
+    "allMarkedAsRead": "All notifications marked as read",
+    "markAllReadError": "Cannot mark all as read",
+    "deleteSuccess": "Notification deleted",
+    "deleteError": "Cannot delete notification",
+    "deleteConfirm": "Are you sure you want to delete this notification?",
+    "deleteConfirmTitle": "Delete this notification?",
+    "yes": "Yes",
+    "no": "No",
+    "preferencesLoadError": "Failed to load notification preferences",
+    "preferencesSaveSuccess": "Notification preferences saved successfully",
+    "preferencesSaveError": "Failed to save notification preferences"
+  },
+  "pagination": {
+    "total": "Total {{total}} notifications"
   }
 }

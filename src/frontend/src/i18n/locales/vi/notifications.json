@@ -1,20 +1,110 @@
 {
-  "title": "Thông Báo",
-  "list": {
-    "title": "Danh Sách Thông Báo",
-    "empty": "Không có thông báo nào",
-    "markAllRead": "Đánh Dấu Tất Cả Đã Đọc"
+  "notification": {
+    "list": "Danh sách thông báo",
+    "create": "Thêm thông báo",
+    "searchPlaceholder": "Tìm kiếm thông báo...",
+    "title": "Tiêu đề",
+    "message": "Nội dung",
+    "type": "Loại",
+    "status": "Trạng thái",
+    "createdAt": "Ngày tạo",
+    "actions": "Thao tác",
+    "markRead": "Đánh dấu đã đọc",
+    "view": "Xem",
+    "syncStatus": "Trạng thái đồng bộ",
+    "syncStatusSynced": "Đã đồng bộ",
+    "syncStatusPending": "Chờ đồng bộ",
+    "syncStatusConflict": "Xung đột",
+    "syncStatusUnknown": "Không rõ"
   },
-  "types": {
-    "order": "Đơn Hàng",
-    "payment": "Thanh Toán",
-    "inventory": "Kho Hàng",
-    "system": "Hệ Thống"
+  "center": {
+    "title": "Trung tâm thông báo",
+    "markAllRead": "Đánh dấu tất cả đã đọc",
+    "settings": "Cài đặt",
+    "all": "Tất cả",
+    "unread": "Chưa đọc",
+    "noNotifications": "Không có thông báo",
+    "new": "Mới",
+    "viewDetails": "Xem chi tiết",
+    "delete": "Xóa",
+    "markAsRead": "Đánh dấu đã đọc"
   },
   "preferences": {
-    "title": "Cài Đặt Thông Báo",
-    "email": "Email",
-    "push": "Thông Báo Đẩy",
-    "sms": "SMS"
+    "title": "Tùy chọn thông báo",
+    "description": "Cấu hình cách bạn muốn nhận thông báo",
+    "channels": "Kênh thông báo",
+    "types": "Loại thông báo",
+    "typesDescription": "Chọn loại thông báo bạn muốn nhận",
+    "inApp": "Thông báo trong ứng dụng",
+    "email": "Thông báo qua email",
+    "emailDescription": "Nhận thông báo qua email",
+    "emailNotConfigured": "Dịch vụ email chưa được cấu hình",
+    "emailServiceNotConfigured": "Dịch vụ email chưa được cấu hình",
+    "emailServiceNotConfiguredDescription": "Thông báo qua email hiện không khả dụng. Vui lòng liên hệ quản trị viên để cấu hình dịch vụ email.",
+    "lowStock": "Cảnh báo tồn kho thấp",
+    "lowStockDescription": "Nhận thông báo khi tồn kho sản phẩm dưới mức tối thiểu",
+    "newOrder": "Đơn hàng mới",
+    "newOrderDescription": "Nhận thông báo khi có đơn hàng mới",
+    "orderStatusChange": "Thay đổi trạng thái đơn hàng",
+    "orderStatusChangeDescription": "Nhận thông báo khi trạng thái đơn hàng được cập nhật",
+    "overdueDebt": "Cảnh báo nợ quá hạn",
+    "overdueDebtDescription": "Nhận thông báo về các khoản thanh toán quá hạn",
+    "deliveryDate": "Nhắc nhở ngày giao hàng",
+    "deliveryDateDescription": "Nhận thông báo khi đơn đặt hàng đến ngày giao dự kiến",
+    "savePreferences": "Lưu tùy chọn",
+    "reset": "Đặt lại"
+  },
+  "types": {
+    "info": "THÔNG TIN",
+    "warning": "CẢNH BÁO",
+    "success": "THÀNH CÔNG",
+    "error": "LỖI",
+    "lowStock": "Tồn kho thấp",
+    "newOrder": "Đơn hàng mới",
+    "orderUpdate": "Cập nhật đơn hàng",
+    "overdueDebt": "Nợ quá hạn",
+    "deliveryDate": "Ngày giao hàng"
+  },
+  "priority": {
+    "low": "Thấp",
+    "medium": "Trung bình",
+    "high": "Cao",
+    "urgent": "Khẩn cấp"
+  },
+  "status": {
+    "unread": "CHƯA ĐỌC",
+    "read": "ĐÃ ĐỌC"
+  },
+  "filters": {
+    "status": "Lọc theo trạng thái",
+    "type": "Lọc theo loại"
+  },
+  "networkStatus": {
+    "online": "Trực tuyến",
+    "offline": "Ngoại tuyến",
+    "pendingSync": "Chờ đồng bộ",
+    "syncing": "Đang đồng bộ...",
+    "syncNow": "Đồng bộ ngay",
+    "unreadBadge": "Chưa đọc"
+  },
+  "messages": {
+    "loadError": "Không thể tải thông báo",
+    "cannotLoad": "Không thể tải thông báo",
+    "markedAsRead": "Đã đánh dấu đã đọc",
+    "markReadError": "Không thể đánh dấu đã đọc",
+    "allMarkedAsRead": "Đã đánh dấu tất cả đã đọc",
+    "markAllReadError": "Không thể đánh dấu tất cả đã đọc",
+    "deleteSuccess": "Đã xóa thông báo",
+    "deleteError": "Không thể xóa thông báo",
+    "deleteConfirm": "Bạn có chắc muốn xóa thông báo này?",
+    "deleteConfirmTitle": "Xóa thông báo này?",
+    "yes": "Có",
+    "no": "Không",
+    "preferencesLoadError": "Không thể tải tùy chọn thông báo",
+    "preferencesSaveSuccess": "Đã lưu tùy chọn thông báo thành công",
+    "preferencesSaveError": "Không thể lưu tùy chọn thông báo"
+  },
+  "pagination": {
+    "total": "Tổng {{total}} thông báo"
   }
 }
