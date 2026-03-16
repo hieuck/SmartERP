@@ -1,0 +1,32 @@
+{
+  "seo": {
+    "title": "SmartERP - Giải pháp quản lý sản xuất & kinh doanh",
+    "description": "Phần mềm ERP chuyên nghiệp cho doanh nghiệp sản xuất và thương mại. Quản lý kho hàng, bán hàng, sản xuất, nhân sự. Dùng thử miễn phí 14 ngày.",
+    "keywords": "ERP, quản lý kho, quản lý sản xuất, phần mềm quản lý, SmartERP",
+    "ogTitle": "SmartERP - Giải pháp quản lý sản xuất & kinh doanh",
+    "ogDescription": "Phần mềm ERP chuyên nghiệp cho doanh nghiệp sản xuất và thương mại. Dùng thử miễn phí 14 ngày."
+  },
+  "sections": {
+    "testimonials": {
+      "title": "Khách hàng nói gì về chúng tôi"
+    },
+    "faq": {
+      "title": "Câu hỏi thường gặp"
+    },
+    "contact": {
+      "title": "Liên hệ với chúng tôi",
+      "hotline": "Hotline",
+      "email": "Email",
+      "address": "Địa chỉ"
+    }
+  },
+  "footer": {
+    "title": "SmartERP",
+    "description": "Giải pháp quản lý toàn diện cho doanh nghiệp sản xuất và thương mại",
+    "contact": "Liên hệ",
+    "legal": "Pháp lý",
+    "privacy": "Chính sách bảo mật",
+    "terms": "Điều khoản sử dụng",
+    "copyright": "© 2026 SmartERP. All rights reserved."
+  }
+}

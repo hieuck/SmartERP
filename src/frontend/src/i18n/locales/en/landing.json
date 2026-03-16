@@ -1,0 +1,32 @@
+{
+  "seo": {
+    "title": "SmartERP - Production & Business Management Solution",
+    "description": "Professional ERP software for manufacturing and trading businesses. Manage inventory, sales, production, HR. Free 14-day trial.",
+    "keywords": "ERP, inventory management, production management, management software, SmartERP",
+    "ogTitle": "SmartERP - Production & Business Management Solution",
+    "ogDescription": "Professional ERP software for manufacturing and trading businesses. Free 14-day trial."
+  },
+  "sections": {
+    "testimonials": {
+      "title": "What Our Customers Say"
+    },
+    "faq": {
+      "title": "Frequently Asked Questions"
+    },
+    "contact": {
+      "title": "Contact Us",
+      "hotline": "Hotline",
+      "email": "Email",
+      "address": "Address"
+    }
+  },
+  "footer": {
+    "title": "SmartERP",
+    "description": "Comprehensive management solution for manufacturing and trading businesses",
+    "contact": "Contact",
+    "legal": "Legal",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "copyright": "© 2026 SmartERP. All rights reserved."
+  }
+}
