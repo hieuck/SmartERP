@@ -1,0 +1,525 @@
+# Instincts generated from https://github.com/hieuck/SmartERP
+# Generated: 2026-03-16T12:16:00.831Z
+# Version: 2.0
+
+---
+id: SmartERP-commit-conventional
+trigger: "when writing a commit message"
+confidence: 0.85
+domain: git
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Commit Conventional
+
+## Action
+
+Use conventional commit format with prefixes: test, feat, docs, refactor, fix
+
+## Evidence
+
+- 200 commits analyzed
+- Detected conventional commit pattern
+- Examples: refactor(frontend): implement i18n, dark mode, and upgrade to Ant Design 6.0, feat(frontend): add dark mode support with theme toggle
+
+---
+id: SmartERP-commit-length
+trigger: "when writing a commit message"
+confidence: 0.6
+domain: git
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Commit Length
+
+## Action
+
+Write moderate-length commit messages (~50 characters)
+
+## Evidence
+
+- Average commit message length: 63 chars
+- Based on 200 commits
+
+---
+id: SmartERP-naming-files
+trigger: "when creating a new file"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Naming Files
+
+## Action
+
+Use camelCase naming convention
+
+## Evidence
+
+- Analyzed file naming patterns in repository
+- Dominant pattern: camelCase
+
+---
+id: SmartERP-import-relative
+trigger: "when importing modules"
+confidence: 0.75
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Import Relative
+
+## Action
+
+Use relative imports for project files
+
+## Evidence
+
+- Import analysis shows relative import pattern
+- Example: import { x } from '../lib/x'
+
+---
+id: SmartERP-export-style
+trigger: "when exporting from a module"
+confidence: 0.7
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Export Style
+
+## Action
+
+Prefer named exports
+
+## Evidence
+
+- Export pattern analysis
+- Dominant style: named
+
+---
+id: SmartERP-arch-feature-based
+trigger: "when adding a new feature"
+confidence: 0.85
+domain: architecture
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Arch Feature Based
+
+## Action
+
+Create a new folder in src/features/ with all related code colocated
+
+## Evidence
+
+- Feature-based module organization detected
+- Structure: src/features/[feature-name]/
+
+---
+id: SmartERP-test-colocate
+trigger: "when writing tests"
+confidence: 0.85
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Test Colocate
+
+## Action
+
+Place test file next to the source file (e.g., Button.test.tsx next to Button.tsx)
+
+## Evidence
+
+- Colocated test pattern detected
+- Tests live alongside source files
+
+---
+id: SmartERP-test-framework
+trigger: "when writing tests"
+confidence: 0.9
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Test Framework
+
+## Action
+
+Use vitest as the test framework
+
+## Evidence
+
+- Test framework detected: vitest
+- File pattern: *.spec.ts
+
+---
+id: SmartERP-test-naming
+trigger: "when creating a test file"
+confidence: 0.85
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Test Naming
+
+## Action
+
+Name test files using the pattern: *.spec.ts
+
+## Evidence
+
+- File pattern: *.spec.ts
+- Consistent across test files
+
+---
+id: SmartERP-test-mocking
+trigger: "when mocking dependencies in tests"
+confidence: 0.75
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Test Mocking
+
+## Action
+
+Use jest.mock for mocking
+
+## Evidence
+
+- Mocking pattern detected: jest.mock
+- Consistent across test files
+
+---
+id: SmartERP-test-types
+trigger: "when planning tests for a feature"
+confidence: 0.7
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Test Types
+
+## Action
+
+Write unit, integration, e2e tests to match project standards
+
+## Evidence
+
+- Test types detected: unit, integration, e2e
+- Coverage config: no
+
+---
+id: SmartERP-workflow-database-migration
+trigger: "when modifying the database schema or adding tables"
+confidence: 0.7
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Workflow Database Migration
+
+## Action
+
+Follow the database-migration workflow:
+1. Create migration file
+2. Update schema definitions
+3. Generate/update types
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~4x per month
+- Files: migrations/*, **/schema.*
+
+---
+id: SmartERP-workflow-feature-development
+trigger: "when implementing a new feature"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Workflow Feature Development
+
+## Action
+
+Follow the feature-development workflow:
+1. Add feature implementation
+2. Add tests for feature
+3. Update documentation
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~18x per month
+- Files: src/backend/src/config/*, src/frontend/src/components/error/*, src/frontend/src/lib/monitoring/*
+
+---
+id: SmartERP-workflow-test-driven-development
+trigger: "when adding new functionality"
+confidence: 0.65
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Workflow Test Driven Development
+
+## Action
+
+Follow the test-driven-development workflow:
+1. Write failing test
+2. Implement code to pass test
+3. Refactor if needed
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~3x per month
+- Files: **/*.test.*, **/*.spec.*, src/**/*
+
+---
+id: SmartERP-workflow-refactoring
+trigger: "when refactoring code"
+confidence: 0.85
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Workflow Refactoring
+
+## Action
+
+Follow the refactoring workflow:
+1. Ensure tests pass before refactor
+2. Refactor code structure
+3. Verify tests still pass
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~7x per month
+- Files: src/**/*
+
+---
+id: SmartERP-workflow-add-or-update-database-migration
+trigger: "when doing add or update database migration"
+confidence: 0.6
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Workflow Add Or Update Database Migration
+
+## Action
+
+Follow the add-or-update-database-migration workflow:
+1. Create or update migration script in src/backend/src/migrations/
+2. Add or update migration runner script in src/backend/scripts/
+3. Update src/backend/package.json to add or update migration npm scripts
+4. Run migration and verify schema changes
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~2x per month
+- Files: src/backend/src/migrations/*.ts, src/backend/scripts/run-migrations.ts, src/backend/package.json
+
+---
+id: SmartERP-workflow-frontend-list-page-standardization
+trigger: "when doing frontend list page standardization"
+confidence: 0.65
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Workflow Frontend List Page Standardization
+
+## Action
+
+Follow the frontend-list-page-standardization workflow:
+1. Refactor or create StandardListPage and supporting subcomponents in src/frontend/src/components/common/
+2. Update entity list page (e.g. ProductList.tsx, CustomerList.tsx) to use StandardListPage
+3. Remove custom table/card logic from the entity list page
+4. Ensure mobile card view and dropdown actions are supported
+5. Apply design tokens for spacing and typography consistency
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~3x per month
+- Files: src/frontend/src/components/common/StandardListPage.tsx, src/frontend/src/components/common/*.tsx, src/frontend/src/pages/*/EntityList.tsx
+
+---
+id: SmartERP-workflow-implement-or-enhance-i18n
+trigger: "when doing implement or enhance i18n"
+confidence: 0.6
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Workflow Implement Or Enhance I18n
+
+## Action
+
+Follow the implement-or-enhance-i18n workflow:
+1. Add or update translation keys in src/frontend/src/i18n/locales/{lang}/*.json
+2. Replace hardcoded strings in components/pages with i18n function (useTranslation, t)
+3. Update forms, lists, and UI elements to use translation keys
+4. Test both languages for completeness
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~2x per month
+- Files: src/frontend/src/i18n/locales/en/*.json, src/frontend/src/i18n/locales/vi/*.json, src/frontend/src/pages/**/*.tsx
+
+---
+id: SmartERP-workflow-theme-system-and-dark-mode-integration
+trigger: "when doing theme system and dark mode integration"
+confidence: 0.6
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Workflow Theme System And Dark Mode Integration
+
+## Action
+
+Follow the theme-system-and-dark-mode-integration workflow:
+1. Add or update theme tokens in src/frontend/src/theme/index.ts
+2. Implement or update theme hooks (useTheme, useResponsiveTheme)
+3. Refactor components to use theme tokens instead of hardcoded values
+4. Integrate theme provider in App.tsx and relevant layout components
+5. Test light/dark mode and responsive breakpoints
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~2x per month
+- Files: src/frontend/src/theme/index.ts, src/frontend/src/hooks/useTheme.ts, src/frontend/src/hooks/useResponsiveTheme.ts
+
+---
+id: SmartERP-workflow-comprehensive-type-error-fixing
+trigger: "when doing comprehensive type error fixing"
+confidence: 0.6
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Workflow Comprehensive Type Error Fixing
+
+## Action
+
+Follow the comprehensive-type-error-fixing workflow:
+1. Identify files with type errors (often via type-check or CI)
+2. Fix variable declarations, type assertions, and enum usages
+3. Add missing properties to mock objects in test files
+4. Add or update type definitions and interfaces
+5. Re-run type-check and tests to verify fixes
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~2x per month
+- Files: src/backend/src/**/*.ts, src/frontend/src/**/*.ts, src/frontend/src/**/*.tsx
+
+---
+id: SmartERP-workflow-ci-cd-workflow-standardization
+trigger: "when doing ci cd workflow standardization"
+confidence: 0.6
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Workflow Ci Cd Workflow Standardization
+
+## Action
+
+Follow the ci-cd-workflow-standardization workflow:
+1. Delete outdated or irrelevant workflow files
+2. Create or update ci.yml, deploy-staging.yml, deploy-production.yml in .github/workflows/
+3. Configure jobs for lint, type-check, build, test, and deployment
+4. Add health checks and deployment monitoring
+5. Document pipeline in docs/
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~2x per month
+- Files: .github/workflows/ci.yml, .github/workflows/deploy-staging.yml, .github/workflows/deploy-production.yml
+
+---
+id: SmartERP-workflow-add-or-improve-e2e-tests
+trigger: "when doing add or improve e2e tests"
+confidence: 0.6
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Workflow Add Or Improve E2e Tests
+
+## Action
+
+Follow the add-or-improve-e2e-tests workflow:
+1. Create new E2E test files in tests/e2e/ or update existing ones
+2. Implement test cases for core flows (auth, product management, offline sync, etc.)
+3. Update or add test fixtures and page objects as needed
+4. Run and verify E2E tests locally and in CI
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~2x per month
+- Files: tests/e2e/**/*.ts, tests/pages/**/*.ts, tests/fixtures/**/*.ts
+
+---
+id: SmartERP-workflow-bulk-documentation-cleanup-or-update
+trigger: "when doing bulk documentation cleanup or update"
+confidence: 0.6
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/hieuck/SmartERP
+---
+
+# SmartERP Workflow Bulk Documentation Cleanup Or Update
+
+## Action
+
+Follow the bulk-documentation-cleanup-or-update workflow:
+1. Identify and delete outdated or duplicate documentation files
+2. Add or update key strategic docs (e.g., completion reports, audit reports, guides)
+3. Update README, CONTRIBUTING, LICENSE as needed
+4. Summarize changes in commit message
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~2x per month
+- Files: docs/**/*.md, README.md, CONTRIBUTING.md
+
