@@ -1,50 +1,33 @@
 {
   "title": "Bảng điều khiển",
-  "welcome": "Chào mừng trở lại",
   "kpi": {
-    "totalRevenue": "Tổng doanh thu",
     "revenueToday": "Doanh thu hôm nay",
     "revenueWeek": "Doanh thu tuần này",
-    "revenueMonth": "Doanh thu tháng",
+    "revenueMonth": "Doanh thu tháng này",
+    "totalRevenue": "Tổng doanh thu",
     "totalOrders": "Tổng đơn hàng",
     "totalCustomers": "Tổng khách hàng",
     "totalProducts": "Tổng sản phẩm",
     "inventoryValue": "Giá trị tồn kho",
-    "lowStock": "Sản phẩm sắp hết hàng",
+    "lowStock": "Sản phẩm sắp hết",
     "outOfStock": "Hết hàng",
-    "pendingOrders": "Đơn hàng chờ xử lý",
     "pendingPayments": "Thanh toán chờ xử lý",
     "totalPayments": "Tổng thanh toán"
   },
   "status": {
     "completed": "Hoàn thành",
     "pending": "Chờ xử lý",
-    "active": "Hoạt động",
+    "active": "Đang hoạt động",
     "new": "Mới"
   },
   "charts": {
-    "salesOverview": "Tổng quan doanh số",
-    "revenueByMonth": "Doanh thu theo tháng",
+    "salesOverview": "Tổng quan doanh số (30 ngày gần nhất)",
     "revenueByCategory": "Doanh thu theo danh mục",
-    "ordersByStatus": "Đơn hàng theo trạng thái",
-    "topProducts": "Sản phẩm bán chạy",
-    "topCustomers": "Khách hàng hàng đầu"
+    "topProducts": "Top 10 sản phẩm",
+    "topCustomers": "Top 10 khách hàng"
   },
   "tables": {
-    "recentOrders": "Đơn hàng gần đây",
-    "lowStockProducts": "Sản phẩm sắp hết hàng",
-    "orderNumber": "Số đơn hàng",
     "customer": "Khách hàng",
-    "amount": "Số tiền",
-    "status": "Trạng thái",
-    "date": "Ngày",
-    "product": "Sản phẩm",
-    "stock": "Tồn kho",
-    "minStock": "Tồn kho tối thiểu"
-  },
-  "actions": {
-    "viewAll": "Xem tất cả",
-    "refresh": "Làm mới dữ liệu",
-    "export": "Xuất báo cáo"
+    "amount": "Số tiền"
   }
 }

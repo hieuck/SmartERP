@@ -322,7 +322,7 @@ export default function LoginPage() {
 
             <Card style={{ marginTop: 24, borderRadius: 16, background: '#f6f8fa' }}>
               <Title level={5} style={{ marginBottom: 16 }}>
-                Tài khoản demo:
+                {t('auth:login.demoAccount')}
               </Title>
               <Space direction="vertical" size="small">
                 <Text>📧 Email: admin@demo.com</Text>

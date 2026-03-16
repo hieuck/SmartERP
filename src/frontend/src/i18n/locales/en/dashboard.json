@@ -1,18 +1,16 @@
 {
   "title": "Dashboard",
-  "welcome": "Welcome back",
   "kpi": {
-    "totalRevenue": "Total Revenue",
     "revenueToday": "Revenue Today",
     "revenueWeek": "Revenue This Week",
     "revenueMonth": "Revenue This Month",
+    "totalRevenue": "Total Revenue",
     "totalOrders": "Total Orders",
     "totalCustomers": "Total Customers",
     "totalProducts": "Total Products",
     "inventoryValue": "Inventory Value",
-    "lowStock": "Low Stock Products",
+    "lowStock": "Low Stock Items",
     "outOfStock": "Out of Stock",
-    "pendingOrders": "Pending Orders",
     "pendingPayments": "Pending Payments",
     "totalPayments": "Total Payments"
   },
@@ -23,28 +21,13 @@
     "new": "New"
   },
   "charts": {
-    "salesOverview": "Sales Overview",
-    "revenueByMonth": "Revenue by Month",
+    "salesOverview": "Sales Overview (Last 30 Days)",
     "revenueByCategory": "Revenue by Category",
-    "ordersByStatus": "Orders by Status",
-    "topProducts": "Top Products",
-    "topCustomers": "Top Customers"
+    "topProducts": "Top 10 Products",
+    "topCustomers": "Top 10 Customers"
   },
   "tables": {
-    "recentOrders": "Recent Orders",
-    "lowStockProducts": "Low Stock Products",
-    "orderNumber": "Order Number",
     "customer": "Customer",
-    "amount": "Amount",
-    "status": "Status",
-    "date": "Date",
-    "product": "Product",
-    "stock": "Stock",
-    "minStock": "Min Stock"
-  },
-  "actions": {
-    "viewAll": "View All",
-    "refresh": "Refresh Data",
-    "export": "Export Report"
+    "amount": "Amount"
   }
 }
