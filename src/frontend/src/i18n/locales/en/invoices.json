@@ -1,15 +1,18 @@
-{
-  "title": "Invoice List",
-  "createButton": "Create Invoice",
+﻿{
+  "title": "Invoices",
+  "createButton": "New Invoice",
   "searchPlaceholder": "Search invoices...",
   "columns": {
-    "invoiceNumber": "Invoice No.",
+    "invoiceNumber": "Invoice Number",
     "customer": "Customer",
+    "supplier": "Supplier",
     "issueDate": "Issue Date",
     "dueDate": "Due Date",
-    "total": "Total Amount",
+    "total": "Total",
     "paidAmount": "Paid Amount",
-    "status": "Status"
+    "totalAmount": "Total Amount",
+    "status": "Status",
+    "actions": "Actions"
   },
   "status": {
     "draft": "Draft",
@@ -18,25 +21,92 @@
     "overdue": "Overdue",
     "cancelled": "Cancelled"
   },
-  "actions": {
-    "view": "View",
-    "send": "Send",
-    "edit": "Edit",
-    "delete": "Delete"
+  "sync": {
+    "synced": "Synced",
+    "pending": "Not Synced"
   },
-  "messages": {
-    "loadError": "Cannot load invoice list",
-    "deleteSuccess": "Invoice deleted successfully",
-    "deleteError": "Cannot delete invoice",
-    "sendSuccess": "Invoice sent successfully",
-    "sendError": "Cannot send invoice",
-    "deleteConfirm": "Are you sure you want to delete this invoice?",
-    "total": "Total {{total}} invoices"
+  "actions": {
+    "viewDetail": "View Details",
+    "edit": "Edit",
+    "send": "Send Invoice",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "back": "Back",
+    "print": "Print",
+    "payment": "Payment"
+  },
+  "form": {
+    "createTitle": "Create New Invoice",
+    "editTitle": "Edit Invoice",
+    "customer": "Customer",
+    "selectCustomer": "Select customer",
+    "customerRequired": "Please select customer",
+    "order": "Order (optional)",
+    "selectOrder": "Select order",
+    "issueDate": "Issue Date",
+    "issueDateRequired": "Please select issue date",
+    "dueDate": "Due Date",
+    "dueDateRequired": "Please select due date",
+    "status": "Status",
+    "invoiceDetails": "Invoice Details",
+    "addItem": "Add Item",
+    "notes": "Notes",
+    "notesPlaceholder": "Enter notes",
+    "subtotal": "Subtotal",
+    "tax": "Tax",
+    "discount": "Discount",
+    "total": "Total",
+    "save": "Save",
+    "create": "Create Invoice",
+    "update": "Update",
+    "cancel": "Cancel"
+  },
+  "detail": {
+    "title": "Invoice Details",
+    "invoiceNumber": "Invoice Number",
+    "status": "Status",
+    "customer": "Customer",
+    "supplier": "Supplier",
+    "issueDate": "Issue Date",
+    "dueDate": "Due Date",
+    "subtotal": "Subtotal",
+    "tax": "Tax",
+    "totalAmount": "Total Amount",
+    "paidAmount": "Paid Amount",
+    "remainingAmount": "Remaining",
+    "overdue": "(Overdue)",
+    "syncStatus": "Sync Status",
+    "notFound": "Invoice not found",
+    "productDetails": "Product Details",
+    "product": "Product",
+    "quantity": "Quantity",
+    "unitPrice": "Unit Price",
+    "discount": "Discount",
+    "amount": "Amount",
+    "sendConfirmTitle": "Send Invoice",
+    "sendConfirmContent": "Are you sure you want to send this invoice to the customer?",
+    "cancelConfirmTitle": "Cancel Invoice",
+    "cancelConfirmContent": "Are you sure you want to cancel this invoice?"
   },
   "filters": {
-    "status": "Status",
-    "dateRange": "Date Range",
+    "status": "Filter by status",
     "fromDate": "From date",
     "toDate": "To date"
+  },
+  "messages": {
+    "total": "Total {{total}} invoices",
+    "loadError": "Failed to load invoices",
+    "loadCustomersError": "Failed to load customers",
+    "loadOrdersError": "Failed to load orders",
+    "loadInvoiceError": "Failed to load invoice",
+    "createSuccess": "Invoice created successfully",
+    "updateSuccess": "Invoice updated successfully",
+    "sendSuccess": "Invoice sent successfully",
+    "sendError": "Failed to send invoice",
+    "cancelSuccess": "Invoice cancelled successfully",
+    "cancelError": "Failed to cancel invoice",
+    "deleteSuccess": "Invoice deleted successfully",
+    "deleteError": "Failed to delete invoice",
+    "deleteConfirm": "Are you sure you want to delete this invoice?"
   }
 }

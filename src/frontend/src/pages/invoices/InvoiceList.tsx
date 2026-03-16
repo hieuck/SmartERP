@@ -386,14 +386,14 @@ export default function InvoiceList() {
             text={
               <Space size="small">
                 {isOnline ? <CloudOutlined /> : <DisconnectOutlined />}
-                {isOnline ? 'Online' : 'Offline'}
+                {isOnline ? t('common:status.online') : t('common:status.offline')}
               </Space>
             }
           />
           
           {queueSize > 0 && (
             <Badge count={queueSize} showZero={false}>
-              <Tag color="warning">Pending Sync</Tag>
+              <Tag color="warning">{t('common:sync.pendingSync')}</Tag>
             </Badge>
           )}
 
@@ -404,7 +404,7 @@ export default function InvoiceList() {
             disabled={!isOnline}
             style={{ width: isMobile ? '100%' : 'auto' }}
           >
-            {syncing ? 'Syncing...' : 'Sync Now'}
+            {syncing ? t('common:sync.syncing') : t('common:actions.syncNow')}
           </Button>
         </Space>
       }

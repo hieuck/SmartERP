@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import {
   Card,
   Descriptions,
@@ -24,6 +24,7 @@ import {
   DisconnectOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   InvoiceStatus,
 } from '@/services/accounting/invoiceService';
@@ -44,14 +45,6 @@ const statusColors: Record<InvoiceStatus, string> = {
   [InvoiceStatus.CANCELLED]: 'red',
 };
 
-const statusLabels: Record<InvoiceStatus, string> = {
-  [InvoiceStatus.DRAFT]: 'Nháp',
-  [InvoiceStatus.SENT]: 'Đã gửi',
-  [InvoiceStatus.PAID]: 'Đã thanh toán',
-  [InvoiceStatus.OVERDUE]: 'Quá hạn',
-  [InvoiceStatus.CANCELLED]: 'Đã hủy',
-};
-
 interface InvoiceItem {
   productId: string;
   productName: string;
@@ -63,6 +56,7 @@ interface InvoiceItem {
 }
 
 const InvoiceDetail: React.FC = () => {
+  const { t } = useTranslation(['invoices', 'common']);
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const [invoice, setInvoice] = useState<Invoice | null>(null);
@@ -71,7 +65,6 @@ const InvoiceDetail: React.FC = () => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [syncQueueSize, setSyncQueueSize] = useState(0);
 
-  // Load invoice from IndexedDB
   const loadInvoice = async () => {
     try {
       setLoading(true);
@@ -82,13 +75,12 @@ const InvoiceDetail: React.FC = () => {
       logger.info('InvoiceDetail', 'Loaded invoice from IndexedDB', { id });
     } catch (error) {
       logger.error('InvoiceDetail', 'Failed to load invoice', error as Error);
-      message.error('Không thể tải thông tin hóa đơn');
+      message.error(t('invoices:messages.loadInvoiceError'));
     } finally {
       setLoading(false);
     }
   };
 
-  // Auto-sync on mount when online
   useEffect(() => {
     const initSync = async () => {
       if (navigator.onLine) {
@@ -108,7 +100,6 @@ const InvoiceDetail: React.FC = () => {
     loadInvoice();
   }, [id]);
 
-  // Monitor network status
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
@@ -122,7 +113,6 @@ const InvoiceDetail: React.FC = () => {
     };
   }, []);
 
-  // Update sync queue size
   useEffect(() => {
     const updateQueueSize = async () => {
       const size = await syncManager.getQueueSize();
@@ -135,11 +125,10 @@ const InvoiceDetail: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Manual sync
   const handleSync = async () => {
     const token = localStorage.getItem('token');
     if (!token) {
-      message.error('Vui lòng đăng nhập');
+      message.error(t('common:messages.loginRequired'));
       return;
     }
 
@@ -148,14 +137,14 @@ const InvoiceDetail: React.FC = () => {
       const result = await syncManager.sync(token);
       
       if (result.success) {
-        message.success(`Đồng bộ thành công: ${result.pulled} pulled, ${result.pushed} pushed`);
+        message.success(t('common:messages.syncSuccess', { pulled: result.pulled, pushed: result.pushed }));
         await loadInvoice();
       } else {
-        message.error(`Đồng bộ thất bại: ${result.errors.join(', ')}`);
+        message.error(t('common:messages.syncError', { errors: result.errors.join(', ') }));
       }
     } catch (error) {
       logger.error('InvoiceDetail', 'Sync failed', error as Error);
-      message.error('Đồng bộ thất bại');
+      message.error(t('common:messages.syncError', { errors: (error as Error).message }));
     } finally {
       setSyncing(false);
     }
@@ -165,19 +154,19 @@ const InvoiceDetail: React.FC = () => {
     if (!invoice) return;
 
     Modal.confirm({
-      title: 'Gửi hóa đơn',
-      content: 'Bạn có chắc chắn muốn gửi hóa đơn này cho khách hàng?',
+      title: t('invoices:detail.sendConfirmTitle'),
+      content: t('invoices:detail.sendConfirmContent'),
       onOk: async () => {
         try {
           await offlineServices.invoices.update(invoice.id, {
             ...invoice,
             status: InvoiceStatus.SENT,
           });
-          message.success('Gửi hóa đơn thành công');
+          message.success(t('invoices:messages.sendSuccess'));
           await loadInvoice();
         } catch (error) {
           logger.error('InvoiceDetail', 'Failed to send invoice', error as Error);
-          message.error('Không thể gửi hóa đơn');
+          message.error(t('invoices:messages.sendError'));
         }
       },
     });
@@ -187,19 +176,19 @@ const InvoiceDetail: React.FC = () => {
     if (!invoice) return;
 
     Modal.confirm({
-      title: 'Hủy hóa đơn',
-      content: 'Bạn có chắc chắn muốn hủy hóa đơn này?',
+      title: t('invoices:detail.cancelConfirmTitle'),
+      content: t('invoices:detail.cancelConfirmContent'),
       onOk: async () => {
         try {
           await offlineServices.invoices.update(invoice.id, {
             ...invoice,
             status: InvoiceStatus.CANCELLED,
           });
-          message.success('Hủy hóa đơn thành công');
+          message.success(t('invoices:messages.cancelSuccess'));
           await loadInvoice();
         } catch (error) {
           logger.error('InvoiceDetail', 'Failed to cancel invoice', error as Error);
-          message.error('Không thể hủy hóa đơn');
+          message.error(t('invoices:messages.cancelError'));
         }
       },
     });
@@ -209,19 +198,18 @@ const InvoiceDetail: React.FC = () => {
     window.print();
   };
 
-  // Parse items from invoice.items (Record<string, unknown>)
   const invoiceItems: InvoiceItem[] = invoice?.items 
     ? (Array.isArray(invoice.items) ? invoice.items : []) as InvoiceItem[]
     : [];
 
   const columns: ColumnsType<InvoiceItem> = [
     {
-      title: 'Sản phẩm',
+      title: t('invoices:detail.product'),
       dataIndex: 'productName',
       key: 'productName',
     },
     {
-      title: 'Số lượng',
+      title: t('invoices:detail.quantity'),
       dataIndex: 'quantity',
       key: 'quantity',
       width: 100,
@@ -229,36 +217,36 @@ const InvoiceDetail: React.FC = () => {
       render: (value: number) => value.toLocaleString('vi-VN'),
     },
     {
-      title: 'Đơn giá',
+      title: t('invoices:detail.unitPrice'),
       dataIndex: 'unitPrice',
       key: 'unitPrice',
       width: 130,
       align: 'right',
-      render: (value: number) => `${value.toLocaleString('vi-VN')} ₫`,
+      render: (value: number) => `${value.toLocaleString('vi-VN')} `,
     },
     {
-      title: 'Giảm giá',
+      title: t('invoices:detail.discount'),
       dataIndex: 'discount',
       key: 'discount',
       width: 100,
       align: 'right',
-      render: (value: number) => `${value.toLocaleString('vi-VN')} ₫`,
+      render: (value: number) => `${value.toLocaleString('vi-VN')} `,
     },
     {
-      title: 'Thuế',
+      title: t('invoices:form.tax'),
       dataIndex: 'tax',
       key: 'tax',
       width: 100,
       align: 'right',
-      render: (value: number) => `${value.toLocaleString('vi-VN')} ₫`,
+      render: (value: number) => `${value.toLocaleString('vi-VN')} `,
     },
     {
-      title: 'Thành tiền',
+      title: t('invoices:detail.amount'),
       dataIndex: 'total',
       key: 'total',
       width: 150,
       align: 'right',
-      render: (value: number) => `${value.toLocaleString('vi-VN')} ₫`,
+      render: (value: number) => `${value.toLocaleString('vi-VN')} `,
     },
   ];
 
@@ -274,7 +262,7 @@ const InvoiceDetail: React.FC = () => {
     return (
       <div style={{ padding: '24px' }}>
         <Card>
-          <Text>Không tìm thấy hóa đơn</Text>
+          <Text>{t('invoices:detail.notFound')}</Text>
         </Card>
       </div>
     );
@@ -289,16 +277,15 @@ const InvoiceDetail: React.FC = () => {
   return (
     <div style={{ padding: '24px' }}>
       <Space direction="vertical" style={{ width: '100%' }} size="large">
-        {/* Network Status & Sync */}
         <Card size="small">
           <Space>
             <Badge status={isOnline ? 'success' : 'error'} />
             <Text>{isOnline ? <WifiOutlined /> : <DisconnectOutlined />}</Text>
-            <Text>{isOnline ? 'Online' : 'Offline'}</Text>
+            <Text>{isOnline ? t('common:status.online') : t('common:status.offline')}</Text>
             {syncQueueSize > 0 && (
               <>
                 <Text>|</Text>
-                <Text type="warning">{syncQueueSize} thay đổi chưa đồng bộ</Text>
+                <Text type="warning">{syncQueueSize} {t('common:sync.pendingChanges')}</Text>
               </>
             )}
             <Button
@@ -308,7 +295,7 @@ const InvoiceDetail: React.FC = () => {
               disabled={!isOnline}
               size="small"
             >
-              Đồng bộ
+              {t('common:actions.sync')}
             </Button>
           </Space>
         </Card>
@@ -322,70 +309,70 @@ const InvoiceDetail: React.FC = () => {
               marginBottom: 16,
             }}
           >
-            <Title level={3}>Chi tiết hóa đơn: {invoice.invoiceNumber}</Title>
+            <Title level={3}>{t('invoices:detail.title')}: {invoice.invoiceNumber}</Title>
             <Space>
               <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/dashboard/invoices')}>
-                Quay lại
+                {t('invoices:actions.back')}
               </Button>
               <Button icon={<PrinterOutlined />} onClick={handlePrint}>
-                In
+                {t('invoices:actions.print')}
               </Button>
               {canEdit && (
                 <Button
                   icon={<EditOutlined />}
                   onClick={() => navigate(`/dashboard/invoices/${id}`)}
                 >
-                  Chỉnh sửa
+                  {t('invoices:actions.edit')}
                 </Button>
               )}
               {canSend && (
                 <Button type="primary" icon={<SendOutlined />} onClick={handleSend}>
-                  Gửi hóa đơn
+                  {t('invoices:actions.send')}
                 </Button>
               )}
               {canCancel && (
                 <Button danger icon={<CloseOutlined />} onClick={handleCancel}>
-                  Hủy
+                  {t('invoices:actions.cancel')}
                 </Button>
               )}
             </Space>
           </div>
 
           <Descriptions bordered column={2}>
-            <Descriptions.Item label="Số hóa đơn">{invoice.invoiceNumber}</Descriptions.Item>
-            <Descriptions.Item label="Trạng thái">
+            <Descriptions.Item label={t('invoices:detail.invoiceNumber')}>{invoice.invoiceNumber}</Descriptions.Item>
+            <Descriptions.Item label={t('invoices:detail.status')}>
               <Tag color={statusColors[invoice.status as InvoiceStatus]}>
-                {statusLabels[invoice.status as InvoiceStatus]}
+                {t(`invoices:status.${invoice.status}`)}
               </Tag>
             </Descriptions.Item>
-            <Descriptions.Item label="Khách hàng">{invoice.customerId || '-'}</Descriptions.Item>
-            <Descriptions.Item label="Nhà cung cấp">{invoice.supplierId || '-'}</Descriptions.Item>
-            <Descriptions.Item label="Ngày phát hành">
+            <Descriptions.Item label={t('invoices:detail.customer')}>{invoice.customerId || '-'}</Descriptions.Item>
+            <Descriptions.Item label={t('invoices:detail.supplier')}>{invoice.supplierId || '-'}</Descriptions.Item>
+            <Descriptions.Item label={t('invoices:detail.issueDate')}>
               {dayjs(invoice.invoiceDate).format('DD/MM/YYYY')}
             </Descriptions.Item>
-            <Descriptions.Item label="Ngày đến hạn">
+            <Descriptions.Item label={t('invoices:detail.dueDate')}>
               <Text style={{ color: isOverdue ? '#ff4d4f' : undefined }}>
                 {invoice.dueDate ? dayjs(invoice.dueDate).format('DD/MM/YYYY') : '-'}
-                {isOverdue && ' (Quá hạn)'}
+                {isOverdue && ` ${t('invoices:detail.overdue')}`}
               </Text>
             </Descriptions.Item>
-            <Descriptions.Item label="Tổng phụ">
+            <Descriptions.Item label={t('invoices:detail.subtotal')}>
               {invoice.subtotal.toLocaleString('vi-VN')} {invoice.currency}
             </Descriptions.Item>
-            <Descriptions.Item label="Thuế">
+            <Descriptions.Item label={t('invoices:detail.tax')}>
               {invoice.taxAmount.toLocaleString('vi-VN')} {invoice.currency}
             </Descriptions.Item>
-            <Descriptions.Item label="Tổng cộng">
+            <Descriptions.Item label={t('invoices:detail.totalAmount')}>
               <Text strong style={{ fontSize: 16 }}>
                 {invoice.totalAmount.toLocaleString('vi-VN')} {invoice.currency}
               </Text>
             </Descriptions.Item>
-            <Descriptions.Item label="Đã thanh toán">
+            <Descriptions.Item label={t('invoices:detail.paidAmount')}>
               <Text style={{ fontSize: 16 }}>
                 {invoice.paidAmount.toLocaleString('vi-VN')} {invoice.currency}
               </Text>
             </Descriptions.Item>
-            <Descriptions.Item label="Còn lại">
+            <Descriptions.Item label={t('invoices:detail.remainingAmount')}>
               <Text
                 strong
                 style={{
@@ -396,20 +383,20 @@ const InvoiceDetail: React.FC = () => {
                 {(invoice.totalAmount - invoice.paidAmount).toLocaleString('vi-VN')} {invoice.currency}
               </Text>
             </Descriptions.Item>
-            <Descriptions.Item label="Trạng thái đồng bộ">
+            <Descriptions.Item label={t('invoices:detail.syncStatus')}>
               <Tag color={invoice.syncStatus === 'synced' ? 'green' : 'orange'}>
-                {invoice.syncStatus === 'synced' ? 'Đã đồng bộ' : 'Chưa đồng bộ'}
+                {invoice.syncStatus === 'synced' ? t('invoices:sync.synced') : t('invoices:sync.pending')}
               </Tag>
             </Descriptions.Item>
             {invoice.notes && (
-              <Descriptions.Item label="Ghi chú" span={2}>
+              <Descriptions.Item label={t('invoices:form.notes')} span={2}>
                 {invoice.notes}
               </Descriptions.Item>
             )}
           </Descriptions>
         </Card>
 
-        <Card title="Chi tiết sản phẩm">
+        <Card title={t('invoices:detail.productDetails')}>
           <Table
             columns={columns}
             dataSource={invoiceItems}
@@ -419,7 +406,7 @@ const InvoiceDetail: React.FC = () => {
               <Table.Summary fixed>
                 <Table.Summary.Row>
                   <Table.Summary.Cell index={0} colSpan={5} align="right">
-                    <Text>Tổng phụ:</Text>
+                    <Text>{t('invoices:detail.subtotal')}:</Text>
                   </Table.Summary.Cell>
                   <Table.Summary.Cell index={1} align="right">
                     {invoice.subtotal.toLocaleString('vi-VN')} {invoice.currency}
@@ -427,7 +414,7 @@ const InvoiceDetail: React.FC = () => {
                 </Table.Summary.Row>
                 <Table.Summary.Row>
                   <Table.Summary.Cell index={0} colSpan={5} align="right">
-                    <Text>Thuế:</Text>
+                    <Text>{t('invoices:detail.tax')}:</Text>
                   </Table.Summary.Cell>
                   <Table.Summary.Cell index={1} align="right">
                     {invoice.taxAmount.toLocaleString('vi-VN')} {invoice.currency}
@@ -435,7 +422,7 @@ const InvoiceDetail: React.FC = () => {
                 </Table.Summary.Row>
                 <Table.Summary.Row>
                   <Table.Summary.Cell index={0} colSpan={5} align="right">
-                    <Text strong>Tổng cộng:</Text>
+                    <Text strong>{t('invoices:detail.totalAmount')}:</Text>
                   </Table.Summary.Cell>
                   <Table.Summary.Cell index={1} align="right">
                     <Text strong style={{ fontSize: 16 }}>
@@ -455,7 +442,7 @@ const InvoiceDetail: React.FC = () => {
               icon={<DollarOutlined />}
               onClick={() => navigate(`/dashboard/payments/new?invoiceId=${id}`)}
             >
-              Thanh toán
+              {t('invoices:actions.payment')}
             </Button>
           </Card>
         )}

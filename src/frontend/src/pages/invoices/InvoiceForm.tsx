@@ -18,6 +18,7 @@ import {
   Badge,
 } from 'antd';
 import { PlusOutlined, DeleteOutlined, SaveOutlined, ArrowLeftOutlined, SyncOutlined, WifiOutlined, DisconnectOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import { InvoiceStatus } from '@/services/accounting/invoiceService';
 import { offlineServices } from '@/services/offline-services';
@@ -37,6 +38,7 @@ interface InvoiceItem {
 }
 
 const InvoiceForm: React.FC = () => {
+  const { t } = useTranslation(['invoices', 'common']);
   const [form] = Form.useForm();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
@@ -116,7 +118,7 @@ const InvoiceForm: React.FC = () => {
       logger.info('InvoiceForm', 'Loaded customers from IndexedDB', { count: allCustomers.length });
     } catch (error) {
       logger.error('InvoiceForm', 'Failed to load customers', error as Error);
-      message.error('Không thể tải danh sách khách hàng');
+      message.error(t('invoices:messages.loadCustomersError'));
     }
   };
 
@@ -128,7 +130,7 @@ const InvoiceForm: React.FC = () => {
       logger.info('InvoiceForm', 'Loaded orders from IndexedDB', { count: customerOrders.length });
     } catch (error) {
       logger.error('InvoiceForm', 'Failed to load orders', error as Error);
-      message.error('Không thể tải danh sách đơn hàng');
+      message.error(t('invoices:messages.loadOrdersError'));
     }
   };
 
@@ -160,7 +162,7 @@ const InvoiceForm: React.FC = () => {
       }
     } catch (error) {
       logger.error('InvoiceForm', 'Failed to load invoice', error as Error);
-      message.error('Không thể tải thông tin hóa đơn');
+      message.error(t('invoices:messages.loadInvoiceError'));
     } finally {
       setLoading(false);
     }
@@ -195,7 +197,7 @@ const InvoiceForm: React.FC = () => {
       }
     } catch (error) {
       logger.error('InvoiceForm', 'Failed to load order', error as Error);
-      message.error('Không thể tải thông tin đơn hàng');
+      message.error(t('invoices:messages.loadOrdersError'));
     }
   };
 
@@ -230,7 +232,7 @@ const InvoiceForm: React.FC = () => {
 
   const handleSubmit = async (values: any) => {
     if (items.length === 0) {
-      message.warning('Vui lòng thêm ít nhất một mục hàng');
+      message.warning(t('common:messages.addItemRequired'));
       return;
     }
 
@@ -253,11 +255,11 @@ const InvoiceForm: React.FC = () => {
 
       if (id) {
         await offlineServices.invoices.update(id, invoiceData);
-        message.success('Cập nhật hóa đơn thành công');
+        message.success(t('invoices:messages.updateSuccess'));
         logger.info('InvoiceForm', 'Updated invoice', { id });
       } else {
         await offlineServices.invoices.create(invoiceData);
-        message.success('Tạo hóa đơn thành công');
+        message.success(t('invoices:messages.createSuccess'));
         logger.info('InvoiceForm', 'Created invoice', { invoiceNumber: invoiceData.invoiceNumber });
       }
 
@@ -274,7 +276,7 @@ const InvoiceForm: React.FC = () => {
       navigate('/dashboard/invoices');
     } catch (error: any) {
       logger.error('InvoiceForm', 'Failed to save invoice', error);
-      message.error(error.message || 'Có lỗi xảy ra');
+      message.error(error.message || t('common:messages.error'));
     } finally {
       setLoading(false);
     }
@@ -284,7 +286,7 @@ const InvoiceForm: React.FC = () => {
   const handleSync = async () => {
     const token = localStorage.getItem('token');
     if (!token) {
-      message.error('Vui lòng đăng nhập');
+      message.error(t('common:messages.loginRequired'));
       return;
     }
 
@@ -293,18 +295,18 @@ const InvoiceForm: React.FC = () => {
       const result = await syncManager.sync(token);
       
       if (result.success) {
-        message.success(`Đồng bộ thành công: ${result.pulled} pulled, ${result.pushed} pushed`);
+        message.success(`${t('common:messages.syncSuccess')}: ${result.pulled} pulled, ${result.pushed} pushed`);
         // Reload data after sync
         await loadCustomers();
         if (id) {
           await loadInvoice();
         }
       } else {
-        message.error(`Đồng bộ thất bại: ${result.errors.join(', ')}`);
+        message.error(t('common:messages.syncError', { errors: result.errors.join(', ') }));
       }
     } catch (error) {
       logger.error('InvoiceForm', 'Sync failed', error as Error);
-      message.error('Đồng bộ thất bại');
+      message.error(t('common:messages.syncError', { errors: (error as Error).message }));
     } finally {
       setSyncing(false);
     }
@@ -312,19 +314,19 @@ const InvoiceForm: React.FC = () => {
 
   const columns = [
     {
-      title: 'Mô tả',
+      title: t('common:columns.description'),
       dataIndex: 'description',
       key: 'description',
       render: (text: string, record: InvoiceItem) => (
         <Input
           value={text}
           onChange={(e) => updateItem(record.key, 'description', e.target.value)}
-          placeholder="Nhập mô tả"
+          placeholder={t('common:placeholders.enterDescription')}
         />
       ),
     },
     {
-      title: 'Số lượng',
+      title: t('common:columns.quantity'),
       dataIndex: 'quantity',
       key: 'quantity',
       width: 120,
@@ -338,7 +340,7 @@ const InvoiceForm: React.FC = () => {
       ),
     },
     {
-      title: 'Đơn giá',
+      title: t('common:columns.unitPrice'),
       dataIndex: 'unitPrice',
       key: 'unitPrice',
       width: 150,
@@ -354,7 +356,7 @@ const InvoiceForm: React.FC = () => {
       ),
     },
     {
-      title: 'Thành tiền',
+      title: t('common:columns.amount'),
       dataIndex: 'amount',
       key: 'amount',
       width: 150,
@@ -380,15 +382,15 @@ const InvoiceForm: React.FC = () => {
       <Card>
         <Space style={{ marginBottom: 16 }}>
           <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/dashboard/invoices')}>
-            Quay lại
+            {t('invoices:actions.back')}
           </Button>
           <Badge status={isOnline ? 'success' : 'error'} />
           <span>{isOnline ? <WifiOutlined /> : <DisconnectOutlined />}</span>
-          <span>{isOnline ? 'Online' : 'Offline'}</span>
+          <span>{isOnline ? t('common:status.online') : t('common:status.offline')}</span>
           {queueSize > 0 && (
             <>
               <span>|</span>
-              <span style={{ color: '#faad14' }}>{queueSize} thay đổi chưa đồng bộ</span>
+              <span style={{ color: '#faad14' }}>{queueSize} {t('common:sync.pendingChanges')}</span>
             </>
           )}
           <Button
@@ -398,11 +400,11 @@ const InvoiceForm: React.FC = () => {
             disabled={!isOnline}
             size="small"
           >
-            Đồng bộ
+            {t('common:actions.sync')}
           </Button>
         </Space>
 
-        <Title level={3}>{id ? 'Chỉnh sửa hóa đơn' : 'Tạo hóa đơn mới'}</Title>
+        <Title level={3}>{id ? t('invoices:form.editTitle') : t('invoices:form.createTitle')}</Title>
 
         <Form
           form={form}
@@ -418,12 +420,12 @@ const InvoiceForm: React.FC = () => {
             <Col xs={24} md={12}>
               <Form.Item
                 name="customerId"
-                label="Khách hàng"
-                rules={[{ required: true, message: 'Vui lòng chọn khách hàng' }]}
+                label={t('invoices:form.customer')}
+                rules={[{ required: true, message: t('invoices:form.customerRequired') }]}
               >
                 <Select
                   showSearch
-                  placeholder="Chọn khách hàng"
+                  placeholder={t('invoices:form.selectCustomer')}
                   optionFilterProp="children"
                   onChange={handleCustomerChange}
                   filterOption={(input, option) =>
@@ -440,8 +442,8 @@ const InvoiceForm: React.FC = () => {
             </Col>
 
             <Col xs={24} md={12}>
-              <Form.Item name="orderId" label="Đơn hàng (tùy chọn)">
-                <Select placeholder="Chọn đơn hàng" allowClear onChange={handleOrderChange}>
+              <Form.Item name="orderId" label={t('invoices:form.order')}>
+                <Select placeholder={t('invoices:form.selectOrder')} allowClear onChange={handleOrderChange}>
                   {orders.map((order) => (
                     <Option key={order.id} value={order.id}>
                       {order.orderNumber} - {order.totalAmount.toLocaleString('vi-VN')} ₫
@@ -456,8 +458,8 @@ const InvoiceForm: React.FC = () => {
             <Col xs={24} md={8}>
               <Form.Item
                 name="issueDate"
-                label="Ngày phát hành"
-                rules={[{ required: true, message: 'Vui lòng chọn ngày phát hành' }]}
+                label={t('invoices:form.issueDate')}
+                rules={[{ required: true, message: t('invoices:form.issueDateRequired') }]}
               >
                 <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" />
               </Form.Item>
@@ -466,27 +468,27 @@ const InvoiceForm: React.FC = () => {
             <Col xs={24} md={8}>
               <Form.Item
                 name="dueDate"
-                label="Ngày đáo hạn"
-                rules={[{ required: true, message: 'Vui lòng chọn ngày đáo hạn' }]}
+                label={t('invoices:form.dueDate')}
+                rules={[{ required: true, message: t('invoices:form.dueDateRequired') }]}
               >
                 <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" />
               </Form.Item>
             </Col>
 
             <Col xs={24} md={8}>
-              <Form.Item name="status" label="Trạng thái">
+              <Form.Item name="status" label={t('invoices:form.status')}>
                 <Select>
-                  <Option value={InvoiceStatus.DRAFT}>Nháp</Option>
-                  <Option value={InvoiceStatus.SENT}>Đã gửi</Option>
-                  <Option value={InvoiceStatus.PAID}>Đã thanh toán</Option>
-                  <Option value={InvoiceStatus.OVERDUE}>Quá hạn</Option>
-                  <Option value={InvoiceStatus.CANCELLED}>Đã hủy</Option>
+                  <Option value={InvoiceStatus.DRAFT}>{t('invoices:status.draft')}</Option>
+                  <Option value={InvoiceStatus.SENT}>{t('invoices:status.sent')}</Option>
+                  <Option value={InvoiceStatus.PAID}>{t('invoices:status.paid')}</Option>
+                  <Option value={InvoiceStatus.OVERDUE}>{t('invoices:status.overdue')}</Option>
+                  <Option value={InvoiceStatus.CANCELLED}>{t('invoices:status.cancelled')}</Option>
                 </Select>
               </Form.Item>
             </Col>
           </Row>
 
-          <Divider>Chi tiết hóa đơn</Divider>
+          <Divider>{t('invoices:form.invoiceDetails')}</Divider>
 
           <Button
             type="dashed"
@@ -494,15 +496,15 @@ const InvoiceForm: React.FC = () => {
             icon={<PlusOutlined />}
             style={{ marginBottom: 16, width: '100%' }}
           >
-            Thêm mục hàng
+            {t('invoices:form.addItem')}
           </Button>
 
           <Table columns={columns} dataSource={items} pagination={false} bordered size="small" />
 
           <Row gutter={16} style={{ marginTop: 24 }}>
             <Col xs={24} md={12}>
-              <Form.Item name="notes" label="Ghi chú">
-                <TextArea rows={4} placeholder="Nhập ghi chú" />
+              <Form.Item name="notes" label={t('invoices:form.notes')}>
+                <TextArea rows={4} placeholder={t('invoices:form.notesPlaceholder')} />
               </Form.Item>
             </Col>
 
@@ -510,12 +512,12 @@ const InvoiceForm: React.FC = () => {
               <Card size="small">
                 <Space direction="vertical" style={{ width: '100%' }}>
                   <Row justify="space-between">
-                    <Text>Tạm tính:</Text>
+                    <Text>{t('invoices:form.subtotal')}:</Text>
                     <Text strong>{subtotal.toLocaleString('vi-VN')} ₫</Text>
                   </Row>
 
                   <Row justify="space-between" align="middle">
-                    <Text>Thuế:</Text>
+                    <Text>{t('invoices:form.tax')}:</Text>
                     <InputNumber
                       min={0}
                       value={tax}
@@ -527,7 +529,7 @@ const InvoiceForm: React.FC = () => {
                   </Row>
 
                   <Row justify="space-between" align="middle">
-                    <Text>Giảm giá:</Text>
+                    <Text>{t('invoices:form.discount')}:</Text>
                     <InputNumber
                       min={0}
                       value={discount}
@@ -541,7 +543,7 @@ const InvoiceForm: React.FC = () => {
                   <Divider style={{ margin: '12px 0' }} />
 
                   <Row justify="space-between">
-                    <Title level={5}>Tổng cộng:</Title>
+                    <Title level={5}>{t('invoices:form.total')}:</Title>
                     <Title level={5} type="danger">
                       {total.toLocaleString('vi-VN')} ₫
                     </Title>
@@ -554,9 +556,9 @@ const InvoiceForm: React.FC = () => {
           <Form.Item style={{ marginTop: 24 }}>
             <Space>
               <Button type="primary" htmlType="submit" icon={<SaveOutlined />} loading={loading}>
-                {id ? 'Cập nhật' : 'Tạo hóa đơn'}
+                {id ? t('invoices:form.update') : t('invoices:form.create')}
               </Button>
-              <Button onClick={() => navigate('/dashboard/invoices')}>Hủy</Button>
+              <Button onClick={() => navigate('/dashboard/invoices')}>{t('invoices:form.cancel')}</Button>
             </Space>
           </Form.Item>
         </Form>
