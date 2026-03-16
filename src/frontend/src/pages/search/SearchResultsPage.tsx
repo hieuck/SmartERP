@@ -22,6 +22,7 @@ import {
   TeamOutlined,
   ShoppingCartOutlined,
 } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import searchService, { SearchResult } from '@/services/utils/searchService';
 import AdvancedFilterPanel from '@/components/search/AdvancedFilterPanel';
 import { logger } from '@/lib/logger/logger.service';
@@ -31,6 +32,7 @@ const { Title, Text } = Typography;
 const { TabPane } = Tabs;
 
 const SearchResultsPage: React.FC = () => {
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const [query, setQuery] = useState(searchParams.get('q') || '');
@@ -126,10 +128,10 @@ const SearchResultsPage: React.FC = () => {
       case 'products':
         icon = <ShoppingOutlined style={{ fontSize: 24, color: '#1890ff' }} />;
         title = source.name;
-        description = `SKU: ${source.sku} | Price: ${source.salePrice?.toLocaleString()} VND`;
+        description = `${t('search.fields.sku')}: ${source.sku} | ${t('search.fields.price')}: ${source.salePrice?.toLocaleString()} VND`;
         tags = [
           <Tag color="blue" key="type">
-            Product
+            {t('search.types.product')}
           </Tag>,
           <Tag key="status">{source.status}</Tag>,
         ];
@@ -137,10 +139,10 @@ const SearchResultsPage: React.FC = () => {
       case 'customers':
         icon = <UserOutlined style={{ fontSize: 24, color: '#52c41a' }} />;
         title = source.name;
-        description = `Code: ${source.code} | Type: ${source.type}`;
+        description = `${t('search.fields.code')}: ${source.code} | ${t('search.fields.type')}: ${source.type}`;
         tags = [
           <Tag color="green" key="type">
-            Customer
+            {t('search.types.customer')}
           </Tag>,
           <Tag key="status">{source.status}</Tag>,
         ];
@@ -148,28 +150,28 @@ const SearchResultsPage: React.FC = () => {
       case 'suppliers':
         icon = <TeamOutlined style={{ fontSize: 24, color: '#fa8c16' }} />;
         title = source.name;
-        description = `Code: ${source.code} | Rating: ${source.rating || 'N/A'}`;
+        description = `${t('search.fields.code')}: ${source.code} | ${t('search.fields.rating')}: ${source.rating || t('search.fields.na')}`;
         tags = [
           <Tag color="orange" key="type">
-            Supplier
+            {t('search.types.supplier')}
           </Tag>,
           <Tag key="status">{source.status}</Tag>,
         ];
         break;
       case 'orders':
         icon = <ShoppingCartOutlined style={{ fontSize: 24, color: '#722ed1' }} />;
-        title = `Order ${source.code}`;
-        description = `Total: ${source.totalAmount?.toLocaleString()} VND | Date: ${source.orderDate}`;
+        title = `${t('search.fields.order')} ${source.code}`;
+        description = `${t('search.fields.total')}: ${source.totalAmount?.toLocaleString()} VND | ${t('search.fields.date')}: ${source.orderDate}`;
         tags = [
           <Tag color="purple" key="type">
-            {source.type === 'sales' ? 'Sales' : 'Purchase'}
+            {source.type === 'sales' ? t('search.types.sales') : t('search.types.purchase')}
           </Tag>,
           <Tag key="status">{source.status}</Tag>,
         ];
         break;
       default:
         icon = <SearchOutlined style={{ fontSize: 24 }} />;
-        title = 'Unknown';
+        title = t('search.types.unknown');
         description = '';
         tags = [];
     }
@@ -208,7 +210,7 @@ const SearchResultsPage: React.FC = () => {
           <Row gutter={16} align="middle">
             <Col flex="auto">
               <Search
-                placeholder="Search..."
+                placeholder={t('search.search.placeholder')}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onSearch={handleSearch}
@@ -224,7 +226,7 @@ const SearchResultsPage: React.FC = () => {
                   onClick={() => setFilterVisible(true)}
                   size="large"
                 >
-                  Filters
+                  {t('search.search.filters')}
                 </Button>
               </Col>
             )}
@@ -233,17 +235,17 @@ const SearchResultsPage: React.FC = () => {
           {results && (
             <div>
               <Text type="secondary">
-                Found {results.hits.total.value} results for "{query}"
+                {t('search.search.resultsFound', { count: results.hits.total.value, query })}
               </Text>
             </div>
           )}
 
           <Tabs activeKey={activeTab} onChange={handleTabChange}>
-            <TabPane tab="All" key="all" />
-            <TabPane tab="Products" key="products" />
-            <TabPane tab="Customers" key="customers" />
-            <TabPane tab="Suppliers" key="suppliers" />
-            <TabPane tab="Orders" key="orders" />
+            <TabPane tab={t('search.tabs.all')} key="all" />
+            <TabPane tab={t('search.tabs.products')} key="products" />
+            <TabPane tab={t('search.tabs.customers')} key="customers" />
+            <TabPane tab={t('search.tabs.suppliers')} key="suppliers" />
+            <TabPane tab={t('search.tabs.orders')} key="orders" />
           </Tabs>
 
           {loading ? (
@@ -259,13 +261,13 @@ const SearchResultsPage: React.FC = () => {
                 pageSize: 20,
                 total: results.hits.total.value,
                 showSizeChanger: true,
-                showTotal: (total) => `Total ${total} items`,
+                showTotal: (total) => t('search.search.totalItems', { total }),
               }}
             />
           ) : query ? (
-            <Empty description="No results found" />
+            <Empty description={t('search.search.noResults')} />
           ) : (
-            <Empty description="Enter a search query to begin" />
+            <Empty description={t('search.search.enterQuery')} />
           )}
         </Space>
       </Card>

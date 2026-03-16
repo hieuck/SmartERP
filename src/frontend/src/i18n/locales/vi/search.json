@@ -1,0 +1,39 @@
+{
+  "search": {
+    "title": "Kết quả tìm kiếm",
+    "placeholder": "Tìm kiếm...",
+    "filters": "Bộ lọc",
+    "resultsFound": "Tìm thấy {{count}} kết quả cho \"{{query}}\"",
+    "noResults": "Không tìm thấy kết quả",
+    "enterQuery": "Nhập từ khóa để bắt đầu tìm kiếm",
+    "totalItems": "Tổng {{total}} mục"
+  },
+  "tabs": {
+    "all": "Tất cả",
+    "products": "Sản phẩm",
+    "customers": "Khách hàng",
+    "suppliers": "Nhà cung cấp",
+    "orders": "Đơn hàng"
+  },
+  "types": {
+    "product": "Sản phẩm",
+    "customer": "Khách hàng",
+    "supplier": "Nhà cung cấp",
+    "order": "Đơn hàng",
+    "sales": "Bán hàng",
+    "purchase": "Mua hàng",
+    "unknown": "Không xác định"
+  },
+  "fields": {
+    "sku": "Mã SKU",
+    "price": "Giá",
+    "code": "Mã",
+    "type": "Loại",
+    "rating": "Đánh giá",
+    "total": "Tổng",
+    "date": "Ngày",
+    "order": "Đơn hàng",
+    "status": "Trạng thái",
+    "na": "Không có"
+  }
+}

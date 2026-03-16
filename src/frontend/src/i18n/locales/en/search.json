@@ -1,0 +1,39 @@
+{
+  "search": {
+    "title": "Search Results",
+    "placeholder": "Search...",
+    "filters": "Filters",
+    "resultsFound": "Found {{count}} results for \"{{query}}\"",
+    "noResults": "No results found",
+    "enterQuery": "Enter a search query to begin",
+    "totalItems": "Total {{total}} items"
+  },
+  "tabs": {
+    "all": "All",
+    "products": "Products",
+    "customers": "Customers",
+    "suppliers": "Suppliers",
+    "orders": "Orders"
+  },
+  "types": {
+    "product": "Product",
+    "customer": "Customer",
+    "supplier": "Supplier",
+    "order": "Order",
+    "sales": "Sales",
+    "purchase": "Purchase",
+    "unknown": "Unknown"
+  },
+  "fields": {
+    "sku": "SKU",
+    "price": "Price",
+    "code": "Code",
+    "type": "Type",
+    "rating": "Rating",
+    "total": "Total",
+    "date": "Date",
+    "order": "Order",
+    "status": "Status",
+    "na": "N/A"
+  }
+}
