@@ -93,5 +93,11 @@
     "en": "English",
     "vi": "Tiếng Việt",
     "switchLanguage": "Chuyển ngôn ngữ"
+  },
+  "theme": {
+    "light": "Giao diện sáng",
+    "dark": "Giao diện tối",
+    "switchToLight": "Chuyển sang giao diện sáng",
+    "switchToDark": "Chuyển sang giao diện tối"
   }
 }

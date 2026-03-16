@@ -93,5 +93,11 @@
     "en": "English",
     "vi": "Tiếng Việt",
     "switchLanguage": "Switch Language"
+  },
+  "theme": {
+    "light": "Light Mode",
+    "dark": "Dark Mode",
+    "switchToLight": "Switch to Light Mode",
+    "switchToDark": "Switch to Dark Mode"
   }
 }
