@@ -8,7 +8,8 @@ import { List, Empty, Card, Dropdown, Button, Collapse } from 'antd';
 import { MoreOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import ListItemActions from './ListItemActions';
-import type { ColumnsType, TableProps } from 'antd/es/table';
+import type { ColumnsType, ColumnType, TableProps } from 'antd/es/table';
+import type { MenuProps } from 'antd';
 
 export interface MobileListViewProps<T> {
   columns: ColumnsType<T>;
@@ -30,7 +31,7 @@ export interface MobileListViewProps<T> {
   onMobileItemClick?: (record: T) => void;
 }
 
-function MobileListViewComponent<T extends Record<string, any>>({
+function MobileListViewComponent<T extends Record<string, unknown>>({
   columns,
   dataSource = [],
   loading = false,
@@ -76,14 +77,14 @@ function MobileListViewComponent<T extends Record<string, any>>({
       dataSource={dataSource}
       loading={loading}
       renderItem={(item) => {
-        // Get menu items for actions
+        // Get menu items for actions - cast to MenuProps['items']
         const menuItems = ListItemActions({
           record: item,
           onEdit,
           onDelete,
           deleteConfirmTitle,
           isMobile: true,
-        });
+        }) as MenuProps['items'];
 
         return (
           <Card
@@ -115,15 +116,24 @@ function MobileListViewComponent<T extends Record<string, any>>({
               style={{ cursor: onMobileItemClick ? 'pointer' : 'default' }}
             >
               {columns.slice(0, 4).map((col, idx) => {
-                const value = col.dataIndex ? item[col.dataIndex] : null;
-                const rendered = col.render ? col.render(value, item, idx) : value;
+                // Type guard to check if column is ColumnType (not ColumnGroupType)
+                if (!('dataIndex' in col)) return null;
+                
+                const column = col as ColumnType<T>;
+                const value = column.dataIndex ? item[column.dataIndex as string] : null;
+                const rendered = column.render ? column.render(value, item, idx) : value;
+                
+                // Handle column.title which can be string, ReactNode, or function
+                const title = typeof column.title === 'function' 
+                  ? column.title({ sortColumns: undefined }) 
+                  : column.title;
 
                 return (
                   <div key={idx} style={{ marginBottom: idx < 3 ? 8 : 0 }}>
                     <div style={{ fontSize: 12, color: '#666', marginBottom: 2 }}>
-                      {col.title}
+                      {title ? <>{title}</> : ''}
                     </div>
-                    <div style={{ fontSize: 14 }}>{rendered || '-'}</div>
+                    <div style={{ fontSize: 14 }}>{rendered ? <>{rendered}</> : '-'}</div>
                   </div>
                 );
               })}

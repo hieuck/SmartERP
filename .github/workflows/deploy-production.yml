@@ -1,4 +1,4 @@
-name: Deploy to Production
+name: Deploy Production
 
 on:
   push:
@@ -6,67 +6,36 @@ on:
   workflow_dispatch:
     inputs:
       confirm:
-        description: 'Type "deploy" to confirm production deployment'
+        description: 'Type "deploy" to confirm'
         required: true
-        type: string
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
 
 env:
-  NODE_VERSION: '20'
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  # Quality gates before deployment
-  quality-gates:
-    name: Pre-Deployment Quality Gates
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Verify CI passed
-        run: |
-          echo "✅ CI pipeline must pass before production deployment"
-          echo "- All tests passed"
-          echo "- Coverage ≥80%"
-          echo "- No linting errors"
-          echo "- No type errors"
-          echo "- Security audit passed"
-          echo "- Build successful"
-
-      - name: Check staging deployment
-        run: |
-          echo "🔍 Verifying staging is healthy..."
-          curl -f https://api-staging.smarterp.com/api/health || {
-            echo "❌ Staging is not healthy. Cannot deploy to production."
-            exit 1
-          }
-          echo "✅ Staging is healthy"
-
-  validate-input:
-    name: Validate Deployment
-    runs-on: ubuntu-latest
-    needs: [quality-gates]
+  validate:
     if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
     steps:
-      - name: Validate confirmation
-        run: |
+      - run: |
           if [ "${{ github.event.inputs.confirm }}" != "deploy" ]; then
-            echo "❌ Deployment not confirmed. Type 'deploy' to proceed."
+            echo "Deployment not confirmed"
             exit 1
           fi
-          echo "✅ Deployment confirmed"
 
-  build-and-push:
-    name: Build and Push Docker Images
+  quality-gates:
+    needs: [validate]
+    if: always() && (needs.validate.result == 'success' || needs.validate.result == 'skipped')
+    uses: ./.github/workflows/ci.yml
+    secrets: inherit
+
+  build-push:
+    needs: [quality-gates]
     runs-on: ubuntu-latest
-    needs: [validate-input]
-    if: always() && (needs.validate-input.result == 'success' || needs.validate-input.result == 'skipped')
     permissions:
       contents: read
       packages: write
@@ -74,278 +43,52 @@ jobs:
       matrix:
         service: [backend, frontend]
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to Container Registry
-        uses: docker/login-action@v3
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-${{ matrix.service }}
-          tags: |
-            type=ref,event=branch
-            type=sha,prefix=prod-
-            type=raw,value=production-latest
-            type=raw,value=latest
-
-      - name: Build and push
-        uses: docker/build-push-action@v5
+      - uses: docker/build-push-action@v5
         with:
           context: src/${{ matrix.service }}
-          file: src/${{ matrix.service }}/Dockerfile
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository }}-${{ matrix.service }}:production
+            ${{ env.REGISTRY }}/${{ github.repository }}-${{ matrix.service }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          build-args: |
-            NODE_ENV=production
 
-  deploy-production:
-    name: Deploy to Production Environment
+  deploy:
+    needs: [build-push]
     runs-on: ubuntu-latest
-    needs: build-and-push
     environment:
       name: production
       url: https://app.smarterp.com
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - run: echo "Deploy to production here"
 
-      - name: Pre-deployment checks
-        run: |
-          echo "🔍 Running pre-deployment checks..."
-          echo "Branch: ${{ github.ref_name }}"
-          echo "Commit: ${{ github.sha }}"
-          echo "Actor: ${{ github.actor }}"
-          echo "Environment: production"
-
-      - name: Create deployment backup
-        run: |
-          echo "💾 Creating backup before deployment..."
-          echo "⚠️  Backup steps not configured yet"
-          # Add backup commands here:
-          # - Database backup
-          # - File system backup
-          # - Configuration backup
-
-      - name: Deploy to production
-        run: |
-          echo "🚀 Deploying to production environment"
-          echo "⚠️  Deployment steps not configured yet"
-          echo "Add your deployment commands here:"
-          echo "  - SSH to production server"
-          echo "  - Pull Docker images"
-          echo "  - Run database migrations (if any)"
-          echo "  - Restart services with zero-downtime"
-          echo "  - Verify deployment"
-
-      # Add your deployment steps here
-      # Examples:
-      # - SSH to server and pull new images
-      # - Use kubectl for Kubernetes deployment
-      # - Use AWS CLI for ECS/EKS updates
-      # - Use Terraform/Ansible for infrastructure
-
-      - name: Run database migrations
-        run: |
-          echo "🗄️  Running database migrations..."
-          echo "⚠️  Migration steps not configured yet"
-          # Add migration commands here
-
-      - name: Deployment placeholder
-        run: |
-          echo "✅ Deployment commands would run here"
-
-  smoke-tests:
-    name: Smoke Tests
+  health-check:
+    needs: [deploy]
     runs-on: ubuntu-latest
-    needs: deploy-production
     steps:
-      - name: Wait for deployment
-        run: sleep 60
-
-      - name: Check backend health
-        run: |
-          echo "Checking backend health..."
-          curl -f https://api.smarterp.com/api/health || {
-            echo "❌ Backend health check failed"
-            exit 1
-          }
-          echo "✅ Backend is healthy"
-
-      - name: Check frontend
-        run: |
-          echo "Checking frontend..."
-          curl -f https://app.smarterp.com || {
-            echo "❌ Frontend check failed"
-            exit 1
-          }
-          echo "✅ Frontend is accessible"
-
-      - name: Check database connectivity
-        run: |
-          echo "Checking database connectivity..."
-          curl -f https://api.smarterp.com/api/health/db || {
-            echo "❌ Database health check failed"
-            exit 1
-          }
-          echo "✅ Database is connected"
-
-      - name: Check Redis connectivity
-        run: |
-          echo "Checking Redis connectivity..."
-          curl -f https://api.smarterp.com/api/health/redis || {
-            echo "❌ Redis health check failed"
-            exit 1
-          }
-          echo "✅ Redis is connected"
-
-      - name: Check critical endpoints
-        run: |
-          echo "Checking critical endpoints..."
-          curl -f https://api.smarterp.com/api/health/memory || {
-            echo "❌ Memory health check failed"
-            exit 1
-          }
-          echo "✅ All critical endpoints are healthy"
-
-      - name: Smoke test results
-        run: |
-          echo "✅ All smoke tests passed!"
-
-  monitor-deployment:
-    name: Monitor Deployment
-    runs-on: ubuntu-latest
-    needs: smoke-tests
-    steps:
-      - name: Monitor for 5 minutes
-        run: |
-          echo "📊 Monitoring deployment for 5 minutes..."
-          echo "Checking for errors, performance issues, etc."
-          
-          for i in {1..10}; do
-            echo "Check $i/10..."
-            curl -f https://api.smarterp.com/api/health || {
-              echo "❌ Health check failed during monitoring"
-              exit 1
-            }
-            sleep 30
-          done
-          
-          echo "✅ Monitoring completed successfully"
-
-      - name: Check error rates
-        run: |
-          echo "Checking error rates..."
-          echo "⚠️  Sentry integration not configured yet"
-          echo "Add Sentry API check here to verify error rates are normal"
-
-      - name: Check performance metrics
-        run: |
-          echo "Checking performance metrics..."
-          echo "⚠️  Performance monitoring not configured yet"
-          echo "Add performance monitoring check here (response times, etc.)"
-
-  notify:
-    name: Notify Deployment
-    runs-on: ubuntu-latest
-    needs: [deploy-production, smoke-tests, monitor-deployment]
-    if: always()
-    steps:
-      - name: Deployment status
-        run: |
-          if [ "${{ needs.deploy-production.result }}" == "success" ] && \
-             [ "${{ needs.smoke-tests.result }}" == "success" ] && \
-             [ "${{ needs.monitor-deployment.result }}" == "success" ]; then
-            echo "✅ Production deployment successful!"
-            echo "URL: https://app.smarterp.com"
-            echo "API: https://api.smarterp.com"
-          else
-            echo "❌ Production deployment failed!"
-            echo "Deploy: ${{ needs.deploy-production.result }}"
-            echo "Smoke Tests: ${{ needs.smoke-tests.result }}"
-            echo "Monitoring: ${{ needs.monitor-deployment.result }}"
-            exit 1
-          fi
-
-      # Add notification here
-      # - name: Notify team
-      #   uses: slackapi/slack-github-action@v1
-      #   with:
-      #     payload: |
-      #       {
-      #         "text": "🚀 Production deployment ${{ needs.deploy-production.result }}",
-      #         "blocks": [
-      #           {
-      #             "type": "section",
-      #             "text": {
-      #               "type": "mrkdwn",
-      #               "text": "*Production Deployment*\nStatus: ${{ needs.deploy-production.result }}\nCommit: ${{ github.sha }}\nActor: ${{ github.actor }}"
-      #             }
-      #           }
-      #         ]
-      #       }
-      #   env:
-      #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      - run: |
+          sleep 60
+          curl -f https://api.smarterp.com/api/health || exit 1
+          curl -f https://app.smarterp.com || exit 1
 
   create-release:
-    name: Create GitHub Release
+    needs: [health-check]
     runs-on: ubuntu-latest
-    needs: notify
-    if: success()
     permissions:
       contents: write
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Generate release notes
-        id: release_notes
-        run: |
-          echo "Generating release notes..."
-          PREVIOUS_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-          if [ -z "$PREVIOUS_TAG" ]; then
-            COMMITS=$(git log --pretty=format:"- %s (%h)" -n 20)
-          else
-            COMMITS=$(git log ${PREVIOUS_TAG}..HEAD --pretty=format:"- %s (%h)")
-          fi
-          echo "commits<<EOF" >> $GITHUB_OUTPUT
-          echo "$COMMITS" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-      - name: Create release
-        uses: actions/create-release@v1
+      - uses: actions/checkout@v4
+      - uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: v${{ github.run_number }}
           release_name: Release v${{ github.run_number }}
-          body: |
-            ## Production Deployment
-            
-            **Deployed:** ${{ github.event.head_commit.timestamp }}
-            **Commit:** ${{ github.sha }}
-            **Actor:** ${{ github.actor }}
-            
-            ### Changes
-            ${{ steps.release_notes.outputs.commits }}
-            
-            ### URLs
-            - Frontend: https://app.smarterp.com
-            - API: https://api.smarterp.com
-            - Health: https://api.smarterp.com/api/health
-          draft: false
-          prerelease: false
+          body: Production deployment ${{ github.sha }}

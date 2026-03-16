@@ -64,7 +64,7 @@ async function bootstrap() {
   );
 
   app.enableCors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:5175',
+    origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
     credentials: true,
   });
 
@@ -103,6 +103,19 @@ async function bootstrap() {
   logger.log(`📚 API Documentation: http://localhost:${port}/api/docs`);
   logger.log(`📊 Health Check: http://localhost:${port}/api/health`);
   logger.log(`📈 Metrics: http://localhost:${port}/api/metrics`);
+
+  // Auto-seed demo data in development
+  if (process.env.NODE_ENV !== 'production') {
+    try {
+      const { SeedService } = await import('./utilities/seed/seed.service');
+      const seedService = app.get(SeedService);
+      const result = await seedService.seedDemoData();
+      logger.log(`🌱 ${result.message}`);
+      logger.log(`📧 Demo credentials: ${result.credentials.email} / ${result.credentials.password}`);
+    } catch (error) {
+      logger.warn('⚠️  Failed to seed demo data (this is normal if data already exists)');
+    }
+  }
 }
 
 bootstrap().catch((error) => {

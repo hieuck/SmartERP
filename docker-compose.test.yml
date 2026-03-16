@@ -1,0 +1,167 @@
+# Test environment - isolated for running tests
+# Usage: docker compose -f docker-compose.test.yml up --abort-on-container-exit
+
+services:
+  # PostgreSQL Test Database
+  postgres-test:
+    image: postgres:16.6-alpine3.21
+    container_name: smart-erp-postgres-test
+    environment:
+      POSTGRES_DB: smart_erp_test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - '5433:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - test-network
+    tmpfs:
+      - /var/lib/postgresql/data  # Use tmpfs for faster tests
+
+  # Redis Test Cache
+  redis-test:
+    image: redis:7.4-alpine3.21
+    container_name: smart-erp-redis-test
+    ports:
+      - '6380:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - test-network
+    tmpfs:
+      - /data  # Use tmpfs for faster tests
+
+  # Backend Unit Tests
+  backend-test-unit:
+    build:
+      context: ./src/backend
+      dockerfile: ../../config/docker/Dockerfile.test
+      target: test-unit
+    container_name: smart-erp-backend-test-unit
+    environment:
+      NODE_ENV: test
+      DB_HOST: postgres-test
+      DB_PORT: 5432
+      DB_NAME: smart_erp_test
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      REDIS_HOST: redis-test
+      REDIS_PORT: 6379
+      JWT_SECRET: test-secret-key
+    command: npm test -- --passWithNoTests
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+    networks:
+      - test-network
+
+  # Backend Integration Tests
+  backend-test-integration:
+    build:
+      context: ./src/backend
+      dockerfile: ../../config/docker/Dockerfile.test
+      target: test-unit
+    container_name: smart-erp-backend-test-integration
+    environment:
+      NODE_ENV: test
+      DB_HOST: postgres-test
+      DB_PORT: 5432
+      DB_NAME: smart_erp_test
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      REDIS_HOST: redis-test
+      REDIS_PORT: 6379
+      JWT_SECRET: test-secret-key
+    command: npm run test:integration -- --passWithNoTests
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+    networks:
+      - test-network
+
+  # Frontend Unit Tests
+  frontend-test-unit:
+    build:
+      context: ./src/frontend
+      dockerfile: ../../config/docker/Dockerfile.test
+      target: test-unit
+    container_name: smart-erp-frontend-test-unit
+    environment:
+      NODE_ENV: test
+      VITE_API_URL: http://backend-test:3000/api
+    command: npm test -- --passWithNoTests
+    networks:
+      - test-network
+
+  # E2E Tests (Playwright)
+  e2e-tests:
+    build:
+      context: ./src/frontend
+      dockerfile: ../../config/docker/Dockerfile.test
+      target: test-e2e
+    container_name: smart-erp-e2e-tests
+    environment:
+      NODE_ENV: test
+      BASE_URL: http://frontend-test:80
+      API_URL: http://backend-test:3000/api
+    command: npm run test:e2e -- --passWithNoTests
+    depends_on:
+      - backend-test
+      - frontend-test
+    networks:
+      - test-network
+
+  # Backend for E2E Testing
+  backend-test:
+    build:
+      context: ./src/backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: smart-erp-backend-test
+    environment:
+      NODE_ENV: test
+      PORT: 3000
+      DB_HOST: postgres-test
+      DB_PORT: 5432
+      DB_NAME: smart_erp_test
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      REDIS_HOST: redis-test
+      REDIS_PORT: 6379
+      JWT_SECRET: test-secret-key
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+    networks:
+      - test-network
+
+  # Frontend for E2E Testing
+  frontend-test:
+    build:
+      context: ./src/frontend
+      dockerfile: Dockerfile
+      target: production
+    container_name: smart-erp-frontend-test
+    environment:
+      VITE_API_URL: http://backend-test:3000/api
+    depends_on:
+      - backend-test
+    networks:
+      - test-network
+
+networks:
+  test-network:
+    driver: bridge

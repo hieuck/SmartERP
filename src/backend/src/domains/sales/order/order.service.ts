@@ -260,4 +260,91 @@ export class OrderService {
 
     return allOrders.slice(0, limit);
   }
+
+  async getStatistics(user: User): Promise<{
+    totalOrders: number;
+    totalRevenue: number;
+    averageOrderValue: number;
+    byStatus: Record<string, number>;
+  }> {
+    const cacheKey = generateCacheKey('order-statistics', user.tenantId);
+
+    return this.cacheService.getOrSet(
+      cacheKey,
+      async () => {
+        const allOrders = await this.secureOrderRepo.find(user, {});
+
+        const totalOrders = allOrders.length;
+
+        const totalRevenue = allOrders
+          .filter((o) => o.status !== 'cancelled')
+          .reduce((sum, o) => sum + Number(o.totalAmount || 0), 0);
+
+        const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+
+        const byStatus: Record<string, number> = {};
+        allOrders.forEach((order) => {
+          const status = order.status || 'unknown';
+          byStatus[status] = (byStatus[status] || 0) + 1;
+        });
+
+        return {
+          totalOrders,
+          totalRevenue: Math.round(totalRevenue * 100) / 100,
+          averageOrderValue: Math.round(averageOrderValue * 100) / 100,
+          byStatus,
+        };
+      },
+      CacheTTL.SHORT,
+    );
+  }
+
+  async confirmOrder(user: User, id: string): Promise<Order> {
+    const order = await this.findOne(user, id);
+
+    if (order.status !== 'draft' && order.status !== 'pending') {
+      throw new BadRequestException('Only draft or pending orders can be confirmed');
+    }
+
+    order.status = 'confirmed';
+    const updated = await this.secureOrderRepo.save(user, order);
+
+    const cacheKey = generateCacheKey('order', user.tenantId, id);
+    await this.cacheService.del(cacheKey);
+
+    return updated;
+  }
+
+  async recordPayment(
+    user: User,
+    id: string,
+    amount: number,
+    paymentMethod?: string,
+  ): Promise<Order> {
+    const order = await this.findOne(user, id);
+
+    if (order.status === 'cancelled') {
+      throw new BadRequestException('Cannot record payment for cancelled order');
+    }
+
+    if (amount <= 0) {
+      throw new BadRequestException('Payment amount must be positive');
+    }
+
+    // Note: This is a simplified implementation
+    // In production, you'd create a Payment entity and link it to the order
+    // For now, we just update the order status if fully paid
+    const totalAmount = Number(order.totalAmount || 0);
+
+    if (amount >= totalAmount) {
+      order.status = 'paid';
+    }
+
+    const updated = await this.secureOrderRepo.save(user, order);
+
+    const cacheKey = generateCacheKey('order', user.tenantId, id);
+    await this.cacheService.del(cacheKey);
+
+    return updated;
+  }
 }

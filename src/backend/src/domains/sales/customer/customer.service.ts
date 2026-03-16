@@ -223,4 +223,48 @@ export class CustomerService {
       .filter((c) => Number(c.currentBalance) >= threshold)
       .sort((a, b) => Number(b.currentBalance) - Number(a.currentBalance));
   }
+
+  async getStatistics(user: User): Promise<{
+    totalCustomers: number;
+    activeCustomers: number;
+    inactiveCustomers: number;
+    totalBalance: number;
+    totalCreditLimit: number;
+    averageBalance: number;
+  }> {
+    const cacheKey = generateCacheKey('customer-statistics', user.tenantId);
+
+    return this.cacheService.getOrSet(
+      cacheKey,
+      async () => {
+        const allCustomers = await this.secureCustomerRepo.find(user, {});
+
+        const totalCustomers = allCustomers.length;
+        const activeCustomers = allCustomers.filter((c) => c.status === 'active').length;
+        const inactiveCustomers = allCustomers.filter((c) => c.status === 'inactive').length;
+
+        const totalBalance = allCustomers.reduce(
+          (sum, c) => sum + Number(c.currentBalance || 0),
+          0,
+        );
+
+        const totalCreditLimit = allCustomers.reduce(
+          (sum, c) => sum + Number(c.creditLimit || 0),
+          0,
+        );
+
+        const averageBalance = totalCustomers > 0 ? totalBalance / totalCustomers : 0;
+
+        return {
+          totalCustomers,
+          activeCustomers,
+          inactiveCustomers,
+          totalBalance: Math.round(totalBalance * 100) / 100,
+          totalCreditLimit: Math.round(totalCreditLimit * 100) / 100,
+          averageBalance: Math.round(averageBalance * 100) / 100,
+        };
+      },
+      CacheTTL.SHORT, // Cache for 1 minute
+    );
+  }
 }

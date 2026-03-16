@@ -55,6 +55,12 @@ export class CustomerController {
     return this.customerService.count(user);
   }
 
+  @Get('statistics')
+  @ApiOperation({ summary: 'Get customer statistics' })
+  getStatistics(@CurrentUser() user: User) {
+    return this.customerService.getStatistics(user);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get customer by ID' })
   findOne(@CurrentUser() user: User, @Param('id') id: string) {

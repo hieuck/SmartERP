@@ -1,16 +1,66 @@
+# Dependencies
 node_modules
 npm-debug.log
+yarn.lock
+pnpm-lock.yaml
+
+# Build outputs
 dist
+build
+.next
+.turbo
+out
+
+# Testing
 coverage
-.git
-.gitignore
+.nyc_output
+test-results
+playwright-report
+
+# Environment files
 .env
 .env.local
 .env.*.local
-*.md
+.env.development
+.env.test
+.env.production
+
+# Version control
+.git
+.gitignore
+.gitattributes
+
+# IDE
 .vscode
 .idea
+*.swp
+*.swo
+*~
 .DS_Store
+
+# Logs
 *.log
-.turbo
+logs
+
+# Documentation
+*.md
+docs
+
+# CI/CD
+.github
+.gitlab-ci.yml
+.circleci
+
+# Development tools
 .husky
+.lintstagedrc.js
+.eslintrc.js
+.prettierrc
+.prettierignore
+jest.config.js
+tsconfig.test.json
+
+# Docker files
+Dockerfile*
+docker-compose*.yml
+.dockerignore

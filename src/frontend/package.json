@@ -11,7 +11,9 @@
     "type-check": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "@ant-design/icons": "^5.2.6",
@@ -45,7 +47,13 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@chromatic-com/storybook": "^5.0.1",
     "@playwright/test": "^1.58.2",
+    "@storybook/addon-a11y": "^10.2.19",
+    "@storybook/addon-docs": "^10.2.19",
+    "@storybook/addon-onboarding": "^10.2.19",
+    "@storybook/addon-vitest": "^10.2.19",
+    "@storybook/react-vite": "^10.2.19",
     "@testing-library/jest-dom": "^6.1.5",
     "@testing-library/react": "^14.1.2",
     "@testing-library/user-event": "^14.5.1",
@@ -56,18 +64,23 @@
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "@typescript-eslint/parser": "^6.21.0",
     "@vitejs/plugin-react": "^4.2.1",
-    "@vitest/coverage-v8": "^1.6.1",
+    "@vitest/browser": "^1.0.4",
+    "@vitest/coverage-v8": "^1.0.4",
     "@vitest/ui": "^1.0.4",
     "eslint": "^8.55.0",
     "eslint-plugin-prettier": "^5.5.5",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",
+    "eslint-plugin-storybook": "^10.2.19",
     "fake-indexeddb": "^6.2.5",
     "jsdom": "^23.0.1",
+    "playwright": "^1.58.2",
     "prettier": "^3.8.1",
+    "storybook": "^10.2.19",
     "terser": "^5.46.0",
     "typescript": "^5.2.2",
     "vite": "^5.0.8",
+    "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^1.0.4"
   }
 }

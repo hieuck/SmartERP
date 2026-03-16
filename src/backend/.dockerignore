@@ -1,25 +1,55 @@
+# Dependencies
 node_modules
 npm-debug.log
+
+# Build outputs
 dist
-.git
-.gitignore
-README.md
+build
+.turbo
+
+# Testing
+coverage
+.nyc_output
+test-results
+
+# Environment files
 .env
 .env.local
 .env.*.local
-.DS_Store
+.env.development
+.env.test
+.env.production
+
+# Version control
+.git
+.gitignore
+.gitattributes
+
+# IDE
 .vscode
 .idea
 *.swp
 *.swo
 *~
-.turbo
-.next
-coverage
-.nyc_output
-test
-__tests__
+.DS_Store
+
+# Logs
+*.log
+logs
+
+# Documentation
+*.md
+docs
+
+# Development tools
 .husky
-.lintstagedrc.js
+.eslintrc.js
+.prettierrc
+.prettierignore
 jest.config.js
 tsconfig.test.json
+
+# Docker files
+Dockerfile*
+docker-compose*.yml
+.dockerignore

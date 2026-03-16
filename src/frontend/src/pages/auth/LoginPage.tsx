@@ -110,7 +110,11 @@ export default function LoginPage() {
       // Extract error message from various sources
       let errorMsg = t('auth:login.error');
 
-      if (error?.response?.status === 423) {
+      if (error?.response?.status === 500) {
+        // Handle 500 Internal Server Error
+        errorMsg = 'Server error occurred. Please try again later.';
+        console.error('Login 500 error:', error?.response?.data);
+      } else if (error?.response?.status === 423) {
         errorMsg = t('common:messages.unauthorized');
       } else if (error?.response?.data?.message) {
         errorMsg = error.response.data.message;
@@ -124,8 +128,8 @@ export default function LoginPage() {
         errorMsg = t('common:messages.networkError');
       }
 
+      // Only set error message for Alert component (removed duplicate message.error toast)
       setErrorMessage(errorMsg);
-      message.error(errorMsg);
     },
   });
 
@@ -238,7 +242,7 @@ export default function LoginPage() {
                 >
                   <Input
                     prefix={<MailOutlined />}
-                    placeholder="admin@test.com"
+                    placeholder="admin@demo.com"
                     size="large"
                     disabled={loginMutation.isPending}
                     type="email"
@@ -321,7 +325,7 @@ export default function LoginPage() {
                 Tài khoản demo:
               </Title>
               <Space direction="vertical" size="small">
-                <Text>📧 Email: admin@test.com</Text>
+                <Text>📧 Email: admin@demo.com</Text>
                 <Text>🔑 Password: admin123</Text>
               </Space>
             </Card>

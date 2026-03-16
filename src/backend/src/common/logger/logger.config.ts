@@ -1,5 +1,6 @@
 import * as winston from 'winston';
 import * as DailyRotateFile from 'winston-daily-rotate-file';
+import * as path from 'path';
 
 const { combine, timestamp, printf, colorize, errors, json } = winston.format;
 
@@ -30,7 +31,7 @@ export const loggerConfig = {
 
     // Error log file (daily rotation)
     new DailyRotateFile({
-      filename: 'logs/error-%DATE%.log',
+      filename: path.join(__dirname, '../../../logs/error-%DATE%.log'),
       datePattern: 'YYYY-MM-DD',
       level: 'error',
       maxSize: '20m',
@@ -40,7 +41,7 @@ export const loggerConfig = {
 
     // Combined log file (daily rotation)
     new DailyRotateFile({
-      filename: 'logs/combined-%DATE%.log',
+      filename: path.join(__dirname, '../../../logs/combined-%DATE%.log'),
       datePattern: 'YYYY-MM-DD',
       maxSize: '20m',
       maxFiles: '14d',
@@ -49,7 +50,7 @@ export const loggerConfig = {
   ],
   exceptionHandlers: [
     new DailyRotateFile({
-      filename: 'logs/exceptions-%DATE%.log',
+      filename: path.join(__dirname, '../../../logs/exceptions-%DATE%.log'),
       datePattern: 'YYYY-MM-DD',
       maxSize: '20m',
       maxFiles: '14d',
@@ -58,7 +59,7 @@ export const loggerConfig = {
   ],
   rejectionHandlers: [
     new DailyRotateFile({
-      filename: 'logs/rejections-%DATE%.log',
+      filename: path.join(__dirname, '../../../logs/rejections-%DATE%.log'),
       datePattern: 'YYYY-MM-DD',
       maxSize: '20m',
       maxFiles: '14d',

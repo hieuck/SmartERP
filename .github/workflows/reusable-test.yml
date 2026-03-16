@@ -1,0 +1,111 @@
+﻿name: Reusable Test
+
+on:
+  workflow_call:
+    inputs:
+      working-directory:
+        description: 'Working directory for the job'
+        required: true
+        type: string
+      node-version:
+        description: 'Node.js version'
+        required: false
+        type: string
+        default: '20'
+      coverage-flag:
+        description: 'Coverage flag name for Codecov'
+        required: true
+        type: string
+      needs-postgres:
+        description: 'Whether PostgreSQL service is needed'
+        required: false
+        type: boolean
+        default: false
+      needs-redis:
+        description: 'Whether Redis service is needed'
+        required: false
+        type: boolean
+        default: false
+    secrets:
+      CODECOV_TOKEN:
+        required: false
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    services:
+      postgres:
+        image: ${{ inputs.needs-postgres && 'postgres:15-alpine' || '' }}
+        env:
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: smart_erp_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: ${{ inputs.needs-redis && 'redis:7-alpine' || '' }}
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: 'npm'
+          cache-dependency-path: ${{ inputs.working-directory }}/package-lock.json
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: ${{ inputs.working-directory }}/node_modules
+          key: ${{ runner.os }}-node-${{ inputs.node-version }}-${{ hashFiles(format('{0}/package-lock.json', inputs.working-directory)) }}
+          restore-keys: |
+            ${{ runner.os }}-node-${{ inputs.node-version }}-
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      - name: Run tests with coverage
+        run: npm run test:coverage
+        env:
+          NODE_ENV: test
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: test_user
+          DB_PASSWORD: test_password
+          DB_NAME: smart_erp_test
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+
+      - name: Check coverage threshold
+        run: |
+          echo " Coverage threshold (80%) enforced by test config"
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          files: ${{ inputs.working-directory }}/coverage/lcov.info
+          flags: ${{ inputs.coverage-flag }}
+          name: ${{ inputs.coverage-flag }}-coverage
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false

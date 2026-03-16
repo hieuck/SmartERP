@@ -56,11 +56,11 @@ export default function Sidebar({ collapsed }: SidebarProps) {
       ],
     },
     {
-      key: '/dashboard/warehouses',
+      key: 'menu-warehouses',
       icon: <HomeOutlined />,
       label: t('sidebar.warehouses'),
       children: [
-        { key: '/dashboard/warehouses', label: t('sidebar.warehouseList') },
+        { key: '/dashboard/warehouses/list', label: t('sidebar.warehouseList') },
         { key: '/dashboard/warehouses/transfers', label: t('sidebar.transfers') },
         { key: '/dashboard/warehouses/stock-report', label: t('sidebar.stockReport') },
       ],
@@ -113,11 +113,11 @@ export default function Sidebar({ collapsed }: SidebarProps) {
       label: t('sidebar.reports'),
     },
     {
-      key: '/dashboard/notifications',
+      key: 'menu-notifications',
       icon: <BellOutlined />,
       label: t('sidebar.notifications'),
       children: [
-        { key: '/dashboard/notifications', label: t('sidebar.notificationList') },
+        { key: '/dashboard/notifications/list', label: t('sidebar.notificationList') },
         { key: '/dashboard/notifications/preferences', label: t('sidebar.notificationPreferences') },
       ],
     },
@@ -163,7 +163,7 @@ export default function Sidebar({ collapsed }: SidebarProps) {
       return '/dashboard/warehouses/transfers';
     if (path.startsWith('/dashboard/warehouses/stock-report'))
       return '/dashboard/warehouses/stock-report';
-    if (path.startsWith('/dashboard/warehouses')) return '/dashboard/warehouses';
+    if (path.startsWith('/dashboard/warehouses')) return '/dashboard/warehouses/list';
     if (path.startsWith('/dashboard/orders/sales')) return '/dashboard/orders/sales';
     if (path.startsWith('/dashboard/orders/purchase')) return '/dashboard/orders/purchase';
     if (path.startsWith('/dashboard/orders/payments')) return '/dashboard/orders/payments';
@@ -183,7 +183,7 @@ export default function Sidebar({ collapsed }: SidebarProps) {
     if (path.startsWith('/dashboard/promotions')) return '/dashboard/promotions';
     if (path.startsWith('/dashboard/notifications/preferences'))
       return '/dashboard/notifications/preferences';
-    if (path.startsWith('/dashboard/notifications')) return '/dashboard/notifications';
+    if (path.startsWith('/dashboard/notifications')) return '/dashboard/notifications/list';
     if (path.startsWith('/dashboard/search')) return '/dashboard/search';
     if (path.startsWith('/dashboard/tenancy')) return '/dashboard/tenancy';
     if (path.startsWith('/dashboard/products')) return '/dashboard/products';
@@ -200,10 +200,10 @@ export default function Sidebar({ collapsed }: SidebarProps) {
   const getOpenKeys = () => {
     const path = location.pathname;
     if (path.startsWith('/dashboard/inventory')) return ['/dashboard/inventory'];
-    if (path.startsWith('/dashboard/warehouses')) return ['/dashboard/warehouses'];
+    if (path.startsWith('/dashboard/warehouses')) return ['menu-warehouses'];
     if (path.startsWith('/dashboard/orders')) return ['/dashboard/orders'];
     if (path.startsWith('/dashboard/production')) return ['/dashboard/production'];
-    if (path.startsWith('/dashboard/notifications')) return ['/dashboard/notifications'];
+    if (path.startsWith('/dashboard/notifications')) return ['menu-notifications'];
     if (path.startsWith('/dashboard/settings')) return ['/dashboard/settings'];
     return [];
   };

@@ -49,7 +49,7 @@ export class HealthController {
       // Disk health (storage should have at least 50% free)
       () =>
         this.disk.checkStorage('storage', {
-          path: '/',
+          path: process.cwd(),
           thresholdPercent: 0.5,
         }),
     ]);
@@ -91,7 +91,7 @@ export class HealthController {
     return this.health.check([
       () =>
         this.disk.checkStorage('storage', {
-          path: '/',
+          path: process.cwd(),
           thresholdPercent: 0.5,
         }),
     ]);

@@ -1,4 +1,4 @@
-name: CI Pipeline
+﻿name: CI Pipeline
 
 on:
   push:
@@ -7,330 +7,85 @@ on:
     branches: [main, develop]
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   NODE_VERSION: '20'
 
 jobs:
-  # Backend jobs
   backend-lint:
-    name: Backend - Lint
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: src/backend
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: src/backend/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run ESLint
-        run: npm run lint
-
-  backend-type-check:
-    name: Backend - Type Check
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: src/backend
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: src/backend/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Type check
-        run: npm run type-check
-
-  backend-build:
-    name: Backend - Build
-    runs-on: ubuntu-latest
-    needs: [backend-lint]
-    defaults:
-      run:
-        working-directory: src/backend
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: src/backend/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build
-        run: npm run build
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: backend-dist
-          path: src/backend/dist
-          retention-days: 7
+    uses: ./.github/workflows/reusable-lint.yml
+    with:
+      working-directory: src/backend
 
   backend-test:
-    name: Backend - Unit Tests
-    runs-on: ubuntu-latest
-    needs: [backend-lint]
-    defaults:
-      run:
-        working-directory: src/backend
-    services:
-      postgres:
-        image: postgres:15-alpine
-        env:
-          POSTGRES_USER: test_user
-          POSTGRES_PASSWORD: test_password
-          POSTGRES_DB: smart_erp_test
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
+    uses: ./.github/workflows/reusable-test.yml
+    with:
+      working-directory: src/backend
+      coverage-flag: backend
+      needs-postgres: true
+      needs-redis: true
+    secrets: inherit
 
-      redis:
-        image: redis:7-alpine
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 6379:6379
+  backend-build:
+    needs: [backend-lint, backend-test]
+    uses: ./.github/workflows/reusable-build.yml
+    with:
+      working-directory: src/backend
+      artifact-name: backend-dist
+      artifact-path: src/backend/dist
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: src/backend/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run tests with coverage
-        run: npm run test:coverage
-        env:
-          NODE_ENV: test
-          DB_HOST: localhost
-          DB_PORT: 5432
-          DB_USER: test_user
-          DB_PASSWORD: test_password
-          DB_NAME: smart_erp_test
-          REDIS_HOST: localhost
-          REDIS_PORT: 6379
-
-      - name: Check coverage threshold
-        run: |
-          echo "✅ Coverage threshold (80%) enforced by jest config"
-
-      - name: Upload coverage
-        uses: codecov/codecov-action@v4
-        if: always()
-        with:
-          files: src/backend/coverage/lcov.info
-          flags: backend
-          name: backend-coverage
-          token: ${{ secrets.CODECOV_TOKEN }}
-        continue-on-error: true
-
-  # Frontend jobs
   frontend-lint:
-    name: Frontend - Lint
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: src/frontend
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: src/frontend/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run ESLint
-        run: npm run lint
-
-  frontend-type-check:
-    name: Frontend - Type Check
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: src/frontend
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: src/frontend/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Type check
-        run: npx tsc --noEmit
-
-  frontend-build:
-    name: Frontend - Build
-    runs-on: ubuntu-latest
-    needs: [frontend-lint, frontend-type-check]
-    defaults:
-      run:
-        working-directory: src/frontend
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: src/frontend/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build
-        run: npm run build
-        env:
-          VITE_API_URL: https://api.smarterp.com
-          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
-          VITE_GA4_MEASUREMENT_ID: ${{ secrets.VITE_GA4_MEASUREMENT_ID }}
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-dist
-          path: src/frontend/dist
-          retention-days: 7
+    uses: ./.github/workflows/reusable-lint.yml
+    with:
+      working-directory: src/frontend
 
   frontend-test:
-    name: Frontend - Unit Tests
-    runs-on: ubuntu-latest
-    needs: [frontend-lint]
-    defaults:
-      run:
-        working-directory: src/frontend
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    uses: ./.github/workflows/reusable-test.yml
+    with:
+      working-directory: src/frontend
+      coverage-flag: frontend
+    secrets: inherit
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: src/frontend/package-lock.json
+  frontend-build:
+    needs: [frontend-lint, frontend-test]
+    uses: ./.github/workflows/reusable-build.yml
+    with:
+      working-directory: src/frontend
+      artifact-name: frontend-dist
+      artifact-path: src/frontend/dist
+    secrets: inherit
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run tests with coverage
-        run: npm run test:coverage
-
-      - name: Check coverage threshold
-        run: |
-          echo "✅ Coverage threshold (80%) enforced by vitest config"
-
-      - name: Upload coverage
-        uses: codecov/codecov-action@v4
-        if: always()
-        with:
-          files: src/frontend/coverage/lcov.info
-          flags: frontend
-          name: frontend-coverage
-          token: ${{ secrets.CODECOV_TOKEN }}
-        continue-on-error: true
-
-  # Security scan
   security-scan:
-    name: Security Scan
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [backend, frontend]
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: src/${{ matrix.service }}/package-lock.json
+      - working-directory: src/${{ matrix.service }}
+        run: npm ci --prefer-offline
+      - working-directory: src/${{ matrix.service }}
+        run: npm audit --audit-level=high || true
 
-      - name: Backend - Security audit
-        working-directory: src/backend
-        run: |
-          npm ci
-          npm run security:audit
-        continue-on-error: true
-
-      - name: Frontend - Security audit
-        working-directory: src/frontend
-        run: |
-          npm ci
-          npm audit --audit-level=high
-        continue-on-error: true
-
-  # Summary
   ci-summary:
-    name: CI Summary
-    runs-on: ubuntu-latest
     if: always()
-    needs: [backend-build, backend-test, frontend-build, frontend-test, security-scan]
+    needs: [backend-build, frontend-build, security-scan]
+    runs-on: ubuntu-latest
     steps:
-      - name: Check results
-        run: |
-          echo "Backend Build: ${{ needs.backend-build.result }}"
-          echo "Backend Tests: ${{ needs.backend-test.result }}"
-          echo "Frontend Build: ${{ needs.frontend-build.result }}"
-          echo "Frontend Tests: ${{ needs.frontend-test.result }}"
-          echo "Security Scan: ${{ needs.security-scan.result }}"
-
-          if [ "${{ needs.backend-build.result }}" != "success" ]; then
-            echo "❌ Backend build failed"
+      - run: |
+          echo "## CI Results" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Backend | ${{ needs.backend-build.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Frontend | ${{ needs.frontend-build.result }} |" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ needs.backend-build.result }}" != "success" ] || [ "${{ needs.frontend-build.result }}" != "success" ]; then
             exit 1
           fi
-
-          if [ "${{ needs.frontend-build.result }}" != "success" ]; then
-            echo "❌ Frontend build failed"
-            exit 1
-          fi
-
-          echo "✅ CI pipeline passed!"

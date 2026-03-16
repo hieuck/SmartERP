@@ -44,6 +44,12 @@ export class OrderController {
     return this.orderService.count(user);
   }
 
+  @Get('statistics')
+  @ApiOperation({ summary: 'Get order statistics' })
+  getStatistics(@CurrentUser() user: User) {
+    return this.orderService.getStatistics(user);
+  }
+
   @Get('recent/:limit')
   @ApiOperation({ summary: 'Get recent orders' })
   getRecentOrders(@CurrentUser() user: User, @Param('limit') limit: string) {
@@ -140,6 +146,23 @@ export class OrderController {
   @ApiOperation({ summary: 'Deliver order' })
   deliver(@CurrentUser() user: User, @Param('id') id: string) {
     return this.orderService.deliver(user, id);
+  }
+
+  @Post(':id/confirm')
+  @ApiOperation({ summary: 'Confirm order' })
+  confirmOrder(@CurrentUser() user: User, @Param('id') id: string) {
+    return this.orderService.confirmOrder(user, id);
+  }
+
+  @Post(':id/payment')
+  @ApiOperation({ summary: 'Record payment for order' })
+  recordPayment(
+    @CurrentUser() user: User,
+    @Param('id') id: string,
+    @Body('amount') amount: number,
+    @Body('paymentMethod') paymentMethod?: string,
+  ) {
+    return this.orderService.recordPayment(user, id, amount, paymentMethod);
   }
 
   @Delete(':id')
