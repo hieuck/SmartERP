@@ -162,10 +162,6 @@ test.describe('Offline-First Sync', () => {
     const onlineIndicator = page.locator('[data-testid="online-indicator"], .online-badge');
     await expect(onlineIndicator).toBeVisible({ timeout: 10000 });
 
-    // Verify online indicator
-    const onlineIndicator = page.locator('[data-testid="online-indicator"], .online-badge');
-    await expect(onlineIndicator).toBeVisible({ timeout: 5000 });
-
     // Verify sync queue is empty
     await expect(syncQueue).not.toBeVisible({ timeout: 5000 }).catch(() => {
       // Queue indicator might not disappear
