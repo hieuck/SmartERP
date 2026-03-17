@@ -12,6 +12,7 @@ import {
   Space,
   DatePicker,
   Badge,
+  theme,
 } from 'antd';
 import { PlusOutlined, DeleteOutlined, ArrowLeftOutlined, SyncOutlined, WifiOutlined, DisconnectOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -24,6 +25,7 @@ import dayjs from 'dayjs';
 
 const { Option } = Select;
 const { TextArea } = Input;
+const { useToken } = theme;
 
 interface OrderItem {
   key: string;
@@ -41,6 +43,7 @@ export default function PurchaseOrderForm() {
   const [form] = Form.useForm();
   const navigate = useNavigate();
   const { id } = useParams();
+  const { token } = useToken();
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState<OrderItem[]>([]);
   const [products, setProducts] = useState<any[]>([]);
@@ -561,7 +564,7 @@ export default function PurchaseOrderForm() {
                           padding: '4px 11px',
                           border: '1px solid #d9d9d9',
                           borderRadius: 6,
-                          background: '#f5f5f5',
+                          background: token.colorBgElevated,
                           fontSize: 14,
                           fontWeight: 500,
                         }}

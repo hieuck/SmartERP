@@ -19,6 +19,7 @@ import {
   Space,
   Typography,
   message,
+  theme,
 } from 'antd';
 import { useDispatch } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
@@ -28,7 +29,8 @@ import { setCredentials } from '@/store/slices/authSlice';
 import LanguageSwitcher from '@/components/common/LanguageSwitcher';
 
 const { Header, Content } = Layout;
-const { Title, Text, Paragraph } = Typography;
+const { Title, Text, Paragraph} = Typography;
+const { useToken } = theme;
 
 interface RegisterFormValues {
   companyName: string;
@@ -46,6 +48,7 @@ export default function RegisterPage() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [form] = Form.useForm<RegisterFormValues>();
+  const { token } = useToken();
 
   const handleCompanyNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const companyName = e.target.value;
@@ -95,9 +98,9 @@ export default function RegisterPage() {
   };
 
   return (
-    <Layout style={{ minHeight: '100vh', background: '#f0f2f5' }}>
+    <Layout style={{ minHeight: '100vh', background: token.colorBgLayout }}>
       <Header
-        style={{ background: '#fff', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', padding: '0 24px' }}
+        style={{ background: token.colorBgContainer, boxShadow: '0 2px 8px rgba(0,0,0,0.1)', padding: '0 24px' }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: '100%' }}>
           <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -105,18 +108,18 @@ export default function RegisterPage() {
               style={{
                 width: 32,
                 height: 32,
-                background: '#1890ff',
+                background: token.colorPrimary,
                 borderRadius: 8,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <Text strong style={{ color: '#fff', fontSize: 20 }}>
+              <Text strong style={{ color: token.colorBgContainer, fontSize: 20 }}>
                 P
               </Text>
             </div>
-            <Text strong style={{ fontSize: 20, color: '#000' }}>
+            <Text strong style={{ fontSize: 20 }}>
               SmartERP
             </Text>
           </Link>
@@ -302,7 +305,7 @@ export default function RegisterPage() {
               </Form>
             </Card>
 
-            <Card style={{ marginTop: 24, borderRadius: 16, background: '#f6f8fa' }}>
+            <Card style={{ marginTop: 24, borderRadius: 16, background: token.colorBgElevated }}>
               <Title level={5} style={{ marginBottom: 16 }}>
                 {t('auth:register.benefits.title')}
               </Title>

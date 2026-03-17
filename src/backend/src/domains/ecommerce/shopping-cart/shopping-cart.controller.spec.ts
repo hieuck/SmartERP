@@ -16,7 +16,7 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe, HttpException, HttpStatus } from '@nestjs/common';
-import * as request from 'supertest';
+import request from 'supertest';
 import { ShoppingCartController } from './shopping-cart.controller';
 import { ShoppingCartService } from './shopping-cart.service';
 import { JwtAuthGuard } from '@/core/auth/guards/jwt-auth.guard';

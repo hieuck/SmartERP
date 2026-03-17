@@ -16,7 +16,7 @@ describe('PaymentGatewayService', () => {
   let permissionService: jest.Mocked<PermissionService>;
   let service: PaymentGatewayService;
   let paymentTransactionRepo: jest.Mocked<Repository<PaymentTransaction>>;
-  let __paymentWebhookRepo: jest.Mocked<Repository<PaymentWebhook>>;
+  let paymentWebhookRepo: jest.Mocked<Repository<PaymentWebhook>>;
   let vnpayService: jest.Mocked<VNPayService>;
   let momoService: jest.Mocked<MomoService>;
   let stripeService: jest.Mocked<StripeService>;

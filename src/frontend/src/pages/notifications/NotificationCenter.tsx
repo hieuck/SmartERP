@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Card, List, Badge, Tag, Button, Space, Empty, Spin, Dropdown, Menu, message } from 'antd';
+import { Card, List, Badge, Tag, Button, Space, Empty, Spin, Dropdown, Menu, message, theme } from 'antd';
 import {
   BellOutlined,
   CheckOutlined,
@@ -23,6 +23,8 @@ import { logger } from '@/lib/logger/logger.service';
 dayjs.extend(relativeTime);
 dayjs.locale('vi');
 
+const { useToken } = theme;
+
 const typeIcons: Record<NotificationType, any> = {
   [NotificationType.INFO]: <InfoCircleOutlined style={{ color: '#1890ff' }} />,
   [NotificationType.SUCCESS]: <CheckCircleOutlined style={{ color: '#52c41a' }} />,
@@ -45,6 +47,7 @@ const priorityColors: Record<NotificationPriority, string> = {
 };
 
 export default function NotificationCenter() {
+  const { token } = useToken();
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -187,7 +190,7 @@ export default function NotificationCenter() {
               renderItem={(item: any) => (
                 <List.Item
                   style={{
-                    backgroundColor: item.isRead ? 'transparent' : '#f0f5ff',
+                    backgroundColor: item.isRead ? 'transparent' : token.colorPrimaryBg,
                     padding: '12px 16px',
                     borderRadius: 4,
                     marginBottom: 8,

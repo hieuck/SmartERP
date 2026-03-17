@@ -20,7 +20,7 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe, HttpException, HttpStatus } from '@nestjs/common';
-import * as request from 'supertest';
+import request from 'supertest';
 import { CustomerController } from './customer.controller';
 import { CustomerService } from './customer.service';
 import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';

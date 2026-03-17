@@ -24,7 +24,7 @@ describe('GdprService', () => {
   const userId = 'user-1';
   const tenantId = 'tenant-1';
 
-  const mockConsent: unknown = {
+  const mockConsent = {
     id: 'consent-1',
     userId,
     tenantId,
@@ -40,9 +40,9 @@ describe('GdprService', () => {
     get isActive() {
       return this.granted && !this.revokedAt;
     },
-  };
+  } as Consent;
 
-  const mockExportRequest: unknown = {
+  const mockExportRequest = {
     id: 'export-1',
     userId,
     tenantId,
@@ -60,9 +60,9 @@ describe('GdprService', () => {
     get isExpired() {
       return this.expiresAt && new Date() > this.expiresAt;
     },
-  };
+  } as DataExportRequest;
 
-  const mockDeletionRequest: unknown = {
+  const mockDeletionRequest = {
     id: 'deletion-1',
     userId,
     tenantId,
@@ -81,7 +81,7 @@ describe('GdprService', () => {
     get isApproved() {
       return this.status === DeletionStatus.APPROVED;
     },
-  };
+  } as DataDeletionRequest;
 
   beforeEach(async () => {
     const mockConsentRepo = {
@@ -144,7 +144,7 @@ describe('GdprService', () => {
 
     it('should create a new consent', async () => {
       consentRepository.update.mockResolvedValue({ affected: 0 } as any);
-      consentRepository.create.mockReturnValue(mockConsent as any);
+      consentRepository.create.mockReturnValue(mockConsent);
       consentRepository.save.mockResolvedValue(mockConsent);
 
       const result = await service.createConsent(userId, tenantId, createDto);
@@ -164,7 +164,7 @@ describe('GdprService', () => {
 
     it('should revoke previous consent of same type', async () => {
       consentRepository.update.mockResolvedValue({ affected: 1 } as any);
-      consentRepository.create.mockReturnValue(mockConsent as any);
+      consentRepository.create.mockReturnValue(mockConsent);
       consentRepository.save.mockResolvedValue(mockConsent);
 
       await service.createConsent(userId, tenantId, createDto);
@@ -179,7 +179,7 @@ describe('GdprService', () => {
       const dtoWithFalse = { ...createDto, granted: false };
       const consentWithFalse = { ...mockConsent, granted: false };
       consentRepository.update.mockResolvedValue({ affected: 0 } as any);
-      consentRepository.create.mockReturnValue(consentWithFalse as any);
+      consentRepository.create.mockReturnValue(consentWithFalse);
       consentRepository.save.mockResolvedValue(consentWithFalse);
 
       const result = await service.createConsent(userId, tenantId, dtoWithFalse);
@@ -198,7 +198,7 @@ describe('GdprService', () => {
         const dto = { ...createDto, type };
         const consent = { ...mockConsent, type };
         consentRepository.update.mockResolvedValue({ affected: 0 } as any);
-        consentRepository.create.mockReturnValue(consent as any);
+        consentRepository.create.mockReturnValue(consent);
         consentRepository.save.mockResolvedValue(consent);
 
         const result = await service.createConsent(userId, tenantId, dto);
@@ -347,7 +347,7 @@ describe('GdprService', () => {
     };
 
     it('should create data export request', async () => {
-      exportRepository.create.mockReturnValue(mockExportRequest as any);
+      exportRepository.create.mockReturnValue(mockExportRequest);
       exportRepository.save.mockResolvedValue(mockExportRequest);
 
       const result = await service.requestDataExport(userId, tenantId, requestDto);
@@ -366,8 +366,8 @@ describe('GdprService', () => {
 
       for (const format of formats) {
         const dto = { format };
-        const request = { ...mockExportRequest, format };
-        exportRepository.create.mockReturnValue(request as any);
+        const request = { ...mockExportRequest, format } as any;
+        exportRepository.create.mockReturnValue(request);
         exportRepository.save.mockResolvedValue(request);
 
         const result = await service.requestDataExport(userId, tenantId, dto);
@@ -430,7 +430,7 @@ describe('GdprService', () => {
 
     it('should create data deletion request', async () => {
       deletionRepository.findOne.mockResolvedValue(null);
-      deletionRepository.create.mockReturnValue(mockDeletionRequest as any);
+      deletionRepository.create.mockReturnValue(mockDeletionRequest);
       deletionRepository.save.mockResolvedValue(mockDeletionRequest);
 
       const result = await service.requestDataDeletion(userId, tenantId, requestDto);
@@ -444,7 +444,7 @@ describe('GdprService', () => {
     });
 
     it('should throw BadRequestException when pending request exists', async () => {
-      const pendingRequest = { ...mockDeletionRequest, status: DeletionStatus.PENDING };
+      const pendingRequest = { ...mockDeletionRequest, status: DeletionStatus.PENDING } as any as any;
       deletionRepository.findOne.mockResolvedValue(pendingRequest);
 
       await expect(service.requestDataDeletion(userId, tenantId, requestDto)).rejects.toThrow(
@@ -454,7 +454,7 @@ describe('GdprService', () => {
 
     it('should allow new request when previous is completed', async () => {
       deletionRepository.findOne.mockResolvedValue(null);
-      deletionRepository.create.mockReturnValue(mockDeletionRequest as any);
+      deletionRepository.create.mockReturnValue(mockDeletionRequest);
       deletionRepository.save.mockResolvedValue(mockDeletionRequest);
 
       const result = await service.requestDataDeletion(userId, tenantId, requestDto);
@@ -513,14 +513,14 @@ describe('GdprService', () => {
     };
 
     it('should approve deletion request', async () => {
-      const pendingRequest = { ...mockDeletionRequest, status: DeletionStatus.PENDING };
+      const pendingRequest = { ...mockDeletionRequest, status: DeletionStatus.PENDING } as any as any;
       deletionRepository.findOne.mockResolvedValue(pendingRequest);
       deletionRepository.save.mockResolvedValue({
         ...pendingRequest,
         status: DeletionStatus.APPROVED,
         approvedBy: 'admin-1',
         approvedAt: expect.any(Date),
-      });
+      }) as any;
 
       const result = await service.approveDeletionRequest('deletion-1', 'admin-1', approveDto);
 
@@ -540,13 +540,13 @@ describe('GdprService', () => {
         approved: false,
         rejectionReason: 'Insufficient reason',
       };
-      const pendingRequest = { ...mockDeletionRequest, status: DeletionStatus.PENDING };
+      const pendingRequest = { ...mockDeletionRequest, status: DeletionStatus.PENDING } as any as any;
       deletionRepository.findOne.mockResolvedValue(pendingRequest);
       deletionRepository.save.mockResolvedValue({
         ...pendingRequest,
         status: DeletionStatus.REJECTED,
         rejectionReason: rejectDto.rejectionReason,
-      });
+      }) as any;
 
       const result = await service.approveDeletionRequest('deletion-1', 'admin-1', rejectDto);
 
@@ -563,7 +563,7 @@ describe('GdprService', () => {
     });
 
     it('should throw BadRequestException when request not pending', async () => {
-      const approvedRequest = { ...mockDeletionRequest, status: DeletionStatus.APPROVED };
+      const approvedRequest = { ...mockDeletionRequest, status: DeletionStatus.APPROVED } as any as any;
       deletionRepository.findOne.mockResolvedValue(approvedRequest);
 
       await expect(
@@ -600,7 +600,7 @@ describe('GdprService', () => {
 
   describe('getPendingDeletionRequests', () => {
     it('should return pending deletion requests for tenant', async () => {
-      const pendingRequests = [{ ...mockDeletionRequest, status: DeletionStatus.PENDING }];
+      const pendingRequests = [{ ...mockDeletionRequest, status: DeletionStatus.PENDING } as any as any];
       deletionRepository.find.mockResolvedValue(pendingRequests);
 
       const result = await service.getPendingDeletionRequests(tenantId);

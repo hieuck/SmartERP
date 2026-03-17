@@ -19,7 +19,7 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe, HttpException, HttpStatus } from '@nestjs/common';
-import * as request from 'supertest';
+import request from 'supertest';
 import { EmailController } from './email.controller';
 import { EmailService } from './email.service';
 import { JwtAuthGuard } from '../../core/auth/guards/jwt-auth.guard';
@@ -130,7 +130,7 @@ describe('EmailController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual(templates);
+      expect((response as any).body).toEqual(templates);
       expect(emailService.findAllTemplates).toHaveBeenCalledWith(mockUser);
     });
 
@@ -142,7 +142,7 @@ describe('EmailController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual([]);
+      expect((response as any).body).toEqual([]);
     });
 
     it('should require authentication', async () => {
@@ -170,7 +170,7 @@ describe('EmailController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual(mockTemplate);
+      expect((response as any).body).toEqual(mockTemplate);
       expect(emailService.findTemplateById).toHaveBeenCalledWith(mockUser, 'template-123');
     });
 
@@ -211,7 +211,7 @@ describe('EmailController (Integration)', () => {
         .send(createDto)
         .expect(201);
 
-      expect(response.body.name).toBe('Order Confirmation');
+      expect((response as any).body.name).toBe('Order Confirmation');
       expect(emailService.createTemplate).toHaveBeenCalledWith(mockUser, createDto);
     });
 
@@ -235,8 +235,8 @@ describe('EmailController (Integration)', () => {
         .send(createDto)
         .expect(201);
 
-      expect(response.body.subject).toContain('{{firstName}}');
-      expect(response.body.body).toContain('{{accountId}}');
+      expect((response as any).body.subject).toContain('{{firstName}}');
+      expect((response as any).body.body).toContain('{{accountId}}');
     });
 
     it('should return 409 when template name already exists', async () => {
@@ -284,8 +284,8 @@ describe('EmailController (Integration)', () => {
         .send(updateDto)
         .expect(200);
 
-      expect(response.body.subject).toBe('Updated Subject');
-      expect(response.body.isActive).toBe(false);
+      expect((response as any).body.subject).toBe('Updated Subject');
+      expect((response as any).body.isActive).toBe(false);
       expect(emailService.updateTemplate).toHaveBeenCalledWith(mockUser, 'template-123', updateDto);
     });
 
@@ -353,7 +353,7 @@ describe('EmailController (Integration)', () => {
         .send(sendDto)
         .expect(201);
 
-      expect(response.body.status).toBe(EmailStatus.SENT);
+      expect((response as any).body.status).toBe(EmailStatus.SENT);
       expect(emailService.sendEmail).toHaveBeenCalledWith(
         mockUser,
         'customer@example.com',
@@ -412,8 +412,8 @@ describe('EmailController (Integration)', () => {
         .send(sendDto)
         .expect(201);
 
-      expect(response.body.status).toBe(EmailStatus.FAILED);
-      expect(response.body.error).toBe('SMTP connection failed');
+      expect((response as any).body.status).toBe(EmailStatus.FAILED);
+      expect((response as any).body.error).toBe('SMTP connection failed');
     });
 
     it('should validate email format', async () => {
@@ -461,8 +461,8 @@ describe('EmailController (Integration)', () => {
         .send(sendDto)
         .expect(201);
 
-      expect(response.body.status).toBe(EmailStatus.SENT);
-      expect(response.body.templateId).toBe('template-123');
+      expect((response as any).body.status).toBe(EmailStatus.SENT);
+      expect((response as any).body.templateId).toBe('template-123');
       expect(emailService.sendTemplateEmail).toHaveBeenCalledWith(
         mockUser,
         'customer@example.com',
@@ -552,7 +552,7 @@ describe('EmailController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual(logs);
+      expect((response as any).body).toEqual(logs);
       expect(emailService.findAllLogs).toHaveBeenCalledWith(mockUser);
     });
 
@@ -564,7 +564,7 @@ describe('EmailController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual([]);
+      expect((response as any).body).toEqual([]);
     });
 
     it('should return logs with different statuses', async () => {
@@ -581,7 +581,7 @@ describe('EmailController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toHaveLength(3);
+      expect((response as any).body).toHaveLength(3);
     });
 
     it('should require authentication', async () => {
@@ -598,7 +598,7 @@ describe('EmailController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual(mockEmailLog);
+      expect((response as any).body).toEqual(mockEmailLog);
       expect(emailService.findLogById).toHaveBeenCalledWith(mockUser, 'log-123');
     });
 

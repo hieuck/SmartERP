@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
-import { Row, Col, Card, Button, Typography } from 'antd';
+import { Row, Col, Card, Button, Typography, theme } from 'antd';
 import { CheckCircleOutlined } from '@ant-design/icons';
 
 const { Title, Paragraph, Text } = Typography;
+const { useToken } = theme;
 
 const pricingFeatures = {
   basic: [
@@ -36,25 +37,27 @@ const pricingFeatures = {
 };
 
 export default function Pricing() {
+  const { token } = useToken();
+
   return (
-    <div style={{ padding: '80px 24px', background: '#f5f5f5' }}>
+    <div style={{ padding: '80px 24px', background: token.colorBgElevated }}>
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-        <Title level={2} style={{ textAlign: 'center', marginBottom: 60 }}>
+        <Title level={2} style={{ textAlign: 'center', marginBottom: 60, color: token.colorText }}>
           Bảng giá
         </Title>
         <Row gutter={[32, 32]} justify="center">
           <Col xs={24} sm={12} lg={8}>
             <Card hoverable style={{ textAlign: 'center', height: '100%' }}>
-              <Title level={3}>Gói cơ bản</Title>
-              <Title level={2} style={{ color: '#1890ff' }}>
+              <Title level={3} style={{ color: token.colorText }}>Gói cơ bản</Title>
+              <Title level={2} style={{ color: token.colorPrimary }}>
                 299.000đ/tháng
               </Title>
-              <Paragraph>Phù hợp cho xưởng nhỏ</Paragraph>
+              <Paragraph style={{ color: token.colorTextSecondary }}>Phù hợp cho xưởng nhỏ</Paragraph>
               <div style={{ textAlign: 'left', marginBottom: 24 }}>
                 {pricingFeatures.basic.map((feature, idx) => (
                   <div key={idx} style={{ marginBottom: 8 }}>
-                    <CheckCircleOutlined style={{ color: '#52c41a', marginRight: 8 }} />
-                    <Text>{feature}</Text>
+                    <CheckCircleOutlined style={{ color: token.colorSuccess, marginRight: 8 }} />
+                    <Text style={{ color: token.colorText }}>{feature}</Text>
                   </div>
                 ))}
               </div>
@@ -68,12 +71,12 @@ export default function Pricing() {
           <Col xs={24} sm={12} lg={8}>
             <Card
               hoverable
-              style={{ textAlign: 'center', border: '2px solid #1890ff', height: '100%' }}
+              style={{ textAlign: 'center', border: `2px solid ${token.colorPrimary}`, height: '100%' }}
             >
               <div
                 style={{
-                  background: '#1890ff',
-                  color: '#fff',
+                  background: token.colorPrimary,
+                  color: token.colorWhite,
                   padding: '4px 16px',
                   borderRadius: 4,
                   display: 'inline-block',
@@ -82,16 +85,16 @@ export default function Pricing() {
               >
                 Phổ biến nhất
               </div>
-              <Title level={3}>Gói chuyên nghiệp</Title>
-              <Title level={2} style={{ color: '#1890ff' }}>
+              <Title level={3} style={{ color: token.colorText }}>Gói chuyên nghiệp</Title>
+              <Title level={2} style={{ color: token.colorPrimary }}>
                 599.000đ/tháng
               </Title>
-              <Paragraph>Phù hợp cho nhà máy vừa</Paragraph>
+              <Paragraph style={{ color: token.colorTextSecondary }}>Phù hợp cho nhà máy vừa</Paragraph>
               <div style={{ textAlign: 'left', marginBottom: 24 }}>
                 {pricingFeatures.pro.map((feature, idx) => (
                   <div key={idx} style={{ marginBottom: 8 }}>
-                    <CheckCircleOutlined style={{ color: '#52c41a', marginRight: 8 }} />
-                    <Text>{feature}</Text>
+                    <CheckCircleOutlined style={{ color: token.colorSuccess, marginRight: 8 }} />
+                    <Text style={{ color: token.colorText }}>{feature}</Text>
                   </div>
                 ))}
               </div>
@@ -104,16 +107,16 @@ export default function Pricing() {
           </Col>
           <Col xs={24} sm={12} lg={8}>
             <Card hoverable style={{ textAlign: 'center', height: '100%' }}>
-              <Title level={3}>Gói doanh nghiệp</Title>
-              <Title level={2} style={{ color: '#1890ff' }}>
+              <Title level={3} style={{ color: token.colorText }}>Gói doanh nghiệp</Title>
+              <Title level={2} style={{ color: token.colorPrimary }}>
                 Liên hệ
               </Title>
-              <Paragraph>Giải pháp tùy chỉnh</Paragraph>
+              <Paragraph style={{ color: token.colorTextSecondary }}>Giải pháp tùy chỉnh</Paragraph>
               <div style={{ textAlign: 'left', marginBottom: 24 }}>
                 {pricingFeatures.enterprise.map((feature, idx) => (
                   <div key={idx} style={{ marginBottom: 8 }}>
-                    <CheckCircleOutlined style={{ color: '#52c41a', marginRight: 8 }} />
-                    <Text>{feature}</Text>
+                    <CheckCircleOutlined style={{ color: token.colorSuccess, marginRight: 8 }} />
+                    <Text style={{ color: token.colorText }}>{feature}</Text>
                   </div>
                 ))}
               </div>

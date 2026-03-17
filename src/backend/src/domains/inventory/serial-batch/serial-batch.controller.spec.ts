@@ -5,7 +5,7 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe, HttpException, HttpStatus } from '@nestjs/common';
-import * as request from 'supertest';
+import request from 'supertest';
 import { SerialBatchController } from './serial-batch.controller';
 import { SerialBatchService } from './serial-batch.service';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';

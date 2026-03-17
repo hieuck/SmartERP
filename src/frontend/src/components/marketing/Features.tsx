@@ -1,4 +1,4 @@
-import { Row, Col, Card, Typography } from 'antd';
+import { Row, Col, Card, Typography, theme } from 'antd';
 import {
   AppstoreOutlined,
   TeamOutlined,
@@ -9,46 +9,49 @@ import {
 } from '@ant-design/icons';
 
 const { Title, Paragraph } = Typography;
-
-const features = [
-  {
-    icon: <AppstoreOutlined style={{ fontSize: 32, color: '#1890ff' }} />,
-    title: 'Quản lý kho hàng',
-    description:
-      'Theo dõi tồn kho, nhập xuất hàng hóa tự động, cảnh báo hết hàng cho mọi loại sản phẩm',
-  },
-  {
-    icon: <ShoppingCartOutlined style={{ fontSize: 32, color: '#1890ff' }} />,
-    title: 'Quản lý bán hàng',
-    description: 'Đơn hàng, báo giá, hóa đơn, công nợ khách hàng - linh hoạt với mọi ngành hàng',
-  },
-  {
-    icon: <ToolOutlined style={{ fontSize: 32, color: '#1890ff' }} />,
-    title: 'Quản lý sản xuất',
-    description: 'Lệnh sản xuất, nguyên vật liệu, quy trình sản xuất, kiểm tra chất lượng',
-  },
-  {
-    icon: <TeamOutlined style={{ fontSize: 32, color: '#1890ff' }} />,
-    title: 'Quản lý nhân sự',
-    description: 'Chấm công, tính lương, ứng lương, quản lý ca làm việc cho mọi quy mô',
-  },
-  {
-    icon: <BarChartOutlined style={{ fontSize: 32, color: '#1890ff' }} />,
-    title: 'Báo cáo thống kê',
-    description: 'Dashboard trực quan, báo cáo doanh thu, lợi nhuận, tồn kho theo thời gian thực',
-  },
-  {
-    icon: <FileTextOutlined style={{ fontSize: 32, color: '#1890ff' }} />,
-    title: 'Quản lý tài liệu',
-    description: 'Hóa đơn, chứng từ, hợp đồng, xuất file Excel/PDF tự động',
-  },
-];
+const { useToken } = theme;
 
 export default function Features() {
+  const { token } = useToken();
+
+  const features = [
+    {
+      icon: <AppstoreOutlined style={{ fontSize: 32, color: token.colorPrimary }} />,
+      title: 'Quản lý kho hàng',
+      description:
+        'Theo dõi tồn kho, nhập xuất hàng hóa tự động, cảnh báo hết hàng cho mọi loại sản phẩm',
+    },
+    {
+      icon: <ShoppingCartOutlined style={{ fontSize: 32, color: token.colorPrimary }} />,
+      title: 'Quản lý bán hàng',
+      description: 'Đơn hàng, báo giá, hóa đơn, công nợ khách hàng - linh hoạt với mọi ngành hàng',
+    },
+    {
+      icon: <ToolOutlined style={{ fontSize: 32, color: token.colorPrimary }} />,
+      title: 'Quản lý sản xuất',
+      description: 'Lệnh sản xuất, nguyên vật liệu, quy trình sản xuất, kiểm tra chất lượng',
+    },
+    {
+      icon: <TeamOutlined style={{ fontSize: 32, color: token.colorPrimary }} />,
+      title: 'Quản lý nhân sự',
+      description: 'Chấm công, tính lương, ứng lương, quản lý ca làm việc cho mọi quy mô',
+    },
+    {
+      icon: <BarChartOutlined style={{ fontSize: 32, color: token.colorPrimary }} />,
+      title: 'Báo cáo thống kê',
+      description: 'Dashboard trực quan, báo cáo doanh thu, lợi nhuận, tồn kho theo thời gian thực',
+    },
+    {
+      icon: <FileTextOutlined style={{ fontSize: 32, color: token.colorPrimary }} />,
+      title: 'Quản lý tài liệu',
+      description: 'Hóa đơn, chứng từ, hợp đồng, xuất file Excel/PDF tự động',
+    },
+  ];
+
   return (
-    <div style={{ padding: '80px 24px', background: '#f5f5f5' }}>
+    <div style={{ padding: '80px 24px', background: token.colorBgElevated }}>
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-        <Title level={2} style={{ textAlign: 'center', marginBottom: 60 }}>
+        <Title level={2} style={{ textAlign: 'center', marginBottom: 60, color: token.colorText }}>
           Tính năng nổi bật
         </Title>
         <Row gutter={[32, 32]}>
@@ -56,8 +59,8 @@ export default function Features() {
             <Col xs={24} sm={12} lg={8} key={index}>
               <Card hoverable style={{ height: '100%', textAlign: 'center' }}>
                 <div style={{ marginBottom: 16 }}>{feature.icon}</div>
-                <Title level={4}>{feature.title}</Title>
-                <Paragraph style={{ color: '#595959' }}>{feature.description}</Paragraph>
+                <Title level={4} style={{ color: token.colorText }}>{feature.title}</Title>
+                <Paragraph style={{ color: token.colorTextSecondary }}>{feature.description}</Paragraph>
               </Card>
             </Col>
           ))}

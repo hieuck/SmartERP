@@ -10,7 +10,7 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, HttpException, HttpStatus } from '@nestjs/common';
-import * as request from 'supertest';
+import request from 'supertest';
 import { SeedController } from './seed.controller';
 import { SeedService } from './seed.service';
 

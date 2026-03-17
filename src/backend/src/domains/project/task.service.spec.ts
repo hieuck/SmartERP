@@ -449,7 +449,7 @@ describe('TaskService', () => {
 
       const result = await service.addDependency(dependencyDto, tenantId, mockUser);
 
-      expect(_result).toEqual(mockDependency);
+      expect(result).toEqual(mockDependency);
     });
 
     it('should throw NotFoundException when task not found', async () => {
@@ -552,7 +552,7 @@ describe('TaskService', () => {
         where: { taskId, tenantId },
         relations: ['task', 'dependsOnTask'],
       });
-      expect(_result).toEqual(dependencies);
+      expect(result).toEqual(dependencies);
     });
 
     it('should return empty array when no dependencies', async () => {
@@ -560,7 +560,7 @@ describe('TaskService', () => {
 
       const result = await service.getDependencies(taskId, tenantId);
 
-      expect(_result).toEqual([]);
+      expect(result).toEqual([]);
     });
   });
 

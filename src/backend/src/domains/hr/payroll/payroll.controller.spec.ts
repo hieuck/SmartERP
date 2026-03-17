@@ -17,7 +17,7 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe, HttpException, HttpStatus } from '@nestjs/common';
-import * as request from 'supertest';
+import request from 'supertest';
 import { PayrollController } from './payroll.controller';
 import { PayrollService } from './payroll.service';
 import { RolesGuard } from '@/common/guards/roles.guard';

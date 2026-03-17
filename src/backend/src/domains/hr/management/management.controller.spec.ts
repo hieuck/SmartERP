@@ -10,7 +10,7 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe, HttpException, HttpStatus } from '@nestjs/common';
-import * as request from 'supertest';
+import request from 'supertest';
 import { ManagementController } from './management.controller';
 import { ManagementService } from './management.service';
 import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';

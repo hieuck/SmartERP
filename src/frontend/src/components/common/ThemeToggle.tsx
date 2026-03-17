@@ -1,22 +1,14 @@
 /**
  * ThemeToggle Component
- * Button to toggle between light and dark theme
+ * Dropdown to select theme mode: light, dark, or auto
  */
 
-import { Button, Tooltip } from 'antd';
-import { MoonOutlined, SunOutlined } from '@ant-design/icons';
-import { useTheme } from '@/hooks/useTheme';
+import { BulbOutlined } from '@ant-design/icons';
+import { Dropdown, MenuProps } from 'antd';
+import { useThemeContext } from '@/contexts/ThemeContext';
 import { useTranslation } from 'react-i18next';
 
 export interface ThemeToggleProps {
-  /**
-   * Button size
-   */
-  size?: 'small' | 'middle' | 'large';
-  /**
-   * Show text label
-   */
-  showLabel?: boolean;
   /**
    * Custom className
    */
@@ -24,50 +16,63 @@ export interface ThemeToggleProps {
 }
 
 /**
- * Theme toggle button component
+ * Theme toggle dropdown component
+ * Allows selection between light, dark, and auto modes
  * 
  * @param {ThemeToggleProps} props - Component props
- * @returns {JSX.Element} Theme toggle button
+ * @returns {JSX.Element} Theme toggle dropdown
  * 
  * @example
  * ```tsx
- * // Icon only
  * <ThemeToggle />
- * 
- * // With label
- * <ThemeToggle showLabel />
- * 
- * // Large size
- * <ThemeToggle size="large" />
  * ```
  */
-export function ThemeToggle({ 
-  size = 'middle', 
-  showLabel = false,
-  className 
-}: ThemeToggleProps) {
-  const { isDark, toggleTheme } = useTheme();
+export function ThemeToggle({ className }: ThemeToggleProps) {
+  const { themeMode, setThemeMode, theme } = useThemeContext();
   const { t } = useTranslation('common');
 
-  const icon = isDark ? <SunOutlined /> : <MoonOutlined />;
-  const label = isDark ? t('theme.light') : t('theme.dark');
-  const tooltipTitle = isDark 
-    ? t('theme.switchToLight') 
-    : t('theme.switchToDark');
+  const items: MenuProps['items'] = [
+    {
+      key: 'light',
+      label: t('theme.light'),
+      onClick: () => setThemeMode('light'),
+    },
+    {
+      key: 'dark',
+      label: t('theme.dark'),
+      onClick: () => setThemeMode('dark'),
+    },
+    {
+      key: 'auto',
+      label: t('theme.auto'),
+      onClick: () => setThemeMode('auto'),
+    },
+  ];
 
   return (
-    <Tooltip title={!showLabel ? tooltipTitle : undefined}>
-      <Button
-        type="text"
-        size={size}
-        icon={icon}
-        onClick={toggleTheme}
+    <Dropdown menu={{ items, selectedKeys: [themeMode] }} placement="bottomRight">
+      <div
         className={className}
-        aria-label={tooltipTitle}
+        style={{
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          gap: theme.token?.marginXS,
+          padding: `${theme.token?.paddingXS}px ${theme.token?.paddingSM}px`,
+          borderRadius: theme.token?.borderRadiusSM,
+          transition: 'background-color 0.3s',
+          color: theme.token?.colorText,
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = theme.token?.colorBgTextHover || 'rgba(0, 0, 0, 0.04)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = 'transparent';
+        }}
       >
-        {showLabel && label}
-      </Button>
-    </Tooltip>
+        <BulbOutlined style={{ fontSize: theme.token?.fontSize }} />
+      </div>
+    </Dropdown>
   );
 }
 

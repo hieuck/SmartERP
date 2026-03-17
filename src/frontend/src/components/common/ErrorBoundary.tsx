@@ -11,11 +11,13 @@
  */
 
 import React, { ReactNode } from 'react';
-import { Result, Button } from 'antd';
+import { Result, Button, theme } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useResponsive } from '@/hooks/useResponsive';
 import { SPACING } from '@/constants/design-tokens';
 import { getButtonSize } from '@/utils/responsive';
+
+const { useToken } = theme;
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -33,15 +35,16 @@ function withHooks(Component: React.ComponentType<any>) {
   return function WrappedComponent(props: any) {
     const { t } = useTranslation('commonUi');
     const responsive = useResponsive();
-    return <Component {...props} t={t} responsive={responsive} />;
+    const { token } = useToken();
+    return <Component {...props} t={t} responsive={responsive} token={token} />;
   };
 }
 
 class ErrorBoundaryClass extends React.Component<
-  ErrorBoundaryProps & { t: any; responsive: any },
+  ErrorBoundaryProps & { t: any; responsive: any; token: any },
   ErrorBoundaryState
 > {
-  constructor(props: ErrorBoundaryProps & { t: any; responsive: any }) {
+  constructor(props: ErrorBoundaryProps & { t: any; responsive: any; token: any }) {
     super(props);
     this.state = {
       hasError: false,
@@ -74,7 +77,7 @@ class ErrorBoundaryClass extends React.Component<
   };
 
   render() {
-    const { t, responsive } = this.props;
+    const { t, responsive, token } = this.props;
     const { isMobile } = responsive;
 
     if (this.state.hasError) {
@@ -107,7 +110,7 @@ class ErrorBoundaryClass extends React.Component<
                       style={{
                         display: 'block',
                         padding: SPACING.sm,
-                        background: '#f5f5f5',
+                        background: token.colorBgElevated,
                         borderRadius: 4,
                         fontSize: 12,
                         textAlign: 'left',

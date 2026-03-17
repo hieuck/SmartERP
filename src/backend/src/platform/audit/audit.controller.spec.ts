@@ -15,7 +15,7 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe, HttpException, HttpStatus } from '@nestjs/common';
-import * as request from 'supertest';
+import request from 'supertest';
 import { AuditController } from './audit.controller';
 import { AuditService } from './audit.service';
 import { JwtAuthGuard } from '../../core/auth/guards/jwt-auth.guard';
@@ -108,7 +108,7 @@ describe('AuditController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual(logs);
+      expect((response as any).body).toEqual(logs);
       expect(auditService.findAll).toHaveBeenCalledWith(
         expect.objectContaining({
           id: mockUser.id,
@@ -130,7 +130,7 @@ describe('AuditController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual(logs);
+      expect((response as any).body).toEqual(logs);
       expect(auditService.findAll).toHaveBeenCalledWith(
         expect.objectContaining({
           id: mockUser.id,
@@ -152,7 +152,7 @@ describe('AuditController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual(logs);
+      expect((response as any).body).toEqual(logs);
       expect(auditService.findAll).toHaveBeenCalledWith(
         expect.objectContaining({
           id: mockUser.id,
@@ -174,7 +174,7 @@ describe('AuditController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual(logs);
+      expect((response as any).body).toEqual(logs);
       expect(auditService.findAll).toHaveBeenCalledWith(
         expect.objectContaining({
           id: mockUser.id,
@@ -196,7 +196,7 @@ describe('AuditController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual(logs);
+      expect((response as any).body).toEqual(logs);
       expect(auditService.findAll).toHaveBeenCalledWith(
         expect.objectContaining({
           id: mockUser.id,
@@ -217,7 +217,7 @@ describe('AuditController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual([]);
+      expect((response as any).body).toEqual([]);
     });
 
     it('should handle invalid date format gracefully', async () => {
@@ -257,7 +257,7 @@ describe('AuditController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual(logs);
+      expect((response as any).body).toEqual(logs);
       expect(auditService.findByEntity).toHaveBeenCalledWith(
         expect.objectContaining({
           id: mockUser.id,
@@ -276,7 +276,7 @@ describe('AuditController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual([]);
+      expect((response as any).body).toEqual([]);
     });
 
     it('should handle different entity types', async () => {
@@ -345,7 +345,7 @@ describe('AuditController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual(logs);
+      expect((response as any).body).toEqual(logs);
       expect(auditService.findByUser).toHaveBeenCalledWith(
         expect.objectContaining({
           id: mockUser.id,
@@ -363,7 +363,7 @@ describe('AuditController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual([]);
+      expect((response as any).body).toEqual([]);
     });
 
     it('should handle UUID format userId', async () => {
@@ -427,7 +427,7 @@ describe('AuditController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual(summary);
+      expect((response as any).body).toEqual(summary);
       expect(auditService.getActivitySummary).toHaveBeenCalledWith(
         expect.objectContaining({
           id: mockUser.id,
@@ -453,7 +453,7 @@ describe('AuditController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body.total).toBe(0);
+      expect((response as any).body.total).toBe(0);
     });
 
     it('should handle different date ranges', async () => {
@@ -531,7 +531,7 @@ describe('AuditController (Integration)', () => {
       const responses = await Promise.all(requests);
 
       responses.forEach((_response) => {
-        expect(response.status).toBe(200);
+        expect((response as any).status).toBe(200);
       });
     });
 

@@ -15,7 +15,7 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import * as request from 'supertest';
+import request from 'supertest';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';

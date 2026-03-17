@@ -39,6 +39,6 @@ module.exports = {
   verbose: true,
   maxWorkers: '50%',
   transformIgnorePatterns: [
-    'node_modules/(?!(uuid)/)',
+    'node_modules/(?!uuid)',
   ],
 };

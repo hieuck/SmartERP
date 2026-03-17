@@ -15,12 +15,14 @@
  */
 
 import { ReactNode } from 'react';
-import { Empty, Button } from 'antd';
+import { Empty, Button, theme } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useResponsive } from '@/hooks/useResponsive';
 import { SPACING, BORDER_RADIUS } from '@/constants/design-tokens';
 import { getSpacing, getButtonSize } from '@/utils/responsive';
+
+const { useToken } = theme;
 
 interface EmptyStateProps {
   description?: string;
@@ -40,6 +42,7 @@ export default function EmptyState({
   const { t } = useTranslation('commonUi');
   const responsive = useResponsive();
   const { isMobile } = responsive;
+  const { token } = useToken();
 
   const padding = getSpacing(responsive, 'sectionSpacing');
 
@@ -50,7 +53,7 @@ export default function EmptyState({
         alignItems: 'center',
         justifyContent: 'center',
         padding: `${padding * 2}px 0`,
-        background: '#fff',
+        background: token.colorBgContainer,
         borderRadius: BORDER_RADIUS.lg,
       }}
     >

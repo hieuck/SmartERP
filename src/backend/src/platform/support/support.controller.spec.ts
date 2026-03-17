@@ -47,7 +47,7 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe, HttpException, HttpStatus } from '@nestjs/common';
-import * as request from 'supertest';
+import request from 'supertest';
 import { SupportController } from './support.controller';
 import { SupportService } from './support.service';
 import { JwtAuthGuard } from '../../core/auth/guards/jwt-auth.guard';

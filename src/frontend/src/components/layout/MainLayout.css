@@ -1,7 +1,7 @@
 .main-content {
   margin: 24px;
   padding: 24px;
-  background: #fff;
+  background: var(--bg-container);
   min-height: 280px;
   border-radius: 8px;
 }

@@ -129,7 +129,7 @@ describe('Accounting Offline Services', () => {
         taxCode: 'VAT10',
         rate: 10,
         taxType: 'sales',
-        isActive: true,
+        isActive: 1,
       } as any);
 
       expect(taxRate.id).toBeDefined();
@@ -144,7 +144,7 @@ describe('Accounting Offline Services', () => {
         taxCode: 'VAT10',
         rate: 10,
         taxType: 'sales',
-        isActive: true,
+        isActive: 1,
       } as any);
 
       const active = await service.getActive();

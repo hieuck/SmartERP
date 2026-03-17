@@ -86,7 +86,7 @@ describe('HR Offline Services', () => {
         tenantId: 'tenant1',
         departmentCode: 'DEPT001',
         departmentName: 'Engineering',
-        isActive: true,
+        isActive: 1,
       } as any);
 
       expect(department.id).toBeDefined();
@@ -99,7 +99,7 @@ describe('HR Offline Services', () => {
         tenantId: 'tenant1',
         departmentCode: 'DEPT001',
         departmentName: 'Engineering',
-        isActive: true,
+        isActive: 1,
       } as any);
 
       const active = await service.getActive();
@@ -119,7 +119,7 @@ describe('HR Offline Services', () => {
         tenantId: 'tenant1',
         positionCode: 'POS001',
         positionName: 'Software Engineer',
-        isActive: true,
+        isActive: 1,
       } as any);
 
       expect(position.id).toBeDefined();
@@ -132,7 +132,7 @@ describe('HR Offline Services', () => {
         tenantId: 'tenant1',
         positionCode: 'POS001',
         positionName: 'Software Engineer',
-        isActive: true,
+        isActive: 1,
       } as any);
 
       const active = await service.getActive();

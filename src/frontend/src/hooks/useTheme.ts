@@ -103,15 +103,28 @@ function getInitialThemeMode(): ThemeMode {
   // Check localStorage first
   const stored = localStorage.getItem(THEME_STORAGE_KEY);
   if (stored === 'light' || stored === 'dark') {
+    // Set initial data-theme attribute
+    if (typeof document !== 'undefined') {
+      document.body.setAttribute('data-theme', stored);
+    }
     return stored;
   }
 
   // Check system preference
   if (typeof window !== 'undefined' && window.matchMedia) {
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    return prefersDark ? 'dark' : 'light';
+    const mode = prefersDark ? 'dark' : 'light';
+    // Set initial data-theme attribute
+    if (typeof document !== 'undefined') {
+      document.body.setAttribute('data-theme', mode);
+    }
+    return mode;
   }
 
+  // Default to light
+  if (typeof document !== 'undefined') {
+    document.body.setAttribute('data-theme', 'light');
+  }
   return 'light';
 }
 
@@ -145,9 +158,11 @@ export function useTheme(): UseThemeReturn {
     return getScreenSize(window.innerWidth);
   });
 
-  // Persist theme mode to localStorage
+  // Persist theme mode to localStorage and update body data-theme attribute
   useEffect(() => {
     localStorage.setItem(THEME_STORAGE_KEY, themeMode);
+    // Update body data-theme attribute for CSS styling
+    document.body.setAttribute('data-theme', themeMode);
   }, [themeMode]);
 
   // Handle window resize for responsive theme

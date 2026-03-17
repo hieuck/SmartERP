@@ -97,7 +97,9 @@
   "theme": {
     "light": "Giao diện sáng",
     "dark": "Giao diện tối",
+    "auto": "Tự động",
     "switchToLight": "Chuyển sang giao diện sáng",
-    "switchToDark": "Chuyển sang giao diện tối"
+    "switchToDark": "Chuyển sang giao diện tối",
+    "switchToAuto": "Chuyển sang chế độ tự động"
   }
 }

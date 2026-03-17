@@ -11,6 +11,7 @@ import {
   Tabs,
   Popconfirm,
   message,
+  theme,
 } from 'antd';
 import { CheckOutlined, DeleteOutlined, SettingOutlined, BellOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
@@ -24,8 +25,10 @@ dayjs.extend(relativeTime);
 
 const { Title, Text } = Typography;
 const { TabPane } = Tabs;
+const { useToken } = theme;
 
 const NotificationListPage: React.FC = () => {
+  const { token } = useToken();
   const { t } = useTranslation(['notifications', 'common']);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
@@ -175,7 +178,7 @@ const NotificationListPage: React.FC = () => {
                 <List.Item
                   key={notification.id}
                   style={{
-                    backgroundColor: notification.isRead ? 'white' : '#f0f7ff',
+                    backgroundColor: notification.isRead ? token.colorBgContainer : token.colorPrimaryBg,
                     padding: '16px',
                     marginBottom: '8px',
                     borderRadius: '4px',

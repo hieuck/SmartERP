@@ -4,12 +4,14 @@
  */
 
 import { memo } from 'react';
-import { List, Empty, Card, Dropdown, Button, Collapse } from 'antd';
+import { List, Empty, Card, Dropdown, Button, Collapse, theme } from 'antd';
 import { MoreOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import ListItemActions from './ListItemActions';
 import type { ColumnsType, ColumnType, TableProps } from 'antd/es/table';
 import type { MenuProps } from 'antd';
+
+const { useToken } = theme;
 
 export interface MobileListViewProps<T> {
   columns: ColumnsType<T>;
@@ -44,6 +46,7 @@ function MobileListViewComponent<T extends Record<string, unknown>>({
   onMobileItemClick,
 }: MobileListViewProps<T>) {
   const { t } = useTranslation('commonUi');
+  const { token } = useToken();
 
   // If custom render provided, use it
   if (mobileRenderItem) {
@@ -149,7 +152,7 @@ function MobileListViewComponent<T extends Record<string, unknown>>({
                   {
                     key: '1',
                     label: (
-                      <span style={{ fontSize: 13, color: '#1890ff' }}>
+                      <span style={{ fontSize: 13, color: token.colorPrimary }}>
                         {t('messages.viewMore')}
                       </span>
                     ),

@@ -35,6 +35,7 @@ const LanguageSwitcher = () => {
           padding: `${theme.token?.paddingXS}px ${theme.token?.paddingSM}px`,
           borderRadius: theme.token?.borderRadiusSM,
           transition: 'background-color 0.3s',
+          color: theme.token?.colorText,
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.backgroundColor = theme.token?.colorBgTextHover || 'rgba(0, 0, 0, 0.04)';
@@ -44,7 +45,6 @@ const LanguageSwitcher = () => {
         }}
       >
         <GlobalOutlined style={{ fontSize: theme.token?.fontSize }} />
-        <span>{i18n.language === 'vi' ? 'VI' : 'EN'}</span>
       </div>
     </Dropdown>
   );

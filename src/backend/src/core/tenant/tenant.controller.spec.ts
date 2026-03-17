@@ -29,7 +29,7 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
-import * as request from 'supertest';
+import request from 'supertest';
 import { TenantController } from './tenant.controller';
 import { TenantService } from './tenant.service';
 import { SubscriptionService } from './subscription.service';

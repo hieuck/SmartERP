@@ -31,27 +31,38 @@ export default defineConfig({
     // Code splitting optimization (Requirement 22.10, 24.4)
     rollupOptions: {
       output: {
-        manualChunks: {
+        manualChunks: (id: string) => {
           // Vendor chunks
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'redux-vendor': ['@reduxjs/toolkit', 'react-redux'],
-          'query-vendor': ['@tanstack/react-query'],
-          'ui-vendor': ['antd'],
-          'chart-vendor': ['recharts'],
-          'form-vendor': ['react-hook-form', '@hookform/resolvers', 'zod'],
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
+              return 'react-vendor';
+            }
+            if (id.includes('@reduxjs/toolkit') || id.includes('react-redux')) {
+              return 'redux-vendor';
+            }
+            if (id.includes('@tanstack/react-query')) {
+              return 'query-vendor';
+            }
+            if (id.includes('antd')) {
+              return 'ui-vendor';
+            }
+            if (id.includes('recharts')) {
+              return 'chart-vendor';
+            }
+            if (id.includes('react-hook-form') || id.includes('@hookform/resolvers') || id.includes('zod')) {
+              return 'form-vendor';
+            }
+          }
           // Feature chunks
-          orders: [
-            './src/pages/orders/SalesOrderList.tsx',
-            './src/pages/orders/SalesOrderForm.tsx',
-            './src/pages/orders/PurchaseOrderList.tsx',
-            './src/pages/orders/PurchaseOrderForm.tsx',
-          ],
-          inventory: [
-            './src/pages/inventory/StockList.tsx',
-            './src/pages/inventory/StockReceiptList.tsx',
-            './src/pages/inventory/StockReceiptForm.tsx',
-          ],
-          reports: ['./src/pages/reports/ReportsPage.tsx'],
+          if (id.includes('SalesOrderList') || id.includes('SalesOrderForm') || id.includes('PurchaseOrderList') || id.includes('PurchaseOrderForm')) {
+            return 'orders';
+          }
+          if (id.includes('StockList') || id.includes('StockReceiptList') || id.includes('StockReceiptForm')) {
+            return 'inventory';
+          }
+          if (id.includes('ReportsPage')) {
+            return 'reports';
+          }
         },
       },
     },

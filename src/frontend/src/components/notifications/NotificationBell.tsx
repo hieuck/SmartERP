@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Badge, Dropdown, Button, List, Typography, Space, Empty, Spin } from 'antd';
+import { Badge, Dropdown, Button, List, Typography, Space, Empty, Spin, theme } from 'antd';
 import { BellOutlined, CheckOutlined, DeleteOutlined, SettingOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import notificationService, { Notification } from '@/services/notification/notificationService';
@@ -10,8 +10,10 @@ import { logger } from '@/lib/logger/logger.service';
 dayjs.extend(relativeTime);
 
 const { Text } = Typography;
+const { useToken } = theme;
 
 const NotificationBell: React.FC = () => {
+  const { token } = useToken();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -108,11 +110,11 @@ const NotificationBell: React.FC = () => {
   };
 
   const dropdownContent = (
-    <div style={{ width: 400, maxHeight: 500, overflow: 'auto', backgroundColor: 'white' }}>
+    <div style={{ width: 400, maxHeight: 500, overflow: 'auto', backgroundColor: token.colorBgContainer }}>
       <div
         style={{
           padding: '12px 16px',
-          borderBottom: '1px solid #f0f0f0',
+          borderBottom: `1px solid ${token.colorBorderSecondary}`,
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -152,7 +154,7 @@ const NotificationBell: React.FC = () => {
               style={{
                 padding: '12px 16px',
                 cursor: 'pointer',
-                backgroundColor: notification.isRead ? 'white' : '#f0f7ff',
+                backgroundColor: notification.isRead ? token.colorBgContainer : token.colorPrimaryBg,
               }}
               onClick={() => handleNotificationClick(notification)}
               actions={[
@@ -203,7 +205,7 @@ const NotificationBell: React.FC = () => {
         <div
           style={{
             padding: '12px 16px',
-            borderTop: '1px solid #f0f0f0',
+            borderTop: `1px solid ${token.colorBorderSecondary}`,
             textAlign: 'center',
           }}
         >

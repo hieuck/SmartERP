@@ -16,7 +16,7 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe, HttpException, HttpStatus } from '@nestjs/common';
-import * as request from 'supertest';
+import request from 'supertest';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { TokenBlacklistService } from './services/token-blacklist.service';

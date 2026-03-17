@@ -11,6 +11,7 @@ import {
   InputNumber,
   message,
   Space,
+  theme,
 } from 'antd';
 import { SaveOutlined, ArrowLeftOutlined, PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -22,6 +23,8 @@ import { formatCurrency } from '@/utils/responsive';
 import MobileFormItemCard from '@/components/common/MobileFormItemCard';
 import dayjs from 'dayjs';
 
+const { useToken } = theme;
+
 export default function StockReceiptForm() {
   const { isMobile } = useResponsive();
   const navigate = useNavigate();
@@ -31,6 +34,7 @@ export default function StockReceiptForm() {
   const [form] = Form.useForm();
   const isEdit = !!id;
   const [items, setItems] = useState<StockReceiptItem[]>([]);
+  const { token } = useToken();
 
   const { data: receipt } = useQuery({
     queryKey: ['stockReceipt', id],
@@ -281,7 +285,7 @@ export default function StockReceiptForm() {
                           padding: '4px 11px',
                           border: '1px solid #d9d9d9',
                           borderRadius: 6,
-                          background: '#f5f5f5',
+                          background: token.colorBgElevated,
                           fontSize: 14,
                           fontWeight: 500,
                         }}
@@ -292,7 +296,7 @@ export default function StockReceiptForm() {
                   </MobileFormItemCard>
                 ))}
 
-                <Card size="small" style={{ marginTop: 12, background: '#fafafa' }}>
+                <Card size="small" style={{ marginTop: 12, background: token.colorBgElevated }}>
                   <div
                     style={{
                       display: 'flex',
@@ -302,7 +306,7 @@ export default function StockReceiptForm() {
                     }}
                   >
                     <span>{t('inventory:receipts.totalAmount')}:</span>
-                    <span style={{ color: '#1890ff' }}>{formatCurrency(totalAmount)}</span>
+                    <span style={{ color: token.colorPrimary }}>{formatCurrency(totalAmount)}</span>
                   </div>
                 </Card>
               </div>

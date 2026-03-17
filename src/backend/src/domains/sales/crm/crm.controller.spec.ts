@@ -13,7 +13,7 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe, HttpException, HttpStatus } from '@nestjs/common';
-import * as request from 'supertest';
+import request from 'supertest';
 import { CrmController } from './crm.controller';
 import { CrmService } from './crm.service';
 import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';

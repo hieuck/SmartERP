@@ -1,7 +1,9 @@
 import { ReactNode } from 'react';
-import { Button, Space } from 'antd';
+import { Button, Space, theme } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+
+const { useToken } = theme;
 
 interface PageHeaderProps {
   title: string;
@@ -41,6 +43,7 @@ export default function PageHeader({
   showBack = false,
 }: PageHeaderProps) {
   const navigate = useNavigate();
+  const { token } = useToken();
 
   const handleBack = () => {
     if (onBack) {
@@ -53,7 +56,7 @@ export default function PageHeader({
   return (
     <div
       style={{
-        background: '#fff',
+        background: token.colorBgContainer,
         padding: '16px 24px',
         marginBottom: 24,
         borderRadius: 8,

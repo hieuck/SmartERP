@@ -97,7 +97,9 @@
   "theme": {
     "light": "Light Mode",
     "dark": "Dark Mode",
+    "auto": "Auto",
     "switchToLight": "Switch to Light Mode",
-    "switchToDark": "Switch to Dark Mode"
+    "switchToDark": "Switch to Dark Mode",
+    "switchToAuto": "Switch to Auto Mode"
   }
 }

@@ -116,7 +116,7 @@ describe('EmailService', () => {
 
       const result = await service.findAllTemplates(mockUser);
 
-      expect(_result).toEqual([mockTemplate]);
+      expect(result).toEqual([mockTemplate]);
       expect(cacheManager.get).toHaveBeenCalledWith(`email-template:all:${mockUser.tenantId}`);
       expect(mockSecureRepo.find).not.toHaveBeenCalled();
     });
@@ -130,7 +130,7 @@ describe('EmailService', () => {
 
       const result = await service.findAllTemplates(mockUser);
 
-      expect(_result).toEqual([mockTemplate]);
+      expect(result).toEqual([mockTemplate]);
       expect(mockSecureRepo.find).toHaveBeenCalledWith(mockUser, {
         order: { createdAt: 'DESC' },
       });
@@ -150,7 +150,7 @@ describe('EmailService', () => {
 
       const result = await service.findAllTemplates(mockUser);
 
-      expect(_result).toEqual([]);
+      expect(result).toEqual([]);
     });
   });
 
@@ -164,7 +164,7 @@ describe('EmailService', () => {
 
       const result = await service.findTemplateById(mockUser, 'template-1');
 
-      expect(_result).toEqual(mockTemplate);
+      expect(result).toEqual(mockTemplate);
       expect(mockSecureRepo.findOne).not.toHaveBeenCalled();
     });
 
@@ -177,7 +177,7 @@ describe('EmailService', () => {
 
       const result = await service.findTemplateById(mockUser, 'template-1');
 
-      expect(_result).toEqual(mockTemplate);
+      expect(result).toEqual(mockTemplate);
       expect(mockSecureRepo.findOne).toHaveBeenCalledWith(mockUser, {
         where: { id: 'template-1' },
       });
@@ -210,7 +210,7 @@ describe('EmailService', () => {
 
       const result = await service.findTemplateByType(mockUser, TemplateType.WELCOME);
 
-      expect(_result).toEqual(mockTemplate);
+      expect(result).toEqual(mockTemplate);
       expect(mockSecureRepo.findOne).not.toHaveBeenCalled();
     });
 
@@ -223,7 +223,7 @@ describe('EmailService', () => {
 
       const result = await service.findTemplateByType(mockUser, TemplateType.WELCOME);
 
-      expect(_result).toEqual(mockTemplate);
+      expect(result).toEqual(mockTemplate);
       expect(mockSecureRepo.findOne).toHaveBeenCalledWith(mockUser, {
         where: { type: TemplateType.WELCOME, isActive: true },
       });
@@ -259,7 +259,7 @@ describe('EmailService', () => {
 
       const result = await service.createTemplate(mockUser, data);
 
-      expect(_result).toEqual(mockTemplate);
+      expect(result).toEqual(mockTemplate);
       expect(templateRepository.create).toHaveBeenCalledWith({
         ...data,
         tenantId: mockUser.tenantId,
@@ -482,7 +482,7 @@ describe('EmailService', () => {
 
       const result = await service.findAllLogs(mockUser);
 
-      expect(_result).toEqual([mockLog]);
+      expect(result).toEqual([mockLog]);
       expect(mockSecureRepo.find).toHaveBeenCalledWith(mockUser, {
         order: { createdAt: 'DESC' },
         take: 100,
@@ -497,7 +497,7 @@ describe('EmailService', () => {
 
       const result = await service.findAllLogs(mockUser);
 
-      expect(_result).toEqual([]);
+      expect(result).toEqual([]);
     });
   });
 
@@ -510,7 +510,7 @@ describe('EmailService', () => {
 
       const result = await service.findLogById(mockUser, 'log-1');
 
-      expect(_result).toEqual(mockLog);
+      expect(result).toEqual(mockLog);
       expect(mockSecureRepo.findOne).toHaveBeenCalledWith(mockUser, {
         where: { id: 'log-1' },
       });

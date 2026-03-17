@@ -24,7 +24,7 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe, HttpException, HttpStatus } from '@nestjs/common';
-import * as request from 'supertest';
+import request from 'supertest';
 import { ReportController } from './report.controller';
 import { ReportService } from './report.service';
 import { ReportTemplateService } from './report-template.service';
