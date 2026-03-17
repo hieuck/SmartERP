@@ -1,21 +1,28 @@
+// Mock crypto module trước khi import bất kỳ thứ gì
+// Lý do: crypto.createHmac là non-configurable property, không thể dùng jest.spyOn
+const mockDigest = jest.fn().mockReturnValue('mocked-signature');
+const mockUpdate = jest.fn().mockReturnValue({ digest: mockDigest });
+const mockCreateHmac = jest.fn().mockReturnValue({
+  update: mockUpdate,
+  digest: mockDigest,
+});
+
+jest.mock('crypto', () => ({
+  ...jest.requireActual('crypto'),
+  createHmac: (...args: unknown[]) => mockCreateHmac(...args),
+}));
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { MomoService, MomoPaymentParams } from './momo.service';
-import * as crypto from 'crypto';
 
 describe('MomoService', () => {
   let service: MomoService;
-  let mockCreateHmac: jest.SpyInstance;
-  let mockUpdate: jest.Mock;
-  let mockDigest: jest.Mock;
 
   beforeEach(async () => {
-    // Setup crypto mocks
-    mockDigest = jest.fn().mockReturnValue('mocked-signature');
-    mockUpdate = jest.fn().mockReturnValue({ digest: mockDigest });
-    mockCreateHmac = jest.spyOn(crypto, 'createHmac').mockReturnValue({
-      update: mockUpdate,
-      digest: mockDigest,
-    } as any);
+    // Reset mock calls trước mỗi test
+    mockCreateHmac.mockClear();
+    mockUpdate.mockClear();
+    mockDigest.mockClear();
 
     // Setup environment variables
     process.env.MOMO_PARTNER_CODE = 'TEST_PARTNER';
@@ -34,7 +41,6 @@ describe('MomoService', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
-    mockCreateHmac.mockRestore();
   });
 
   describe('constructor', () => {
@@ -76,11 +82,7 @@ describe('MomoService', () => {
     });
 
     it('should create payment with custom requestType', async () => {
-      const params: MomoPaymentParams = {
-        ...validParams,
-        requestType: 'payWithATM',
-      };
-
+      const params: MomoPaymentParams = { ...validParams, requestType: 'payWithATM' };
       const result = await service.createPayment(params);
 
       expect(result.payUrl).toBeDefined();
@@ -88,11 +90,7 @@ describe('MomoService', () => {
     });
 
     it('should create payment with extraData', async () => {
-      const params: MomoPaymentParams = {
-        ...validParams,
-        extraData: 'customerId=123',
-      };
-
+      const params: MomoPaymentParams = { ...validParams, extraData: 'customerId=123' };
       const result = await service.createPayment(params);
 
       expect(result.payUrl).toBeDefined();
@@ -108,24 +106,12 @@ describe('MomoService', () => {
     });
 
     it('should handle payment creation with zero amount', async () => {
-      const params: MomoPaymentParams = {
-        ...validParams,
-        amount: 0,
-      };
-
-      const result = await service.createPayment(params);
-
+      const result = await service.createPayment({ ...validParams, amount: 0 });
       expect(result.payUrl).toBeDefined();
     });
 
     it('should handle payment creation with large amount', async () => {
-      const params: MomoPaymentParams = {
-        ...validParams,
-        amount: 999999999,
-      };
-
-      const result = await service.createPayment(params);
-
+      const result = await service.createPayment({ ...validParams, amount: 999999999 });
       expect(result.payUrl).toBeDefined();
     });
 
@@ -168,25 +154,14 @@ describe('MomoService', () => {
     });
 
     it('should reject IPN with invalid signature', () => {
-      const invalidData = {
-        ...validIPNData,
-        signature: 'invalid-signature',
-      };
-
-      const result = service.verifyIPN(invalidData);
+      const result = service.verifyIPN({ ...validIPNData, signature: 'invalid-signature' });
 
       expect(result.success).toBe(false);
       expect(result.message).toBe('Invalid signature');
     });
 
     it('should handle failed payment with result code 1000', () => {
-      const failedData = {
-        ...validIPNData,
-        resultCode: 1000,
-        message: 'Transaction initiated',
-      };
-
-      const result = service.verifyIPN(failedData);
+      const result = service.verifyIPN({ ...validIPNData, resultCode: 1000, message: 'Transaction initiated' });
 
       expect(result.success).toBe(false);
       expect(result.transactionId).toBe('TRANS-123');
@@ -194,13 +169,7 @@ describe('MomoService', () => {
     });
 
     it('should handle payment with result code 9000', () => {
-      const pendingData = {
-        ...validIPNData,
-        resultCode: 9000,
-      };
-
-      const result = service.verifyIPN(pendingData);
-
+      const result = service.verifyIPN({ ...validIPNData, resultCode: 9000 });
       expect(result.success).toBe(false);
     });
 
@@ -213,24 +182,12 @@ describe('MomoService', () => {
     });
 
     it('should handle IPN with extraData', () => {
-      const dataWithExtra = {
-        ...validIPNData,
-        extraData: 'customerId=123',
-      };
-
-      const result = service.verifyIPN(dataWithExtra);
-
+      const result = service.verifyIPN({ ...validIPNData, extraData: 'customerId=123' });
       expect(result.success).toBe(true);
     });
 
     it('should return appropriate message for unknown result code', () => {
-      const unknownCodeData = {
-        ...validIPNData,
-        resultCode: 99999,
-        message: '',
-      };
-
-      const result = service.verifyIPN(unknownCodeData);
+      const result = service.verifyIPN({ ...validIPNData, resultCode: 99999, message: '' });
 
       expect(result.success).toBe(false);
       expect(result.message).toBe('Lỗi không xác định');
@@ -257,25 +214,18 @@ describe('MomoService', () => {
 
     it('should include signature in request body', async () => {
       const result = await service.queryTransaction('ORDER-123', 'REQ-123');
-
       expect(result.signature).toBe('mocked-signature');
     });
 
     it('should handle query with special characters in orderId', async () => {
       const result = await service.queryTransaction('ORDER-123-ĐẶC-BIỆT', 'REQ-123');
-
       expect(result.orderId).toBe('ORDER-123-ĐẶC-BIỆT');
     });
   });
 
   describe('refundTransaction', () => {
     it('should refund transaction successfully', async () => {
-      const result = await service.refundTransaction(
-        'ORDER-123',
-        'TRANS-123',
-        50000,
-        'Customer request',
-      );
+      const result = await service.refundTransaction('ORDER-123', 'TRANS-123', 50000, 'Customer request');
 
       expect(result).toBeDefined();
       expect(result.orderId).toBe('ORDER-123');
@@ -293,12 +243,7 @@ describe('MomoService', () => {
     });
 
     it('should include all required fields in refund request', async () => {
-      const result = await service.refundTransaction(
-        'ORDER-123',
-        'TRANS-123',
-        50000,
-        'Refund reason',
-      );
+      const result = await service.refundTransaction('ORDER-123', 'TRANS-123', 50000, 'Refund reason');
 
       expect(result.partnerCode).toBe('TEST_PARTNER');
       expect(result.accessKey).toBe('TEST_ACCESS_KEY');
@@ -307,27 +252,18 @@ describe('MomoService', () => {
 
     it('should handle refund with zero amount', async () => {
       const result = await service.refundTransaction('ORDER-123', 'TRANS-123', 0, 'Test');
-
       expect(result.amount).toBe(0);
     });
 
     it('should handle refund with full amount', async () => {
-      const result = await service.refundTransaction(
-        'ORDER-123',
-        'TRANS-123',
-        100000,
-        'Full refund',
-      );
-
+      const result = await service.refundTransaction('ORDER-123', 'TRANS-123', 100000, 'Full refund');
       expect(result.amount).toBe(100000);
     });
 
     it('should generate unique requestId for each refund', async () => {
       const result1 = await service.refundTransaction('ORDER-123', 'TRANS-123', 50000, 'Reason 1');
-
-      // Wait 1ms to ensure different timestamp
+      // Đợi 1ms để đảm bảo timestamp khác nhau
       await new Promise((resolve) => setTimeout(resolve, 1));
-
       const result2 = await service.refundTransaction('ORDER-123', 'TRANS-123', 50000, 'Reason 2');
 
       expect(result1.requestId).not.toBe(result2.requestId);
@@ -336,23 +272,21 @@ describe('MomoService', () => {
 
   describe('getResultMessage', () => {
     it('should return correct message for result code 0', () => {
-      const message = (service as any).getResultMessage(0);
-      expect(message).toBe('Giao dịch thành công');
+      expect((service as any).getResultMessage(0)).toBe('Giao dịch thành công');
     });
 
     it('should return correct message for result code 1001', () => {
-      const message = (service as any).getResultMessage(1001);
-      expect(message).toBe('Giao dịch thanh toán thất bại do tài khoản người dùng không đủ tiền');
+      expect((service as any).getResultMessage(1001)).toBe(
+        'Giao dịch thanh toán thất bại do tài khoản người dùng không đủ tiền',
+      );
     });
 
     it('should return correct message for result code 9999', () => {
-      const message = (service as any).getResultMessage(9999);
-      expect(message).toBe('Giao dịch thất bại');
+      expect((service as any).getResultMessage(9999)).toBe('Giao dịch thất bại');
     });
 
     it('should return default message for unknown code', () => {
-      const message = (service as any).getResultMessage(88888);
-      expect(message).toBe('Lỗi không xác định');
+      expect((service as any).getResultMessage(88888)).toBe('Lỗi không xác định');
     });
   });
 });
