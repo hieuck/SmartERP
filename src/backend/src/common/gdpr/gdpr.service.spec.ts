@@ -37,9 +37,7 @@ describe('GdprService', () => {
     revokedAt: null,
     createdAt: new Date(),
     updatedAt: new Date(),
-    get isActive() {
-      return this.granted && !this.revokedAt;
-    },
+    isActive: true,
   } as Consent;
 
   const mockExportRequest = {

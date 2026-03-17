@@ -1,0 +1,38 @@
+[
+  {
+    "id": "setting-1",
+    "key": "app.name",
+    "value": "SmartERP",
+    "category": "general",
+    "dataType": "STRING",
+    "description": "Application name",
+    "isPublic": true,
+    "tenantId": "tenant-123",
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "updatedAt": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "setting-2",
+    "key": "app.version",
+    "value": "1.0.0",
+    "category": "general",
+    "dataType": "STRING",
+    "description": "Application version",
+    "isPublic": true,
+    "tenantId": "tenant-123",
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "updatedAt": "2026-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "setting-3",
+    "key": "feature.notifications",
+    "value": "true",
+    "category": "features",
+    "dataType": "BOOLEAN",
+    "description": "Enable notifications",
+    "isPublic": false,
+    "tenantId": "tenant-123",
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "updatedAt": "2026-01-01T00:00:00.000Z"
+  }
+]

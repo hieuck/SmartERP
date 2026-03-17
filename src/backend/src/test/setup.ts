@@ -3,6 +3,14 @@
  * Global test configuration and utilities
  */
 
+// Mock uuid module to avoid ES module issues
+jest.mock('uuid', () => ({
+  v4: jest.fn(() => 'test-uuid-v4'),
+  v1: jest.fn(() => 'test-uuid-v1'),
+  validate: jest.fn(() => true),
+  version: jest.fn(() => 4),
+}));
+
 // Set test environment variables
 process.env.NODE_ENV = 'test';
 process.env.JWT_SECRET = 'test-jwt-secret-key-for-testing-only';

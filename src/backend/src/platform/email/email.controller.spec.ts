@@ -27,7 +27,6 @@ import { TemplateType } from './enums/template-type.enum';
 import { EmailStatus } from './enums/email-status.enum';
 
 describe('EmailController (Integration)', () => {
-  let response: unknown;
   let app: INestApplication;
   let emailService: jest.Mocked<EmailService>;
 
@@ -125,7 +124,7 @@ describe('EmailController (Integration)', () => {
       const templates = [mockTemplate];
       emailService.findAllTemplates.mockResolvedValue(templates as any);
 
-      const __response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .get('/email/templates')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -137,7 +136,7 @@ describe('EmailController (Integration)', () => {
     it('should return empty array when no templates', async () => {
       emailService.findAllTemplates.mockResolvedValue([]);
 
-      const __response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .get('/email/templates')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -165,7 +164,7 @@ describe('EmailController (Integration)', () => {
     it('should return template by ID', async () => {
       emailService.findTemplateById.mockResolvedValue(mockTemplate as any);
 
-      const __response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .get('/email/templates/template-123')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -205,7 +204,7 @@ describe('EmailController (Integration)', () => {
         ...createDto,
       } as any);
 
-      const __response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .post('/email/templates')
         .set('Authorization', 'Bearer valid-token')
         .send(createDto)
@@ -229,7 +228,7 @@ describe('EmailController (Integration)', () => {
         ...createDto,
       } as any);
 
-      const __response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .post('/email/templates')
         .set('Authorization', 'Bearer valid-token')
         .send(createDto)
@@ -278,7 +277,7 @@ describe('EmailController (Integration)', () => {
       const updatedTemplate = { ...mockTemplate, ...updateDto };
       emailService.updateTemplate.mockResolvedValue(updatedTemplate as any);
 
-      const __response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .put('/email/templates/template-123')
         .set('Authorization', 'Bearer valid-token')
         .send(updateDto)
@@ -347,7 +346,7 @@ describe('EmailController (Integration)', () => {
 
       emailService.sendEmail.mockResolvedValue(mockEmailLog as any);
 
-      const __response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .post('/email/send')
         .set('Authorization', 'Bearer valid-token')
         .send(sendDto)
@@ -375,7 +374,7 @@ describe('EmailController (Integration)', () => {
 
       emailService.sendEmail.mockResolvedValue(mockEmailLog as any);
 
-      const __response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .post('/email/send')
         .set('Authorization', 'Bearer valid-token')
         .send(sendDto)
@@ -406,7 +405,7 @@ describe('EmailController (Integration)', () => {
 
       emailService.sendEmail.mockResolvedValue(failedLog as any);
 
-      const __response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .post('/email/send')
         .set('Authorization', 'Bearer valid-token')
         .send(sendDto)
@@ -455,7 +454,7 @@ describe('EmailController (Integration)', () => {
 
       emailService.sendTemplateEmail.mockResolvedValue(mockEmailLog as any);
 
-      const __response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .post('/email/send-template')
         .set('Authorization', 'Bearer valid-token')
         .send(sendDto)
@@ -547,7 +546,7 @@ describe('EmailController (Integration)', () => {
       const logs = [mockEmailLog];
       emailService.findAllLogs.mockResolvedValue(logs as any);
 
-      const __response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .get('/email/logs')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -559,7 +558,7 @@ describe('EmailController (Integration)', () => {
     it('should return empty array when no logs', async () => {
       emailService.findAllLogs.mockResolvedValue([]);
 
-      const __response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .get('/email/logs')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -576,7 +575,7 @@ describe('EmailController (Integration)', () => {
 
       emailService.findAllLogs.mockResolvedValue(logs as any);
 
-      const __response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .get('/email/logs')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -593,7 +592,7 @@ describe('EmailController (Integration)', () => {
     it('should return email log by ID', async () => {
       emailService.findLogById.mockResolvedValue(mockEmailLog as any);
 
-      const __response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .get('/email/logs/log-123')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);

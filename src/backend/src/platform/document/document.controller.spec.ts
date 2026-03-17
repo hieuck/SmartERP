@@ -27,9 +27,9 @@ import { JwtAuthGuard } from '../../core/auth/guards/jwt-auth.guard';
 import { DocumentType } from './enums/document-type.enum';
 
 describe('DocumentController (Integration)', () => {
-  let response: unknown;
   let app: INestApplication;
   let documentService: jest.Mocked<DocumentService>;
+  let response: any;
 
   const mockUser = {
     id: 'user-123',

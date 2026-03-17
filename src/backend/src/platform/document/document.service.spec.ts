@@ -94,7 +94,7 @@ describe('DocumentService', () => {
 
       const result = await service.findAll(mockUser);
 
-      expect(_result).toEqual([mockDocument]);
+      expect(result).toEqual([mockDocument]);
       expect(mockSecureRepo.find).toHaveBeenCalledWith(
         mockUser,
         expect.objectContaining({
@@ -130,7 +130,7 @@ describe('DocumentService', () => {
 
       const result = await service.findById(mockUser, 'doc-1');
 
-      expect(_result).toEqual(mockDocument);
+      expect(result).toEqual(mockDocument);
     });
 
     it('should throw NotFoundException when not found', async () => {
@@ -151,7 +151,7 @@ describe('DocumentService', () => {
 
       const result = await service.createFolder(mockUser, 'New Folder', null);
 
-      expect(_result).toEqual(mockDocument);
+      expect(result).toEqual(mockDocument);
       expect(documentRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
           name: 'New Folder',
@@ -171,7 +171,7 @@ describe('DocumentService', () => {
         filePath: '/uploads/test.pdf',
       });
 
-      expect(_result).toEqual(mockDocument);
+      expect(result).toEqual(mockDocument);
     });
   });
 
@@ -234,7 +234,7 @@ describe('DocumentService', () => {
 
       const result = await service.search(mockUser, 'test');
 
-      expect(_result).toEqual([mockDocument]);
+      expect(result).toEqual([mockDocument]);
     });
   });
 });

@@ -74,7 +74,7 @@ describe('RoleService', () => {
       checkAccess: jest.fn(),
       buildSecureQuery: jest.fn((_user, baseWhere, _entityName) => ({
         ...baseWhere,
-        tenantId: user.tenantId,
+        tenantId: _user.tenantId,
       })),
       canRead: jest.fn(() => true),
       canWrite: jest.fn(() => true),
@@ -113,13 +113,13 @@ describe('RoleService', () => {
     const secureRepo = (service as any).secureRoleRepo;
     secureRepo.findOne = jest.fn((_user, _options) => roleRepository.findOne(_options));
     secureRepo.find = jest.fn((_user, _options) => {
-      const secureWhere = permissionService.buildSecureQuery(_user, options.where || {}, 'Role');
+      const secureWhere = permissionService.buildSecureQuery(_user, _options.where || {}, 'Role');
       return roleRepository.find({ ..._options, where: secureWhere });
     });
     secureRepo.save = jest.fn((_user, entity) => {
       if (!entity.id) {
-        entity.tenantId = user.tenantId;
-        entity.createdBy = user.id;
+        entity.tenantId = _user.tenantId;
+        entity.createdBy = _user.id;
       }
       return roleRepository.save(entity);
     });
@@ -139,13 +139,13 @@ describe('RoleService', () => {
     const secureRepo = (service as any).secureRoleRepo;
     secureRepo.findOne = jest.fn((_user, _options) => roleRepository.findOne(_options));
     secureRepo.find = jest.fn((_user, _options) => {
-      const secureWhere = permissionService.buildSecureQuery(_user, options.where || {}, 'Role');
+      const secureWhere = permissionService.buildSecureQuery(_user, _options.where || {}, 'Role');
       return roleRepository.find({ ..._options, where: secureWhere });
     });
     secureRepo.save = jest.fn((_user, entity) => {
       if (!entity.id) {
-        entity.tenantId = user.tenantId;
-        entity.createdBy = user.id;
+        entity.tenantId = _user.tenantId;
+        entity.createdBy = _user.id;
       }
       return roleRepository.save(entity);
     });

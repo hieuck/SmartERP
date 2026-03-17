@@ -1,0 +1,25 @@
+{
+  "id": "tenant-123",
+  "code": "ACME",
+  "name": "Acme Corporation",
+  "email": "admin@acme.com",
+  "phone": "+84901234567",
+  "address": "123 Main St, Ho Chi Minh City",
+  "status": "active",
+  "subscriptionPlan": "professional",
+  "subscriptionStatus": "active",
+  "subscriptionStartDate": "2026-01-01T00:00:00.000Z",
+  "subscriptionEndDate": "2027-01-01T00:00:00.000Z",
+  "maxUsers": 50,
+  "maxStorage": 107374182400,
+  "currentUsers": 10,
+  "currentStorage": 10737418240,
+  "settings": {
+    "timezone": "Asia/Ho_Chi_Minh",
+    "currency": "VND",
+    "language": "vi"
+  },
+  "metadata": {},
+  "createdAt": "2026-01-01T00:00:00.000Z",
+  "updatedAt": "2026-01-01T00:00:00.000Z"
+}

@@ -14,7 +14,6 @@ describe('CustomerService', () => {
   let customerRepository: jest.Mocked<Repository<Customer>>;
   let permissionService: jest.Mocked<PermissionService>;
   let service: CustomerService;
-  let customerRepository: jest.Mocked<Repository<Customer>>;
   let cacheService: jest.Mocked<CacheService>;
   let secureCustomerRepo: jest.Mocked<SecureRepository<Customer>>;
 

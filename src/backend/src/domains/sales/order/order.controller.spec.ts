@@ -34,7 +34,6 @@ import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
 import { TenantGuard } from '../../../common/guards/tenant.guard';
 
 describe('OrderController (Integration)', () => {
-  let response: unknown;
   let app: INestApplication;
   let orderService: jest.Mocked<OrderService>;
 
@@ -150,7 +149,7 @@ describe('OrderController (Integration)', () => {
       const orders = [mockOrder];
       orderService.findAll.mockResolvedValue(orders as any);
 
-      const _response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .get('/orders')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -170,7 +169,7 @@ describe('OrderController (Integration)', () => {
       };
       orderService.findAll.mockResolvedValue(emptyResponse as any);
 
-      const _response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .get('/orders')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -184,7 +183,7 @@ describe('OrderController (Integration)', () => {
       const pendingOrders = [mockOrder];
       orderService.getPendingOrders.mockResolvedValue(pendingOrders as any);
 
-      const _response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .get('/orders/pending')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -196,7 +195,7 @@ describe('OrderController (Integration)', () => {
     it('should return empty array when no pending orders', async () => {
       orderService.getPendingOrders.mockResolvedValue([]);
 
-      const _response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .get('/orders/pending')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -209,7 +208,7 @@ describe('OrderController (Integration)', () => {
     it('should return order count', async () => {
       orderService.count.mockResolvedValue(50);
 
-      const _response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .get('/orders/count')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -221,7 +220,7 @@ describe('OrderController (Integration)', () => {
     it('should return 0 when no orders', async () => {
       orderService.count.mockResolvedValue(0);
 
-      const _response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .get('/orders/count')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -235,7 +234,7 @@ describe('OrderController (Integration)', () => {
       const recentOrders = [mockOrder];
       orderService.getRecentOrders.mockResolvedValue(recentOrders as any);
 
-      const _response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .get('/orders/recent/10')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -270,7 +269,7 @@ describe('OrderController (Integration)', () => {
     it('should return total revenue', async () => {
       orderService.getTotalRevenue.mockResolvedValue(50000000);
 
-      const _response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .get('/orders/revenue/total')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -282,7 +281,7 @@ describe('OrderController (Integration)', () => {
     it('should return 0 when no revenue', async () => {
       orderService.getTotalRevenue.mockResolvedValue(0);
 
-      const _response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .get('/orders/revenue/total')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -295,7 +294,7 @@ describe('OrderController (Integration)', () => {
     it('should return revenue by date range', async () => {
       orderService.getRevenueByDateRange.mockResolvedValue(10000000);
 
-      const _response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .get('/orders/revenue/range?startDate=2024-01-01&endDate=2024-01-31')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -321,7 +320,7 @@ describe('OrderController (Integration)', () => {
       const orders = [mockOrder];
       orderService.findByDateRange.mockResolvedValue(orders as any);
 
-      const _response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .get('/orders/date-range?startDate=2024-01-01&endDate=2024-01-31')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -337,7 +336,7 @@ describe('OrderController (Integration)', () => {
     it('should return empty array when no orders in range', async () => {
       orderService.findByDateRange.mockResolvedValue([]);
 
-      const _response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .get('/orders/date-range?startDate=2024-12-01&endDate=2024-12-31')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -351,7 +350,7 @@ describe('OrderController (Integration)', () => {
       const orders = [mockOrder];
       orderService.findByCustomer.mockResolvedValue(orders as any);
 
-      const _response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .get('/orders/customer/customer-123')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -363,7 +362,7 @@ describe('OrderController (Integration)', () => {
     it('should return empty array when customer has no orders', async () => {
       orderService.findByCustomer.mockResolvedValue([]);
 
-      const _response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .get('/orders/customer/customer-999')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -377,7 +376,7 @@ describe('OrderController (Integration)', () => {
       const orders = [mockOrder];
       orderService.findByStatus.mockResolvedValue(orders as any);
 
-      const _response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .get('/orders/status/pending')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -406,7 +405,7 @@ describe('OrderController (Integration)', () => {
     it('should return order by ID', async () => {
       orderService.findOne.mockResolvedValue(mockOrder as any);
 
-      const _response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .get('/orders/order-123')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -446,7 +445,7 @@ describe('OrderController (Integration)', () => {
 
       orderService.create.mockResolvedValue(mockOrder as any);
 
-      const _response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .post('/orders')
         .set('Authorization', 'Bearer valid-token')
         .send(createDto)
@@ -512,7 +511,7 @@ describe('OrderController (Integration)', () => {
       const updatedOrder = { ...mockOrder, ...updateDto };
       orderService.update.mockResolvedValue(updatedOrder as any);
 
-      const _response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .patch('/orders/order-123')
         .set('Authorization', 'Bearer valid-token')
         .send(updateDto)
@@ -551,7 +550,7 @@ describe('OrderController (Integration)', () => {
       const updatedOrder = { ...mockOrder, status: 'confirmed' };
       orderService.updateStatus.mockResolvedValue(updatedOrder as any);
 
-      const _response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .patch('/orders/order-123/status')
         .set('Authorization', 'Bearer valid-token')
         .send({ status: 'confirmed' })
@@ -591,7 +590,7 @@ describe('OrderController (Integration)', () => {
       const cancelledOrder = { ...mockOrder, status: 'cancelled' };
       orderService.cancel.mockResolvedValue(cancelledOrder as any);
 
-      const _response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .patch('/orders/order-123/cancel')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -628,7 +627,7 @@ describe('OrderController (Integration)', () => {
       const shippedOrder = { ...mockOrder, status: 'shipped', trackingNumber: 'TRACK-123' };
       orderService.ship.mockResolvedValue(shippedOrder as any);
 
-      const _response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .patch('/orders/order-123/ship')
         .set('Authorization', 'Bearer valid-token')
         .send({ trackingNumber: 'TRACK-123' })
@@ -669,7 +668,7 @@ describe('OrderController (Integration)', () => {
       const deliveredOrder = { ...mockOrder, status: 'delivered' };
       orderService.deliver.mockResolvedValue(deliveredOrder as any);
 
-      const _response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .patch('/orders/order-123/deliver')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -705,7 +704,7 @@ describe('OrderController (Integration)', () => {
     it('should delete order successfully', async () => {
       orderService.remove.mockResolvedValue(undefined);
 
-      const _response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .delete('/orders/order-123')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);

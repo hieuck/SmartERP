@@ -164,7 +164,7 @@ describe('TaskService', () => {
           updatedBy: userId,
         }),
       );
-      expect(_result).toEqual(mockTask);
+      expect(result).toEqual(mockTask);
     });
 
     it('should throw NotFoundException when project not found', async () => {
@@ -213,7 +213,7 @@ describe('TaskService', () => {
         where: { id: taskId, tenantId },
         relations: ['project', 'assignee', 'parentTask', 'dependencies', 'dependentTasks'],
       });
-      expect(_result).toEqual(mockTask);
+      expect(result).toEqual(mockTask);
     });
 
     it('should throw NotFoundException when task not found', async () => {
@@ -233,7 +233,7 @@ describe('TaskService', () => {
         where: { code: 'TSK-2026-0001', tenantId },
         relations: ['project', 'assignee', 'parentTask'],
       });
-      expect(_result).toEqual(mockTask);
+      expect(result).toEqual(mockTask);
     });
 
     it('should throw NotFoundException when task not found', async () => {
@@ -253,7 +253,7 @@ describe('TaskService', () => {
 
       expect(qb.where).toHaveBeenCalledWith('task.tenantId = :tenantId', { tenantId });
       expect(qb.orderBy).toHaveBeenCalledWith('task.createdAt', 'DESC');
-      expect(_result).toEqual([mockTask]);
+      expect(result).toEqual([mockTask]);
     });
 
     it('should filter by projectId', async () => {

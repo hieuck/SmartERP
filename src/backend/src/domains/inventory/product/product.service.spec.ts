@@ -11,14 +11,11 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 
 describe('ProductService', () => {
-  let productRepository: jest.Mocked<Repository<Product>>;
-  let _cacheService: jest.Mocked<CacheService>;
-  let permissionService: jest.Mocked<PermissionService>;
+  let productRepository: any;
+  let cacheService: any;
+  let permissionService: any;
   let service: ProductService;
-  let __productRepository: Repository<Product>;
-  let __cacheService: CacheService;
-  let permissionService: PermissionService;
-  let secureProductRepo: unknown;
+  let secureProductRepo: any;
 
   const mockUser: User = {
     id: 'user-1',

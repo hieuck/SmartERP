@@ -13,7 +13,7 @@ import { createMockUser } from '@/test/factories/user.factory';
 
 describe('UserService', () => {
   let service: UserService;
-  let _userRepository: jest.Mocked<Repository<UserEntity>>;
+  let userRepository: jest.Mocked<Repository<UserEntity>>;
   let permissionService: jest.Mocked<PermissionService>;
   let secureUserRepo: jest.Mocked<SecureRepository<UserEntity>>;
 
