@@ -1,0 +1,13 @@
+{
+  "name": "Auto Review on Save",
+  "version": "1.0.0",
+  "description": "Automatically review code quality and security when saving TypeScript files",
+  "when": {
+    "type": "fileEdited",
+    "patterns": ["src/**/*.ts", "src/**/*.tsx"]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Review this code change for quality, security, and offline-first compliance"
+  }
+}

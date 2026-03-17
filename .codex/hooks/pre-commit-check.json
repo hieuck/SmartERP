@@ -1,0 +1,13 @@
+{
+  "name": "Pre-Commit Quality Check",
+  "version": "1.0.0",
+  "description": "Run tests and security checks before allowing commits",
+  "when": {
+    "type": "promptSubmit",
+    "patterns": []
+  },
+  "then": {
+    "type": "runCommand",
+    "command": "npm run lint && npm test"
+  }
+}

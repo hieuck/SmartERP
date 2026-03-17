@@ -8,7 +8,7 @@ import { ResponseTransformInterceptor } from '@common/response/field-filter.inte
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import * as compression from 'compression';
+import compression from 'compression';
 import helmet from 'helmet';
 import 'tsconfig-paths/register';
 import { AppModule } from './app.module';
