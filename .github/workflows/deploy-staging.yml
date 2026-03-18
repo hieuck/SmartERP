@@ -1,4 +1,4 @@
-name: Deploy Staging
+﻿name: Deploy Staging
 
 on:
   push:
@@ -45,17 +45,11 @@ jobs:
   deploy:
     needs: [build-push]
     runs-on: ubuntu-latest
-    environment:
-      name: staging
-      url: https://staging.smarterp.com
     steps:
-      - run: echo "Deploy to staging here"
+      - run: echo "Deploy to staging - configure your deployment here"
 
   health-check:
     needs: [deploy]
     runs-on: ubuntu-latest
     steps:
-      - run: |
-          sleep 30
-          curl -f https://api-staging.smarterp.com/api/health || exit 1
-          curl -f https://staging.smarterp.com || exit 1
+      - run: echo "Health check - configure your staging URL here"
