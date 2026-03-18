@@ -1,25 +1,25 @@
+import { CacheTTL, generateCacheKey } from '@/common/cache/cache.config';
+import { CacheService } from '@/common/cache/cache.service';
+import { User } from '@/common/security/permission.service';
+import { Payment } from '@/domains/accounting/payment/entities/payment.entity';
+import { Product } from '@/domains/inventory/product/entities/product.entity';
+import { Inventory } from '@/domains/inventory/stock/entities/inventory.entity';
+import { Customer } from '@/domains/sales/customer/entities/customer.entity';
+import { Order } from '@/domains/sales/order/entities/order.entity';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Order } from '@/domains/sales/order/entities/order.entity';
-import { Product } from '@/domains/inventory/product/entities/product.entity';
-import { Customer } from '@/domains/sales/customer/entities/customer.entity';
-import { Inventory } from '@/domains/inventory/stock/entities/inventory.entity';
-import { Payment } from '@/domains/accounting/payment/entities/payment.entity';
-import { CacheService } from '@/common/cache/cache.service';
-import { CacheTTL, generateCacheKey } from '@/common/cache/cache.config';
-import { User } from '@/common/security/permission.service';
 import {
-  DashboardOverviewDto,
-  MobileDashboardStatsDto,
-  SalesChartDataDto,
-  TopProductDto,
-  TopCustomerDto,
-  RevenueByCategoryDto,
-  MobileChartDataDto,
-  RecentOrderDto,
-  LowStockProductDto,
   ChartPeriod,
+  DashboardOverviewDto,
+  LowStockProductDto,
+  MobileChartDataDto,
+  MobileDashboardStatsDto,
+  RecentOrderDto,
+  RevenueByCategoryDto,
+  SalesChartDataDto,
+  TopCustomerDto,
+  TopProductDto,
 } from './dto';
 
 /**
@@ -137,15 +137,15 @@ export class DashboardService {
 
         const result = await this.orderRepository
           .createQueryBuilder('order')
-          .select('DATE(order.createdAt)', 'date')
-          .addSelect('SUM(order.totalAmount)', 'revenue')
+          .select('DATE(order.created_at)', 'date')
+          .addSelect('SUM(order.total_amount)', 'revenue')
           .addSelect('COUNT(order.id)', 'orders')
-          .where('order.tenantId = :tenantId', { tenantId: user.tenantId })
-          .andWhere('order.createdAt >= :startDate', { startDate })
-          .andWhere('order.createdAt <= :endDate', { endDate })
+          .where('order.tenant_id = :tenantId', { tenantId: user.tenantId })
+          .andWhere('order.created_at >= :startDate', { startDate })
+          .andWhere('order.created_at <= :endDate', { endDate })
           .andWhere('order.status != :cancelledStatus', { cancelledStatus: 'cancelled' })
-          .groupBy('DATE(order.createdAt)')
-          .orderBy('DATE(order.createdAt)', 'ASC')
+          .groupBy('DATE(order.created_at)')
+          .orderBy('DATE(order.created_at)', 'ASC')
           .getRawMany();
 
         return result.map((row) => ({
@@ -200,13 +200,13 @@ export class DashboardService {
 
         const result = await this.orderRepository
           .createQueryBuilder('order')
-          .select('DATE(order.createdAt)', 'date')
-          .addSelect('SUM(order.totalAmount)', 'revenue')
-          .where('order.tenantId = :tenantId', { tenantId: user.tenantId })
-          .andWhere('order.createdAt >= :startDate', { startDate })
+          .select('DATE(order.created_at)', 'date')
+          .addSelect('SUM(order.total_amount)', 'revenue')
+          .where('order.tenant_id = :tenantId', { tenantId: user.tenantId })
+          .andWhere('order.created_at >= :startDate', { startDate })
           .andWhere('order.status != :cancelledStatus', { cancelledStatus: 'cancelled' })
-          .groupBy('DATE(order.createdAt)')
-          .orderBy('DATE(order.createdAt)', 'ASC')
+          .groupBy('DATE(order.created_at)')
+          .orderBy('DATE(order.created_at)', 'ASC')
           .getRawMany();
 
         const values = labels.map(() => 0);
@@ -243,8 +243,8 @@ export class DashboardService {
         const products = await this.productRepository
           .createQueryBuilder('product')
           .select(['product.id', 'product.name'])
-          .where('product.tenantId = :tenantId', { tenantId: user.tenantId })
-          .orderBy('product.createdAt', 'DESC')
+          .where('product.tenant_id = :tenantId', { tenantId: user.tenantId })
+          .orderBy('product.created_at', 'DESC')
           .take(limit)
           .getMany();
 
@@ -268,16 +268,16 @@ export class DashboardService {
 
         const result = await this.orderRepository
           .createQueryBuilder('order')
-          .select('order.customerId', 'id')
+          .select('order.customer_id', 'id')
           .addSelect('customer.name', 'name')
-          .addSelect('SUM(order.totalAmount)', 'totalSpent')
+          .addSelect('SUM(order.total_amount)', 'totalSpent')
           .addSelect('COUNT(order.id)', 'orderCount')
           .leftJoin('order.customer', 'customer')
-          .where('order.tenantId = :tenantId', { tenantId: user.tenantId })
+          .where('order.tenant_id = :tenantId', { tenantId: user.tenantId })
           .andWhere('order.status != :cancelledStatus', { cancelledStatus: 'cancelled' })
-          .groupBy('order.customerId')
+          .groupBy('order.customer_id')
           .addGroupBy('customer.name')
-          .orderBy('SUM(order.totalAmount)', 'DESC')
+          .orderBy('SUM(order.total_amount)', 'DESC')
           .take(limit)
           .getRawMany();
 
@@ -322,8 +322,8 @@ export class DashboardService {
             'customer.name',
           ])
           .leftJoin('order.customer', 'customer')
-          .where('order.tenantId = :tenantId', { tenantId: user.tenantId })
-          .orderBy('order.createdAt', 'DESC')
+          .where('order.tenant_id = :tenantId', { tenantId: user.tenantId })
+          .orderBy('order.created_at', 'DESC')
           .take(limit)
           .getMany();
 
@@ -360,8 +360,8 @@ export class DashboardService {
             'product.sku',
           ])
           .leftJoin('inv.product', 'product')
-          .where('inv.tenantId = :tenantId', { tenantId: user.tenantId })
-          .andWhere('inv.quantity <= inv.reorderPoint')
+          .where('inv.tenant_id = :tenantId', { tenantId: user.tenantId })
+          .andWhere('inv.quantity <= inv.reorder_point')
           .orderBy('inv.quantity', 'ASC')
           .take(limit)
           .getMany();
@@ -447,10 +447,10 @@ export class DashboardService {
   private async calculateRevenue(user: User, startDate: Date, endDate: Date): Promise<number> {
     const result = await this.orderRepository
       .createQueryBuilder('order')
-      .select('SUM(order.totalAmount)', 'total')
-      .where('order.tenantId = :tenantId', { tenantId: user.tenantId })
-      .andWhere('order.createdAt >= :startDate', { startDate })
-      .andWhere('order.createdAt <= :endDate', { endDate })
+      .select('SUM(order.total_amount)', 'total')
+      .where('order.tenant_id = :tenantId', { tenantId: user.tenantId })
+      .andWhere('order.created_at >= :startDate', { startDate })
+      .andWhere('order.created_at <= :endDate', { endDate })
       .andWhere('order.status != :cancelledStatus', { cancelledStatus: 'cancelled' })
       .getRawOne();
 
@@ -460,9 +460,9 @@ export class DashboardService {
   private async countOrders(user: User, startDate: Date, endDate: Date): Promise<number> {
     return this.orderRepository
       .createQueryBuilder('order')
-      .where('order.tenantId = :tenantId', { tenantId: user.tenantId })
-      .andWhere('order.createdAt >= :startDate', { startDate })
-      .andWhere('order.createdAt <= :endDate', { endDate })
+      .where('order.tenant_id = :tenantId', { tenantId: user.tenantId })
+      .andWhere('order.created_at >= :startDate', { startDate })
+      .andWhere('order.created_at <= :endDate', { endDate })
       .getCount();
   }
 
@@ -473,8 +473,8 @@ export class DashboardService {
   private async calculateInventoryValue(user: User): Promise<number> {
     const result = await this.inventoryRepository
       .createQueryBuilder('inv')
-      .select('SUM(inv.totalValue)', 'total')
-      .where('inv.tenantId = :tenantId', { tenantId: user.tenantId })
+      .select('SUM(inv.total_value)', 'total')
+      .where('inv.tenant_id = :tenantId', { tenantId: user.tenantId })
       .getRawOne();
 
     return Number(result?.total) || 0;
@@ -483,8 +483,8 @@ export class DashboardService {
   private async countLowStock(user: User): Promise<number> {
     return this.inventoryRepository
       .createQueryBuilder('inv')
-      .where('inv.tenantId = :tenantId', { tenantId: user.tenantId })
-      .andWhere('inv.quantity <= inv.reorderPoint')
+      .where('inv.tenant_id = :tenantId', { tenantId: user.tenantId })
+      .andWhere('inv.quantity <= inv.reorder_point')
       .andWhere('inv.quantity > 0')
       .getCount();
   }
@@ -498,9 +498,9 @@ export class DashboardService {
   private async countNewCustomers(user: User, startDate: Date, endDate: Date): Promise<number> {
     return this.customerRepository
       .createQueryBuilder('customer')
-      .where('customer.tenantId = :tenantId', { tenantId: user.tenantId })
-      .andWhere('customer.createdAt >= :startDate', { startDate })
-      .andWhere('customer.createdAt <= :endDate', { endDate })
+      .where('customer.tenant_id = :tenantId', { tenantId: user.tenantId })
+      .andWhere('customer.created_at >= :startDate', { startDate })
+      .andWhere('customer.created_at <= :endDate', { endDate })
       .getCount();
   }
 
@@ -508,7 +508,7 @@ export class DashboardService {
     const result = await this.paymentRepository
       .createQueryBuilder('payment')
       .select('SUM(payment.amount)', 'total')
-      .where('payment.tenantId = :tenantId', { tenantId: user.tenantId })
+      .where('payment.tenant_id = :tenantId', { tenantId: user.tenantId })
       .getRawOne();
 
     return Number(result?.total) || 0;
