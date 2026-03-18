@@ -260,7 +260,7 @@ export default function LoginPage() {
                 >
                   <Input
                     prefix={<MailOutlined />}
-                    placeholder="admin@demo.com"
+                    placeholder="admin@test.com"
                     size="large"
                     disabled={loginMutation.isPending}
                     type="email"
@@ -345,7 +345,7 @@ export default function LoginPage() {
                 {t('auth:login.demoAccount')}
               </Title>
               <Space direction="vertical" size="small">
-                <Text>📧 Email: admin@demo.com</Text>
+                <Text>📧 Email: admin@test.com</Text>
                 <Text>🔑 Password: admin123</Text>
               </Space>
             </Card>
