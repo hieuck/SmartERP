@@ -1,6 +1,6 @@
 import { Page } from '@playwright/test';
 
-const API_BASE = process.env.E2E_API_URL || 'http://localhost:3000/api';
+const API_BASE = process.env.E2E_API_URL || 'http://127.0.0.1:3000/api';
 
 /**
  * Login via API, inject credentials into sessionStorage BEFORE navigating.
