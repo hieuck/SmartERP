@@ -1,29 +1,29 @@
 import {
-  Controller,
-  Post,
-  Get,
+  BadRequestException,
   Body,
-  UseGuards,
-  Request,
-  Query,
+  Controller,
+  Get,
   HttpCode,
   HttpStatus,
-  BadRequestException,
-  UnauthorizedException,
   Logger,
+  Post,
+  Query,
+  Request,
+  UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBody, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
-import { LocalAuthGuard } from './guards/local-auth.guard';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { RegisterTenantDto } from './dto/register-tenant.dto';
 import { RegisterDto } from './dto/register.dto';
-import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
-import { RefreshTokenDto } from './dto/refresh-token.dto';
-import { TokenBlacklistService } from './services/token-blacklist.service';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { LocalAuthGuard } from './guards/local-auth.guard';
 import { AccountLockoutService } from './services/account-lockout.service';
+import { TokenBlacklistService } from './services/token-blacklist.service';
 
 class LoginDto {
   email: string;
@@ -108,6 +108,14 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get user profile' })
   async getProfile(@Request() req) {
+    return req.user;
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get current user info' })
+  async getMe(@Request() req) {
     return req.user;
   }
 
