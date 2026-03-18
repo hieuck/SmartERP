@@ -1,9 +1,9 @@
-import { Page, Locator } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 import { BasePage } from './BasePage';
 
 /**
  * LoginPage - Page Object Model for Login page
- * 
+ *
  * Handles:
  * - User login with email and password
  * - Form validation
@@ -23,13 +23,15 @@ export class LoginPage extends BasePage {
 
   constructor(page: Page) {
     super(page);
-    
-    // Initialize locators using data-testid (semantic selectors)
-    this.emailInput = page.locator('[data-testid="email-input"]');
-    this.passwordInput = page.locator('[data-testid="password-input"]');
-    this.submitButton = page.locator('[data-testid="submit-button"]');
-    this.errorMessage = page.locator('[data-testid="error-message"]');
-    
+
+    // Ant Design Form uses id prefix from form name — fallback to input type
+    this.emailInput = page.locator('#login_email, input[type="email"]').first();
+    this.passwordInput = page.locator('#login_password, input[type="password"]').first();
+    this.submitButton = page.locator('button[type="submit"]').first();
+    this.errorMessage = page
+      .locator('.ant-alert-error, .ant-message-error, [role="alert"]')
+      .first();
+
     // Fallback to other selectors if data-testid not available
     this.rememberMeCheckbox = page.locator('input[type="checkbox"]').first();
     this.forgotPasswordLink = page.locator('a:has-text("Forgot Password")');
@@ -50,13 +52,13 @@ export class LoginPage extends BasePage {
   async login(email: string, password: string, rememberMe = false) {
     await this.fillInput(this.emailInput, email);
     await this.fillInput(this.passwordInput, password);
-    
+
     if (rememberMe) {
       await this.rememberMeCheckbox.check();
     }
-    
+
     await this.clickButton(this.submitButton);
-    
+
     // Wait for either success (redirect to dashboard) or error message
     await Promise.race([
       this.page.waitForURL('/dashboard', { timeout: 10000 }),
@@ -70,11 +72,11 @@ export class LoginPage extends BasePage {
   async loginWithApiWait(email: string, password: string) {
     await this.fillInput(this.emailInput, email);
     await this.fillInput(this.passwordInput, password);
-    
+
     // Wait for login API call
     const responsePromise = this.waitForApiResponse('/api/auth/login');
     await this.clickButton(this.submitButton);
-    
+
     const response = await responsePromise;
     return response;
   }

@@ -9,11 +9,13 @@ import {
   Post,
   Query,
   Request,
+  Res,
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
+import { Response as ExpressResponse } from 'express';
 import { AuthService } from './auth.service';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
@@ -47,7 +49,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'User login' })
   @ApiBody({ type: LoginDto })
-  async login(@Request() req) {
+  async login(@Request() req, @Res({ passthrough: true }) res: ExpressResponse) {
     const email = req.user?.email;
 
     // Check if account is locked
@@ -61,7 +63,18 @@ export class AuthController {
     // Reset failed attempts on successful login
     await this.accountLockoutService.resetAttempts(email);
 
-    return this.authService.login(req.user);
+    const result = await this.authService.login(req.user);
+
+    // Set refresh token as httpOnly cookie (7d)
+    res.cookie('refreshToken', result.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in ms
+    });
+
+    const { refreshToken: _rt, ...response } = result;
+    return response;
   }
 
   @UseGuards(ThrottlerGuard)
@@ -183,8 +196,13 @@ export class AuthController {
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Post('refresh')
   @ApiOperation({ summary: 'Refresh access token' })
-  @ApiBody({ type: RefreshTokenDto })
-  async refresh(@Body() refreshTokenDto: RefreshTokenDto) {
-    return this.authService.refreshToken(refreshTokenDto.refreshToken);
+  @ApiBody({ type: RefreshTokenDto, required: false })
+  async refresh(@Request() req, @Body() refreshTokenDto?: RefreshTokenDto) {
+    // Accept refresh token from httpOnly cookie (preferred) or request body (fallback)
+    const token = req.cookies?.refreshToken || refreshTokenDto?.refreshToken;
+    if (!token) {
+      throw new UnauthorizedException('Refresh token not provided');
+    }
+    return this.authService.refreshToken(token);
   }
 }

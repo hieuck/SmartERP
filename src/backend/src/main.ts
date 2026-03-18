@@ -49,6 +49,10 @@ async function bootstrap() {
 
   logger.log('🔒 Security headers enabled (Helmet.js)');
 
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  app.use(require('cookie-parser')()); // cookie-parser for httpOnly cookie support
+  logger.log('🍪 Cookie parser enabled');
+
   app.use(compression());
   logger.log('📦 Response compression enabled');
 

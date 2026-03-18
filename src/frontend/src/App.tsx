@@ -1,13 +1,13 @@
 import { App as AntApp, ConfigProvider, Spin } from 'antd';
+import axios from 'axios';
 import { useEffect, useState } from 'react';
-import { BrowserRouter } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { useLocale } from './hooks/useLocale';
+import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider, useThemeContext } from './contexts/ThemeContext';
+import { useLocale } from './hooks/useLocale';
+import { logger } from './lib/logger/logger.service';
 import { AppRoutes } from './routes';
 import { setCredentials } from './store/slices/authSlice';
-import { authService } from './services/auth/authService';
-import { logger } from './lib/logger/logger.service';
 
 /**
  * App content component (wrapped by ThemeProvider)
@@ -19,24 +19,33 @@ function AppContent() {
   const [isInitializing, setIsInitializing] = useState(true);
 
   /**
-   * Initialize auth state on mount
-   * Attempts to restore session from refresh token (httpOnly cookie)
+   * Initialize auth state on mount.
+   * Uses refresh token cookie directly via raw axios to avoid triggering
+   * the axios interceptor redirect loop when no access token exists yet.
    */
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        // Try to get current user from refresh token cookie
-        const response = await authService.getMe();
-        
-        if (response.success && response.data) {
-          // Session is valid - restore auth state
-          dispatch(setCredentials({
-            user: response.data.user,
-            accessToken: response.data.token,
-          }));
+        // E2E test injection: check sessionStorage for pre-injected credentials
+        const e2eToken = sessionStorage.getItem('e2e_access_token');
+        const e2eUser = sessionStorage.getItem('e2e_user');
+        if (e2eToken && e2eUser) {
+          dispatch(setCredentials({ user: JSON.parse(e2eUser), accessToken: e2eToken }));
+          logger.info('App', 'E2E session restored');
+          return;
+        }
+
+        const apiUrl = import.meta.env.VITE_API_URL || '/api';
+        const response = await axios.post(`${apiUrl}/auth/refresh`, {}, { withCredentials: true });
+
+        const payload = response.data?.data || response.data;
+        const { accessToken: newAccessToken, user } = payload;
+
+        if (newAccessToken && user) {
+          dispatch(setCredentials({ user, accessToken: newAccessToken }));
           logger.info('App', 'Session restored successfully');
         }
-      } catch (error) {
+      } catch {
         // No valid session - user needs to login
         logger.info('App', 'No valid session found');
       } finally {
@@ -47,7 +56,6 @@ function AppContent() {
     initializeAuth();
   }, [dispatch]);
 
-  // Show loading spinner while checking session
   if (isInitializing) {
     return (
       <div
@@ -58,7 +66,7 @@ function AppContent() {
           height: '100vh',
         }}
       >
-        <Spin size="large" tip="Loading..." />
+        <Spin size="large" description="Loading..." />
       </div>
     );
   }
@@ -74,11 +82,6 @@ function AppContent() {
   );
 }
 
-/**
- * Main App component
- * Provides global configuration and routing
- * Handles session restoration on mount
- */
 function App() {
   return (
     <ThemeProvider>

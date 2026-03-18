@@ -14,14 +14,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
 import { DataSource, Repository } from 'typeorm';
+import { Tenant } from '../tenant/entities/tenant.entity';
 import { SubscriptionPlan } from '../tenant/enums/subscription-plan.enum';
 import { TenantStatus } from '../tenant/enums/tenant-status.enum';
-import { Tenant } from '../tenant/entities/tenant.entity';
 import { User as UserEntity } from '../user/entities/user.entity';
 import { RegisterTenantDto } from './dto/register-tenant.dto';
+import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { AccountLockoutService } from './services/account-lockout.service';
 import { TokenBlacklistService } from './services/token-blacklist.service';
-import { JwtPayload } from './interfaces/jwt-payload.interface';
 
 @Injectable()
 export class AuthService {
@@ -131,9 +131,9 @@ export class AuthService {
   }
 
   /**
-   * Login user and generate JWT token
+   * Login user and generate JWT tokens
    * @param user User object from validateUser
-   * @returns Access token and user info with tenantId
+   * @returns Access token, refresh token, and user info with tenantId
    */
   async login(user: Omit<UserEntity, 'password'>) {
     // Create JWT payload with tenantId
@@ -141,22 +141,23 @@ export class AuthService {
       email: user.email,
       sub: user.id,
       userId: user.id,
-      tenantId: user.tenantId, // ← CRITICAL: Include tenantId in JWT
+      tenantId: user.tenantId,
       role: user.role,
     };
 
-    // Generate JWT token
-    const accessToken = this.jwtService.sign(payload);
+    // Generate access token (15m) and refresh token (7d)
+    const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
+    const refreshToken = this.jwtService.sign({ sub: user.id }, { expiresIn: '7d' });
 
-    // Return token and user info
     return {
-      token: accessToken, // ← Changed from access_token to token (match E2E tests)
+      token: accessToken,
+      refreshToken,
       user: {
         id: user.id,
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
-        tenantId: user.tenantId, // ← CRITICAL: Return tenantId to client
+        tenantId: user.tenantId,
         role: user.role,
       },
     };
@@ -286,7 +287,17 @@ export class AuthService {
    * @param refreshToken Refresh token
    * @returns New access token
    */
-  async refreshToken(refreshToken: string): Promise<{ accessToken: string }> {
+  async refreshToken(refreshToken: string): Promise<{
+    accessToken: string;
+    user: {
+      id: string;
+      email: string;
+      firstName?: string;
+      lastName?: string;
+      tenantId: string;
+      role: string;
+    };
+  }> {
     try {
       // Verify refresh token signature
       const payload = this.jwtService.verify(refreshToken);
@@ -340,6 +351,14 @@ export class AuthService {
 
       return {
         accessToken: this.jwtService.sign(newPayload, { expiresIn: '15m' }),
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          tenantId: user.tenantId,
+          role: user.role,
+        },
       };
     } catch (error) {
       if (error instanceof UnauthorizedException) {

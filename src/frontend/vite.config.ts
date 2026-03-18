@@ -1,6 +1,6 @@
-import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
+import { defineConfig } from 'vite';
 import tsconfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig({
@@ -16,8 +16,9 @@ export default defineConfig({
     port: parseInt(process.env.VITE_PORT || process.env.PORT || '5173'),
     proxy: {
       '/api': {
-        target: process.env.VITE_API_URL || 'http://localhost:3000',
-        changeOrigin: true,
+        target: 'http://localhost:3000',
+        changeOrigin: false, // keep original host so cookies work
+        cookieDomainRewrite: 'localhost',
       },
       '/ws': {
         target: process.env.VITE_WS_URL || 'ws://localhost:3000',
@@ -34,7 +35,11 @@ export default defineConfig({
         manualChunks: (id: string) => {
           // Vendor chunks
           if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
+            if (
+              id.includes('react') ||
+              id.includes('react-dom') ||
+              id.includes('react-router-dom')
+            ) {
               return 'react-vendor';
             }
             if (id.includes('@reduxjs/toolkit') || id.includes('react-redux')) {
@@ -49,15 +54,28 @@ export default defineConfig({
             if (id.includes('recharts')) {
               return 'chart-vendor';
             }
-            if (id.includes('react-hook-form') || id.includes('@hookform/resolvers') || id.includes('zod')) {
+            if (
+              id.includes('react-hook-form') ||
+              id.includes('@hookform/resolvers') ||
+              id.includes('zod')
+            ) {
               return 'form-vendor';
             }
           }
           // Feature chunks
-          if (id.includes('SalesOrderList') || id.includes('SalesOrderForm') || id.includes('PurchaseOrderList') || id.includes('PurchaseOrderForm')) {
+          if (
+            id.includes('SalesOrderList') ||
+            id.includes('SalesOrderForm') ||
+            id.includes('PurchaseOrderList') ||
+            id.includes('PurchaseOrderForm')
+          ) {
             return 'orders';
           }
-          if (id.includes('StockList') || id.includes('StockReceiptList') || id.includes('StockReceiptForm')) {
+          if (
+            id.includes('StockList') ||
+            id.includes('StockReceiptList') ||
+            id.includes('StockReceiptForm')
+          ) {
             return 'inventory';
           }
           if (id.includes('ReportsPage')) {

@@ -1,6 +1,6 @@
-import axios, { InternalAxiosRequestConfig } from 'axios';
 import { store } from '@/store';
 import { clearCredentials, updateAccessToken } from '@/store/slices/authSlice';
+import axios, { InternalAxiosRequestConfig } from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
@@ -89,7 +89,7 @@ api.interceptors.response.use(
           { withCredentials: true },
         );
 
-        const { token: newAccessToken } = response.data;
+        const { accessToken: newAccessToken } = response.data?.data || response.data;
 
         // Update Redux store with new access token
         store.dispatch(updateAccessToken(newAccessToken));
@@ -103,12 +103,14 @@ api.interceptors.response.use(
         // Retry original request
         return api(originalRequest);
       } catch (refreshError) {
-        // Refresh failed - clear credentials and redirect to login
+        // Refresh failed - clear credentials
         store.dispatch(clearCredentials());
         processQueue(refreshError, undefined);
 
-        // Redirect to login page
-        window.location.href = '/login';
+        // Only redirect if not already on login page to prevent infinite loop
+        if (!window.location.pathname.includes('/login')) {
+          window.location.href = '/login';
+        }
 
         return Promise.reject(refreshError);
       } finally {

@@ -178,7 +178,15 @@ export function AppRoutes() {
           }
         />
 
-        {/* Inventory */}
+        {/* Inventory — /inventory redirects to stock list; also supports bare /inventory path */}
+        <Route
+          path="inventory"
+          element={
+            <LazyRoute>
+              <StockList />
+            </LazyRoute>
+          }
+        />
         <Route
           path="inventory/stock"
           element={
@@ -246,7 +254,7 @@ export function AppRoutes() {
           }
         />
 
-        {/* Suppliers */}
+        {/* Suppliers — also accessible under purchasing/ prefix */}
         <Route
           path="suppliers"
           element={
@@ -265,6 +273,30 @@ export function AppRoutes() {
         />
         <Route
           path="suppliers/:id"
+          element={
+            <LazyRoute>
+              <SupplierForm />
+            </LazyRoute>
+          }
+        />
+        <Route
+          path="purchasing/suppliers"
+          element={
+            <LazyRoute>
+              <SupplierList />
+            </LazyRoute>
+          }
+        />
+        <Route
+          path="purchasing/suppliers/new"
+          element={
+            <LazyRoute>
+              <SupplierForm />
+            </LazyRoute>
+          }
+        />
+        <Route
+          path="purchasing/suppliers/:id"
           element={
             <LazyRoute>
               <SupplierForm />
@@ -612,9 +644,17 @@ export function AppRoutes() {
           }
         />
 
-        {/* Invoices */}
+        {/* Invoices — also accessible under accounting/ prefix */}
         <Route
           path="invoices"
+          element={
+            <LazyRoute>
+              <InvoiceList />
+            </LazyRoute>
+          }
+        />
+        <Route
+          path="accounting/invoices"
           element={
             <LazyRoute>
               <InvoiceList />
@@ -638,9 +678,17 @@ export function AppRoutes() {
           }
         />
 
-        {/* Payments */}
+        {/* Payments — also accessible under accounting/ prefix */}
         <Route
           path="payments"
+          element={
+            <LazyRoute>
+              <PaymentList />
+            </LazyRoute>
+          }
+        />
+        <Route
+          path="accounting/payments"
           element={
             <LazyRoute>
               <PaymentList />

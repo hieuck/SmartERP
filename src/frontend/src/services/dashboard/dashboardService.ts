@@ -60,27 +60,27 @@ export interface RevenueByCategory {
 export const dashboardService = {
   getOverview: async (): Promise<DashboardOverview> => {
     const response = await api.get('/dashboard/overview');
-    return response.data;
+    return response.data?.data ?? response.data;
   },
 
   getSalesChart: async (days: number = 30): Promise<SalesChartData[]> => {
     const response = await api.get('/dashboard/sales-chart', { params: { days } });
-    return response.data;
+    return response.data?.data ?? response.data;
   },
 
   getTopProducts: async (limit: number = 10): Promise<TopProduct[]> => {
     const response = await api.get('/dashboard/top-products', { params: { limit } });
-    return response.data;
+    return response.data?.data ?? response.data;
   },
 
   getTopCustomers: async (limit: number = 10): Promise<TopCustomer[]> => {
     const response = await api.get('/dashboard/top-customers', { params: { limit } });
-    return response.data;
+    return response.data?.data ?? response.data;
   },
 
   getRevenueByCategory: async (): Promise<RevenueByCategory[]> => {
     const response = await api.get('/dashboard/revenue-by-category');
-    return response.data;
+    return response.data?.data ?? response.data;
   },
 };
 
