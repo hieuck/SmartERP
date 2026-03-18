@@ -65,22 +65,26 @@ export const dashboardService = {
 
   getSalesChart: async (days: number = 30): Promise<SalesChartData[]> => {
     const response = await api.get('/dashboard/sales-chart', { params: { days } });
-    return response.data?.data ?? response.data;
+    const data = response.data?.data !== undefined ? response.data.data : response.data;
+    return Array.isArray(data) ? data : [];
   },
 
   getTopProducts: async (limit: number = 10): Promise<TopProduct[]> => {
     const response = await api.get('/dashboard/top-products', { params: { limit } });
-    return response.data?.data ?? response.data;
+    const data = response.data?.data !== undefined ? response.data.data : response.data;
+    return Array.isArray(data) ? data : [];
   },
 
   getTopCustomers: async (limit: number = 10): Promise<TopCustomer[]> => {
     const response = await api.get('/dashboard/top-customers', { params: { limit } });
-    return response.data?.data ?? response.data;
+    const data = response.data?.data !== undefined ? response.data.data : response.data;
+    return Array.isArray(data) ? data : [];
   },
 
   getRevenueByCategory: async (): Promise<RevenueByCategory[]> => {
     const response = await api.get('/dashboard/revenue-by-category');
-    return response.data?.data ?? response.data;
+    const data = response.data?.data !== undefined ? response.data.data : response.data;
+    return Array.isArray(data) ? data : [];
   },
 };
 

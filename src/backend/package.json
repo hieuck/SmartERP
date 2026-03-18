@@ -31,6 +31,7 @@
     "config:check-env": "ts-node ../../scripts/check-env.ts"
   },
   "dependencies": {
+    "@keyv/redis": "^5.1.6",
     "@nestjs/cache-manager": "^3.1.0",
     "@nestjs/common": "^10.2.0",
     "@nestjs/config": "^4.0.3",
@@ -49,8 +50,8 @@
     "@types/qrcode": "^1.5.6",
     "bcrypt": "^5.1.1",
     "bwip-js": "^4.8.0",
-    "cache-manager": "^5.2.3",
-    "cache-manager-redis-yet": "^4.1.2",
+    "cache-manager": "^6.4.3",
+    "cache-manager-redis-yet": "^5.1.5",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
     "compression": "^1.8.1",

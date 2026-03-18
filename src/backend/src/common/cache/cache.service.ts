@@ -1,5 +1,5 @@
-import { Injectable, Inject, Logger } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Cache } from 'cache-manager';
 import { CacheTTL, generateCacheKey } from './cache.config';
 
@@ -80,7 +80,12 @@ export class CacheService {
    */
   async reset(): Promise<void> {
     try {
-      await this.cacheManager.reset();
+      // cache-manager v6 removed reset() — clear() is the replacement
+      if (
+        typeof (this.cacheManager as unknown as { clear: () => Promise<void> }).clear === 'function'
+      ) {
+        await (this.cacheManager as unknown as { clear: () => Promise<void> }).clear();
+      }
       this.logger.warn('Cache RESET: All keys deleted');
     } catch (error) {
       this.logger.error('Cache RESET error:', error);

@@ -1,17 +1,10 @@
+import KeyvRedis from '@keyv/redis';
 import { CacheModuleOptions } from '@nestjs/cache-manager';
-import { ConfigService } from '@nestjs/config';
 import { Logger } from '@nestjs/common';
-import { redisStore } from 'cache-manager-redis-yet';
-import type { RedisClientOptions } from 'redis';
+import { ConfigService } from '@nestjs/config';
 
 /**
- * Redis Cache Configuration
- *
- * Features:
- * - Redis-based caching for high performance
- * - Configurable TTL (Time To Live)
- * - Connection pooling
- * - Error handling with fallback
+ * Redis Cache Configuration (cache-manager v6 + @keyv/redis)
  *
  * Environment Variables:
  * - REDIS_HOST: Redis server host (default: localhost)
@@ -19,48 +12,27 @@ import type { RedisClientOptions } from 'redis';
  * - REDIS_PASSWORD: Redis password (optional)
  * - REDIS_DB: Redis database number (default: 0)
  * - CACHE_TTL: Default cache TTL in seconds (default: 300 = 5 minutes)
- * - CACHE_MAX: Maximum number of items in cache (default: 100)
  */
-export const getCacheConfig = async (
-  configService: ConfigService,
-): Promise<CacheModuleOptions<RedisClientOptions>> => {
+export const getCacheConfig = async (configService: ConfigService): Promise<CacheModuleOptions> => {
   const logger = new Logger('CacheConfig');
   const redisHost = configService.get<string>('REDIS_HOST', 'localhost');
   const redisPort = configService.get<number>('REDIS_PORT', 6379);
   const redisPassword = configService.get<string>('REDIS_PASSWORD');
   const redisDb = configService.get<number>('REDIS_DB', 0);
-  const cacheTtl = configService.get<number>('CACHE_TTL', 300); // 5 minutes default
-  const cacheMax = configService.get<number>('CACHE_MAX', 100);
+  const cacheTtl = configService.get<number>('CACHE_TTL', 300); // seconds
 
-  const MAX_REDIS_RETRIES = 3;
+  const redisUrl = redisPassword
+    ? `redis://:${redisPassword}@${redisHost}:${redisPort}/${redisDb}`
+    : `redis://${redisHost}:${redisPort}/${redisDb}`;
+
+  logger.log(`CacheConfig: connecting to Redis at ${redisHost}:${redisPort}`);
+
+  const store = new KeyvRedis(redisUrl);
 
   return {
-    store: await redisStore({
-      socket: {
-        host: redisHost,
-        port: redisPort,
-        reconnectStrategy: (retries: number) => {
-          if (retries > MAX_REDIS_RETRIES) {
-            // Stop retrying after max attempts
-            logger.error(`Redis connection failed after ${MAX_REDIS_RETRIES} attempts`);
-            return false;
-          }
-          // Exponential backoff: 100ms, 200ms, 400ms
-          const BACKOFF_BASE_MS = 100;
-          const MAX_BACKOFF_MS = 3000;
-          return Math.min(retries * BACKOFF_BASE_MS, MAX_BACKOFF_MS);
-        },
-      },
-      password: redisPassword,
-      database: redisDb,
-      // Connection options
-      // lazyConnect: true, // Connect on first use - deprecated in redis v4
-      disableOfflineQueue: false, // Queue commands when offline
-    }),
-    ttl: cacheTtl * 1000, // Convert to milliseconds
-    max: cacheMax,
-    // Global cache options
-    isGlobal: true, // Make cache available globally
+    stores: [store],
+    ttl: cacheTtl * 1000, // cache-manager v6 uses milliseconds
+    isGlobal: true,
   };
 };
 

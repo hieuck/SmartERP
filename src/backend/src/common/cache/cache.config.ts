@@ -1,9 +1,9 @@
+import KeyvRedis from '@keyv/redis';
 import { CacheModuleOptions } from '@nestjs/cache-manager';
 import { ConfigService } from '@nestjs/config';
-import { redisStore } from 'cache-manager-redis-yet';
 
 /**
- * Cache Configuration
+ * Cache Configuration (cache-manager v6 + @keyv/redis)
  *
  * Implements Redis-based caching with:
  * - Multi-tenant isolation
@@ -18,15 +18,15 @@ export const getCacheConfig = async (configService: ConfigService): Promise<Cach
   const redisPassword = configService.get<string>('REDIS_PASSWORD');
   const redisTtl = configService.get<number>('REDIS_TTL', 3600); // 1 hour default
 
+  const redisUrl = redisPassword
+    ? `redis://:${redisPassword}@${redisHost}:${redisPort}`
+    : `redis://${redisHost}:${redisPort}`;
+
+  const store = new KeyvRedis(redisUrl);
+
   return {
-    store: await redisStore({
-      socket: {
-        host: redisHost,
-        port: redisPort,
-      },
-      password: redisPassword,
-      ttl: redisTtl * 1000, // Convert to milliseconds
-    }),
+    stores: [store],
+    ttl: redisTtl * 1000, // cache-manager v6 uses milliseconds
     isGlobal: true,
   };
 };
