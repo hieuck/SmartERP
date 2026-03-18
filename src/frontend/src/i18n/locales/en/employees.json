@@ -1,0 +1,51 @@
+{
+  "title": "Employees",
+  "createButton": "New Employee",
+  "searchPlaceholder": "Search by name, email or employee code...",
+  "columns": {
+    "code": "Employee Code",
+    "name": "Full Name",
+    "email": "Email",
+    "phone": "Phone",
+    "department": "Department",
+    "position": "Position",
+    "status": "Status",
+    "hireDate": "Hire Date"
+  },
+  "status": {
+    "active": "Active",
+    "inactive": "Inactive",
+    "on_leave": "On Leave",
+    "terminated": "Terminated"
+  },
+  "form": {
+    "title_create": "New Employee",
+    "title_edit": "Edit Employee",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "email": "Email",
+    "phone": "Phone",
+    "department": "Department",
+    "position": "Position",
+    "hireDate": "Hire Date",
+    "salary": "Base Salary",
+    "status": "Status",
+    "address": "Address",
+    "dateOfBirth": "Date of Birth",
+    "gender": "Gender",
+    "gender_male": "Male",
+    "gender_female": "Female",
+    "gender_other": "Other"
+  },
+  "messages": {
+    "loadError": "Failed to load employees",
+    "createSuccess": "Employee created successfully",
+    "createError": "Failed to create employee",
+    "updateSuccess": "Employee updated successfully",
+    "updateError": "Failed to update employee",
+    "deleteSuccess": "Employee deleted successfully",
+    "deleteError": "Failed to delete employee",
+    "deleteConfirm": "Are you sure you want to delete this employee?",
+    "total": "Total {{total}} employees"
+  }
+}

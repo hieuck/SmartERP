@@ -1,0 +1,51 @@
+{
+  "title": "Nhân viên",
+  "createButton": "Thêm nhân viên",
+  "searchPlaceholder": "Tìm theo tên, email hoặc mã nhân viên...",
+  "columns": {
+    "code": "Mã nhân viên",
+    "name": "Họ và tên",
+    "email": "Email",
+    "phone": "Điện thoại",
+    "department": "Phòng ban",
+    "position": "Chức vụ",
+    "status": "Trạng thái",
+    "hireDate": "Ngày vào làm"
+  },
+  "status": {
+    "active": "Đang làm việc",
+    "inactive": "Không hoạt động",
+    "on_leave": "Đang nghỉ phép",
+    "terminated": "Đã nghỉ việc"
+  },
+  "form": {
+    "title_create": "Thêm nhân viên mới",
+    "title_edit": "Chỉnh sửa nhân viên",
+    "firstName": "Tên",
+    "lastName": "Họ",
+    "email": "Email",
+    "phone": "Điện thoại",
+    "department": "Phòng ban",
+    "position": "Chức vụ",
+    "hireDate": "Ngày vào làm",
+    "salary": "Lương cơ bản",
+    "status": "Trạng thái",
+    "address": "Địa chỉ",
+    "dateOfBirth": "Ngày sinh",
+    "gender": "Giới tính",
+    "gender_male": "Nam",
+    "gender_female": "Nữ",
+    "gender_other": "Khác"
+  },
+  "messages": {
+    "loadError": "Không thể tải danh sách nhân viên",
+    "createSuccess": "Tạo nhân viên thành công",
+    "createError": "Không thể tạo nhân viên",
+    "updateSuccess": "Cập nhật nhân viên thành công",
+    "updateError": "Không thể cập nhật nhân viên",
+    "deleteSuccess": "Xóa nhân viên thành công",
+    "deleteError": "Không thể xóa nhân viên",
+    "deleteConfirm": "Bạn có chắc muốn xóa nhân viên này?",
+    "total": "Tổng {{total}} nhân viên"
+  }
+}

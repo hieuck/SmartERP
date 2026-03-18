@@ -1,0 +1,68 @@
+{
+  "title": "Dự án",
+  "createButton": "Tạo dự án mới",
+  "searchPlaceholder": "Tìm theo tên hoặc mã dự án...",
+  "columns": {
+    "code": "Mã dự án",
+    "name": "Tên dự án",
+    "manager": "Quản lý dự án",
+    "startDate": "Ngày bắt đầu",
+    "endDate": "Ngày kết thúc",
+    "budget": "Ngân sách",
+    "progress": "Tiến độ",
+    "status": "Trạng thái"
+  },
+  "status": {
+    "planning": "Lên kế hoạch",
+    "active": "Đang thực hiện",
+    "on_hold": "Tạm dừng",
+    "completed": "Hoàn thành",
+    "cancelled": "Đã hủy"
+  },
+  "form": {
+    "title_create": "Tạo dự án mới",
+    "title_edit": "Chỉnh sửa dự án",
+    "code": "Mã dự án",
+    "name": "Tên dự án",
+    "description": "Mô tả",
+    "managerId": "Quản lý dự án",
+    "startDate": "Ngày bắt đầu",
+    "endDate": "Ngày kết thúc",
+    "budget": "Ngân sách",
+    "status": "Trạng thái"
+  },
+  "tasks": {
+    "title": "Công việc",
+    "createButton": "Thêm công việc",
+    "columns": {
+      "title": "Tiêu đề",
+      "assignee": "Người thực hiện",
+      "dueDate": "Hạn hoàn thành",
+      "priority": "Ưu tiên",
+      "status": "Trạng thái"
+    },
+    "priority": {
+      "low": "Thấp",
+      "medium": "Trung bình",
+      "high": "Cao",
+      "critical": "Khẩn cấp"
+    },
+    "status": {
+      "todo": "Chưa làm",
+      "in_progress": "Đang làm",
+      "review": "Đang review",
+      "done": "Hoàn thành"
+    }
+  },
+  "messages": {
+    "loadError": "Không thể tải danh sách dự án",
+    "createSuccess": "Tạo dự án thành công",
+    "createError": "Không thể tạo dự án",
+    "updateSuccess": "Cập nhật dự án thành công",
+    "updateError": "Không thể cập nhật dự án",
+    "deleteSuccess": "Xóa dự án thành công",
+    "deleteError": "Không thể xóa dự án",
+    "deleteConfirm": "Bạn có chắc muốn xóa dự án này?",
+    "total": "Tổng {{total}} dự án"
+  }
+}

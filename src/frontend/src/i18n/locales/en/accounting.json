@@ -1,0 +1,83 @@
+{
+  "title": "Accounting",
+  "accounts": {
+    "title": "Chart of Accounts",
+    "createButton": "New Account",
+    "searchPlaceholder": "Search accounts...",
+    "columns": {
+      "code": "Code",
+      "name": "Account Name",
+      "type": "Type",
+      "balance": "Balance",
+      "isGroup": "Group"
+    },
+    "types": {
+      "asset": "Asset",
+      "liability": "Liability",
+      "equity": "Equity",
+      "revenue": "Revenue",
+      "expense": "Expense"
+    },
+    "form": {
+      "title_create": "New Account",
+      "title_edit": "Edit Account",
+      "code": "Account Code",
+      "name": "Account Name",
+      "type": "Account Type",
+      "parentId": "Parent Account",
+      "isGroup": "Group Account",
+      "description": "Description"
+    },
+    "messages": {
+      "loadError": "Failed to load accounts",
+      "createSuccess": "Account created successfully",
+      "createError": "Failed to create account",
+      "updateSuccess": "Account updated successfully",
+      "deleteSuccess": "Account deleted successfully",
+      "deleteConfirm": "Are you sure you want to delete this account?"
+    }
+  },
+  "journalEntries": {
+    "title": "Journal Entries",
+    "createButton": "New Entry",
+    "columns": {
+      "date": "Date",
+      "reference": "Reference",
+      "description": "Description",
+      "debit": "Debit",
+      "credit": "Credit",
+      "status": "Status"
+    },
+    "status": {
+      "draft": "Draft",
+      "posted": "Posted"
+    },
+    "form": {
+      "title_create": "New Journal Entry",
+      "date": "Date",
+      "reference": "Reference",
+      "description": "Description",
+      "lines": "Entry Lines",
+      "account": "Account",
+      "debit": "Debit",
+      "credit": "Credit"
+    },
+    "actions": {
+      "post": "Post Entry"
+    },
+    "messages": {
+      "loadError": "Failed to load journal entries",
+      "createSuccess": "Journal entry created",
+      "postSuccess": "Journal entry posted",
+      "deleteConfirm": "Are you sure you want to delete this entry?"
+    }
+  },
+  "reports": {
+    "balanceSheet": "Balance Sheet",
+    "profitLoss": "Profit & Loss",
+    "asOfDate": "As of Date",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "generate": "Generate Report"
+  }
+}

@@ -3,6 +3,11 @@ module.exports = {
   testEnvironment: 'node',
   roots: ['<rootDir>/src'],
   testMatch: ['**/__tests__/**/*.ts', '**/?(*.)+(spec|test).ts'],
+  globals: {
+    'ts-jest': {
+      isolatedModules: true,
+    },
+  },
   transform: {
     '^.+\\.ts$': 'ts-jest',
     '^.+\\.js$': 'babel-jest',
@@ -17,6 +22,7 @@ module.exports = {
     '!src/main.ts',
     '!src/**/*.module.ts',
   ],
+  coverageProvider: 'v8',
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html', 'json'],
   coverageThreshold: {

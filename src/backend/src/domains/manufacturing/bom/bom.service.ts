@@ -1,11 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { BOM } from './entities/bom.entity';
-import { BOMLine } from './entities/bom-line.entity';
-import { CreateBOMDto, BOMLineItemDto } from './dto/create-bom.dto';
-import { UpdateBOMDto } from './dto/update-bom.dto';
 import { AddBOMLineDto } from './dto/add-bom-line.dto';
+import { BOMLineItemDto, CreateBOMDto } from './dto/create-bom.dto';
+import { UpdateBOMDto } from './dto/update-bom.dto';
+import { BOMLine } from './entities/bom-line.entity';
+import { BOM } from './entities/bom.entity';
 
 const REFERENCE_SEQUENCE_LENGTH = 4;
 
@@ -60,6 +60,14 @@ export class BOMService {
     }
 
     return bom;
+  }
+
+  async findAll(tenantId: string): Promise<BOM[]> {
+    return this.bomRepository.find({
+      where: { tenantId },
+      relations: ['product', 'lines'],
+      order: { createdAt: 'DESC' },
+    });
   }
 
   async findByProduct(tenantId: string, productId: string): Promise<BOM[]> {

@@ -252,14 +252,56 @@ export class SyncService {
    * Get repository by entity name
    */
   private getRepository(entityName: string) {
-    // Map entity names to actual entities
-    const entityMap = {
+    // Map frontend entity names to backend entity class names
+    const entityMap: Record<string, string> = {
+      // Core
       users: 'User',
       products: 'Product',
       customers: 'Customer',
       suppliers: 'Supplier',
-      salesOrders: 'Order', // Backend entity is named 'Order', not 'SalesOrder'
+      salesOrders: 'Order',
       invoices: 'Invoice',
+      payments: 'Payment',
+      purchaseOrders: 'PurchaseOrder',
+      warehouses: 'Warehouse',
+      stocks: 'Inventory',
+      stockReceipts: 'StockReceipt',
+      attendances: 'Attendance',
+      notifications: 'Notification',
+      categories: 'Category',
+      // Accounting
+      accounts: 'Account',
+      journalEntries: 'JournalEntry',
+      ledgers: 'GeneralLedger',
+      taxRates: 'TaxRate',
+      // Purchasing
+      purchaseReceipts: 'PurchaseReceipt',
+      supplierInvoices: 'SupplierInvoice',
+      // Sales
+      quotations: 'Quotation',
+      deliveryNotes: 'DeliveryNote',
+      // Inventory
+      stockAdjustments: 'StockAdjustment',
+      stockTransfers: 'StockTransfer',
+      binLocations: 'BinLocation',
+      // Manufacturing
+      boms: 'BOM',
+      workOrders: 'WorkOrder',
+      productionPlans: 'ProductionPlan',
+      // HR
+      employees: 'Employee',
+      departments: 'Department',
+      positions: 'Position',
+      shifts: 'Shift',
+      // Project
+      projects: 'Project',
+      tasks: 'Task',
+      timeEntries: 'TimeEntry',
+      // Platform
+      documents: 'Document',
+      reports: 'Report',
+      workflows: 'Workflow',
+      settings: 'Settings',
     };
 
     const entityClass = entityMap[entityName];

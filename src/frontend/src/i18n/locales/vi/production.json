@@ -1,86 +1,111 @@
 {
   "title": "Quản Lý Sản Xuất",
-  "workers": {
-    "title": "Nhân Viên",
-    "list": "Danh Sách Nhân Viên",
-    "create": "Thêm Nhân Viên",
-    "edit": "Chỉnh Sửa Nhân Viên",
-    "name": "Tên Nhân Viên",
-    "code": "Mã Nhân Viên",
-    "department": "Phòng Ban",
-    "position": "Chức Vụ",
-    "salary": "Lương Cơ Bản"
-  },
-  "attendance": {
-    "title": "Chấm Công",
-    "checkIn": "Vào Ca",
-    "checkOut": "Tan Ca",
-    "date": "Ngày",
-    "shift": "Ca Làm",
-    "status": "Trạng Thái",
-    "hours": "Số Giờ Làm"
-  },
-  "piecework": {
-    "title": "Chấm Công Khoán",
-    "product": "Sản Phẩm",
-    "quantity": "Số Lượng Hoàn Thành",
-    "rate": "Đơn Giá",
-    "amount": "Thành Tiền"
-  },
-  "shifts": {
-    "title": "Ca Làm Việc",
-    "morning": "Ca Sáng",
-    "afternoon": "Ca Chiều",
-    "night": "Ca Đêm",
-    "assign": "Phân Ca"
-  },
-  "payroll": {
-    "title": "Tính Lương",
-    "period": "Kỳ Lương",
-    "baseSalary": "Lương Cơ Bản",
-    "overtime": "Làm Thêm Giờ",
-    "bonus": "Thưởng",
-    "deduction": "Khấu Trừ",
-    "netPay": "Lương Thực Nhận"
-  },
-  "advances": {
-    "title": "Tạm Ứng",
-    "request": "Yêu Cầu Tạm Ứng",
-    "amount": "Số Tiền",
-    "reason": "Lý Do",
-    "status": "Trạng Thái",
-    "approved": "Đã Duyệt",
-    "pending": "Chờ Duyệt"
-  },
-  "materials": {
-    "title": "Nguyên Vật Liệu",
-    "list": "Danh Sách NVL",
-    "name": "Tên NVL",
-    "code": "Mã NVL",
-    "unit": "Đơn Vị",
-    "stock": "Tồn Kho",
-    "transactions": "Giao Dịch"
-  },
-  "molds": {
-    "title": "Khuôn Mẫu",
-    "list": "Danh Sách Khuôn",
-    "code": "Mã Khuôn",
-    "name": "Tên Khuôn",
-    "status": "Trạng Thái",
-    "maintenance": "Bảo Trì",
-    "lastMaintenance": "Bảo Trì Lần Cuối",
-    "nextMaintenance": "Bảo Trì Tiếp Theo"
-  },
-  "orders": {
+  "workOrders": {
     "title": "Lệnh Sản Xuất",
-    "list": "Danh Sách Lệnh",
-    "create": "Tạo Lệnh SX",
-    "orderNumber": "Số Lệnh",
+    "create": "Tạo Lệnh Sản Xuất",
+    "edit": "Chỉnh Sửa Lệnh SX",
+    "reference": "Mã Tham Chiếu",
     "product": "Sản Phẩm",
+    "productId": "Mã Sản Phẩm",
+    "bomId": "Mã BOM",
+    "qtyToProduce": "SL Cần Sản Xuất",
+    "qtyProduced": "SL Đã Sản Xuất",
+    "responsibleId": "Người Phụ Trách (ID)",
+    "status": "Trạng Thái",
+    "plannedStartDate": "Ngày Bắt Đầu",
+    "plannedEndDate": "Ngày Kết Thúc",
+    "notes": "Ghi Chú",
+    "start": "Bắt Đầu",
+    "complete": "Hoàn Thành",
+    "completeConfirm": "Đánh dấu lệnh sản xuất này là đã hoàn thành?",
+    "searchPlaceholder": "Tìm kiếm lệnh sản xuất...",
+    "startSuccess": "Đã bắt đầu lệnh sản xuất",
+    "startError": "Không thể bắt đầu lệnh sản xuất",
+    "confirmSuccess": "Đã xác nhận lệnh sản xuất",
+    "confirmError": "Không thể xác nhận lệnh sản xuất",
+    "completeSuccess": "Đã hoàn thành lệnh sản xuất",
+    "completeError": "Không thể hoàn thành lệnh sản xuất",
+    "statuses": {
+      "DRAFT": "Nháp",
+      "READY": "Sẵn Sàng",
+      "IN_PROGRESS": "Đang Thực Hiện",
+      "COMPLETED": "Hoàn Thành",
+      "CANCELLED": "Đã Hủy"
+    }
+  },
+  "bom": {
+    "title": "Định Mức Nguyên Vật Liệu",
+    "create": "Tạo BOM",
+    "edit": "Chỉnh Sửa BOM",
+    "reference": "Mã Tham Chiếu",
+    "productId": "Mã Sản Phẩm",
+    "productQty": "SL Sản Phẩm",
+    "type": "Loại",
+    "isActive": "Đang Dùng",
+    "totalCost": "Tổng Chi Phí",
+    "unitCost": "Đơn Giá",
+    "linesCount": "Số Dòng",
+    "lines": "Dòng BOM",
+    "addLine": "Thêm Dòng",
+    "lineProductId": "Mã NVL",
     "quantity": "Số Lượng",
-    "startDate": "Ngày Bắt Đầu",
-    "endDate": "Ngày Kết Thúc",
-    "status": "Trạng Thái"
+    "searchPlaceholder": "Tìm kiếm BOM...",
+    "types": {
+      "manufacture": "Sản Xuất",
+      "kit": "Bộ Kit"
+    }
+  },
+  "workCenter": {
+    "title": "Trung Tâm Sản Xuất",
+    "create": "Tạo Trung Tâm SX",
+    "edit": "Chỉnh Sửa Trung Tâm SX",
+    "code": "Mã",
+    "name": "Tên",
+    "description": "Mô Tả",
+    "timeEfficiency": "Hiệu Suất Thời Gian",
+    "capacityPerCycle": "Công Suất/Chu Kỳ",
+    "costPerHour": "Chi Phí/Giờ",
+    "isActive": "Hoạt Động",
+    "active": "Hoạt Động",
+    "inactive": "Không Hoạt Động",
+    "status": "Trạng Thái",
+    "searchPlaceholder": "Tìm kiếm trung tâm sản xuất..."
+  },
+  "actions": {
+    "actions": "Thao Tác",
+    "view": "Xem",
+    "edit": "Chỉnh Sửa",
+    "delete": "Xóa",
+    "save": "Lưu",
+    "cancel": "Hủy",
+    "confirm": "Xác Nhận",
+    "approve": "Duyệt",
+    "reject": "Từ Chối",
+    "search": "Tìm Kiếm",
+    "filter": "Lọc",
+    "export": "Xuất",
+    "refresh": "Làm Mới"
+  },
+  "messages": {
+    "deleteConfirm": "Bạn có chắc muốn xóa bản ghi này?",
+    "deleteSuccess": "Xóa thành công",
+    "deleteError": "Xóa thất bại",
+    "saveSuccess": "Lưu thành công",
+    "saveError": "Lưu thất bại",
+    "total": "Tổng {{total}} bản ghi",
+    "noData": "Không có dữ liệu"
+  },
+  "filters": {
+    "status": "Trạng Thái",
+    "type": "Loại",
+    "fromDate": "Từ Ngày",
+    "toDate": "Đến Ngày"
+  },
+  "validation": {
+    "required": "Trường này là bắt buộc",
+    "invalidAmount": "Số tiền không hợp lệ",
+    "invalidQuantity": "Số lượng không hợp lệ",
+    "invalidDate": "Ngày không hợp lệ"
   },
   "reports": {
     "title": "Báo Cáo Sản Xuất",

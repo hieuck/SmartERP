@@ -1,0 +1,83 @@
+{
+  "title": "Kế toán",
+  "accounts": {
+    "title": "Hệ thống tài khoản",
+    "createButton": "Thêm tài khoản",
+    "searchPlaceholder": "Tìm tài khoản...",
+    "columns": {
+      "code": "Mã TK",
+      "name": "Tên tài khoản",
+      "type": "Loại",
+      "balance": "Số dư",
+      "isGroup": "Nhóm"
+    },
+    "types": {
+      "asset": "Tài sản",
+      "liability": "Nợ phải trả",
+      "equity": "Vốn chủ sở hữu",
+      "revenue": "Doanh thu",
+      "expense": "Chi phí"
+    },
+    "form": {
+      "title_create": "Thêm tài khoản mới",
+      "title_edit": "Chỉnh sửa tài khoản",
+      "code": "Mã tài khoản",
+      "name": "Tên tài khoản",
+      "type": "Loại tài khoản",
+      "parentId": "Tài khoản cha",
+      "isGroup": "Tài khoản nhóm",
+      "description": "Mô tả"
+    },
+    "messages": {
+      "loadError": "Không thể tải danh sách tài khoản",
+      "createSuccess": "Tạo tài khoản thành công",
+      "createError": "Không thể tạo tài khoản",
+      "updateSuccess": "Cập nhật tài khoản thành công",
+      "deleteSuccess": "Xóa tài khoản thành công",
+      "deleteConfirm": "Bạn có chắc muốn xóa tài khoản này?"
+    }
+  },
+  "journalEntries": {
+    "title": "Bút toán",
+    "createButton": "Thêm bút toán",
+    "columns": {
+      "date": "Ngày",
+      "reference": "Số tham chiếu",
+      "description": "Mô tả",
+      "debit": "Nợ",
+      "credit": "Có",
+      "status": "Trạng thái"
+    },
+    "status": {
+      "draft": "Nháp",
+      "posted": "Đã ghi sổ"
+    },
+    "form": {
+      "title_create": "Thêm bút toán mới",
+      "date": "Ngày",
+      "reference": "Số tham chiếu",
+      "description": "Mô tả",
+      "lines": "Dòng bút toán",
+      "account": "Tài khoản",
+      "debit": "Nợ",
+      "credit": "Có"
+    },
+    "actions": {
+      "post": "Ghi sổ"
+    },
+    "messages": {
+      "loadError": "Không thể tải danh sách bút toán",
+      "createSuccess": "Tạo bút toán thành công",
+      "postSuccess": "Đã ghi sổ bút toán",
+      "deleteConfirm": "Bạn có chắc muốn xóa bút toán này?"
+    }
+  },
+  "reports": {
+    "balanceSheet": "Bảng cân đối kế toán",
+    "profitLoss": "Báo cáo lãi lỗ",
+    "asOfDate": "Tính đến ngày",
+    "startDate": "Từ ngày",
+    "endDate": "Đến ngày",
+    "generate": "Tạo báo cáo"
+  }
+}

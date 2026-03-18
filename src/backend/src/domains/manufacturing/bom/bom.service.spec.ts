@@ -1,14 +1,14 @@
+import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { NotFoundException } from '@nestjs/common';
 import { BOMService } from './bom.service';
-import { BOM } from './entities/bom.entity';
-import { BOMLine } from './entities/bom-line.entity';
-import { BOMType } from './enums/b-o-m-type.enum';
+import { AddBOMLineDto } from './dto/add-bom-line.dto';
 import { CreateBOMDto } from './dto/create-bom.dto';
 import { UpdateBOMDto } from './dto/update-bom.dto';
-import { AddBOMLineDto } from './dto/add-bom-line.dto';
+import { BOMLine } from './entities/bom-line.entity';
+import { BOM } from './entities/bom.entity';
+import { BOMType } from './enums/b-o-m-type.enum';
 
 describe('BOMService', () => {
   let service: BOMService;
@@ -181,6 +181,29 @@ describe('BOMService', () => {
       bomRepository.findOne.mockResolvedValue(null);
 
       await expect(service.findOne(tenantId, 'invalid-id')).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('findAll', () => {
+    it('should return all BOMs for tenant', async () => {
+      bomRepository.find.mockResolvedValue([mockBOM]);
+
+      const result = await service.findAll(tenantId);
+
+      expect(bomRepository.find).toHaveBeenCalledWith({
+        where: { tenantId },
+        relations: ['product', 'lines'],
+        order: { createdAt: 'DESC' },
+      });
+      expect(result).toEqual([mockBOM]);
+    });
+
+    it('should return empty array when no BOMs exist', async () => {
+      bomRepository.find.mockResolvedValue([]);
+
+      const result = await service.findAll(tenantId);
+
+      expect(result).toEqual([]);
     });
   });
 

@@ -1,0 +1,41 @@
+{
+  "title": "Bảng lương",
+  "payslips": "Phiếu lương",
+  "salaryStructures": "Cấu trúc lương",
+  "createButton": "Tạo phiếu lương",
+  "searchPlaceholder": "Tìm theo nhân viên...",
+  "columns": {
+    "employee": "Nhân viên",
+    "month": "Tháng",
+    "year": "Năm",
+    "basicSalary": "Lương cơ bản",
+    "allowances": "Phụ cấp",
+    "deductions": "Khấu trừ",
+    "netSalary": "Lương thực nhận",
+    "status": "Trạng thái",
+    "paymentDate": "Ngày thanh toán"
+  },
+  "status": {
+    "draft": "Nháp",
+    "submitted": "Đã gửi",
+    "approved": "Đã duyệt",
+    "paid": "Đã thanh toán",
+    "cancelled": "Đã hủy"
+  },
+  "actions": {
+    "generate": "Tạo",
+    "submit": "Gửi duyệt",
+    "markPaid": "Đánh dấu đã trả",
+    "cancel": "Hủy"
+  },
+  "messages": {
+    "loadError": "Không thể tải dữ liệu bảng lương",
+    "generateSuccess": "Tạo phiếu lương thành công",
+    "generateError": "Không thể tạo phiếu lương",
+    "submitSuccess": "Đã gửi phiếu lương để duyệt",
+    "markPaidSuccess": "Đã đánh dấu phiếu lương là đã thanh toán",
+    "cancelSuccess": "Đã hủy phiếu lương",
+    "deleteConfirm": "Bạn có chắc muốn hủy phiếu lương này?",
+    "total": "Tổng {{total}} phiếu lương"
+  }
+}

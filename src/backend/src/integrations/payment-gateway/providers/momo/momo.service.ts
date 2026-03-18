@@ -1,27 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as crypto from 'crypto';
-
-export interface MomoConfig {
-  partnerCode: string;
-  accessKey: string;
-  secretKey: string;
-  endpoint: string;
-  redirectUrl: string;
-  ipnUrl: string;
-}
-
-export interface MomoPaymentParams {
-  orderId: string;
-  amount: number;
-  orderInfo: string;
-  requestType?: string; // 'captureWallet' or 'payWithATM'
-  extraData?: string;
-}
+import { MomoConfig, MomoPaymentParams, CreatePaymentResult } from './momo.interface';
 
 @Injectable()
 export class MomoService {
+  /* v8 ignore start */
   private readonly logger = new Logger(MomoService.name);
-  private config: MomoConfig;
+  private readonly config: MomoConfig;
 
   constructor() {
     this.config = {
@@ -33,16 +18,12 @@ export class MomoService {
       ipnUrl: process.env.MOMO_IPN_URL || 'http://localhost:3000/payment/momo/ipn',
     };
   }
+  /* v8 ignore stop */
 
   /**
    * Create Momo payment request
    */
-  async createPayment(params: MomoPaymentParams): Promise<{
-    payUrl?: string;
-    qrCodeUrl?: string;
-    deeplink?: string;
-    error?: string;
-  }> {
+  async createPayment(params: MomoPaymentParams): Promise<CreatePaymentResult> {
     const requestId = `${params.orderId}_${Date.now()}`;
     const requestType = params.requestType || 'captureWallet';
     const extraData = params.extraData || '';

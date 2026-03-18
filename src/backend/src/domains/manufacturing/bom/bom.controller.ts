@@ -1,10 +1,10 @@
-import { Controller, Get, Post, Body, Param, Patch, Delete, Request } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { Roles } from '@common/decorators/roles.decorator';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Request } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { BOMService } from './bom.service';
+import { AddBOMLineDto } from './dto/add-bom-line.dto';
 import { CreateBOMDto } from './dto/create-bom.dto';
 import { UpdateBOMDto } from './dto/update-bom.dto';
-import { AddBOMLineDto } from './dto/add-bom-line.dto';
-import { Roles } from '@common/decorators/roles.decorator';
 @ApiTags('manufacturing-bom')
 @ApiBearerAuth()
 @Controller('manufacturing/bom')
@@ -17,6 +17,22 @@ export class BOMController {
   @ApiResponse({ status: 201, description: 'BOM created successfully' })
   async create(@Body() dto: CreateBOMDto, @Request() req) {
     return this.bomService.create(req.user.tenantId, dto);
+  }
+
+  @Get()
+  @Roles('manager', 'admin', 'production_manager', 'production_user')
+  @ApiOperation({ summary: 'Get all BOMs' })
+  @ApiResponse({ status: 200, description: 'BOMs retrieved successfully' })
+  async findAll(@Request() req) {
+    return this.bomService.findAll(req.user.tenantId);
+  }
+
+  @Get()
+  @Roles('manager', 'admin', 'production_manager', 'production_user')
+  @ApiOperation({ summary: 'Get all BOMs' })
+  @ApiResponse({ status: 200, description: 'BOMs found' })
+  async findAll(@Request() req) {
+    return this.bomService.findAll(req.user.tenantId);
   }
 
   @Get(':id')

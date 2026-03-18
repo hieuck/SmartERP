@@ -8,12 +8,13 @@ const mockCreateHmac = jest.fn().mockReturnValue({
 });
 
 jest.mock('crypto', () => ({
-  ...jest.requireActual('crypto'),
+  // Chỉ mock createHmac, không spread actual để tránh lỗi non-configurable property
   createHmac: (...args: unknown[]) => mockCreateHmac(...args),
 }));
 
 import { Test, TestingModule } from '@nestjs/testing';
-import { MomoService, MomoPaymentParams } from './momo.service';
+import { MomoService } from './momo.service';
+import { MomoPaymentParams } from './momo.interface';
 
 describe('MomoService', () => {
   let service: MomoService;
@@ -55,12 +56,59 @@ describe('MomoService', () => {
       delete process.env.MOMO_PARTNER_CODE;
       delete process.env.MOMO_ACCESS_KEY;
       delete process.env.MOMO_SECRET_KEY;
+      delete process.env.MOMO_ENDPOINT;
+      delete process.env.MOMO_REDIRECT_URL;
+      delete process.env.MOMO_IPN_URL;
 
       const newService = new MomoService();
 
       expect((newService as any).config.partnerCode).toBe('');
       expect((newService as any).config.accessKey).toBe('');
       expect((newService as any).config.secretKey).toBe('');
+      expect((newService as any).config.endpoint).toBe('https://test-payment.momo.vn/v2/gateway/api/create');
+      expect((newService as any).config.redirectUrl).toBe('http://localhost:3000/payment/momo/return');
+      expect((newService as any).config.ipnUrl).toBe('http://localhost:3000/payment/momo/ipn');
+    });
+
+    it('should use provided env values for endpoint, redirectUrl, ipnUrl', () => {
+      // Đảm bảo branch truthy của ?? được cover
+      process.env.MOMO_ENDPOINT = 'https://custom-endpoint.com';
+      process.env.MOMO_REDIRECT_URL = 'https://custom-redirect.com';
+      process.env.MOMO_IPN_URL = 'https://custom-ipn.com';
+
+      const newService = new MomoService();
+
+      expect((newService as any).config.endpoint).toBe('https://custom-endpoint.com');
+      expect((newService as any).config.redirectUrl).toBe('https://custom-redirect.com');
+      expect((newService as any).config.ipnUrl).toBe('https://custom-ipn.com');
+    });
+
+    it('should call buildConfig and assign to this.config', () => {
+      // Cover line 15: this.config = MomoService.buildConfig()
+      process.env.MOMO_PARTNER_CODE = 'BUILD_TEST';
+      const newService = new MomoService();
+      expect((newService as any).config).toBeDefined();
+      expect((newService as any).config.partnerCode).toBe('BUILD_TEST');
+    });
+
+    it('should use null-coalescing fallback when env vars are undefined', () => {
+      // Cover nullish branch của ?? operator trong buildConfig (lines 33-37)
+      delete process.env.MOMO_PARTNER_CODE;
+      delete process.env.MOMO_ACCESS_KEY;
+      delete process.env.MOMO_SECRET_KEY;
+      delete process.env.MOMO_ENDPOINT;
+      delete process.env.MOMO_REDIRECT_URL;
+      delete process.env.MOMO_IPN_URL;
+
+      const newService = new MomoService();
+      const config = (newService as any).config;
+
+      expect(config.partnerCode).toBe('');
+      expect(config.accessKey).toBe('');
+      expect(config.secretKey).toBe('');
+      expect(config.endpoint).toBe('https://test-payment.momo.vn/v2/gateway/api/create');
+      expect(config.redirectUrl).toBe('http://localhost:3000/payment/momo/return');
+      expect(config.ipnUrl).toBe('http://localhost:3000/payment/momo/ipn');
     });
   });
 
@@ -124,6 +172,18 @@ describe('MomoService', () => {
       expect(callArg).toContain('orderId=ORDER-123');
       expect(callArg).toContain('orderInfo=Payment for order ORDER-123');
       expect(callArg).toContain('partnerCode=TEST_PARTNER');
+    });
+
+    it('should handle error when payment creation throws', async () => {
+      // Giả lập lỗi từ logger để trigger catch block
+      jest.spyOn(service['logger'], 'log').mockImplementationOnce(() => {
+        throw new Error('Network error');
+      });
+
+      const result = await service.createPayment(validParams);
+
+      expect(result.error).toBe('Network error');
+      expect(result.payUrl).toBeUndefined();
     });
   });
 
@@ -221,6 +281,15 @@ describe('MomoService', () => {
       const result = await service.queryTransaction('ORDER-123-ĐẶC-BIỆT', 'REQ-123');
       expect(result.orderId).toBe('ORDER-123-ĐẶC-BIỆT');
     });
+
+    it('should throw error when query transaction fails', async () => {
+      // Giả lập lỗi từ logger để trigger catch block
+      jest.spyOn(service['logger'], 'log').mockImplementationOnce(() => {
+        throw new Error('Query failed');
+      });
+
+      await expect(service.queryTransaction('ORDER-123', 'REQ-123')).rejects.toThrow('Query failed');
+    });
   });
 
   describe('refundTransaction', () => {
@@ -267,6 +336,17 @@ describe('MomoService', () => {
       const result2 = await service.refundTransaction('ORDER-123', 'TRANS-123', 50000, 'Reason 2');
 
       expect(result1.requestId).not.toBe(result2.requestId);
+    });
+
+    it('should throw error when refund transaction fails', async () => {
+      // Giả lập lỗi từ logger để trigger catch block
+      jest.spyOn(service['logger'], 'log').mockImplementationOnce(() => {
+        throw new Error('Refund failed');
+      });
+
+      await expect(
+        service.refundTransaction('ORDER-123', 'TRANS-123', 50000, 'Reason'),
+      ).rejects.toThrow('Refund failed');
     });
   });
 

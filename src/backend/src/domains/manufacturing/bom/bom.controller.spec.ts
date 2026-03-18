@@ -3,14 +3,14 @@
  * Coverage target: 95%
  */
 
+import { RolesGuard } from '@common/guards/roles.guard';
+import { HttpException, HttpStatus, INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe, HttpException, HttpStatus } from '@nestjs/common';
 import request from 'supertest';
+import { SyncStatus } from '../../../common/enums/sync-status.enum';
+import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
 import { BOMController } from './bom.controller';
 import { BOMService } from './bom.service';
-import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
-import { RolesGuard } from '@common/guards/roles.guard';
-import { SyncStatus } from '../../../common/enums/sync-status.enum';
 
 describe('BOMController (Integration)', () => {
   let app: INestApplication;
@@ -40,6 +40,7 @@ describe('BOMController (Integration)', () => {
   beforeAll(async () => {
     const mockBOMService = {
       create: jest.fn(),
+      findAll: jest.fn(),
       findOne: jest.fn(),
       findByProduct: jest.fn(),
       update: jest.fn(),
@@ -90,6 +91,22 @@ describe('BOMController (Integration)', () => {
   });
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  describe('GET /manufacturing/bom', () => {
+    it('should return all BOMs for tenant', async () => {
+      bomService.findAll.mockResolvedValue([mockBOM] as any);
+      const response = await request(app.getHttpServer())
+        .get('/manufacturing/bom')
+        .set('Authorization', 'Bearer valid-token')
+        .expect(200);
+      expect(Array.isArray(response.body)).toBe(true);
+      expect(response.body[0].id).toBe('bom-123');
+    });
+
+    it('should require authentication', async () => {
+      await request(app.getHttpServer()).get('/manufacturing/bom').expect(401);
+    });
   });
 
   describe('POST /manufacturing/bom', () => {

@@ -1,0 +1,41 @@
+{
+  "title": "Payroll",
+  "payslips": "Payslips",
+  "salaryStructures": "Salary Structures",
+  "createButton": "Generate Payslip",
+  "searchPlaceholder": "Search by employee...",
+  "columns": {
+    "employee": "Employee",
+    "month": "Month",
+    "year": "Year",
+    "basicSalary": "Basic Salary",
+    "allowances": "Allowances",
+    "deductions": "Deductions",
+    "netSalary": "Net Salary",
+    "status": "Status",
+    "paymentDate": "Payment Date"
+  },
+  "status": {
+    "draft": "Draft",
+    "submitted": "Submitted",
+    "approved": "Approved",
+    "paid": "Paid",
+    "cancelled": "Cancelled"
+  },
+  "actions": {
+    "generate": "Generate",
+    "submit": "Submit",
+    "markPaid": "Mark as Paid",
+    "cancel": "Cancel"
+  },
+  "messages": {
+    "loadError": "Failed to load payroll data",
+    "generateSuccess": "Payslip generated successfully",
+    "generateError": "Failed to generate payslip",
+    "submitSuccess": "Payslip submitted for approval",
+    "markPaidSuccess": "Payslip marked as paid",
+    "cancelSuccess": "Payslip cancelled",
+    "deleteConfirm": "Are you sure you want to cancel this payslip?",
+    "total": "Total {{total}} payslips"
+  }
+}

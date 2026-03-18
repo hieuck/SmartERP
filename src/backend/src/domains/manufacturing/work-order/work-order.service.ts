@@ -1,9 +1,9 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { CreateWorkOrderDto } from './dto/create-work-order.dto';
 import { WorkOrder } from './entities/work-order.entity';
 import { WorkOrderStatus } from './enums/work-order-status.enum';
-import { CreateWorkOrderDto } from './dto/create-work-order.dto';
 
 const REFERENCE_SEQUENCE_LENGTH = 4;
 
@@ -31,6 +31,14 @@ export class WorkOrderService {
     });
 
     return this.workOrderRepository.save(workOrder);
+  }
+
+  async findAll(tenantId: string): Promise<WorkOrder[]> {
+    return this.workOrderRepository.find({
+      where: { tenantId },
+      relations: ['product', 'bom', 'responsible'],
+      order: { createdAt: 'DESC' },
+    });
   }
 
   async findOne(tenantId: string, id: string): Promise<WorkOrder> {

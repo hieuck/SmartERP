@@ -1,0 +1,68 @@
+{
+  "title": "Projects",
+  "createButton": "New Project",
+  "searchPlaceholder": "Search by project name or code...",
+  "columns": {
+    "code": "Code",
+    "name": "Project Name",
+    "manager": "Project Manager",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "budget": "Budget",
+    "progress": "Progress",
+    "status": "Status"
+  },
+  "status": {
+    "planning": "Planning",
+    "active": "Active",
+    "on_hold": "On Hold",
+    "completed": "Completed",
+    "cancelled": "Cancelled"
+  },
+  "form": {
+    "title_create": "New Project",
+    "title_edit": "Edit Project",
+    "code": "Project Code",
+    "name": "Project Name",
+    "description": "Description",
+    "managerId": "Project Manager",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "budget": "Budget",
+    "status": "Status"
+  },
+  "tasks": {
+    "title": "Tasks",
+    "createButton": "New Task",
+    "columns": {
+      "title": "Title",
+      "assignee": "Assignee",
+      "dueDate": "Due Date",
+      "priority": "Priority",
+      "status": "Status"
+    },
+    "priority": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "critical": "Critical"
+    },
+    "status": {
+      "todo": "To Do",
+      "in_progress": "In Progress",
+      "review": "In Review",
+      "done": "Done"
+    }
+  },
+  "messages": {
+    "loadError": "Failed to load projects",
+    "createSuccess": "Project created successfully",
+    "createError": "Failed to create project",
+    "updateSuccess": "Project updated successfully",
+    "updateError": "Failed to update project",
+    "deleteSuccess": "Project deleted successfully",
+    "deleteError": "Failed to delete project",
+    "deleteConfirm": "Are you sure you want to delete this project?",
+    "total": "Total {{total}} projects"
+  }
+}

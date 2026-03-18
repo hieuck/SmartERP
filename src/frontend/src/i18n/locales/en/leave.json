@@ -1,0 +1,53 @@
+{
+  "title": "Leave Requests",
+  "createButton": "Request Leave",
+  "searchPlaceholder": "Search by employee...",
+  "columns": {
+    "employee": "Employee",
+    "leaveType": "Leave Type",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "days": "Days",
+    "status": "Status",
+    "reason": "Reason"
+  },
+  "leaveType": {
+    "annual": "Annual Leave",
+    "sick": "Sick Leave",
+    "maternity": "Maternity Leave",
+    "paternity": "Paternity Leave",
+    "unpaid": "Unpaid Leave",
+    "other": "Other"
+  },
+  "status": {
+    "pending": "Pending",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "cancelled": "Cancelled"
+  },
+  "form": {
+    "title_create": "Request Leave",
+    "employeeId": "Employee",
+    "leaveType": "Leave Type",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "reason": "Reason",
+    "rejectionReason": "Rejection Reason"
+  },
+  "actions": {
+    "approve": "Approve",
+    "reject": "Reject",
+    "cancel": "Cancel"
+  },
+  "messages": {
+    "loadError": "Failed to load leave requests",
+    "createSuccess": "Leave request submitted successfully",
+    "createError": "Failed to submit leave request",
+    "approveSuccess": "Leave request approved",
+    "approveError": "Failed to approve leave request",
+    "rejectSuccess": "Leave request rejected",
+    "rejectError": "Failed to reject leave request",
+    "deleteConfirm": "Are you sure you want to cancel this leave request?",
+    "total": "Total {{total}} requests"
+  }
+}

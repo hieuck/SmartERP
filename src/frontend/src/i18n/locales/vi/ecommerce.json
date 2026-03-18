@@ -1,0 +1,63 @@
+{
+  "title": "Thương Mại Điện Tử",
+  "catalog": {
+    "title": "Danh Mục Sản Phẩm",
+    "createButton": "Thêm Sản Phẩm",
+    "searchPlaceholder": "Tìm kiếm sản phẩm...",
+    "columns": {
+      "sku": "Mã SKU",
+      "name": "Tên Sản Phẩm",
+      "price": "Giá",
+      "stock": "Tồn Kho",
+      "status": "Trạng Thái"
+    },
+    "status": {
+      "published": "Đã Đăng",
+      "unpublished": "Nháp",
+      "out_of_stock": "Hết Hàng"
+    },
+    "actions": {
+      "publish": "Đăng Bán",
+      "unpublish": "Ẩn"
+    },
+    "messages": {
+      "publishSuccess": "Đã đăng sản phẩm",
+      "unpublishSuccess": "Đã ẩn sản phẩm",
+      "deleteConfirm": "Bạn có chắc muốn xóa sản phẩm này?",
+      "deleteSuccess": "Đã xóa sản phẩm",
+      "loadError": "Không thể tải danh sách sản phẩm",
+      "total": "Tổng {{total}} sản phẩm"
+    }
+  },
+  "orders": {
+    "title": "Đơn Hàng Online",
+    "searchPlaceholder": "Tìm theo số đơn hàng...",
+    "columns": {
+      "orderNumber": "Số ĐH",
+      "customer": "Khách Hàng",
+      "total": "Tổng Tiền",
+      "status": "Trạng Thái",
+      "paymentStatus": "Thanh Toán",
+      "createdAt": "Ngày Tạo"
+    },
+    "status": {
+      "pending": "Chờ Xử Lý",
+      "confirmed": "Đã Xác Nhận",
+      "processing": "Đang Xử Lý",
+      "shipped": "Đã Giao Vận",
+      "delivered": "Đã Giao Hàng",
+      "cancelled": "Đã Hủy",
+      "refunded": "Đã Hoàn Tiền"
+    },
+    "paymentStatus": {
+      "pending": "Chờ Thanh Toán",
+      "paid": "Đã Thanh Toán",
+      "failed": "Thất Bại",
+      "refunded": "Đã Hoàn Tiền"
+    },
+    "messages": {
+      "loadError": "Không thể tải đơn hàng",
+      "total": "Tổng {{total}} đơn hàng"
+    }
+  }
+}

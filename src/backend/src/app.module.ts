@@ -25,10 +25,12 @@ import { UserModule } from './core/user/user.module';
 
 import { AccountingDomainModule } from './domains/accounting/accounting.module';
 
+import { PurchaseOrderModule } from './domains/purchasing/purchase-order/purchase-order.module';
 import { SerialBatchModule } from './domains/inventory/serial-batch/serial-batch.module';
 import { ValuationModule } from './domains/inventory/valuation/valuation.module';
 
 import { AttendanceModule } from './domains/hr/attendance/attendance.module';
+import { EmployeeModule } from './domains/hr/employee/employee.module';
 import { LeaveModule } from './domains/hr/leave/leave.module';
 import { PayrollModule } from './domains/hr/payroll/payroll.module';
 
@@ -131,10 +133,12 @@ import { CrmModule } from './domains/sales/crm/crm.module';
     SerialBatchModule,
     ValuationModule,
     AttendanceModule,
+    EmployeeModule,
     LeaveModule,
     PayrollModule,
     BOMModule,
     WorkCenterModule,
+    PurchaseOrderModule,
     ProductCatalogModule,
     ShoppingCartModule,
     EcommerceOrderModule,

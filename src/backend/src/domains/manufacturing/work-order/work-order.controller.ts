@@ -1,10 +1,10 @@
-import { Controller, Get, Post, Body, Param, Patch, Request } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { WorkOrderService } from './work-order.service';
+import { Roles } from '@common/decorators/roles.decorator';
+import { Body, Controller, Get, Param, Patch, Post, Request } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CreateWorkOrderDto } from './dto/create-work-order.dto';
 import { FinishProductionDto } from './dto/finish-production.dto';
 import { WorkOrderStatus } from './enums/work-order-status.enum';
-import { Roles } from '@common/decorators/roles.decorator';
+import { WorkOrderService } from './work-order.service';
 @ApiTags('manufacturing-work-orders')
 @ApiBearerAuth()
 @Controller('manufacturing/work-orders')
@@ -17,6 +17,14 @@ export class WorkOrderController {
   @ApiResponse({ status: 201, description: 'Work order created successfully' })
   async create(@Body() dto: CreateWorkOrderDto, @Request() req) {
     return this.workOrderService.create(req.user.tenantId, dto);
+  }
+
+  @Get()
+  @Roles('manager', 'admin', 'production_manager', 'production_user')
+  @ApiOperation({ summary: 'Get all work orders' })
+  @ApiResponse({ status: 200, description: 'Work orders found' })
+  async findAll(@Request() req) {
+    return this.workOrderService.findAll(req.user.tenantId);
   }
 
   @Get(':id')

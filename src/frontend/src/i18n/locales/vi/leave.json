@@ -1,0 +1,53 @@
+{
+  "title": "Đơn xin nghỉ phép",
+  "createButton": "Xin nghỉ phép",
+  "searchPlaceholder": "Tìm theo nhân viên...",
+  "columns": {
+    "employee": "Nhân viên",
+    "leaveType": "Loại nghỉ phép",
+    "startDate": "Ngày bắt đầu",
+    "endDate": "Ngày kết thúc",
+    "days": "Số ngày",
+    "status": "Trạng thái",
+    "reason": "Lý do"
+  },
+  "leaveType": {
+    "annual": "Nghỉ phép năm",
+    "sick": "Nghỉ ốm",
+    "maternity": "Nghỉ thai sản",
+    "paternity": "Nghỉ chăm con",
+    "unpaid": "Nghỉ không lương",
+    "other": "Khác"
+  },
+  "status": {
+    "pending": "Chờ duyệt",
+    "approved": "Đã duyệt",
+    "rejected": "Từ chối",
+    "cancelled": "Đã hủy"
+  },
+  "form": {
+    "title_create": "Xin nghỉ phép",
+    "employeeId": "Nhân viên",
+    "leaveType": "Loại nghỉ phép",
+    "startDate": "Ngày bắt đầu",
+    "endDate": "Ngày kết thúc",
+    "reason": "Lý do",
+    "rejectionReason": "Lý do từ chối"
+  },
+  "actions": {
+    "approve": "Duyệt",
+    "reject": "Từ chối",
+    "cancel": "Hủy"
+  },
+  "messages": {
+    "loadError": "Không thể tải danh sách đơn nghỉ phép",
+    "createSuccess": "Gửi đơn xin nghỉ phép thành công",
+    "createError": "Không thể gửi đơn xin nghỉ phép",
+    "approveSuccess": "Đã duyệt đơn nghỉ phép",
+    "approveError": "Không thể duyệt đơn nghỉ phép",
+    "rejectSuccess": "Đã từ chối đơn nghỉ phép",
+    "rejectError": "Không thể từ chối đơn nghỉ phép",
+    "deleteConfirm": "Bạn có chắc muốn hủy đơn nghỉ phép này?",
+    "total": "Tổng {{total}} đơn"
+  }
+}

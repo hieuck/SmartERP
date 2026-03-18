@@ -63,11 +63,15 @@ async function bootstrap() {
     new ResponseTransformInterceptor(),
   );
 
-  // CORS configuration for LAN access
+  // CORS configuration - supports localhost and optional LAN IP via CORS_ORIGIN env
+  const corsOriginEnv = process.env.CORS_ORIGIN || '';
   const allowedOrigins = [
     'http://localhost:5173',
     'http://127.0.0.1:5173',
-    'http://192.168.2.7:5173', // LAN IP
+    ...corsOriginEnv
+      .split(',')
+      .map((o) => o.trim())
+      .filter(Boolean),
   ];
 
   app.enableCors({
@@ -139,7 +143,9 @@ async function bootstrap() {
       const seedService = app.get(SeedService);
       const result = await seedService.seedDemoData();
       logger.log(`🌱 ${result.message}`);
-      logger.log(`📧 Demo credentials: ${result.credentials.email} / ${result.credentials.password}`);
+      logger.log(
+        `📧 Demo credentials: ${result.credentials.email} / ${result.credentials.password}`,
+      );
     } catch (error) {
       logger.warn('⚠️  Failed to seed demo data (this is normal if data already exists)');
     }
