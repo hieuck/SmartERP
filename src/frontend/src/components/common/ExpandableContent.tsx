@@ -4,9 +4,9 @@
  * Sử dụng Ant Design Descriptions
  */
 
-import { Descriptions } from 'antd';
-import type { DescriptionsProps } from 'antd';
 import { useResponsive } from '@/hooks/useResponsive';
+import type { DescriptionsProps } from 'antd';
+import { Descriptions } from 'antd';
 
 interface ExpandableField {
   label: string;
@@ -25,7 +25,7 @@ export default function ExpandableContent({
   fields,
   column = 3,
   size = 'small',
-  bordered = false,
+  bordered: _bordered = false,
 }: ExpandableContentProps) {
   const { isMobile } = useResponsive();
 

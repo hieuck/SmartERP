@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Select, Card, Typography, Space, Avatar } from 'antd';
 import { ShopOutlined } from '@ant-design/icons';
+import { Avatar, Card, Select, Space, Typography } from 'antd';
+import React, { useEffect, useState } from 'react';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -20,7 +20,7 @@ interface TenantSelectorProps {
 export const TenantSelector: React.FC<TenantSelectorProps> = ({ onTenantChange }) => {
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [selectedTenant, setSelectedTenant] = useState<string>('');
-  const [loading, setLoading] = useState(false);
+  const [loading, _setLoading] = useState(false);
 
   useEffect(() => {
     // Mock data - replace with actual API call

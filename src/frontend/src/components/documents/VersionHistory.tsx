@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Timeline, Button, Modal, Space, Tag } from 'antd';
 import { DownloadOutlined, RollbackOutlined } from '@ant-design/icons';
+import { Button, Modal, Space, Tag, Timeline } from 'antd';
+import React, { useState } from 'react';
 
 interface Version {
   version: number;
@@ -16,7 +16,11 @@ interface VersionHistoryProps {
   onClose: () => void;
 }
 
-export const VersionHistory: React.FC<VersionHistoryProps> = ({ documentId, visible, onClose }) => {
+export const VersionHistory: React.FC<VersionHistoryProps> = ({
+  documentId: _documentId,
+  visible,
+  onClose,
+}) => {
   const [versions] = useState<Version[]>([
     {
       version: 2,

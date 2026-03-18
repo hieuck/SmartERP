@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { List, Avatar, Form, Button, Input } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
+import { Avatar, Button, Form, Input, List } from 'antd';
+import React, { useState } from 'react';
 
 const { TextArea } = Input;
 
@@ -16,7 +16,7 @@ interface CommentSectionProps {
   recordId: string;
 }
 
-export const CommentSection: React.FC<CommentSectionProps> = ({ recordId }) => {
+export const CommentSection: React.FC<CommentSectionProps> = ({ recordId: _recordId }) => {
   const [comments, setComments] = useState<CommentData[]>([
     {
       id: '1',

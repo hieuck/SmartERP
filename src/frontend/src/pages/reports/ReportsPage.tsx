@@ -1,42 +1,41 @@
-import React, { useState } from 'react';
 import {
-  Card,
-  Tabs,
-  DatePicker,
-  Button,
-  Space,
-  Table,
-  message,
-  Row,
-  Col,
-  Statistic,
-  Typography,
-} from 'antd';
-import { FilePdfOutlined, FileExcelOutlined, BarChartOutlined } from '@ant-design/icons';
-import { useTranslation } from 'react-i18next';
-import dayjs from 'dayjs';
-import {
-  useSalesReport,
+  useCashFlowReport,
+  useCustomerReport,
   useDailySalesReport,
-  useProductPerformanceReport,
+  useExportReportExcel,
+  useExportReportPDF,
+  useFinancialReport,
+  useInventoryMovementsReport,
   useInventoryReport,
   useLowStockReport,
-  useInventoryMovementsReport,
-  useCustomerReport,
-  useTopCustomersReport,
-  useFinancialReport,
+  useProductPerformanceReport,
   useProfitLossReport,
-  useCashFlowReport,
-  useExportReportPDF,
-  useExportReportExcel,
+  useSalesReport,
+  useTopCustomersReport,
 } from '@/hooks/useReports';
+import { BarChartOutlined, FileExcelOutlined, FilePdfOutlined } from '@ant-design/icons';
+import {
+  Button,
+  Card,
+  Col,
+  DatePicker,
+  message,
+  Row,
+  Space,
+  Statistic,
+  Tabs,
+  Typography,
+} from 'antd';
+import dayjs from 'dayjs';
+import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const { RangePicker } = DatePicker;
 const { Title } = Typography;
 
 const ReportsPage: React.FC = () => {
   const { t } = useTranslation(['reports', 'common']);
-  
+
   const [dateRange, setDateRange] = useState<[string, string]>([
     dayjs().startOf('month').format('YYYY-MM-DD'),
     dayjs().endOf('month').format('YYYY-MM-DD'),
@@ -178,18 +177,28 @@ const ReportsPage: React.FC = () => {
             </Button>
           </Space>
           {salesReport.error && (
-            <div style={{ color: 'red' }}>{t('common:messages.error')}: {salesReport.error.message}</div>
+            <div style={{ color: 'red' }}>
+              {t('common:messages.error')}: {salesReport.error.message}
+            </div>
           )}
           {reportData && (
             <Row gutter={16}>
               <Col span={8}>
-                <Statistic title={t('reports:sales.totalRevenue')} value={reportData.totalRevenue} suffix="₫" />
+                <Statistic
+                  title={t('reports:sales.totalRevenue')}
+                  value={reportData.totalRevenue}
+                  suffix="₫"
+                />
               </Col>
               <Col span={8}>
                 <Statistic title={t('reports:sales.totalOrders')} value={reportData.totalOrders} />
               </Col>
               <Col span={8}>
-                <Statistic title={t('reports:sales.averageOrderValue')} value={reportData.averageOrderValue} suffix="₫" />
+                <Statistic
+                  title={t('reports:sales.averageOrderValue')}
+                  value={reportData.averageOrderValue}
+                  suffix="₫"
+                />
               </Col>
             </Row>
           )}
@@ -210,7 +219,9 @@ const ReportsPage: React.FC = () => {
           </Button>
         </Space>
         {dailySalesReport.error && (
-          <div style={{ color: 'red' }}>{t('common:messages.error')}: {dailySalesReport.error.message}</div>
+          <div style={{ color: 'red' }}>
+            {t('common:messages.error')}: {dailySalesReport.error.message}
+          </div>
         )}
       </Card>
 
@@ -231,7 +242,9 @@ const ReportsPage: React.FC = () => {
           </Button>
         </Space>
         {productPerformanceReport.error && (
-          <div style={{ color: 'red' }}>{t('common:messages.error')}: {productPerformanceReport.error.message}</div>
+          <div style={{ color: 'red' }}>
+            {t('common:messages.error')}: {productPerformanceReport.error.message}
+          </div>
         )}
       </Card>
     </Space>

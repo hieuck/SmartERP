@@ -105,7 +105,7 @@ const NotificationBell: React.FC = () => {
     }
   };
 
-  const getNotificationIcon = (type: string) => {
+  const getNotificationIcon = (_type: string) => {
     // Return appropriate icon based on notification type
     return '📢';
   };

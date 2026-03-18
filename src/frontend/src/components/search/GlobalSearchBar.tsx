@@ -115,7 +115,7 @@ const GlobalSearchBar: React.FC = () => {
     debouncedSearch(searchQuery);
   }, [searchQuery, debouncedSearch]);
 
-  const handleSelect = (value: string, option: SearchOption) => {
+  const handleSelect = (_value: string, option: SearchOption) => {
     // Navigate to the selected item
     const route = getRouteForItem(option.type, option.id);
     if (route) {

@@ -1,6 +1,6 @@
+import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
+import { Button, Card, Form, Input, message, Select, Space } from 'antd';
 import React, { useState } from 'react';
-import { Card, Button, Space, Select, Input, Form, message } from 'antd';
-import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import styles from './WorkflowBuilder.module.css';
 
 const { Option } = Select;
@@ -18,7 +18,7 @@ interface WorkflowBuilderProps {
 
 export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ onSave }) => {
   const [steps, setSteps] = useState<WorkflowStep[]>([]);
-  const [form] = Form.useForm();
+  const [_form] = Form.useForm();
 
   const addStep = () => {
     const newStep: WorkflowStep = {

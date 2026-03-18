@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Avatar, Badge, Tooltip, List, Card } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
+import { Avatar, Badge, Card, List } from 'antd';
+import React, { useState } from 'react';
 
 interface User {
   id: string;

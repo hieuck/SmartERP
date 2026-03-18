@@ -1,30 +1,30 @@
-import React, { useEffect, useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import LanguageSwitcher from '@/components/common/LanguageSwitcher';
+import { useRateLimit } from '@/hooks/useRateLimit';
+import { authService, LoginRequest } from '@/services/auth/authService';
+import { RootState } from '@/store';
+import { setCredentials } from '@/store/slices/authSlice';
+import { sanitizeEmail } from '@/utils/sanitize';
+import { LockOutlined, MailOutlined } from '@ant-design/icons';
+import { useMutation } from '@tanstack/react-query';
 import {
-  Layout,
-  Form,
-  Input,
+  Alert,
   Button,
   Card,
-  Typography,
-  Row,
-  Col,
   Checkbox,
-  Space,
+  Col,
+  Form,
+  Input,
+  Layout,
   message,
-  Alert,
+  Row,
+  Space,
   theme,
+  Typography,
 } from 'antd';
-import { LockOutlined, MailOutlined } from '@ant-design/icons';
-import { useDispatch, useSelector } from 'react-redux';
-import { useMutation } from '@tanstack/react-query';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { authService, LoginRequest } from '@/services/auth/authService';
-import { setCredentials } from '@/store/slices/authSlice';
-import { RootState } from '@/store';
-import { sanitizeEmail } from '@/utils/sanitize';
-import { useRateLimit } from '@/hooks/useRateLimit';
-import LanguageSwitcher from '@/components/common/LanguageSwitcher';
+import { useDispatch, useSelector } from 'react-redux';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 const { Header, Content } = Layout;
 const { Title, Text, Paragraph } = Typography;
@@ -53,7 +53,11 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
 
   // Rate limiting: 5 attempts per 60 seconds
-  const { isLimited, remainingTime, recordAttempt } = useRateLimit({
+  const {
+    isLimited,
+    remainingTime: _remainingTime,
+    recordAttempt,
+  } = useRateLimit({
     maxAttempts: 5,
     windowMs: 60 * 1000,
   });
@@ -166,9 +170,20 @@ export default function LoginPage() {
   return (
     <Layout style={{ minHeight: '100vh', background: token.colorBgLayout }}>
       <Header
-        style={{ background: token.colorBgContainer, boxShadow: token.boxShadowTertiary, padding: '0 24px' }}
+        style={{
+          background: token.colorBgContainer,
+          boxShadow: token.boxShadowTertiary,
+          padding: '0 24px',
+        }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: '100%' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            height: '100%',
+          }}
+        >
           <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div
               style={{
@@ -308,7 +323,9 @@ export default function LoginPage() {
                     block
                     style={{ height: 48, fontSize: 16, fontWeight: 600 }}
                   >
-                    {loginMutation.isPending ? t('common:messages.loading') : t('auth:login.loginButton')}
+                    {loginMutation.isPending
+                      ? t('common:messages.loading')
+                      : t('auth:login.loginButton')}
                   </Button>
                 </Form.Item>
 

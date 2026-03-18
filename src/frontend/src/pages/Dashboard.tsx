@@ -1,35 +1,35 @@
-import { useEffect, useState, useMemo } from 'react';
-import { Card, Row, Col, Statistic, Table, Spin, message } from 'antd';
+import { FONT_SIZES, SPACING } from '@/constants/design-tokens';
+import { useResponsive } from '@/hooks/useResponsive';
+import { dashboardService } from '@/services/dashboard/dashboardService';
 import {
-  DollarOutlined,
-  ShoppingCartOutlined,
-  InboxOutlined,
-  WarningOutlined,
-  RiseOutlined,
-  FallOutlined,
-  UserOutlined,
   CreditCardOutlined,
+  DollarOutlined,
+  FallOutlined,
+  InboxOutlined,
+  RiseOutlined,
+  ShoppingCartOutlined,
+  UserOutlined,
+  WarningOutlined,
 } from '@ant-design/icons';
+import { Card, Col, Row, Spin, Statistic, Table, message } from 'antd';
+import dayjs from 'dayjs';
+import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
-  LineChart,
-  Line,
-  BarChart,
   Bar,
-  PieChart,
-  Pie,
+  BarChart,
+  CartesianGrid,
   Cell,
+  Legend,
+  Line,
+  LineChart,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
 } from 'recharts';
-import { useTranslation } from 'react-i18next';
-import { dashboardService } from '@/services/dashboard/dashboardService';
-import dayjs from 'dayjs';
-import { useResponsive } from '@/hooks/useResponsive';
-import { SPACING, FONT_SIZES } from '@/constants/design-tokens';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
 
@@ -83,34 +83,33 @@ export default function Dashboard() {
         maximumFractionDigits: 0,
       }).format(value);
     },
-    [i18n.language]
+    [i18n.language],
   );
 
   // Responsive values using design tokens
   const gutterSize: [number, number] = useMemo(
-    () => (isMobile ? [SPACING.sm, SPACING.sm] : isTablet ? [SPACING.md, SPACING.md] : [SPACING.base, SPACING.base]),
-    [isMobile, isTablet]
+    () =>
+      isMobile
+        ? [SPACING.sm, SPACING.sm]
+        : isTablet
+          ? [SPACING.md, SPACING.md]
+          : [SPACING.base, SPACING.base],
+    [isMobile, isTablet],
   );
 
   const containerPadding = useMemo(
     () => (isMobile ? SPACING.md : isTablet ? SPACING.base : 0),
-    [isMobile, isTablet]
+    [isMobile, isTablet],
   );
 
   const titleFontSize = useMemo(
     () => (isMobile ? FONT_SIZES.xl : isTablet ? FONT_SIZES.xxl : FONT_SIZES.xxxl),
-    [isMobile, isTablet]
+    [isMobile, isTablet],
   );
 
-  const statisticFontSize = useMemo(
-    () => (isMobile ? FONT_SIZES.lg : FONT_SIZES.xxl),
-    [isMobile]
-  );
+  const statisticFontSize = useMemo(() => (isMobile ? FONT_SIZES.lg : FONT_SIZES.xxl), [isMobile]);
 
-  const chartHeight = useMemo(
-    () => (isMobile ? 250 : isTablet ? 280 : 300),
-    [isMobile, isTablet]
-  );
+  const chartHeight = useMemo(() => (isMobile ? 250 : isTablet ? 280 : 300), [isMobile, isTablet]);
 
   if (loading) {
     return (
@@ -137,7 +136,13 @@ export default function Dashboard() {
               formatter={(value) => formatCurrency(Number(value))}
               valueStyle={{ color: '#3f8600', fontSize: statisticFontSize }}
             />
-            <div style={{ marginTop: SPACING.sm, fontSize: isMobile ? FONT_SIZES.xs : FONT_SIZES.sm, color: '#8c8c8c' }}>
+            <div
+              style={{
+                marginTop: SPACING.sm,
+                fontSize: isMobile ? FONT_SIZES.xs : FONT_SIZES.sm,
+                color: '#8c8c8c',
+              }}
+            >
               {overview?.revenue?.growth && overview.revenue.growth > 0 ? (
                 <span style={{ color: '#3f8600' }}>
                   <RiseOutlined /> +{overview.revenue.growth.toFixed(1)}%
@@ -159,7 +164,13 @@ export default function Dashboard() {
               formatter={(value) => formatCurrency(Number(value))}
               valueStyle={{ fontSize: statisticFontSize }}
             />
-            <div style={{ marginTop: SPACING.sm, fontSize: isMobile ? FONT_SIZES.xs : FONT_SIZES.sm, color: '#8c8c8c' }}>
+            <div
+              style={{
+                marginTop: SPACING.sm,
+                fontSize: isMobile ? FONT_SIZES.xs : FONT_SIZES.sm,
+                color: '#8c8c8c',
+              }}
+            >
               {t('dashboard:kpi.revenueMonth')}: {formatCurrency(overview?.revenue?.thisMonth || 0)}
             </div>
           </Card>
@@ -172,7 +183,13 @@ export default function Dashboard() {
               prefix={<ShoppingCartOutlined />}
               valueStyle={{ fontSize: statisticFontSize }}
             />
-            <div style={{ marginTop: SPACING.sm, fontSize: isMobile ? FONT_SIZES.xs : FONT_SIZES.sm, color: '#8c8c8c' }}>
+            <div
+              style={{
+                marginTop: SPACING.sm,
+                fontSize: isMobile ? FONT_SIZES.xs : FONT_SIZES.sm,
+                color: '#8c8c8c',
+              }}
+            >
               {t('dashboard:status.completed')}: {overview?.orders?.completed || 0} |{' '}
               {t('dashboard:status.pending')}: {overview?.orders?.pending || 0}
             </div>
@@ -186,7 +203,13 @@ export default function Dashboard() {
               prefix={<UserOutlined />}
               valueStyle={{ fontSize: statisticFontSize }}
             />
-            <div style={{ marginTop: SPACING.sm, fontSize: isMobile ? FONT_SIZES.xs : FONT_SIZES.sm, color: '#8c8c8c' }}>
+            <div
+              style={{
+                marginTop: SPACING.sm,
+                fontSize: isMobile ? FONT_SIZES.xs : FONT_SIZES.sm,
+                color: '#8c8c8c',
+              }}
+            >
               {t('dashboard:status.active')}: {overview?.customers?.active || 0} |{' '}
               {t('dashboard:status.new')}: {overview?.customers?.new || 0}
             </div>
@@ -204,8 +227,15 @@ export default function Dashboard() {
               prefix={<InboxOutlined />}
               valueStyle={{ fontSize: statisticFontSize }}
             />
-            <div style={{ marginTop: SPACING.sm, fontSize: isMobile ? FONT_SIZES.xs : FONT_SIZES.sm, color: '#8c8c8c' }}>
-              {t('dashboard:kpi.inventoryValue')}: {formatCurrency(overview?.inventory?.totalValue || 0)}
+            <div
+              style={{
+                marginTop: SPACING.sm,
+                fontSize: isMobile ? FONT_SIZES.xs : FONT_SIZES.sm,
+                color: '#8c8c8c',
+              }}
+            >
+              {t('dashboard:kpi.inventoryValue')}:{' '}
+              {formatCurrency(overview?.inventory?.totalValue || 0)}
             </div>
           </Card>
         </Col>
@@ -217,7 +247,13 @@ export default function Dashboard() {
               prefix={<WarningOutlined />}
               valueStyle={{ color: '#cf1322', fontSize: statisticFontSize }}
             />
-            <div style={{ marginTop: SPACING.sm, fontSize: isMobile ? FONT_SIZES.xs : FONT_SIZES.sm, color: '#8c8c8c' }}>
+            <div
+              style={{
+                marginTop: SPACING.sm,
+                fontSize: isMobile ? FONT_SIZES.xs : FONT_SIZES.sm,
+                color: '#8c8c8c',
+              }}
+            >
               {t('dashboard:kpi.outOfStock')}: {overview?.inventory?.outOfStock || 0}
             </div>
           </Card>
@@ -230,7 +266,13 @@ export default function Dashboard() {
               prefix={<CreditCardOutlined />}
               valueStyle={{ color: '#faad14', fontSize: statisticFontSize }}
             />
-            <div style={{ marginTop: SPACING.sm, fontSize: isMobile ? FONT_SIZES.xs : FONT_SIZES.sm, color: '#8c8c8c' }}>
+            <div
+              style={{
+                marginTop: SPACING.sm,
+                fontSize: isMobile ? FONT_SIZES.xs : FONT_SIZES.sm,
+                color: '#8c8c8c',
+              }}
+            >
               {t('dashboard:status.completed')}: {overview?.payments?.completed || 0}
             </div>
           </Card>
@@ -298,7 +340,10 @@ export default function Dashboard() {
         </Col>
 
         <Col xs={24} lg={8}>
-          <Card title={t('dashboard:charts.revenueByCategory')} size={isMobile ? 'small' : 'default'}>
+          <Card
+            title={t('dashboard:charts.revenueByCategory')}
+            size={isMobile ? 'small' : 'default'}
+          >
             <ResponsiveContainer width="100%" height={chartHeight}>
               <PieChart>
                 <Pie
@@ -308,13 +353,9 @@ export default function Dashboard() {
                   cx="50%"
                   cy="50%"
                   outerRadius={isMobile ? 60 : isTablet ? 70 : 80}
-                  label={
-                    isMobile
-                      ? false
-                      : (entry) => `${entry.category}: ${entry.percentage}%`
-                  }
+                  label={isMobile ? false : (entry) => `${entry.category}: ${entry.percentage}%`}
                 >
-                  {revenueByCategory.map((entry, index) => (
+                  {revenueByCategory.map((_entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
@@ -342,7 +383,10 @@ export default function Dashboard() {
                   interval={0}
                   style={{ fontSize: isMobile ? FONT_SIZES.xs - 2 : FONT_SIZES.xs }}
                 />
-                <YAxis type="number" style={{ fontSize: isMobile ? FONT_SIZES.xs - 1 : FONT_SIZES.sm }} />
+                <YAxis
+                  type="number"
+                  style={{ fontSize: isMobile ? FONT_SIZES.xs - 1 : FONT_SIZES.sm }}
+                />
                 <Tooltip
                   formatter={(value: number, name: string) => {
                     if (name === t('dashboard:kpi.totalRevenue')) {

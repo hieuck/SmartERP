@@ -1,6 +1,6 @@
 import MobileFormItemCard from '@/components/common/MobileFormItemCard';
 import { useResponsive } from '@/hooks/useResponsive';
-import { inventoryService, StockReceipt } from '@/services/inventory/inventoryService';
+import { inventoryService } from '@/services/inventory/inventoryService';
 import { productService } from '@/services/inventory/productService';
 import { formatCurrency } from '@/utils/responsive';
 import { ArrowLeftOutlined, DeleteOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons';
@@ -23,7 +23,12 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 
-type StockReceiptItem = StockReceipt['items'][number];
+interface StockReceiptItem {
+  productId: string;
+  quantity: number;
+  unitCost: number;
+  totalCost: number;
+}
 
 const { useToken } = theme;
 
@@ -55,7 +60,14 @@ export default function StockReceiptForm() {
         ...receipt,
         receiptDate: dayjs(receipt.receivedDate),
       });
-      setItems(receipt.items);
+      setItems(
+        receipt.items.map((item: any) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+          unitCost: item.unitCost ?? item.unitPrice ?? 0,
+          totalCost: item.totalCost ?? item.quantity * (item.unitPrice ?? 0),
+        })),
+      );
     }
   }, [receipt, form]);
 
@@ -162,7 +174,7 @@ export default function StockReceiptForm() {
           onChange={(val) => updateItem(index, 'unitCost', val || 0)}
           min={0}
           formatter={(val) => `${val}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-          parser={(val) => val!.replace(/\$\s?|(,*)/g, '')}
+          parser={(val) => Number(val!.replace(/\$\s?|(,*)/g, '')) as unknown as 0}
           style={{ width: '100%' }}
         />
       ),

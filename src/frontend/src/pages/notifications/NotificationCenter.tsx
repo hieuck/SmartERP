@@ -13,20 +13,7 @@ import {
   MoreOutlined,
   WarningOutlined,
 } from '@ant-design/icons';
-import {
-  Badge,
-  Button,
-  Card,
-  Dropdown,
-  Empty,
-  List,
-  Menu,
-  message,
-  Space,
-  Spin,
-  Tag,
-  theme,
-} from 'antd';
+import { Badge, Button, Card, Dropdown, Empty, List, message, Space, Spin, Tag, theme } from 'antd';
 import dayjs from 'dayjs';
 import 'dayjs/locale/vi';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -43,13 +30,6 @@ const typeIcons: Record<NotificationType, any> = {
   [NotificationType.SUCCESS]: <CheckCircleOutlined style={{ color: '#52c41a' }} />,
   [NotificationType.WARNING]: <WarningOutlined style={{ color: '#faad14' }} />,
   [NotificationType.ERROR]: <CloseCircleOutlined style={{ color: '#ff4d4f' }} />,
-};
-
-const typeColors: Record<NotificationType, string> = {
-  [NotificationType.INFO]: 'blue',
-  [NotificationType.SUCCESS]: 'green',
-  [NotificationType.WARNING]: 'orange',
-  [NotificationType.ERROR]: 'red',
 };
 
 const priorityColors: Record<NotificationPriority, string> = {
@@ -156,24 +136,6 @@ export default function NotificationCenter() {
       );
     }
   };
-
-  const getMenu = (item: any) => (
-    <Menu>
-      {!item.isRead && (
-        <Menu.Item key="read" icon={<CheckOutlined />} onClick={() => handleMarkAsRead(item.id)}>
-          {t('notifications.center.markAsRead')}
-        </Menu.Item>
-      )}
-      <Menu.Item
-        key="delete"
-        icon={<DeleteOutlined />}
-        danger
-        onClick={() => handleDelete(item.id)}
-      >
-        {t('notifications.center.delete')}
-      </Menu.Item>
-    </Menu>
-  );
 
   return (
     <div>

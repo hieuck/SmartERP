@@ -1,12 +1,18 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Card, Table, Button, Space, Modal, Form, Input, message, Popconfirm, Badge } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, ArrowLeftOutlined, SyncOutlined, WifiOutlined, CloudOutlined } from '@ant-design/icons';
 import { useResponsive } from '@/hooks/useResponsive';
-import { offlineServices } from '@/services/offline-services';
-import { syncManager } from '@/lib/offline/sync-manager';
 import { logger } from '@/lib/logger/logger.service';
 import type { Category } from '@/lib/offline/db';
+import { syncManager } from '@/lib/offline/sync-manager';
+import { offlineServices } from '@/services/offline-services';
+import {
+  ArrowLeftOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  PlusOutlined,
+  SyncOutlined,
+} from '@ant-design/icons';
+import { Badge, Button, Card, Form, Input, message, Modal, Popconfirm, Space, Table } from 'antd';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function CategoryManagement() {
   const { isMobile } = useResponsive();
@@ -79,7 +85,7 @@ export default function CategoryManagement() {
     try {
       setSyncing(true);
       const result = await syncManager.sync(token);
-      
+
       if (result.success) {
         message.success(`Đồng bộ thành công: ${result.pulled} pulled, ${result.pushed} pushed`);
         await loadCategories();
@@ -123,7 +129,7 @@ export default function CategoryManagement() {
         message.success('Tạo danh mục thành công!');
         logger.info('CategoryManagement', 'Category created');
       }
-      
+
       handleCloseModal();
       await loadCategories();
       await loadQueueSize();
@@ -201,7 +207,14 @@ export default function CategoryManagement() {
 
   return (
     <div>
-      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div
+        style={{
+          marginBottom: 16,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
         <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/products')}>
           Quay Lại
         </Button>

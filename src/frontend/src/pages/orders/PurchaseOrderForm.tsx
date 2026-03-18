@@ -1,27 +1,34 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import MobileFormItemCard from '@/components/common/MobileFormItemCard';
+import { useResponsive } from '@/hooks/useResponsive';
+import { logger } from '@/lib/logger/logger.service';
+import { syncManager } from '@/lib/offline/sync-manager';
+import { offlineServices } from '@/services/offline-services';
 import {
+  ArrowLeftOutlined,
+  DeleteOutlined,
+  DisconnectOutlined,
+  PlusOutlined,
+  SyncOutlined,
+  WifiOutlined,
+} from '@ant-design/icons';
+import {
+  Badge,
+  Button,
+  Card,
+  DatePicker,
   Form,
   Input,
-  Button,
-  Select,
   InputNumber,
+  Select,
+  Space,
   Table,
   message,
-  Card,
-  Space,
-  DatePicker,
-  Badge,
   theme,
 } from 'antd';
-import { PlusOutlined, DeleteOutlined, ArrowLeftOutlined, SyncOutlined, WifiOutlined, DisconnectOutlined } from '@ant-design/icons';
-import { useTranslation } from 'react-i18next';
-import { logger } from '@/lib/logger/logger.service';
-import { offlineServices } from '@/services/offline-services';
-import { syncManager } from '@/lib/offline/sync-manager';
-import { useResponsive } from '@/hooks/useResponsive';
-import MobileFormItemCard from '@/components/common/MobileFormItemCard';
 import dayjs from 'dayjs';
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -115,7 +122,9 @@ export default function PurchaseOrderForm() {
     try {
       const allProducts = await offlineServices.products.getAll();
       setProducts(allProducts);
-      logger.info('PurchaseOrderForm', 'Loaded products from IndexedDB', { count: allProducts.length });
+      logger.info('PurchaseOrderForm', 'Loaded products from IndexedDB', {
+        count: allProducts.length,
+      });
     } catch (error) {
       logger.error('PurchaseOrderForm', 'Failed to load products', error as Error);
       message.error(t('purchaseOrders:messages.loadProductsError'));
@@ -126,7 +135,9 @@ export default function PurchaseOrderForm() {
     try {
       const allSuppliers = await offlineServices.suppliers.getAll();
       setSuppliers(allSuppliers);
-      logger.info('PurchaseOrderForm', 'Loaded suppliers from IndexedDB', { count: allSuppliers.length });
+      logger.info('PurchaseOrderForm', 'Loaded suppliers from IndexedDB', {
+        count: allSuppliers.length,
+      });
     } catch (error) {
       logger.error('PurchaseOrderForm', 'Failed to load suppliers', error as Error);
       message.error(t('purchaseOrders:messages.loadSuppliersError'));
@@ -175,7 +186,9 @@ export default function PurchaseOrderForm() {
       }
     } catch (error: any) {
       logger.error('PurchaseOrderForm', 'Failed to load order', error);
-      message.error(`${t('purchaseOrders:messages.loadOrderError')}: ${error.message || 'Unknown error'}`);
+      message.error(
+        `${t('purchaseOrders:messages.loadOrderError')}: ${error.message || 'Unknown error'}`,
+      );
     } finally {
       setLoading(false);
     }
@@ -248,6 +261,7 @@ export default function PurchaseOrderForm() {
     try {
       setLoading(true);
       const orderData = {
+        poNumber: `PO-${Date.now()}`,
         supplierId: values.supplierId,
         orderDate: values.orderDate.format('YYYY-MM-DD'),
         expectedDeliveryDate: values.expectedDate ? values.expectedDate.format('YYYY-MM-DD') : null,
@@ -270,11 +284,11 @@ export default function PurchaseOrderForm() {
       };
 
       if (id) {
-        await offlineServices.purchaseOrders.update(id, orderData);
+        await offlineServices.purchaseOrders.update(id, orderData as any);
         message.success(t('purchaseOrders:messages.updateSuccess'));
         logger.info('PurchaseOrderForm', 'Updated purchase order', { id });
       } else {
-        await offlineServices.purchaseOrders.create(orderData);
+        await offlineServices.purchaseOrders.create(orderData as any);
         message.success(t('purchaseOrders:messages.createSuccess'));
         logger.info('PurchaseOrderForm', 'Created purchase order');
       }
@@ -283,9 +297,9 @@ export default function PurchaseOrderForm() {
       if (navigator.onLine) {
         const token = localStorage.getItem('token');
         if (token) {
-          syncManager.sync(token).catch(err => 
-            logger.error('PurchaseOrderForm', 'Sync after save failed', err)
-          );
+          syncManager
+            .sync(token)
+            .catch((err) => logger.error('PurchaseOrderForm', 'Sync after save failed', err));
         }
       }
 
@@ -309,9 +323,11 @@ export default function PurchaseOrderForm() {
     try {
       setSyncing(true);
       const result = await syncManager.sync(token);
-      
+
       if (result.success) {
-        message.success(`${t('purchaseOrders:messages.syncSuccess')}: ${result.pulled} pulled, ${result.pushed} pushed`);
+        message.success(
+          `${t('purchaseOrders:messages.syncSuccess')}: ${result.pulled} pulled, ${result.pushed} pushed`,
+        );
         // Reload data after sync
         await loadProducts();
         await loadSuppliers();
@@ -424,11 +440,15 @@ export default function PurchaseOrderForm() {
           </Button>
           <Badge status={isOnline ? 'success' : 'error'} />
           <span>{isOnline ? <WifiOutlined /> : <DisconnectOutlined />}</span>
-          <span>{isOnline ? t('purchaseOrders:sync.online') : t('purchaseOrders:sync.offline')}</span>
+          <span>
+            {isOnline ? t('purchaseOrders:sync.online') : t('purchaseOrders:sync.offline')}
+          </span>
           {queueSize > 0 && (
             <>
               <span>|</span>
-              <span style={{ color: '#faad14' }}>{queueSize} {t('purchaseOrders:sync.pendingChanges')}</span>
+              <span style={{ color: '#faad14' }}>
+                {queueSize} {t('purchaseOrders:sync.pendingChanges')}
+              </span>
             </>
           )}
           <Button
@@ -504,7 +524,9 @@ export default function PurchaseOrderForm() {
                   onRemove={() => removeItem(item.key)}
                 >
                   <div>
-                    <div style={{ marginBottom: 4, fontSize: 12, color: '#666' }}>{t('purchaseOrders:columns.product')}</div>
+                    <div style={{ marginBottom: 4, fontSize: 12, color: '#666' }}>
+                      {t('purchaseOrders:columns.product')}
+                    </div>
                     <Select
                       value={item.productId}
                       onChange={(val) => updateItem(item.key, 'productId', val)}
@@ -525,7 +547,9 @@ export default function PurchaseOrderForm() {
 
                   <div style={{ display: 'flex', gap: 8 }}>
                     <div style={{ flex: 1 }}>
-                      <div style={{ marginBottom: 4, fontSize: 12, color: '#666' }}>{t('purchaseOrders:columns.quantity')}</div>
+                      <div style={{ marginBottom: 4, fontSize: 12, color: '#666' }}>
+                        {t('purchaseOrders:columns.quantity')}
+                      </div>
                       <InputNumber
                         min={1}
                         value={item.quantity ?? 1}
@@ -534,7 +558,9 @@ export default function PurchaseOrderForm() {
                       />
                     </div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ marginBottom: 4, fontSize: 12, color: '#666' }}>{t('purchaseOrders:columns.unitPrice')}</div>
+                      <div style={{ marginBottom: 4, fontSize: 12, color: '#666' }}>
+                        {t('purchaseOrders:columns.unitPrice')}
+                      </div>
                       <InputNumber
                         min={0}
                         value={item.unitPrice ?? 0}
@@ -547,7 +573,9 @@ export default function PurchaseOrderForm() {
 
                   <div style={{ display: 'flex', gap: 8 }}>
                     <div style={{ flex: 1 }}>
-                      <div style={{ marginBottom: 4, fontSize: 12, color: '#666' }}>{t('purchaseOrders:columns.discount')}</div>
+                      <div style={{ marginBottom: 4, fontSize: 12, color: '#666' }}>
+                        {t('purchaseOrders:columns.discount')}
+                      </div>
                       <InputNumber
                         min={0}
                         value={item.discount ?? 0}
@@ -558,7 +586,9 @@ export default function PurchaseOrderForm() {
                       />
                     </div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ marginBottom: 4, fontSize: 12, color: '#666' }}>{t('purchaseOrders:columns.subtotal')}</div>
+                      <div style={{ marginBottom: 4, fontSize: 12, color: '#666' }}>
+                        {t('purchaseOrders:columns.subtotal')}
+                      </div>
                       <div
                         style={{
                           padding: '4px 11px',
@@ -595,7 +625,11 @@ export default function PurchaseOrderForm() {
                 <strong>{totals.subtotal.toLocaleString('vi-VN')} đ</strong>
               </div>
 
-              <Form.Item label={t('purchaseOrders:form.tax')} name="tax" style={{ marginBottom: 8 }}>
+              <Form.Item
+                label={t('purchaseOrders:form.tax')}
+                name="tax"
+                style={{ marginBottom: 8 }}
+              >
                 <InputNumber
                   min={0}
                   formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
@@ -603,7 +637,11 @@ export default function PurchaseOrderForm() {
                 />
               </Form.Item>
 
-              <Form.Item label={t('purchaseOrders:form.shippingFee')} name="shippingFee" style={{ marginBottom: 8 }}>
+              <Form.Item
+                label={t('purchaseOrders:form.shippingFee')}
+                name="shippingFee"
+                style={{ marginBottom: 8 }}
+              >
                 <InputNumber
                   min={0}
                   formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
@@ -611,7 +649,11 @@ export default function PurchaseOrderForm() {
                 />
               </Form.Item>
 
-              <Form.Item label={t('purchaseOrders:form.discount')} name="discount" style={{ marginBottom: 8 }}>
+              <Form.Item
+                label={t('purchaseOrders:form.discount')}
+                name="discount"
+                style={{ marginBottom: 8 }}
+              >
                 <InputNumber
                   min={0}
                   formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
@@ -637,7 +679,9 @@ export default function PurchaseOrderForm() {
               <Button type="primary" htmlType="submit" loading={loading}>
                 {id ? t('purchaseOrders:form.update') : t('purchaseOrders:form.create')}
               </Button>
-              <Button onClick={() => navigate('/orders/purchase')}>{t('purchaseOrders:form.cancel')}</Button>
+              <Button onClick={() => navigate('/orders/purchase')}>
+                {t('purchaseOrders:form.cancel')}
+              </Button>
             </Space>
           </Form.Item>
         </Form>

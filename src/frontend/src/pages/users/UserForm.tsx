@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { Form, Input, Button, Card, message, Select, Switch, Space, Typography, Badge } from 'antd';
-import { SaveOutlined, ArrowLeftOutlined, UserOutlined, SyncOutlined } from '@ant-design/icons';
-import { useNavigate, useParams } from 'react-router-dom';
-import { offlineServices } from '@/services/offline-services';
-import { syncManager } from '@/lib/offline/sync-manager';
 import { logger } from '@/lib/logger/logger.service';
+import { syncManager } from '@/lib/offline/sync-manager';
 import authService from '@/services/auth/authService';
+import { offlineServices } from '@/services/offline-services';
+import { ArrowLeftOutlined, SaveOutlined, SyncOutlined, UserOutlined } from '@ant-design/icons';
+import { Badge, Button, Card, Form, Input, message, Select, Space, Typography } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -83,7 +83,7 @@ const UserForm: React.FC = () => {
     try {
       setSyncing(true);
       const result = await syncManager.sync(token);
-      
+
       if (result.success) {
         await loadQueueSize();
         if (isEdit) await loadUser();
@@ -147,7 +147,10 @@ const UserForm: React.FC = () => {
                   Đồng bộ
                 </Button>
               </Badge>
-              <Badge status={isOnline ? 'success' : 'error'} text={isOnline ? 'Online' : 'Offline'} />
+              <Badge
+                status={isOnline ? 'success' : 'error'}
+                text={isOnline ? 'Online' : 'Offline'}
+              />
               <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/dashboard/users')}>
                 Quay lại
               </Button>
@@ -248,12 +251,7 @@ const UserForm: React.FC = () => {
 
             <Form.Item>
               <Space>
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  icon={<SaveOutlined />}
-                  loading={loading}
-                >
+                <Button type="primary" htmlType="submit" icon={<SaveOutlined />} loading={loading}>
                   {isEdit ? 'Cập nhật' : 'Tạo mới'}
                 </Button>
                 <Button onClick={() => navigate('/dashboard/users')}>Hủy</Button>

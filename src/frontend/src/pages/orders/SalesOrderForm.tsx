@@ -1,28 +1,35 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import MobileFormItemCard from '@/components/common/MobileFormItemCard';
+import { useResponsive } from '@/hooks/useResponsive';
+import { logger } from '@/lib/logger/logger.service';
+import { syncManager } from '@/lib/offline/sync-manager';
+import { offlineServices } from '@/services/offline-services';
+import { formatCurrency } from '@/utils/responsive';
 import {
+  ArrowLeftOutlined,
+  DeleteOutlined,
+  DisconnectOutlined,
+  PlusOutlined,
+  SyncOutlined,
+  WifiOutlined,
+} from '@ant-design/icons';
+import {
+  Badge,
+  Button,
+  Card,
+  DatePicker,
   Form,
   Input,
-  Button,
-  Select,
   InputNumber,
+  Select,
+  Space,
   Table,
   message,
-  Card,
-  Space,
-  DatePicker,
-  Badge,
   theme,
 } from 'antd';
-import { PlusOutlined, DeleteOutlined, ArrowLeftOutlined, SyncOutlined, WifiOutlined, DisconnectOutlined } from '@ant-design/icons';
-import { useTranslation } from 'react-i18next';
-import { logger } from '@/lib/logger/logger.service';
-import { offlineServices } from '@/services/offline-services';
-import { syncManager } from '@/lib/offline/sync-manager';
-import { useResponsive } from '@/hooks/useResponsive';
-import MobileFormItemCard from '@/components/common/MobileFormItemCard';
-import { formatCurrency } from '@/utils/responsive';
 import dayjs from 'dayjs';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -54,11 +61,9 @@ export default function SalesOrderForm() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [queueSize, setQueueSize] = useState(0);
 
-  // Memoize currency symbol
-  const currencySymbol = useMemo(() => (i18n.language === 'vi' ? 'đ' : '$'), [i18n.language]);
   const memoizedFormatCurrency = useCallback(
     (value: number) => formatCurrency(value, i18n.language),
-    [i18n.language]
+    [i18n.language],
   );
 
   // Monitor network status
@@ -123,7 +128,9 @@ export default function SalesOrderForm() {
     try {
       const allProducts = await offlineServices.products.getAll();
       setProducts(allProducts);
-      logger.info('SalesOrderForm', 'Loaded products from IndexedDB', { count: allProducts.length });
+      logger.info('SalesOrderForm', 'Loaded products from IndexedDB', {
+        count: allProducts.length,
+      });
     } catch (error) {
       logger.error('SalesOrderForm', 'Failed to load products', error as Error);
       message.error(t('orders:messages.loadProductsError'));
@@ -134,7 +141,9 @@ export default function SalesOrderForm() {
     try {
       const allCustomers = await offlineServices.customers.getAll();
       setCustomers(allCustomers);
-      logger.info('SalesOrderForm', 'Loaded customers from IndexedDB', { count: allCustomers.length });
+      logger.info('SalesOrderForm', 'Loaded customers from IndexedDB', {
+        count: allCustomers.length,
+      });
     } catch (error) {
       logger.error('SalesOrderForm', 'Failed to load customers', error as Error);
       message.error(t('orders:messages.loadCustomersError'));
@@ -277,11 +286,11 @@ export default function SalesOrderForm() {
       };
 
       if (id) {
-        await offlineServices.salesOrders.update(id, orderData);
+        await offlineServices.salesOrders.update(id, orderData as any);
         message.success(t('orders:form.messages.updateSuccess'));
         logger.info('SalesOrderForm', 'Updated sales order', { id });
       } else {
-        await offlineServices.salesOrders.create(orderData);
+        await offlineServices.salesOrders.create(orderData as any);
         message.success(t('orders:form.messages.createSuccess'));
         logger.info('SalesOrderForm', 'Created sales order');
       }
@@ -290,9 +299,9 @@ export default function SalesOrderForm() {
       if (navigator.onLine) {
         const token = localStorage.getItem('token');
         if (token) {
-          syncManager.sync(token).catch(err => 
-            logger.error('SalesOrderForm', 'Sync after save failed', err)
-          );
+          syncManager
+            .sync(token)
+            .catch((err) => logger.error('SalesOrderForm', 'Sync after save failed', err));
         }
       }
 
@@ -316,13 +325,13 @@ export default function SalesOrderForm() {
     try {
       setSyncing(true);
       const result = await syncManager.sync(token);
-      
+
       if (result.success) {
         message.success(
           t('commonUi:messages.syncSuccess', {
             pulled: result.pulled,
             pushed: result.pushed,
-          })
+          }),
         );
         // Reload data after sync
         await loadProducts();
@@ -341,91 +350,94 @@ export default function SalesOrderForm() {
     }
   };
 
-  const columns = useMemo(() => [
-    {
-      title: t('orders:form.table.product'),
-      dataIndex: 'productId',
-      width: '30%',
-      render: (value: string, record: OrderItem) => (
-        <Select
-          value={value}
-          onChange={(val) => updateItem(record.key, 'productId', val)}
-          placeholder={t('orders:form.placeholders.selectProduct')}
-          showSearch
-          filterOption={(input, option) =>
-            (option?.children as string).toLowerCase().includes(input.toLowerCase())
-          }
-          style={{ width: '100%' }}
-        >
-          {products.map((product) => (
-            <Option key={product.id} value={product.id}>
-              {product.name} - {product.sku}
-            </Option>
-          ))}
-        </Select>
-      ),
-    },
-    {
-      title: t('orders:form.table.quantity'),
-      dataIndex: 'quantity',
-      width: '15%',
-      render: (value: number, record: OrderItem) => (
-        <InputNumber
-          min={1}
-          value={value ?? 1}
-          onChange={(val) => updateItem(record.key, 'quantity', val ?? 1)}
-          style={{ width: '100%' }}
-        />
-      ),
-    },
-    {
-      title: t('orders:form.table.unitPrice'),
-      dataIndex: 'unitPrice',
-      width: '15%',
-      render: (value: number, record: OrderItem) => (
-        <InputNumber
-          min={0}
-          value={value ?? 0}
-          onChange={(val) => updateItem(record.key, 'unitPrice', val ?? 0)}
-          formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-          style={{ width: '100%' }}
-        />
-      ),
-    },
-    {
-      title: t('orders:form.table.discount'),
-      dataIndex: 'discount',
-      width: '15%',
-      render: (value: number, record: OrderItem) => (
-        <InputNumber
-          min={0}
-          value={value ?? 0}
-          onChange={(val) => updateItem(record.key, 'discount', val ?? 0)}
-          formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-          style={{ width: '100%' }}
-          placeholder="0"
-        />
-      ),
-    },
-    {
-      title: t('orders:form.table.subtotal'),
-      dataIndex: 'subtotal',
-      width: '15%',
-      render: (value: number) => memoizedFormatCurrency(value || 0),
-    },
-    {
-      title: '',
-      width: '10%',
-      render: (_: any, record: OrderItem) => (
-        <Button
-          type="text"
-          danger
-          icon={<DeleteOutlined />}
-          onClick={() => removeItem(record.key)}
-        />
-      ),
-    },
-  ], [t, products, memoizedFormatCurrency]);
+  const columns = useMemo(
+    () => [
+      {
+        title: t('orders:form.table.product'),
+        dataIndex: 'productId',
+        width: '30%',
+        render: (value: string, record: OrderItem) => (
+          <Select
+            value={value}
+            onChange={(val) => updateItem(record.key, 'productId', val)}
+            placeholder={t('orders:form.placeholders.selectProduct')}
+            showSearch
+            filterOption={(input, option) =>
+              (option?.children as string).toLowerCase().includes(input.toLowerCase())
+            }
+            style={{ width: '100%' }}
+          >
+            {products.map((product) => (
+              <Option key={product.id} value={product.id}>
+                {product.name} - {product.sku}
+              </Option>
+            ))}
+          </Select>
+        ),
+      },
+      {
+        title: t('orders:form.table.quantity'),
+        dataIndex: 'quantity',
+        width: '15%',
+        render: (value: number, record: OrderItem) => (
+          <InputNumber
+            min={1}
+            value={value ?? 1}
+            onChange={(val) => updateItem(record.key, 'quantity', val ?? 1)}
+            style={{ width: '100%' }}
+          />
+        ),
+      },
+      {
+        title: t('orders:form.table.unitPrice'),
+        dataIndex: 'unitPrice',
+        width: '15%',
+        render: (value: number, record: OrderItem) => (
+          <InputNumber
+            min={0}
+            value={value ?? 0}
+            onChange={(val) => updateItem(record.key, 'unitPrice', val ?? 0)}
+            formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+            style={{ width: '100%' }}
+          />
+        ),
+      },
+      {
+        title: t('orders:form.table.discount'),
+        dataIndex: 'discount',
+        width: '15%',
+        render: (value: number, record: OrderItem) => (
+          <InputNumber
+            min={0}
+            value={value ?? 0}
+            onChange={(val) => updateItem(record.key, 'discount', val ?? 0)}
+            formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+            style={{ width: '100%' }}
+            placeholder="0"
+          />
+        ),
+      },
+      {
+        title: t('orders:form.table.subtotal'),
+        dataIndex: 'subtotal',
+        width: '15%',
+        render: (value: number) => memoizedFormatCurrency(value || 0),
+      },
+      {
+        title: '',
+        width: '10%',
+        render: (_: any, record: OrderItem) => (
+          <Button
+            type="text"
+            danger
+            icon={<DeleteOutlined />}
+            onClick={() => removeItem(record.key)}
+          />
+        ),
+      },
+    ],
+    [t, products, memoizedFormatCurrency],
+  );
 
   return (
     <div style={{ padding: '24px' }}>
@@ -628,7 +640,11 @@ export default function SalesOrderForm() {
                 />
               </Form.Item>
 
-              <Form.Item label={t('orders:form.fields.shippingFee')} name="shippingFee" style={{ marginBottom: 8 }}>
+              <Form.Item
+                label={t('orders:form.fields.shippingFee')}
+                name="shippingFee"
+                style={{ marginBottom: 8 }}
+              >
                 <InputNumber
                   min={0}
                   formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
@@ -637,7 +653,11 @@ export default function SalesOrderForm() {
                 />
               </Form.Item>
 
-              <Form.Item label={t('orders:form.fields.discount')} name="discount" style={{ marginBottom: 8 }}>
+              <Form.Item
+                label={t('orders:form.fields.discount')}
+                name="discount"
+                style={{ marginBottom: 8 }}
+              >
                 <InputNumber
                   min={0}
                   formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
@@ -648,9 +668,7 @@ export default function SalesOrderForm() {
 
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 18 }}>
                 <span>{t('orders:form.totals.total')}:</span>
-                <strong style={{ color: '#1890ff' }}>
-                  {memoizedFormatCurrency(totals.total)}
-                </strong>
+                <strong style={{ color: '#1890ff' }}>{memoizedFormatCurrency(totals.total)}</strong>
               </div>
             </Space>
           </div>

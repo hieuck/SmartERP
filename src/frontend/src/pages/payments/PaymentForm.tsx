@@ -1,32 +1,36 @@
-import React, { useEffect, useState, useMemo } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { logger } from '@/lib/logger/logger.service';
+import { syncManager } from '@/lib/offline/sync-manager';
+import { PaymentMethod, PaymentStatus } from '@/services/accounting/paymentService';
+import { offlineServices } from '@/services/offline-services';
 import {
-  Form,
-  Input,
+  ArrowLeftOutlined,
+  DisconnectOutlined,
+  DollarOutlined,
+  SaveOutlined,
+  SyncOutlined,
+  WifiOutlined,
+} from '@ant-design/icons';
+import {
+  Alert,
+  Badge,
   Button,
   Card,
-  Select,
+  Col,
   DatePicker,
+  Divider,
+  Form,
+  Input,
   InputNumber,
   message,
   Row,
-  Col,
+  Select,
   Space,
   Typography,
-  Divider,
-  Alert,
-  Badge,
 } from 'antd';
-import { SaveOutlined, ArrowLeftOutlined, DollarOutlined, SyncOutlined, WifiOutlined, DisconnectOutlined } from '@ant-design/icons';
-import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
-import {
-  PaymentMethod,
-  PaymentStatus,
-} from '@/services/accounting/paymentService';
-import { offlineServices } from '@/services/offline-services';
-import { syncManager } from '@/lib/offline/sync-manager';
-import { logger } from '@/lib/logger/logger.service';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -223,6 +227,7 @@ const PaymentForm: React.FC = () => {
         invoiceId: values.invoiceId,
         orderId: values.orderId,
         amount: values.amount,
+        currency: 'VND',
         paymentMethod: values.paymentMethod,
         paymentDate: values.paymentDate.toISOString(),
         status: values.status || PaymentStatus.PENDING,
@@ -244,9 +249,9 @@ const PaymentForm: React.FC = () => {
       if (navigator.onLine) {
         const token = localStorage.getItem('token');
         if (token) {
-          syncManager.sync(token).catch(err => 
-            logger.error('PaymentForm', 'Sync after save failed', err)
-          );
+          syncManager
+            .sync(token)
+            .catch((err) => logger.error('PaymentForm', 'Sync after save failed', err));
         }
       }
 
@@ -270,9 +275,11 @@ const PaymentForm: React.FC = () => {
     try {
       setSyncing(true);
       const result = await syncManager.sync(token);
-      
+
       if (result.success) {
-        message.success(t('common:sync.syncSuccess', { pulled: result.pulled, pushed: result.pushed }));
+        message.success(
+          t('common:sync.syncSuccess', { pulled: result.pulled, pushed: result.pushed }),
+        );
         // Reload data after sync
         await loadInvoices();
         await loadOrders();
@@ -314,7 +321,9 @@ const PaymentForm: React.FC = () => {
           {queueSize > 0 && (
             <>
               <span>|</span>
-              <span style={{ color: '#faad14' }}>{t('common:sync.pendingChanges', { count: queueSize })}</span>
+              <span style={{ color: '#faad14' }}>
+                {t('common:sync.pendingChanges', { count: queueSize })}
+              </span>
             </>
           )}
           <Button
@@ -393,12 +402,16 @@ const PaymentForm: React.FC = () => {
                 <Space direction="vertical" style={{ width: '100%' }}>
                   {selectedInvoice && (
                     <>
-                      <Text>{t('invoices:invoiceNumber')}: {selectedInvoice.invoiceNumber}</Text>
                       <Text>
-                        {t('common:totalAmount')}: {selectedInvoice.totalAmount.toLocaleString('vi-VN')} ₫
+                        {t('invoices:invoiceNumber')}: {selectedInvoice.invoiceNumber}
                       </Text>
                       <Text>
-                        {t('common:paidAmount')}: {selectedInvoice.paidAmount.toLocaleString('vi-VN')} ₫
+                        {t('common:totalAmount')}:{' '}
+                        {selectedInvoice.totalAmount.toLocaleString('vi-VN')} ₫
+                      </Text>
+                      <Text>
+                        {t('common:paidAmount')}:{' '}
+                        {selectedInvoice.paidAmount.toLocaleString('vi-VN')} ₫
                       </Text>
                       <Text strong>
                         {t('common:remainingAmount')}:{' '}
@@ -411,10 +424,16 @@ const PaymentForm: React.FC = () => {
                   )}
                   {selectedOrder && (
                     <>
-                      <Text>{t('orders:orderNumber')}: {selectedOrder.orderNumber}</Text>
-                      <Text>{t('common:totalAmount')}: {selectedOrder.totalAmount.toLocaleString('vi-VN')} ₫</Text>
                       <Text>
-                        {t('common:paidAmount')}: {selectedOrder.paidAmount.toLocaleString('vi-VN')} ₫
+                        {t('orders:orderNumber')}: {selectedOrder.orderNumber}
+                      </Text>
+                      <Text>
+                        {t('common:totalAmount')}:{' '}
+                        {selectedOrder.totalAmount.toLocaleString('vi-VN')} ₫
+                      </Text>
+                      <Text>
+                        {t('common:paidAmount')}: {selectedOrder.paidAmount.toLocaleString('vi-VN')}{' '}
+                        ₫
                       </Text>
                       <Text strong>
                         {t('common:remainingAmount')}:{' '}
@@ -447,7 +466,7 @@ const PaymentForm: React.FC = () => {
                   min={0}
                   style={{ width: '100%' }}
                   formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                  parser={(value) => value!.replace(/\$\s?|(,*)/g, '')}
+                  parser={(value) => Number(value!.replace(/\$\s?|(,*)/g, '')) as unknown as 0}
                   addonAfter="₫"
                 />
               </Form.Item>
@@ -467,13 +486,16 @@ const PaymentForm: React.FC = () => {
                     {getPaymentMethodIcon(PaymentMethod.CARD)} {getMethodLabel(PaymentMethod.CARD)}
                   </Option>
                   <Option value={PaymentMethod.BANK_TRANSFER}>
-                    {getPaymentMethodIcon(PaymentMethod.BANK_TRANSFER)} {getMethodLabel(PaymentMethod.BANK_TRANSFER)}
+                    {getPaymentMethodIcon(PaymentMethod.BANK_TRANSFER)}{' '}
+                    {getMethodLabel(PaymentMethod.BANK_TRANSFER)}
                   </Option>
                   <Option value={PaymentMethod.CHEQUE}>
-                    {getPaymentMethodIcon(PaymentMethod.CHEQUE)} {getMethodLabel(PaymentMethod.CHEQUE)}
+                    {getPaymentMethodIcon(PaymentMethod.CHEQUE)}{' '}
+                    {getMethodLabel(PaymentMethod.CHEQUE)}
                   </Option>
                   <Option value={PaymentMethod.E_WALLET}>
-                    {getPaymentMethodIcon(PaymentMethod.E_WALLET)} {getMethodLabel(PaymentMethod.E_WALLET)}
+                    {getPaymentMethodIcon(PaymentMethod.E_WALLET)}{' '}
+                    {getMethodLabel(PaymentMethod.E_WALLET)}
                   </Option>
                 </Select>
               </Form.Item>
@@ -500,10 +522,18 @@ const PaymentForm: React.FC = () => {
             <Col xs={24} md={12}>
               <Form.Item name="status" label={t('payments:status')}>
                 <Select>
-                  <Option value={PaymentStatus.PENDING}>{getStatusLabel(PaymentStatus.PENDING)}</Option>
-                  <Option value={PaymentStatus.COMPLETED}>{getStatusLabel(PaymentStatus.COMPLETED)}</Option>
-                  <Option value={PaymentStatus.FAILED}>{getStatusLabel(PaymentStatus.FAILED)}</Option>
-                  <Option value={PaymentStatus.REFUNDED}>{getStatusLabel(PaymentStatus.REFUNDED)}</Option>
+                  <Option value={PaymentStatus.PENDING}>
+                    {getStatusLabel(PaymentStatus.PENDING)}
+                  </Option>
+                  <Option value={PaymentStatus.COMPLETED}>
+                    {getStatusLabel(PaymentStatus.COMPLETED)}
+                  </Option>
+                  <Option value={PaymentStatus.FAILED}>
+                    {getStatusLabel(PaymentStatus.FAILED)}
+                  </Option>
+                  <Option value={PaymentStatus.REFUNDED}>
+                    {getStatusLabel(PaymentStatus.REFUNDED)}
+                  </Option>
                 </Select>
               </Form.Item>
             </Col>
@@ -520,7 +550,9 @@ const PaymentForm: React.FC = () => {
               <Button type="primary" htmlType="submit" icon={<SaveOutlined />} loading={loading}>
                 {id ? t('common:actions.update') : t('payments:createPayment')}
               </Button>
-              <Button onClick={() => navigate('/dashboard/payments')}>{t('common:actions.cancel')}</Button>
+              <Button onClick={() => navigate('/dashboard/payments')}>
+                {t('common:actions.cancel')}
+              </Button>
             </Space>
           </Form.Item>
         </Form>

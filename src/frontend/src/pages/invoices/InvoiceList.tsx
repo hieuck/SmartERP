@@ -4,34 +4,25 @@
  * Features: auto-sync, manual sync, network status, sync queue, status & date filtering
  */
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import {
-  Button,
-  Space,
-  Tag,
-  message,
-  Badge,
-  Select,
-  DatePicker,
-} from 'antd';
-import {
-  FileTextOutlined,
-  SyncOutlined,
-  CloudOutlined,
-  DisconnectOutlined,
-  SendOutlined,
-} from '@ant-design/icons';
-import { useTranslation } from 'react-i18next';
+import StandardListPage from '@/components/common/StandardListPage';
 import { useResponsive } from '@/hooks/useResponsive';
-import { offlineServices } from '@/services/offline-services';
-import { syncManager } from '@/lib/offline/sync-manager';
 import { logger } from '@/lib/logger/logger.service';
 import { Invoice, SyncStatus } from '@/lib/offline/db';
+import { syncManager } from '@/lib/offline/sync-manager';
+import { offlineServices } from '@/services/offline-services';
 import { formatCurrency, formatDate } from '@/utils/responsive';
-import dayjs from 'dayjs';
-import StandardListPage from '@/components/common/StandardListPage';
+import {
+  CloudOutlined,
+  DisconnectOutlined,
+  FileTextOutlined,
+  SyncOutlined,
+} from '@ant-design/icons';
+import { Badge, Button, DatePicker, Select, Space, Tag, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
+import dayjs from 'dayjs';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 const { RangePicker } = DatePicker;
 
@@ -58,7 +49,10 @@ export default function InvoiceList() {
   const { isMobile } = useResponsive();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<InvoiceStatus | undefined>();
-  const [dateRange, setDateRange] = useState<[string | undefined, string | undefined]>([undefined, undefined]);
+  const [dateRange, setDateRange] = useState<[string | undefined, string | undefined]>([
+    undefined,
+    undefined,
+  ]);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -68,15 +62,9 @@ export default function InvoiceList() {
   const [queueSize, setQueueSize] = useState(0);
 
   // Memoize format functions
-  const memoizedFormatCurrency = useCallback(
-    (value: number) => formatCurrency(value),
-    []
-  );
+  const memoizedFormatCurrency = useCallback((value: number) => formatCurrency(value), []);
 
-  const memoizedFormatDate = useCallback(
-    (date: string) => formatDate(date),
-    []
-  );
+  const memoizedFormatDate = useCallback((date: string) => formatDate(date), []);
 
   // Monitor network status
   useEffect(() => {
@@ -107,23 +95,23 @@ export default function InvoiceList() {
     try {
       logger.debug('InvoiceList', 'Loading invoices from offline storage');
       const allInvoices = await offlineServices.invoices.getAll();
-      
+
       // Filter by search, status, and date range
       let filtered = allInvoices;
-      
+
       if (search) {
         const searchLower = search.toLowerCase();
         filtered = filtered.filter(
           (inv) =>
             inv.invoiceNumber?.toLowerCase().includes(searchLower) ||
-            inv.customerName?.toLowerCase().includes(searchLower)
+            inv.customerName?.toLowerCase().includes(searchLower),
         );
       }
-      
+
       if (statusFilter) {
         filtered = filtered.filter((inv) => inv.status === statusFilter);
       }
-      
+
       if (dateRange[0] && dateRange[1]) {
         const startDate = dayjs(dateRange[0]);
         const endDate = dayjs(dateRange[1]);
@@ -192,13 +180,13 @@ export default function InvoiceList() {
     try {
       logger.info('InvoiceList', 'Starting manual sync');
       const result = await syncManager.sync(token);
-      
+
       if (result.success) {
         message.success(
           t('common:messages.syncSuccess', {
             pulled: result.pulled,
             pushed: result.pushed,
-          })
+          }),
         );
         await loadInvoices();
         await updateQueueSize();
@@ -241,100 +229,113 @@ export default function InvoiceList() {
     }
   };
 
+  const paginatedInvoices = useMemo(
+    () => invoices.slice((page - 1) * pageSize, page * pageSize),
+    [invoices, page, pageSize],
+  );
+
+  const columns: ColumnsType<Invoice> = useMemo(
+    () => [
+      {
+        title: t('invoices:columns.invoiceNumber'),
+        dataIndex: 'invoiceNumber',
+        key: 'invoiceNumber',
+        render: (text: string, record: Invoice) => (
+          <Button
+            type="link"
+            onClick={() => navigate(`/dashboard/invoices/${record.id}`)}
+            style={{ padding: 0 }}
+          >
+            {text}
+          </Button>
+        ),
+      },
+      {
+        title: t('invoices:columns.customer'),
+        dataIndex: 'customerName',
+        key: 'customerName',
+        ellipsis: true,
+        render: (name: string) => name || '-',
+      },
+      {
+        title: t('invoices:columns.issueDate'),
+        dataIndex: 'issueDate',
+        key: 'issueDate',
+        render: (date: string) => (date ? memoizedFormatDate(date) : '-'),
+      },
+      {
+        title: t('invoices:columns.dueDate'),
+        dataIndex: 'dueDate',
+        key: 'dueDate',
+        render: (date: string) => (date ? memoizedFormatDate(date) : '-'),
+      },
+      {
+        title: t('invoices:columns.total'),
+        dataIndex: 'totalAmount',
+        key: 'totalAmount',
+        align: 'right',
+        render: (val: number) => (val ? memoizedFormatCurrency(val) : '-'),
+      },
+      {
+        title: t('invoices:columns.paidAmount'),
+        dataIndex: 'paidAmount',
+        key: 'paidAmount',
+        align: 'right',
+        render: (val: number) => (val ? memoizedFormatCurrency(val) : '-'),
+      },
+      {
+        title: t('invoices:columns.status'),
+        dataIndex: 'status',
+        key: 'status',
+        render: (status: string) => (
+          <Tag color={statusColors[status as InvoiceStatus] || 'default'}>
+            {t(`invoices:status.${status}`)}
+          </Tag>
+        ),
+      },
+      {
+        title: 'Sync',
+        dataIndex: 'syncStatus',
+        key: 'syncStatus',
+        render: (syncStatus: SyncStatus) => {
+          const colors = {
+            [SyncStatus.SYNCED]: 'success',
+            [SyncStatus.PENDING]: 'warning',
+            [SyncStatus.CONFLICT]: 'error',
+          };
+          const labels = {
+            [SyncStatus.SYNCED]: 'Synced',
+            [SyncStatus.PENDING]: 'Pending',
+            [SyncStatus.CONFLICT]: 'Conflict',
+          };
+          return (
+            <Tag color={colors[syncStatus] || 'default'}>{labels[syncStatus] || 'Unknown'}</Tag>
+          );
+        },
+      },
+    ],
+    [t, navigate, memoizedFormatCurrency, memoizedFormatDate],
+  );
+
+  // Handle send (update status to SENT)
+  const handleSend = async (invoice: Invoice) => {
+    try {
+      logger.info('InvoiceList', `Sending invoice: ${invoice.id}`);
+      await offlineServices.invoices.update(invoice.id, { status: InvoiceStatus.SENT });
+      message.success(t('invoices:messages.sendSuccess'));
+      await loadInvoices();
+      await updateQueueSize();
+    } catch (error) {
+      logger.error('InvoiceList', 'Failed to send invoice', error as Error);
+      message.error(t('invoices:messages.sendError'));
+    }
+  };
+
   // Get paginated data
   const paginatedInvoices = useMemo(
     () => invoices.slice((page - 1) * pageSize, page * pageSize),
-    [invoices, page, pageSize]
+    [invoices, page, pageSize],
   );
-
-  const columns: ColumnsType<Invoice> = useMemo(() => [
-    {
-      title: t('invoices:columns.invoiceNumber'),
-      dataIndex: 'invoiceNumber',
-      key: 'invoiceNumber',
-      render: (text: string, record: Invoice) => (
-        <Button
-          type="link"
-          onClick={() => navigate(`/dashboard/invoices/${record.id}`)}
-          style={{ padding: 0 }}
-        >
-          {text}
-        </Button>
-      ),
-    },
-    {
-      title: t('invoices:columns.customer'),
-      dataIndex: 'customerName',
-      key: 'customerName',
-      ellipsis: true,
-      render: (name: string) => name || '-',
-    },
-    {
-      title: t('invoices:columns.issueDate'),
-      dataIndex: 'issueDate',
-      key: 'issueDate',
-      render: (date: string) => (date ? memoizedFormatDate(date) : '-'),
-    },
-    {
-      title: t('invoices:columns.dueDate'),
-      dataIndex: 'dueDate',
-      key: 'dueDate',
-      render: (date: string) => (date ? memoizedFormatDate(date) : '-'),
-    },
-    {
-      title: t('invoices:columns.total'),
-      dataIndex: 'totalAmount',
-      key: 'totalAmount',
-      align: 'right',
-      render: (val: number) => (val ? memoizedFormatCurrency(val) : '-'),
-    },
-    {
-      title: t('invoices:columns.paidAmount'),
-      dataIndex: 'paidAmount',
-      key: 'paidAmount',
-      align: 'right',
-      render: (val: number) => (val ? memoizedFormatCurrency(val) : '-'),
-    },
-    {
-      title: t('invoices:columns.status'),
-      dataIndex: 'status',
-      key: 'status',
-      render: (status: string) => (
-        <Tag color={statusColors[status as InvoiceStatus] || 'default'}>
-          {t(`invoices:status.${status}`)}
-        </Tag>
-      ),
-    },
-    {
-      title: 'Sync',
-      dataIndex: 'syncStatus',
-      key: 'syncStatus',
-      render: (syncStatus: SyncStatus) => {
-        const colors = {
-          [SyncStatus.SYNCED]: 'success',
-          [SyncStatus.PENDING]: 'warning',
-          [SyncStatus.CONFLICT]: 'error',
-        };
-        const labels = {
-          [SyncStatus.SYNCED]: 'Synced',
-          [SyncStatus.PENDING]: 'Pending',
-          [SyncStatus.CONFLICT]: 'Conflict',
-        };
-        return (
-          <Tag color={colors[syncStatus] || 'default'}>
-            {labels[syncStatus] || 'Unknown'}
-          </Tag>
-        );
-      },
-    },
-  ], [t, navigate, memoizedFormatCurrency, memoizedFormatDate]);
-
-  // Custom action for send button (only for draft invoices)
-  const handleSendClick = useCallback((record: Invoice) => {
-    if (record.status === InvoiceStatus.DRAFT) {
-      handleSend(record);
-    }
-  }, []);
 
   const filterComponents = useMemo(
     () => (
@@ -352,21 +353,18 @@ export default function InvoiceList() {
             </Select.Option>
           ))}
         </Select>
-        
+
         <RangePicker
           format="DD/MM/YYYY"
           placeholder={[t('invoices:filters.fromDate'), t('invoices:filters.toDate')]}
           style={{ width: isMobile ? '100%' : 'auto' }}
           onChange={(dates) => {
-            setDateRange([
-              dates?.[0]?.format('YYYY-MM-DD'),
-              dates?.[1]?.format('YYYY-MM-DD'),
-            ]);
+            setDateRange([dates?.[0]?.format('YYYY-MM-DD'), dates?.[1]?.format('YYYY-MM-DD')]);
           }}
         />
       </Space>
     ),
-    [t, isMobile, statusFilter, dateRange]
+    [t, isMobile, statusFilter, dateRange],
   );
 
   return (
@@ -380,7 +378,10 @@ export default function InvoiceList() {
       createButtonText={t('invoices:createButton')}
       onCreateClick={() => navigate('/dashboard/invoices/new')}
       extraActions={
-        <Space direction={isMobile ? 'vertical' : 'horizontal'} style={{ width: isMobile ? '100%' : 'auto' }}>
+        <Space
+          direction={isMobile ? 'vertical' : 'horizontal'}
+          style={{ width: isMobile ? '100%' : 'auto' }}
+        >
           <Badge
             status={isOnline ? 'success' : 'error'}
             text={
@@ -390,7 +391,7 @@ export default function InvoiceList() {
               </Space>
             }
           />
-          
+
           {queueSize > 0 && (
             <Badge count={queueSize} showZero={false}>
               <Tag color="warning">Pending Sync</Tag>

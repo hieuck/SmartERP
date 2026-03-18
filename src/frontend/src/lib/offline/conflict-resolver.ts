@@ -11,8 +11,8 @@ export enum ConflictResolution {
 export interface Conflict {
   id: string;
   entity: string;
-  localData: any;
-  serverData: any;
+  localData: Record<string, unknown>;
+  serverData: Record<string, unknown>;
   localVersion: number;
   serverVersion: number;
 }
@@ -25,7 +25,7 @@ export class ConflictResolver {
     token: string,
     conflictId: string,
     resolution: ConflictResolution,
-    mergedData?: any
+    mergedData?: Record<string, unknown>,
   ): Promise<void> {
     await axios.post(
       `${API_BASE_URL}/api/sync/resolve`,
@@ -36,14 +36,15 @@ export class ConflictResolver {
       },
       {
         headers: { Authorization: `Bearer ${token}` },
-      }
+      },
     );
   }
 
   /**
    * Auto-resolve conflicts using predefined rules
    */
-  autoResolve(conflict: Conflict): ConflictResolution {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  autoResolve(_conflict: Conflict): ConflictResolution {
     // Simple rule: server always wins for now
     // Can be enhanced with field-level merging
     return ConflictResolution.KEEP_SERVER;
@@ -52,10 +53,10 @@ export class ConflictResolver {
   /**
    * Merge two versions field by field
    */
-  merge(local: any, server: any): any {
+  merge(local: Record<string, unknown>, server: Record<string, unknown>): Record<string, unknown> {
     // Simple merge: take non-null values from both
     const merged = { ...server };
-    
+
     for (const key in local) {
       if (local[key] !== null && local[key] !== undefined) {
         // If server value is null/undefined, use local
@@ -64,7 +65,7 @@ export class ConflictResolver {
         }
       }
     }
-    
+
     return merged;
   }
 }

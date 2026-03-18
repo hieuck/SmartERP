@@ -1,29 +1,37 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import {
-  Form,
-  Input,
-  Button,
-  Card,
-  Select,
-  DatePicker,
-  InputNumber,
-  Table,
-  Space,
-  message,
-  Row,
-  Col,
-  Divider,
-  Typography,
-  Badge,
-} from 'antd';
-import { PlusOutlined, DeleteOutlined, SaveOutlined, ArrowLeftOutlined, SyncOutlined, WifiOutlined, DisconnectOutlined } from '@ant-design/icons';
-import { useTranslation } from 'react-i18next';
-import dayjs from 'dayjs';
+import { logger } from '@/lib/logger/logger.service';
+import { syncManager } from '@/lib/offline/sync-manager';
 import { InvoiceStatus } from '@/services/accounting/invoiceService';
 import { offlineServices } from '@/services/offline-services';
-import { syncManager } from '@/lib/offline/sync-manager';
-import { logger } from '@/lib/logger/logger.service';
+import {
+  ArrowLeftOutlined,
+  DeleteOutlined,
+  DisconnectOutlined,
+  PlusOutlined,
+  SaveOutlined,
+  SyncOutlined,
+  WifiOutlined,
+} from '@ant-design/icons';
+import {
+  Badge,
+  Button,
+  Card,
+  Col,
+  DatePicker,
+  Divider,
+  Form,
+  Input,
+  InputNumber,
+  message,
+  Row,
+  Select,
+  Space,
+  Table,
+  Typography,
+} from 'antd';
+import dayjs from 'dayjs';
+import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -125,7 +133,7 @@ const InvoiceForm: React.FC = () => {
   const loadOrders = async (customerId: string) => {
     try {
       const allOrders = await offlineServices.salesOrders.getAll();
-      const customerOrders = allOrders.filter(order => order.customerId === customerId);
+      const customerOrders = allOrders.filter((order) => order.customerId === customerId);
       setOrders(customerOrders);
       logger.info('InvoiceForm', 'Loaded orders from IndexedDB', { count: customerOrders.length });
     } catch (error) {
@@ -185,15 +193,20 @@ const InvoiceForm: React.FC = () => {
     try {
       const order = await offlineServices.salesOrders.getById(orderId);
       if (order && order.items) {
-        const orderItems: InvoiceItem[] = order.items.map((item: any, index: number) => ({
-          key: `item-${index}`,
-          description: item.productName || item.description || 'Sản phẩm',
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-          amount: item.quantity * item.unitPrice,
-        }));
+        const orderItems: InvoiceItem[] = (order.items as any[]).map(
+          (item: any, index: number) => ({
+            key: `item-${index}`,
+            description: item.productName || item.description || 'Sản phẩm',
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            amount: item.quantity * item.unitPrice,
+          }),
+        );
         setItems(orderItems);
-        logger.info('InvoiceForm', 'Loaded order items from IndexedDB', { orderId, count: orderItems.length });
+        logger.info('InvoiceForm', 'Loaded order items from IndexedDB', {
+          orderId,
+          count: orderItems.length,
+        });
       }
     } catch (error) {
       logger.error('InvoiceForm', 'Failed to load order', error as Error);
@@ -240,17 +253,22 @@ const InvoiceForm: React.FC = () => {
       setLoading(true);
 
       const invoiceData = {
+        invoiceNumber: values.invoiceNumber || `INV-${Date.now()}`,
+        type: 'sales',
         customerId: values.customerId,
         orderId: values.orderId,
+        invoiceDate: values.issueDate.toISOString(),
         issueDate: values.issueDate.toISOString(),
         dueDate: values.dueDate.toISOString(),
         subtotal,
         taxAmount: tax,
         discountAmount: discount,
         totalAmount: total,
+        paidAmount: 0,
+        currency: 'VND',
         status: values.status || InvoiceStatus.DRAFT,
         notes: values.notes,
-        invoiceNumber: values.invoiceNumber || `INV-${Date.now()}`,
+        items: items as unknown as any,
       };
 
       if (id) {
@@ -267,9 +285,9 @@ const InvoiceForm: React.FC = () => {
       if (navigator.onLine) {
         const token = localStorage.getItem('token');
         if (token) {
-          syncManager.sync(token).catch(err => 
-            logger.error('InvoiceForm', 'Sync after save failed', err)
-          );
+          syncManager
+            .sync(token)
+            .catch((err) => logger.error('InvoiceForm', 'Sync after save failed', err));
         }
       }
 
@@ -293,9 +311,11 @@ const InvoiceForm: React.FC = () => {
     try {
       setSyncing(true);
       const result = await syncManager.sync(token);
-      
+
       if (result.success) {
-        message.success(`${t('common:messages.syncSuccess')}: ${result.pulled} pulled, ${result.pushed} pushed`);
+        message.success(
+          `${t('common:messages.syncSuccess')}: ${result.pulled} pulled, ${result.pushed} pushed`,
+        );
         // Reload data after sync
         await loadCustomers();
         if (id) {
@@ -350,7 +370,7 @@ const InvoiceForm: React.FC = () => {
           value={value}
           onChange={(val) => updateItem(record.key, 'unitPrice', val || 0)}
           formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-          parser={(value) => value!.replace(/\$\s?|(,*)/g, '')}
+          parser={(value) => Number(value!.replace(/\$\s?|(,*)/g, '')) as unknown as 0}
           style={{ width: '100%' }}
         />
       ),
@@ -390,7 +410,9 @@ const InvoiceForm: React.FC = () => {
           {queueSize > 0 && (
             <>
               <span>|</span>
-              <span style={{ color: '#faad14' }}>{queueSize} {t('common:sync.pendingChanges')}</span>
+              <span style={{ color: '#faad14' }}>
+                {queueSize} {t('common:sync.pendingChanges')}
+              </span>
             </>
           )}
           <Button
@@ -404,7 +426,9 @@ const InvoiceForm: React.FC = () => {
           </Button>
         </Space>
 
-        <Title level={3}>{id ? t('invoices:form.editTitle') : t('invoices:form.createTitle')}</Title>
+        <Title level={3}>
+          {id ? t('invoices:form.editTitle') : t('invoices:form.createTitle')}
+        </Title>
 
         <Form
           form={form}
@@ -523,7 +547,7 @@ const InvoiceForm: React.FC = () => {
                       value={tax}
                       onChange={(val) => setTax(val || 0)}
                       formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                      parser={(value) => value!.replace(/\$\s?|(,*)/g, '')}
+                      parser={(value) => Number(value!.replace(/\$\s?|(,*)/g, '')) as unknown as 0}
                       style={{ width: 150 }}
                     />
                   </Row>
@@ -535,7 +559,7 @@ const InvoiceForm: React.FC = () => {
                       value={discount}
                       onChange={(val) => setDiscount(val || 0)}
                       formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                      parser={(value) => value!.replace(/\$\s?|(,*)/g, '')}
+                      parser={(value) => Number(value!.replace(/\$\s?|(,*)/g, '')) as unknown as 0}
                       style={{ width: 150 }}
                     />
                   </Row>

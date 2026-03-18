@@ -45,7 +45,7 @@ export default function TaskList() {
     enabled: Boolean(projectId),
   });
 
-  const deleteMutation = useMutation({
+  const _deleteMutation = useMutation({
     mutationFn: (taskId: string) => axios.delete(`/api/projects/${projectId}/tasks/${taskId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks', projectId] });

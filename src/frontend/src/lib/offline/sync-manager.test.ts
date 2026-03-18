@@ -1,10 +1,8 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { syncManager, SyncManager } from './sync-manager';
-import { db, SyncStatus } from './db';
-import axios from 'axios';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { db } from './db';
+import { SyncManager } from './sync-manager';
 
 vi.mock('axios');
-const mockedAxios = vi.mocked(axios);
 
 describe('SyncManager', () => {
   let manager: SyncManager;
@@ -23,22 +21,31 @@ describe('SyncManager', () => {
   describe('sync', () => {
     it('should sync all 41 entities successfully', async () => {
       const mockToken = 'test-token';
-      
+
       // Mock pull response
-      mockedAxios.post.mockResolvedValueOnce({
+      vi.mocked(axios.post).mockResolvedValueOnce({
         data: {
           data: {
             changes: [
-              { entity: 'products', records: [{ id: '1', name: 'Product 1', tenantId: 'tenant1' }] },
-              { entity: 'accounts', records: [{ id: '2', accountName: 'Account 1', tenantId: 'tenant1' }] },
-              { entity: 'employees', records: [{ id: '3', firstName: 'John', tenantId: 'tenant1' }] },
+              {
+                entity: 'products',
+                records: [{ id: '1', name: 'Product 1', tenantId: 'tenant1' }],
+              },
+              {
+                entity: 'accounts',
+                records: [{ id: '2', accountName: 'Account 1', tenantId: 'tenant1' }],
+              },
+              {
+                entity: 'employees',
+                records: [{ id: '3', firstName: 'John', tenantId: 'tenant1' }],
+              },
             ],
           },
         },
       });
 
       // Mock push response
-      mockedAxios.post.mockResolvedValueOnce({
+      vi.mocked(axios.post).mockResolvedValueOnce({
         data: {
           data: {
             applied: 0,
@@ -51,29 +58,48 @@ describe('SyncManager', () => {
 
       expect(result.success).toBe(true);
       expect(result.pulled).toBe(3);
-      expect(mockedAxios.post).toHaveBeenCalledWith(
+      expect(vi.mocked(axios.post)).toHaveBeenCalledWith(
         expect.stringContaining('/api/sync/pull'),
         expect.objectContaining({
           entities: expect.arrayContaining([
-            'products', 'customers', 'suppliers',
-            'accounts', 'journalEntries', 'ledgers', 'taxRates',
-            'purchaseReceipts', 'supplierInvoices',
-            'quotations', 'deliveryNotes',
-            'stockAdjustments', 'stockTransfers', 'binLocations',
-            'boms', 'workOrders', 'productionPlans',
-            'employees', 'departments', 'positions', 'shifts',
-            'projects', 'tasks', 'timeEntries',
-            'documents', 'reports', 'workflows', 'settings',
+            'products',
+            'customers',
+            'suppliers',
+            'accounts',
+            'journalEntries',
+            'ledgers',
+            'taxRates',
+            'purchaseReceipts',
+            'supplierInvoices',
+            'quotations',
+            'deliveryNotes',
+            'stockAdjustments',
+            'stockTransfers',
+            'binLocations',
+            'boms',
+            'workOrders',
+            'productionPlans',
+            'employees',
+            'departments',
+            'positions',
+            'shifts',
+            'projects',
+            'tasks',
+            'timeEntries',
+            'documents',
+            'reports',
+            'workflows',
+            'settings',
           ]),
         }),
-        expect.any(Object)
+        expect.any(Object),
       );
     });
 
     it('should handle sync errors gracefully', async () => {
       const mockToken = 'test-token';
-      
-      mockedAxios.post.mockRejectedValueOnce(new Error('Network error'));
+
+      vi.mocked(axios.post).mockRejectedValueOnce(new Error('Network error'));
 
       const result = await manager.sync(mockToken);
 
@@ -84,7 +110,13 @@ describe('SyncManager', () => {
 
   describe('queueOperation', () => {
     it('should queue operation for new entities', async () => {
-      await manager.queueOperation('accounts', 'create', { id: '1', accountName: 'Test' }, 1, 'offline_1');
+      await manager.queueOperation(
+        'accounts',
+        'create',
+        { id: '1', accountName: 'Test' },
+        1,
+        'offline_1',
+      );
 
       const queueSize = await manager.getQueueSize();
       expect(queueSize).toBeGreaterThan(0);
@@ -94,24 +126,39 @@ describe('SyncManager', () => {
   describe('applyChanges', () => {
     it('should apply changes to all 27 new entities', async () => {
       const mockToken = 'test-token';
-      
+
       // Mock pull with all new entities
-      mockedAxios.post.mockResolvedValueOnce({
+      vi.mocked(axios.post).mockResolvedValueOnce({
         data: {
           data: {
             changes: [
-              { entity: 'accounts', records: [{ id: '1', accountName: 'Account 1', tenantId: 'tenant1' }] },
-              { entity: 'journalEntries', records: [{ id: '2', entryNumber: 'JE001', tenantId: 'tenant1' }] },
-              { entity: 'employees', records: [{ id: '3', firstName: 'John', tenantId: 'tenant1' }] },
-              { entity: 'projects', records: [{ id: '4', projectName: 'Project 1', tenantId: 'tenant1' }] },
-              { entity: 'documents', records: [{ id: '5', documentName: 'Doc 1', tenantId: 'tenant1' }] },
+              {
+                entity: 'accounts',
+                records: [{ id: '1', accountName: 'Account 1', tenantId: 'tenant1' }],
+              },
+              {
+                entity: 'journalEntries',
+                records: [{ id: '2', entryNumber: 'JE001', tenantId: 'tenant1' }],
+              },
+              {
+                entity: 'employees',
+                records: [{ id: '3', firstName: 'John', tenantId: 'tenant1' }],
+              },
+              {
+                entity: 'projects',
+                records: [{ id: '4', projectName: 'Project 1', tenantId: 'tenant1' }],
+              },
+              {
+                entity: 'documents',
+                records: [{ id: '5', documentName: 'Doc 1', tenantId: 'tenant1' }],
+              },
             ],
           },
         },
       });
 
       // Mock push response
-      mockedAxios.post.mockResolvedValueOnce({
+      vi.mocked(axios.post).mockResolvedValueOnce({
         data: {
           data: {
             applied: 0,

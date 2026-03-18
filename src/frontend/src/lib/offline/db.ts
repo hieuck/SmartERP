@@ -126,6 +126,7 @@ export interface Invoice extends BaseEntity {
   customerId?: string;
   customerName?: string;
   supplierId?: string;
+  orderId?: string;
   invoiceDate: Date;
   issueDate?: string; // alias for invoiceDate (string form)
   dueDate?: Date;

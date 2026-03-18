@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface UseLazyImageOptions {
   threshold?: number;
@@ -87,7 +87,7 @@ export function useLazyImage(src: string, options: UseLazyImageOptions = {}) {
 /**
  * Hook for lazy loading multiple images
  */
-export function useLazyImages(images: string[], options: UseLazyImageOptions = {}) {
+export function useLazyImages(_images: string[], _options: UseLazyImageOptions = {}) {
   const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
   const [loadingImages, setLoadingImages] = useState<Set<string>>(new Set());
   const [errors, setErrors] = useState<Map<string, Error>>(new Map());

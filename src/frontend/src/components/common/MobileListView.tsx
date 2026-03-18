@@ -3,13 +3,13 @@
  * List view for mobile screens with card-based layout
  */
 
-import { memo } from 'react';
-import { List, Empty, Card, Dropdown, Button, Collapse, theme } from 'antd';
 import { MoreOutlined } from '@ant-design/icons';
+import type { MenuProps } from 'antd';
+import { Button, Card, Collapse, Dropdown, Empty, List, theme } from 'antd';
+import type { ColumnsType, ColumnType, TableProps } from 'antd/es/table';
+import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import ListItemActions from './ListItemActions';
-import type { ColumnsType, ColumnType, TableProps } from 'antd/es/table';
-import type { MenuProps } from 'antd';
 
 const { useToken } = theme;
 
@@ -87,22 +87,20 @@ function MobileListViewComponent<T extends Record<string, unknown>>({
           onDelete,
           deleteConfirmTitle,
           isMobile: true,
-        }) as MenuProps['items'];
+        }) as unknown as MenuProps['items'];
 
         return (
           <Card
             size="small"
             style={{ marginBottom: 8, position: 'relative' }}
-            styles={{ body: { paddingRight: menuItems && menuItems.length > 0 ? 40 : 12, paddingBottom: 8 } }}
+            styles={{
+              body: { paddingRight: menuItems && menuItems.length > 0 ? 40 : 12, paddingBottom: 8 },
+            }}
           >
             {/* Actions dropdown in top-right corner */}
             {(onEdit || onDelete) && menuItems && menuItems.length > 0 && (
               <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 1 }}>
-                <Dropdown
-                  menu={{ items: menuItems }}
-                  trigger={['click']}
-                  placement="bottomRight"
-                >
+                <Dropdown menu={{ items: menuItems }} trigger={['click']} placement="bottomRight">
                   <Button
                     type="text"
                     icon={<MoreOutlined />}
@@ -121,15 +119,16 @@ function MobileListViewComponent<T extends Record<string, unknown>>({
               {columns.slice(0, 4).map((col, idx) => {
                 // Type guard to check if column is ColumnType (not ColumnGroupType)
                 if (!('dataIndex' in col)) return null;
-                
+
                 const column = col as ColumnType<T>;
                 const value = column.dataIndex ? item[column.dataIndex as string] : null;
                 const rendered = column.render ? column.render(value, item, idx) : value;
-                
+
                 // Handle column.title which can be string, ReactNode, or function
-                const title = typeof column.title === 'function' 
-                  ? column.title({ sortColumns: undefined }) 
-                  : column.title;
+                const title =
+                  typeof column.title === 'function'
+                    ? column.title({ sortColumns: undefined })
+                    : column.title;
 
                 return (
                   <div key={idx} style={{ marginBottom: idx < 3 ? 8 : 0 }}>

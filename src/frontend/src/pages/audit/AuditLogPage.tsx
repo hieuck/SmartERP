@@ -1,45 +1,35 @@
-import { useState, useEffect } from 'react';
+import { useResponsive } from '@/hooks/useResponsive';
+import { logger } from '@/lib/logger/logger.service';
+import { AuditAction, AuditEntity, AuditLog, auditService } from '@/services/audit/auditService';
+import { EyeOutlined, FileTextOutlined, UserOutlined } from '@ant-design/icons';
 import {
+  Button,
   Card,
-  Table,
-  Tag,
-  Select,
+  Col,
   DatePicker,
-  Space,
   Descriptions,
   Drawer,
-  Button,
   Row,
-  Col,
+  Select,
+  Space,
   Statistic,
+  Table,
+  Tag,
 } from 'antd';
-import {
-  EyeOutlined,
-  UserOutlined,
-  FileTextOutlined,
-  ClockCircleOutlined,
-} from '@ant-design/icons';
-import {
-  auditService,
-  AuditLog,
-  AuditAction,
-  AuditEntity,
-} from '@/services/audit/auditService';
-import { logger } from '@/lib/logger/logger.service';
 import dayjs from 'dayjs';
-import { useResponsive } from '@/hooks/useResponsive';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  LineChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Legend,
   Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
 } from 'recharts';
 
 const { RangePicker } = DatePicker;
@@ -351,19 +341,29 @@ export default function AuditLogPage() {
         {selectedLog && (
           <Descriptions column={1} bordered>
             <Descriptions.Item label={t('audit:details.id')}>{selectedLog.id}</Descriptions.Item>
-            <Descriptions.Item label={t('audit:details.user')}>{selectedLog.userId}</Descriptions.Item>
+            <Descriptions.Item label={t('audit:details.user')}>
+              {selectedLog.userId}
+            </Descriptions.Item>
             <Descriptions.Item label={t('audit:details.action')}>
-              <Tag color={actionColors[selectedLog.action]}>{getActionLabel(selectedLog.action)}</Tag>
+              <Tag color={actionColors[selectedLog.action]}>
+                {getActionLabel(selectedLog.action)}
+              </Tag>
             </Descriptions.Item>
             <Descriptions.Item label={t('audit:details.entity')}>
               {getEntityLabel(selectedLog.entity)}
             </Descriptions.Item>
-            <Descriptions.Item label={t('audit:details.entityId')}>{selectedLog.entityId}</Descriptions.Item>
+            <Descriptions.Item label={t('audit:details.entityId')}>
+              {selectedLog.entityId}
+            </Descriptions.Item>
             <Descriptions.Item label={t('audit:details.time')}>
               {dayjs(selectedLog.createdAt).format('DD/MM/YYYY HH:mm:ss')}
             </Descriptions.Item>
-            <Descriptions.Item label={t('audit:details.ip')}>{selectedLog.ipAddress || '-'}</Descriptions.Item>
-            <Descriptions.Item label={t('audit:details.userAgent')}>{selectedLog.userAgent || '-'}</Descriptions.Item>
+            <Descriptions.Item label={t('audit:details.ip')}>
+              {selectedLog.ipAddress || '-'}
+            </Descriptions.Item>
+            <Descriptions.Item label={t('audit:details.userAgent')}>
+              {selectedLog.userAgent || '-'}
+            </Descriptions.Item>
             {selectedLog.oldValue && (
               <Descriptions.Item label={t('audit:details.oldValue')}>
                 {renderValue(selectedLog.oldValue)}

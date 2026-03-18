@@ -1,11 +1,23 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeftOutlined, SaveOutlined, UserOutlined, SyncOutlined } from '@ant-design/icons';
-import { Button, Card, Col, Form, Input, InputNumber, message, Row, Space, Typography, Badge } from 'antd';
-import { useTranslation } from 'react-i18next';
-import { offlineServices } from '@/services/offline-services';
-import { syncManager } from '@/lib/offline/sync-manager';
 import { logger } from '@/lib/logger/logger.service';
+import { syncManager } from '@/lib/offline/sync-manager';
+import { offlineServices } from '@/services/offline-services';
+import { ArrowLeftOutlined, SaveOutlined, SyncOutlined, UserOutlined } from '@ant-design/icons';
+import {
+  Badge,
+  Button,
+  Card,
+  Col,
+  Form,
+  Input,
+  InputNumber,
+  message,
+  Row,
+  Space,
+  Typography,
+} from 'antd';
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const { Title } = Typography;
 const { TextArea } = Input;
@@ -84,7 +96,7 @@ export default function CustomerForm() {
     try {
       setSyncing(true);
       const result = await syncManager.sync(token);
-      
+
       if (result.success) {
         await loadQueueSize();
         if (isEdit) await loadCustomer();
@@ -138,15 +150,16 @@ export default function CustomerForm() {
                 {syncing ? t('customers:sync.syncing') : t('customers:sync.syncNow')}
               </Button>
             </Badge>
-            <Badge 
-              status={isOnline ? 'success' : 'error'} 
-              text={isOnline ? t('customers:sync.online') : t('customers:sync.offline')} 
+            <Badge
+              status={isOnline ? 'success' : 'error'}
+              text={isOnline ? t('customers:sync.online') : t('customers:sync.offline')}
             />
           </Space>
         </Space>
 
         <Title level={3}>
-          <UserOutlined /> {isEdit ? t('customers:form.title.edit') : t('customers:form.title.create')}
+          <UserOutlined />{' '}
+          {isEdit ? t('customers:form.title.edit') : t('customers:form.title.create')}
         </Title>
 
         <Form
@@ -189,7 +202,10 @@ export default function CustomerForm() {
                 label={t('customers:form.fields.phone')}
                 rules={[
                   { required: true, message: t('customers:form.validation.phoneRequired') },
-                  { pattern: /^[0-9]{10,11}$/, message: t('customers:form.validation.phoneInvalid') },
+                  {
+                    pattern: /^[0-9]{10,11}$/,
+                    message: t('customers:form.validation.phoneInvalid'),
+                  },
                 ]}
               >
                 <Input placeholder={t('customers:form.placeholders.phone')} />
@@ -200,13 +216,15 @@ export default function CustomerForm() {
               <Form.Item
                 name="creditLimit"
                 label={t('customers:form.fields.creditLimit')}
-                rules={[{ required: true, message: t('customers:form.validation.creditLimitRequired') }]}
+                rules={[
+                  { required: true, message: t('customers:form.validation.creditLimitRequired') },
+                ]}
               >
                 <InputNumber
                   min={0}
                   style={{ width: '100%' }}
                   formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                  parser={(value) => value!.replace(/\$\s?|(,*)/g, '')}
+                  parser={(value) => Number(value!.replace(/\$\s?|(,*)/g, '')) as unknown as 0}
                   addonAfter={i18n.language === 'vi' ? '₫' : '$'}
                 />
               </Form.Item>

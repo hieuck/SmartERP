@@ -1,26 +1,32 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { logger } from '@/lib/logger/logger.service';
+import type { Category } from '@/lib/offline/db';
+import { syncManager } from '@/lib/offline/sync-manager';
+import { offlineServices } from '@/services/offline-services';
 import {
+  AppstoreOutlined,
+  ArrowLeftOutlined,
+  PlusOutlined,
+  SaveOutlined,
+  SyncOutlined,
+} from '@ant-design/icons';
+import {
+  Badge,
+  Button,
+  Card,
+  Col,
   Form,
   Input,
   InputNumber,
-  Select,
-  Button,
-  Card,
-  Space,
   message,
-  Typography,
-  Row,
-  Col,
   Modal,
-  Badge,
+  Row,
+  Select,
+  Space,
+  Typography,
 } from 'antd';
-import { SaveOutlined, ArrowLeftOutlined, AppstoreOutlined, PlusOutlined, SyncOutlined } from '@ant-design/icons';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { offlineServices } from '@/services/offline-services';
-import { syncManager } from '@/lib/offline/sync-manager';
-import { logger } from '@/lib/logger/logger.service';
-import type { Product, Category } from '@/lib/offline/db';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const { Title } = Typography;
 const { TextArea } = Input;
@@ -119,7 +125,7 @@ export default function ProductForm() {
     try {
       setSyncing(true);
       const result = await syncManager.sync(token);
-      
+
       if (result.success) {
         await loadCategories();
         await loadQueueSize();
@@ -138,11 +144,11 @@ export default function ProductForm() {
       const newCategory = await offlineServices.categories.create(values);
       message.success(t('products:categories.createSuccess'));
       logger.info('ProductForm', 'Category created', { id: newCategory.id });
-      
+
       categoryForm.resetFields();
       setShowCategoryModal(false);
       form.setFieldsValue({ categoryId: newCategory.id });
-      
+
       await loadCategories();
       await loadQueueSize();
     } catch (error) {
@@ -156,7 +162,7 @@ export default function ProductForm() {
   const onFinish = async (values: any) => {
     try {
       setLoading(true);
-      
+
       if (isEdit && id) {
         await offlineServices.products.update(id, values);
         message.success(t('products:messages.updateSuccess'));
@@ -166,7 +172,7 @@ export default function ProductForm() {
         message.success(t('products:messages.createSuccess'));
         logger.info('ProductForm', 'Product created');
       }
-      
+
       await loadQueueSize();
       navigate('/dashboard/products');
     } catch (error) {
@@ -199,12 +205,16 @@ export default function ProductForm() {
                   {t('products:sync.syncNow')}
                 </Button>
               </Badge>
-              <Badge status={isOnline ? 'success' : 'error'} text={t(isOnline ? 'products:sync.online' : 'products:sync.offline')} />
+              <Badge
+                status={isOnline ? 'success' : 'error'}
+                text={t(isOnline ? 'products:sync.online' : 'products:sync.offline')}
+              />
             </Space>
           </Space>
 
           <Title level={3}>
-            <AppstoreOutlined /> {isEdit ? t('products:form.editTitle') : t('products:form.createTitle')}
+            <AppstoreOutlined />{' '}
+            {isEdit ? t('products:form.editTitle') : t('products:form.createTitle')}
           </Title>
 
           <Form
@@ -284,7 +294,7 @@ export default function ProductForm() {
                     min={0}
                     style={{ width: '100%' }}
                     formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                    parser={(value) => value!.replace(/\$\s?|(,*)/g, '')}
+                    parser={(value) => Number(value!.replace(/\$\s?|(,*)/g, '')) as unknown as 0}
                     addonAfter={currencySymbol}
                   />
                 </Form.Item>
@@ -300,7 +310,7 @@ export default function ProductForm() {
                     min={0}
                     style={{ width: '100%' }}
                     formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                    parser={(value) => value!.replace(/\$\s?|(,*)/g, '')}
+                    parser={(value) => Number(value!.replace(/\$\s?|(,*)/g, '')) as unknown as 0}
                     addonAfter={currencySymbol}
                   />
                 </Form.Item>
@@ -322,7 +332,9 @@ export default function ProductForm() {
                 <Form.Item
                   name="minStockLevel"
                   label={t('products:fields.minStockLevel')}
-                  rules={[{ required: true, message: t('products:form.validation.minStockRequired') }]}
+                  rules={[
+                    { required: true, message: t('products:form.validation.minStockRequired') },
+                  ]}
                 >
                   <InputNumber min={0} style={{ width: '100%' }} />
                 </Form.Item>

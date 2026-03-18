@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
-import { Table, Button, Space, Upload, message, Tag } from 'antd';
 import {
-  UploadOutlined,
-  DownloadOutlined,
   DeleteOutlined,
+  DownloadOutlined,
   EyeOutlined,
   HistoryOutlined,
+  UploadOutlined,
 } from '@ant-design/icons';
+import { Button, message, Space, Table, Tag, Upload } from 'antd';
+import React, { useState } from 'react';
 
 interface Document {
   id: string;
@@ -60,7 +60,7 @@ export const DocumentBrowser: React.FC = () => {
     {
       title: 'Hành động',
       key: 'action',
-      render: (_: any, record: Document) => (
+      render: (_: any, _record: Document) => (
         <Space>
           <Button icon={<EyeOutlined />} size="small" />
           <Button icon={<DownloadOutlined />} size="small" />
