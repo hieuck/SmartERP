@@ -57,35 +57,30 @@ jobs:
           - 6379:6379
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ inputs.node-version }}
           cache: npm
           cache-dependency-path: ${{ inputs.working-directory }}/package-lock.json
-
       - uses: actions/cache@v4
         with:
           path: ${{ inputs.working-directory }}/node_modules
           key: ${{ runner.os }}-node-${{ inputs.node-version }}-${{ hashFiles(format('{0}/package-lock.json', inputs.working-directory)) }}
           restore-keys: ${{ runner.os }}-node-${{ inputs.node-version }}-
-
       - run: npm ci --prefer-offline --no-audit
-
       - name: Run tests with coverage
         run: npm run test:coverage
         env:
           NODE_ENV: test
-          DB_HOST: ${{ inputs.needs-postgres && 'localhost' || '' }}
+          DB_HOST: localhost
           DB_PORT: 5432
           DB_USER: test_user
           DB_PASSWORD: test_password
           DB_NAME: smart_erp_test
-          REDIS_HOST: ${{ inputs.needs-redis && 'localhost' || '' }}
+          REDIS_HOST: localhost
           REDIS_PORT: 6379
           JWT_SECRET: test-secret-key
-
-      - uses: codecov/codecov-action@v4
+      - uses: codecov/codecov-action@v5
         if: always()
         with:
           files: ${{ inputs.working-directory }}/coverage/lcov.info
