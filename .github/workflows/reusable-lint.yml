@@ -1,4 +1,4 @@
-﻿name: Reusable Lint
+name: Reusable Lint
 
 on:
   workflow_call:
@@ -27,11 +27,11 @@ jobs:
           cache-dependency-path: ${{ inputs.working-directory }}/package-lock.json
       - run: npm ci --prefer-offline --no-audit
       - name: Run ESLint
-        run: npm run lint || true
+        run: npm run lint
       - name: Type check
         run: |
           if grep -q '"type-check"' package.json 2>/dev/null; then
             npm run type-check || true
           elif [ -f "tsconfig.json" ]; then
-            npx tsc --noEmit || true
+            npx tsc --noEmit
           fi
