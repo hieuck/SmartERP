@@ -1,8 +1,6 @@
-import React, { useState } from 'react';
-import { Modal, Steps, Button, Result, Progress } from 'antd';
 import { CheckCircleOutlined } from '@ant-design/icons';
-
-const { Step } = Steps;
+import { Button, Modal, Progress, Result, Steps } from 'antd';
+import React, { useState } from 'react';
 
 interface InstallationWizardProps {
   visible: boolean;
@@ -70,11 +68,11 @@ export const InstallationWizard: React.FC<InstallationWizardProps> = ({
       }
       width={600}
     >
-      <Steps current={currentStep} style={{ marginBottom: 24 }}>
-        {steps.map((step) => (
-          <Step key={step.title} title={step.title} description={step.description} />
-        ))}
-      </Steps>
+      <Steps
+        current={currentStep}
+        style={{ marginBottom: 24 }}
+        items={steps.map((step) => ({ title: step.title, description: step.description }))}
+      />
 
       {currentStep === 2 && installing && <Progress percent={progress} status="active" />}
 

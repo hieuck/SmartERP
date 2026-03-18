@@ -1,24 +1,37 @@
-import { useState, useEffect } from 'react';
-import { Card, List, Badge, Tag, Button, Space, Empty, Spin, Dropdown, Menu, message, theme } from 'antd';
+import { logger } from '@/lib/logger/logger.service';
+import notificationService, {
+  NotificationPriority,
+  NotificationType,
+} from '@/services/notification/notificationService';
 import {
   BellOutlined,
+  CheckCircleOutlined,
   CheckOutlined,
+  CloseCircleOutlined,
   DeleteOutlined,
   InfoCircleOutlined,
-  CheckCircleOutlined,
-  WarningOutlined,
-  CloseCircleOutlined,
   MoreOutlined,
+  WarningOutlined,
 } from '@ant-design/icons';
-import { useTranslation } from 'react-i18next';
-import notificationService, {
-  NotificationType,
-  NotificationPriority,
-} from '@/services/notification/notificationService';
+import {
+  Badge,
+  Button,
+  Card,
+  Dropdown,
+  Empty,
+  List,
+  Menu,
+  message,
+  Space,
+  Spin,
+  Tag,
+  theme,
+} from 'antd';
 import dayjs from 'dayjs';
-import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/vi';
-import { logger } from '@/lib/logger/logger.service';
+import relativeTime from 'dayjs/plugin/relativeTime';
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 dayjs.extend(relativeTime);
 dayjs.locale('vi');
@@ -80,7 +93,11 @@ export default function NotificationCenter() {
       });
       setNotifications(response.data || []);
     } catch (error: any) {
-      message.error(t('notifications.messages.cannotLoad') + ': ' + (error.message || t('notifications.messages.unknownError')));
+      message.error(
+        t('notifications.messages.cannotLoad') +
+          ': ' +
+          (error.message || t('notifications.messages.unknownError')),
+      );
     } finally {
       setLoading(false);
     }
@@ -102,7 +119,11 @@ export default function NotificationCenter() {
       fetchNotifications();
       fetchUnreadCount();
     } catch (error: any) {
-      message.error(t('notifications.messages.markReadError') + ': ' + (error.message || t('notifications.messages.unknownError')));
+      message.error(
+        t('notifications.messages.markReadError') +
+          ': ' +
+          (error.message || t('notifications.messages.unknownError')),
+      );
     }
   };
 
@@ -113,7 +134,11 @@ export default function NotificationCenter() {
       fetchNotifications();
       fetchUnreadCount();
     } catch (error: any) {
-      message.error(t('notifications.messages.markAllReadError') + ': ' + (error.message || t('notifications.messages.unknownError')));
+      message.error(
+        t('notifications.messages.markAllReadError') +
+          ': ' +
+          (error.message || t('notifications.messages.unknownError')),
+      );
     }
   };
 
@@ -124,7 +149,11 @@ export default function NotificationCenter() {
       fetchNotifications();
       fetchUnreadCount();
     } catch (error: any) {
-      message.error(t('notifications.messages.deleteError') + ': ' + (error.message || t('notifications.messages.unknownError')));
+      message.error(
+        t('notifications.messages.deleteError') +
+          ': ' +
+          (error.message || t('notifications.messages.unknownError')),
+      );
     }
   };
 
@@ -196,7 +225,30 @@ export default function NotificationCenter() {
                     marginBottom: 8,
                   }}
                   actions={[
-                    <Dropdown overlay={getMenu(item)} trigger={['click']}>
+                    <Dropdown
+                      menu={{
+                        items: [
+                          ...(!item.isRead
+                            ? [
+                                {
+                                  key: 'read',
+                                  label: t('notifications.center.markAsRead'),
+                                  icon: <CheckOutlined />,
+                                  onClick: () => handleMarkAsRead(item.id),
+                                },
+                              ]
+                            : []),
+                          {
+                            key: 'delete',
+                            label: t('notifications.center.delete'),
+                            icon: <DeleteOutlined />,
+                            danger: true,
+                            onClick: () => handleDelete(item.id),
+                          },
+                        ],
+                      }}
+                      trigger={['click']}
+                    >
                       <Button type="text" icon={<MoreOutlined />} />
                     </Dropdown>,
                   ]}
@@ -211,7 +263,9 @@ export default function NotificationCenter() {
                         <Tag color={priorityColors[item.priority as NotificationPriority]}>
                           {getPriorityLabel(item.priority as NotificationPriority)}
                         </Tag>
-                        {!item.isRead && <Badge status="processing" text={t('notifications.center.new')} />}
+                        {!item.isRead && (
+                          <Badge status="processing" text={t('notifications.center.new')} />
+                        )}
                       </Space>
                     }
                     description={

@@ -2,7 +2,6 @@
  * Hook để detect responsive breakpoints
  */
 
-import { useState, useEffect } from 'react';
 import { Grid } from 'antd';
 
 const { useBreakpoint } = Grid;
@@ -18,7 +17,7 @@ export function useResponsive(): ResponsiveInfo {
   const screens = useBreakpoint();
 
   const isMobile = !screens.md; // < 768px
-  const isTablet = screens.md && !screens.lg; // 768px - 991px
+  const isTablet = !!screens.md && !screens.lg; // 768px - 991px
   const isDesktop = !!screens.lg; // >= 992px
 
   return {

@@ -1,5 +1,5 @@
-import { useQuery, UseQueryResult } from '@tanstack/react-query';
 import reportingService from '@/services/report/reportingService';
+import { useQuery, UseQueryResult } from '@tanstack/react-query';
 
 interface ReportParams {
   startDate: string;
@@ -83,7 +83,7 @@ export const useInventoryMovementsReport = (params: ReportParams): UseQueryResul
   return useQuery({
     queryKey: ['report', 'inventory-movements', params],
     queryFn: async () => {
-      const data = await reportingService.getInventoryMovements(params);
+      const data = await reportingService.getStockMovementReport(params);
       return data;
     },
     enabled: !!params.startDate && !!params.endDate,
@@ -111,7 +111,7 @@ export const useTopCustomersReport = (params: ReportParams): UseQueryResult<any,
   return useQuery({
     queryKey: ['report', 'top-customers', params],
     queryFn: async () => {
-      const data = await reportingService.getTopCustomers(params);
+      const data = await reportingService.getTopCustomers(10);
       return data;
     },
     enabled: !!params.startDate && !!params.endDate,
@@ -166,7 +166,16 @@ export const useCashFlowReport = (params: ReportParams): UseQueryResult<any, Err
 export const useExportReportPDF = () => {
   return async (reportType: string, params: ReportParams) => {
     try {
-      const blob = await reportingService.exportPDF(reportType, params);
+      let blob: Blob;
+      if (reportType === 'financial') {
+        blob = await reportingService.exportFinancialReport(params, 'pdf');
+      } else if (reportType === 'customers') {
+        blob = await reportingService.exportCustomerReport(params, 'pdf');
+      } else if (reportType === 'inventory') {
+        blob = await reportingService.exportInventoryReport('pdf');
+      } else {
+        blob = await reportingService.exportSalesReport(params, 'pdf');
+      }
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -186,7 +195,16 @@ export const useExportReportPDF = () => {
 export const useExportReportExcel = () => {
   return async (reportType: string, params: ReportParams) => {
     try {
-      const blob = await reportingService.exportExcel(reportType, params);
+      let blob: Blob;
+      if (reportType === 'financial') {
+        blob = await reportingService.exportFinancialReport(params, 'excel');
+      } else if (reportType === 'customers') {
+        blob = await reportingService.exportCustomerReport(params, 'excel');
+      } else if (reportType === 'inventory') {
+        blob = await reportingService.exportInventoryReport('excel');
+      } else {
+        blob = await reportingService.exportSalesReport(params, 'excel');
+      }
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;

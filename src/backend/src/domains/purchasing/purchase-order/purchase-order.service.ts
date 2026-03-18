@@ -10,9 +10,9 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { PurchaseOrder } from './entities/purchase-order.entity';
 import { CreatePurchaseOrderDto } from './dto/create-purchase-order.dto';
 import { UpdatePurchaseOrderDto } from './dto/update-purchase-order.dto';
+import { PurchaseOrder } from './entities/purchase-order.entity';
 
 const TERMINAL_STATUSES = ['received', 'cancelled'];
 
@@ -66,6 +66,7 @@ export class PurchaseOrderService {
     const totalAmount = this.calculateTotal(dto);
     return this.secureRepo.save(user, {
       ...dto,
+      orderDate: dto.orderDate ? new Date(dto.orderDate) : undefined,
       status: dto.status || 'draft',
       totalAmount,
       shippingFee: dto.shippingFee || 0,
@@ -122,10 +123,12 @@ export class PurchaseOrderService {
         const all = await this.secureRepo.find(user, {});
         const totalOrders = all.length;
         const totalAmount = all
-          .filter((o) => TERMINAL_STATUSES.includes(o.status) ? o.status === 'received' : true)
+          .filter((o) => (TERMINAL_STATUSES.includes(o.status) ? o.status === 'received' : true))
           .reduce((sum, o) => sum + Number(o.totalAmount || 0), 0);
         const byStatus: Record<string, number> = {};
-        all.forEach((o) => { byStatus[o.status] = (byStatus[o.status] || 0) + 1; });
+        all.forEach((o) => {
+          byStatus[o.status] = (byStatus[o.status] || 0) + 1;
+        });
         return {
           totalOrders,
           totalAmount: Math.round(totalAmount * 100) / 100,

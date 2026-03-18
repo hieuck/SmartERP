@@ -1,31 +1,27 @@
-import React, { useState } from 'react';
+import importExportService, { ImportResult } from '@/services/import-export/importExportService';
 import {
-  Modal,
-  Steps,
-  Button,
-  Upload,
+  CheckCircleOutlined,
+  DownloadOutlined,
+  FileExcelOutlined,
+  UploadOutlined,
+} from '@ant-design/icons';
+import {
   Alert,
-  Table,
+  Button,
+  Divider,
+  Modal,
   Progress,
   Result,
   Space,
+  Steps,
+  Table,
   Typography,
+  Upload,
   message,
-  Divider,
 } from 'antd';
-import {
-  UploadOutlined,
-  FileExcelOutlined,
-  CheckCircleOutlined,
-  CloseCircleOutlined,
-  DownloadOutlined,
-} from '@ant-design/icons';
 import type { UploadFile } from 'antd/es/upload/interface';
-import importExportService, {
-  ImportResult,
-} from '@/services/import-export/importExportService';
+import React, { useState } from 'react';
 
-const { Step } = Steps;
 const { Text, Title, Paragraph } = Typography;
 const { Dragger } = Upload;
 
@@ -362,11 +358,15 @@ const ImportWizard: React.FC<ImportWizardProps> = ({
       }
     >
       {currentStep !== 3 && (
-        <Steps current={currentStep} style={{ marginBottom: 24 }}>
-          <Step title="Upload" icon={<UploadOutlined />} status={getStepStatus(0)} />
-          <Step title="Validate" icon={<CheckCircleOutlined />} status={getStepStatus(1)} />
-          <Step title="Import" icon={<FileExcelOutlined />} status={getStepStatus(2)} />
-        </Steps>
+        <Steps
+          current={currentStep}
+          style={{ marginBottom: 24 }}
+          items={[
+            { title: 'Upload', icon: <UploadOutlined />, status: getStepStatus(0) },
+            { title: 'Validate', icon: <CheckCircleOutlined />, status: getStepStatus(1) },
+            { title: 'Import', icon: <FileExcelOutlined />, status: getStepStatus(2) },
+          ]}
+        />
       )}
 
       {renderStepContent()}

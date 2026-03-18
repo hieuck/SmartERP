@@ -1,11 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { Card, Form, Switch, Button, Space, Typography, Divider, message, Spin, Alert } from 'antd';
-import { SaveOutlined, BellOutlined, MailOutlined } from '@ant-design/icons';
-import { useTranslation } from 'react-i18next';
-import notificationService, {
-  NotificationPreferences,
-} from '@/services/notification/notificationService';
 import { logger } from '@/lib/logger/logger.service';
+import notificationService from '@/services/notification/notificationService';
+import { BellOutlined, MailOutlined, SaveOutlined } from '@ant-design/icons';
+import { Alert, Button, Card, Divider, Form, message, Space, Spin, Switch, Typography } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -91,9 +89,15 @@ const NotificationPreferencesPage: React.FC = () => {
           )}
 
           <Form form={form} layout="vertical" onFinish={handleSave}>
-            <Divider orientation="left">{t('notifications.preferences.channels')}</Divider>
+            <Divider orientation={'left' as const}>
+              {t('notifications.preferences.channels')}
+            </Divider>
 
-            <Form.Item name="inAppEnabled" label={t('notifications.preferences.inApp')} valuePropName="checked">
+            <Form.Item
+              name="inAppEnabled"
+              label={t('notifications.preferences.inApp')}
+              valuePropName="checked"
+            >
               <Switch />
             </Form.Item>
 
@@ -110,7 +114,7 @@ const NotificationPreferencesPage: React.FC = () => {
               <Switch disabled={!emailConnected} />
             </Form.Item>
 
-            <Divider orientation="left">{t('notifications.preferences.types')}</Divider>
+            <Divider orientation={'left' as const}>{t('notifications.preferences.types')}</Divider>
 
             <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
               {t('notifications.preferences.typesDescription')}
@@ -127,7 +131,11 @@ const NotificationPreferencesPage: React.FC = () => {
               {t('notifications.preferences.lowStockDescription')}
             </Paragraph>
 
-            <Form.Item name={['types', 'newOrder']} label={t('notifications.preferences.newOrder')} valuePropName="checked">
+            <Form.Item
+              name={['types', 'newOrder']}
+              label={t('notifications.preferences.newOrder')}
+              valuePropName="checked"
+            >
               <Switch />
             </Form.Item>
             <Paragraph type="secondary" style={{ marginTop: -16, marginBottom: 16 }}>
@@ -174,7 +182,9 @@ const NotificationPreferencesPage: React.FC = () => {
                 <Button type="primary" htmlType="submit" icon={<SaveOutlined />} loading={saving}>
                   {t('notifications.preferences.savePreferences')}
                 </Button>
-                <Button onClick={() => form.resetFields()}>{t('notifications.preferences.reset')}</Button>
+                <Button onClick={() => form.resetFields()}>
+                  {t('notifications.preferences.reset')}
+                </Button>
               </Space>
             </Form.Item>
           </Form>

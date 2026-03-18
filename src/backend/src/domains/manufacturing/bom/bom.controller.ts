@@ -27,14 +27,6 @@ export class BOMController {
     return this.bomService.findAll(req.user.tenantId);
   }
 
-  @Get()
-  @Roles('manager', 'admin', 'production_manager', 'production_user')
-  @ApiOperation({ summary: 'Get all BOMs' })
-  @ApiResponse({ status: 200, description: 'BOMs found' })
-  async findAll(@Request() req) {
-    return this.bomService.findAll(req.user.tenantId);
-  }
-
   @Get(':id')
   @Roles('manager', 'admin', 'production_manager', 'production_user')
   @ApiOperation({ summary: 'Get BOM by ID' })

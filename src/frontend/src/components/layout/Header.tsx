@@ -1,20 +1,20 @@
-import { Layout, Button, Dropdown, Avatar, Space, Breadcrumb } from 'antd';
-import {
-  MenuFoldOutlined,
-  MenuUnfoldOutlined,
-  UserOutlined,
-  LogoutOutlined,
-} from '@ant-design/icons';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
-import { useTranslation } from 'react-i18next';
-import { useTheme } from '@/hooks/useTheme';
-import { logout } from '@/store/slices/authSlice';
-import { RootState } from '@/store';
 import LanguageSwitcher from '@/components/common/LanguageSwitcher';
 import ThemeToggle from '@/components/common/ThemeToggle';
 import { OfflineStatus } from '@/components/OfflineStatus';
+import { useTheme } from '@/hooks/useTheme';
+import { RootState } from '@/store';
+import { logout } from '@/store/slices/authSlice';
+import {
+  LogoutOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
+  UserOutlined,
+} from '@ant-design/icons';
 import type { MenuProps } from 'antd';
+import { Avatar, Breadcrumb, Button, Dropdown, Layout, Space } from 'antd';
+import { useTranslation } from 'react-i18next';
+import { useDispatch, useSelector } from 'react-redux';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const { Header: AntHeader } = Layout;
 
@@ -83,7 +83,7 @@ export default function Header({ collapsed, onToggle }: HeaderProps) {
       if (breadcrumbNameMap[snippet]) {
         items.push({
           title: breadcrumbNameMap[snippet],
-          href: isLast ? undefined : url,
+          href: isLast ? '' : url,
         });
       }
     });

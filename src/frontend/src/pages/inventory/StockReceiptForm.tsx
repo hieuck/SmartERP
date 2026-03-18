@@ -1,27 +1,29 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import MobileFormItemCard from '@/components/common/MobileFormItemCard';
+import { useResponsive } from '@/hooks/useResponsive';
+import { inventoryService, StockReceipt } from '@/services/inventory/inventoryService';
+import { productService } from '@/services/inventory/productService';
+import { formatCurrency } from '@/utils/responsive';
+import { ArrowLeftOutlined, DeleteOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  Form,
-  Input,
-  DatePicker,
   Button,
   Card,
-  Table,
-  Select,
+  DatePicker,
+  Form,
+  Input,
   InputNumber,
   message,
+  Select,
   Space,
+  Table,
   theme,
 } from 'antd';
-import { SaveOutlined, ArrowLeftOutlined, PlusOutlined, DeleteOutlined } from '@ant-design/icons';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useTranslation } from 'react-i18next';
-import { inventoryService, StockReceiptItem } from '@/services/inventory/inventoryService';
-import { productService } from '@/services/inventory/productService';
-import { useResponsive } from '@/hooks/useResponsive';
-import { formatCurrency } from '@/utils/responsive';
-import MobileFormItemCard from '@/components/common/MobileFormItemCard';
 import dayjs from 'dayjs';
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useNavigate, useParams } from 'react-router-dom';
+
+type StockReceiptItem = StockReceipt['items'][number];
 
 const { useToken } = theme;
 
@@ -51,7 +53,7 @@ export default function StockReceiptForm() {
     if (receipt) {
       form.setFieldsValue({
         ...receipt,
-        receiptDate: dayjs(receipt.receiptDate),
+        receiptDate: dayjs(receipt.receivedDate),
       });
       setItems(receipt.items);
     }
@@ -70,12 +72,16 @@ export default function StockReceiptForm() {
         : inventoryService.createStockReceipt(data);
     },
     onSuccess: () => {
-      message.success(isEdit ? t('inventory:messages.updateSuccess') : t('inventory:messages.createSuccess'));
+      message.success(
+        isEdit ? t('inventory:messages.updateSuccess') : t('inventory:messages.createSuccess'),
+      );
       queryClient.invalidateQueries({ queryKey: ['stockReceipts'] });
       navigate('/inventory/receipts');
     },
     onError: () => {
-      message.error(isEdit ? t('inventory:messages.updateError') : t('inventory:messages.createError'));
+      message.error(
+        isEdit ? t('inventory:messages.updateError') : t('inventory:messages.createError'),
+      );
     },
   });
 
@@ -196,7 +202,9 @@ export default function StockReceiptForm() {
         </Button>
       </div>
 
-      <Card title={isEdit ? t('inventory:receipts.editTitle') : t('inventory:receipts.createTitle')}>
+      <Card
+        title={isEdit ? t('inventory:receipts.editTitle') : t('inventory:receipts.createTitle')}
+      >
         <Form
           form={form}
           layout="vertical"

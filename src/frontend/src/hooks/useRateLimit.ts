@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 interface RateLimitConfig {
   maxAttempts?: number;
@@ -45,7 +45,7 @@ export const useRateLimit = (config: RateLimitConfig = {}) => {
 
     const interval = setInterval(() => {
       const now = Date.now();
-      const remaining = Math.max(0, Math.ceil((state.resetTime - now) / 1000));
+      const remaining = Math.max(0, Math.ceil(((state.resetTime ?? 0) - now) / 1000));
 
       if (remaining === 0) {
         // Reset rate limit

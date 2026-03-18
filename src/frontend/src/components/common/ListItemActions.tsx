@@ -3,11 +3,11 @@
  * Actions column for desktop table and dropdown menu for mobile
  */
 
-import { memo } from 'react';
-import { Button, Space, Popconfirm } from 'antd';
-import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
-import { useTranslation } from 'react-i18next';
+import { DeleteOutlined, EditOutlined, MoreOutlined } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
+import { Button, Dropdown, Popconfirm, Space } from 'antd';
+import { memo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export interface ListItemActionsProps<T> {
   record: T;
@@ -26,10 +26,10 @@ function ListItemActionsComponent<T>({
 }: ListItemActionsProps<T>) {
   const { t } = useTranslation('commonUi');
 
-  // For mobile, return menu items
+  // For mobile, render a dropdown menu
   if (isMobile) {
     const menuItems: MenuProps['items'] = [];
-    
+
     if (onEdit) {
       menuItems.push({
         key: 'edit',
@@ -38,7 +38,7 @@ function ListItemActionsComponent<T>({
         onClick: () => onEdit(record),
       });
     }
-    
+
     if (onDelete) {
       menuItems.push({
         key: 'delete',
@@ -47,25 +47,23 @@ function ListItemActionsComponent<T>({
         danger: true,
         onClick: () => {
           const confirmed = window.confirm(deleteConfirmTitle || t('messages.deleteConfirm'));
-          if (confirmed) {
-            onDelete(record);
-          }
+          if (confirmed) onDelete(record);
         },
       });
     }
-    
-    return menuItems;
+
+    return (
+      <Dropdown menu={{ items: menuItems }} trigger={['click']}>
+        <Button type="text" icon={<MoreOutlined />} />
+      </Dropdown>
+    );
   }
 
   // For desktop, return action buttons
   return (
     <Space>
       {onEdit && (
-        <Button 
-          type="link" 
-          icon={<EditOutlined />} 
-          onClick={() => onEdit(record)}
-        >
+        <Button type="link" icon={<EditOutlined />} onClick={() => onEdit(record)}>
           {t('actions.edit')}
         </Button>
       )}

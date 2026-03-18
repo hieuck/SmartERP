@@ -19,14 +19,14 @@ class TenantContextService {
     try {
       // Decode JWT token to get tenant info
       const payload = this.decodeToken(token);
-      
+
       this.tenantInfo = {
         tenantId: payload.tenantId,
         tenantCode: payload.tenantCode || '',
         tenantName: payload.tenantName || '',
       };
     } catch (error) {
-      logger.error(this.context, 'Failed to initialize tenant context', error as Error);
+      console.error('TenantContextService: Failed to initialize tenant context', error);
       this.tenantInfo = null;
     }
   }
@@ -74,7 +74,7 @@ class TenantContextService {
       const jsonPayload = decodeURIComponent(
         atob(base64)
           .split('')
-          .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
           .join(''),
       );
       return JSON.parse(jsonPayload);

@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { Badge, Dropdown, Button, List, Typography, Space, Empty, Spin, theme } from 'antd';
-import { BellOutlined, CheckOutlined, DeleteOutlined, SettingOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import { logger } from '@/lib/logger/logger.service';
 import notificationService, { Notification } from '@/services/notification/notificationService';
+import { BellOutlined, CheckOutlined, DeleteOutlined, SettingOutlined } from '@ant-design/icons';
+import { Badge, Button, Dropdown, Empty, List, Space, Spin, theme, Typography } from 'antd';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
-import { logger } from '@/lib/logger/logger.service';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 dayjs.extend(relativeTime);
 
@@ -97,9 +97,10 @@ const NotificationBell: React.FC = () => {
       handleMarkAsRead(notification.id, {} as React.MouseEvent);
     }
 
-    // Navigate based on notification type
-    if (notification.data?.link) {
-      navigate(notification.data.link);
+    // Navigate based on notification link or metadata
+    const link = notification.link ?? notification.metadata?.link;
+    if (link) {
+      navigate(link);
       setVisible(false);
     }
   };
@@ -110,7 +111,14 @@ const NotificationBell: React.FC = () => {
   };
 
   const dropdownContent = (
-    <div style={{ width: 400, maxHeight: 500, overflow: 'auto', backgroundColor: token.colorBgContainer }}>
+    <div
+      style={{
+        width: 400,
+        maxHeight: 500,
+        overflow: 'auto',
+        backgroundColor: token.colorBgContainer,
+      }}
+    >
       <div
         style={{
           padding: '12px 16px',
@@ -154,7 +162,9 @@ const NotificationBell: React.FC = () => {
               style={{
                 padding: '12px 16px',
                 cursor: 'pointer',
-                backgroundColor: notification.isRead ? token.colorBgContainer : token.colorPrimaryBg,
+                backgroundColor: notification.isRead
+                  ? token.colorBgContainer
+                  : token.colorPrimaryBg,
               }}
               onClick={() => handleNotificationClick(notification)}
               actions={[
@@ -225,7 +235,7 @@ const NotificationBell: React.FC = () => {
 
   return (
     <Dropdown
-      overlay={dropdownContent}
+      dropdownRender={() => dropdownContent}
       trigger={['click']}
       open={visible}
       onOpenChange={setVisible}

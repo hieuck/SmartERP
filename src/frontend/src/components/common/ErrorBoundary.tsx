@@ -10,12 +10,12 @@
  * </ErrorBoundary>
  */
 
-import React, { ReactNode } from 'react';
-import { Result, Button, theme } from 'antd';
-import { useTranslation } from 'react-i18next';
-import { useResponsive } from '@/hooks/useResponsive';
 import { SPACING } from '@/constants/design-tokens';
+import { useResponsive } from '@/hooks/useResponsive';
 import { getButtonSize } from '@/utils/responsive';
+import { Button, Result, theme } from 'antd';
+import React, { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const { useToken } = theme;
 
@@ -93,11 +93,7 @@ class ErrorBoundaryClass extends React.Component<
         >
           <Result
             status="error"
-            title={
-              <span style={{ fontSize: isMobile ? 18 : 24 }}>
-                {t('errorState.title')}
-              </span>
-            }
+            title={<span style={{ fontSize: isMobile ? 18 : 24 }}>{t('errorState.title')}</span>}
             subTitle={
               <div style={{ fontSize: isMobile ? 13 : 14 }}>
                 <div>{t('errorState.subtitle')}</div>
@@ -125,11 +121,7 @@ class ErrorBoundaryClass extends React.Component<
               </div>
             }
             extra={
-              <Button
-                type="primary"
-                onClick={this.handleReset}
-                size={getButtonSize(responsive)}
-              >
+              <Button type="primary" onClick={this.handleReset} size={getButtonSize(responsive)}>
                 {t('actions.tryAgain')}
               </Button>
             }
@@ -143,5 +135,5 @@ class ErrorBoundaryClass extends React.Component<
 }
 
 export const ErrorBoundary = withHooks(ErrorBoundaryClass);
-ErrorBoundary.displayName = 'ErrorBoundary';
+(ErrorBoundary as React.FC).displayName = 'ErrorBoundary';
 export default ErrorBoundary;

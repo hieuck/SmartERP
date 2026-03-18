@@ -124,11 +124,14 @@ export interface Invoice extends BaseEntity {
   invoiceNumber: string;
   type: string;
   customerId?: string;
+  customerName?: string;
   supplierId?: string;
   invoiceDate: Date;
+  issueDate?: string; // alias for invoiceDate (string form)
   dueDate?: Date;
   subtotal: number;
   taxAmount: number;
+  discountAmount?: number;
   totalAmount: number;
   paidAmount: number;
   currency: string;
@@ -619,54 +622,54 @@ export class OfflineDB extends Dexie {
   attendances!: Table<Attendance, string>;
   notifications!: Table<Notification, string>;
   categories!: Table<Category, string>;
-  
+
   // New entities for 50% coverage (27)
   // Accounting (4)
   accounts!: Table<Account, string>;
   journalEntries!: Table<JournalEntry, string>;
   ledgers!: Table<Ledger, string>;
   taxRates!: Table<TaxRate, string>;
-  
+
   // Purchasing (2)
   purchaseReceipts!: Table<PurchaseReceipt, string>;
   supplierInvoices!: Table<SupplierInvoice, string>;
-  
+
   // Sales (2)
   quotations!: Table<Quotation, string>;
   deliveryNotes!: Table<DeliveryNote, string>;
-  
+
   // Inventory (3)
   stockAdjustments!: Table<StockAdjustment, string>;
   stockTransfers!: Table<StockTransfer, string>;
   binLocations!: Table<BinLocation, string>;
-  
+
   // Manufacturing (3)
   boms!: Table<BOM, string>;
   workOrders!: Table<WorkOrder, string>;
   productionPlans!: Table<ProductionPlan, string>;
-  
+
   // HR (4)
   employees!: Table<Employee, string>;
   departments!: Table<Department, string>;
   positions!: Table<Position, string>;
   shifts!: Table<Shift, string>;
-  
+
   // Project (3)
   projects!: Table<Project, string>;
   tasks!: Table<Task, string>;
   timeEntries!: Table<TimeEntry, string>;
-  
+
   // Platform (4)
   documents!: Table<Document, string>;
   reports!: Table<Report, string>;
   workflows!: Table<Workflow, string>;
   settings!: Table<Settings, string>;
-  
+
   syncQueue!: Table<SyncQueueItem, number>;
 
   constructor() {
     super('SmartERP');
-    
+
     this.version(1).stores({
       users: 'id, tenantId, email, syncStatus, lastSyncedAt',
       syncQueue: '++id, entity, operation, createdAt',
@@ -675,43 +678,53 @@ export class OfflineDB extends Dexie {
     // Version 2: Add core entities (indexes match backend)
     this.version(2).stores({
       users: 'id, tenantId, email, syncStatus, lastSyncedAt',
-      products: 'id, tenantId, sku, name, status, categoryId, stockQuantity, syncStatus, lastSyncedAt',
+      products:
+        'id, tenantId, sku, name, status, categoryId, stockQuantity, syncStatus, lastSyncedAt',
       customers: 'id, tenantId, name, email, phone, status, syncStatus, lastSyncedAt',
       suppliers: 'id, tenantId, name, email, status, syncStatus, lastSyncedAt',
       salesOrders: 'id, tenantId, orderNumber, customerId, status, syncStatus, lastSyncedAt',
-      invoices: 'id, tenantId, invoiceNumber, customerId, supplierId, invoiceDate, status, syncStatus, lastSyncedAt',
+      invoices:
+        'id, tenantId, invoiceNumber, customerId, supplierId, invoiceDate, status, syncStatus, lastSyncedAt',
       syncQueue: '++id, entity, operation, createdAt',
     });
 
     // Version 3: Add Batch 1 entities (Payment, PurchaseOrder, Warehouse, Stock, StockReceipt)
     this.version(3).stores({
       users: 'id, tenantId, email, syncStatus, lastSyncedAt',
-      products: 'id, tenantId, sku, name, status, categoryId, stockQuantity, syncStatus, lastSyncedAt',
+      products:
+        'id, tenantId, sku, name, status, categoryId, stockQuantity, syncStatus, lastSyncedAt',
       customers: 'id, tenantId, name, email, phone, status, syncStatus, lastSyncedAt',
       suppliers: 'id, tenantId, name, email, status, syncStatus, lastSyncedAt',
       salesOrders: 'id, tenantId, orderNumber, customerId, status, syncStatus, lastSyncedAt',
-      invoices: 'id, tenantId, invoiceNumber, customerId, supplierId, invoiceDate, status, syncStatus, lastSyncedAt',
+      invoices:
+        'id, tenantId, invoiceNumber, customerId, supplierId, invoiceDate, status, syncStatus, lastSyncedAt',
       payments: 'id, tenantId, orderId, status, paymentDate, syncStatus, lastSyncedAt',
-      purchaseOrders: 'id, tenantId, poNumber, supplierId, status, orderDate, syncStatus, lastSyncedAt',
+      purchaseOrders:
+        'id, tenantId, poNumber, supplierId, status, orderDate, syncStatus, lastSyncedAt',
       warehouses: 'id, tenantId, code, name, status, isDefault, syncStatus, lastSyncedAt',
       stocks: 'id, tenantId, productId, warehouseId, quantity, syncStatus, lastSyncedAt',
-      stockReceipts: 'id, tenantId, receiptNumber, warehouseId, status, receiptDate, syncStatus, lastSyncedAt',
+      stockReceipts:
+        'id, tenantId, receiptNumber, warehouseId, status, receiptDate, syncStatus, lastSyncedAt',
       syncQueue: '++id, entity, operation, createdAt',
     });
 
     // Version 4: Add Batch 3A entities (Attendance, Notification, Category)
     this.version(4).stores({
       users: 'id, tenantId, email, syncStatus, lastSyncedAt',
-      products: 'id, tenantId, sku, name, status, categoryId, stockQuantity, syncStatus, lastSyncedAt',
+      products:
+        'id, tenantId, sku, name, status, categoryId, stockQuantity, syncStatus, lastSyncedAt',
       customers: 'id, tenantId, name, email, phone, status, syncStatus, lastSyncedAt',
       suppliers: 'id, tenantId, name, email, status, syncStatus, lastSyncedAt',
       salesOrders: 'id, tenantId, orderNumber, customerId, status, syncStatus, lastSyncedAt',
-      invoices: 'id, tenantId, invoiceNumber, customerId, supplierId, invoiceDate, status, syncStatus, lastSyncedAt',
+      invoices:
+        'id, tenantId, invoiceNumber, customerId, supplierId, invoiceDate, status, syncStatus, lastSyncedAt',
       payments: 'id, tenantId, orderId, status, paymentDate, syncStatus, lastSyncedAt',
-      purchaseOrders: 'id, tenantId, poNumber, supplierId, status, orderDate, syncStatus, lastSyncedAt',
+      purchaseOrders:
+        'id, tenantId, poNumber, supplierId, status, orderDate, syncStatus, lastSyncedAt',
       warehouses: 'id, tenantId, code, name, status, isDefault, syncStatus, lastSyncedAt',
       stocks: 'id, tenantId, productId, warehouseId, quantity, syncStatus, lastSyncedAt',
-      stockReceipts: 'id, tenantId, receiptNumber, warehouseId, status, receiptDate, syncStatus, lastSyncedAt',
+      stockReceipts:
+        'id, tenantId, receiptNumber, warehouseId, status, receiptDate, syncStatus, lastSyncedAt',
       attendances: 'id, tenantId, employeeId, date, syncStatus, lastSyncedAt',
       notifications: 'id, tenantId, userId, type, status, createdAt, syncStatus, lastSyncedAt',
       categories: 'id, tenantId, code, name, parentId, level, isActive, syncStatus, lastSyncedAt',
@@ -722,61 +735,84 @@ export class OfflineDB extends Dexie {
     this.version(5).stores({
       // Existing entities (14)
       users: 'id, tenantId, email, syncStatus, lastSyncedAt',
-      products: 'id, tenantId, sku, name, status, categoryId, stockQuantity, syncStatus, lastSyncedAt',
+      products:
+        'id, tenantId, sku, name, status, categoryId, stockQuantity, syncStatus, lastSyncedAt',
       customers: 'id, tenantId, name, email, phone, status, syncStatus, lastSyncedAt',
       suppliers: 'id, tenantId, name, email, status, syncStatus, lastSyncedAt',
       salesOrders: 'id, tenantId, orderNumber, customerId, status, syncStatus, lastSyncedAt',
-      invoices: 'id, tenantId, invoiceNumber, customerId, supplierId, invoiceDate, status, syncStatus, lastSyncedAt',
+      invoices:
+        'id, tenantId, invoiceNumber, customerId, supplierId, invoiceDate, status, syncStatus, lastSyncedAt',
       payments: 'id, tenantId, orderId, status, paymentDate, syncStatus, lastSyncedAt',
-      purchaseOrders: 'id, tenantId, poNumber, supplierId, status, orderDate, syncStatus, lastSyncedAt',
+      purchaseOrders:
+        'id, tenantId, poNumber, supplierId, status, orderDate, syncStatus, lastSyncedAt',
       warehouses: 'id, tenantId, code, name, status, isDefault, syncStatus, lastSyncedAt',
       stocks: 'id, tenantId, productId, warehouseId, quantity, syncStatus, lastSyncedAt',
-      stockReceipts: 'id, tenantId, receiptNumber, warehouseId, status, receiptDate, syncStatus, lastSyncedAt',
+      stockReceipts:
+        'id, tenantId, receiptNumber, warehouseId, status, receiptDate, syncStatus, lastSyncedAt',
       attendances: 'id, tenantId, employeeId, date, syncStatus, lastSyncedAt',
       notifications: 'id, tenantId, userId, type, status, createdAt, syncStatus, lastSyncedAt',
       categories: 'id, tenantId, code, name, parentId, level, isActive, syncStatus, lastSyncedAt',
-      
+
       // Accounting (4)
-      accounts: 'id, tenantId, accountNumber, accountName, accountType, isActive, syncStatus, lastSyncedAt',
+      accounts:
+        'id, tenantId, accountNumber, accountName, accountType, isActive, syncStatus, lastSyncedAt',
       journalEntries: 'id, tenantId, entryNumber, entryDate, status, syncStatus, lastSyncedAt',
       ledgers: 'id, tenantId, accountId, journalEntryId, transactionDate, syncStatus, lastSyncedAt',
       taxRates: 'id, tenantId, taxCode, taxName, isActive, syncStatus, lastSyncedAt',
-      
+
       // Purchasing (2)
-      purchaseReceipts: 'id, tenantId, receiptNumber, supplierId, status, receiptDate, syncStatus, lastSyncedAt',
-      supplierInvoices: 'id, tenantId, invoiceNumber, supplierId, invoiceDate, status, syncStatus, lastSyncedAt',
-      
+      purchaseReceipts:
+        'id, tenantId, receiptNumber, supplierId, status, receiptDate, syncStatus, lastSyncedAt',
+      supplierInvoices:
+        'id, tenantId, invoiceNumber, supplierId, invoiceDate, status, syncStatus, lastSyncedAt',
+
       // Sales (2)
-      quotations: 'id, tenantId, quotationNumber, customerId, quotationDate, status, syncStatus, lastSyncedAt',
-      deliveryNotes: 'id, tenantId, deliveryNumber, salesOrderId, customerId, deliveryDate, status, syncStatus, lastSyncedAt',
-      
+      quotations:
+        'id, tenantId, quotationNumber, customerId, quotationDate, status, syncStatus, lastSyncedAt',
+      deliveryNotes:
+        'id, tenantId, deliveryNumber, salesOrderId, customerId, deliveryDate, status, syncStatus, lastSyncedAt',
+
       // Inventory (3)
-      stockAdjustments: 'id, tenantId, adjustmentNumber, warehouseId, adjustmentDate, status, syncStatus, lastSyncedAt',
-      stockTransfers: 'id, tenantId, transferNumber, fromWarehouseId, toWarehouseId, transferDate, status, syncStatus, lastSyncedAt',
-      binLocations: 'id, tenantId, warehouseId, binCode, binName, isActive, syncStatus, lastSyncedAt',
-      
+      stockAdjustments:
+        'id, tenantId, adjustmentNumber, warehouseId, adjustmentDate, status, syncStatus, lastSyncedAt',
+      stockTransfers:
+        'id, tenantId, transferNumber, fromWarehouseId, toWarehouseId, transferDate, status, syncStatus, lastSyncedAt',
+      binLocations:
+        'id, tenantId, warehouseId, binCode, binName, isActive, syncStatus, lastSyncedAt',
+
       // Manufacturing (3)
       boms: 'id, tenantId, bomNumber, productId, isActive, syncStatus, lastSyncedAt',
-      workOrders: 'id, tenantId, workOrderNumber, bomId, productId, status, syncStatus, lastSyncedAt',
-      productionPlans: 'id, tenantId, planNumber, startDate, endDate, status, syncStatus, lastSyncedAt',
-      
+      workOrders:
+        'id, tenantId, workOrderNumber, bomId, productId, status, syncStatus, lastSyncedAt',
+      productionPlans:
+        'id, tenantId, planNumber, startDate, endDate, status, syncStatus, lastSyncedAt',
+
       // HR (4)
-      employees: 'id, tenantId, employeeNumber, email, departmentId, positionId, status, syncStatus, lastSyncedAt',
-      departments: 'id, tenantId, departmentCode, departmentName, isActive, syncStatus, lastSyncedAt',
-      positions: 'id, tenantId, positionCode, positionName, departmentId, isActive, syncStatus, lastSyncedAt',
+      employees:
+        'id, tenantId, employeeNumber, email, departmentId, positionId, status, syncStatus, lastSyncedAt',
+      departments:
+        'id, tenantId, departmentCode, departmentName, isActive, syncStatus, lastSyncedAt',
+      positions:
+        'id, tenantId, positionCode, positionName, departmentId, isActive, syncStatus, lastSyncedAt',
       shifts: 'id, tenantId, shiftCode, shiftName, isActive, syncStatus, lastSyncedAt',
-      
+
       // Project (3)
-      projects: 'id, tenantId, projectCode, projectName, customerId, status, syncStatus, lastSyncedAt',
-      tasks: 'id, tenantId, taskNumber, projectId, assignedTo, status, priority, syncStatus, lastSyncedAt',
-      timeEntries: 'id, tenantId, employeeId, projectId, taskId, entryDate, status, syncStatus, lastSyncedAt',
-      
+      projects:
+        'id, tenantId, projectCode, projectName, customerId, status, syncStatus, lastSyncedAt',
+      tasks:
+        'id, tenantId, taskNumber, projectId, assignedTo, status, priority, syncStatus, lastSyncedAt',
+      timeEntries:
+        'id, tenantId, employeeId, projectId, taskId, entryDate, status, syncStatus, lastSyncedAt',
+
       // Platform (4)
-      documents: 'id, tenantId, documentNumber, documentType, relatedEntity, relatedEntityId, status, syncStatus, lastSyncedAt',
-      reports: 'id, tenantId, reportCode, reportName, reportType, isActive, syncStatus, lastSyncedAt',
-      workflows: 'id, tenantId, workflowCode, workflowName, entityType, isActive, syncStatus, lastSyncedAt',
+      documents:
+        'id, tenantId, documentNumber, documentType, relatedEntity, relatedEntityId, status, syncStatus, lastSyncedAt',
+      reports:
+        'id, tenantId, reportCode, reportName, reportType, isActive, syncStatus, lastSyncedAt',
+      workflows:
+        'id, tenantId, workflowCode, workflowName, entityType, isActive, syncStatus, lastSyncedAt',
       settings: 'id, tenantId, settingKey, category, syncStatus, lastSyncedAt',
-      
+
       syncQueue: '++id, entity, operation, createdAt',
     });
   }

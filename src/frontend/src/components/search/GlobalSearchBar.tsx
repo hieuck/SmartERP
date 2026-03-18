@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Input, AutoComplete, Spin, Tag, Empty } from 'antd';
-import { SearchOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
-import searchService, { SearchResult } from '@/services/utils/searchService';
-import { debounce } from 'lodash';
 import { logger } from '@/lib/logger/logger.service';
+import searchService, { SearchResult } from '@/services/utils/searchService';
+import { SearchOutlined } from '@ant-design/icons';
+import { AutoComplete, Empty, Input, Spin, Tag } from 'antd';
+import { debounce } from 'lodash';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const { Search } = Input;
 
@@ -32,11 +32,10 @@ const GlobalSearchBar: React.FC = () => {
       const result: SearchResult = await searchService.globalSearch(query, 0, 10);
 
       const searchOptions: SearchOption[] = result.hits.hits.map((hit) => {
-        const source = hit._source;
+        const source = hit._source as Record<string, string>;
         const type = hit._index;
 
         let label: React.ReactNode;
-        let route = '';
 
         switch (type) {
           case 'products':
@@ -50,7 +49,6 @@ const GlobalSearchBar: React.FC = () => {
                 <Tag color="blue">Product</Tag>
               </div>
             );
-            route = `/products/${hit._id}`;
             break;
           case 'customers':
             label = (
@@ -63,7 +61,6 @@ const GlobalSearchBar: React.FC = () => {
                 <Tag color="green">Customer</Tag>
               </div>
             );
-            route = `/customers/${hit._id}`;
             break;
           case 'suppliers':
             label = (
@@ -76,7 +73,6 @@ const GlobalSearchBar: React.FC = () => {
                 <Tag color="orange">Supplier</Tag>
               </div>
             );
-            route = `/suppliers/${hit._id}`;
             break;
           case 'orders':
             label = (
@@ -87,8 +83,6 @@ const GlobalSearchBar: React.FC = () => {
                 <Tag color="purple">{source.type === 'sales' ? 'Sales' : 'Purchase'}</Tag>
               </div>
             );
-            route =
-              source.type === 'sales' ? `/orders/sales/${hit._id}` : `/orders/purchases/${hit._id}`;
             break;
           default:
             label = <span>{JSON.stringify(source)}</span>;

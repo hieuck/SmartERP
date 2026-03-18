@@ -1,25 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import { logger } from '@/lib/logger/logger.service';
+import notificationService, { Notification } from '@/services/notification/notificationService';
+import { BellOutlined, CheckOutlined, DeleteOutlined, SettingOutlined } from '@ant-design/icons';
 import {
-  Card,
-  List,
   Button,
-  Space,
-  Typography,
-  Tag,
+  Card,
   Empty,
+  List,
+  Popconfirm,
+  Space,
   Spin,
   Tabs,
-  Popconfirm,
+  Tag,
+  Typography,
   message,
   theme,
 } from 'antd';
-import { CheckOutlined, DeleteOutlined, SettingOutlined, BellOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import notificationService, { Notification } from '@/services/notification/notificationService';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
-import { logger } from '@/lib/logger/logger.service';
+import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 dayjs.extend(relativeTime);
 
@@ -95,8 +95,9 @@ const NotificationListPage: React.FC = () => {
       handleMarkAsRead(notification.id);
     }
 
-    if (notification.data?.link) {
-      navigate(notification.data.link);
+    const link = notification.link ?? notification.metadata?.link;
+    if (link) {
+      navigate(link);
     }
   };
 
@@ -178,7 +179,9 @@ const NotificationListPage: React.FC = () => {
                 <List.Item
                   key={notification.id}
                   style={{
-                    backgroundColor: notification.isRead ? token.colorBgContainer : token.colorPrimaryBg,
+                    backgroundColor: notification.isRead
+                      ? token.colorBgContainer
+                      : token.colorPrimaryBg,
                     padding: '16px',
                     marginBottom: '8px',
                     borderRadius: '4px',
@@ -225,7 +228,9 @@ const NotificationListPage: React.FC = () => {
                         <Tag color={getNotificationTypeColor(notification.type)}>
                           {getNotificationTypeLabel(notification.type)}
                         </Tag>
-                        {!notification.isRead && <Tag color="blue">{t('notifications:center.new')}</Tag>}
+                        {!notification.isRead && (
+                          <Tag color="blue">{t('notifications:center.new')}</Tag>
+                        )}
                       </Space>
                     }
                     description={
