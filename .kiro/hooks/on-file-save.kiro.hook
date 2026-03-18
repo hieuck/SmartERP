@@ -1,0 +1,13 @@
+{
+  "name": "Lint & Review on Save",
+  "version": "1.0.0",
+  "description": "When a source file is saved, remind the agent to check for issues and suggest improvements.",
+  "when": {
+    "type": "fileEdited",
+    "patterns": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.py", "**/*.go"]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A source file was just saved. Check it for syntax errors using getDiagnostics, flag any obvious issues, and suggest improvements if relevant. Keep feedback concise."
+  }
+}

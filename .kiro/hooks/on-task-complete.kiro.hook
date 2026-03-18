@@ -1,0 +1,12 @@
+{
+  "name": "Run Tests After Task",
+  "version": "1.0.0",
+  "description": "After a spec task is completed, remind the agent to verify tests pass.",
+  "when": {
+    "type": "postTaskExecution"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A spec task just completed. Remind the user to run their test suite to verify nothing is broken. If a test command is known from the project context, suggest it explicitly."
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "name": "Pre-Commit Quality Gate",
+  "version": "1.0.0",
+  "description": "Run tests and linter before allowing commits",
+  "when": {
+    "type": "agentStop"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "🚦 PRE-COMMIT QUALITY GATE:\n\nBefore considering this task complete, verify:\n\n✅ All tests pass: npm test\n✅ Coverage ≥80%: npm run test:cov\n✅ Linter passes: npm run lint\n✅ Build successful: npm run build\n✅ No security vulnerabilities\n\nIf ANY check fails, task is INCOMPLETE. Fix issues before marking done."
+  }
+}

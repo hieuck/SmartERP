@@ -1,0 +1,12 @@
+{
+  "name": "Autonomous Work - Post Task Execution",
+  "version": "1.0.0",
+  "description": "Sau khi task execution hoàn thành, agent tự động đánh giá và tiếp tục công việc",
+  "when": {
+    "type": "postTaskExecution"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Đánh giá kết quả task vừa hoàn thành:\n1. Task có thành công không?\n2. Có lỗi gì không?\n3. Cần làm gì tiếp theo?\n4. Nếu có lỗi, tự động fix lại\n5. Nếu thành công, tiếp tục công việc tiếp theo\n\nTuân theo autonomous-work.md: Tự động hoàn thành công việc, không cần user can thiệp."
+  }
+}

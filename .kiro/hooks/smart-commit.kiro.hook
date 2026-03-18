@@ -1,0 +1,12 @@
+{
+  "name": "Smart Commit",
+  "version": "1.0.0",
+  "description": "Auto commit with a conventional commit message after each agent task",
+  "when": {
+    "type": "agentStop"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Based on the changes you just made, run git add -A and commit with an appropriate conventional commit message in the format type(scope): description. If there are no changes to commit, do nothing."
+  }
+}

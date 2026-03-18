@@ -1,0 +1,13 @@
+{
+  "name": "New File Bootstrap",
+  "version": "1.0.0",
+  "description": "When a new source file is created, remind the agent to follow project structure and naming conventions.",
+  "when": {
+    "type": "fileCreated",
+    "patterns": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.py", "**/*.go"]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A new source file was just created. Check that: (1) the file name follows the project naming convention (kebab-case for files, PascalCase for components), (2) it's placed in the right directory per project structure, (3) it has a clear single responsibility. Suggest corrections if needed."
+  }
+}

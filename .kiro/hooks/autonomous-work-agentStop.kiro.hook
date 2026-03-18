@@ -1,0 +1,12 @@
+{
+  "name": "Autonomous Work - Agent Stop",
+  "version": "1.0.0",
+  "description": "Khi agent dừng, kiểm tra công việc còn dang dở và báo cáo kết quả",
+  "when": {
+    "type": "agentStop"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Agent vừa dừng. Hãy kiểm tra:\n1. Công việc đã hoàn thành chưa? Có task nào còn dang dở không?\n2. Nếu có lỗi chưa fix, tự động fix ngay\n3. Nếu hoàn thành, tóm tắt ngắn gọn (1-2 câu) những gì đã làm\n4. Nếu cần chạy test hoặc restart server, đề xuất lệnh cụ thể\n\nTuân theo autonomous-work.md: Hoàn thành triệt để, báo cáo bằng tiếng Việt."
+  }
+}

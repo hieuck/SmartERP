@@ -1,0 +1,12 @@
+{
+  "name": "Agent Stop Summary",
+  "version": "1.0.0",
+  "description": "When the agent finishes a task, provide a brief summary of what changed.",
+  "when": {
+    "type": "agentStop"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "You just finished a task. In 1-2 sentences, summarize what was changed or accomplished. If any follow-up actions are needed (e.g., run tests, restart server), mention them briefly."
+  }
+}

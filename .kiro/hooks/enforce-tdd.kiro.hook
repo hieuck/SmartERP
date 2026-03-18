@@ -1,0 +1,13 @@
+{
+  "name": "Enforce TDD Workflow",
+  "version": "1.0.0",
+  "description": "Nhắc nhở viết test trước khi implement - chỉ áp dụng cho source code, không áp dụng cho config/hook/doc files",
+  "when": {
+    "type": "preToolUse",
+    "toolTypes": ["write"]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "TDD CHECK - Bỏ qua nếu đang ghi: .md, .json, .yaml, .kiro.hook, config, translation, hoặc template files.\n\nNếu đây là implementation code (.ts/.tsx/.js):\n1. Tests đã tồn tại chưa?\n2. Nếu CHƯA → Viết tests TRƯỚC\n3. Nếu ĐÃ CÓ → Xác nhận fail trước khi implement\n\nNếu là non-code file → tiến hành ghi file ngay."
+  }
+}

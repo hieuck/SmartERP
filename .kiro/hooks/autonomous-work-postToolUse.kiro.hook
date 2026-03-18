@@ -1,0 +1,13 @@
+{
+  "name": "Autonomous Work - Post Tool Use",
+  "version": "1.0.0",
+  "description": "Sau khi write tool được dùng, agent tự động đánh giá kết quả và tiếp tục công việc",
+  "when": {
+    "type": "postToolUse",
+    "toolTypes": ["write"]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Đánh giá kết quả tool vừa dùng:\n1. Tool có thành công không?\n2. Có lỗi gì không?\n3. Cần làm gì tiếp theo?\n4. Nếu có lỗi, tự động fix lại\n5. Nếu thành công, tiếp tục công việc tiếp theo\n\nTuân theo autonomous-work.md: Tự động hoàn thành công việc, không cần user can thiệp."
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "Auto Code Review After Write",
+  "version": "1.0.0",
+  "description": "Automatically review code quality and security after any code write",
+  "when": {
+    "type": "postToolUse",
+    "toolTypes": ["write"]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "🔍 AUTO CODE REVIEW:\n\nReview the code just written for:\n\n1. Code Quality:\n   - Functions <50 lines?\n   - Clear naming?\n   - Proper error handling?\n   - No code duplication?\n\n2. Security:\n   - No hardcoded secrets?\n   - Input validation?\n   - SQL injection prevention?\n   - XSS prevention?\n\n3. Testing:\n   - Tests exist and pass?\n   - Coverage ≥80%?\n\nReport any CRITICAL or HIGH issues immediately."
+  }
+}

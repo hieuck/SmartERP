@@ -1,0 +1,13 @@
+{
+  "name": "Pre-Write Safety Check",
+  "version": "1.0.0",
+  "description": "Before any file write, verify the operation follows project coding standards.",
+  "when": {
+    "type": "preToolUse",
+    "toolTypes": ["write"]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "You are about to write or modify a file. Verify: (1) the change is minimal and focused, (2) no secrets or hardcoded credentials are included, (3) naming conventions from project.md are followed. If all checks pass, proceed."
+  }
+}
