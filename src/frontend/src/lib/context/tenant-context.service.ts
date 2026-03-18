@@ -36,8 +36,8 @@ class TenantContextService {
    */
   getTenantId(): string {
     if (!this.tenantInfo) {
-      // Fallback: try to get from localStorage
-      const token = localStorage.getItem('token');
+      // Fallback: try to get from localStorage or sessionStorage (E2E)
+      const token = localStorage.getItem('token') || sessionStorage.getItem('e2e_access_token');
       if (token) {
         this.initialize(token);
       }

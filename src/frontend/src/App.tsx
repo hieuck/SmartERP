@@ -31,6 +31,7 @@ function AppContent() {
         const e2eUser = sessionStorage.getItem('e2e_user');
         if (e2eToken && e2eUser) {
           dispatch(setCredentials({ user: JSON.parse(e2eUser), accessToken: e2eToken }));
+          tenantContext.initialize(e2eToken);
           logger.info('App', 'E2E session restored');
           return;
         }
@@ -43,6 +44,7 @@ function AppContent() {
 
         if (newAccessToken && user) {
           dispatch(setCredentials({ user, accessToken: newAccessToken }));
+          tenantContext.initialize(newAccessToken);
           logger.info('App', 'Session restored successfully');
         }
       } catch {
