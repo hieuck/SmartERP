@@ -63,6 +63,9 @@ jobs:
     strategy:
       matrix:
         service: [backend, frontend]
+    defaults:
+      run:
+        working-directory: src/${{ matrix.service }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -70,10 +73,8 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: src/${{ matrix.service }}/package-lock.json
-      - working-directory: src/${{ matrix.service }}
-        run: npm ci --prefer-offline
-      - working-directory: src/${{ matrix.service }}
-        run: npm audit --audit-level=high || true
+      - run: npm ci --prefer-offline
+      - run: npm audit --audit-level=high || true
 
   ci-summary:
     if: always()

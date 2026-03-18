@@ -37,30 +37,6 @@ jobs:
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
-    services:
-      postgres:
-        image: ${{ inputs.needs-postgres && 'postgres:15-alpine' || '' }}
-        env:
-          POSTGRES_USER: test_user
-          POSTGRES_PASSWORD: test_password
-          POSTGRES_DB: smart_erp_test
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
-      redis:
-        image: ${{ inputs.needs-redis && 'redis:7-alpine' || '' }}
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 6379:6379
 
     steps:
       - name: Checkout code
@@ -81,6 +57,21 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-${{ inputs.node-version }}-
 
+      - name: Start PostgreSQL
+        if: ${{ inputs.needs-postgres }}
+        uses: ikalnytskyi/action-setup-postgres@v6
+        with:
+          username: test_user
+          password: test_password
+          database: smart_erp_test
+          port: 5432
+
+      - name: Start Redis
+        if: ${{ inputs.needs-redis }}
+        uses: supercharge/redis-github-action@1.8.0
+        with:
+          redis-version: 7
+
       - name: Install dependencies
         run: npm ci --prefer-offline --no-audit
 
@@ -95,10 +86,7 @@ jobs:
           DB_NAME: smart_erp_test
           REDIS_HOST: localhost
           REDIS_PORT: 6379
-
-      - name: Check coverage threshold
-        run: |
-          echo " Coverage threshold (80%) enforced by test config"
+          JWT_SECRET: test-secret-key
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
