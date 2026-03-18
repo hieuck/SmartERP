@@ -66,7 +66,11 @@ export class PurchaseOrderService {
     const totalAmount = this.calculateTotal(dto);
     return this.secureRepo.save(user, {
       ...dto,
+      items: dto.items as unknown as Record<string, unknown>[],
       orderDate: dto.orderDate ? new Date(dto.orderDate) : undefined,
+      expectedDeliveryDate: dto.expectedDeliveryDate
+        ? new Date(dto.expectedDeliveryDate)
+        : undefined,
       status: dto.status || 'draft',
       totalAmount,
       shippingFee: dto.shippingFee || 0,
@@ -81,7 +85,8 @@ export class PurchaseOrderService {
       if (existing) throw new ConflictException(`Purchase order ${dto.poNumber} already exists`);
     }
     Object.assign(po, dto);
-    if (dto.items) po.totalAmount = this.calculateTotal({ ...po, ...dto } as any);
+    if (dto.items)
+      po.totalAmount = this.calculateTotal({ ...po, ...dto } as CreatePurchaseOrderDto);
     const updated = await this.secureRepo.save(user, po);
     await this.cacheService.del(generateCacheKey('purchase-order', user.tenantId, id));
     return updated;
