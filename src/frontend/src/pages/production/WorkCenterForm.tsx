@@ -48,6 +48,20 @@ export default function WorkCenterForm() {
     onError: () => message.error(t('messages.saveError')),
   });
 
+  const generateCode = (name: string) =>
+    name
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/đ/gi, 'd')
+      .toUpperCase()
+      .replace(/[^A-Z0-9]+/g, '_')
+      .replace(/^_|_$/g, '')
+      .slice(0, 30);
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!isEdit) form.setFieldValue('code', generateCode(e.target.value));
+  };
+
   const onFinish = (values: CreateWorkCenterDto) => {
     if (isEdit) updateMutation.mutate(values);
     else createMutation.mutate(values);
@@ -81,7 +95,7 @@ export default function WorkCenterForm() {
             <Form.Item
               name="code"
               label={t('workCenter.code')}
-              rules={[{ required: true, message: t('validation.required') }]}
+              extra={!isEdit ? 'Tự động tạo từ tên' : undefined}
             >
               <Input />
             </Form.Item>
@@ -92,7 +106,7 @@ export default function WorkCenterForm() {
               label={t('workCenter.name')}
               rules={[{ required: true, message: t('validation.required') }]}
             >
-              <Input />
+              <Input onChange={handleNameChange} />
             </Form.Item>
           </Col>
           <Col xs={24}>

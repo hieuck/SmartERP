@@ -55,14 +55,32 @@ export default function ProjectForm() {
     },
   });
 
+  const generateCode = (name: string) =>
+    name
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/đ/gi, 'd')
+      .toUpperCase()
+      .replace(/[^A-Z0-9]+/g, '_')
+      .replace(/^_|_$/g, '')
+      .slice(0, 30);
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!isEdit) form.setFieldValue('code', generateCode(e.target.value));
+  };
+
   return (
     <Card title={isEdit ? t('form.title_edit') : t('form.title_create')}>
       <Form form={form} layout="vertical" onFinish={mutation.mutate} style={{ maxWidth: 600 }}>
-        <Form.Item name="code" label={t('form.code')} rules={[{ required: true }]}>
+        <Form.Item
+          name="code"
+          label={t('form.code')}
+          extra={!isEdit ? 'Tự động tạo từ tên' : undefined}
+        >
           <Input />
         </Form.Item>
         <Form.Item name="name" label={t('form.name')} rules={[{ required: true }]}>
-          <Input />
+          <Input onChange={handleNameChange} />
         </Form.Item>
         <Form.Item name="description" label={t('form.description')}>
           <Input.TextArea rows={3} />

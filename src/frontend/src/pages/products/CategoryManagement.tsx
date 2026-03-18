@@ -101,6 +101,16 @@ export default function CategoryManagement() {
     }
   };
 
+  const generateCode = (name: string) =>
+    name
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/đ/gi, 'd')
+      .toUpperCase()
+      .replace(/[^A-Z0-9]+/g, '_')
+      .replace(/^_|_$/g, '')
+      .slice(0, 30);
+
   const handleOpenModal = (category?: Category) => {
     if (category) {
       setEditingCategory(category);
@@ -110,6 +120,12 @@ export default function CategoryManagement() {
       form.resetFields();
     }
     setIsModalOpen(true);
+  };
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!editingCategory) {
+      form.setFieldValue('code', generateCode(e.target.value));
+    }
   };
 
   const handleCloseModal = () => {
@@ -267,14 +283,10 @@ export default function CategoryManagement() {
             label="Tên danh mục"
             rules={[{ required: true, message: 'Vui lòng nhập tên danh mục!' }]}
           >
-            <Input placeholder="Ví dụ: Tấm thạch cao" />
+            <Input placeholder="Ví dụ: Tấm thạch cao" onChange={handleNameChange} />
           </Form.Item>
 
-          <Form.Item
-            name="code"
-            label="Mã danh mục"
-            rules={[{ required: true, message: 'Vui lòng nhập mã danh mục!' }]}
-          >
+          <Form.Item name="code" label="Mã danh mục" extra="Tự động tạo từ tên, có thể chỉnh sửa">
             <Input placeholder="Ví dụ: GYPSUM_BOARD" />
           </Form.Item>
 
