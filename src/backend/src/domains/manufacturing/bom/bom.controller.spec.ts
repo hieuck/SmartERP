@@ -90,7 +90,15 @@ describe('BOMController (Integration)', () => {
     await app.close();
   });
   afterEach(() => {
-    jest.clearAllMocks();
+    bomService.create.mockReset();
+    bomService.findAll.mockReset();
+    bomService.findOne.mockReset();
+    bomService.findByProduct.mockReset();
+    bomService.update.mockReset();
+    bomService.addLine.mockReset();
+    bomService.removeLine.mockReset();
+    bomService.calculateCosts.mockReset();
+    bomService.remove.mockReset();
   });
 
   describe('GET /manufacturing/bom', () => {
@@ -115,7 +123,7 @@ describe('BOMController (Integration)', () => {
       const response = await request(app.getHttpServer())
         .post('/manufacturing/bom')
         .set('Authorization', 'Bearer valid-token')
-        .send({ productId: 'prod-123', name: 'New BOM', version: '1.0', quantity: 1 })
+        .send({ productId: 'prod-123', productQty: 1, type: 'manufacture', version: '1.0' })
         .expect(201);
       expect(response.body.code).toBe('BOM-001');
     });
@@ -127,7 +135,7 @@ describe('BOMController (Integration)', () => {
       await request(app.getHttpServer())
         .post('/manufacturing/bom')
         .set('Authorization', 'Bearer valid-token')
-        .send({ productId: 'non-existent', name: 'BOM', version: '1.0', quantity: 1 })
+        .send({ productId: 'non-existent', productQty: 1, type: 'manufacture', version: '1.0' })
         .expect(404);
     });
 
@@ -187,7 +195,7 @@ describe('BOMController (Integration)', () => {
       await request(app.getHttpServer())
         .post('/manufacturing/bom/bom-123/lines')
         .set('Authorization', 'Bearer valid-token')
-        .send({ materialId: 'mat-456', quantity: 3, unit: 'kg' })
+        .send({ productId: 'mat-456', quantity: 3, type: 'component' })
         .expect(201);
     });
   });
@@ -204,8 +212,7 @@ describe('BOMController (Integration)', () => {
 
   describe('GET /manufacturing/bom/:id/cost', () => {
     it('should calculate BOM cost', async () => {
-      const bomWithCost = { ...mockBOM, totalCost: 150000 };
-      bomService.calculateCosts.mockResolvedValue(bomWithCost as any);
+      bomService.calculateCosts.mockResolvedValue(150000 as any);
       const response = await request(app.getHttpServer())
         .get('/manufacturing/bom/bom-123/cost')
         .set('Authorization', 'Bearer valid-token')
