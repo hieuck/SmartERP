@@ -1,5 +1,5 @@
 import { CallHandler, ExecutionContext, HttpStatus, UnauthorizedException } from '@nestjs/common';
-import { throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { QueryPerformanceInterceptor } from './query-performance.interceptor';
 
 describe('QueryPerformanceInterceptor', () => {
@@ -12,6 +12,20 @@ describe('QueryPerformanceInterceptor', () => {
         }),
         getResponse: () => ({
           statusCode: HttpStatus.UNAUTHORIZED,
+        }),
+      }),
+    } as ExecutionContext;
+  }
+
+  function createHealthContext() {
+    return {
+      switchToHttp: () => ({
+        getRequest: () => ({
+          method: 'GET',
+          url: '/api/health',
+        }),
+        getResponse: () => ({
+          statusCode: HttpStatus.OK,
         }),
       }),
     } as ExecutionContext;
@@ -45,6 +59,48 @@ describe('QueryPerformanceInterceptor', () => {
           expect(warn).toHaveBeenCalled();
           expect(error).not.toHaveBeenCalled();
           done();
+        },
+      });
+  });
+
+  it('skips slow-query warnings for health endpoints', (done) => {
+    const dateNowSpy = jest.spyOn(Date, 'now');
+    const metricsService = {
+      recordQueryDuration: jest.fn(),
+      incrementSlowQuery: jest.fn(),
+      incrementQueryError: jest.fn(),
+    };
+    const interceptor = new QueryPerformanceInterceptor(metricsService as never);
+    const warn = jest.fn();
+    const error = jest.fn();
+    (interceptor as unknown as { logger: { warn: jest.Mock; error: jest.Mock } }).logger = {
+      warn,
+      error,
+    };
+
+    dateNowSpy.mockReturnValueOnce(0).mockReturnValueOnce(250);
+
+    interceptor
+      .intercept(createHealthContext(), {
+        handle: () => of({ ok: true }),
+      } as CallHandler)
+      .subscribe({
+        next: () => {
+          expect(metricsService.recordQueryDuration).toHaveBeenCalledWith(
+            'GET',
+            '/api/health',
+            HttpStatus.OK,
+            250,
+          );
+          expect(metricsService.incrementSlowQuery).not.toHaveBeenCalled();
+          expect(warn).not.toHaveBeenCalled();
+          expect(error).not.toHaveBeenCalled();
+          dateNowSpy.mockRestore();
+          done();
+        },
+        error: (err) => {
+          dateNowSpy.mockRestore();
+          done(err);
         },
       });
   });

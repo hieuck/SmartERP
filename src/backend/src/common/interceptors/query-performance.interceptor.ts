@@ -19,8 +19,15 @@ import { MetricsService } from '../metrics/metrics.service';
 export class QueryPerformanceInterceptor implements NestInterceptor {
   private readonly logger = new Logger('QueryPerformance');
   private readonly SLOW_QUERY_THRESHOLD_MS = 100;
+  private readonly SLOW_QUERY_EXCLUDED_PATHS = ['/health', '/health/'];
 
   constructor(private readonly metricsService: MetricsService) {}
+
+  private shouldSkipSlowQueryLogging(url: string): boolean {
+    return this.SLOW_QUERY_EXCLUDED_PATHS.some((path) =>
+      url === path || url.endsWith(path) || url.includes(`${path}/`),
+    );
+  }
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const request = context.switchToHttp().getRequest();
@@ -38,7 +45,7 @@ export class QueryPerformanceInterceptor implements NestInterceptor {
           this.metricsService.recordQueryDuration(method, url, statusCode, duration);
 
           // Log and count slow queries
-          if (duration > this.SLOW_QUERY_THRESHOLD_MS) {
+          if (duration > this.SLOW_QUERY_THRESHOLD_MS && !this.shouldSkipSlowQueryLogging(url)) {
             this.metricsService.incrementSlowQuery(method, url);
 
             this.logger.warn(`Slow query detected: ${method} ${url} took ${duration}ms`, {
