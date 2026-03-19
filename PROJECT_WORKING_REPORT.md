@@ -269,7 +269,7 @@ These areas can still be useful, but the test signal is easier to distort:
 
 There are also areas where the right conclusion is not "tests are stale" but "frontend unit coverage is still thin":
 
-- current visible frontend service test files: `36`
+- current visible frontend service test files: `38`
 - current visible frontend component test files: `4`
 - current visible frontend hook test files: `2`
 
@@ -308,6 +308,8 @@ Progress already made:
 - offline-services mapping now has a dedicated unit suite
 - platform offline service layer now has a dedicated unit suite
 - sales offline service layer now has a dedicated unit suite
+- purchasing offline service layer now has a dedicated unit suite
+- project offline service layer now has a dedicated unit suite
 
 Remaining interpretation:
 
@@ -457,6 +459,8 @@ Current status:
 - offline-services test added
 - platform offline service tests added
 - sales offline service tests added
+- purchasing offline service tests added
+- project offline service tests added
 - next additions should target other service/orchestration layers with business logic but no direct fast-feedback coverage
 
 ### Queue C: Refactor Only After Guard Rails Exist
