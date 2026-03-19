@@ -5,7 +5,8 @@ import {
   HistoryOutlined,
   UploadOutlined,
 } from '@ant-design/icons';
-import { Button, message, Space, Table, Tag, Upload } from 'antd';
+import { App, Button, Space, Table, Tag, Upload } from 'antd';
+import type { UploadProps } from 'antd';
 import React, { useState } from 'react';
 
 interface Document {
@@ -19,6 +20,7 @@ interface Document {
 }
 
 export const DocumentBrowser: React.FC = () => {
+  const { message } = App.useApp();
   const [documents, setDocuments] = useState<Document[]>([
     {
       id: '1',
@@ -40,6 +42,15 @@ export const DocumentBrowser: React.FC = () => {
     },
   ]);
 
+  const renderActions = () => (
+    <Space>
+      <Button icon={<EyeOutlined />} size="small" />
+      <Button icon={<DownloadOutlined />} size="small" />
+      <Button icon={<HistoryOutlined />} size="small" title="Lịch sử phiên bản" />
+      <Button icon={<DeleteOutlined />} size="small" danger />
+    </Space>
+  );
+
   const columns = [
     { title: 'Tên file', dataIndex: 'name', key: 'name' },
     {
@@ -60,18 +71,11 @@ export const DocumentBrowser: React.FC = () => {
     {
       title: 'Hành động',
       key: 'action',
-      render: (_: any, _record: Document) => (
-        <Space>
-          <Button icon={<EyeOutlined />} size="small" />
-          <Button icon={<DownloadOutlined />} size="small" />
-          <Button icon={<HistoryOutlined />} size="small" title="Lịch sử phiên bản" />
-          <Button icon={<DeleteOutlined />} size="small" danger />
-        </Space>
-      ),
+      render: renderActions,
     },
   ];
 
-  const handleUpload = (file: any) => {
+  const handleUpload: UploadProps['beforeUpload'] = (file) => {
     const newDoc: Document = {
       id: Date.now().toString(),
       name: file.name,

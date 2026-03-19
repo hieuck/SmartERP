@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, Row, Col, Button, Tag, Rate, Modal, message } from 'antd';
+import { App, Button, Card, Col, Modal, Rate, Row, Tag } from 'antd';
 import { DownloadOutlined, CheckCircleOutlined } from '@ant-design/icons';
 
 interface Module {
@@ -14,6 +14,7 @@ interface Module {
 }
 
 export const ModuleBrowser: React.FC = () => {
+  const { message } = App.useApp();
   const [modules, setModules] = useState<Module[]>([
     {
       id: '1',

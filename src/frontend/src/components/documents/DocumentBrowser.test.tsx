@@ -1,5 +1,6 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+﻿import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { App } from 'antd';
 import { DocumentBrowser } from './DocumentBrowser';
 
 const { messageSuccessMock } = vi.hoisted(() => ({
@@ -14,94 +15,65 @@ vi.mock('@ant-design/icons', () => ({
   UploadOutlined: () => <span>icon-upload</span>,
 }));
 
-vi.mock('antd', () => ({
-  Button: ({
-    children,
-    icon,
-    onClick,
-    title,
-  }: {
-    children?: React.ReactNode;
-    icon?: React.ReactNode;
-    onClick?: () => void;
-    title?: string;
-  }) => (
-    <button onClick={onClick} title={title}>
-      {icon}
-      {children ?? 'button'}
-    </button>
-  ),
-  Space: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  Table: ({
-    columns,
-    dataSource,
-  }: {
-    columns: Array<{
-      title: React.ReactNode;
-      dataIndex?: string;
-      key?: string;
-      render?: (value: unknown, record: Record<string, unknown>) => React.ReactNode;
-    }>;
-    dataSource: Array<Record<string, unknown>>;
-  }) => (
-    <table>
-      <thead>
-        <tr>
-          {columns.map((column) => (
-            <th key={String(column.key ?? column.dataIndex ?? column.title)}>{column.title}</th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {dataSource.map((record) => (
-          <tr key={String(record.id)}>
-            {columns.map((column) => {
-              const cellValue = column.dataIndex ? record[column.dataIndex] : undefined;
-              return (
-                <td key={String(column.key ?? column.dataIndex ?? column.title)}>
-                  {column.render ? column.render(cellValue, record) : String(cellValue ?? '')}
-                </td>
-              );
-            })}
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  ),
-  Tag: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
-  Upload: ({
-    beforeUpload,
-    children,
-  }: {
-    beforeUpload?: (file: { name: string; size: number }) => boolean;
-    children: React.ReactNode;
-  }) => (
-    <div>
-      {children}
-      <button
-        onClick={() =>
-          beforeUpload?.({
-            name: 'spec-sheet.docx',
-            size: 3 * 1024 * 1024,
-          })
-        }
-      >
-        mock-upload
+vi.mock('antd', async () => {
+  const actual = await vi.importActual<typeof import('antd')>('antd');
+  return {
+    ...actual,
+    App: Object.assign(
+      ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+      { useApp: () => ({ message: { success: messageSuccessMock } }) },
+    ),
+    Button: ({ children, icon, onClick, title }: { children?: React.ReactNode; icon?: React.ReactNode; onClick?: () => void; title?: string }) => (
+      <button onClick={onClick} title={title}>
+        {icon}
+        {children ?? 'button'}
       </button>
-    </div>
-  ),
-  message: {
-    success: messageSuccessMock,
-  },
-}));
+    ),
+    Space: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+    Table: ({ columns, dataSource }: { columns: Array<{ title: React.ReactNode; dataIndex?: string; key?: string; render?: (value: unknown, record: Record<string, unknown>) => React.ReactNode }>; dataSource: Array<Record<string, unknown>> }) => (
+      <table>
+        <thead>
+          <tr>
+            {columns.map((column) => (
+              <th key={String(column.key ?? column.dataIndex ?? column.title)}>{column.title}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {dataSource.map((record) => (
+            <tr key={String(record.id)}>
+              {columns.map((column) => {
+                const cellValue = column.dataIndex ? record[column.dataIndex] : undefined;
+                return (
+                  <td key={String(column.key ?? column.dataIndex ?? column.title)}>
+                    {column.render ? column.render(cellValue, record) : String(cellValue ?? '')}
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    ),
+    Tag: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
+    Upload: ({ beforeUpload, children }: { beforeUpload?: (file: { name: string; size: number }) => boolean; children: React.ReactNode }) => (
+      <div>
+        {children}
+        <button onClick={() => beforeUpload?.({ name: 'spec-sheet.docx', size: 3 * 1024 * 1024 })}>mock-upload</button>
+      </div>
+    ),
+  };
+});
 
 describe('DocumentBrowser', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
+  const renderBrowser = () => render(<App><DocumentBrowser /></App>);
+
   it('renders the seeded documents and version metadata', () => {
-    render(<DocumentBrowser />);
+    renderBrowser();
 
     expect(screen.getByText('Hợp đồng mua bán.pdf')).toBeInTheDocument();
     expect(screen.getByText('Báo giá sản phẩm.xlsx')).toBeInTheDocument();
@@ -112,7 +84,7 @@ describe('DocumentBrowser', () => {
   });
 
   it('prepends a newly uploaded document and shows a success message', () => {
-    render(<DocumentBrowser />);
+    renderBrowser();
 
     fireEvent.click(screen.getByRole('button', { name: 'mock-upload' }));
 
@@ -124,13 +96,11 @@ describe('DocumentBrowser', () => {
     expect(screen.getByText('3.00 MB')).toBeInTheDocument();
     expect(screen.getAllByText('v1').length).toBeGreaterThan(0);
     expect(rows?.[0]).toContainElement(uploadedName.closest('td'));
-    expect(messageSuccessMock).toHaveBeenCalledWith(
-      expect.stringMatching(/ÄÃ£ tÃ¡ÂºÂ£i lÃƒÂªn file thÃƒÂ nh cÃƒÂ´ng|Đã tải lên file thành công/),
-    );
+    expect(messageSuccessMock).toHaveBeenCalledWith('Đã tải lên file thành công');
   });
 
   it('renders the document action shell for each row', () => {
-    render(<DocumentBrowser />);
+    renderBrowser();
 
     expect(screen.getAllByText('icon-eye')).toHaveLength(2);
     expect(screen.getAllByText('icon-download')).toHaveLength(2);
