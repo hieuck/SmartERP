@@ -18,37 +18,37 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({ visible, onSelec
       children: [
         {
           value: '01',
-          label: 'Dãy 01',
+          label: 'D?y 01',
           children: [
             {
               value: 'R1',
-              label: 'Kệ R1',
+              label: 'K? R1',
               children: [
-                { value: 'B1', label: 'Ngăn B1' },
-                { value: 'B2', label: 'Ngăn B2' },
-                { value: 'B3', label: 'Ngăn B3' },
+                { value: 'B1', label: 'Ng?n B1' },
+                { value: 'B2', label: 'Ng?n B2' },
+                { value: 'B3', label: 'Ng?n B3' },
               ],
             },
             {
               value: 'R2',
-              label: 'Kệ R2',
+              label: 'K? R2',
               children: [
-                { value: 'B1', label: 'Ngăn B1' },
-                { value: 'B2', label: 'Ngăn B2' },
+                { value: 'B1', label: 'Ng?n B1' },
+                { value: 'B2', label: 'Ng?n B2' },
               ],
             },
           ],
         },
         {
           value: '02',
-          label: 'Dãy 02',
+          label: 'D?y 02',
           children: [
             {
               value: 'R1',
-              label: 'Kệ R1',
+              label: 'K? R1',
               children: [
-                { value: 'B1', label: 'Ngăn B1' },
-                { value: 'B2', label: 'Ngăn B2' },
+                { value: 'B1', label: 'Ng?n B1' },
+                { value: 'B2', label: 'Ng?n B2' },
               ],
             },
           ],
@@ -61,12 +61,12 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({ visible, onSelec
       children: [
         {
           value: '01',
-          label: 'Dãy 01',
+          label: 'D?y 01',
           children: [
             {
               value: 'R1',
-              label: 'Kệ R1',
-              children: [{ value: 'B1', label: 'Ngăn B1' }],
+              label: 'K? R1',
+              children: [{ value: 'B1', label: 'Ng?n B1' }],
             },
           ],
         },
@@ -82,26 +82,26 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({ visible, onSelec
 
   return (
     <Modal
-      title="Chọn vị trí kho"
+      title="Ch?n v? tr? kho"
       open={visible}
       onCancel={onCancel}
       onOk={handleOk}
       okButtonProps={{ disabled: selectedLocation.length !== 4 }}
     >
-      <Space direction="vertical" style={{ width: '100%' }}>
+      <Space orientation="vertical" style={{ width: '100%' }}>
         <div>
-          <EnvironmentOutlined /> Chọn vị trí: Khu vực → Dãy → Kệ → Ngăn
+          <EnvironmentOutlined /> Ch?n v? tr?: Khu v?c - D?y - K? - Ng?n
         </div>
         <Cascader
           options={options}
           onChange={(value) => setSelectedLocation(value as string[])}
-          placeholder="Chọn vị trí kho"
+          placeholder="Ch?n v? tr? kho"
           style={{ width: '100%' }}
           expandTrigger="hover"
         />
         {selectedLocation.length === 4 && (
           <div>
-            <strong>Vị trí đã chọn:</strong>
+            <strong>V? tr? ?? ch?n:</strong>
             <div style={{ marginTop: 8 }}>
               <Tag color="blue">{selectedLocation.join('-')}</Tag>
             </div>
