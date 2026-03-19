@@ -493,6 +493,7 @@ Current status:
 - collaboration comments UI covered: `CommentSection` (`3/3`)
 - workflow builder UI covered: `WorkflowBuilder` (`3/3`)
 - document version history UI covered: `VersionHistory` (`3/3`)
+- dashboard builder UI covered: `DashboardBuilder` (`3/3`)
 - testing this shell also exposed a design nuance: cancel fallback logic exists internally, but the cancel button only renders when an explicit `onCancel` is provided
 - real production bug fixed in `NotificationBell`: notification click no longer passes a fake mouse event into `handleMarkAsRead`
 - root cause in the first page batch was test-harness drift: deep Ant Design mocks were less reliable than using real components with thin service/router mocks
