@@ -1,6 +1,9 @@
 import { Roles } from '@common/decorators/roles.decorator';
+import { TenantGuard } from '@common/guards/tenant.guard';
 import { Body, Controller, Get, Param, Patch, Post, Request } from '@nestjs/common';
+import { UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { JwtAuthGuard } from '@/core/auth/guards/jwt-auth.guard';
 import { CreateWorkOrderDto } from './dto/create-work-order.dto';
 import { FinishProductionDto } from './dto/finish-production.dto';
 import { WorkOrderStatus } from './enums/work-order-status.enum';
@@ -8,6 +11,7 @@ import { WorkOrderService } from './work-order.service';
 @ApiTags('manufacturing-work-orders')
 @ApiBearerAuth()
 @Controller('manufacturing/work-orders')
+@UseGuards(JwtAuthGuard, TenantGuard)
 export class WorkOrderController {
   constructor(private readonly workOrderService: WorkOrderService) {}
 

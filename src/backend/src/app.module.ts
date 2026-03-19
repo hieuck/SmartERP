@@ -37,6 +37,7 @@ import { RoleModule } from './domains/hr/role/role.module';
 
 import { BOMModule } from './domains/manufacturing/bom/bom.module';
 import { WorkCenterModule } from './domains/manufacturing/work-center/work-center.module';
+import { WorkOrderModule } from './domains/manufacturing/work-order/work-order.module';
 
 import { OrderModule as EcommerceOrderModule } from './domains/ecommerce/order/order.module';
 import { ProductCatalogModule } from './domains/ecommerce/product-catalog/product-catalog.module';
@@ -140,6 +141,7 @@ import { CrmModule } from './domains/sales/crm/crm.module';
     RoleModule,
     BOMModule,
     WorkCenterModule,
+    WorkOrderModule,
     PurchaseOrderModule,
     ProductCatalogModule,
     ShoppingCartModule,

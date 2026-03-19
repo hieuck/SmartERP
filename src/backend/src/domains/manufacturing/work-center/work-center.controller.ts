@@ -1,12 +1,16 @@
 import { Controller, Get, Post, Body, Param, Patch, Delete, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { UseGuards } from '@nestjs/common';
+import { TenantGuard } from '@common/guards/tenant.guard';
 import { WorkCenterService } from './work-center.service';
 import { CreateWorkCenterDto } from './dto/create-work-center.dto';
 import { UpdateWorkCenterDto } from './dto/update-work-center.dto';
 import { Roles } from '@common/decorators/roles.decorator';
+import { JwtAuthGuard } from '@/core/auth/guards/jwt-auth.guard';
 @ApiTags('manufacturing-work-centers')
 @ApiBearerAuth()
 @Controller('manufacturing/work-centers')
+@UseGuards(JwtAuthGuard, TenantGuard)
 export class WorkCenterController {
   constructor(private readonly workCenterService: WorkCenterService) {}
 

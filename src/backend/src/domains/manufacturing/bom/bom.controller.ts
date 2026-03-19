@@ -1,6 +1,9 @@
 import { Roles } from '@common/decorators/roles.decorator';
+import { TenantGuard } from '@common/guards/tenant.guard';
 import { Body, Controller, Delete, Get, Param, Patch, Post, Request } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '@/core/auth/guards/jwt-auth.guard';
 import { BOMService } from './bom.service';
 import { AddBOMLineDto } from './dto/add-bom-line.dto';
 import { CreateBOMDto } from './dto/create-bom.dto';
@@ -8,6 +11,7 @@ import { UpdateBOMDto } from './dto/update-bom.dto';
 @ApiTags('manufacturing-bom')
 @ApiBearerAuth()
 @Controller('manufacturing/bom')
+@UseGuards(JwtAuthGuard, TenantGuard)
 export class BOMController {
   constructor(private readonly bomService: BOMService) {}
 
