@@ -474,6 +474,7 @@ Current status:
 - second page-orchestration batch added for `NotificationPreferencesPage` (`3/3` passing)
 - third page-orchestration batch added for offline-first `NotificationList` (`3/3` passing)
 - shared UI batch added for `NotificationBell` (`3/3` passing)
+- shared list primitives covered: `ListPageHeader` (`2/2`) and `ListPageFilters` (`3/3`)
 - real production bug fixed in `NotificationBell`: notification click no longer passes a fake mouse event into `handleMarkAsRead`
 - root cause in the first page batch was test-harness drift: deep Ant Design mocks were less reliable than using real components with thin service/router mocks
 - aggregate verification now passes for `src/pages/notifications/NotificationListPage.test.tsx src/services`: `42` files, `226` tests
