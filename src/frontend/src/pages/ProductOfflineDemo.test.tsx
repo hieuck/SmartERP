@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { App } from 'antd';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProductOfflineDemo } from './ProductOfflineDemo';
 
@@ -84,7 +85,7 @@ vi.mock('antd', () => {
       },
     ),
     InputNumber: () => <input type="number" />,
-    message: messageMock,
+    App: Object.assign(({ children }: { children?: React.ReactNode }) => <div>{children}</div>, { useApp: () => ({ message: messageMock }) }),
     Modal: ({
       children,
       open,
@@ -162,7 +163,7 @@ describe('ProductOfflineDemo', () => {
   });
 
   it('loads products from offline storage on mount', async () => {
-    render(<ProductOfflineDemo />);
+    render(<App><ProductOfflineDemo /></App>);
 
     await waitFor(() => {
       expect(getAllMock).toHaveBeenCalled();

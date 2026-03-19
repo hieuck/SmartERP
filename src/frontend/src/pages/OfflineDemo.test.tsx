@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { App } from 'antd';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import OfflineDemo from './OfflineDemo';
 
@@ -85,7 +86,7 @@ vi.mock('antd', () => {
       useForm: () => [formApi],
     }),
     Input: () => <input />,
-    message: messageMock,
+    App: Object.assign(({ children }: { children?: React.ReactNode }) => <div>{children}</div>, { useApp: () => ({ message: messageMock }) }),
     Modal: ({
       children,
       open,
@@ -162,7 +163,7 @@ describe('OfflineDemo', () => {
   });
 
   it('loads users from the offline database on mount', async () => {
-    render(<OfflineDemo />);
+    render(<App><OfflineDemo /></App>);
 
     await waitFor(() => {
       expect(toArrayMock).toHaveBeenCalled();

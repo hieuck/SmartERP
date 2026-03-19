@@ -773,3 +773,30 @@ Verification:
 - Modernized Ant Design `Space` usage in several user-facing components by replacing deprecated `direction` with `orientation`.
 - Preserved proper Vietnamese copy in the landing hero, tenant selector, and warehouse location picker instead of keeping ASCII-only placeholders.
 - Verified targeted frontend lint cleanly for the edited files.
+
+## 2026-03-19 Offline Demo Feedback Batch
+- Completed the pending Ant Design feedback refactor in [src/frontend/src/pages/OfflineDemo.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/OfflineDemo.tsx) and [src/frontend/src/pages/ProductOfflineDemo.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/ProductOfflineDemo.tsx) by replacing static `message` usage with `App.useApp().message`.
+- Repaired the corresponding test harnesses in [src/frontend/src/pages/OfflineDemo.test.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/OfflineDemo.test.tsx) and [src/frontend/src/pages/ProductOfflineDemo.test.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/ProductOfflineDemo.test.tsx) so mocked `antd` shape matches the new runtime contract.
+- Verified with `npx.cmd vitest run src/pages/OfflineDemo.test.tsx src/pages/ProductOfflineDemo.test.tsx` and targeted `eslint` on the four files.
+
+## 2026-03-19 Runtime Round
+- Re-ran `npm.cmd run runtime:smoke` after the offline-demo batch.
+- Current live status:
+  - frontend `http://127.0.0.1:5173` returns `200`
+  - backend `http://127.0.0.1:3000/api/health` returns `200`
+  - local Postgres `erp_production` remains reachable
+- Current backend error tail remains limited to dependency/tooling noise:
+  - `Sentry DSN not provided. Error tracking disabled.`
+  - Node deprecation `[DEP0169]` from dependency code using `url.parse()`
+- Queried Postgres through the backend Node runtime to avoid depending on a missing `psql` CLI in `PATH`.
+- Latest DB snapshot:
+  - active connections: `1`
+  - total connections: `1`
+  - top user tables by live rows: `permissions` `12`, `role_permissions` `12`, `documents` `5`, `tenants` `3`, `users` `3`, `roles` `1`
+
+## 2026-03-19 Playwright UI Check
+- Re-validated the local Playwright wrapper with `node run-playwright.cjs test --ui --help`.
+- Result: the repository wrapper is healthy and exposes standard Playwright UI options correctly.
+- Current conclusion:
+  - if Playwright UI still fails in a given terminal/app shell, the remaining blocker is environment-level process/IPC behavior rather than a broken repo command
+  - the repo-side fallback command path is currently professional enough to keep using while runtime work continues

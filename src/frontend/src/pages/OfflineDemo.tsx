@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import {
+  App,
   Card,
   Table,
   Button,
   Space,
   Typography,
   Tag,
-  message,
   Modal,
   Form,
   Input,
@@ -17,6 +17,7 @@ import {
   DeleteOutlined,
   SyncOutlined,
 } from '@ant-design/icons';
+import type { FormInstance } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { db, User, SyncStatus, syncManager } from '../lib/offline';
 
@@ -24,11 +25,12 @@ const { Title, Paragraph } = Typography;
 
 const OfflineDemo: React.FC = () => {
   const { t } = useTranslation();
+  const { message } = App.useApp();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [form] = Form.useForm() as any;
+  const [form] = Form.useForm<Partial<User>>();
 
   useEffect(() => {
     loadUsers();
@@ -39,7 +41,7 @@ const OfflineDemo: React.FC = () => {
     try {
       const allUsers = await db.users.toArray();
       setUsers(allUsers);
-    } catch (error) {
+    } catch {
       message.error(t('offline:messages.loadFailed', { entity: t('offline:entities.users') }));
     } finally {
       setLoading(false);
@@ -64,7 +66,7 @@ const OfflineDemo: React.FC = () => {
       await syncManager.queueOperation('users', 'delete', { id: user.id });
       message.success(t('offline:messages.deletedSuccess', { entity: t('offline:entities.user') }));
       loadUsers();
-    } catch (error) {
+    } catch {
       message.error(t('offline:messages.deleteFailed', { entity: t('offline:entities.user') }));
     }
   };
@@ -110,7 +112,7 @@ const OfflineDemo: React.FC = () => {
       }
       setModalVisible(false);
       loadUsers();
-    } catch (error) {
+    } catch {
       message.error(t('offline:messages.saveFailed', { entity: t('offline:entities.user') }));
     }
   };
@@ -249,7 +251,7 @@ const OfflineDemo: React.FC = () => {
         onCancel={() => setModalVisible(false)}
         onOk={() => form.submit()}
       >
-        <Form form={form} layout="vertical" onFinish={handleSubmit}>
+        <Form form={form as FormInstance<Partial<User>>} layout="vertical" onFinish={handleSubmit}>
           <Form.Item
             name="email"
             label={t('offline:form.email')}

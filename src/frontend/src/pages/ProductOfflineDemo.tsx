@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import {
+  App,
   Card,
   Table,
   Button,
   Space,
   Typography,
   Tag,
-  message,
   Modal,
   Form,
   Input,
@@ -18,20 +18,23 @@ import {
   DeleteOutlined,
   SyncOutlined,
 } from '@ant-design/icons';
+import type { FormInstance } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { Product, SyncStatus } from '../lib/offline/db';
 import { offlineServices } from '../services/offline-services';
 import { syncManager } from '../lib/offline/sync-manager';
 
 const { Title, Paragraph } = Typography;
+type ProductDraft = Omit<Product, 'id' | 'tenantId' | 'version' | 'lastSyncedAt' | 'syncStatus' | 'offlineId' | 'createdAt' | 'updatedAt' | 'deletedAt'>;
 
 export const ProductOfflineDemo: React.FC = () => {
   const { t } = useTranslation();
+  const { message } = App.useApp();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [form] = Form.useForm() as any;
+  const [form] = Form.useForm<Partial<Product>>();
 
   useEffect(() => {
     loadProducts();
@@ -42,7 +45,7 @@ export const ProductOfflineDemo: React.FC = () => {
     try {
       const allProducts = await offlineServices.products.getAll();
       setProducts(allProducts);
-    } catch (error) {
+    } catch {
       message.error(t('offline:messages.loadFailed', { entity: t('offline:entities.products') }));
     } finally {
       setLoading(false);
@@ -57,7 +60,14 @@ export const ProductOfflineDemo: React.FC = () => {
 
   const handleEdit = (product: Product) => {
     setEditingProduct(product);
-    form.setFieldsValue(product);
+    form.setFieldsValue({
+      sku: product.sku,
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      cost: product.cost,
+      status: product.status,
+    });
     setModalVisible(true);
   };
 
@@ -66,7 +76,7 @@ export const ProductOfflineDemo: React.FC = () => {
       await offlineServices.products.delete(product.id);
       message.success(t('offline:messages.deletedSuccess', { entity: t('offline:entities.product') }));
       loadProducts();
-    } catch (error) {
+    } catch {
       message.error(t('offline:messages.deleteFailed', { entity: t('offline:entities.product') }));
     }
   };
@@ -75,24 +85,24 @@ export const ProductOfflineDemo: React.FC = () => {
     try {
       if (editingProduct) {
         // Update existing product
-        await offlineServices.products.update(editingProduct.id, values);
+        await offlineServices.products.update(editingProduct.id, values as Partial<ProductDraft>);
         message.success(t('offline:messages.updatedSuccess', { entity: t('offline:entities.product') }));
       } else {
         // Create new product
-        await offlineServices.products.create({
-          tenantId: 'demo-tenant',
+        const newProduct: ProductDraft = {
           name: values.name || '',
           sku: values.sku || '',
           price: values.price || 0,
           cost: values.cost,
           description: values.description,
           status: 'active',
-        } as Product);
+        };
+        await offlineServices.products.create(newProduct);
         message.success(t('offline:messages.createdSuccess', { entity: t('offline:entities.product') }));
       }
       setModalVisible(false);
       loadProducts();
-    } catch (error) {
+    } catch {
       message.error(t('offline:messages.saveFailed', { entity: t('offline:entities.product') }));
     }
   };
@@ -236,7 +246,7 @@ export const ProductOfflineDemo: React.FC = () => {
         onCancel={() => setModalVisible(false)}
         onOk={() => form.submit()}
       >
-        <Form form={form} layout="vertical" onFinish={handleSubmit}>
+        <Form form={form as FormInstance<Partial<Product>>} layout="vertical" onFinish={handleSubmit}>
           <Form.Item
             name="sku"
             label={t('offline:form.sku')}
