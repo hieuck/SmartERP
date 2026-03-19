@@ -269,7 +269,7 @@ These areas can still be useful, but the test signal is easier to distort:
 
 There are also areas where the right conclusion is not "tests are stale" but "frontend unit coverage is still thin":
 
-- current visible frontend service test files: `23`
+- current visible frontend service test files: `25`
 - current visible frontend component test files: `4`
 - current visible frontend hook test files: `2`
 
@@ -295,6 +295,8 @@ Progress already made:
 - integration frontend service layer now has a dedicated unit suite
 - config frontend service layer now has a dedicated unit suite
 - settings frontend service layer now has a dedicated unit suite
+- category frontend service layer now has a dedicated unit suite
+- permission frontend service layer now has a dedicated unit suite
 
 Remaining interpretation:
 
@@ -431,6 +433,8 @@ Current status:
 - integration service tests added
 - config service tests added
 - settings service tests added
+- category service tests added
+- permission service tests added
 - next additions should target other service/orchestration layers with business logic but no direct fast-feedback coverage
 
 ### Queue C: Refactor Only After Guard Rails Exist
