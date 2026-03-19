@@ -47,7 +47,8 @@ export class DepartmentOfflineService extends BaseOfflineService<Department> {
   }
 
   async getActive(): Promise<Department[]> {
-    return db.departments.where('isActive').equals(1).toArray();
+    const all = await db.departments.toArray();
+    return all.filter((department) => department.isActive);
   }
 
   async getByManager(managerId: string): Promise<Department[]> {
@@ -78,7 +79,8 @@ export class PositionOfflineService extends BaseOfflineService<Position> {
   }
 
   async getActive(): Promise<Position[]> {
-    return db.positions.where('isActive').equals(1).toArray();
+    const all = await db.positions.toArray();
+    return all.filter((position) => position.isActive);
   }
 
   async getByLevel(level: string): Promise<Position[]> {
@@ -100,7 +102,8 @@ export class ShiftOfflineService extends BaseOfflineService<Shift> {
   }
 
   async getActive(): Promise<Shift[]> {
-    return db.shifts.where('isActive').equals(1).toArray();
+    const all = await db.shifts.toArray();
+    return all.filter((shift) => shift.isActive);
   }
 }
 

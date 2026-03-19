@@ -17,6 +17,7 @@ Smoke verification completed:
 
 - frontend Vitest smoke run: `19` tests passing across `2` representative suites
 - backend Jest smoke run: auth controller integration suite passing (`37/37`)
+- frontend service-layer aggregate run: `41` files passing, `223` tests passing
 
 Test inventory currently visible in the repo:
 
@@ -316,7 +317,8 @@ Progress already made:
 
 Remaining interpretation:
 
-- coverage is better than before, but still thinner than backend depth
+- service and offline-service coverage on the frontend is now broad enough that the main frontend risk is no longer missing service tests
+- the next thin spots are page orchestration, large forms, shared UI complexity, and drift in older suites outside the service layer
 
 This matters because TDD readiness depends on having fast feedback at the right layer, not just having E2E coverage elsewhere.
 
@@ -418,16 +420,16 @@ Why:
 
 - this produces the fastest improvement in trustworthiness across the widest surface area
 
-### Queue B: Add Frontend Fast-Feedback Tests In Missing Layers
+### Queue B: Shift Frontend Fast-Feedback Tests Up One Layer
 
 Priority:
 
-- other service modules that currently rely mostly on E2E or page tests
+- page orchestration, shared UI behaviors, and complex form flows that still rely too heavily on E2E
 
 Why:
 
-- this is the clearest frontend TDD gap now
-- without these tests, many frontend changes will remain slower and riskier than backend changes
+- the service layer is now heavily covered
+- the next frontend TDD gap is above the service layer, where rendering and orchestration still create slower feedback loops
 
 Current status:
 
@@ -467,7 +469,8 @@ Current status:
 - inventory offline service tests added
 - manufacturing offline service tests added
 - API client tests added
-- next additions should target other service/orchestration layers with business logic but no direct fast-feedback coverage
+- aggregate verification now passes for `src/services`: `41` files, `223` tests
+- next additions should target page orchestration and shared UI hotspots rather than continuing CRUD-style service test expansion
 
 ### Queue C: Refactor Only After Guard Rails Exist
 
@@ -494,7 +497,7 @@ Use the following rule of thumb:
 The next best move is:
 
 1. continue backend drift cleanup in modules that use shared security/repository abstractions
-2. add frontend unit tests for the next uncovered service/orchestration modules
+2. add frontend tests around page orchestration and complex shared UI flows
 3. only then start splitting the worst frontend god files
 
 That is the most practical path from “green and cleaner” to “consistently TDD-friendly”.

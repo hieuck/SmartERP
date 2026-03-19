@@ -69,7 +69,8 @@ export class BinLocationOfflineService extends BaseOfflineService<BinLocation> {
   }
 
   async getActive(): Promise<BinLocation[]> {
-    return db.binLocations.where('isActive').equals(1).toArray();
+    const all = await db.binLocations.toArray();
+    return all.filter((bin) => bin.isActive);
   }
 
   async getAvailable(): Promise<BinLocation[]> {

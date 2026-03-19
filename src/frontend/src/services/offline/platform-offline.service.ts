@@ -46,7 +46,8 @@ export class ReportOfflineService extends BaseOfflineService<Report> {
   }
 
   async getActive(): Promise<Report[]> {
-    return db.reports.where('isActive').equals(1).toArray();
+    const all = await db.reports.toArray();
+    return all.filter((report) => report.isActive);
   }
 }
 
@@ -67,7 +68,8 @@ export class WorkflowOfflineService extends BaseOfflineService<Workflow> {
   }
 
   async getActive(): Promise<Workflow[]> {
-    return db.workflows.where('isActive').equals(1).toArray();
+    const all = await db.workflows.toArray();
+    return all.filter((workflow) => workflow.isActive);
   }
 }
 
@@ -92,7 +94,7 @@ export class SettingsOfflineService extends BaseOfflineService<Settings> {
     return all.filter(setting => setting.isPublic);
   }
 
-  async getValue(settingKey: string): Promise<any> {
+  async getValue(settingKey: string): Promise<unknown> {
     const setting = await this.getByKey(settingKey);
     if (!setting) return null;
 

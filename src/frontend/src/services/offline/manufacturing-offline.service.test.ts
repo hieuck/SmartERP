@@ -11,6 +11,7 @@ const makeEqualsChain = <T>(result: T) => ({
 });
 
 const bomsWhere = vi.fn();
+const bomsToArray = vi.fn();
 const workOrdersWhere = vi.fn();
 const productionPlansWhere = vi.fn();
 const productionPlansToArray = vi.fn();
@@ -19,6 +20,7 @@ vi.mock('@/lib/offline/db', () => ({
   db: {
     boms: {
       where: bomsWhere,
+      toArray: bomsToArray,
     },
     workOrders: {
       where: workOrdersWhere,
@@ -44,10 +46,11 @@ describe('manufacturing offline services', () => {
   it('queries BOMs by number, product, and active status', async () => {
     const bom = { id: 'bom-1', bomNumber: 'BOM-001' };
     const boms = [bom];
-    bomsWhere
-      .mockReturnValueOnce(makeEqualsChain(bom))
-      .mockReturnValueOnce(makeEqualsChain(boms))
-      .mockReturnValueOnce(makeEqualsChain(boms));
+    bomsWhere.mockReturnValueOnce(makeEqualsChain(bom)).mockReturnValueOnce(makeEqualsChain(boms));
+    bomsToArray.mockResolvedValueOnce([
+      { id: 'bom-1', bomNumber: 'BOM-001', isActive: true },
+      { id: 'bom-2', bomNumber: 'BOM-002', isActive: false },
+    ]);
 
     const { bomOfflineService } = await import('./manufacturing-offline.service');
 
@@ -57,10 +60,9 @@ describe('manufacturing offline services', () => {
 
     expect(bomsWhere).toHaveBeenNthCalledWith(1, 'bomNumber');
     expect(bomsWhere).toHaveBeenNthCalledWith(2, 'productId');
-    expect(bomsWhere).toHaveBeenNthCalledWith(3, 'isActive');
     expect(byNumber).toEqual(bom);
     expect(byProduct).toEqual(boms);
-    expect(active).toEqual(boms);
+    expect(active).toEqual([{ id: 'bom-1', bomNumber: 'BOM-001', isActive: true }]);
   });
 
   it('queries work orders by dimensions and in-progress state', async () => {

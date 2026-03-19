@@ -18,7 +18,8 @@ export class AccountOfflineService extends BaseOfflineService<Account> {
   }
 
   async getActive(): Promise<Account[]> {
-    return db.accounts.where('isActive').equals(1).toArray();
+    const all = await db.accounts.toArray();
+    return all.filter((account) => account.isActive);
   }
 }
 
@@ -83,7 +84,8 @@ export class TaxRateOfflineService extends BaseOfflineService<TaxRate> {
   }
 
   async getActive(): Promise<TaxRate[]> {
-    return db.taxRates.where('isActive').equals(1).toArray();
+    const all = await db.taxRates.toArray();
+    return all.filter((taxRate) => taxRate.isActive);
   }
 
   async getByType(taxType: string): Promise<TaxRate[]> {

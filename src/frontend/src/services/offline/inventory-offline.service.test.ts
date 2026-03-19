@@ -99,7 +99,6 @@ describe('inventory offline services', () => {
     const bins = [bin];
     binLocationsWhere
       .mockReturnValueOnce(makeEqualsChain(bin))
-      .mockReturnValueOnce(makeEqualsChain(bins))
       .mockReturnValueOnce(makeEqualsChain(bins));
     binLocationsToArray.mockResolvedValue([
       { id: 'bin-1', isActive: true, capacity: 100, currentOccupancy: 50 },
@@ -116,10 +115,12 @@ describe('inventory offline services', () => {
 
     expect(binLocationsWhere).toHaveBeenNthCalledWith(1, 'binCode');
     expect(binLocationsWhere).toHaveBeenNthCalledWith(2, 'warehouseId');
-    expect(binLocationsWhere).toHaveBeenNthCalledWith(3, 'isActive');
     expect(byCode).toEqual(bin);
     expect(byWarehouse).toEqual(bins);
-    expect(active).toEqual(bins);
+    expect(active).toEqual([
+      { id: 'bin-1', isActive: true, capacity: 100, currentOccupancy: 50 },
+      { id: 'bin-2', isActive: true, capacity: 100, currentOccupancy: 100 },
+    ]);
     expect(available).toEqual([{ id: 'bin-1', isActive: true, capacity: 100, currentOccupancy: 50 }]);
   });
 });

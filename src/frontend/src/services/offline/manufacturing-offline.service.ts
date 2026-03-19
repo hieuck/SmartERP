@@ -18,7 +18,8 @@ export class BOMOfflineService extends BaseOfflineService<BOM> {
   }
 
   async getActive(): Promise<BOM[]> {
-    return db.boms.where('isActive').equals(1).toArray();
+    const all = await db.boms.toArray();
+    return all.filter((bom) => bom.isActive);
   }
 }
 

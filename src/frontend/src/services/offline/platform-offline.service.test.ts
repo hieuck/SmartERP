@@ -9,15 +9,17 @@ const makeEqualsChain = <T>(result: T) => ({
 
 const documentsWhere = vi.fn();
 const reportsWhere = vi.fn();
+const reportsToArray = vi.fn();
 const workflowsWhere = vi.fn();
+const workflowsToArray = vi.fn();
 const settingsWhere = vi.fn();
 const settingsToArray = vi.fn();
 
 vi.mock('@/lib/offline/db', () => ({
   db: {
     documents: { where: documentsWhere },
-    reports: { where: reportsWhere },
-    workflows: { where: workflowsWhere },
+    reports: { where: reportsWhere, toArray: reportsToArray },
+    workflows: { where: workflowsWhere, toArray: workflowsToArray },
     settings: { where: settingsWhere, toArray: settingsToArray },
   },
 }));
@@ -64,14 +66,18 @@ describe('platform offline services', () => {
     const reports = [report];
     const workflow = { id: 'wf-1', workflowCode: 'WF-001' };
     const workflows = [workflow];
-    reportsWhere
-      .mockReturnValueOnce(makeEqualsChain(report))
-      .mockReturnValueOnce(makeEqualsChain(reports))
-      .mockReturnValueOnce(makeEqualsChain(reports));
+    reportsWhere.mockReturnValueOnce(makeEqualsChain(report)).mockReturnValueOnce(makeEqualsChain(reports));
+    reportsToArray.mockResolvedValueOnce([
+      { id: 'rep-1', reportCode: 'R-001', isActive: true },
+      { id: 'rep-2', reportCode: 'R-002', isActive: false },
+    ]);
     workflowsWhere
       .mockReturnValueOnce(makeEqualsChain(workflow))
-      .mockReturnValueOnce(makeEqualsChain(workflows))
       .mockReturnValueOnce(makeEqualsChain(workflows));
+    workflowsToArray.mockResolvedValueOnce([
+      { id: 'wf-1', workflowCode: 'WF-001', isActive: true },
+      { id: 'wf-2', workflowCode: 'WF-002', isActive: false },
+    ]);
 
     const { reportOfflineService, workflowOfflineService } = await import('./platform-offline.service');
 
@@ -84,16 +90,14 @@ describe('platform offline services', () => {
 
     expect(reportsWhere).toHaveBeenNthCalledWith(1, 'reportCode');
     expect(reportsWhere).toHaveBeenNthCalledWith(2, 'reportType');
-    expect(reportsWhere).toHaveBeenNthCalledWith(3, 'isActive');
     expect(workflowsWhere).toHaveBeenNthCalledWith(1, 'workflowCode');
     expect(workflowsWhere).toHaveBeenNthCalledWith(2, 'entityType');
-    expect(workflowsWhere).toHaveBeenNthCalledWith(3, 'isActive');
     expect(reportByCode).toEqual(report);
     expect(reportByType).toEqual(reports);
-    expect(activeReports).toEqual(reports);
+    expect(activeReports).toEqual([{ id: 'rep-1', reportCode: 'R-001', isActive: true }]);
     expect(workflowByCode).toEqual(workflow);
     expect(workflowByEntity).toEqual(workflows);
-    expect(activeWorkflows).toEqual(workflows);
+    expect(activeWorkflows).toEqual([{ id: 'wf-1', workflowCode: 'WF-001', isActive: true }]);
   });
 
   it('queries settings offline service and parses typed values', async () => {
