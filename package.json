@@ -2,7 +2,8 @@
   "scripts": {
     "test:e2e": "node run-playwright.cjs test",
     "test:e2e:headed": "node run-playwright.cjs test --headed --project=chromium",
-    "test:e2e:ui": "node run-playwright.cjs test --ui"
+    "test:e2e:ui": "node run-playwright.cjs test --ui",
+    "runtime:smoke": "node tools/runtime-smoke.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",

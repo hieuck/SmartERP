@@ -706,3 +706,59 @@ Start with **Phase 5 + Phase 6 together**:
 
 That gives the fastest path to a repo we can trust for the next round of engineering decisions.
 
+## Manual Registration Runtime Incident
+
+Latest finding:
+
+- manual registration looked broken from the browser because frontend requests to `/api/auth/register` and `/api/auth/refresh` were hitting a backend that was not actually booting cleanly on port `3000`
+- the backend root cause was a manufacturing-era wiring problem that prevented the monolith from reaching a healthy startup path reliably in the local runtime environment
+
+Fix applied:
+
+- restored backend runtime health by wiring manufacturing modules and controllers correctly
+- verified backend health on `http://127.0.0.1:3000/api/health`
+- hardened frontend registration guard rails with unit coverage in [src/frontend/src/pages/public/RegisterPage.test.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/public/RegisterPage.test.tsx)
+
+Verification:
+
+- backend health returns `200`
+- direct registration POST returns `201`
+- `npx playwright test tests/e2e/public/register.spec.ts --project=chromium` passed earlier in the recovery flow
+- `npx vitest run src/pages/public/RegisterPage.test.tsx` now passes `5/5`
+
+## Runtime Snapshot
+
+Current live state after the latest smoke:
+
+- frontend Vite server is healthy on `http://localhost:5173`
+- backend monolith is healthy on `http://127.0.0.1:3000/api/health`
+- local Postgres `erp_production` contains the manufacturing tables:
+  - `work_centers`
+  - `boms`
+  - `bom_lines`
+  - `work_orders`
+- manufacturing runtime smoke now returns `200` for:
+  - `GET /api/manufacturing/work-centers`
+  - `GET /api/manufacturing/bom`
+  - `GET /api/manufacturing/work-orders`
+
+## Tooling Runtime Notes
+
+Latest finding:
+
+- backend Jest config had been left in a broken intermediate state during a previous ts-jest cleanup attempt
+- the remaining backend deprecation warning is not from project code; it traces to `bcrypt` via `@mapbox/node-pre-gyp` calling Node's deprecated `url.parse()`
+- Playwright UI launcher is functioning correctly now for normal terminals; when it still fails, the remaining blocker is environment-level child-process IPC, not a broken repo script
+
+Fix applied:
+
+- cleaned `src/backend/jest.config.js` and moved `isolatedModules` ownership to `src/backend/tsconfig.json`
+- verified the wrapper path for `node run-playwright.cjs test --ui --help`
+
+Verification:
+
+- `npx.cmd jest src/domains/manufacturing/bom/bom.controller.spec.ts --runInBand` passes without the previous ts-jest warning
+- `node run-playwright.cjs test --ui --help` prints Playwright help successfully
+- the remaining backend deprecation is currently classified as dependency noise, not an app bug
+- `npm run runtime:smoke` now provides a single health snapshot for frontend, backend, database, and current error-log tails
+
