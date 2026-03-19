@@ -1,5 +1,5 @@
 import { App } from 'antd';
-import { screen } from '@testing-library/react';
+import { fireEvent, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from '@/test/test-utils';
 import RegisterPage from './RegisterPage';
@@ -112,5 +112,32 @@ describe('RegisterPage', () => {
 
     expect(passwordInput).toHaveAttribute('autocomplete', 'new-password');
     expect(confirmPasswordInput).toHaveAttribute('autocomplete', 'new-password');
+  });
+
+  it('auto-generates a normalized company slug as users type the company name', () => {
+    render(
+      <App>
+        <RegisterPage />
+      </App>,
+    );
+
+    fireEvent.change(screen.getByLabelText('Company Name'), {
+      target: { value: 'C\u00f4ng ty \u0110\u1eb7ng Khoa' },
+    });
+
+    expect(screen.getByLabelText('Company Slug')).toHaveValue('cong-ty-dang-khoa');
+  });
+
+  it('uses browser-friendly autocomplete values on key registration inputs', () => {
+    render(
+      <App>
+        <RegisterPage />
+      </App>,
+    );
+
+    expect(screen.getByLabelText('Company Name')).toHaveAttribute('autocomplete', 'organization');
+    expect(screen.getByLabelText('Full Name')).toHaveAttribute('autocomplete', 'name');
+    expect(screen.getByLabelText('Email')).toHaveAttribute('autocomplete', 'email');
+    expect(screen.getByLabelText('Phone Number')).toHaveAttribute('autocomplete', 'tel');
   });
 });
