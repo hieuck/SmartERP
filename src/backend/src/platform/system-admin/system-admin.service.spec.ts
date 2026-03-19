@@ -2,16 +2,15 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConflictException, NotFoundException } from '@nestjs/common';
+import { PermissionService } from '@common/security/permission.service';
 import { SystemAdminService } from './system-admin.service';
 import { SystemSetting } from './entities/system-setting.entity';
 import { BackgroundJob } from './entities/background-job.entity';
 import { ErrorLog } from './entities/error-log.entity';
-import { PermissionService } from '@common/security/permission.service';
 import { User } from '@core/user/entities/user.entity';
 import { JobStatus, ErrorSeverity, SettingCategory } from './enums';
 
 describe('SystemAdminService', () => {
-  let permissionService: jest.Mocked<PermissionService>;
   let service: SystemAdminService;
   let settingRepository: jest.Mocked<Repository<SystemSetting>>;
   let jobRepository: jest.Mocked<Repository<BackgroundJob>>;
@@ -115,7 +114,6 @@ describe('SystemAdminService', () => {
     settingRepository = module.get(getRepositoryToken(SystemSetting));
     jobRepository = module.get(getRepositoryToken(BackgroundJob));
     errorLogRepository = module.get(getRepositoryToken(ErrorLog));
-    permissionService = module.get(PermissionService);
   });
 
   afterEach(() => {

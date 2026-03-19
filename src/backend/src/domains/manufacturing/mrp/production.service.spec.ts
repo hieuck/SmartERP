@@ -122,6 +122,7 @@ describe('ProductionService', () => {
     qualityCheckRepository = module.get(getRepositoryToken(QualityCheck));
     cacheService = module.get(CacheService);
     permissionService = module.get(PermissionService);
+    void permissionService;
   });
 
   afterEach(() => {
@@ -158,7 +159,7 @@ describe('ProductionService', () => {
     it('should create material', async () => {
       materialRepository.save.mockResolvedValue(mockMaterial);
 
-      const result = await service.createMaterial({ name: 'New Material' }, mockUser);
+      await service.createMaterial({ name: 'New Material' }, mockUser);
 
       expect(materialRepository.save).toHaveBeenCalled();
     });
@@ -167,7 +168,7 @@ describe('ProductionService', () => {
       cacheService.getOrSet.mockResolvedValue(mockMaterial);
       materialRepository.save.mockResolvedValue(mockMaterial);
 
-      const result = await service.updateMaterial('material-1', { name: 'Updated' }, mockUser);
+      await service.updateMaterial('material-1', { name: 'Updated' }, mockUser);
 
       expect(cacheService.del).toHaveBeenCalled();
     });
@@ -230,7 +231,7 @@ describe('ProductionService', () => {
     it('should create mold', async () => {
       moldRepository.save.mockResolvedValue(mockMold);
 
-      const result = await service.createMold({ name: 'New Mold' }, mockUser);
+      await service.createMold({ name: 'New Mold' }, mockUser);
 
       expect(moldRepository.save).toHaveBeenCalled();
     });
@@ -317,7 +318,7 @@ describe('ProductionService', () => {
       };
       bomRepository.save.mockResolvedValue(mockBom);
 
-      const result = await service.createBom(bomData, mockUser);
+      await service.createBom(bomData, mockUser);
 
       expect(bomRepository.save).toHaveBeenCalled();
     });

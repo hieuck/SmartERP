@@ -24,8 +24,8 @@ export const TenantSelector: React.FC<TenantSelectorProps> = ({ onTenantChange }
 
   useEffect(() => {
     setTenants([
-      { id: '1', name: 'C?ng ty TNHH ABC', currency: 'VND', timezone: 'Asia/Ho_Chi_Minh' },
-      { id: '2', name: 'C?ng ty XYZ', currency: 'USD', timezone: 'Asia/Ho_Chi_Minh' },
+      { id: '1', name: 'Công ty TNHH ABC', currency: 'VND', timezone: 'Asia/Ho_Chi_Minh' },
+      { id: '2', name: 'Công ty XYZ', currency: 'USD', timezone: 'Asia/Ho_Chi_Minh' },
     ]);
   }, []);
 
@@ -38,10 +38,10 @@ export const TenantSelector: React.FC<TenantSelectorProps> = ({ onTenantChange }
   return (
     <Card style={{ maxWidth: 400, margin: '50px auto' }}>
       <Space orientation="vertical" style={{ width: '100%' }}>
-        <Title level={4}>Ch?n t? ch?c</Title>
+        <Title level={4}>Chọn tổ chức</Title>
         <Select
           style={{ width: '100%' }}
-          placeholder="Ch?n t? ch?c ?? l?m vi?c"
+          placeholder="Chọn tổ chức để làm việc"
           onChange={handleChange}
           value={selectedTenant}
           loading={loading}
@@ -53,7 +53,7 @@ export const TenantSelector: React.FC<TenantSelectorProps> = ({ onTenantChange }
                 <div>
                   <div>{tenant.name}</div>
                   <Text type="secondary" style={{ fontSize: 12 }}>
-                    {tenant.currency} ? {tenant.timezone}
+                    {tenant.currency} • {tenant.timezone}
                   </Text>
                 </div>
               </Space>

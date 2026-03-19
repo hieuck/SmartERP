@@ -203,17 +203,12 @@ export default function UserList() {
     }
   };
 
-  const handleResetPassword = (_id: string) => {
+  const handleResetPassword = (id: string) => {
     Modal.confirm({
       title: t('users:messages.resetPasswordConfirm'),
-      content: t('users:messages.resetPasswordDescription'),
+      content: `${t('users:messages.resetPasswordDescription')} (#${id})`,
       onOk: async () => {
-        try {
-          // Backend API not yet implemented
-          message.info(t('users:messages.featureNotAvailable'));
-        } catch (error) {
-          message.error(t('users:messages.resetPasswordError'));
-        }
+        message.info(t('users:messages.featureNotAvailable'));
       },
     });
   };
@@ -280,7 +275,8 @@ export default function UserList() {
       title: t('users:columns.fullName'),
       key: 'fullName',
       width: 200,
-      render: (_: any, record: User) => `${record.firstName || ''} ${record.lastName || ''}`.trim() || '-',
+      render: (_value: string, record: User) =>
+        `${record.firstName || ''} ${record.lastName || ''}`.trim() || '-',
     },
     {
       title: t('users:columns.role'),
@@ -343,7 +339,7 @@ export default function UserList() {
       width: 80,
       fixed: 'right',
       align: 'center',
-      render: (_: any, record: User) => (
+      render: (_value: string, record: User) => (
         <Dropdown menu={{ items: getActionMenu(record) }} trigger={['click']}>
           <Button type="text" icon={<MoreOutlined />} size="small" />
         </Dropdown>

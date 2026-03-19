@@ -126,7 +126,8 @@ export class AuthService {
     });
 
     // Return user without password
-    const { password: _password, ...result } = user;
+    const result = { ...user };
+    delete result.password;
     return result;
   }
 

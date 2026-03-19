@@ -87,7 +87,8 @@ export function useLazyImage(src: string, options: UseLazyImageOptions = {}) {
 /**
  * Hook for lazy loading multiple images
  */
-export function useLazyImages(_images: string[], _options: UseLazyImageOptions = {}) {
+export function useLazyImages(images: string[]) {
+  void images;
   const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
   const [loadingImages, setLoadingImages] = useState<Set<string>>(new Set());
   const [errors, setErrors] = useState<Map<string, Error>>(new Map());

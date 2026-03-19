@@ -175,7 +175,7 @@ describe('GdprService', () => {
 
     it('should create consent with granted false', async () => {
       const dtoWithFalse = { ...createDto, granted: false };
-      const consentWithFalse = { ...mockConsent, granted: false };
+      const consentWithFalse: Consent = { ...mockConsent, granted: false, isActive: true };
       consentRepository.update.mockResolvedValue({ affected: 0 } as any);
       consentRepository.create.mockReturnValue(consentWithFalse);
       consentRepository.save.mockResolvedValue(consentWithFalse);
@@ -194,7 +194,7 @@ describe('GdprService', () => {
 
       for (const type of types) {
         const dto = { ...createDto, type };
-        const consent = { ...mockConsent, type };
+        const consent: Consent = { ...mockConsent, type, isActive: true };
         consentRepository.update.mockResolvedValue({ affected: 0 } as any);
         consentRepository.create.mockReturnValue(consent);
         consentRepository.save.mockResolvedValue(consent);
@@ -269,8 +269,18 @@ describe('GdprService', () => {
     });
 
     it('should return multiple consents ordered by date', async () => {
-      const consent1 = { ...mockConsent, id: 'consent-1', createdAt: new Date('2024-01-01') };
-      const consent2 = { ...mockConsent, id: 'consent-2', createdAt: new Date('2024-01-02') };
+      const consent1: Consent = {
+        ...mockConsent,
+        id: 'consent-1',
+        createdAt: new Date('2024-01-01'),
+        isActive: true,
+      };
+      const consent2: Consent = {
+        ...mockConsent,
+        id: 'consent-2',
+        createdAt: new Date('2024-01-02'),
+        isActive: true,
+      };
       consentRepository.find.mockResolvedValue([consent2, consent1]);
 
       const result = await service.getUserConsents(userId, tenantId);
@@ -442,7 +452,10 @@ describe('GdprService', () => {
     });
 
     it('should throw BadRequestException when pending request exists', async () => {
-      const pendingRequest = { ...mockDeletionRequest, status: DeletionStatus.PENDING } as any as any;
+      const pendingRequest = {
+        ...mockDeletionRequest,
+        status: DeletionStatus.PENDING,
+      } as any as any;
       deletionRepository.findOne.mockResolvedValue(pendingRequest);
 
       await expect(service.requestDataDeletion(userId, tenantId, requestDto)).rejects.toThrow(
@@ -511,7 +524,10 @@ describe('GdprService', () => {
     };
 
     it('should approve deletion request', async () => {
-      const pendingRequest = { ...mockDeletionRequest, status: DeletionStatus.PENDING } as any as any;
+      const pendingRequest = {
+        ...mockDeletionRequest,
+        status: DeletionStatus.PENDING,
+      } as any as any;
       deletionRepository.findOne.mockResolvedValue(pendingRequest);
       deletionRepository.save.mockResolvedValue({
         ...pendingRequest,
@@ -538,7 +554,10 @@ describe('GdprService', () => {
         approved: false,
         rejectionReason: 'Insufficient reason',
       };
-      const pendingRequest = { ...mockDeletionRequest, status: DeletionStatus.PENDING } as any as any;
+      const pendingRequest = {
+        ...mockDeletionRequest,
+        status: DeletionStatus.PENDING,
+      } as any as any;
       deletionRepository.findOne.mockResolvedValue(pendingRequest);
       deletionRepository.save.mockResolvedValue({
         ...pendingRequest,
@@ -561,7 +580,10 @@ describe('GdprService', () => {
     });
 
     it('should throw BadRequestException when request not pending', async () => {
-      const approvedRequest = { ...mockDeletionRequest, status: DeletionStatus.APPROVED } as any as any;
+      const approvedRequest = {
+        ...mockDeletionRequest,
+        status: DeletionStatus.APPROVED,
+      } as any as any;
       deletionRepository.findOne.mockResolvedValue(approvedRequest);
 
       await expect(
@@ -598,7 +620,9 @@ describe('GdprService', () => {
 
   describe('getPendingDeletionRequests', () => {
     it('should return pending deletion requests for tenant', async () => {
-      const pendingRequests = [{ ...mockDeletionRequest, status: DeletionStatus.PENDING } as any as any];
+      const pendingRequests = [
+        { ...mockDeletionRequest, status: DeletionStatus.PENDING } as any as any,
+      ];
       deletionRepository.find.mockResolvedValue(pendingRequests);
 
       const result = await service.getPendingDeletionRequests(tenantId);

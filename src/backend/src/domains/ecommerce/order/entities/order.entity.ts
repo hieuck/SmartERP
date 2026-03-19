@@ -10,7 +10,6 @@ import {
   BeforeInsert,
   BeforeUpdate,
 } from 'typeorm';
-import { User as UserEntity } from '../../../../core/user/entities/user.entity';
 import { OrderStatus } from '../enums/order-status.enum';
 import { PaymentStatus } from '../enums/payment-status.enum';
 import { ShippingStatus } from '../enums/shipping-status.enum';

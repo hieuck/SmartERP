@@ -5,6 +5,14 @@ import {
   PositionOfflineService,
 } from './hr-offline.service';
 import { db, SyncStatus } from '@/lib/offline/db';
+import type { Department, Employee, Position } from '@/lib/offline/db';
+
+type EmployeeCreate = Omit<Employee, 'id' | 'version' | 'syncStatus' | 'createdAt' | 'updatedAt'>;
+type DepartmentCreate = Omit<
+  Department,
+  'id' | 'version' | 'syncStatus' | 'createdAt' | 'updatedAt'
+>;
+type PositionCreate = Omit<Position, 'id' | 'version' | 'syncStatus' | 'createdAt' | 'updatedAt'>;
 
 vi.mock('@/lib/offline/sync-manager', () => ({
   syncManager: {
@@ -35,7 +43,7 @@ describe('HR Offline Services', () => {
         email: 'john@example.com',
         hireDate: new Date(),
         status: 'active',
-      } as any);
+      } satisfies EmployeeCreate);
 
       expect(employee.id).toBeDefined();
       expect(employee.firstName).toBe('John');
@@ -51,7 +59,7 @@ describe('HR Offline Services', () => {
         email: 'john@example.com',
         hireDate: new Date(),
         status: 'active',
-      } as any);
+      } satisfies EmployeeCreate);
 
       const found = await service.getByEmail('john@example.com');
       expect(found).toBeDefined();
@@ -67,7 +75,7 @@ describe('HR Offline Services', () => {
         email: 'john@example.com',
         hireDate: new Date(),
         status: 'active',
-      } as any);
+      } satisfies EmployeeCreate);
 
       const active = await service.getActive();
       expect(active.length).toBeGreaterThan(0);
@@ -86,8 +94,8 @@ describe('HR Offline Services', () => {
         tenantId: 'tenant1',
         departmentCode: 'DEPT001',
         departmentName: 'Engineering',
-        isActive: 1,
-      } as any);
+        isActive: true,
+      } satisfies DepartmentCreate);
 
       expect(department.id).toBeDefined();
       expect(department.departmentName).toBe('Engineering');
@@ -99,8 +107,8 @@ describe('HR Offline Services', () => {
         tenantId: 'tenant1',
         departmentCode: 'DEPT001',
         departmentName: 'Engineering',
-        isActive: 1,
-      } as any);
+        isActive: true,
+      } satisfies DepartmentCreate);
 
       const active = await service.getActive();
       expect(active.length).toBeGreaterThan(0);
@@ -119,8 +127,8 @@ describe('HR Offline Services', () => {
         tenantId: 'tenant1',
         positionCode: 'POS001',
         positionName: 'Software Engineer',
-        isActive: 1,
-      } as any);
+        isActive: true,
+      } satisfies PositionCreate);
 
       expect(position.id).toBeDefined();
       expect(position.positionName).toBe('Software Engineer');
@@ -132,8 +140,8 @@ describe('HR Offline Services', () => {
         tenantId: 'tenant1',
         positionCode: 'POS001',
         positionName: 'Software Engineer',
-        isActive: 1,
-      } as any);
+        isActive: true,
+      } satisfies PositionCreate);
 
       const active = await service.getActive();
       expect(active.length).toBeGreaterThan(0);

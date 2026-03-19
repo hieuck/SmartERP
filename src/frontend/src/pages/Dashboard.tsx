@@ -1,6 +1,13 @@
 import { FONT_SIZES, SPACING } from '@/constants/design-tokens';
 import { useResponsive } from '@/hooks/useResponsive';
 import { dashboardService } from '@/services/dashboard/dashboardService';
+import type {
+  DashboardOverview,
+  RevenueByCategory,
+  SalesChartData,
+  TopCustomer,
+  TopProduct,
+} from '@/services/dashboard/dashboardService';
 import {
   CreditCardOutlined,
   DollarOutlined,
@@ -33,15 +40,23 @@ import {
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
 
+function getErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  return fallback;
+}
+
 export default function Dashboard() {
   const { t, i18n } = useTranslation(['dashboard', 'common']);
   const { isMobile, isTablet } = useResponsive();
   const [loading, setLoading] = useState(true);
-  const [overview, setOverview] = useState<any>(null);
-  const [salesChart, setSalesChart] = useState<any[]>([]);
-  const [topProducts, setTopProducts] = useState<any[]>([]);
-  const [topCustomers, setTopCustomers] = useState<any[]>([]);
-  const [revenueByCategory, setRevenueByCategory] = useState<any[]>([]);
+  const [overview, setOverview] = useState<DashboardOverview | null>(null);
+  const [salesChart, setSalesChart] = useState<SalesChartData[]>([]);
+  const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
+  const [topCustomers, setTopCustomers] = useState<TopCustomer[]>([]);
+  const [revenueByCategory, setRevenueByCategory] = useState<RevenueByCategory[]>([]);
 
   useEffect(() => {
     fetchDashboardData();
@@ -64,10 +79,8 @@ export default function Dashboard() {
       setTopProducts(productsData);
       setTopCustomers(customersData);
       setRevenueByCategory(categoryData);
-    } catch (error: any) {
-      message.error(
-        t('common:messages.error') + ': ' + (error.message || t('common:messages.error')),
-      );
+    } catch (error: unknown) {
+      message.error(t('common:messages.error') + ': ' + getErrorMessage(error, t('common:messages.error')));
     } finally {
       setLoading(false);
     }

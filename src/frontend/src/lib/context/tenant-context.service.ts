@@ -9,6 +9,12 @@ interface TenantInfo {
   tenantName: string;
 }
 
+interface TokenPayload {
+  tenantId: string;
+  tenantCode?: string;
+  tenantName?: string;
+}
+
 class TenantContextService {
   private tenantInfo: TenantInfo | null = null;
 
@@ -67,7 +73,7 @@ class TenantContextService {
   /**
    * Decode JWT token
    */
-  private decodeToken(token: string): any {
+  private decodeToken(token: string): TokenPayload {
     try {
       const base64Url = token.split('.')[1];
       const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -77,8 +83,8 @@ class TenantContextService {
           .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
           .join(''),
       );
-      return JSON.parse(jsonPayload);
-    } catch (error) {
+      return JSON.parse(jsonPayload) as TokenPayload;
+    } catch {
       throw new Error('Invalid token format');
     }
   }

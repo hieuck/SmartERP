@@ -319,7 +319,7 @@ export class OrderService {
     user: User,
     id: string,
     amount: number,
-    paymentMethod?: string,
+    _paymentMethod?: string,
   ): Promise<Order> {
     const order = await this.findOne(user, id);
 

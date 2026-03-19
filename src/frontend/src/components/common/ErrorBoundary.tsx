@@ -12,9 +12,12 @@
 
 import { SPACING } from '@/constants/design-tokens';
 import { useResponsive } from '@/hooks/useResponsive';
+import type { ResponsiveInfo } from '@/hooks/useResponsive';
 import { getButtonSize } from '@/utils/responsive';
 import { Button, Result, theme } from 'antd';
 import React, { ReactNode } from 'react';
+import type { GlobalToken } from 'antd/es/theme/interface/cssinjs-utils';
+import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
 const { useToken } = theme;
@@ -28,11 +31,17 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
+interface ErrorBoundaryInjectedProps {
+  t: TFunction<'commonUi'>;
+  responsive: ResponsiveInfo;
+  token: GlobalToken;
+}
+
 /**
  * HOC wrapper to provide hooks to class component
  */
-function withHooks(Component: React.ComponentType<any>) {
-  return function WrappedComponent(props: any) {
+function withHooks<P extends object>(Component: React.ComponentType<P & ErrorBoundaryInjectedProps>) {
+  return function WrappedComponent(props: P) {
     const { t } = useTranslation('commonUi');
     const responsive = useResponsive();
     const { token } = useToken();
@@ -41,10 +50,10 @@ function withHooks(Component: React.ComponentType<any>) {
 }
 
 class ErrorBoundaryClass extends React.Component<
-  ErrorBoundaryProps & { t: any; responsive: any; token: any },
+  ErrorBoundaryProps & ErrorBoundaryInjectedProps,
   ErrorBoundaryState
 > {
-  constructor(props: ErrorBoundaryProps & { t: any; responsive: any; token: any }) {
+  constructor(props: ErrorBoundaryProps & ErrorBoundaryInjectedProps) {
     super(props);
     this.state = {
       hasError: false,

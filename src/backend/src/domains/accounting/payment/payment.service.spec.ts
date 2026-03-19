@@ -8,7 +8,6 @@ import { CacheService } from '@/common/cache/cache.service';
 import { PermissionService, User } from '@/common/security/permission.service';
 
 describe('PaymentService', () => {
-  let permissionService: jest.Mocked<PermissionService>;
   let service: PaymentService;
   let paymentRepository: jest.Mocked<Repository<Payment>>;
   let cacheService: jest.Mocked<CacheService>;
@@ -72,7 +71,6 @@ describe('PaymentService', () => {
     service = module.get<PaymentService>(PaymentService);
     paymentRepository = module.get(getRepositoryToken(Payment));
     cacheService = module.get(CacheService);
-    permissionService = module.get(PermissionService);
   });
 
   afterEach(() => {

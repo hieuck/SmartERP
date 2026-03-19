@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
   Injectable,
   NestInterceptor,
@@ -9,6 +8,18 @@ import {
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
+
+type RequestWithTenant = {
+  user?: {
+    tenantId?: string;
+  };
+};
+
+type TenantScopedRecord = {
+  tenantId?: string;
+  data?: unknown;
+  items?: unknown;
+};
 
 /**
  * TenantIsolationInterceptor
@@ -26,7 +37,7 @@ export class TenantIsolationInterceptor implements NestInterceptor {
   private readonly logger = new Logger(TenantIsolationInterceptor.name);
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
-    const request = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest<RequestWithTenant>();
     const userTenantId = request.user?.tenantId;
 
     return next.handle().pipe(
@@ -59,23 +70,25 @@ export class TenantIsolationInterceptor implements NestInterceptor {
     }
 
     // Handle object responses
-    if (typeof data === 'object') {
+    if (typeof data === 'object' && data !== null) {
+      const scopedData = data as TenantScopedRecord;
+
       // Check if object has tenantId field
-      if (data.tenantId && data.tenantId !== userTenantId) {
+      if (scopedData.tenantId && scopedData.tenantId !== userTenantId) {
         this.logger.error(
-          `Tenant isolation violation: User tenant ${userTenantId} attempted to access data from tenant ${data.tenantId}`,
+          `Tenant isolation violation: User tenant ${userTenantId} attempted to access data from tenant ${scopedData.tenantId}`,
         );
         throw new ForbiddenException('Access denied: Tenant isolation violation');
       }
 
       // Check nested data property (common in API responses)
-      if (data.data) {
-        this.validateTenantIsolation(data.data, userTenantId);
+      if (scopedData.data) {
+        this.validateTenantIsolation(scopedData.data, userTenantId);
       }
 
       // Check items array (common in paginated responses)
-      if (data.items && Array.isArray(data.items)) {
-        this.validateTenantIsolation(data.items, userTenantId);
+      if (Array.isArray(scopedData.items)) {
+        this.validateTenantIsolation(scopedData.items, userTenantId);
       }
     }
   }

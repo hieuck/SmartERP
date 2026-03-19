@@ -280,12 +280,13 @@ export class SupportService {
     const assigneeIds = rule.assigneeIds;
 
     switch (rule.strategy) {
-      case AssignmentStrategy.ROUND_ROBIN:
+      case AssignmentStrategy.ROUND_ROBIN: {
         // Simple round-robin: rotate through assignees
         const index = Math.floor(Math.random() * assigneeIds.length);
         return assigneeIds[index];
+      }
 
-      case AssignmentStrategy.LEAST_ACTIVE:
+      case AssignmentStrategy.LEAST_ACTIVE: {
         // Find assignee with least active tickets
         const counts = await Promise.all(
           assigneeIds.map(async (assigneeId) => {
@@ -301,6 +302,7 @@ export class SupportService {
         );
         counts.sort((a, b) => a.count - b.count);
         return counts[0].assigneeId;
+      }
 
       case AssignmentStrategy.RANDOM:
         return assigneeIds[Math.floor(Math.random() * assigneeIds.length)];

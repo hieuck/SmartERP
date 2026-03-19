@@ -5,6 +5,14 @@ import {
   TaxRateOfflineService,
 } from './accounting-offline.service';
 import { db, SyncStatus } from '@/lib/offline/db';
+import type { Account, JournalEntry, TaxRate } from '@/lib/offline/db';
+
+type AccountCreate = Omit<Account, 'id' | 'version' | 'syncStatus' | 'createdAt' | 'updatedAt'>;
+type JournalEntryCreate = Omit<
+  JournalEntry,
+  'id' | 'version' | 'syncStatus' | 'createdAt' | 'updatedAt'
+>;
+type TaxRateCreate = Omit<TaxRate, 'id' | 'version' | 'syncStatus' | 'createdAt' | 'updatedAt'>;
 
 vi.mock('@/lib/offline/sync-manager', () => ({
   syncManager: {
@@ -35,7 +43,7 @@ describe('Accounting Offline Services', () => {
         currency: 'USD',
         balance: 1000,
         isActive: true,
-      } as any);
+      } satisfies AccountCreate);
 
       expect(account.id).toBeDefined();
       expect(account.accountName).toBe('Cash');
@@ -51,7 +59,7 @@ describe('Accounting Offline Services', () => {
         currency: 'USD',
         balance: 1000,
         isActive: true,
-      } as any);
+      } satisfies AccountCreate);
 
       const found = await service.getByAccountNumber('ACC001');
       expect(found).toBeDefined();
@@ -67,7 +75,7 @@ describe('Accounting Offline Services', () => {
         currency: 'USD',
         balance: 1000,
         isActive: true,
-      } as any);
+      } satisfies AccountCreate);
 
       const assets = await service.getByType('asset');
       expect(assets.length).toBeGreaterThan(0);
@@ -91,7 +99,7 @@ describe('Accounting Offline Services', () => {
         totalCredit: 1000,
         status: 'draft',
         lines: [],
-      } as any);
+      } satisfies JournalEntryCreate);
 
       expect(entry.id).toBeDefined();
       expect(entry.entryNumber).toBe('JE001');
@@ -107,7 +115,7 @@ describe('Accounting Offline Services', () => {
         totalCredit: 1000,
         status: 'posted',
         lines: [],
-      } as any);
+      } satisfies JournalEntryCreate);
 
       const posted = await service.getByStatus('posted');
       expect(posted.length).toBeGreaterThan(0);
@@ -129,8 +137,8 @@ describe('Accounting Offline Services', () => {
         taxCode: 'VAT10',
         rate: 10,
         taxType: 'sales',
-        isActive: 1,
-      } as any);
+        isActive: true,
+      } satisfies TaxRateCreate);
 
       expect(taxRate.id).toBeDefined();
       expect(taxRate.taxName).toBe('VAT');
@@ -144,8 +152,8 @@ describe('Accounting Offline Services', () => {
         taxCode: 'VAT10',
         rate: 10,
         taxType: 'sales',
-        isActive: 1,
-      } as any);
+        isActive: true,
+      } satisfies TaxRateCreate);
 
       const active = await service.getActive();
       expect(active.length).toBeGreaterThan(0);

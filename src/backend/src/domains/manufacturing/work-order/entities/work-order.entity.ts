@@ -14,7 +14,6 @@ import { Product } from '../../../inventory/product/entities/product.entity';
 import { WorkOrderStatus } from '../enums/work-order-status.enum';
 
 import { BOM } from '../../bom/entities/bom.entity';
-import { User as UserEntity } from '../../../../core/user/entities/user.entity';
 import { User } from '@/common/security/permission.service';
 
 @Entity('work_orders')

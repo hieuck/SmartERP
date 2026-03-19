@@ -65,8 +65,12 @@ describe('MomoService', () => {
       expect((newService as any).config.partnerCode).toBe('');
       expect((newService as any).config.accessKey).toBe('');
       expect((newService as any).config.secretKey).toBe('');
-      expect((newService as any).config.endpoint).toBe('https://test-payment.momo.vn/v2/gateway/api/create');
-      expect((newService as any).config.redirectUrl).toBe('http://localhost:3000/payment/momo/return');
+      expect((newService as any).config.endpoint).toBe(
+        'https://test-payment.momo.vn/v2/gateway/api/create',
+      );
+      expect((newService as any).config.redirectUrl).toBe(
+        'http://localhost:3000/payment/momo/return',
+      );
       expect((newService as any).config.ipnUrl).toBe('http://localhost:3000/payment/momo/ipn');
     });
 
@@ -221,7 +225,11 @@ describe('MomoService', () => {
     });
 
     it('should handle failed payment with result code 1000', () => {
-      const result = service.verifyIPN({ ...validIPNData, resultCode: 1000, message: 'Transaction initiated' });
+      const result = service.verifyIPN({
+        ...validIPNData,
+        resultCode: 1000,
+        message: 'Transaction initiated',
+      });
 
       expect(result.success).toBe(false);
       expect(result.transactionId).toBe('TRANS-123');
@@ -288,13 +296,20 @@ describe('MomoService', () => {
         throw new Error('Query failed');
       });
 
-      await expect(service.queryTransaction('ORDER-123', 'REQ-123')).rejects.toThrow('Query failed');
+      await expect(service.queryTransaction('ORDER-123', 'REQ-123')).rejects.toThrow(
+        'Query failed',
+      );
     });
   });
 
   describe('refundTransaction', () => {
     it('should refund transaction successfully', async () => {
-      const result = await service.refundTransaction('ORDER-123', 'TRANS-123', 50000, 'Customer request');
+      const result = await service.refundTransaction(
+        'ORDER-123',
+        'TRANS-123',
+        50000,
+        'Customer request',
+      );
 
       expect(result).toBeDefined();
       expect(result.orderId).toBe('ORDER-123');
@@ -312,7 +327,12 @@ describe('MomoService', () => {
     });
 
     it('should include all required fields in refund request', async () => {
-      const result = await service.refundTransaction('ORDER-123', 'TRANS-123', 50000, 'Refund reason');
+      const result = await service.refundTransaction(
+        'ORDER-123',
+        'TRANS-123',
+        50000,
+        'Refund reason',
+      );
 
       expect(result.partnerCode).toBe('TEST_PARTNER');
       expect(result.accessKey).toBe('TEST_ACCESS_KEY');
@@ -325,7 +345,12 @@ describe('MomoService', () => {
     });
 
     it('should handle refund with full amount', async () => {
-      const result = await service.refundTransaction('ORDER-123', 'TRANS-123', 100000, 'Full refund');
+      const result = await service.refundTransaction(
+        'ORDER-123',
+        'TRANS-123',
+        100000,
+        'Full refund',
+      );
       expect(result.amount).toBe(100000);
     });
 

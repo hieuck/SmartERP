@@ -10,9 +10,9 @@ import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 
 describe('CategoryService', () => {
-  let categoryRepository: any;
-  let cacheService: any;
-  let permissionService: any;
+  let categoryRepository: Repository<Category>;
+  let cacheService: CacheService;
+  let permissionService: PermissionService;
   let service: CategoryService;
   let secureCategoryRepo: any;
 
@@ -81,6 +81,9 @@ describe('CategoryService', () => {
     categoryRepository = module.get<Repository<Category>>(getRepositoryToken(Category));
     cacheService = module.get<CacheService>(CacheService);
     permissionService = module.get<PermissionService>(PermissionService);
+    void categoryRepository;
+    void cacheService;
+    void permissionService;
 
     // Access private secureCategoryRepo
     secureCategoryRepo = (service as any).secureCategoryRepo;

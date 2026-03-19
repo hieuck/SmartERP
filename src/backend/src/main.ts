@@ -8,7 +8,9 @@ import { ResponseTransformInterceptor } from '@common/response/field-filter.inte
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { Logger } from '@nestjs/common';
 import compression from 'compression';
+import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import 'tsconfig-paths/register';
 import { AppModule } from './app.module';
@@ -49,8 +51,7 @@ async function bootstrap() {
 
   logger.log('🔒 Security headers enabled (Helmet.js)');
 
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  app.use(require('cookie-parser')()); // cookie-parser for httpOnly cookie support
+  app.use(cookieParser()); // cookie-parser for httpOnly cookie support
   logger.log('🍪 Cookie parser enabled');
 
   app.use(compression());
@@ -158,7 +159,6 @@ async function bootstrap() {
 
 bootstrap().catch((error) => {
   // Use NestJS built-in logger as fallback when app fails to bootstrap
-  const { Logger } = require('@nestjs/common');
   const fallbackLogger = new Logger('Bootstrap');
   fallbackLogger.error('Failed to start application', error.stack || error);
   process.exit(1);

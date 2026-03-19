@@ -10,7 +10,6 @@ import {
   BeforeUpdate,
   Index,
 } from 'typeorm';
-import { User as UserEntity } from '../../../core/user/entities/user.entity';
 import { Task } from './task.entity';
 import { Project } from './project.entity';
 import { User } from '@/common/security/permission.service';

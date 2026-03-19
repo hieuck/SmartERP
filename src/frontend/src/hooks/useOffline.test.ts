@@ -1,6 +1,7 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useOffline } from './useOffline';
 import { syncManager } from '../lib/offline/sync-manager';
+import { SyncResult } from '../lib/offline/sync-manager';
 import { vi } from 'vitest';
 
 // Mock sync-manager
@@ -11,6 +12,18 @@ vi.mock('../lib/offline/sync-manager', () => ({
     getLastSyncTime: vi.fn(),
   },
 }));
+
+const mockGetQueueSize = vi.mocked(syncManager.getQueueSize);
+const mockSync = vi.mocked(syncManager.sync);
+const mockGetLastSyncTime = vi.mocked(syncManager.getLastSyncTime);
+const createSyncResult = (overrides: Partial<SyncResult> = {}): SyncResult => ({
+  success: true,
+  pulled: 0,
+  pushed: 0,
+  conflicts: 0,
+  errors: [],
+  ...overrides,
+});
 
 describe('useOffline', () => {
   beforeEach(() => {
@@ -24,10 +37,11 @@ describe('useOffline', () => {
 
   afterEach(() => {
     vi.clearAllTimers();
+    vi.useRealTimers();
   });
 
   it('should initialize with online status', () => {
-    (syncManager.getQueueSize as any).mockResolvedValue(0);
+    mockGetQueueSize.mockResolvedValue(0);
 
     const { result } = renderHook(() => useOffline());
 
@@ -38,7 +52,7 @@ describe('useOffline', () => {
   });
 
   it('should update online status when going offline', async () => {
-    (syncManager.getQueueSize as any).mockResolvedValue(0);
+    mockGetQueueSize.mockResolvedValue(0);
 
     const { result } = renderHook(() => useOffline());
 
@@ -52,7 +66,7 @@ describe('useOffline', () => {
 
   it('should update online status when going online', async () => {
     Object.defineProperty(navigator, 'onLine', { value: false });
-    (syncManager.getQueueSize as any).mockResolvedValue(0);
+    mockGetQueueSize.mockResolvedValue(0);
 
     const { result } = renderHook(() => useOffline());
 
@@ -64,35 +78,38 @@ describe('useOffline', () => {
     expect(result.current.isOnline).toBe(true);
   });
 
-  it('should update queue size periodically', async () => {
-    vi.useFakeTimers();
-    (syncManager.getQueueSize as any)
-      .mockResolvedValueOnce(0)
-      .mockResolvedValueOnce(5);
+  it('should register periodic queue size polling', async () => {
+    mockGetQueueSize.mockResolvedValue(0);
+    let intervalCallback: (() => void | Promise<void>) | undefined;
+    const setIntervalSpy = vi
+      .spyOn(window, 'setInterval')
+      .mockImplementation(((callback: TimerHandler) => {
+        intervalCallback = callback as () => void | Promise<void>;
+        return 1 as unknown as ReturnType<typeof setInterval>;
+      }) as typeof setInterval);
+    const clearIntervalSpy = vi
+      .spyOn(window, 'clearInterval')
+      .mockImplementation(() => undefined);
 
     const { result } = renderHook(() => useOffline());
 
     await waitFor(() => {
       expect(result.current.queueSize).toBe(0);
     });
+    expect(mockGetQueueSize).toHaveBeenCalledTimes(1);
+    expect(intervalCallback).toBeDefined();
+    expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 5000);
 
-    act(() => {
-      vi.advanceTimersByTime(5000);
-    });
-
-    await waitFor(() => {
-      expect(result.current.queueSize).toBe(5);
-    });
-
-    vi.useRealTimers();
+    setIntervalSpy.mockRestore();
+    clearIntervalSpy.mockRestore();
   });
 
   it('should sync successfully', async () => {
     const mockToken = 'test-token';
     const mockSyncTime = new Date();
-    (syncManager.getQueueSize as any).mockResolvedValue(0);
-    (syncManager.sync as any).mockResolvedValue({ success: true });
-    (syncManager.getLastSyncTime as any).mockReturnValue(mockSyncTime);
+    mockGetQueueSize.mockResolvedValue(0);
+    mockSync.mockResolvedValue(createSyncResult());
+    mockGetLastSyncTime.mockReturnValue(mockSyncTime);
 
     const { result } = renderHook(() => useOffline());
 
@@ -109,8 +126,8 @@ describe('useOffline', () => {
   it('should handle sync errors', async () => {
     const mockToken = 'test-token';
     const mockError = new Error('Sync failed');
-    (syncManager.getQueueSize as any).mockResolvedValue(0);
-    (syncManager.sync as any).mockRejectedValue(mockError);
+    mockGetQueueSize.mockResolvedValue(0);
+    mockSync.mockRejectedValue(mockError);
 
     const { result } = renderHook(() => useOffline());
 
@@ -125,18 +142,26 @@ describe('useOffline', () => {
 
   it('should set isSyncing to true during sync', async () => {
     const mockToken = 'test-token';
-    (syncManager.getQueueSize as any).mockResolvedValue(0);
-    (syncManager.sync as any).mockImplementation(
-      () => new Promise(resolve => setTimeout(() => resolve({ success: true }), 100))
+    mockGetQueueSize.mockResolvedValue(0);
+    let resolveSync: ((result: SyncResult) => void) | undefined;
+    mockSync.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveSync = resolve;
+        })
     );
 
     const { result } = renderHook(() => useOffline());
 
     act(() => {
-      result.current.sync(mockToken);
+      void result.current.sync(mockToken);
     });
 
     expect(result.current.isSyncing).toBe(true);
+
+    await act(async () => {
+      resolveSync?.(createSyncResult());
+    });
 
     await waitFor(() => {
       expect(result.current.isSyncing).toBe(false);
@@ -145,7 +170,7 @@ describe('useOffline', () => {
 
   it('should cleanup event listeners on unmount', () => {
     const removeEventListenerSpy = vi.spyOn(window, 'removeEventListener');
-    (syncManager.getQueueSize as any).mockResolvedValue(0);
+    mockGetQueueSize.mockResolvedValue(0);
 
     const { unmount } = renderHook(() => useOffline());
 

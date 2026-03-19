@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { MetricsService } from './metrics.service';
-import { Counter, Histogram, Gauge, Registry } from 'prom-client';
+import { Counter, Histogram, Registry } from 'prom-client';
 
 describe('MetricsService', () => {
   let service: MetricsService;

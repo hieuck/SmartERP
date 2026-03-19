@@ -215,20 +215,6 @@ export default function InvoiceList() {
     }
   };
 
-  // Handle send (update status to SENT)
-  const handleSend = async (invoice: Invoice) => {
-    try {
-      logger.info('InvoiceList', `Sending invoice: ${invoice.id}`);
-      await offlineServices.invoices.update(invoice.id, { status: InvoiceStatus.SENT });
-      message.success(t('invoices:messages.sendSuccess'));
-      await loadInvoices();
-      await updateQueueSize();
-    } catch (error) {
-      logger.error('InvoiceList', 'Failed to send invoice', error as Error);
-      message.error(t('invoices:messages.sendError'));
-    }
-  };
-
   const paginatedInvoices = useMemo(
     () => invoices.slice((page - 1) * pageSize, page * pageSize),
     [invoices, page, pageSize],

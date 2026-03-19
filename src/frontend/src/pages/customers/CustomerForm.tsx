@@ -1,4 +1,5 @@
 import { logger } from '@/lib/logger/logger.service';
+import type { Customer } from '@/lib/offline/db';
 import { syncManager } from '@/lib/offline/sync-manager';
 import { offlineServices } from '@/services/offline-services';
 import { ArrowLeftOutlined, SaveOutlined, SyncOutlined, UserOutlined } from '@ant-design/icons';
@@ -21,6 +22,11 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 const { Title } = Typography;
 const { TextArea } = Input;
+
+type CustomerFormValues = Pick<
+  Customer,
+  'name' | 'email' | 'phone' | 'address' | 'creditLimit' | 'status'
+>;
 
 export default function CustomerForm() {
   const navigate = useNavigate();
@@ -60,6 +66,7 @@ export default function CustomerForm() {
           phone: customer.phone,
           address: customer.address,
           creditLimit: customer.creditLimit,
+          status: customer.status,
         });
         logger.info('CustomerForm', 'Loaded customer from IndexedDB', { id });
       }
@@ -108,7 +115,7 @@ export default function CustomerForm() {
     }
   };
 
-  const onFinish = async (values: any) => {
+  const onFinish = async (values: CustomerFormValues) => {
     try {
       setLoading(true);
 
@@ -168,6 +175,7 @@ export default function CustomerForm() {
           onFinish={onFinish}
           initialValues={{
             creditLimit: 0,
+            status: 'active',
           }}
         >
           <Row gutter={16}>

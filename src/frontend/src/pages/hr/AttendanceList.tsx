@@ -226,7 +226,7 @@ export default function AttendanceList() {
       title: t('hr:attendance.status'),
       key: 'status',
       width: 100,
-      render: (_: any, record: Attendance) => {
+      render: (_value: unknown, record: Attendance) => {
         const isComplete = !!record.checkOut;
         return (
           <Tag color={isComplete ? 'success' : 'warning'} icon={isComplete ? <CheckCircleOutlined /> : <CloseCircleOutlined />}>

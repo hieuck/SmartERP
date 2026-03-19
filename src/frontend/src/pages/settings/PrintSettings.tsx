@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Card, Form, Input, Button, Switch, message, Tabs, Space, Upload, Divider } from 'antd';
-import type { FormInstance } from 'antd';
 import { SaveOutlined, ReloadOutlined, UploadOutlined } from '@ant-design/icons';
+import type { UploadProps } from 'antd';
+import type { UploadChangeParam, UploadFile } from 'antd/es/upload';
 import { useTranslation } from 'react-i18next';
 import { loadPrintConfig, clearConfigCache, PrintConfig } from '@/utils/printConfig';
 
@@ -23,7 +24,7 @@ export default function PrintSettings() {
       const cfg = await loadPrintConfig();
       setConfig(cfg);
       form.setFieldsValue(cfg);
-    } catch (error) {
+    } catch {
       message.error(t('print.messages.loadError'));
     } finally {
       setLoading(false);
@@ -37,7 +38,7 @@ export default function PrintSettings() {
       clearConfigCache();
       message.success(t('print.messages.saveSuccess'));
       await loadConfigData();
-    } catch (error) {
+    } catch {
       message.error(t('print.messages.saveError'));
     } finally {
       setLoading(false);
@@ -51,8 +52,12 @@ export default function PrintSettings() {
     message.success(t('print.messages.resetSuccess'));
   };
 
-  const handleLogoUpload = (info: any) => {
+  const handleLogoUpload = (info: UploadChangeParam<UploadFile>) => {
     if (info.file.status === 'done') {
+      const uploadedFile = info.file.originFileObj;
+      if (!uploadedFile) {
+        return;
+      }
       const reader = new FileReader();
       reader.onload = (e) => {
         const currentValues = form.getFieldsValue();
@@ -65,8 +70,12 @@ export default function PrintSettings() {
         });
         message.success(t('print.messages.logoUploadSuccess'));
       };
-      reader.readAsDataURL(info.file.originFileObj);
+      reader.readAsDataURL(uploadedFile);
     }
+  };
+
+  const handleCustomUpload: UploadProps['customRequest'] = ({ onSuccess }) => {
+    setTimeout(() => onSuccess?.('ok'), 0);
   };
 
   return (
@@ -145,9 +154,7 @@ export default function PrintSettings() {
               <Upload
                 accept="image/*"
                 showUploadList={false}
-                customRequest={({ onSuccess }: any) => {
-                  setTimeout(() => onSuccess && onSuccess('ok'), 0);
-                }}
+                customRequest={handleCustomUpload}
                 onChange={handleLogoUpload}
               >
                 <Button icon={<UploadOutlined />}>{t('print.company.uploadLogo')}</Button>

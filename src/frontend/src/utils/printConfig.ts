@@ -47,21 +47,28 @@ export async function loadPrintConfig(): Promise<PrintConfig> {
     return cachedConfig;
   }
 
-  try {
-    // Try to load from localStorage first (user settings)
-    const localConfig = localStorage.getItem('printConfig');
-    if (localConfig) {
-      cachedConfig = JSON.parse(localConfig);
-      return cachedConfig!;
+  // Try user override first, but do not let corrupted browser state block other fallbacks
+  const localConfig = localStorage.getItem('printConfig');
+  if (localConfig) {
+    try {
+      const parsedConfig = JSON.parse(localConfig) as PrintConfig;
+      cachedConfig = parsedConfig;
+      return parsedConfig;
+    } catch (error) {
+      localStorage.removeItem('printConfig');
+      logger.error('PrintConfig', 'Invalid local print config, falling back to bundled config', error as Error);
     }
+  }
 
+  try {
     // Fallback to JSON file
     const response = await fetch('/print-config.json');
     if (!response.ok) {
       throw new Error('Failed to load print config');
     }
-    cachedConfig = await response.json();
-    return cachedConfig!;
+    const fetchedConfig = (await response.json()) as PrintConfig;
+    cachedConfig = fetchedConfig;
+    return fetchedConfig;
   } catch (error) {
     logger.error('PrintConfig', 'Error loading print config, using defaults', error as Error);
     return getDefaultConfig();

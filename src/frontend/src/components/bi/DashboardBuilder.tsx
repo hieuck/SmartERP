@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Card, Row, Col, Button, Select, Modal, Form, Input } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, DragOutlined } from '@ant-design/icons';
+import type { FormProps } from 'antd';
 
 const { Option } = Select;
 
@@ -22,7 +23,7 @@ export const DashboardBuilder: React.FC = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [form] = Form.useForm();
 
-  const handleAddWidget = (values: any) => {
+  const handleAddWidget: FormProps<Pick<Widget, 'title' | 'type' | 'chartType' | 'dataSource'>>['onFinish'] = (values) => {
     const newWidget: Widget = {
       id: Date.now().toString(),
       ...values,

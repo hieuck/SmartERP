@@ -6,7 +6,7 @@ import { Employee } from './entities/employee.entity';
 import { CacheService } from '@/common/cache/cache.service';
 import { PermissionService } from '@/common/security/permission.service';
 
-const mockUser = { id: 'user-1', tenantId: 'tenant-1', role: 'admin' };
+const mockUser = { id: 'user-1', tenantId: 'tenant-1', role: 'admin', roles: ['admin'] };
 
 const mockEmployee = {
   id: 'emp-1',
@@ -25,6 +25,7 @@ const mockRepository = {
   find: jest.fn(),
   findOne: jest.fn(),
   save: jest.fn(),
+  remove: jest.fn(),
   softDelete: jest.fn(),
 };
 
@@ -34,8 +35,10 @@ const mockCacheService = {
 };
 
 const mockPermissionService = {
-  checkPermission: jest.fn().mockResolvedValue(true),
-  filterByTenant: jest.fn((user, query) => query),
+  canRead: jest.fn().mockReturnValue(true),
+  canWrite: jest.fn().mockReturnValue(true),
+  canDelete: jest.fn().mockReturnValue(true),
+  buildSecureQuery: jest.fn((_user, query) => query),
 };
 
 describe('EmployeeService', () => {
@@ -79,7 +82,9 @@ describe('EmployeeService', () => {
 
     it('should throw NotFoundException when not found', async () => {
       mockRepository.findOne.mockResolvedValue(null);
-      await expect(service.findOne(mockUser as any, 'nonexistent')).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(mockUser as any, 'nonexistent')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -100,7 +105,9 @@ describe('EmployeeService', () => {
 
     it('should throw ConflictException for duplicate email', async () => {
       mockRepository.findOne.mockResolvedValue(mockEmployee);
-      await expect(service.create(mockUser as any, createDto as any)).rejects.toThrow(ConflictException);
+      await expect(service.create(mockUser as any, createDto as any)).rejects.toThrow(
+        ConflictException,
+      );
     });
   });
 
@@ -108,20 +115,24 @@ describe('EmployeeService', () => {
     it('should update an employee', async () => {
       mockRepository.findOne.mockResolvedValue(mockEmployee);
       mockRepository.save.mockResolvedValue({ ...mockEmployee, firstName: 'Updated' });
-      const result = await service.update(mockUser as any, 'emp-1', { firstName: 'Updated' } as any);
+      const result = await service.update(mockUser as any, 'emp-1', {
+        firstName: 'Updated',
+      } as any);
       expect(result.firstName).toBe('Updated');
     });
 
     it('should throw NotFoundException for nonexistent employee', async () => {
       mockRepository.findOne.mockResolvedValue(null);
-      await expect(service.update(mockUser as any, 'nonexistent', {} as any)).rejects.toThrow(NotFoundException);
+      await expect(service.update(mockUser as any, 'nonexistent', {} as any)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
   describe('remove', () => {
     it('should remove an employee', async () => {
       mockRepository.findOne.mockResolvedValue(mockEmployee);
-      mockRepository.softDelete.mockResolvedValue({ affected: 1 });
+      mockRepository.remove.mockResolvedValue(mockEmployee);
       await expect(service.remove(mockUser as any, 'emp-1')).resolves.not.toThrow();
     });
   });

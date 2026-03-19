@@ -14,10 +14,13 @@ import { Badge, Button, Card, Form, Input, message, Modal, Popconfirm, Space, Ta
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+type CategoryFormValues = Pick<Category, 'name' | 'code' | 'description'> &
+  Partial<Pick<Category, 'level' | 'sortOrder' | 'isActive'>>;
+
 export default function CategoryManagement() {
   const { isMobile } = useResponsive();
   const navigate = useNavigate();
-  const [form] = Form.useForm();
+  const [form] = Form.useForm<CategoryFormValues>();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -134,14 +137,19 @@ export default function CategoryManagement() {
     form.resetFields();
   };
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: CategoryFormValues) => {
     try {
       if (editingCategory) {
         await offlineServices.categories.update(editingCategory.id, values);
         message.success('Cập nhật danh mục thành công!');
         logger.info('CategoryManagement', 'Category updated', { id: editingCategory.id });
       } else {
-        await offlineServices.categories.create(values);
+        await offlineServices.categories.create({
+          level: values.level ?? 1,
+          sortOrder: values.sortOrder ?? 0,
+          isActive: values.isActive ?? true,
+          ...values,
+        });
         message.success('Tạo danh mục thành công!');
         logger.info('CategoryManagement', 'Category created');
       }
@@ -194,13 +202,13 @@ export default function CategoryManagement() {
       title: 'Trạng thái đồng bộ',
       key: 'syncStatus',
       width: 150,
-      render: (_: any, record: Category) => getSyncStatusBadge(record),
+      render: (_value: unknown, record: Category) => getSyncStatusBadge(record),
     },
     {
       title: 'Thao tác',
       key: 'action',
       width: 150,
-      render: (_: any, record: Category) => (
+      render: (_value: unknown, record: Category) => (
         <Space>
           <Button type="link" icon={<EditOutlined />} onClick={() => handleOpenModal(record)}>
             Sửa

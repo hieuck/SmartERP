@@ -15,7 +15,7 @@ describe('IssueTrackingService', () => {
   let service: IssueTrackingService;
   let issueRepository: jest.Mocked<Repository<Issue>>;
   let commentRepository: jest.Mocked<Repository<IssueComment>>;
-  let attachmentRepository: jest.Mocked<Repository<IssueAttachment>>;
+  let attachmentRepository: unknown;
 
   const mockUser: User = {
     id: 'user-1',
@@ -90,6 +90,7 @@ describe('IssueTrackingService', () => {
     issueRepository = module.get(getRepositoryToken(Issue));
     commentRepository = module.get(getRepositoryToken(IssueComment));
     attachmentRepository = module.get(getRepositoryToken(IssueAttachment));
+    void attachmentRepository;
   });
 
   afterEach(() => {

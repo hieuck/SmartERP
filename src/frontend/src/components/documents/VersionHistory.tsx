@@ -17,7 +17,7 @@ interface VersionHistoryProps {
 }
 
 export const VersionHistory: React.FC<VersionHistoryProps> = ({
-  documentId: _documentId,
+  documentId,
   visible,
   onClose,
 }) => {
@@ -49,7 +49,13 @@ export const VersionHistory: React.FC<VersionHistoryProps> = ({
   };
 
   return (
-    <Modal title="Lịch sử phiên bản" open={visible} onCancel={onClose} footer={null} width={600}>
+    <Modal
+      title={`Lịch sử phiên bản - ${documentId}`}
+      open={visible}
+      onCancel={onClose}
+      footer={null}
+      width={600}
+    >
       <Timeline>
         {versions.map((version) => (
           <Timeline.Item

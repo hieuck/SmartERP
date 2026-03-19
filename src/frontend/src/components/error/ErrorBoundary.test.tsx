@@ -16,6 +16,8 @@ const ThrowError = ({ shouldThrow }: { shouldThrow: boolean }) => {
   return <div>No error</div>;
 };
 
+const viteEnv = import.meta.env as ImportMetaEnv & { DEV: boolean };
+
 describe('ErrorBoundary', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -65,8 +67,8 @@ describe('ErrorBoundary', () => {
   });
 
   it('should show error message in development mode', () => {
-    const originalEnv = import.meta.env.DEV;
-    (import.meta.env as any).DEV = true;
+    const originalEnv = viteEnv.DEV;
+    viteEnv.DEV = true;
 
     render(
       <ErrorBoundary>
@@ -76,7 +78,7 @@ describe('ErrorBoundary', () => {
 
     expect(screen.getByText('Test error')).toBeInTheDocument();
 
-    (import.meta.env as any).DEV = originalEnv;
+    viteEnv.DEV = originalEnv;
   });
 
   it('should reset error state when clicking reset button', () => {

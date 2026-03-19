@@ -112,8 +112,8 @@ export const supplierService = {
   },
 
   // Legacy methods for backward compatibility
-  getSuppliers: async (params?: any) => {
-    return supplierService.getAll(params);
+  getSuppliers: async (params?: SupplierQueryParams) => {
+    return supplierService.getAll(params ?? {});
   },
 
   getSupplier: async (id: string): Promise<Supplier> => {

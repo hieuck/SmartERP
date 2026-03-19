@@ -1,6 +1,13 @@
 import {
-  Controller, Get, Post, Patch, Delete,
-  Body, Param, Query, UseGuards,
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { EmployeeService } from './employee.service';
@@ -20,11 +27,7 @@ export class EmployeeController {
 
   @Get()
   @ApiOperation({ summary: 'Get all employees' })
-  findAll(
-    @CurrentUser() user: User,
-    @Query('page') page = 1,
-    @Query('limit') limit = 20,
-  ) {
+  findAll(@CurrentUser() user: User, @Query('page') page = 1, @Query('limit') limit = 20) {
     return this.service.findAll(user, +page, +limit);
   }
 
@@ -60,11 +63,7 @@ export class EmployeeController {
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update employee' })
-  update(
-    @CurrentUser() user: User,
-    @Param('id') id: string,
-    @Body() dto: UpdateEmployeeDto,
-  ) {
+  update(@CurrentUser() user: User, @Param('id') id: string, @Body() dto: UpdateEmployeeDto) {
     return this.service.update(user, id, dto);
   }
 

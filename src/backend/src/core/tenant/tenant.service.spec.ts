@@ -18,7 +18,6 @@ describe('TenantService', () => {
   let tenantRepository: jest.Mocked<Repository<Tenant>>;
   let userRepository: jest.Mocked<Repository<UserEntity>>;
   let cacheService: jest.Mocked<CacheService>;
-  let permissionService: jest.Mocked<PermissionService>;
   let secureTenantRepo: jest.Mocked<SecureRepository<Tenant>>;
 
   const mockCurrentUser: User = {
@@ -82,8 +81,6 @@ describe('TenantService', () => {
     tenantRepository = module.get(getRepositoryToken(Tenant));
     userRepository = module.get(getRepositoryToken(UserEntity));
     cacheService = module.get(CacheService);
-    permissionService = module.get(PermissionService);
-
     // Mock SecureRepository methods
     secureTenantRepo = (service as any).secureTenantRepo;
     secureTenantRepo.findOne = jest.fn();

@@ -1,14 +1,22 @@
-// @ts-nocheck
 import { Injectable, Logger, NotFoundException, ConflictException } from '@nestjs/common';
-import { DataSource, MoreThan } from 'typeorm';
+import { DataSource, FindOptionsWhere, MoreThan, ObjectLiteral, Repository } from 'typeorm';
 import { PullDto, PushDto, ChangeDto, ResolveConflictDto, ConflictResolution } from './dto';
 import { SyncStatus } from '../enums/sync-status.enum';
+
+type SyncEntityRecord = ObjectLiteral & {
+  id: string;
+  tenantId: string;
+  updatedAt?: Date | string;
+  version?: number;
+  syncStatus?: SyncStatus;
+  lastSyncedAt?: Date;
+};
 
 interface SyncConflict {
   id: string;
   entity: string;
-  localData: unknown;
-  serverData: unknown;
+  localData: SyncEntityRecord;
+  serverData: SyncEntityRecord;
   localVersion: number;
   serverVersion: number;
 }
@@ -27,7 +35,7 @@ export class SyncService {
     const { since, entities = ['users'] } = dto;
     const sinceDate = since ? new Date(since) : new Date(0);
 
-    const changes = [];
+    const changes: Array<{ entity: string; records: SyncEntityRecord[] }> = [];
 
     for (const entityName of entities) {
       try {
@@ -46,7 +54,8 @@ export class SyncService {
           records,
         });
       } catch (error) {
-        this.logger.error(`Failed to pull ${entityName}`, error);
+        const message = error instanceof Error ? error.message : String(error);
+        this.logger.error(`Failed to pull ${entityName}: ${message}`);
       }
     }
 
@@ -75,7 +84,8 @@ export class SyncService {
           applied.push(change);
         }
       } catch (error) {
-        this.logger.error(`Failed to apply change`, error);
+        const message = error instanceof Error ? error.message : String(error);
+        this.logger.error(`Failed to apply change: ${message}`);
       }
     }
 
@@ -96,11 +106,12 @@ export class SyncService {
    */
   private async applyChange(tenantId: string, change: ChangeDto) {
     const repository = this.getRepository(change.entity);
+    const changeData = change.data as SyncEntityRecord;
 
     switch (change.operation) {
       case 'create': {
         const created = repository.create({
-          ...change.data,
+          ...changeData,
           tenantId,
           syncStatus: SyncStatus.SYNCED,
           lastSyncedAt: new Date(),
@@ -111,7 +122,7 @@ export class SyncService {
 
       case 'update': {
         const existing = await repository.findOne({
-          where: { id: change.data.id, tenantId },
+          where: { id: changeData.id, tenantId } as FindOptionsWhere<SyncEntityRecord>,
         });
 
         if (!existing) {
@@ -120,18 +131,18 @@ export class SyncService {
 
         // Requirement 3.2: Apply last-write-wins strategy
         // Compare timestamps instead of versions
-        const localTimestamp = new Date(change.data.updatedAt || 0);
-        const serverTimestamp = new Date(existing.updatedAt);
+        const localTimestamp = new Date(changeData.updatedAt || 0);
+        const serverTimestamp = new Date(existing.updatedAt || 0);
 
         if (localTimestamp < serverTimestamp) {
           // Server is newer, reject local change
           const conflict: SyncConflict = {
-            id: `${change.entity}-${change.data.id}`,
+            id: `${change.entity}-${changeData.id}`,
             entity: change.entity,
-            localData: change.data,
+            localData: changeData,
             serverData: existing,
             localVersion: change.version || 0,
-            serverVersion: existing.version,
+            serverVersion: existing.version || 0,
           };
           this.conflicts.set(conflict.id, conflict);
           this.logger.warn(
@@ -141,22 +152,21 @@ export class SyncService {
         }
 
         // Local is newer or equal, apply update
-        await repository.update(
-          { id: change.data.id, tenantId },
-          {
-            ...change.data,
-            version: existing.version + 1,
-            syncStatus: SyncStatus.SYNCED,
-            lastSyncedAt: new Date(),
-          },
-        );
+        const updatedRecord: SyncEntityRecord = {
+          ...existing,
+          ...changeData,
+          version: (existing.version || 0) + 1,
+          syncStatus: SyncStatus.SYNCED,
+          lastSyncedAt: new Date(),
+        };
+        await repository.save(repository.create(updatedRecord));
         return { conflict: null };
       }
 
       case 'delete': {
         // Requirement 3.3: FOR delete conflicts, prioritize delete operation
         const existingForDelete = await repository.findOne({
-          where: { id: change.data.id, tenantId },
+          where: { id: changeData.id, tenantId } as FindOptionsWhere<SyncEntityRecord>,
         });
 
         if (!existingForDelete) {
@@ -165,7 +175,7 @@ export class SyncService {
         }
 
         // Check if there's a pending update conflict
-        const updateConflictId = `${change.entity}-${change.data.id}`;
+        const updateConflictId = `${change.entity}-${changeData.id}`;
         if (this.conflicts.has(updateConflictId)) {
           // Delete wins over update conflict
           this.conflicts.delete(updateConflictId);
@@ -173,7 +183,10 @@ export class SyncService {
         }
 
         // Always prioritize delete
-        await repository.softDelete({ id: change.data.id, tenantId });
+        await repository.softDelete({
+          id: changeData.id,
+          tenantId,
+        } as FindOptionsWhere<SyncEntityRecord>);
         return { conflict: null };
       }
 
@@ -198,17 +211,18 @@ export class SyncService {
 
     try {
       switch (dto.resolution) {
-        case ConflictResolution.KEEP_LOCAL:
-          await repository.update(
-            { id: conflict.localData.id, tenantId },
-            {
-              ...conflict.localData,
-              version: conflict.serverVersion + 1,
-              syncStatus: SyncStatus.SYNCED,
-              lastSyncedAt: new Date(),
-            },
-          );
+        case ConflictResolution.KEEP_LOCAL: {
+          const keepLocalRecord: SyncEntityRecord = {
+            ...conflict.serverData,
+            ...conflict.localData,
+            tenantId,
+            version: conflict.serverVersion + 1,
+            syncStatus: SyncStatus.SYNCED,
+            lastSyncedAt: new Date(),
+          };
+          await repository.save(repository.create(keepLocalRecord));
           break;
+        }
 
         case ConflictResolution.KEEP_SERVER:
           // Do nothing, server version already exists
@@ -218,16 +232,19 @@ export class SyncService {
           if (!dto.mergedData) {
             throw new ConflictException('Merged data required for MERGE strategy');
           }
-          await repository.update(
-            { id: conflict.localData.id, tenantId },
-            {
-              ...dto.mergedData,
+          {
+            const mergeRecord: SyncEntityRecord = {
+              ...conflict.serverData,
+              ...(dto.mergedData as ObjectLiteral),
+              id: conflict.localData.id,
+              tenantId,
               version: conflict.serverVersion + 1,
               syncStatus: SyncStatus.SYNCED,
               lastSyncedAt: new Date(),
-            },
-          );
-          break;
+            };
+            await repository.save(repository.create(mergeRecord));
+            break;
+          }
       }
 
       this.conflicts.delete(dto.conflictId);
@@ -238,20 +255,19 @@ export class SyncService {
       };
     } catch (error) {
       // Requirement 3.5: Log error and notify administrator
-      this.logger.error(`Conflict resolution failed: ${dto.conflictId}`, error.stack, {
-        conflictId: dto.conflictId,
-        resolution: dto.resolution,
-        tenantId,
-      });
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.error(
+        `Conflict resolution failed: ${dto.conflictId} (${dto.resolution}, tenant ${tenantId}) - ${message}`,
+      );
 
-      throw new ConflictException(`Failed to resolve conflict: ${error.message}`);
+      throw new ConflictException(`Failed to resolve conflict: ${message}`);
     }
   }
 
   /**
    * Get repository by entity name
    */
-  private getRepository(entityName: string) {
+  private getRepository(entityName: string): Repository<SyncEntityRecord> {
     // Map frontend entity names to backend entity class names
     const entityMap: Record<string, string> = {
       // Core

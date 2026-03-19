@@ -1,5 +1,11 @@
 import { useQuery, useMutation, UseQueryResult, UseMutationResult } from '@tanstack/react-query';
-import { settingsService, Setting, SettingCategory } from '@/services/utils/settingsService';
+import {
+  CreateSettingDto,
+  settingsService,
+  Setting,
+  SettingCategory,
+  UpdateSettingDto,
+} from '@/services/utils/settingsService';
 import { useQueryClient } from '@tanstack/react-query';
 
 /**
@@ -24,11 +30,11 @@ export const useSettingsByCategory = (
  * Hook for creating a new setting
  * @returns Mutation for creating setting
  */
-export const useCreateSetting = (): UseMutationResult<Setting, Error, any> => {
+export const useCreateSetting = (): UseMutationResult<Setting, Error, CreateSettingDto> => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: CreateSettingDto) => {
       return await settingsService.create(data);
     },
     onSuccess: (data) => {
@@ -47,7 +53,7 @@ export const useCreateSetting = (): UseMutationResult<Setting, Error, any> => {
 export const useUpdateSetting = (): UseMutationResult<
   Setting,
   Error,
-  { key: string; data: any }
+  { key: string; data: UpdateSettingDto }
 > => {
   const queryClient = useQueryClient();
 

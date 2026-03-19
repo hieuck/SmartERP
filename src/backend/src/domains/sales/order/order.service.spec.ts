@@ -1,7 +1,7 @@
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository, Between } from 'typeorm';
+import { Between } from 'typeorm';
 import { CacheService } from '@/common/cache/cache.service';
 import { PermissionService, User } from '@/common/security/permission.service';
 import { SecureRepository } from '@/common/security/secure-repository';
@@ -12,7 +12,7 @@ import { UpdateOrderDto } from './dto/update-order.dto';
 
 describe('OrderService', () => {
   let service: OrderService;
-  let orderRepository: jest.Mocked<Repository<Order>>;
+  let orderRepository: unknown;
   let cacheService: jest.Mocked<CacheService>;
   let permissionService: jest.Mocked<PermissionService>;
   let secureOrderRepo: jest.Mocked<SecureRepository<Order>>;
@@ -79,6 +79,8 @@ describe('OrderService', () => {
     orderRepository = module.get(getRepositoryToken(Order));
     cacheService = module.get(CacheService);
     permissionService = module.get(PermissionService);
+    void orderRepository;
+    void permissionService;
 
     secureOrderRepo = (service as any).secureOrderRepo;
     secureOrderRepo.find = jest.fn();

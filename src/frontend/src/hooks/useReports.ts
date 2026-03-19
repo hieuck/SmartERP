@@ -1,4 +1,11 @@
-import reportingService from '@/services/report/reportingService';
+import reportingService, {
+  CustomerReport,
+  DailySales,
+  FinancialReport,
+  InventoryReport,
+  ProductPerformance,
+  SalesReport,
+} from '@/services/report/reportingService';
 import { useQuery, UseQueryResult } from '@tanstack/react-query';
 
 interface ReportParams {
@@ -11,7 +18,7 @@ interface ReportParams {
  * @param params - Report parameters (startDate, endDate)
  * @returns Query result with report data
  */
-export const useSalesReport = (params: ReportParams): UseQueryResult<any, Error> => {
+export const useSalesReport = (params: ReportParams): UseQueryResult<SalesReport, Error> => {
   return useQuery({
     queryKey: ['report', 'sales', params],
     queryFn: async () => {
@@ -25,7 +32,7 @@ export const useSalesReport = (params: ReportParams): UseQueryResult<any, Error>
 /**
  * Hook for fetching daily sales report
  */
-export const useDailySalesReport = (params: ReportParams): UseQueryResult<any, Error> => {
+export const useDailySalesReport = (params: ReportParams): UseQueryResult<DailySales[], Error> => {
   return useQuery({
     queryKey: ['report', 'daily-sales', params],
     queryFn: async () => {
@@ -39,7 +46,9 @@ export const useDailySalesReport = (params: ReportParams): UseQueryResult<any, E
 /**
  * Hook for fetching product performance report
  */
-export const useProductPerformanceReport = (params: ReportParams): UseQueryResult<any, Error> => {
+export const useProductPerformanceReport = (
+  params: ReportParams,
+): UseQueryResult<ProductPerformance[], Error> => {
   return useQuery({
     queryKey: ['report', 'product-performance', params],
     queryFn: async () => {
@@ -53,7 +62,7 @@ export const useProductPerformanceReport = (params: ReportParams): UseQueryResul
 /**
  * Hook for fetching inventory report
  */
-export const useInventoryReport = (): UseQueryResult<any, Error> => {
+export const useInventoryReport = (): UseQueryResult<InventoryReport, Error> => {
   return useQuery({
     queryKey: ['report', 'inventory'],
     queryFn: async () => {
@@ -66,7 +75,7 @@ export const useInventoryReport = (): UseQueryResult<any, Error> => {
 /**
  * Hook for fetching low stock report
  */
-export const useLowStockReport = (): UseQueryResult<any, Error> => {
+export const useLowStockReport = (): UseQueryResult<unknown, Error> => {
   return useQuery({
     queryKey: ['report', 'inventory-low-stock'],
     queryFn: async () => {
@@ -79,7 +88,9 @@ export const useLowStockReport = (): UseQueryResult<any, Error> => {
 /**
  * Hook for fetching inventory movements report
  */
-export const useInventoryMovementsReport = (params: ReportParams): UseQueryResult<any, Error> => {
+export const useInventoryMovementsReport = (
+  params: ReportParams,
+): UseQueryResult<unknown, Error> => {
   return useQuery({
     queryKey: ['report', 'inventory-movements', params],
     queryFn: async () => {
@@ -93,7 +104,9 @@ export const useInventoryMovementsReport = (params: ReportParams): UseQueryResul
 /**
  * Hook for fetching customer report
  */
-export const useCustomerReport = (params: ReportParams): UseQueryResult<any, Error> => {
+export const useCustomerReport = (
+  params: ReportParams,
+): UseQueryResult<CustomerReport, Error> => {
   return useQuery({
     queryKey: ['report', 'customers', params],
     queryFn: async () => {
@@ -107,7 +120,7 @@ export const useCustomerReport = (params: ReportParams): UseQueryResult<any, Err
 /**
  * Hook for fetching top customers report
  */
-export const useTopCustomersReport = (params: ReportParams): UseQueryResult<any, Error> => {
+export const useTopCustomersReport = (params: ReportParams): UseQueryResult<unknown, Error> => {
   return useQuery({
     queryKey: ['report', 'top-customers', params],
     queryFn: async () => {
@@ -121,7 +134,9 @@ export const useTopCustomersReport = (params: ReportParams): UseQueryResult<any,
 /**
  * Hook for fetching financial report
  */
-export const useFinancialReport = (params: ReportParams): UseQueryResult<any, Error> => {
+export const useFinancialReport = (
+  params: ReportParams,
+): UseQueryResult<FinancialReport, Error> => {
   return useQuery({
     queryKey: ['report', 'financial', params],
     queryFn: async () => {
@@ -135,7 +150,7 @@ export const useFinancialReport = (params: ReportParams): UseQueryResult<any, Er
 /**
  * Hook for fetching profit and loss report
  */
-export const useProfitLossReport = (params: ReportParams): UseQueryResult<any, Error> => {
+export const useProfitLossReport = (params: ReportParams): UseQueryResult<unknown, Error> => {
   return useQuery({
     queryKey: ['report', 'profit-loss', params],
     queryFn: async () => {
@@ -149,7 +164,7 @@ export const useProfitLossReport = (params: ReportParams): UseQueryResult<any, E
 /**
  * Hook for fetching cash flow report
  */
-export const useCashFlowReport = (params: ReportParams): UseQueryResult<any, Error> => {
+export const useCashFlowReport = (params: ReportParams): UseQueryResult<unknown, Error> => {
   return useQuery({
     queryKey: ['report', 'cash-flow', params],
     queryFn: async () => {
@@ -165,27 +180,24 @@ export const useCashFlowReport = (params: ReportParams): UseQueryResult<any, Err
  */
 export const useExportReportPDF = () => {
   return async (reportType: string, params: ReportParams) => {
-    try {
-      let blob: Blob;
-      if (reportType === 'financial') {
-        blob = await reportingService.exportFinancialReport(params, 'pdf');
-      } else if (reportType === 'customers') {
-        blob = await reportingService.exportCustomerReport(params, 'pdf');
-      } else if (reportType === 'inventory') {
-        blob = await reportingService.exportInventoryReport('pdf');
-      } else {
-        blob = await reportingService.exportSalesReport(params, 'pdf');
-      }
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${reportType}-${new Date().toISOString().split('T')[0]}.pdf`;
-      link.click();
-      window.URL.revokeObjectURL(url);
-      return { success: true };
-    } catch (error) {
-      throw error;
+    let blob: Blob;
+    if (reportType === 'financial') {
+      blob = await reportingService.exportFinancialReport(params, 'pdf');
+    } else if (reportType === 'customers') {
+      blob = await reportingService.exportCustomerReport(params, 'pdf');
+    } else if (reportType === 'inventory') {
+      blob = await reportingService.exportInventoryReport('pdf');
+    } else {
+      blob = await reportingService.exportSalesReport(params, 'pdf');
     }
+
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${reportType}-${new Date().toISOString().split('T')[0]}.pdf`;
+    link.click();
+    window.URL.revokeObjectURL(url);
+    return { success: true };
   };
 };
 
@@ -194,26 +206,23 @@ export const useExportReportPDF = () => {
  */
 export const useExportReportExcel = () => {
   return async (reportType: string, params: ReportParams) => {
-    try {
-      let blob: Blob;
-      if (reportType === 'financial') {
-        blob = await reportingService.exportFinancialReport(params, 'excel');
-      } else if (reportType === 'customers') {
-        blob = await reportingService.exportCustomerReport(params, 'excel');
-      } else if (reportType === 'inventory') {
-        blob = await reportingService.exportInventoryReport('excel');
-      } else {
-        blob = await reportingService.exportSalesReport(params, 'excel');
-      }
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${reportType}-${new Date().toISOString().split('T')[0]}.xlsx`;
-      link.click();
-      window.URL.revokeObjectURL(url);
-      return { success: true };
-    } catch (error) {
-      throw error;
+    let blob: Blob;
+    if (reportType === 'financial') {
+      blob = await reportingService.exportFinancialReport(params, 'excel');
+    } else if (reportType === 'customers') {
+      blob = await reportingService.exportCustomerReport(params, 'excel');
+    } else if (reportType === 'inventory') {
+      blob = await reportingService.exportInventoryReport('excel');
+    } else {
+      blob = await reportingService.exportSalesReport(params, 'excel');
     }
+
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${reportType}-${new Date().toISOString().split('T')[0]}.xlsx`;
+    link.click();
+    window.URL.revokeObjectURL(url);
+    return { success: true };
   };
 };

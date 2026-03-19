@@ -82,6 +82,7 @@ describe('ProjectService', () => {
     service = module.get<ProjectService>(ProjectService);
     projectRepository = module.get(getRepositoryToken(Project));
     permissionService = module.get(PermissionService);
+    void permissionService;
   });
 
   afterEach(() => {

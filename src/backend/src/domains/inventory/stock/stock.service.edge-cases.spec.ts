@@ -1,13 +1,13 @@
 ﻿import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { StockService } from './stock.service';
 import { Inventory } from './entities/inventory.entity';
 import { CacheService } from '@/common/cache/cache.service';
 import { PermissionService, User } from '@/common/security/permission.service';
 import { SecureRepository } from '@/common/security/secure-repository';
 import { SyncStatus } from '@/common/enums/sync-status.enum';
+import { InventoryTransactionType } from '../enums/inventory.enum';
 
 describe('StockService - TDD Edge Cases', () => {
   let service: StockService;
@@ -178,7 +178,11 @@ describe('StockService - TDD Edge Cases', () => {
 
   describe('fulfillReservation - Edge Cases', () => {
     it('should fulfill exact reserved quantity', async () => {
-      const inventory = createMockInventory({ reservedQuantity: 50, availableQuantity: 50, quantity: 100 });
+      const inventory = createMockInventory({
+        reservedQuantity: 50,
+        availableQuantity: 50,
+        quantity: 100,
+      });
       mockInventoryRepository.findOne.mockResolvedValue(inventory);
       mockCacheService.getOrSet.mockResolvedValue(inventory);
       mockInventoryRepository.save.mockImplementation((entity) => Promise.resolve(entity as any));
@@ -199,7 +203,11 @@ describe('StockService - TDD Edge Cases', () => {
     });
 
     it('should handle partial fulfillment', async () => {
-      const inventory = createMockInventory({ reservedQuantity: 50, availableQuantity: 50, quantity: 100 });
+      const inventory = createMockInventory({
+        reservedQuantity: 50,
+        availableQuantity: 50,
+        quantity: 100,
+      });
       mockInventoryRepository.findOne.mockResolvedValue(inventory);
       mockCacheService.getOrSet.mockResolvedValue(inventory);
       mockInventoryRepository.save.mockImplementation((entity) => Promise.resolve(entity as any));
@@ -370,7 +378,10 @@ describe('StockService - TDD Edge Cases', () => {
       mockCacheService.getOrSet.mockResolvedValue(inventory);
       mockInventoryRepository.save.mockImplementation((entity) => Promise.resolve(entity as any));
 
-      const result = await service.adjustQuantity(mockUser, 'inv-1', { adjustment: 0 });
+      const result = await service.adjustQuantity(mockUser, 'inv-1', {
+        adjustment: 0,
+        type: InventoryTransactionType.ADJUSTMENT,
+      });
 
       expect(result.quantity).toBe(100);
     });
@@ -381,19 +392,28 @@ describe('StockService - TDD Edge Cases', () => {
       mockCacheService.getOrSet.mockResolvedValue(inventory);
       mockInventoryRepository.save.mockImplementation((entity) => Promise.resolve(entity as any));
 
-      const result = await service.adjustQuantity(mockUser, 'inv-1', { adjustment: -50 });
+      const result = await service.adjustQuantity(mockUser, 'inv-1', {
+        adjustment: -50,
+        type: InventoryTransactionType.ADJUSTMENT,
+      });
 
       expect(result.quantity).toBe(0);
       expect(result.availableQuantity).toBe(0);
     });
 
     it('should not set lastRestockDate for negative adjustment', async () => {
-      const inventory = createMockInventory({ quantity: 100, lastRestockDate: new Date('2024-01-01') });
+      const inventory = createMockInventory({
+        quantity: 100,
+        lastRestockDate: new Date('2024-01-01'),
+      });
       mockInventoryRepository.findOne.mockResolvedValue(inventory);
       mockCacheService.getOrSet.mockResolvedValue(inventory);
       mockInventoryRepository.save.mockImplementation((entity) => Promise.resolve(entity as any));
 
-      const result = await service.adjustQuantity(mockUser, 'inv-1', { adjustment: -20 });
+      const result = await service.adjustQuantity(mockUser, 'inv-1', {
+        adjustment: -20,
+        type: InventoryTransactionType.ADJUSTMENT,
+      });
 
       expect(result.quantity).toBe(80);
       // lastRestockDate should not be updated for negative adjustments

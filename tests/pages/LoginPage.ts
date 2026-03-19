@@ -55,6 +55,8 @@ export class LoginPage extends BasePage {
 
     if (rememberMe) {
       await this.rememberMeCheckbox.check();
+    } else if (await this.rememberMeCheckbox.isChecked()) {
+      await this.rememberMeCheckbox.uncheck();
     }
 
     await this.clickButton(this.submitButton);

@@ -48,7 +48,10 @@ describe('EmployeeController', () => {
 
   describe('findAll', () => {
     it('should return paginated employees', async () => {
-      const result = { data: [mockEmployee], meta: { page: 1, limit: 20, total: 1, totalPages: 1 } };
+      const result = {
+        data: [mockEmployee],
+        meta: { page: 1, limit: 20, total: 1, totalPages: 1 },
+      };
       mockService.findAll.mockResolvedValue(result);
 
       const response = await controller.findAll(mockUser as any, 1, 20);

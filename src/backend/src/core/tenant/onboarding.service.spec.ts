@@ -13,7 +13,6 @@ describe('OnboardingService', () => {
   let service: OnboardingService;
   let tenantRepository: jest.Mocked<Repository<Tenant>>;
   let userRepository: jest.Mocked<Repository<UserEntity>>;
-  let permissionService: jest.Mocked<PermissionService>;
 
   const mockUser: User = {
     id: 'user-1',
@@ -100,7 +99,6 @@ describe('OnboardingService', () => {
     service = module.get<OnboardingService>(OnboardingService);
     tenantRepository = module.get(getRepositoryToken(Tenant));
     userRepository = module.get(getRepositoryToken(UserEntity));
-    permissionService = module.get(PermissionService);
   });
 
   afterEach(() => {
@@ -276,16 +274,18 @@ describe('OnboardingService', () => {
       tenantRepository.findOne.mockResolvedValue(mockTenant);
       tenantRepository.save.mockResolvedValue(mockTenant);
       // Mock to reject only when checking for team member existence
-      userRepository.findOne.mockImplementation((options: unknown) => {
-        if (options?.where?.email) {
-          return Promise.reject(new Error('Database error'));
-        }
-        // For admin user check in getOnboardingStatus
-        return Promise.resolve({
-          emailVerified: true,
-          role: 'admin',
-        } as any);
-      });
+      userRepository.findOne.mockImplementation(
+        (options: { where?: { email?: string } } | undefined) => {
+          if (options?.where?.email) {
+            return Promise.reject(new Error('Database error'));
+          }
+          // For admin user check in getOnboardingStatus
+          return Promise.resolve({
+            emailVerified: true,
+            role: 'admin',
+          } as any);
+        },
+      );
       userRepository.count.mockResolvedValue(1);
 
       const result = await service.completeOnboarding(mockUser, completeDto);

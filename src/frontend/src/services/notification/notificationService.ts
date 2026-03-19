@@ -23,7 +23,7 @@ export interface Notification {
   message: string;
   isRead: boolean;
   link?: string;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
   createdAt: string;
   readAt?: string;
 }
@@ -35,7 +35,7 @@ export interface CreateNotificationDto {
   title: string;
   message: string;
   link?: string;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 }
 
 export interface NotificationQueryParams {

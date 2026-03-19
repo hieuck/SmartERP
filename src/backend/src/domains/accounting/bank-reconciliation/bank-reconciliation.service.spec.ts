@@ -139,6 +139,7 @@ describe('BankReconciliationService', () => {
     journalEntryRepository = module.get(getRepositoryToken(JournalEntry));
     accountRepository = module.get(getRepositoryToken(Account));
     permissionService = module.get(PermissionService);
+    void permissionService;
   });
 
   afterEach(() => {

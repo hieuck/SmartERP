@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Card, Button, Form, Input, Select, Switch, Space, List } from 'antd';
 import { PlusOutlined, DeleteOutlined, DragOutlined } from '@ant-design/icons';
+import type { FormProps } from 'antd';
 
 const { Option } = Select;
 
@@ -13,12 +14,14 @@ interface CustomField {
   options?: string[];
 }
 
+type CustomFieldFormValues = Omit<CustomField, 'id' | 'options'> & { options?: string };
+
 export const FormBuilder: React.FC = () => {
   const [fields, setFields] = useState<CustomField[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [form] = Form.useForm();
 
-  const handleAddField = (values: any) => {
+  const handleAddField: FormProps<CustomFieldFormValues>['onFinish'] = (values) => {
     const newField: CustomField = {
       id: Date.now().toString(),
       ...values,

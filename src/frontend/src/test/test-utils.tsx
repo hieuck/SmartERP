@@ -10,17 +10,20 @@ import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ConfigProvider } from 'antd';
 import { configureStore } from '@reduxjs/toolkit';
+import type { RootState } from '@/store';
 import authReducer from '@/store/slices/authSlice';
 import uiReducer from '@/store/slices/uiSlice';
 
+type PreloadedState = Partial<RootState>;
+
 // Create a test store
-export function createTestStore(preloadedState = {}) {
+export function createTestStore(preloadedState: PreloadedState = {}) {
   return configureStore({
     reducer: {
       auth: authReducer,
       ui: uiReducer,
     },
-    preloadedState,
+    preloadedState: preloadedState as RootState,
   });
 }
 
@@ -71,7 +74,7 @@ export function renderWithProviders(
     queryClient = createTestQueryClient(),
     ...renderOptions
   }: {
-    preloadedState?: any;
+    preloadedState?: PreloadedState;
     store?: ReturnType<typeof createTestStore>;
     queryClient?: QueryClient;
   } & Omit<RenderOptions, 'wrapper'> = {},

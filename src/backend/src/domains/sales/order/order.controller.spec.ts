@@ -511,7 +511,7 @@ describe('OrderController (Integration)', () => {
       const updatedOrder = { ...mockOrder, ...updateDto };
       orderService.update.mockResolvedValue(updatedOrder as any);
 
-      const response = await request(app.getHttpServer())
+      await request(app.getHttpServer())
         .patch('/orders/order-123')
         .set('Authorization', 'Bearer valid-token')
         .send(updateDto)

@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { UnauthorizedException } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 import { DataSource } from 'typeorm';
 import { AuthService } from './auth.service';
 import { User } from '../user/entities/user.entity';
@@ -15,15 +16,15 @@ import { TenantStatus } from '../tenant/enums/tenant-status.enum';
 describe('AuthService', () => {
   let service: AuthService;
   let userRepository: any;
-  let tenantRepository: any;
   let jwtService: any;
   let cacheService: any;
   let tokenBlacklistService: any;
   let accountLockoutService: any;
 
   beforeEach(async () => {
-    jest.clearAllMocks(); // Clear all mocks before each test
-    
+    jest.restoreAllMocks();
+    jest.clearAllMocks();
+
     const mockUserRepository = {
       findOne: jest.fn(),
       save: jest.fn(),
@@ -101,7 +102,6 @@ describe('AuthService', () => {
 
     service = module.get<AuthService>(AuthService);
     userRepository = module.get(getRepositoryToken(User));
-    tenantRepository = module.get(getRepositoryToken(Tenant));
     jwtService = module.get(JwtService);
     cacheService = module.get(CacheService);
     tokenBlacklistService = module.get(TokenBlacklistService);
@@ -114,10 +114,11 @@ describe('AuthService', () => {
 
   describe('validateUser', () => {
     it('should return user without password when credentials are valid', async () => {
+      const hashedPassword = await service.hashPassword('password');
       const mockUser = {
         id: '1',
         email: 'test@example.com',
-        password: '$2b$12$hashedpassword',
+        password: hashedPassword,
         tenantId: 'tenant1',
         tenant: { id: 'tenant1', status: TenantStatus.ACTIVE },
         status: 'active',
@@ -125,10 +126,6 @@ describe('AuthService', () => {
 
       (accountLockoutService.isAccountLocked as jest.Mock).mockResolvedValue(false);
       (userRepository.findOne as jest.Mock).mockResolvedValue(mockUser);
-      
-      // Mock bcrypt.compare instead of non-existent comparePasswords method
-      const bcrypt = require('bcrypt');
-      jest.spyOn(bcrypt, 'compare').mockResolvedValue(true);
 
       const result = await service.validateUser('test@example.com', 'password');
 
@@ -365,13 +362,13 @@ describe('AuthService', () => {
 
     it('should use constant-time response to prevent timing attacks', async () => {
       const startTime = Date.now();
-      
+
       (userRepository.findOne as jest.Mock).mockResolvedValue(null);
 
       await service.forgotPassword('test@example.com');
 
       const elapsedTime = Date.now() - startTime;
-      
+
       // Should take at least 500ms (constant time)
       expect(elapsedTime).toBeGreaterThanOrEqual(500);
     });
@@ -809,10 +806,7 @@ describe('AuthService', () => {
         { expiresIn: '15m' },
       );
 
-      expect(jwtService.sign).toHaveBeenCalledWith(
-        { sub: 'user-1' },
-        { expiresIn: '7d' },
-      );
+      expect(jwtService.sign).toHaveBeenCalledWith({ sub: 'user-1' }, { expiresIn: '7d' });
     });
 
     it('should invalidate email cache after registration', async () => {
@@ -840,9 +834,7 @@ describe('AuthService', () => {
 
       await service.register(registerData, mockCurrentUser);
 
-      expect(cacheService.del).toHaveBeenCalledWith(
-        expect.stringContaining(registerData.email),
-      );
+      expect(cacheService.del).toHaveBeenCalledWith(expect.stringContaining(registerData.email));
     });
   });
 

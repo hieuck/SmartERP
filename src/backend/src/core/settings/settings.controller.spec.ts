@@ -14,14 +14,18 @@
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import {
+  ConflictException,
+  INestApplication,
+  NotFoundException,
+  ValidationPipe,
+} from '@nestjs/common';
 import request from 'supertest';
 import { SettingsController } from './settings.controller';
 import { SettingsService } from './settings.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { SyncStatus } from '@/common/enums/sync-status.enum';
-import mockSettings from '../../../test/fixtures/settings.json';
 
 describe('SettingsController (Integration)', () => {
   let app: INestApplication;
@@ -141,7 +145,6 @@ describe('SettingsController (Integration)', () => {
         dataType: 'STRING',
       };
 
-      const ConflictException = require('@nestjs/common').ConflictException;
       settingsService.create.mockRejectedValue(
         new ConflictException("Setting with key 'app.name' already exists"),
       );
@@ -242,7 +245,6 @@ describe('SettingsController (Integration)', () => {
     });
 
     it('should return 404 when setting not found', async () => {
-      const NotFoundException = require('@nestjs/common').NotFoundException;
       settingsService.findOne.mockRejectedValue(
         new NotFoundException("Setting with key 'nonexistent' not found"),
       );
@@ -277,7 +279,6 @@ describe('SettingsController (Integration)', () => {
     });
 
     it('should return 404 when setting not found', async () => {
-      const NotFoundException = require('@nestjs/common').NotFoundException;
       settingsService.update.mockRejectedValue(new NotFoundException('Setting not found'));
 
       await request(app.getHttpServer())
@@ -301,7 +302,6 @@ describe('SettingsController (Integration)', () => {
     });
 
     it('should return 404 when setting not found', async () => {
-      const NotFoundException = require('@nestjs/common').NotFoundException;
       settingsService.remove.mockRejectedValue(new NotFoundException('Setting not found'));
 
       await request(app.getHttpServer())

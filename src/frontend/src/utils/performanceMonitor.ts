@@ -30,9 +30,6 @@ class PerformanceMonitor {
     }
 
     const timing = window.performance.timing;
-    const navigation = window.performance.getEntriesByType(
-      'navigation',
-    )[0] as PerformanceNavigationTiming;
 
     return {
       pageLoadTime: timing.loadEventEnd - timing.navigationStart,

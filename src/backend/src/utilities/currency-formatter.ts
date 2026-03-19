@@ -26,10 +26,7 @@ const CURRENCY_DECIMALS: Record<string, number> = {
  * @returns Formatted currency string
  * @throws Error if amount is invalid or currency code is not supported
  */
-export function formatCurrency(
-  amount: number,
-  currencyCode: string = 'USD',
-): string {
+export function formatCurrency(amount: number, currencyCode: string = 'USD'): string {
   // Validate amount
   if (isNaN(amount) || !isFinite(amount)) {
     throw new Error('Invalid amount');

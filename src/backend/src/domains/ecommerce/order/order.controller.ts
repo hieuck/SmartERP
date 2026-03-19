@@ -1,5 +1,5 @@
-// @ts-nocheck
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
+import { User } from '@/common/security/permission.service';
 import {
   Body,
   Controller,
@@ -12,6 +12,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Request } from 'express';
 import { CacheTTL } from '../../../common/decorators/cache-ttl.decorator';
 import { CacheInterceptor } from '../../../common/interceptors/cache.interceptor';
 import { CacheTTL as CacheTTLConstant } from '../../../config/cache.config';
@@ -24,7 +25,10 @@ import { OrderStatus, PaymentStatus, ShippingStatus } from '../enums/ecommerce.e
 import { OrderService } from './order.service';
 import { PaymentService } from './payment.service';
 
-import { User } from '@/common/security/permission.service';
+type RequestWithUser = Request & {
+  user: User;
+};
+
 @ApiTags('Orders')
 @Controller('orders')
 export class OrderController {
@@ -37,8 +41,7 @@ export class OrderController {
   @ApiOperation({ summary: 'Create order manually' })
   @ApiResponse({ status: 201, description: 'Order created successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
-  async create(@Body() dto: CreateOrderDto, @Req() req: unknown) {
-    const __tenantId = req.user?.tenantId || 'default';
+  async create(@Body() dto: CreateOrderDto, @Req() req: RequestWithUser) {
     const user = req.user;
     return this.orderService.create(dto, user);
   }
@@ -72,11 +75,11 @@ export class OrderController {
   async getStatistics(
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
-    @Req() req?: unknown,
+    @Req() req?: RequestWithUser,
   ) {
-    const _tenantId = req.user?.tenantId || 'default';
+    const tenantId = req?.user?.tenantId || 'default';
     return this.orderService.getStatistics(
-      _tenantId,
+      tenantId,
       startDate ? new Date(startDate) : undefined,
       endDate ? new Date(endDate) : undefined,
     );
@@ -114,11 +117,10 @@ export class OrderController {
   async updateStatus(
     @Param('id') id: string,
     @Body() dto: UpdateOrderStatusDto,
-    @Req() req: unknown,
+    @Req() req: RequestWithUser,
   ) {
-    const __tenantId = req.user?.tenantId || 'default';
     const user = req.user;
-    return this.orderService.updateStatus(id, dto, user, user);
+    return this.orderService.updateStatus(id, dto, user.tenantId, user);
   }
 
   @Post(':id/cancel')
@@ -126,10 +128,9 @@ export class OrderController {
   @ApiResponse({ status: 200, description: 'Order cancelled successfully' })
   @ApiResponse({ status: 400, description: 'Order cannot be cancelled' })
   @ApiResponse({ status: 404, description: 'Order not found' })
-  async cancel(@Param('id') id: string, @Body() dto: CancelOrderDto, @Req() req: unknown) {
-    const __tenantId = req.user?.tenantId || 'default';
+  async cancel(@Param('id') id: string, @Body() dto: CancelOrderDto, @Req() req: RequestWithUser) {
     const user = req.user;
-    return this.orderService.cancel(id, dto, user, user);
+    return this.orderService.cancel(id, dto, user.tenantId, user);
   }
 
   @Post('payment/process')

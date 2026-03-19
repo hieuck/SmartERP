@@ -76,6 +76,7 @@ describe('AuditService', () => {
     auditRepository = module.get(getRepositoryToken(AuditLog));
     cacheService = module.get(CacheService);
     permissionService = module.get(PermissionService);
+    void permissionService;
   });
 
   afterEach(() => {

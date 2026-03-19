@@ -1,10 +1,19 @@
-// @ts-nocheck
 import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Inject } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { Observable, of } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { Reflector } from '@nestjs/core';
+
+type CacheableRequest = {
+  method?: string;
+  url?: string;
+  query?: Record<string, unknown>;
+  tenantId?: string;
+  user?: {
+    id?: string;
+  };
+};
 
 /**
  * Cache Interceptor
@@ -35,7 +44,7 @@ export class CacheInterceptor implements NestInterceptor {
   ) {}
 
   async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<unknown>> {
-    const request = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest<CacheableRequest>();
     const method = request.method;
 
     // Only cache GET requests
@@ -73,9 +82,9 @@ export class CacheInterceptor implements NestInterceptor {
    * Format: {method}:{path}:{queryString}:{userId}
    * Example: GET:/api/products:category=electronics:user123
    */
-  private generateCacheKey(request: unknown): string {
-    const method = request.method;
-    const path = request.url.split('?')[0]; // Remove query string
+  private generateCacheKey(request: CacheableRequest): string {
+    const method = request.method || 'GET';
+    const path = (request.url || '').split('?')[0]; // Remove query string
     const queryString = JSON.stringify(request.query || {});
     const userId = request.user?.id || 'anonymous';
     const tenantId = request.tenantId || 'no-tenant';

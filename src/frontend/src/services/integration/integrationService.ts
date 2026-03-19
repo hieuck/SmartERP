@@ -5,7 +5,7 @@ export interface IntegrationConfig {
   name: string;
   type: string;
   enabled: boolean;
-  config: Record<string, any>;
+  config: Record<string, unknown>;
 }
 
 export interface ProcessPaymentDto {
@@ -39,12 +39,12 @@ const integrationService = {
     await api.delete(`/integrations/${name}`);
   },
 
-  async processPayment(data: ProcessPaymentDto): Promise<any> {
+  async processPayment(data: ProcessPaymentDto): Promise<unknown> {
     const response = await api.post('/integrations/payment/process', data);
     return response.data;
   },
 
-  async createShipment(data: CreateShipmentDto): Promise<any> {
+  async createShipment(data: CreateShipmentDto): Promise<unknown> {
     const response = await api.post('/integrations/shipments', data);
     return response.data;
   },

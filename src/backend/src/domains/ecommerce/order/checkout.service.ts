@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { PermissionService, User } from '@common/security/permission.service';
 import { SecureRepository } from '@common/security/secure-repository';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
@@ -11,6 +10,8 @@ import { Order } from './entities/order.entity';
 import { OrderItem } from './entities/order-item.entity';
 import { OrderStatus, PaymentStatus, ShippingStatus } from '../enums/ecommerce.enum';
 import { CartStatus } from '@domains/ecommerce/shopping-cart/enums/cart-status.enum';
+
+type CheckoutAddressInput = CheckoutDto['shippingAddress'];
 
 /**
  * CheckoutService handles checkout flow and order creation from cart
@@ -50,7 +51,7 @@ export class CheckoutService {
   /**
    * Convert AddressDto to Address format
    */
-  private convertToAddress(addressDto: unknown): Address {
+  private convertToAddress(addressDto: CheckoutAddressInput): Address {
     return {
       fullName: addressDto.fullName,
       phone: addressDto.phone,
@@ -222,6 +223,6 @@ export class CheckoutService {
     };
 
     const method = shippingMethod || 'standard';
-    return shippingRates[method] || shippingRates.standard;
+    return shippingRates[method as keyof typeof shippingRates] || shippingRates.standard;
   }
 }

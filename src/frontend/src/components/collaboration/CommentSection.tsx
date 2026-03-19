@@ -16,7 +16,7 @@ interface CommentSectionProps {
   recordId: string;
 }
 
-export const CommentSection: React.FC<CommentSectionProps> = ({ recordId: _recordId }) => {
+export const CommentSection: React.FC<CommentSectionProps> = ({ recordId }) => {
   const [comments, setComments] = useState<CommentData[]>([
     {
       id: '1',
@@ -54,7 +54,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ recordId: _recor
   };
 
   return (
-    <div>
+    <div data-record-id={recordId}>
       <List
         dataSource={comments}
         header={`${comments.length} bình luận`}

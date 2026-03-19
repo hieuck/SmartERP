@@ -74,7 +74,7 @@ export interface StandardListPageProps<T> {
   onMobileItemClick?: (record: T) => void;
 }
 
-function StandardListPageComponent<T extends Record<string, any>>({
+function StandardListPageComponent<T extends object>({
   title,
   createButtonText,
   onCreateClick,

@@ -352,7 +352,7 @@ describe('EmailController (Integration)', () => {
         .send(sendDto)
         .expect(201);
 
-      expect((response as any).body.status).toBe(EmailStatus.SENT);
+      expect((response.body as { status: EmailStatus }).status).toBe(EmailStatus.SENT);
       expect(emailService.sendEmail).toHaveBeenCalledWith(
         mockUser,
         'customer@example.com',
@@ -374,7 +374,7 @@ describe('EmailController (Integration)', () => {
 
       emailService.sendEmail.mockResolvedValue(mockEmailLog as any);
 
-      const response = await request(app.getHttpServer())
+      await request(app.getHttpServer())
         .post('/email/send')
         .set('Authorization', 'Bearer valid-token')
         .send(sendDto)
@@ -632,7 +632,7 @@ describe('EmailController (Integration)', () => {
 
       const responses = await Promise.all(requests);
 
-      responses.forEach((_response) => {
+      responses.forEach((response) => {
         expect(response.status).toBe(201);
       });
     });

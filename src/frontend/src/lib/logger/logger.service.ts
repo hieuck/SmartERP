@@ -16,7 +16,7 @@ export interface LogEntry {
   level: LogLevel;
   context: string;
   message: string;
-  data?: any;
+  data?: unknown;
   error?: Error;
 }
 
@@ -28,7 +28,7 @@ class LoggerService {
   /**
    * Log debug message (only in development)
    */
-  debug(context: string, message: string, data?: any) {
+  debug(context: string, message: string, data?: unknown) {
     if (this.isDevelopment) {
       this.log(LogLevel.DEBUG, context, message, data);
     }
@@ -37,21 +37,21 @@ class LoggerService {
   /**
    * Log info message
    */
-  info(context: string, message: string, data?: any) {
+  info(context: string, message: string, data?: unknown) {
     this.log(LogLevel.INFO, context, message, data);
   }
 
   /**
    * Log warning message
    */
-  warn(context: string, message: string, data?: any) {
+  warn(context: string, message: string, data?: unknown) {
     this.log(LogLevel.WARN, context, message, data);
   }
 
   /**
    * Log error message
    */
-  error(context: string, message: string, error?: Error, data?: any) {
+  error(context: string, message: string, error?: Error, data?: unknown) {
     this.log(LogLevel.ERROR, context, message, data, error);
   }
 
@@ -62,7 +62,7 @@ class LoggerService {
     level: LogLevel,
     context: string,
     message: string,
-    data?: any,
+    data?: unknown,
     error?: Error,
   ) {
     const entry: LogEntry = {
@@ -83,19 +83,25 @@ class LoggerService {
     // Console output in development
     if (this.isDevelopment) {
       const prefix = `[${entry.timestamp}] [${level.toUpperCase()}] [${context}]`;
+      const consoleHandlers: Record<LogLevel, (...args: unknown[]) => void> = {
+        [LogLevel.DEBUG]: globalThis.console.debug.bind(globalThis.console),
+        [LogLevel.INFO]: globalThis.console.info.bind(globalThis.console),
+        [LogLevel.WARN]: globalThis.console.warn.bind(globalThis.console),
+        [LogLevel.ERROR]: globalThis.console.error.bind(globalThis.console),
+      };
       
       switch (level) {
         case LogLevel.DEBUG:
-          console.debug(prefix, message, data);
+          consoleHandlers[level](prefix, message, data);
           break;
         case LogLevel.INFO:
-          console.info(prefix, message, data);
+          consoleHandlers[level](prefix, message, data);
           break;
         case LogLevel.WARN:
-          console.warn(prefix, message, data);
+          consoleHandlers[level](prefix, message, data);
           break;
         case LogLevel.ERROR:
-          console.error(prefix, message, error || data);
+          consoleHandlers[level](prefix, message, error || data);
           break;
       }
     }
@@ -127,7 +133,7 @@ class LoggerService {
       }
       
       localStorage.setItem('app_errors', JSON.stringify(errors));
-    } catch (e) {
+    } catch {
       // Fail silently if localStorage is full
     }
   }
@@ -139,7 +145,7 @@ class LoggerService {
     let filtered = this.logs;
     
     if (level) {
-      filtered = filtered.filter(log => log.level === level);
+      filtered = filtered.filter((log) => log.level === level);
     }
     
     return filtered.slice(-limit);

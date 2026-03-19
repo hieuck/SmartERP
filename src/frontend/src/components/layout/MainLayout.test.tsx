@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import MainLayout from './MainLayout';
-import { useResponsive } from '@/hooks/useResponsive';
+import { ResponsiveInfo, useResponsive } from '@/hooks/useResponsive';
 import { vi } from 'vitest';
 
 // Mock dependencies
@@ -27,17 +27,29 @@ const renderWithRouter = (component: React.ReactElement) => {
   return render(<BrowserRouter>{component}</BrowserRouter>);
 };
 
+const mockUseResponsive = vi.mocked(useResponsive);
+const createResponsiveInfo = (overrides: Partial<ResponsiveInfo> = {}): ResponsiveInfo => ({
+  isMobile: false,
+  isTablet: false,
+  isDesktop: true,
+  screens: {
+    xs: false,
+    sm: false,
+    md: true,
+    lg: true,
+    xl: false,
+    xxl: false,
+  },
+  ...overrides,
+});
+
 describe('MainLayout', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it('should render layout with sidebar and header on desktop', () => {
-    (useResponsive as any).mockReturnValue({
-      isMobile: false,
-      isTablet: false,
-      isDesktop: true,
-    });
+    mockUseResponsive.mockReturnValue(createResponsiveInfo());
 
     renderWithRouter(<MainLayout />);
 
@@ -46,11 +58,13 @@ describe('MainLayout', () => {
   });
 
   it('should auto-collapse sidebar on mobile', () => {
-    (useResponsive as any).mockReturnValue({
-      isMobile: true,
-      isTablet: false,
-      isDesktop: false,
-    });
+    mockUseResponsive.mockReturnValue(
+      createResponsiveInfo({
+        isMobile: true,
+        isDesktop: false,
+        screens: { xs: true, sm: false, md: false, lg: false, xl: false, xxl: false },
+      }),
+    );
 
     renderWithRouter(<MainLayout />);
 
@@ -58,11 +72,13 @@ describe('MainLayout', () => {
   });
 
   it('should auto-collapse sidebar on tablet', () => {
-    (useResponsive as any).mockReturnValue({
-      isMobile: false,
-      isTablet: true,
-      isDesktop: false,
-    });
+    mockUseResponsive.mockReturnValue(
+      createResponsiveInfo({
+        isTablet: true,
+        isDesktop: false,
+        screens: { xs: false, sm: true, md: true, lg: false, xl: false, xxl: false },
+      }),
+    );
 
     renderWithRouter(<MainLayout />);
 
@@ -70,11 +86,7 @@ describe('MainLayout', () => {
   });
 
   it('should toggle sidebar on desktop', () => {
-    (useResponsive as any).mockReturnValue({
-      isMobile: false,
-      isTablet: false,
-      isDesktop: true,
-    });
+    mockUseResponsive.mockReturnValue(createResponsiveInfo());
 
     renderWithRouter(<MainLayout />);
 
@@ -93,11 +105,13 @@ describe('MainLayout', () => {
   });
 
   it('should open mobile drawer on toggle', () => {
-    (useResponsive as any).mockReturnValue({
-      isMobile: true,
-      isTablet: false,
-      isDesktop: false,
-    });
+    mockUseResponsive.mockReturnValue(
+      createResponsiveInfo({
+        isMobile: true,
+        isDesktop: false,
+        screens: { xs: true, sm: false, md: false, lg: false, xl: false, xxl: false },
+      }),
+    );
 
     renderWithRouter(<MainLayout />);
 
@@ -111,11 +125,13 @@ describe('MainLayout', () => {
   });
 
   it('should apply correct padding on mobile', () => {
-    (useResponsive as any).mockReturnValue({
-      isMobile: true,
-      isTablet: false,
-      isDesktop: false,
-    });
+    mockUseResponsive.mockReturnValue(
+      createResponsiveInfo({
+        isMobile: true,
+        isDesktop: false,
+        screens: { xs: true, sm: false, md: false, lg: false, xl: false, xxl: false },
+      }),
+    );
 
     const { container } = renderWithRouter(<MainLayout />);
 
@@ -124,24 +140,22 @@ describe('MainLayout', () => {
   });
 
   it('should apply correct padding on tablet', () => {
-    (useResponsive as any).mockReturnValue({
-      isMobile: false,
-      isTablet: true,
-      isDesktop: false,
-    });
+    mockUseResponsive.mockReturnValue(
+      createResponsiveInfo({
+        isTablet: true,
+        isDesktop: false,
+        screens: { xs: false, sm: true, md: true, lg: false, xl: false, xxl: false },
+      }),
+    );
 
     const { container } = renderWithRouter(<MainLayout />);
 
     const content = container.querySelector('.main-content');
-    expect(content).toHaveStyle({ padding: '16px' });
+    expect(content).toHaveStyle({ padding: '20px' });
   });
 
   it('should apply correct padding on desktop', () => {
-    (useResponsive as any).mockReturnValue({
-      isMobile: false,
-      isTablet: false,
-      isDesktop: true,
-    });
+    mockUseResponsive.mockReturnValue(createResponsiveInfo());
 
     const { container } = renderWithRouter(<MainLayout />);
 

@@ -15,7 +15,7 @@ export interface UseLocaleReturn {
   currentLanguage: SupportedLanguage;
   antdLocale: Locale;
   changeLanguage: (lang: SupportedLanguage) => Promise<void>;
-  t: (key: string, options?: any) => string;
+  t: (key: string, options?: Record<string, unknown>) => string;
 }
 
 /**

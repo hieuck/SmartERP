@@ -389,7 +389,7 @@ export class InitSchema1710567890123 implements MigrationInterface {
       'suppliers',
       'customers',
       'products',
-      'tenants'
+      'tenants',
     ];
 
     for (const table of tables) {

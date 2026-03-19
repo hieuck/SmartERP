@@ -15,6 +15,8 @@ export interface ReportData {
   }[];
 }
 
+type ReportQueryParams = DateRangeParams & Record<string, string | number | undefined>;
+
 const reportService = {
   // Inventory Reports
   getCurrentStock: async () => {
@@ -37,7 +39,7 @@ const reportService = {
     return response.data;
   },
 
-  exportInventoryToExcel: async (params?: any) => {
+  exportInventoryToExcel: async (params?: ReportQueryParams) => {
     const response = await api.get('/reports/inventory/export/excel', {
       params,
       responseType: 'blob',
@@ -45,7 +47,7 @@ const reportService = {
     return response.data;
   },
 
-  exportInventoryToPDF: async (params?: any) => {
+  exportInventoryToPDF: async (params?: ReportQueryParams) => {
     const response = await api.get('/reports/inventory/export/pdf', {
       params,
       responseType: 'blob',
@@ -156,7 +158,7 @@ const reportService = {
   },
 
   // Export Functions
-  exportPDF: async (reportType: string, params: any) => {
+  exportPDF: async (reportType: string, params: ReportQueryParams) => {
     const response = await api.get(`/reports/${reportType}/export/pdf`, {
       params,
       responseType: 'blob',
@@ -164,7 +166,7 @@ const reportService = {
     return response.data;
   },
 
-  exportExcel: async (reportType: string, params: any) => {
+  exportExcel: async (reportType: string, params: ReportQueryParams) => {
     const response = await api.get(`/reports/${reportType}/export/excel`, {
       params,
       responseType: 'blob',

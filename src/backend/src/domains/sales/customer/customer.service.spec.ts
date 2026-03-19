@@ -80,6 +80,8 @@ describe('CustomerService', () => {
     customerRepository = module.get(getRepositoryToken(Customer));
     cacheService = module.get(CacheService);
     permissionService = module.get(PermissionService);
+    void customerRepository;
+    void permissionService;
 
     secureCustomerRepo = (service as any).secureCustomerRepo;
     secureCustomerRepo.find = jest.fn();

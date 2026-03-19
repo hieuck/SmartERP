@@ -1,4 +1,5 @@
 import ReactGA from 'react-ga4';
+import { logger } from '../logger/logger.service';
 
 /**
  * Initialize Google Analytics 4
@@ -12,13 +13,13 @@ export function initGA4() {
 
   // Only initialize if measurement ID is provided
   if (!measurementId) {
-    console.warn('GA4 Measurement ID not provided. Analytics disabled.');
+    logger.warn('analytics', 'GA4 Measurement ID not provided. Analytics disabled.');
     return;
   }
 
   // Don't track in development
   if (environment === 'development') {
-    console.log('GA4 disabled in development');
+    logger.info('analytics', 'GA4 disabled in development');
     return;
   }
 
@@ -28,7 +29,7 @@ export function initGA4() {
     },
   });
 
-  console.log('GA4 initialized');
+  logger.info('analytics', 'GA4 initialized');
 }
 
 /**
@@ -183,6 +184,6 @@ export function setUserId(userId: string) {
 /**
  * Set user properties
  */
-export function setUserProperties(properties: Record<string, any>) {
+export function setUserProperties(properties: Record<string, unknown>) {
   ReactGA.set(properties);
 }

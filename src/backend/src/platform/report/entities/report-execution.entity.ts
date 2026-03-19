@@ -8,7 +8,6 @@ import {
 } from 'typeorm';
 import { Report } from './report.entity';
 import { ExecutionStatus } from '../enums/execution-status.enum';
-import { User as UserEntity } from '@/core/user/entities/user.entity';
 import { User } from '@/common/security/permission.service';
 
 /**

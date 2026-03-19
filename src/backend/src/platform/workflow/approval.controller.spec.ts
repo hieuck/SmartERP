@@ -5,9 +5,7 @@ import { User } from '@/common/security/permission.service';
 import { SubmitApprovalDto, RejectApprovalDto } from './dto/approval.dto';
 
 describe('ApprovalController', () => {
-  let service: jest.Mocked<ApprovalService>;
   let controller: ApprovalController;
-  let __service: ApprovalService;
 
   const mockUser: User = {
     id: 'user-1',
@@ -44,8 +42,6 @@ describe('ApprovalController', () => {
     }).compile();
 
     controller = module.get<ApprovalController>(ApprovalController);
-    service = module.get<ApprovalService>(ApprovalService) as any;
-
     jest.clearAllMocks();
   });
 

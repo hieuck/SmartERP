@@ -1,6 +1,17 @@
-// @ts-nocheck
 import { Injectable, NestMiddleware, Logger } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
+
+type TenantAwareRequest = Request & {
+  user?: {
+    tenantId?: string;
+    userId?: string;
+  };
+  tenantContext?: {
+    tenantId: string;
+    userId?: string;
+    timestamp: Date;
+  };
+};
 
 /**
  * TenantContextMiddleware
@@ -17,7 +28,7 @@ import { Request, Response, NextFunction } from 'express';
 export class TenantContextMiddleware implements NestMiddleware {
   private readonly logger = new Logger(TenantContextMiddleware.name);
 
-  use(req: Request & { user?: unknown }, res: Response, next: NextFunction) {
+  use(req: TenantAwareRequest, res: Response, next: NextFunction) {
     // Extract tenant context from JWT (if authenticated)
     const tenantId = req.user?.tenantId;
     const userId = req.user?.userId;
@@ -28,7 +39,7 @@ export class TenantContextMiddleware implements NestMiddleware {
       this.logger.debug(`[Tenant Context] TenantID: ${tenantId}, UserID: ${userId}, Path: ${path}`);
 
       // Add tenant context to request for downstream use
-      req['tenantContext'] = {
+      req.tenantContext = {
         tenantId,
         userId,
         timestamp: new Date(),

@@ -1,19 +1,21 @@
+import { vi } from 'vitest';
+
 /**
  * Mock API Client
  */
 
 export const mockApiClient = {
-  get: jest.fn(),
-  post: jest.fn(),
-  put: jest.fn(),
-  patch: jest.fn(),
-  delete: jest.fn(),
+  get: vi.fn(),
+  post: vi.fn(),
+  put: vi.fn(),
+  patch: vi.fn(),
+  delete: vi.fn(),
 };
 
 // Mock axios
-jest.mock('axios', () => ({
-  create: jest.fn(() => mockApiClient),
-  isAxiosError: jest.fn(),
+vi.mock('axios', () => ({
+  create: vi.fn(() => mockApiClient),
+  isAxiosError: vi.fn(),
 }));
 
 // Mock API responses

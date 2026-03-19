@@ -25,25 +25,6 @@ describe('PaymentGatewayController (Integration)', () => {
   let app: INestApplication;
   let paymentGatewayService: jest.Mocked<PaymentGatewayService>;
 
-  const _mockUser = {
-    id: 'user-123',
-    email: 'user@example.com',
-    tenantId: 'tenant-123',
-    roles: ['user'],
-  };
-
-  const __mockTransaction = {
-    id: 'txn-123',
-    orderId: 'order-123',
-    gateway: 'vnpay',
-    amount: 100000,
-    status: 'pending',
-    version: 1,
-    syncStatus: 'synced',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
-
   beforeAll(async () => {
     const mockPaymentGatewayService = {
       createPayment: jest.fn(),

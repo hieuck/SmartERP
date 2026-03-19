@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
@@ -175,7 +174,7 @@ export class AccountController {
   // Journal Entries - New Methods
   @Post('journal-entries/create')
   @ApiOperation({ summary: 'Create journal entry with validation' })
-  async createJournalEntryNew(@CurrentUser() user: User, @Body() dto: unknown) {
+  async createJournalEntryNew(@CurrentUser() user: User, @Body() dto: CreateJournalEntryDto) {
     return this.accountingService.createJournalEntry(user, dto);
   }
 

@@ -1,6 +1,13 @@
 import {
-  Controller, Get, Post, Patch, Delete,
-  Body, Param, Query, UseGuards,
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { PurchaseOrderService } from './purchase-order.service';
@@ -20,11 +27,7 @@ export class PurchaseOrderController {
 
   @Get()
   @ApiOperation({ summary: 'Get all purchase orders' })
-  findAll(
-    @CurrentUser() user: User,
-    @Query('page') page = 1,
-    @Query('limit') limit = 20,
-  ) {
+  findAll(@CurrentUser() user: User, @Query('page') page = 1, @Query('limit') limit = 20) {
     return this.service.findAll(user, +page, +limit);
   }
 
@@ -60,21 +63,13 @@ export class PurchaseOrderController {
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update purchase order' })
-  update(
-    @CurrentUser() user: User,
-    @Param('id') id: string,
-    @Body() dto: UpdatePurchaseOrderDto,
-  ) {
+  update(@CurrentUser() user: User, @Param('id') id: string, @Body() dto: UpdatePurchaseOrderDto) {
     return this.service.update(user, id, dto);
   }
 
   @Patch(':id/status')
   @ApiOperation({ summary: 'Update purchase order status' })
-  updateStatus(
-    @CurrentUser() user: User,
-    @Param('id') id: string,
-    @Body('status') status: string,
-  ) {
+  updateStatus(@CurrentUser() user: User, @Param('id') id: string, @Body('status') status: string) {
     return this.service.updateStatus(user, id, status);
   }
 

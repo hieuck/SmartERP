@@ -24,13 +24,6 @@ describe('ShippingController (Integration)', () => {
   let app: INestApplication;
   let shippingService: jest.Mocked<ShippingService>;
 
-  const __mockUser = {
-    id: 'user-123',
-    email: 'logistics@example.com',
-    tenantId: 'tenant-123',
-    roles: ['logistics'],
-  };
-
   const mockShipment = {
     id: 'shipment-123',
     orderId: 'order-123',

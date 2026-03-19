@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -53,22 +52,26 @@ export class PaymentService {
     }
 
     let result: { success: boolean; transactionId: string; message: string };
+    const paymentDetails =
+      dto.paymentDetails && typeof dto.paymentDetails === 'object'
+        ? (dto.paymentDetails as PaymentDetails)
+        : undefined;
 
     switch (dto.paymentMethod.toLowerCase()) {
       case 'cod':
         result = await this.processCOD(_order);
         break;
       case 'stripe':
-        result = await this.processStripe(_order, dto.paymentToken, dto.paymentDetails);
+        result = await this.processStripe(_order, dto.paymentToken, paymentDetails);
         break;
       case 'paypal':
-        result = await this.processPayPal(_order, dto.paymentToken, dto.paymentDetails);
+        result = await this.processPayPal(_order, dto.paymentToken, paymentDetails);
         break;
       case 'vnpay':
-        result = await this.processVNPay(_order, dto.paymentDetails);
+        result = await this.processVNPay(_order, paymentDetails);
         break;
       case 'momo':
-        result = await this.processMomo(_order, dto.paymentDetails);
+        result = await this.processMomo(_order, paymentDetails);
         break;
       default:
         throw new BadRequestException(`Unsupported payment method: ${dto.paymentMethod}`);
@@ -210,8 +213,8 @@ export class PaymentService {
 
   private async processStripe(
     _order: Order,
-    token?: string,
-    details?: PaymentDetails,
+    _token?: string,
+    _details?: PaymentDetails,
   ): Promise<{ success: boolean; transactionId: string; message: string }> {
     // TODO: Implement Stripe integration
     return {
@@ -223,8 +226,8 @@ export class PaymentService {
 
   private async processPayPal(
     _order: Order,
-    token?: string,
-    details?: PaymentDetails,
+    _token?: string,
+    _details?: PaymentDetails,
   ): Promise<{ success: boolean; transactionId: string; message: string }> {
     // TODO: Implement PayPal integration
     return {
@@ -236,7 +239,7 @@ export class PaymentService {
 
   private async processVNPay(
     _order: Order,
-    details?: PaymentDetails,
+    _details?: PaymentDetails,
   ): Promise<{ success: boolean; transactionId: string; message: string }> {
     // TODO: Implement VNPay integration
     return {
@@ -248,7 +251,7 @@ export class PaymentService {
 
   private async processMomo(
     _order: Order,
-    details?: PaymentDetails,
+    _details?: PaymentDetails,
   ): Promise<{ success: boolean; transactionId: string; message: string }> {
     // TODO: Implement Momo integration
     return {

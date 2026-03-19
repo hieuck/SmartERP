@@ -2,7 +2,6 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
-import { Repository } from 'typeorm';
 import { PermissionService, User } from '@/common/security/permission.service';
 import { SecureRepository } from '@/common/security/secure-repository';
 import { UserService } from './user.service';
@@ -13,8 +12,6 @@ import { createMockUser } from '@/test/factories/user.factory';
 
 describe('UserService', () => {
   let service: UserService;
-  let userRepository: jest.Mocked<Repository<UserEntity>>;
-  let permissionService: jest.Mocked<PermissionService>;
   let secureUserRepo: jest.Mocked<SecureRepository<UserEntity>>;
 
   const mockCurrentUser: User = {
@@ -50,9 +47,6 @@ describe('UserService', () => {
     }).compile();
 
     service = module.get<UserService>(UserService);
-    userRepository = module.get(getRepositoryToken(UserEntity));
-    permissionService = module.get(PermissionService);
-
     // Mock SecureRepository methods
     secureUserRepo = (service as any).secureUserRepo;
     secureUserRepo.findOne = jest.fn();

@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { BaseOfflineService } from './base-offline.service';
 import { db, SyncStatus, BaseEntity } from '@/lib/offline/db';
 import { syncManager } from '@/lib/offline/sync-manager';
+import type { Table } from 'dexie';
 
 // Mock sync manager
 vi.mock('@/lib/offline/sync-manager', () => ({
@@ -15,6 +16,9 @@ interface TestEntity extends BaseEntity {
   code: string;
 }
 
+type TestEntityCreate = Omit<TestEntity, 'id' | 'version' | 'syncStatus' | 'createdAt' | 'updatedAt'>;
+type TestEntityUpdate = Partial<TestEntity>;
+
 describe('BaseOfflineService', () => {
   let service: BaseOfflineService<TestEntity>;
 
@@ -24,7 +28,7 @@ describe('BaseOfflineService', () => {
     await db.open();
     
     // Create test service using products table
-    service = new BaseOfflineService(db.products as any, 'testEntity');
+    service = new BaseOfflineService(db.products as unknown as Table<TestEntity, string>, 'testEntity');
     
     vi.clearAllMocks();
   });
@@ -38,11 +42,11 @@ describe('BaseOfflineService', () => {
 
   describe('create', () => {
     it('should create new record with pending sync status', async () => {
-      const data = {
+      const data: TestEntityCreate = {
         tenantId: 'tenant1',
         name: 'Test Product',
         code: 'TEST001',
-      } as any;
+      };
 
       const result = await service.create(data);
 
@@ -66,7 +70,7 @@ describe('BaseOfflineService', () => {
         tenantId: 'tenant1',
         name: 'Test Product',
         code: 'TEST001',
-      } as any);
+      });
 
       const found = await service.getById(created.id);
       expect(found).toBeDefined();
@@ -85,9 +89,9 @@ describe('BaseOfflineService', () => {
         tenantId: 'tenant1',
         name: 'Test Product',
         code: 'TEST001',
-      } as any);
+      });
 
-      const updated = await service.update(created.id, { name: 'Updated Product' } as any);
+      const updated = await service.update(created.id, { name: 'Updated Product' } satisfies TestEntityUpdate);
 
       expect(updated.name).toBe('Updated Product');
       expect(updated.version).toBe(2);
@@ -102,7 +106,7 @@ describe('BaseOfflineService', () => {
     });
 
     it('should throw error for non-existent record', async () => {
-      await expect(service.update('non-existent', { name: 'Updated' } as any))
+      await expect(service.update('non-existent', { name: 'Updated' } satisfies TestEntityUpdate))
         .rejects.toThrow('testEntity not found');
     });
   });
@@ -113,7 +117,7 @@ describe('BaseOfflineService', () => {
         tenantId: 'tenant1',
         name: 'Test Product',
         code: 'TEST001',
-      } as any);
+      });
 
       await service.delete(created.id);
 
@@ -141,7 +145,7 @@ describe('BaseOfflineService', () => {
         tenantId: 'tenant1',
         name: 'Pending Product',
         code: 'PEND001',
-      } as any);
+      });
 
       const pending = await service.getPending();
       expect(pending.length).toBeGreaterThan(0);
@@ -155,13 +159,13 @@ describe('BaseOfflineService', () => {
         tenantId: 'tenant1',
         name: 'Product 1',
         code: 'PROD001',
-      } as any);
+      });
 
       await service.create({
         tenantId: 'tenant1',
         name: 'Product 2',
         code: 'PROD002',
-      } as any);
+      });
 
       const count = await service.count();
       expect(count).toBeGreaterThanOrEqual(2);

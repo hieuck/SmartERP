@@ -36,7 +36,7 @@ export interface DesktopTableViewProps<T> {
   deleteConfirmTitle?: string;
 }
 
-function DesktopTableViewComponent<T extends Record<string, any>>({
+function DesktopTableViewComponent<T extends object>({
   columns,
   dataSource = [],
   loading = false,

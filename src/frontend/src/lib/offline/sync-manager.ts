@@ -1,8 +1,34 @@
 import { db, SyncStatus } from './db';
 import { logger } from '../logger/logger.service';
 import axios from 'axios';
+import type { Table } from 'dexie';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
+interface SyncPullChange {
+  entity: string;
+  records: Array<Record<string, unknown>>;
+}
+
+interface SyncPullResponse {
+  data: {
+    changes: SyncPullChange[];
+  };
+}
+
+interface SyncPushConflict {
+  id?: string;
+}
+
+interface SyncPushResponse {
+  data: {
+    applied: number;
+    conflicts: SyncPushConflict[];
+  };
+}
+
+const getErrorMessage = (error: unknown): string =>
+  error instanceof Error ? error.message : 'Unknown sync error';
 
 export interface SyncResult {
   success: boolean;
@@ -92,13 +118,15 @@ export class SyncManager {
         const result = await this.sync(token);
         this.retryCount = 0; // Reset on success
         return result;
-      } catch (error: any) {
-        lastError = error;
+      } catch (error: unknown) {
+        lastError = error instanceof Error ? error : new Error(getErrorMessage(error));
         this.retryCount = attempt + 1;
 
         if (attempt < this.maxRetries) {
           const delay = this.baseRetryDelay * Math.pow(2, attempt);
-          logger.warn(this.context, `Sync failed, retry ${attempt + 1}/${this.maxRetries} after ${delay}ms`, { error: error.message });
+          logger.warn(this.context, `Sync failed, retry ${attempt + 1}/${this.maxRetries} after ${delay}ms`, {
+            error: getErrorMessage(error),
+          });
           await this.sleep(delay);
         }
       }
@@ -194,13 +222,13 @@ export class SyncManager {
 
       this.lastSyncTime = new Date();
       logger.info(this.context, 'Sync completed successfully');
-    } catch (error: any) {
+      } catch (error: unknown) {
       result.success = false;
-      result.errors.push(error.message);
+      result.errors.push(getErrorMessage(error));
       
       // Log error for admin notification
       // Requirement 3.5: Log error and notify administrator
-      this.logSyncError(error);
+      this.logSyncError(error instanceof Error ? error : new Error(getErrorMessage(error)));
     } finally {
       this.syncing = false;
       window.removeEventListener('offline', offlineHandler);
@@ -240,7 +268,7 @@ export class SyncManager {
     
     logger.debug(this.context, 'Pulling changes from server', { since });
     
-    const response = await axios.post(
+    const response = await axios.post<SyncPullResponse>(
       `${API_BASE_URL}/api/sync/pull`,
       { 
         since, 
@@ -305,7 +333,7 @@ export class SyncManager {
       await this.applyChanges(change.entity, change.records);
     }
 
-    return { count: changes.reduce((sum: number, c: any) => sum + c.records.length, 0) };
+    return { count: changes.reduce((sum, change) => sum + change.records.length, 0) };
   }
 
   /**
@@ -329,7 +357,7 @@ export class SyncManager {
       offlineId: item.offlineId,
     }));
 
-    const response = await axios.post(
+    const response = await axios.post<SyncPushResponse>(
       `${API_BASE_URL}/api/sync/push`,
       { changes },
       { headers: { Authorization: `Bearer ${token}` } }
@@ -347,7 +375,7 @@ export class SyncManager {
   /**
    * Apply changes to local database (DRY - no duplication)
    */
-  private async applyChanges(entity: string, records: any[]) {
+  private async applyChanges(entity: string, records: Array<Record<string, unknown>>) {
     logger.debug(this.context, `Applying ${records.length} changes for ${entity}`);
 
     // Entity to table mapping
@@ -409,7 +437,7 @@ export class SyncManager {
       return;
     }
 
-    const table = db[tableName] as any;
+    const table = db[tableName] as Table<Record<string, unknown>, string>;
 
     // Apply all records
     for (const record of records) {
@@ -429,7 +457,7 @@ export class SyncManager {
   async queueOperation(
     entity: string,
     operation: 'create' | 'update' | 'delete',
-    data: any,
+    data: unknown,
     version?: number,
     offlineId?: string
   ) {

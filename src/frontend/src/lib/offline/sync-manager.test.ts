@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { db } from './db';
 import { SyncManager } from './sync-manager';

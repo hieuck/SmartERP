@@ -103,7 +103,7 @@ export const LazyBackgroundImage: React.FC<LazyBackgroundImageProps> = ({
 
   return (
     <div
-      ref={imgRef as any}
+      ref={imgRef as unknown as React.Ref<HTMLDivElement>}
       className={className}
       style={{
         backgroundImage: `url(${imageSrc})`,

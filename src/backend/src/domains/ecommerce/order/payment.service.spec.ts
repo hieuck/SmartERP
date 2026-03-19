@@ -112,6 +112,7 @@ describe('PaymentService', () => {
     service = module.get<PaymentService>(PaymentService);
     orderRepository = module.get(getRepositoryToken(Order));
     permissionService = module.get(PermissionService);
+    void permissionService;
   });
 
   afterEach(() => {

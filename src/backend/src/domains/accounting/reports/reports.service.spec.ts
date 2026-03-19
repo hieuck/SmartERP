@@ -13,8 +13,6 @@ import { AccountType } from '../account/enums/account-type.enum';
 import { JournalEntryStatus } from '../account/enums/journal-entry-status.enum';
 
 describe('ReportsService', () => {
-  let accountRepository: jest.Mocked<Repository<Account>>;
-  let permissionService: jest.Mocked<PermissionService>;
   let service: ReportsService;
   let journalLineRepository: jest.Mocked<Repository<JournalLine>>;
   let productRepository: jest.Mocked<Repository<Product>>;
@@ -90,12 +88,9 @@ describe('ReportsService', () => {
     }).compile();
 
     service = module.get<ReportsService>(ReportsService);
-    accountRepository = module.get(getRepositoryToken(Account));
     journalLineRepository = module.get(getRepositoryToken(JournalLine));
     productRepository = module.get(getRepositoryToken(Product));
     invoiceRepository = module.get(getRepositoryToken(Invoice));
-    permissionService = module.get(PermissionService);
-
     // Mock SecureRepository methods
     const secureAccountRepo = (service as any).secureAccountRepo;
     secureAccountRepo.find = jest.fn();
@@ -248,7 +243,10 @@ describe('ReportsService', () => {
       const startDate = new Date('2024-01-01');
       const endDate = new Date('2024-12-31');
 
-      const result = await service.getCashFlowStatement(mockUser, startDate, endDate);
+      const result = (await service.getCashFlowStatement(mockUser, startDate, endDate)) as {
+        period: { startDate: Date; endDate: Date };
+        netCashFlow: number;
+      };
 
       expect(result.period.startDate).toEqual(startDate);
       expect(result.period.endDate).toEqual(endDate);

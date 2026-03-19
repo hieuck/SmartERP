@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import type { Dayjs } from 'dayjs';
 import {
   Card,
   Tabs,
@@ -24,6 +25,10 @@ import {
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import configService from '@/services/utils/configService';
+import type {
+  BackupConfig,
+  EmailConfig,
+} from '@/services/utils/configService';
 import dayjs from 'dayjs';
 import { logger } from '@/lib/logger/logger.service';
 
@@ -32,45 +37,15 @@ const { TabPane } = Tabs;
 const { Option } = Select;
 const { TextArea } = Input;
 
-interface CompanyFormValues {
-  name: string;
-  address: string;
-  phone: string;
-  email: string;
-  taxCode?: string;
-}
-
-interface CodeFormValues {
-  productPrefix?: string;
-  customerPrefix?: string;
-  supplierPrefix?: string;
-  salesOrderPrefix?: string;
-  purchaseOrderPrefix?: string;
-  receiptPrefix?: string;
-  issuePrefix?: string;
-}
-
-interface GeneralFormValues {
-  defaultTaxRate: number;
-  currency: string;
-  timezone: string;
-  language: string;
-  dateFormat: string;
-}
-
-interface EmailFormValues {
-  host: string;
-  port: number;
-  secure?: boolean;
-  user: string;
-  password: string;
-  from: string;
-}
+type CompanyFormValues = Awaited<ReturnType<typeof configService.getCompanyInfo>>;
+type CodeFormValues = Awaited<ReturnType<typeof configService.getCodeFormats>>;
+type GeneralFormValues = Awaited<ReturnType<typeof configService.getGeneralConfig>>;
+type EmailFormValues = EmailConfig;
 
 interface BackupFormValues {
   enabled?: boolean;
   frequency: string;
-  time: any;
+  time: Dayjs | null;
   retention: number;
 }
 
@@ -102,12 +77,12 @@ const SystemSettingsPage: React.FC = () => {
         configService.getBackupConfig(),
       ]);
 
-      if (company) (companyForm as any).setFieldsValue(company);
-      if (codes) (codeForm as any).setFieldsValue(codes);
-      if (general) (generalForm as any).setFieldsValue(general);
-      if (email) (emailForm as any).setFieldsValue(email);
+      if (company) companyForm.setFieldsValue(company);
+      if (codes) codeForm.setFieldsValue(codes);
+      if (general) generalForm.setFieldsValue(general);
+      if (email) emailForm.setFieldsValue(email);
       if (backup) {
-        (backupForm as any).setFieldsValue({
+        backupForm.setFieldsValue({
           ...backup,
           time: backup.time ? dayjs(backup.time, 'HH:mm') : null,
         });
@@ -123,10 +98,10 @@ const SystemSettingsPage: React.FC = () => {
   const handleSaveCompanyInfo = async () => {
     setSaving(true);
     try {
-      const values = await (companyForm as any).validateFields();
+      const values = await companyForm.validateFields();
       await configService.updateCompanyInfo(values);
       message.success(t('company.messages.saveSuccess'));
-    } catch (error) {
+    } catch {
       message.error(t('company.messages.saveError'));
     } finally {
       setSaving(false);
@@ -136,10 +111,10 @@ const SystemSettingsPage: React.FC = () => {
   const handleSaveCodeFormats = async () => {
     setSaving(true);
     try {
-      const values = await (codeForm as any).validateFields();
+      const values = await codeForm.validateFields();
       await configService.updateCodeFormats(values);
       message.success(t('codes.messages.saveSuccess'));
-    } catch (error) {
+    } catch {
       message.error(t('codes.messages.saveError'));
     } finally {
       setSaving(false);
@@ -149,10 +124,10 @@ const SystemSettingsPage: React.FC = () => {
   const handleSaveGeneralConfig = async () => {
     setSaving(true);
     try {
-      const values = await (generalForm as any).validateFields();
+      const values = await generalForm.validateFields();
       await configService.updateGeneralConfig(values);
       message.success(t('general.messages.saveSuccess'));
-    } catch (error) {
+    } catch {
       message.error(t('general.messages.saveError'));
     } finally {
       setSaving(false);
@@ -162,10 +137,10 @@ const SystemSettingsPage: React.FC = () => {
   const handleSaveEmailConfig = async () => {
     setSaving(true);
     try {
-      const values = await (emailForm as any).validateFields();
+      const values = await emailForm.validateFields();
       await configService.updateEmailConfig(values);
       message.success(t('email.messages.saveSuccess'));
-    } catch (error) {
+    } catch {
       message.error(t('email.messages.saveError'));
     } finally {
       setSaving(false);
@@ -175,14 +150,14 @@ const SystemSettingsPage: React.FC = () => {
   const handleTestEmailConnection = async () => {
     setTestingEmail(true);
     try {
-      const values = await (emailForm as any).validateFields();
+      const values = await emailForm.validateFields();
       const result = await configService.testEmailConnection(values);
       if (result.success) {
         message.success(t('email.messages.testSuccess'));
       } else {
         message.error(t('email.messages.testError', { message: result.message }));
       }
-    } catch (error) {
+    } catch {
       message.error(t('email.messages.testError', { message: 'Unknown error' }));
     } finally {
       setTestingEmail(false);
@@ -192,14 +167,16 @@ const SystemSettingsPage: React.FC = () => {
   const handleSaveBackupConfig = async () => {
     setSaving(true);
     try {
-      const values = await (backupForm as any).validateFields();
-      const backupData = {
-        ...values,
+      const values = await backupForm.validateFields();
+      const backupData: BackupConfig = {
+        enabled: values.enabled ?? false,
+        frequency: values.frequency as BackupConfig['frequency'],
+        retention: values.retention,
         time: values.time ? values.time.format('HH:mm') : '00:00',
       };
       await configService.updateBackupConfig(backupData);
       message.success(t('backup.messages.saveSuccess'));
-    } catch (error) {
+    } catch {
       message.error(t('backup.messages.saveError'));
     } finally {
       setSaving(false);

@@ -5,6 +5,7 @@
  */
 
 import { logger } from '@/lib/logger/logger.service';
+import type { Warehouse } from '@/lib/offline/db';
 import { syncManager } from '@/lib/offline/sync-manager';
 import { offlineServices } from '@/services/offline-services';
 import { ArrowLeftOutlined, SaveOutlined, SyncOutlined } from '@ant-design/icons';
@@ -17,12 +18,17 @@ const WarehouseForm = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { t } = useTranslation(['warehouses', 'commonUi']);
-  const [form] = Form.useForm();
+  const [form] = Form.useForm<WarehouseFormValues>();
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [queueSize, setQueueSize] = useState(0);
   const isEdit = !!id;
+
+  type WarehouseFormValues = Pick<
+    Warehouse,
+    'code' | 'name' | 'address' | 'ward' | 'district' | 'city' | 'phone' | 'status' | 'isDefault'
+  >;
 
   // Monitor network status
   useEffect(() => {
@@ -117,7 +123,7 @@ const WarehouseForm = () => {
     if (!isEdit) form.setFieldValue('code', generateCode(e.target.value));
   };
 
-  const onFinish = async (values: any) => {
+  const onFinish = async (values: WarehouseFormValues) => {
     try {
       setLoading(true);
 

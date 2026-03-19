@@ -6,11 +6,7 @@ import authReducer, {
 } from './authSlice';
 
 describe('authSlice', () => {
-  const initialState = {
-    user: null,
-    accessToken: null,
-    isAuthenticated: false,
-  };
+  const initialState = authReducer(undefined, { type: '@@INIT' });
 
   const mockUser = {
     id: '1',

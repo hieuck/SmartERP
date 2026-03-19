@@ -1,7 +1,6 @@
-// @ts-nocheck
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Like, Between } from 'typeorm';
+import { Repository, Like } from 'typeorm';
 import { BankStatement } from './entities/bank-statement.entity';
 import { BankStatementStatus } from './enums/bank-statement-status.enum';
 import { BankTransaction } from './entities/bank-transaction.entity';
@@ -10,6 +9,12 @@ import { Account } from '../account/entities/account.entity';
 import { SecureRepository } from '@/common/security/secure-repository';
 import { PermissionService, User } from '@/common/security/permission.service';
 import { CreateBankStatementDto } from './dto/create-bank-statement.dto';
+
+type UnreconciledEntry = {
+  id: string;
+  date: Date;
+  amount: number;
+};
 
 @Injectable()
 export class BankReconciliationService {
@@ -84,7 +89,7 @@ export class BankReconciliationService {
     // Get unreconciled journal entries for this bank account
     const entries = await this.getUnreconciledEntries(statement.bankAccount.id, user.tenantId);
 
-    const matches: Array<{ transaction: BankTransaction; entry: JournalEntry }> = [];
+    const matches: Array<{ transaction: BankTransaction; entry: UnreconciledEntry }> = [];
 
     // Match by amount and date (within 3 days)
     for (const tx of statement.transactions) {
@@ -105,7 +110,15 @@ export class BankReconciliationService {
 
     // Apply matches
     for (const { transaction, entry } of matches) {
-      transaction.matchedEntry = entry;
+      const matchedEntry = await this.journalEntryRepository.findOne({
+        where: { id: entry.id, tenantId: user.tenantId },
+      });
+
+      if (!matchedEntry) {
+        continue;
+      }
+
+      transaction.matchedEntry = matchedEntry;
       transaction.isReconciled = true;
       await this.transactionRepository.save(transaction);
     }
@@ -209,7 +222,7 @@ export class BankReconciliationService {
   private async getUnreconciledEntries(
     bankAccountId: string,
     tenantId: string,
-  ): Promise<unknown[]> {
+  ): Promise<UnreconciledEntry[]> {
     // Get journal entries for this bank account that are not yet reconciled
     const query = this.journalEntryRepository
       .createQueryBuilder('je')
@@ -223,7 +236,7 @@ export class BankReconciliationService {
       .groupBy('je.id')
       .addGroupBy('je.date');
 
-    return query.getRawMany();
+    return query.getRawMany<UnreconciledEntry>();
   }
 
   private async getBookBalance(

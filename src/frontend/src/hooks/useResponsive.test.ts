@@ -10,13 +10,15 @@ vi.mock('antd', () => ({
   },
 }));
 
+const mockUseBreakpoint = vi.mocked(Grid.useBreakpoint);
+
 describe('useResponsive', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it('should detect mobile screen (xs)', () => {
-    (Grid.useBreakpoint as any).mockReturnValue({
+    mockUseBreakpoint.mockReturnValue({
       xs: true,
       sm: false,
       md: false,
@@ -34,7 +36,7 @@ describe('useResponsive', () => {
   });
 
   it('should detect mobile screen (sm)', () => {
-    (Grid.useBreakpoint as any).mockReturnValue({
+    mockUseBreakpoint.mockReturnValue({
       xs: true,
       sm: true,
       md: false,
@@ -51,7 +53,7 @@ describe('useResponsive', () => {
   });
 
   it('should detect tablet screen (md)', () => {
-    (Grid.useBreakpoint as any).mockReturnValue({
+    mockUseBreakpoint.mockReturnValue({
       xs: true,
       sm: true,
       md: true,
@@ -69,7 +71,7 @@ describe('useResponsive', () => {
   });
 
   it('should detect desktop screen (lg)', () => {
-    (Grid.useBreakpoint as any).mockReturnValue({
+    mockUseBreakpoint.mockReturnValue({
       xs: true,
       sm: true,
       md: true,
@@ -87,7 +89,7 @@ describe('useResponsive', () => {
   });
 
   it('should detect large desktop screen (xl)', () => {
-    (Grid.useBreakpoint as any).mockReturnValue({
+    mockUseBreakpoint.mockReturnValue({
       xs: true,
       sm: true,
       md: true,
@@ -105,7 +107,7 @@ describe('useResponsive', () => {
   });
 
   it('should detect extra large desktop screen (xxl)', () => {
-    (Grid.useBreakpoint as any).mockReturnValue({
+    mockUseBreakpoint.mockReturnValue({
       xs: true,
       sm: true,
       md: true,
@@ -132,7 +134,7 @@ describe('useResponsive', () => {
       xxl: false,
     };
 
-    (Grid.useBreakpoint as any).mockReturnValue(mockScreens);
+    mockUseBreakpoint.mockReturnValue(mockScreens);
 
     const { result } = renderHook(() => useResponsive());
 

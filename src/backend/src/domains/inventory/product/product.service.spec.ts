@@ -11,9 +11,9 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 
 describe('ProductService', () => {
-  let productRepository: any;
-  let cacheService: any;
-  let permissionService: any;
+  let productRepository: Repository<Product>;
+  let cacheService: CacheService;
+  let permissionService: PermissionService;
   let service: ProductService;
   let secureProductRepo: any;
 
@@ -82,6 +82,9 @@ describe('ProductService', () => {
     productRepository = module.get<Repository<Product>>(getRepositoryToken(Product));
     cacheService = module.get<CacheService>(CacheService);
     permissionService = module.get<PermissionService>(PermissionService);
+    void productRepository;
+    void cacheService;
+    void permissionService;
 
     // Access private secureProductRepo
     secureProductRepo = (service as any).secureProductRepo;

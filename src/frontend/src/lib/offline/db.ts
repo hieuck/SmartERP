@@ -115,7 +115,7 @@ export interface SalesOrder extends BaseEntity {
   shippingFee?: number;
   paidAmount?: number;
   status: string;
-  items?: Record<string, unknown>;
+  items?: Record<string, unknown>[];
   notes?: string;
 }
 
@@ -599,7 +599,7 @@ export interface SyncQueueItem {
   id?: number;
   operation: 'create' | 'update' | 'delete';
   entity: string;
-  data: any;
+  data: unknown;
   version?: number;
   offlineId?: string;
   createdAt: Date;

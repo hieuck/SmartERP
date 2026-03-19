@@ -1,5 +1,6 @@
 import { logger } from '@/lib/logger/logger.service';
 import notificationService, {
+  Notification,
   NotificationPriority,
   NotificationType,
 } from '@/services/notification/notificationService';
@@ -18,6 +19,7 @@ import dayjs from 'dayjs';
 import 'dayjs/locale/vi';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 dayjs.extend(relativeTime);
@@ -25,7 +27,15 @@ dayjs.locale('vi');
 
 const { useToken } = theme;
 
-const typeIcons: Record<NotificationType, any> = {
+function getErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  return fallback;
+}
+
+const typeIcons: Record<NotificationType, ReactNode> = {
   [NotificationType.INFO]: <InfoCircleOutlined style={{ color: '#1890ff' }} />,
   [NotificationType.SUCCESS]: <CheckCircleOutlined style={{ color: '#52c41a' }} />,
   [NotificationType.WARNING]: <WarningOutlined style={{ color: '#faad14' }} />,
@@ -43,7 +53,7 @@ export default function NotificationCenter() {
   const { token } = useToken();
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
-  const [notifications, setNotifications] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
 
@@ -72,11 +82,11 @@ export default function NotificationCenter() {
         isRead: filter === 'unread' ? false : undefined,
       });
       setNotifications(response.data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       message.error(
         t('notifications.messages.cannotLoad') +
           ': ' +
-          (error.message || t('notifications.messages.unknownError')),
+          getErrorMessage(error, t('notifications.messages.unknownError')),
       );
     } finally {
       setLoading(false);
@@ -87,7 +97,7 @@ export default function NotificationCenter() {
     try {
       const count = await notificationService.getUnreadCount();
       setUnreadCount(count);
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('NotificationCenter', 'Error fetching unread count', error as Error);
     }
   };
@@ -98,11 +108,11 @@ export default function NotificationCenter() {
       message.success(t('notifications.messages.markedAsRead'));
       fetchNotifications();
       fetchUnreadCount();
-    } catch (error: any) {
+    } catch (error: unknown) {
       message.error(
         t('notifications.messages.markReadError') +
           ': ' +
-          (error.message || t('notifications.messages.unknownError')),
+          getErrorMessage(error, t('notifications.messages.unknownError')),
       );
     }
   };
@@ -113,11 +123,11 @@ export default function NotificationCenter() {
       message.success(t('notifications.messages.allMarkedAsRead'));
       fetchNotifications();
       fetchUnreadCount();
-    } catch (error: any) {
+    } catch (error: unknown) {
       message.error(
         t('notifications.messages.markAllReadError') +
           ': ' +
-          (error.message || t('notifications.messages.unknownError')),
+          getErrorMessage(error, t('notifications.messages.unknownError')),
       );
     }
   };
@@ -128,11 +138,11 @@ export default function NotificationCenter() {
       message.success(t('notifications.messages.deleteSuccess'));
       fetchNotifications();
       fetchUnreadCount();
-    } catch (error: any) {
+    } catch (error: unknown) {
       message.error(
         t('notifications.messages.deleteError') +
           ': ' +
-          (error.message || t('notifications.messages.unknownError')),
+          getErrorMessage(error, t('notifications.messages.unknownError')),
       );
     }
   };
@@ -178,7 +188,7 @@ export default function NotificationCenter() {
             <List
               itemLayout="horizontal"
               dataSource={notifications}
-              renderItem={(item: any) => (
+              renderItem={(item) => (
                 <List.Item
                   style={{
                     backgroundColor: item.isRead ? 'transparent' : token.colorPrimaryBg,

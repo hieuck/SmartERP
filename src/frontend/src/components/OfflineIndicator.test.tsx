@@ -6,18 +6,27 @@ import { vi } from 'vitest';
 // Mock useOffline hook
 vi.mock('../hooks/useOffline');
 
+const mockUseOffline = vi.mocked(useOffline);
+const createOfflineState = (
+  overrides: Partial<ReturnType<typeof useOffline>> = {},
+): ReturnType<typeof useOffline> => ({
+  isOnline: true,
+  isSyncing: false,
+  lastSyncTime: null,
+  queueSize: 0,
+  sync: vi.fn(),
+  ...overrides,
+});
+
 describe('OfflineIndicator', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it('should show online status when online and synced', () => {
-    (useOffline as any).mockReturnValue({
-      isOnline: true,
-      isSyncing: false,
-      lastSyncTime: new Date('2024-01-01T12:00:00'),
-      queueSize: 0,
-    });
+    mockUseOffline.mockReturnValue(
+      createOfflineState({ lastSyncTime: new Date('2024-01-01T12:00:00') }),
+    );
 
     render(<OfflineIndicator />);
 
@@ -26,12 +35,7 @@ describe('OfflineIndicator', () => {
   });
 
   it('should show offline status when offline', () => {
-    (useOffline as any).mockReturnValue({
-      isOnline: false,
-      isSyncing: false,
-      lastSyncTime: null,
-      queueSize: 0,
-    });
+    mockUseOffline.mockReturnValue(createOfflineState({ isOnline: false }));
 
     render(<OfflineIndicator />);
 
@@ -40,12 +44,7 @@ describe('OfflineIndicator', () => {
   });
 
   it('should show syncing status when syncing', () => {
-    (useOffline as any).mockReturnValue({
-      isOnline: true,
-      isSyncing: true,
-      lastSyncTime: null,
-      queueSize: 0,
-    });
+    mockUseOffline.mockReturnValue(createOfflineState({ isSyncing: true }));
 
     render(<OfflineIndicator />);
 
@@ -54,40 +53,29 @@ describe('OfflineIndicator', () => {
   });
 
   it('should show pending status when queue has items', () => {
-    (useOffline as any).mockReturnValue({
-      isOnline: true,
-      isSyncing: false,
-      lastSyncTime: new Date('2024-01-01T12:00:00'),
-      queueSize: 5,
-    });
+    mockUseOffline.mockReturnValue(
+      createOfflineState({ lastSyncTime: new Date('2024-01-01T12:00:00'), queueSize: 5 }),
+    );
 
-    render(<OfflineIndicator />);
+    const { container } = render(<OfflineIndicator />);
 
-    const badge = screen.getByText('5');
+    const badge = container.querySelector('.ant-badge-count');
     expect(badge).toBeInTheDocument();
+    expect(badge).toHaveAttribute('title', '5');
   });
 
   it('should show badge count when queue size > 0', () => {
-    (useOffline as any).mockReturnValue({
-      isOnline: true,
-      isSyncing: false,
-      lastSyncTime: null,
-      queueSize: 10,
-    });
+    mockUseOffline.mockReturnValue(createOfflineState({ queueSize: 10 }));
 
-    render(<OfflineIndicator />);
+    const { container } = render(<OfflineIndicator />);
 
-    const badge = screen.getByText('10');
+    const badge = container.querySelector('.ant-badge-count');
     expect(badge).toBeInTheDocument();
+    expect(badge).toHaveAttribute('title', '10');
   });
 
   it('should not show badge when queue size is 0', () => {
-    (useOffline as any).mockReturnValue({
-      isOnline: true,
-      isSyncing: false,
-      lastSyncTime: null,
-      queueSize: 0,
-    });
+    mockUseOffline.mockReturnValue(createOfflineState());
 
     render(<OfflineIndicator />);
 
@@ -95,12 +83,7 @@ describe('OfflineIndicator', () => {
   });
 
   it('should show "Never synced" when lastSyncTime is null', () => {
-    (useOffline as any).mockReturnValue({
-      isOnline: true,
-      isSyncing: false,
-      lastSyncTime: null,
-      queueSize: 0,
-    });
+    mockUseOffline.mockReturnValue(createOfflineState());
 
     const { container } = render(<OfflineIndicator />);
 
@@ -109,12 +92,7 @@ describe('OfflineIndicator', () => {
 
   it('should format lastSyncTime correctly', () => {
     const mockDate = new Date('2024-01-01T12:30:45');
-    (useOffline as any).mockReturnValue({
-      isOnline: true,
-      isSyncing: false,
-      lastSyncTime: mockDate,
-      queueSize: 0,
-    });
+    mockUseOffline.mockReturnValue(createOfflineState({ lastSyncTime: mockDate }));
 
     const { container } = render(<OfflineIndicator />);
 

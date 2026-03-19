@@ -7,6 +7,8 @@ import {
   getPasswordStrengthColor,
 } from './sanitize';
 
+const nullableString = (value: string | null | undefined) => value ?? '';
+
 describe('sanitize utils', () => {
   describe('sanitizeEmail', () => {
     it('should trim and lowercase email', () => {
@@ -22,8 +24,8 @@ describe('sanitize utils', () => {
     });
 
     it('should handle null/undefined email', () => {
-      expect(sanitizeEmail(null as any)).toBe('');
-      expect(sanitizeEmail(undefined as any)).toBe('');
+      expect(sanitizeEmail(nullableString(null))).toBe('');
+      expect(sanitizeEmail(nullableString(undefined))).toBe('');
     });
 
     it('should remove script tags', () => {
@@ -49,8 +51,8 @@ describe('sanitize utils', () => {
     });
 
     it('should handle null/undefined text', () => {
-      expect(sanitizeText(null as any)).toBe('');
-      expect(sanitizeText(undefined as any)).toBe('');
+      expect(sanitizeText(nullableString(null))).toBe('');
+      expect(sanitizeText(nullableString(undefined))).toBe('');
     });
 
     it('should remove multiple HTML tags', () => {

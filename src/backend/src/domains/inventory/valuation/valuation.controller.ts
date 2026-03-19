@@ -1,10 +1,15 @@
-// @ts-nocheck
 import { Controller, Post, Get, Body, Param, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { ValuationService } from './valuation.service';
 import { CalculateFIFODto } from './dto/calculate-fifo.dto';
 import { AddStockValuationDto } from './dto/add-stock-valuation.dto';
 import { Roles } from '../../../common/decorators/roles.decorator';
+
+type RequestWithUser = {
+  user: {
+    tenantId: string;
+  };
+};
 
 @ApiTags('Stock Valuation')
 @ApiBearerAuth()
@@ -22,7 +27,7 @@ export class ValuationController {
   @Post('add')
   @Roles('manager', 'admin', 'warehouse_manager')
   @ApiOperation({ summary: 'Add stock valuation (when stock is received)' })
-  async addStockValuation(@Body() dto: AddStockValuationDto, @Request() req: unknown) {
+  async addStockValuation(@Body() dto: AddStockValuationDto, @Request() req: RequestWithUser) {
     return this.valuationService.addStockValuation(
       dto.productId,
       dto.warehouseId,

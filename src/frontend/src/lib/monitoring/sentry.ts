@@ -1,4 +1,5 @@
 import * as Sentry from '@sentry/react';
+import { logger } from '../logger/logger.service';
 
 /**
  * Initialize Sentry for error tracking
@@ -15,7 +16,7 @@ export function initSentry() {
 
   // Only initialize if DSN is provided
   if (!dsn) {
-    console.warn('Sentry DSN not provided. Error tracking disabled.');
+    logger.warn('sentry', 'Sentry DSN not provided. Error tracking disabled.');
     return;
   }
 
@@ -94,7 +95,7 @@ export function clearSentryUser() {
 /**
  * Capture exception manually
  */
-export function captureException(error: Error, context?: Record<string, any>) {
+export function captureException(error: Error, context?: Record<string, unknown>) {
   Sentry.captureException(error, {
     extra: context,
   });
@@ -110,7 +111,7 @@ export function captureMessage(message: string, level: Sentry.SeverityLevel = 'i
 /**
  * Add breadcrumb for debugging
  */
-export function addBreadcrumb(message: string, data?: Record<string, any>) {
+export function addBreadcrumb(message: string, data?: Record<string, unknown>) {
   Sentry.addBreadcrumb({
     message,
     data,

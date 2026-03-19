@@ -370,7 +370,7 @@ export default function PurchaseOrderList() {
       width: 80,
       fixed: 'right',
       align: 'center',
-      render: (_: any, record: PurchaseOrder) => (
+      render: (_value: unknown, record: PurchaseOrder) => (
         <Dropdown menu={{ items: getActionMenu(record) }} trigger={['click']}>
           <Button type="text" icon={<MoreOutlined />} size="small" />
         </Dropdown>

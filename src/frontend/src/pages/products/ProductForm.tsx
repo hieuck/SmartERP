@@ -1,5 +1,5 @@
 import { logger } from '@/lib/logger/logger.service';
-import type { Category } from '@/lib/offline/db';
+import type { Category, Product } from '@/lib/offline/db';
 import { syncManager } from '@/lib/offline/sync-manager';
 import { offlineServices } from '@/services/offline-services';
 import {
@@ -31,12 +31,27 @@ import { useNavigate, useParams } from 'react-router-dom';
 const { Title } = Typography;
 const { TextArea } = Input;
 
+type ProductFormValues = Pick<
+  Product,
+  | 'name'
+  | 'sku'
+  | 'description'
+  | 'price'
+  | 'cost'
+  | 'stockQuantity'
+  | 'minStockLevel'
+  | 'categoryId'
+>;
+
+type CategoryFormValues = Pick<Category, 'name' | 'code' | 'description'> &
+  Partial<Pick<Category, 'level' | 'sortOrder' | 'isActive'>>;
+
 export default function ProductForm() {
   const navigate = useNavigate();
   const { id } = useParams();
   const { t, i18n } = useTranslation(['products', 'common']);
-  const [form] = Form.useForm();
-  const [categoryForm] = Form.useForm();
+  const [form] = Form.useForm<ProductFormValues>();
+  const [categoryForm] = Form.useForm<CategoryFormValues>();
   const [loading, setLoading] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [creatingCategory, setCreatingCategory] = useState(false);
@@ -163,10 +178,15 @@ export default function ProductForm() {
     }
   };
 
-  const handleCreateCategory = async (values: any) => {
+  const handleCreateCategory = async (values: CategoryFormValues) => {
     try {
       setCreatingCategory(true);
-      const newCategory = await offlineServices.categories.create(values);
+      const newCategory = await offlineServices.categories.create({
+        level: values.level ?? 1,
+        sortOrder: values.sortOrder ?? 0,
+        isActive: values.isActive ?? true,
+        ...values,
+      });
       message.success(t('products:categories.createSuccess'));
       logger.info('ProductForm', 'Category created', { id: newCategory.id });
 
@@ -184,7 +204,7 @@ export default function ProductForm() {
     }
   };
 
-  const onFinish = async (values: any) => {
+  const onFinish = async (values: ProductFormValues) => {
     try {
       setLoading(true);
 
@@ -193,7 +213,10 @@ export default function ProductForm() {
         message.success(t('products:messages.updateSuccess'));
         logger.info('ProductForm', 'Product updated', { id });
       } else {
-        await offlineServices.products.create(values);
+        await offlineServices.products.create({
+          status: 'active',
+          ...values,
+        });
         message.success(t('products:messages.createSuccess'));
         logger.info('ProductForm', 'Product created');
       }

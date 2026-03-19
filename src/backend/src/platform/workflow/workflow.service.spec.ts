@@ -10,7 +10,6 @@ import { CacheService } from '@/common/cache/cache.service';
 import { PermissionService, User } from '@/common/security/permission.service';
 
 describe('WorkflowService', () => {
-  let permissionService: jest.Mocked<PermissionService>;
   let service: WorkflowService;
   let workflowRepository: jest.Mocked<Repository<Workflow>>;
   let instanceRepository: jest.Mocked<Repository<WorkflowInstance>>;
@@ -116,7 +115,6 @@ describe('WorkflowService', () => {
     workflowRepository = module.get(getRepositoryToken(Workflow));
     instanceRepository = module.get(getRepositoryToken(WorkflowInstance));
     cacheService = module.get(CacheService);
-    permissionService = module.get(PermissionService);
   });
 
   afterEach(() => {

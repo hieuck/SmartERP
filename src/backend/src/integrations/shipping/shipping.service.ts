@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { CacheTTL, generateCacheKey } from '@/common/cache/cache.config';
 import { CacheService } from '@/common/cache/cache.service';
 import { PermissionService, User } from '@/common/security/permission.service';
@@ -17,6 +16,34 @@ import { GHNService } from './providers/ghn/ghn.service';
 import { GHTKService } from './providers/ghtk/ghtk.service';
 import { ViettelPostService } from './providers/viettelpost/viettelpost.service';
 import { VNPostService } from './providers/vnpost/vnpost.service';
+
+type ShipmentProviderResult = {
+  error?: string;
+  trackingNumber?: string;
+  orderCode?: string;
+  labelId?: string;
+  shippingFee?: number;
+  expectedDeliveryTime?: Date;
+  estimatedDeliveryTime?: Date;
+  moneyTotal?: number;
+  status?: string | number;
+  success?: boolean;
+  message?: string;
+  total?: number;
+  serviceFee?: number;
+  insuranceFee?: number;
+  fee?: number;
+  moneyFee?: number;
+  moneyVas?: number;
+};
+
+type ShipmentFilters = {
+  orderId?: string;
+  provider?: string;
+  status?: string;
+  limit?: number;
+  offset?: number;
+};
 
 @Injectable()
 export class ShippingService {
@@ -37,31 +64,34 @@ export class ShippingService {
     this.secureShipmentRepo = new SecureRepository(shipmentRepo, permissionService, 'Shipment');
   }
 
+  private getErrorMessage(error: unknown): string {
+    return error instanceof Error ? error.message : String(error);
+  }
+
   /**
    * Create shipment
    */
   async createShipment(user: User, dto: CreateShipmentDto): Promise<Shipment> {
     // Create shipment record with SecureRepository (auto tenant isolation)
-    const shipment: unknown = {
+    const shipment: Partial<Shipment> = {
       orderId: dto.orderId,
       provider: dto.provider,
       status: 'pending',
       senderInfo: dto.senderInfo,
       receiverInfo: dto.receiverInfo,
-      packageInfo: dto.packageInfo,
+      packageInfo: {
+        ...dto.packageInfo,
+        length: dto.packageInfo.length || 10,
+        width: dto.packageInfo.width || 10,
+        height: dto.packageInfo.height || 10,
+      },
       codAmount: dto.codAmount || 0,
       note: dto.note,
     };
 
     try {
       // Create shipment with provider
-      let result: {
-        error?: string;
-        trackingNumber?: string;
-        orderCode?: string;
-        shippingFee?: number;
-        expectedDeliveryTime?: Date;
-      };
+      let result: ShipmentProviderResult;
 
       switch (dto.provider) {
         case 'ghn':
@@ -94,7 +124,7 @@ export class ShippingService {
           shipment.status = 'picked_up';
           break;
 
-        case 'ghtk':
+        case 'ghtk': {
           result = await this.ghtkService.createOrder({
             pickAddress: dto.senderInfo.address,
             pickProvince: dto.senderInfo.province,
@@ -131,11 +161,12 @@ export class ShippingService {
           }
 
           shipment.trackingNumber = result.trackingNumber;
-          shipment.providerOrderCode = result.orderCode;
+          shipment.providerOrderCode = result.orderCode ?? result.labelId;
           shipment.shippingFee = result.shippingFee;
-          shipment.expectedDeliveryAt = result.expectedDeliveryTime;
+          shipment.expectedDeliveryAt = result.expectedDeliveryTime ?? result.estimatedDeliveryTime;
           shipment.status = 'picked_up';
           break;
+        }
 
         case 'viettelpost':
           result = await this.viettelPostService.createOrder({
@@ -167,8 +198,8 @@ export class ShippingService {
           }
 
           shipment.trackingNumber = result.trackingNumber;
-          shipment.providerOrderCode = result.orderCode;
-          shipment.shippingFee = result.shippingFee;
+          shipment.providerOrderCode = result.orderCode ?? result.trackingNumber;
+          shipment.shippingFee = result.shippingFee ?? result.moneyTotal;
           shipment.expectedDeliveryAt = result.expectedDeliveryTime;
           shipment.status = 'picked_up';
           break;
@@ -216,7 +247,7 @@ export class ShippingService {
       shipment.status = 'failed';
       await this.secureShipmentRepo.save(user, shipment);
 
-      this.logger.error(`Shipment creation failed: ${error.message}`);
+      this.logger.error(`Shipment creation failed: ${this.getErrorMessage(error)}`);
       throw error;
     }
   }
@@ -234,12 +265,7 @@ export class ShippingService {
     insuranceFee: number;
   }> {
     try {
-      let result: {
-        total?: number;
-        serviceFee?: number;
-        insuranceFee?: number;
-        error?: string;
-      };
+      let result: ShipmentProviderResult;
 
       switch (dto.provider) {
         case 'ghn':
@@ -266,7 +292,7 @@ export class ShippingService {
             insuranceFee: result.insuranceFee || 0,
           };
 
-        case 'ghtk':
+        case 'ghtk': {
           const ghtkResult = await this.ghtkService.calculateFee({
             pickProvince: dto.fromProvince,
             pickDistrict: dto.fromDistrict,
@@ -286,8 +312,9 @@ export class ShippingService {
             serviceFee: ghtkResult.fee || 0,
             insuranceFee: ghtkResult.insuranceFee || 0,
           };
+        }
 
-        case 'viettelpost':
+        case 'viettelpost': {
           const viettelResult = await this.viettelPostService.calculateFee({
             senderProvince: parseInt(dto.fromProvince) || 0,
             senderDistrict: parseInt(dto.fromDistrict) || 0,
@@ -310,6 +337,7 @@ export class ShippingService {
             serviceFee: viettelResult.moneyFee || 0,
             insuranceFee: viettelResult.moneyVas || 0,
           };
+        }
 
         case 'vnpost':
           result = await this.vnPostService.calculateFee({
@@ -338,7 +366,7 @@ export class ShippingService {
           throw new BadRequestException(`Unsupported provider: ${dto.provider}`);
       }
     } catch (error) {
-      this.logger.error(`Calculate fee failed: ${error.message}`);
+      this.logger.error(`Calculate fee failed: ${this.getErrorMessage(error)}`);
       throw error;
     }
   }
@@ -362,7 +390,7 @@ export class ShippingService {
     }
 
     try {
-      let result: Record<string, unknown>;
+      let result: ShipmentProviderResult;
 
       switch (dto.provider) {
         case 'ghn':
@@ -457,7 +485,7 @@ export class ShippingService {
           throw new BadRequestException(`Unsupported provider: ${dto.provider}`);
       }
     } catch (error) {
-      this.logger.error(`Track shipment failed: ${error.message}`);
+      this.logger.error(`Track shipment failed: ${this.getErrorMessage(error)}`);
       throw error;
     }
   }
@@ -479,10 +507,7 @@ export class ShippingService {
     }
 
     try {
-      let result: {
-        success?: boolean;
-        message?: string;
-      };
+      let result: ShipmentProviderResult;
 
       switch (shipment.provider) {
         case 'ghn':
@@ -534,7 +559,7 @@ export class ShippingService {
 
       return shipment;
     } catch (error) {
-      this.logger.error(`Cancel shipment failed: ${error.message}`);
+      this.logger.error(`Cancel shipment failed: ${this.getErrorMessage(error)}`);
       throw error;
     }
   }
@@ -566,16 +591,10 @@ export class ShippingService {
    */
   async listShipments(
     user: User,
-    filters?: {
-      orderId?: string;
-      provider?: string;
-      status?: string;
-      limit?: number;
-      offset?: number;
-    },
+    filters?: ShipmentFilters,
   ): Promise<{ shipments: Shipment[]; total: number }> {
     // Build where conditions
-    const where: unknown = { tenantId: user.tenantId };
+    const where: Partial<Shipment> = { tenantId: user.tenantId };
 
     if (filters?.orderId) {
       where.orderId = filters.orderId;

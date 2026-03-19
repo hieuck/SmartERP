@@ -42,7 +42,7 @@ export const OfflineStatus: React.FC = () => {
         if (!('indexedDB' in window) || window.indexedDB === null) {
           setError('Offline storage unavailable. Please use a modern browser.');
         }
-      } catch (e) {
+      } catch {
         setError('Offline storage unavailable. Please use a modern browser.');
       }
     };
@@ -77,8 +77,8 @@ export const OfflineStatus: React.FC = () => {
         setError(result.errors.join(', '));
       }
       setLastSync(new Date());
-    } catch (error: any) {
-      setError(error.message);
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : 'Sync failed');
     } finally {
       setIsSyncing(false);
     }

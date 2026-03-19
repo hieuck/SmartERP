@@ -28,7 +28,13 @@
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  INestApplication,
+  NotFoundException,
+  ValidationPipe,
+} from '@nestjs/common';
 import request from 'supertest';
 import { TenantController } from './tenant.controller';
 import { TenantService } from './tenant.service';
@@ -37,7 +43,6 @@ import { OnboardingService } from './onboarding.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { TenantStatus } from './enums/tenant-status.enum';
 import { SubscriptionPlan } from './enums/subscription-plan.enum';
-import mockTenant from '../../../test/fixtures/tenant.json';
 
 describe('TenantController (Integration)', () => {
   let app: INestApplication;
@@ -194,7 +199,6 @@ describe('TenantController (Integration)', () => {
         name: 'Existing Company',
       };
 
-      const ConflictException = require('@nestjs/common').ConflictException;
       tenantService.create.mockRejectedValue(
         new ConflictException('Tenant with code existing already exists'),
       );
@@ -267,7 +271,6 @@ describe('TenantController (Integration)', () => {
     });
 
     it('should return 404 when tenant not found', async () => {
-      const NotFoundException = require('@nestjs/common').NotFoundException;
       tenantService.findOne.mockRejectedValue(new NotFoundException('Tenant not found'));
 
       await request(app.getHttpServer())
@@ -292,7 +295,6 @@ describe('TenantController (Integration)', () => {
     });
 
     it('should return 404 when code not found', async () => {
-      const NotFoundException = require('@nestjs/common').NotFoundException;
       tenantService.findByCode.mockRejectedValue(new NotFoundException('Tenant not found'));
 
       await request(app.getHttpServer())
@@ -653,7 +655,6 @@ describe('TenantController (Integration)', () => {
 
     it('should return 409 when code already exists', async () => {
       const updateDto = { code: 'existing-code' };
-      const ConflictException = require('@nestjs/common').ConflictException;
       tenantService.update.mockRejectedValue(
         new ConflictException('Tenant with code existing-code already exists'),
       );
@@ -729,7 +730,6 @@ describe('TenantController (Integration)', () => {
 
     it('should return 400 when storage exceeds limit', async () => {
       const storageDto = { storageUsed: 99999999999 };
-      const BadRequestException = require('@nestjs/common').BadRequestException;
       tenantService.updateStorage.mockRejectedValue(
         new BadRequestException('Storage limit exceeded'),
       );
@@ -756,7 +756,6 @@ describe('TenantController (Integration)', () => {
     });
 
     it('should return 400 when tenant has users', async () => {
-      const BadRequestException = require('@nestjs/common').BadRequestException;
       tenantService.remove.mockRejectedValue(
         new BadRequestException(
           'Cannot delete tenant with 5 users. Please remove all users first.',
@@ -770,7 +769,6 @@ describe('TenantController (Integration)', () => {
     });
 
     it('should return 404 when tenant not found', async () => {
-      const NotFoundException = require('@nestjs/common').NotFoundException;
       tenantService.remove.mockRejectedValue(new NotFoundException('Tenant not found'));
 
       await request(app.getHttpServer())

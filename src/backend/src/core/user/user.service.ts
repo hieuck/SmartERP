@@ -29,7 +29,8 @@ export class UserService {
       throw new NotFoundException('User not found');
     }
 
-    const { password: _, ...profile } = user;
+    const profile = { ...user };
+    delete profile.password;
     return profile;
   }
 
@@ -62,7 +63,8 @@ export class UserService {
 
     const updatedUser = await this.secureUserRepo.save(currentUser, user);
 
-    const { password: _, ...profile } = updatedUser;
+    const profile = { ...updatedUser };
+    delete profile.password;
     return profile;
   }
 

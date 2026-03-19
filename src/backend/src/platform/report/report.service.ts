@@ -1,11 +1,10 @@
-// @ts-nocheck
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { DataSource, EntityMetadata, Repository } from 'typeorm';
 import { Report } from './entities/report.entity';
 import { ReportColumn } from './entities/report-column.entity';
 import { ReportExecution } from './entities/report-execution.entity';
-import { ReportType, AggregationType } from '../enums/platform.enum';
+import { AggregationType } from '../enums/platform.enum';
 import { ExecutionStatus } from './enums/execution-status.enum';
 import { User } from '@/common/security/permission.service';
 
@@ -14,6 +13,12 @@ const ALLOWED_AGGREGATIONS = ['SUM', 'AVG', 'COUNT', 'MIN', 'MAX'];
 
 // Whitelist of allowed operators (security)
 const ALLOWED_OPERATORS = ['=', '!=', '>', '<', '>=', '<=', 'LIKE', 'IN'];
+
+type ReportParameters = Record<string, string | number | boolean | Date | null>;
+type ReportOrderBy = {
+  field: string;
+  order: 'ASC' | 'DESC';
+};
 
 @Injectable()
 export class ReportService {
@@ -176,7 +181,7 @@ export class ReportService {
     } catch (error) {
       // Update execution with error
       execution.status = ExecutionStatus.FAILED;
-      execution.errorMessage = error.message;
+      execution.errorMessage = error instanceof Error ? error.message : String(error);
       execution.executionTime = Date.now() - startTime;
 
       await this.executionRepository.save(execution);
@@ -195,10 +200,10 @@ export class ReportService {
     tenantId: string,
   ): Promise<unknown[]> {
     // Validate source entity exists
-    let entityMetadata;
+    let entityMetadata: EntityMetadata;
     try {
       entityMetadata = this.dataSource.getMetadata(report.sourceEntity);
-    } catch (error) {
+    } catch {
       throw new BadRequestException(`Invalid source entity: ${report.sourceEntity}`);
     }
 
@@ -228,10 +233,11 @@ export class ReportService {
 
     // Apply runtime parameters (override report filters)
     if (parameters && typeof parameters === 'object') {
-      Object.keys(parameters).forEach((key) => {
+      const runtimeParameters = parameters as ReportParameters;
+      Object.keys(runtimeParameters).forEach((key) => {
         // Validate field exists
         this.validateFieldName(entityMetadata, key);
-        query = query.andWhere(`entity.${key} = :${key}`, { [key]: parameters[key] });
+        query = query.andWhere(`entity.${key} = :${key}`, { [key]: runtimeParameters[key] });
       });
     }
 
@@ -245,8 +251,9 @@ export class ReportService {
 
     // Apply sorting
     if (report.orderBy) {
-      this.validateFieldName(entityMetadata, report.orderBy.field);
-      query = query.orderBy(`entity.${report.orderBy.field}`, report.orderBy.order);
+      const orderBy = report.orderBy as ReportOrderBy;
+      this.validateFieldName(entityMetadata, orderBy.field);
+      query = query.orderBy(`entity.${orderBy.field}`, orderBy.order);
     }
 
     // Select only specified columns
@@ -281,8 +288,8 @@ export class ReportService {
    * Validate that a field name exists in the entity metadata
    * Prevents SQL injection through field names
    */
-  private validateFieldName(entityMetadata: unknown, fieldName: string): void {
-    const columns = entityMetadata.columns.map((col: unknown) => col.propertyName);
+  private validateFieldName(entityMetadata: EntityMetadata, fieldName: string): void {
+    const columns = entityMetadata.columns.map((col) => col.propertyName);
     if (!columns.includes(fieldName)) {
       throw new BadRequestException(`Invalid field name: ${fieldName}`);
     }

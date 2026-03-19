@@ -88,6 +88,7 @@ describe('SupplierService', () => {
     supplierRepository = module.get(getRepositoryToken(Supplier));
     cacheService = module.get(CacheService);
     permissionService = module.get(PermissionService);
+    void permissionService;
   });
 
   afterEach(() => {

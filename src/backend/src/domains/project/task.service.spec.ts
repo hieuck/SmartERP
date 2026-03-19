@@ -355,12 +355,7 @@ describe('TaskService', () => {
       taskRepository.findOne.mockResolvedValue(mockTask);
       taskRepository.save.mockResolvedValue(updatedTask as Task);
 
-      const result = await service.updateStatus(
-        taskId,
-        TaskStatus.IN_PROGRESS,
-        tenantId,
-        mockUser,
-      );
+      const result = await service.updateStatus(taskId, TaskStatus.IN_PROGRESS, tenantId, mockUser);
 
       expect(result.status).toBe(TaskStatus.IN_PROGRESS);
     });
@@ -375,7 +370,7 @@ describe('TaskService', () => {
       taskRepository.findOne.mockResolvedValue(mockTask);
       taskRepository.save.mockResolvedValue(completedTask as Task);
 
-      const result = await service.updateStatus(taskId, TaskStatus.COMPLETED, tenantId, mockUser);
+      await service.updateStatus(taskId, TaskStatus.COMPLETED, tenantId, mockUser);
 
       expect(taskRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({

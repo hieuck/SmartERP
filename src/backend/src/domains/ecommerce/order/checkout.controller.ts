@@ -1,8 +1,13 @@
-// @ts-nocheck
 import { Controller, Post, Body, Req } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Request } from 'express';
+import { User } from '@/common/security/permission.service';
 import { CheckoutService } from './checkout.service';
 import { CheckoutDto } from './dto/checkout.dto';
+
+type RequestWithUser = Request & {
+  user: User;
+};
 
 @ApiTags('Checkout')
 @Controller('checkout')
@@ -14,8 +19,7 @@ export class CheckoutController {
   @ApiResponse({ status: 200, description: 'Checkout initiated successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 404, description: 'Cart not found' })
-  async initiateCheckout(@Body() dto: CheckoutDto, @Req() req: unknown) {
-    const __tenantId = req.user?.tenantId || 'default';
+  async initiateCheckout(@Body() dto: CheckoutDto, @Req() req: RequestWithUser) {
     const user = req.user;
     return this.checkoutService.initiateCheckout(dto, user);
   }
@@ -25,8 +29,7 @@ export class CheckoutController {
   @ApiResponse({ status: 201, description: 'Order created successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 404, description: 'Cart not found' })
-  async createOrder(@Body() dto: CheckoutDto, @Req() req: unknown) {
-    const __tenantId = req.user?.tenantId || 'default';
+  async createOrder(@Body() dto: CheckoutDto, @Req() req: RequestWithUser) {
     const user = req.user;
     return this.checkoutService.createOrderFromCart(dto, user);
   }

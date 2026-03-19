@@ -1,7 +1,42 @@
 import dayjs from 'dayjs';
 
+interface PrintableLineItem {
+  product?: {
+    name?: string;
+    unit?: string;
+  };
+  productName?: string;
+  unit?: string;
+  quantity?: number;
+  unitPrice?: number;
+  totalAmount?: number;
+}
+
+interface PrintableAddress {
+  street?: string;
+  city?: string;
+}
+
+interface PrintableCustomer {
+  name?: string;
+  phone?: string;
+  taxCode?: string;
+}
+
+interface PrintableDocument {
+  code?: string;
+  receiptDate?: string | Date;
+  issueDate?: string | Date;
+  orderDate?: string | Date;
+  totalAmount?: number;
+  notes?: string;
+  items?: PrintableLineItem[];
+  customer?: PrintableCustomer;
+  shippingAddress?: string | PrintableAddress;
+}
+
 // Print Document for Stock Receipt/Issue
-export const printDocument = (type: 'receipt' | 'issue', data: any) => {
+export const printDocument = (type: 'receipt' | 'issue', data: PrintableDocument) => {
   const printWindow = window.open('', '_blank');
   if (!printWindow) {
     alert('Vui lòng cho phép popup để in phiếu');
@@ -22,7 +57,7 @@ export const printDocument = (type: 'receipt' | 'issue', data: any) => {
   const itemsHtml =
     data.items
       ?.map(
-        (item: any, index: number) =>
+        (item: PrintableLineItem, index: number) =>
           `<tr>
       <td style="border: 1px solid #000; padding: 8px; text-align: center">${index + 1}</td>
       <td style="border: 1px solid #000; padding: 8px">${item.product?.name || item.productName || '-'}</td>
@@ -118,7 +153,7 @@ export const printDocument = (type: 'receipt' | 'issue', data: any) => {
 };
 
 // Print Sales Order
-export const printSalesOrder = (order: any) => {
+export const printSalesOrder = (order: PrintableDocument) => {
   const printWindow = window.open('', '_blank');
   if (!printWindow) {
     alert('Vui lòng cho phép popup để in đơn hàng');
@@ -135,7 +170,7 @@ export const printSalesOrder = (order: any) => {
   const itemsHtml =
     order.items
       ?.map(
-        (item: any, index: number) =>
+        (item: PrintableLineItem, index: number) =>
           `<tr>
       <td style="border: 1px solid #000; padding: 8px; text-align: center">${index + 1}</td>
       <td style="border: 1px solid #000; padding: 8px">${item.product?.name || '-'}</td>
@@ -243,7 +278,7 @@ export const printSalesOrder = (order: any) => {
 };
 
 // Print Invoice
-export const printInvoice = (order: any) => {
+export const printInvoice = (order: PrintableDocument) => {
   const printWindow = window.open('', '_blank');
   if (!printWindow) {
     alert('Vui lòng cho phép popup để in hóa đơn');
@@ -260,7 +295,7 @@ export const printInvoice = (order: any) => {
   const itemsHtml =
     order.items
       ?.map(
-        (item: any, index: number) =>
+        (item: PrintableLineItem, index: number) =>
           `<tr>
       <td style="border: 1px solid #000; padding: 8px; text-align: center">${index + 1}</td>
       <td style="border: 1px solid #000; padding: 8px">${item.product?.name || '-'}</td>

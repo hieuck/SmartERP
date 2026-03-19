@@ -30,7 +30,6 @@ import { PaymentStatus } from './enums/payment-status.enum';
 import { ShippingStatus } from './enums/shipping-status.enum';
 
 describe('OrderController (Integration)', () => {
-  let _response: unknown;
   let app: INestApplication;
   let orderService: jest.Mocked<OrderService>;
   let paymentService: jest.Mocked<PaymentService>;

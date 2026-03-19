@@ -192,7 +192,7 @@ export default function WarehouseList() {
       key: 'address',
       width: 250,
       ellipsis: true,
-      render: (_: any, record: Warehouse) => (
+      render: (_value: unknown, record: Warehouse) => (
         <span>
           {record.address}
           {record.ward && `, ${record.ward}`}

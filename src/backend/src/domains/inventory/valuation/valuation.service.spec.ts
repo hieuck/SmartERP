@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository, MoreThan, SelectQueryBuilder } from 'typeorm';
+import { Repository, MoreThan } from 'typeorm';
 import { BadRequestException } from '@nestjs/common';
 import { ValuationService } from './valuation.service';
 import { StockValuation } from './entities/stock-valuation.entity';

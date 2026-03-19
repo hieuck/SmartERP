@@ -1,7 +1,7 @@
 import MobileFormItemCard from '@/components/common/MobileFormItemCard';
 import { useResponsive } from '@/hooks/useResponsive';
 import { inventoryService } from '@/services/inventory/inventoryService';
-import { productService } from '@/services/inventory/productService';
+import { productService, type Product } from '@/services/inventory/productService';
 import { formatCurrency } from '@/utils/responsive';
 import { ArrowLeftOutlined, DeleteOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -30,6 +30,15 @@ interface StockReceiptItem {
   totalCost: number;
 }
 
+type StockReceiptFormValues = {
+  receiptDate: dayjs.Dayjs;
+  notes?: string;
+};
+
+type ProductListResponse = {
+  data: Product[];
+};
+
 const { useToken } = theme;
 
 export default function StockReceiptForm() {
@@ -38,7 +47,7 @@ export default function StockReceiptForm() {
   const { id } = useParams();
   const queryClient = useQueryClient();
   const { t } = useTranslation(['inventory', 'common']);
-  const [form] = Form.useForm();
+  const [form] = Form.useForm<StockReceiptFormValues>();
   const isEdit = !!id;
   const [items, setItems] = useState<StockReceiptItem[]>([]);
   const { token } = useToken();
@@ -49,9 +58,14 @@ export default function StockReceiptForm() {
     enabled: isEdit,
   });
 
-  const { data: products } = useQuery({
+  const { data: products } = useQuery<ProductListResponse>({
     queryKey: ['products'],
-    queryFn: () => productService.getProducts({ limit: 1000 }),
+    queryFn: async () => {
+      const response = await productService.getProducts({ limit: 1000 });
+      return {
+        data: Array.isArray(response.data) ? response.data : [],
+      };
+    },
   });
 
   useEffect(() => {
@@ -61,22 +75,26 @@ export default function StockReceiptForm() {
         receiptDate: dayjs(receipt.receivedDate),
       });
       setItems(
-        receipt.items.map((item: any) => ({
+        receipt.items.map((item) => ({
           productId: item.productId,
           quantity: item.quantity,
-          unitCost: item.unitCost ?? item.unitPrice ?? 0,
-          totalCost: item.totalCost ?? item.quantity * (item.unitPrice ?? 0),
+          unitCost: item.unitPrice ?? 0,
+          totalCost: item.quantity * (item.unitPrice ?? 0),
         })),
       );
     }
   }, [receipt, form]);
 
   const saveMutation = useMutation({
-    mutationFn: (values: any) => {
+    mutationFn: (values: StockReceiptFormValues) => {
       const data = {
         ...values,
         receiptDate: values.receiptDate.format('YYYY-MM-DD'),
-        items,
+        items: items.map((item) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+          unitPrice: item.unitCost,
+        })),
         totalAmount: items.reduce((sum, item) => sum + (Number(item.totalCost) || 0), 0),
       };
       return isEdit
@@ -113,7 +131,7 @@ export default function StockReceiptForm() {
     setItems(items.filter((_, i) => i !== index));
   };
 
-  const updateItem = (index: number, field: keyof StockReceiptItem, value: any) => {
+  const updateItem = (index: number, field: keyof StockReceiptItem, value: string | number) => {
     const newItems = [...items];
     newItems[index] = { ...newItems[index], [field]: value };
 
@@ -132,7 +150,7 @@ export default function StockReceiptForm() {
       dataIndex: 'productId',
       key: 'productId',
       width: 300,
-      render: (value: string, _: any, index: number) => (
+      render: (value: string, _record: StockReceiptItem, index: number) => (
         <Select
           value={value}
           onChange={(val) => updateItem(index, 'productId', val)}
@@ -141,7 +159,7 @@ export default function StockReceiptForm() {
           optionFilterProp="children"
           placeholder={t('inventory:form.selectProduct')}
         >
-          {products?.data?.map((product: any) => (
+          {products?.data?.map((product) => (
             <Select.Option key={product.id} value={product.id}>
               {product.name} ({product.sku})
             </Select.Option>
@@ -154,7 +172,7 @@ export default function StockReceiptForm() {
       dataIndex: 'quantity',
       key: 'quantity',
       width: 120,
-      render: (value: number, _: any, index: number) => (
+      render: (value: number, _record: StockReceiptItem, index: number) => (
         <InputNumber
           value={value}
           onChange={(val) => updateItem(index, 'quantity', val || 0)}
@@ -168,7 +186,7 @@ export default function StockReceiptForm() {
       dataIndex: 'unitCost',
       key: 'unitCost',
       width: 150,
-      render: (value: number, _: any, index: number) => (
+      render: (value: number, _record: StockReceiptItem, index: number) => (
         <InputNumber
           value={value}
           onChange={(val) => updateItem(index, 'unitCost', val || 0)}
@@ -190,13 +208,13 @@ export default function StockReceiptForm() {
       title: '',
       key: 'action',
       width: 60,
-      render: (_: any, __: any, index: number) => (
+      render: (_value: unknown, _record: StockReceiptItem, index: number) => (
         <Button type="link" danger icon={<DeleteOutlined />} onClick={() => removeItem(index)} />
       ),
     },
   ];
 
-  const onFinish = (values: any) => {
+  const onFinish = (values: StockReceiptFormValues) => {
     if (items.length === 0) {
       message.error(t('inventory:messages.addProductError'));
       return;
@@ -262,7 +280,7 @@ export default function StockReceiptForm() {
                         optionFilterProp="children"
                         placeholder={t('inventory:form.selectProduct')}
                       >
-                        {products?.data?.map((product: any) => (
+                        {products?.data?.map((product) => (
                           <Select.Option key={product.id} value={product.id}>
                             {product.name} ({product.sku})
                           </Select.Option>

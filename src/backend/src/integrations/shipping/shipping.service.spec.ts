@@ -156,6 +156,7 @@ describe('ShippingService', () => {
     vnPostService = module.get(VNPostService);
     cacheService = module.get(CacheService);
     permissionService = module.get(PermissionService);
+    void permissionService;
   });
 
   describe('createShipment', () => {
@@ -331,9 +332,7 @@ describe('ShippingService', () => {
         expectedDeliveryTime: new Date(),
       });
 
-      const __saveSpy = jest
-        .spyOn(service['secureShipmentRepo'], 'save')
-        .mockResolvedValue(mockShipment as Shipment);
+      jest.spyOn(service['secureShipmentRepo'], 'save').mockResolvedValue(mockShipment as Shipment);
 
       const result = await service.createShipment(mockUser, dto);
 

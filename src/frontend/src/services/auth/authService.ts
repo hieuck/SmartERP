@@ -35,6 +35,28 @@ export interface ChangePasswordRequest {
   newPassword: string;
 }
 
+interface ApiErrorPayload {
+  message?: string;
+}
+
+interface ApiErrorResponse {
+  status?: number;
+  data?: ApiErrorPayload;
+}
+
+interface ApiErrorShape {
+  response?: ApiErrorResponse;
+  message?: string;
+}
+
+function getApiError(error: unknown): ApiErrorShape | undefined {
+  return typeof error === 'object' && error !== null ? (error as ApiErrorShape) : undefined;
+}
+
+function getApiErrorMessage(error: unknown, fallback: string): string {
+  return getApiError(error)?.response?.data?.message ?? fallback;
+}
+
 /**
  * Authentication Service
  * Handles all auth-related API calls
@@ -58,8 +80,8 @@ export const authService = {
       // Backend returns { success, data: { token, user }, message }
       // Unwrap to get { token, user }
       return response.data.data || response.data;
-    } catch (error: any) {
-      throw new Error(error?.response?.data?.message || 'Registration failed');
+    } catch (error: unknown) {
+      throw new Error(getApiErrorMessage(error, 'Registration failed'));
     }
   },
 
@@ -75,16 +97,22 @@ export const authService = {
       // Backend returns { success, data: { token, user }, message }
       // Unwrap to get { token, user }
       return response.data.data || response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const apiError = getApiError(error);
+
       // Handle specific error cases
-      if (error?.response?.status === 401) {
+      if (!apiError?.response) {
+        throw new Error('Network Error');
+      }
+
+      if (apiError.response.status === 401) {
         throw new Error('Invalid email or password');
-      } else if (error?.response?.status === 404) {
+      } else if (apiError.response.status === 404) {
         throw new Error('User not found');
-      } else if (error?.response?.status === 429) {
+      } else if (apiError.response.status === 429) {
         throw new Error('Too many login attempts. Please try again later.');
       }
-      throw new Error(error?.response?.data?.message || 'Login failed');
+      throw new Error(getApiErrorMessage(error, 'Login failed'));
     }
   },
 
@@ -95,9 +123,9 @@ export const authService = {
   logout: async (): Promise<void> => {
     try {
       await api.post('/auth/logout');
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Log error but don't throw - logout should always succeed locally
-      logger.error('AuthService', 'Logout error', error);
+      logger.error('AuthService', 'Logout error', error instanceof Error ? error : new Error('Logout error'));
     }
   },
 
@@ -111,8 +139,8 @@ export const authService = {
     try {
       const response = await api.post('/auth/refresh', { refreshToken });
       return response.data;
-    } catch (error: any) {
-      throw new Error(error?.response?.data?.message || 'Token refresh failed');
+    } catch (error: unknown) {
+      throw new Error(getApiErrorMessage(error, 'Token refresh failed'));
     }
   },
 
@@ -125,8 +153,8 @@ export const authService = {
     try {
       const response = await api.get('/auth/me');
       return response.data;
-    } catch (error: any) {
-      throw new Error(error?.response?.data?.message || 'Failed to fetch user info');
+    } catch (error: unknown) {
+      throw new Error(getApiErrorMessage(error, 'Failed to fetch user info'));
     }
   },
 
@@ -138,8 +166,8 @@ export const authService = {
   changePassword: async (data: ChangePasswordRequest): Promise<void> => {
     try {
       await api.post('/auth/change-password', data);
-    } catch (error: any) {
-      throw new Error(error?.response?.data?.message || 'Password change failed');
+    } catch (error: unknown) {
+      throw new Error(getApiErrorMessage(error, 'Password change failed'));
     }
   },
 };

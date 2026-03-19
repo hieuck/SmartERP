@@ -7,6 +7,9 @@ import { vi } from 'vitest';
 vi.mock('./api');
 vi.mock('@/lib/logger/logger.service');
 
+const mockApiPost = vi.mocked(api.post);
+const mockApiGet = vi.mocked(api.get);
+
 describe('authService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -38,7 +41,7 @@ describe('authService', () => {
         },
       };
 
-      (api.post as any).mockResolvedValue(mockResponse);
+      mockApiPost.mockResolvedValue(mockResponse);
 
       const result = await authService.register(mockData);
 
@@ -63,7 +66,7 @@ describe('authService', () => {
         },
       };
 
-      (api.post as any).mockRejectedValue(mockError);
+      mockApiPost.mockRejectedValue(mockError);
 
       await expect(authService.register(mockData)).rejects.toThrow('Email already exists');
     });
@@ -77,7 +80,7 @@ describe('authService', () => {
         phone: '1234567890',
       };
 
-      (api.post as any).mockRejectedValue(new Error());
+      mockApiPost.mockRejectedValue(new Error());
 
       await expect(authService.register(mockData)).rejects.toThrow('Registration failed');
     });
@@ -106,7 +109,7 @@ describe('authService', () => {
         },
       };
 
-      (api.post as any).mockResolvedValue(mockResponse);
+      mockApiPost.mockResolvedValue(mockResponse);
 
       const result = await authService.login(mockCredentials);
 
@@ -126,7 +129,7 @@ describe('authService', () => {
         },
       };
 
-      (api.post as any).mockRejectedValue(mockError);
+      mockApiPost.mockRejectedValue(mockError);
 
       await expect(authService.login(mockCredentials)).rejects.toThrow('Invalid email or password');
     });
@@ -143,7 +146,7 @@ describe('authService', () => {
         },
       };
 
-      (api.post as any).mockRejectedValue(mockError);
+      mockApiPost.mockRejectedValue(mockError);
 
       await expect(authService.login(mockCredentials)).rejects.toThrow('User not found');
     });
@@ -160,7 +163,7 @@ describe('authService', () => {
         },
       };
 
-      (api.post as any).mockRejectedValue(mockError);
+      mockApiPost.mockRejectedValue(mockError);
 
       await expect(authService.login(mockCredentials)).rejects.toThrow(
         'Too many login attempts. Please try again later.'
@@ -173,15 +176,15 @@ describe('authService', () => {
         password: 'password123',
       };
 
-      (api.post as any).mockRejectedValue(new Error());
+      mockApiPost.mockRejectedValue(new Error());
 
-      await expect(authService.login(mockCredentials)).rejects.toThrow('Login failed');
+      await expect(authService.login(mockCredentials)).rejects.toThrow('Network Error');
     });
   });
 
   describe('logout', () => {
     it('should logout successfully', async () => {
-      (api.post as any).mockResolvedValue({});
+      mockApiPost.mockResolvedValue({});
 
       await authService.logout();
 
@@ -190,7 +193,7 @@ describe('authService', () => {
 
     it('should not throw error on logout failure', async () => {
       const mockError = new Error('Logout failed');
-      (api.post as any).mockRejectedValue(mockError);
+      mockApiPost.mockRejectedValue(mockError);
 
       await expect(authService.logout()).resolves.not.toThrow();
       expect(logger.error).toHaveBeenCalledWith('AuthService', 'Logout error', mockError);
@@ -207,7 +210,7 @@ describe('authService', () => {
         },
       };
 
-      (api.post as any).mockResolvedValue(mockResponse);
+      mockApiPost.mockResolvedValue(mockResponse);
 
       const result = await authService.refreshToken(mockRefreshToken);
 
@@ -225,7 +228,7 @@ describe('authService', () => {
         },
       };
 
-      (api.post as any).mockRejectedValue(mockError);
+      mockApiPost.mockRejectedValue(mockError);
 
       await expect(authService.refreshToken(mockRefreshToken)).rejects.toThrow('Invalid refresh token');
     });
@@ -242,7 +245,7 @@ describe('authService', () => {
         },
       };
 
-      (api.get as any).mockResolvedValue(mockResponse);
+      mockApiGet.mockResolvedValue(mockResponse);
 
       const result = await authService.getMe();
 
@@ -259,7 +262,7 @@ describe('authService', () => {
         },
       };
 
-      (api.get as any).mockRejectedValue(mockError);
+      mockApiGet.mockRejectedValue(mockError);
 
       await expect(authService.getMe()).rejects.toThrow('Unauthorized');
     });
@@ -272,7 +275,7 @@ describe('authService', () => {
         newPassword: 'new-password',
       };
 
-      (api.post as any).mockResolvedValue({});
+      mockApiPost.mockResolvedValue({});
 
       await authService.changePassword(mockData);
 
@@ -293,7 +296,7 @@ describe('authService', () => {
         },
       };
 
-      (api.post as any).mockRejectedValue(mockError);
+      mockApiPost.mockRejectedValue(mockError);
 
       await expect(authService.changePassword(mockData)).rejects.toThrow('Old password is incorrect');
     });

@@ -66,7 +66,7 @@ export interface TopCustomer {
 }
 
 export const customerService = {
-  getAll: async (params: CustomerQueryParams) => {
+  getAll: async (params: CustomerQueryParams = {}) => {
     const response = await api.get('/customers', { params });
     return response.data;
   },
@@ -106,7 +106,7 @@ export const customerService = {
   },
 
   // Legacy methods for backward compatibility
-  getCustomers: async (params?: any) => {
+  getCustomers: async (params?: CustomerQueryParams) => {
     return customerService.getAll(params);
   },
 

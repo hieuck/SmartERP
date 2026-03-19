@@ -1,6 +1,6 @@
 import StandardListPage from '@/components/common/StandardListPage';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Tag, message } from 'antd';
+import { useQuery } from '@tanstack/react-query';
+import { Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import axios from 'axios';
 import { useState } from 'react';
@@ -34,8 +34,6 @@ export default function TaskList() {
   const { t } = useTranslation('projects');
   const { id: projectId } = useParams<{ id: string }>();
   const [search, setSearch] = useState('');
-  const queryClient = useQueryClient();
-
   const { data, isLoading } = useQuery({
     queryKey: ['tasks', projectId],
     queryFn: async () => {
@@ -43,14 +41,6 @@ export default function TaskList() {
       return res.data;
     },
     enabled: Boolean(projectId),
-  });
-
-  const _deleteMutation = useMutation({
-    mutationFn: (taskId: string) => axios.delete(`/api/projects/${projectId}/tasks/${taskId}`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks', projectId] });
-    },
-    onError: () => message.error(t('messages.deleteError')),
   });
 
   const tasks: Task[] = Array.isArray(data) ? data : (data?.data ?? []);

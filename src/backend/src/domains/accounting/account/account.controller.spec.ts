@@ -37,27 +37,6 @@ describe('AccountController (Integration)', () => {
     syncStatus: SyncStatus.SYNCED,
   };
 
-  const __mockJournalEntry = {
-    id: 'je-1',
-    tenantId: 'tenant-1',
-    number: 'JE-2024-0001',
-    date: new Date(),
-    status: 'draft',
-    lines: [],
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
-
-  const __mockInvoice = {
-    id: 'invoice-1',
-    tenantId: 'tenant-1',
-    invoiceNumber: 'INV-001',
-    type: 'sales',
-    amount: 1000,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
-
   beforeEach(async () => {
     const mockAccountService = {
       findAllAccounts: jest.fn(),

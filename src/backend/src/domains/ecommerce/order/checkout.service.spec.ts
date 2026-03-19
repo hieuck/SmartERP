@@ -197,6 +197,7 @@ describe('CheckoutService', () => {
     orderItemRepository = module.get(getRepositoryToken(OrderItem));
     cartRepository = module.get(getRepositoryToken(ShoppingCart));
     permissionService = module.get(PermissionService);
+    void permissionService;
   });
 
   afterEach(() => {

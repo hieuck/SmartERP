@@ -9,9 +9,7 @@ import { CreateBackgroundJobDto } from './dto/create-background-job.dto';
 import { UpdateErrorLogDto } from './dto/update-error-log.dto';
 
 describe('SystemAdminController', () => {
-  let service: jest.Mocked<SystemAdminService>;
   let controller: SystemAdminController;
-  let __service: SystemAdminService;
 
   const mockUser: User = {
     id: 'user-1',
@@ -46,8 +44,6 @@ describe('SystemAdminController', () => {
     }).compile();
 
     controller = module.get<SystemAdminController>(SystemAdminController);
-    service = module.get<SystemAdminService>(SystemAdminService) as any;
-
     // Clear all mocks before each test
     jest.clearAllMocks();
   });

@@ -7,18 +7,13 @@ vi.mock('@ant-design/icons', () => ({
 }));
 
 vi.mock('antd', () => {
-  const optionRegistry = new Map<string, string>();
-
   const Option = ({
     children,
     value,
   }: {
     children: React.ReactNode;
     value: string;
-  }) => {
-    optionRegistry.set(value, String(children));
-    return <div>{children}</div>;
-  };
+  }) => <div data-value={value}>{children}</div>;
 
   return {
     Avatar: ({ children, icon }: { children?: React.ReactNode; icon?: React.ReactNode }) => (
@@ -58,12 +53,13 @@ describe('TenantSelector', () => {
     localStorage.clear();
   });
 
-  it('renders the built-in tenant options', async () => {
+  it('renders the built-in tenant options with clean locale text', async () => {
     render(<TenantSelector onTenantChange={vi.fn()} />);
 
-    expect(await screen.findByText(/CÃ´ng ty TNHH ABC|Công ty TNHH ABC/)).toBeInTheDocument();
-    expect(screen.getByText(/CÃ´ng ty XYZ|Công ty XYZ/)).toBeInTheDocument();
+    expect(await screen.findByText('Công ty TNHH ABC')).toBeInTheDocument();
+    expect(screen.getByText('Công ty XYZ')).toBeInTheDocument();
     expect(screen.getByText('VND • Asia/Ho_Chi_Minh')).toBeInTheDocument();
+    expect(screen.getByText('USD • Asia/Ho_Chi_Minh')).toBeInTheDocument();
   });
 
   it('propagates tenant selection and persists it to localStorage', () => {
@@ -72,7 +68,7 @@ describe('TenantSelector', () => {
 
     render(<TenantSelector onTenantChange={onTenantChange} />);
 
-    fireEvent.click(screen.getByRole('button', { name: /Chá»n tá»• chá»©c Ä‘á»ƒ lÃ m viá»‡c|Chọn tổ chức để làm việc/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Chọn tổ chức để làm việc' }));
 
     expect(onTenantChange).toHaveBeenCalledWith('1');
     expect(setItemSpy).toHaveBeenCalledWith('selectedTenant', '1');

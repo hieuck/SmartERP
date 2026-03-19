@@ -79,7 +79,7 @@ export default function SettingsPage() {
         await createMutation.mutateAsync({
           key: values.key,
           value: values.value,
-          type: values.type,
+          dataType: values.type,
           category: activeCategory,
           description: values.description,
           isPublic: values.isPublic,
@@ -121,7 +121,7 @@ export default function SettingsPage() {
     form.setFieldsValue({
       key: setting.key,
       value: setting.value,
-      type: setting.type,
+      type: setting.dataType,
       description: setting.description,
       isPublic: setting.isPublic,
     });
@@ -164,12 +164,12 @@ export default function SettingsPage() {
       dataIndex: 'value',
       key: 'value',
       ellipsis: true,
-      render: (value: string, record: Setting) => renderValue(value, record.type),
+      render: (value: string, record: Setting) => renderValue(value, record.dataType),
     },
     {
       title: t('systemSettings.table.type'),
-      dataIndex: 'type',
-      key: 'type',
+      dataIndex: 'dataType',
+      key: 'dataType',
       width: 100,
       render: (type: SettingDataType) => typeLabels[type],
     },
@@ -290,8 +290,8 @@ export default function SettingsPage() {
               prevValues.type !== currentValues.type
             }
           >
-            {({ getFieldValue }: { getFieldValue: (name: string) => SettingDataType }) => {
-              const type = getFieldValue('type');
+            {(formInstance) => {
+              const type = formInstance.getFieldValue('type') as SettingDataType | undefined;
               if (type === SettingDataType.BOOLEAN) {
                 return (
                   <Form.Item

@@ -41,18 +41,26 @@ export interface TransactionQueryParams {
   offset?: number;
 }
 
+export interface PaymentGatewayResponse {
+  success: boolean;
+  message?: string;
+  paymentUrl?: string;
+  transactionId?: string;
+  [key: string]: unknown;
+}
+
 const paymentGatewayService = {
-  async createPayment(data: CreatePaymentDto): Promise<any> {
+  async createPayment(data: CreatePaymentDto): Promise<PaymentGatewayResponse> {
     const response = await api.post('/payment-gateway', data);
     return response.data;
   },
 
-  async verifyPayment(data: VerifyPaymentDto): Promise<any> {
+  async verifyPayment(data: VerifyPaymentDto): Promise<PaymentGatewayResponse> {
     const response = await api.post('/payment-gateway/verify', data);
     return response.data;
   },
 
-  async refundPayment(data: RefundPaymentDto): Promise<any> {
+  async refundPayment(data: RefundPaymentDto): Promise<PaymentGatewayResponse> {
     const response = await api.post('/payment-gateway/refund', data);
     return response.data;
   },

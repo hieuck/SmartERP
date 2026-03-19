@@ -395,7 +395,7 @@ export class ReportsService {
   async getInventoryValuation(
     _user: User,
     productId?: string,
-    warehouseId?: string,
+    _warehouseId?: string,
   ): Promise<InventoryValuation> {
     const productQuery = this.productRepository
       .createQueryBuilder('product')
@@ -428,8 +428,8 @@ export class ReportsService {
     _user: User,
     _startDate: Date,
     _endDate: Date,
-    productId?: string,
-    warehouseId?: string,
+    _productId?: string,
+    _warehouseId?: string,
   ): Promise<InventoryMovement> {
     // TODO: Implement inventory movement tracking
     // This would require an inventory movement/transaction entity

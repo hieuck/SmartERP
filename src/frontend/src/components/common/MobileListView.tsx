@@ -33,7 +33,7 @@ export interface MobileListViewProps<T> {
   onMobileItemClick?: (record: T) => void;
 }
 
-function MobileListViewComponent<T extends Record<string, unknown>>({
+function MobileListViewComponent<T extends object>({
   columns,
   dataSource = [],
   loading = false,
@@ -121,7 +121,8 @@ function MobileListViewComponent<T extends Record<string, unknown>>({
                 if (!('dataIndex' in col)) return null;
 
                 const column = col as ColumnType<T>;
-                const value = column.dataIndex ? item[column.dataIndex as string] : null;
+                const itemRecord = item as Record<string, unknown>;
+                const value = column.dataIndex ? itemRecord[column.dataIndex as string] : null;
                 const rendered = column.render ? column.render(value, item, idx) : value;
 
                 // Handle column.title which can be string, ReactNode, or function

@@ -11,7 +11,7 @@ export const store = configureStore({
 
 // Expose store for E2E tests in development only
 if (import.meta.env.DEV) {
-  (window as any).__store__ = store;
+  (window as Window & { __store__?: typeof store }).__store__ = store;
 }
 
 export type RootState = ReturnType<typeof store.getState>;

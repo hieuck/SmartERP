@@ -1,17 +1,74 @@
-import { test, expect } from '@playwright/test';
-import { LoginPage } from '../../pages/LoginPage';
+import { expect, Page, test } from '@playwright/test';
 import { DashboardPage } from '../../pages/DashboardPage';
+import { LoginPage } from '../../pages/LoginPage';
+
+const mockUser = {
+  id: 'user-1',
+  email: 'admin@test.com',
+  firstName: 'Admin',
+  lastName: 'User',
+  tenantId: 'tenant-1',
+  role: 'admin',
+};
+
+async function mockDashboardApis(page: Page) {
+  await page.route('**/api/dashboard/overview', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        data: {
+          revenue: { today: 1200000, thisWeek: 5000000, thisMonth: 20000000, growth: 12.5 },
+          orders: { total: 42, pending: 5, completed: 35, cancelled: 2 },
+          inventory: { totalProducts: 99, lowStock: 3, outOfStock: 1, totalValue: 8800000 },
+          customers: { total: 15, active: 12, new: 2 },
+          payments: { pending: 4, completed: 18, totalAmount: 21000000 },
+        },
+      }),
+    });
+  });
+
+  for (const [endpoint, data] of [
+    ['**/api/dashboard/sales-chart**', [{ date: '2026-03-01', revenue: 1000000, orders: 3 }]],
+    ['**/api/dashboard/top-products**', [{ id: 'p-1', name: 'Product A', revenue: 2000000, quantity: 10 }]],
+    ['**/api/dashboard/top-customers**', [{ id: 'c-1', name: 'Customer A', totalSpent: 3500000, orderCount: 4 }]],
+    ['**/api/dashboard/revenue-by-category**', [{ category: 'Main', revenue: 3500000, percentage: 100 }]],
+  ] as const) {
+    await page.route(endpoint, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ data }),
+      });
+    });
+  }
+}
+
+async function mockSuccessfulLogin(page: Page, delayMs = 0) {
+  await mockDashboardApis(page);
+  await page.route('**/api/auth/login', async (route) => {
+    if (delayMs > 0) {
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        data: {
+          token: 'mock-access-token',
+          refreshToken: 'mock-refresh-token',
+          user: mockUser,
+        },
+      }),
+    });
+  });
+}
 
 /**
  * Authentication Flow E2E Tests
- * 
- * Test cases:
- * 1. User can login with valid credentials
- * 2. User cannot login with invalid credentials
- * 3. User sees error message for invalid email format
- * 4. User sees error message for missing password
- * 5. Remember me functionality works
- * 6. User can logout
+ *
+ * Uses mocked API responses so login behavior is tested independently from backend availability.
  */
 test.describe('Authentication Flow', () => {
   let loginPage: LoginPage;
@@ -23,167 +80,133 @@ test.describe('Authentication Flow', () => {
     await loginPage.goto();
   });
 
-  test('should display login page correctly', async ({ page }) => {
-    // Verify page title
+  test('should display login page correctly', async () => {
     const title = await loginPage.getPageTitle();
     expect(title).toContain('Login');
 
-    // Verify form elements are visible
     await expect(loginPage.emailInput).toBeVisible();
     await expect(loginPage.passwordInput).toBeVisible();
     await expect(loginPage.submitButton).toBeVisible();
   });
 
   test('should login successfully with valid credentials', async ({ page }) => {
-    // Login with valid credentials
-    await loginPage.login('admin@test.com', 'admin123');
+    await mockSuccessfulLogin(page);
 
-    // Wait for redirect to dashboard
-    await page.waitForURL('/dashboard');
+    await loginPage.login(mockUser.email, 'admin123');
 
-    // Verify on dashboard page
+    await page.waitForURL('**/dashboard');
     expect(await dashboardPage.isOnDashboardPage()).toBe(true);
-
-    // Verify dashboard loads correctly
-    const pageTitle = await dashboardPage.getPageTitle();
-    expect(pageTitle).toContain('Dashboard');
+    expect(await dashboardPage.getPageTitle()).toContain('Dashboard');
   });
 
   test('should show error for invalid credentials', async ({ page }) => {
-    // Login with invalid credentials
-    await loginPage.login('admin@test.com', 'wrongpassword');
+    await page.route('**/api/auth/login', async (route) => {
+      await route.fulfill({
+        status: 401,
+        contentType: 'application/json',
+        body: JSON.stringify({ message: 'Invalid email or password' }),
+      });
+    });
 
-    // Verify error message is displayed
+    await loginPage.login(mockUser.email, 'wrongpassword');
+
     expect(await loginPage.hasError()).toBe(true);
-
-    const errorMessage = await loginPage.getErrorMessage();
-    expect(errorMessage.toLowerCase()).toContain('invalid');
-
-    // Verify still on login page
+    await expect(loginPage.errorMessage).toContainText(/invalid email or password/i);
     expect(await loginPage.isOnLoginPage()).toBe(true);
   });
 
   test('should show error for invalid email format', async ({ page }) => {
-    // Fill invalid email
     await loginPage.emailInput.fill('invalid-email');
     await loginPage.passwordInput.fill('password123');
     await loginPage.submitButton.click();
 
-    // Verify validation error (Ant Design form validation)
     const emailError = page.locator('.ant-form-item-explain-error').first();
     await expect(emailError).toBeVisible();
-    expect(await emailError.textContent()).toContain('email');
+    await expect(emailError).toContainText(/email/i);
   });
 
   test('should show error for missing password', async ({ page }) => {
-    // Fill email only
-    await loginPage.emailInput.fill('admin@test.com');
+    await loginPage.emailInput.fill(mockUser.email);
     await loginPage.submitButton.click();
 
-    // Verify validation error
-    const passwordError = page.locator('.ant-form-item-explain-error').filter({ hasText: 'password' });
-    await expect(passwordError).toBeVisible();
+    const passwordError = page.locator('.ant-form-item-explain-error');
+    await expect(passwordError).toContainText(/password/i);
   });
 
   test('should show error for short password', async ({ page }) => {
-    // Fill short password
-    await loginPage.emailInput.fill('admin@test.com');
-    await loginPage.passwordInput.fill('12345');
+    await loginPage.emailInput.fill(mockUser.email);
+    await loginPage.passwordInput.fill('1234567');
     await loginPage.submitButton.click();
 
-    // Verify validation error
-    const passwordError = page.locator('.ant-form-item-explain-error').filter({ hasText: /password|6/ });
+    const passwordError = page
+      .locator('.ant-form-item-explain-error')
+      .filter({ hasText: /at least 8|ít nhất 8/i });
     await expect(passwordError).toBeVisible();
   });
 
   test('should disable submit button while loading', async ({ page }) => {
-    // Start login
-    await loginPage.emailInput.fill('admin@test.com');
+    await mockSuccessfulLogin(page, 1200);
+
+    await loginPage.emailInput.fill(mockUser.email);
     await loginPage.passwordInput.fill('admin123');
-    
-    // Click submit and immediately check if disabled
+
     const submitPromise = loginPage.submitButton.click();
-    
-    // Button should be disabled during API call
     await expect(loginPage.submitButton).toBeDisabled();
-    
     await submitPromise;
   });
 
-  test('should remember email when remember me is checked', async ({ page, context }) => {
-    // Login with remember me
-    await loginPage.login('admin@test.com', 'admin123', true);
+  test('should remember email when remember me is checked', async ({ page }) => {
+    await mockSuccessfulLogin(page);
 
-    // Wait for redirect
-    await page.waitForURL('/dashboard');
+    await loginPage.login(mockUser.email, 'admin123', true);
+    await page.waitForURL('**/dashboard');
 
-    // Logout (navigate back to login)
-    await page.goto('/login');
-
-    // Verify email is remembered
-    const emailValue = await loginPage.emailInput.inputValue();
-    expect(emailValue).toBe('admin@test.com');
+    const rememberedEmail = await page.evaluate(() => localStorage.getItem('rememberedEmail'));
+    expect(rememberedEmail).toBe(mockUser.email);
   });
 
-  test('should not remember email when remember me is unchecked', async ({ page, context }) => {
-    // Clear any remembered email first
-    await page.evaluate(() => localStorage.removeItem('rememberedEmail'));
+  test('should not remember email when remember me is unchecked', async ({ page }) => {
+    await mockSuccessfulLogin(page);
 
-    // Login without remember me
-    await loginPage.login('admin@test.com', 'admin123', false);
+    await page.evaluate(() => localStorage.setItem('rememberedEmail', 'old@example.com'));
+    await loginPage.goto();
+    await loginPage.login(mockUser.email, 'admin123', false);
+    await page.waitForURL('**/dashboard');
 
-    // Wait for redirect
-    await page.waitForURL('/dashboard');
-
-    // Logout (navigate back to login)
-    await page.goto('/login');
-
-    // Verify email is not remembered
-    const emailValue = await loginPage.emailInput.inputValue();
-    expect(emailValue).toBe('');
+    const rememberedEmail = await page.evaluate(() => localStorage.getItem('rememberedEmail'));
+    expect(rememberedEmail).toBeNull();
   });
 
   test('should logout successfully', async ({ page }) => {
-    // Login first
-    await loginPage.login('admin@test.com', 'admin123');
-    await page.waitForURL('/dashboard');
+    await mockSuccessfulLogin(page);
 
-    // Click logout button (in header/menu)
-    const logoutButton = page.locator('button:has-text("Logout"), a:has-text("Logout"), span:has-text("Logout")');
-    await logoutButton.click();
+    await loginPage.login(mockUser.email, 'admin123');
+    await page.waitForURL('**/dashboard');
 
-    // Wait for redirect to login
-    await page.waitForURL('/login');
+    await page.locator('header').getByText('Admin User').click();
+    await page.getByText(/logout/i).click();
 
-    // Verify on login page
+    await page.waitForURL('**/login');
     expect(await loginPage.isOnLoginPage()).toBe(true);
   });
 
   test('should redirect to login when accessing protected route without auth', async ({ page }) => {
-    // Try to access dashboard without login
     await page.goto('/dashboard');
-
-    // Should redirect to login
-    await page.waitForURL('/login');
+    await page.waitForURL('**/login');
     expect(await loginPage.isOnLoginPage()).toBe(true);
   });
 
-  test('should handle network error gracefully', async ({ page, context }) => {
-    // Simulate offline
-    await context.setOffline(true);
+  test('should handle network error gracefully', async ({ page }) => {
+    await page.route('**/api/auth/login', async (route) => {
+      await route.abort('failed');
+    });
 
-    // Try to login
-    await loginPage.emailInput.fill('admin@test.com');
+    await loginPage.emailInput.fill(mockUser.email);
     await loginPage.passwordInput.fill('admin123');
     await loginPage.submitButton.click();
 
-    // Wait for error message to appear (not arbitrary timeout)
     await loginPage.errorMessage.waitFor({ state: 'visible', timeout: 5000 });
-
-    // Verify error message is shown
     expect(await loginPage.hasError()).toBe(true);
-
-    // Restore online
-    await context.setOffline(false);
+    await expect(loginPage.errorMessage).toContainText(/network error/i);
   });
 });

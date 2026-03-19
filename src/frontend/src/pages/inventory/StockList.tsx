@@ -21,6 +21,7 @@ import { offlineServices } from '@/services/offline-services';
 import { syncManager } from '@/lib/offline/sync-manager';
 import { logger } from '@/lib/logger/logger.service';
 import { Stock, SyncStatus } from '@/lib/offline/db';
+import type { Warehouse } from '@/lib/offline/db';
 import type { ColumnsType } from 'antd/es/table';
 
 const { Option } = Select;
@@ -33,7 +34,7 @@ export default function StockList() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [stocks, setStocks] = useState<Stock[]>([]);
-  const [warehouses, setWarehouses] = useState<any[]>([]);
+  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -244,7 +245,7 @@ export default function StockList() {
       key: 'minMax',
       width: 120,
       align: 'center',
-      render: (_: any, record: Stock) => (
+      render: (_value: unknown, record: Stock) => (
         <span style={{ fontSize: 12 }}>
           {record.minStockLevel} / {record.maxStockLevel}
         </span>
@@ -254,7 +255,7 @@ export default function StockList() {
       title: t('inventory:columns.status'),
       key: 'status',
       width: 120,
-      render: (_: any, record: Stock) => {
+      render: (_value: unknown, record: Stock) => {
         const status = getStockStatus(record);
         return <Tag color={status.color}>{status.text}</Tag>;
       },

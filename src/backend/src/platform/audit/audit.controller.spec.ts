@@ -22,7 +22,6 @@ import { JwtAuthGuard } from '../../core/auth/guards/jwt-auth.guard';
 import { AuditAction } from './enums/audit-action.enum';
 
 describe('AuditController (Integration)', () => {
-  let response: unknown;
   let app: INestApplication;
   let auditService: jest.Mocked<AuditService>;
 
@@ -103,7 +102,7 @@ describe('AuditController (Integration)', () => {
       const logs = [mockAuditLog];
       auditService.findAll.mockResolvedValue(logs as any);
 
-      const __response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .get('/audit/logs')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -125,7 +124,7 @@ describe('AuditController (Integration)', () => {
       const logs = [mockAuditLog];
       auditService.findAll.mockResolvedValue(logs as any);
 
-      const __response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .get('/audit/logs?startDate=2024-01-01&endDate=2024-01-31')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -147,7 +146,7 @@ describe('AuditController (Integration)', () => {
       const logs = [mockAuditLog];
       auditService.findAll.mockResolvedValue(logs as any);
 
-      const __response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .get('/audit/logs?userId=user-456')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -169,7 +168,7 @@ describe('AuditController (Integration)', () => {
       const logs = [mockAuditLog];
       auditService.findAll.mockResolvedValue(logs as any);
 
-      const __response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .get('/audit/logs?entityType=Order')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -191,7 +190,7 @@ describe('AuditController (Integration)', () => {
       const logs = [mockAuditLog];
       auditService.findAll.mockResolvedValue(logs as any);
 
-      const __response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .get('/audit/logs?startDate=2024-01-01&endDate=2024-01-31&userId=user-456&entityType=Order')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -212,7 +211,7 @@ describe('AuditController (Integration)', () => {
     it('should return empty array when no logs found', async () => {
       auditService.findAll.mockResolvedValue([]);
 
-      const __response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .get('/audit/logs')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -223,7 +222,7 @@ describe('AuditController (Integration)', () => {
     it('should handle invalid date format gracefully', async () => {
       auditService.findAll.mockResolvedValue([]);
 
-      const __response = await request(app.getHttpServer())
+      await request(app.getHttpServer())
         .get('/audit/logs?startDate=invalid-date&endDate=2024-01-31')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -252,7 +251,7 @@ describe('AuditController (Integration)', () => {
       const logs = [mockAuditLog];
       auditService.findByEntity.mockResolvedValue(logs as any);
 
-      const __response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .get('/audit/logs/entity/Order/order-123')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -271,7 +270,7 @@ describe('AuditController (Integration)', () => {
     it('should return empty array when no logs for entity', async () => {
       auditService.findByEntity.mockResolvedValue([]);
 
-      const __response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .get('/audit/logs/entity/Order/order-999')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -340,7 +339,7 @@ describe('AuditController (Integration)', () => {
       const logs = [mockAuditLog];
       auditService.findByUser.mockResolvedValue(logs as any);
 
-      const __response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .get('/audit/logs/user/user-456')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -358,7 +357,7 @@ describe('AuditController (Integration)', () => {
     it('should return empty array when user has no logs', async () => {
       auditService.findByUser.mockResolvedValue([]);
 
-      const __response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .get('/audit/logs/user/user-999')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -422,7 +421,7 @@ describe('AuditController (Integration)', () => {
 
       auditService.getActivitySummary.mockResolvedValue(summary as any);
 
-      const __response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .get('/audit/summary?startDate=2024-01-01&endDate=2024-01-31')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -448,7 +447,7 @@ describe('AuditController (Integration)', () => {
 
       auditService.getActivitySummary.mockResolvedValue(emptySummary as any);
 
-      const __response = await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .get('/audit/summary?startDate=2024-12-01&endDate=2024-12-31')
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -530,8 +529,8 @@ describe('AuditController (Integration)', () => {
 
       const responses = await Promise.all(requests);
 
-      responses.forEach((_response) => {
-        expect((response as any).status).toBe(200);
+      responses.forEach((response) => {
+        expect(response.status).toBe(200);
       });
     });
 

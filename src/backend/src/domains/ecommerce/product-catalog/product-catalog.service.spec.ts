@@ -112,6 +112,7 @@ describe('ProductCatalogService', () => {
     service = module.get<ProductCatalogService>(ProductCatalogService);
     repository = module.get(getRepositoryToken(ProductCatalog));
     permissionService = module.get(PermissionService);
+    void permissionService;
   });
 
   afterEach(() => {

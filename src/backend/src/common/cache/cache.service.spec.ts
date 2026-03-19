@@ -1,6 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
 import { CacheService } from './cache.service';
 import { CacheTTL } from './cache.config';
 

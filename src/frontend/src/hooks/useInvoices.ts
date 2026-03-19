@@ -1,4 +1,9 @@
-import { Invoice, invoiceService, InvoiceStatus } from '@/services/accounting/invoiceService';
+import {
+  CreateInvoiceDto,
+  invoiceService,
+  InvoiceStatus,
+  UpdateInvoiceDto,
+} from '@/services/accounting/invoiceService';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 interface InvoiceFilters {
@@ -31,7 +36,7 @@ export const useInvoice = (id: string) => {
 export const useCreateInvoice = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: Partial<Invoice>) => invoiceService.create(data as any),
+    mutationFn: (data: CreateInvoiceDto) => invoiceService.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['invoices'] });
     },
@@ -41,7 +46,7 @@ export const useCreateInvoice = () => {
 export const useUpdateInvoice = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<Invoice> }) =>
+    mutationFn: ({ id, data }: { id: string; data: UpdateInvoiceDto }) =>
       invoiceService.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['invoices'] });

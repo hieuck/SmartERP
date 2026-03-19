@@ -29,8 +29,8 @@ export interface AuditLog {
   action: AuditAction;
   entity: AuditEntity;
   entityId: string;
-  oldValue?: any;
-  newValue?: any;
+  oldValue?: unknown;
+  newValue?: unknown;
   ipAddress?: string;
   userAgent?: string;
   createdAt: string;

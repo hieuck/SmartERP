@@ -1,6 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PurchaseOrderService } from './purchase-order.service';
 import { PurchaseOrder } from './entities/purchase-order.entity';
@@ -12,6 +11,7 @@ const mockUser = {
   tenantId: 'tenant-1',
   email: 'test@example.com',
   role: 'admin',
+  roles: ['admin'],
 };
 
 const mockPO = {
@@ -33,6 +33,7 @@ const mockRepository = {
   create: jest.fn(),
   save: jest.fn(),
   update: jest.fn(),
+  remove: jest.fn(),
   softDelete: jest.fn(),
 };
 
@@ -42,14 +43,14 @@ const mockCacheService = {
 };
 
 const mockPermissionService = {
-  checkPermission: jest.fn().mockResolvedValue(true),
-  filterByTenant: jest.fn((user, query) => query),
+  canRead: jest.fn().mockReturnValue(true),
+  canWrite: jest.fn().mockReturnValue(true),
+  canDelete: jest.fn().mockReturnValue(true),
+  buildSecureQuery: jest.fn((_user, query) => query),
 };
 
 describe('PurchaseOrderService', () => {
   let service: PurchaseOrderService;
-  let repository: Repository<PurchaseOrder>;
-
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -61,8 +62,6 @@ describe('PurchaseOrderService', () => {
     }).compile();
 
     service = module.get<PurchaseOrderService>(PurchaseOrderService);
-    repository = module.get<Repository<PurchaseOrder>>(getRepositoryToken(PurchaseOrder));
-
     jest.clearAllMocks();
   });
 
@@ -143,16 +142,16 @@ describe('PurchaseOrderService', () => {
     it('should throw NotFoundException when updating nonexistent order', async () => {
       mockRepository.findOne.mockResolvedValue(null);
 
-      await expect(
-        service.update(mockUser as any, 'nonexistent', {} as any),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.update(mockUser as any, 'nonexistent', {} as any)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
   describe('remove', () => {
     it('should remove a purchase order', async () => {
       mockRepository.findOne.mockResolvedValue(mockPO);
-      mockRepository.softDelete.mockResolvedValue({ affected: 1 });
+      mockRepository.remove.mockResolvedValue(mockPO);
 
       await expect(service.remove(mockUser as any, 'po-1')).resolves.not.toThrow();
     });
@@ -171,9 +170,9 @@ describe('PurchaseOrderService', () => {
     it('should throw BadRequestException when cancelling received order', async () => {
       mockRepository.findOne.mockResolvedValue({ ...mockPO, status: 'received' });
 
-      await expect(
-        service.updateStatus(mockUser as any, 'po-1', 'cancelled'),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.updateStatus(mockUser as any, 'po-1', 'cancelled')).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 

@@ -139,6 +139,7 @@ describe('ManagementService', () => {
     leaveRepository = module.get(getRepositoryToken(Leave));
     cacheService = module.get(CacheService);
     permissionService = module.get(PermissionService);
+    void permissionService;
   });
 
   afterEach(() => {

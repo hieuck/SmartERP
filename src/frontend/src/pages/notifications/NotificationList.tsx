@@ -320,7 +320,7 @@ export default function NotificationList() {
       title: t('notifications:notification.actions'),
       key: 'actions',
       width: 150,
-      render: (_: any, record: Notification) => (
+      render: (_value: unknown, record: Notification) => (
         <Space>
           {record.status === 'unread' && (
             <Button

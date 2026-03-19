@@ -100,6 +100,7 @@ describe('EmailService', () => {
     logRepository = module.get(getRepositoryToken(EmailLog));
     cacheManager = module.get(CACHE_MANAGER);
     permissionService = module.get(PermissionService);
+    void permissionService;
   });
 
   afterEach(() => {
@@ -281,7 +282,7 @@ describe('EmailService', () => {
       (service as any).secureTemplateRepo = mockSecureRepo;
       cacheManager.get.mockResolvedValue(null);
 
-      const result = await service.updateTemplate(mockUser, 'template-1', { name: 'Updated' });
+      await service.updateTemplate(mockUser, 'template-1', { name: 'Updated' });
 
       expect(mockSecureRepo.save).toHaveBeenCalled();
       expect(cacheManager.del).toHaveBeenCalledWith(
@@ -416,7 +417,7 @@ describe('EmailService', () => {
       cacheManager.get.mockResolvedValue(null);
       logRepository.create.mockReturnValue(mockLog as any);
 
-      const result = await service.sendTemplateEmail(mockUser, 'test@example.com', 'template-1', {
+      await service.sendTemplateEmail(mockUser, 'test@example.com', 'template-1', {
         name: 'John',
       });
 

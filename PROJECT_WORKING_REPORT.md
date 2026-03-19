@@ -837,3 +837,10 @@ Verification:
 - Verified with:
   - `npx.cmd vitest run src/components/workflow/WorkflowApproval.test.tsx`
   - targeted `eslint` for the component and its test
+
+## 2026-03-20 Tenant Selector Locale Cleanup
+- Cleaned mojibake in [src/frontend/src/components/tenancy/TenantSelector.tsx](/e:/GitHub/smart-erp/src/frontend/src/components/tenancy/TenantSelector.tsx) so tenant names, headings, placeholder text, and currency/timezone display render valid Vietnamese.
+- Rewrote [src/frontend/src/components/tenancy/TenantSelector.test.tsx](/e:/GitHub/smart-erp/src/frontend/src/components/tenancy/TenantSelector.test.tsx) to assert the final clean strings directly instead of tolerating broken encodings with regex.
+- Verified with:
+  - `npx.cmd vitest run src/components/tenancy/TenantSelector.test.tsx`
+  - `npx.cmd eslint src/components/tenancy/TenantSelector.tsx src/components/tenancy/TenantSelector.test.tsx`

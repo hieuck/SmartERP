@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { PermissionService, User } from '@/common/security/permission.service';
 import { SecureRepository } from '@/common/security/secure-repository';
 import {
@@ -12,6 +11,11 @@ import { Repository } from 'typeorm';
 import { ApprovalRequest } from './entities/approval-request.entity';
 import { Workflow } from './entities/workflow.entity';
 import { ApprovalStatus } from './enums';
+
+type WorkflowApprovalStep = {
+  name?: string;
+  allowedRoles?: string[];
+};
 
 @Injectable()
 export class ApprovalService {
@@ -193,16 +197,24 @@ export class ApprovalService {
 
   private canApprove(workflow: Workflow, user: User): boolean {
     // Check if user has any of the allowed roles for approval
-    const states = (workflow as any).states || (workflow as any).transitions || [];
+    const workflowWithLegacySteps = workflow as Workflow & {
+      states?: WorkflowApprovalStep[];
+      transitions?: WorkflowApprovalStep[];
+    };
+    const states =
+      workflowWithLegacySteps.states || workflowWithLegacySteps.transitions || workflow.steps || [];
     const approvalState = states.find(
-      (s: unknown) => s.name === 'pending_approval' || s.name === 'approved',
+      (step) => step.name === 'pending_approval' || step.name === 'approved',
     );
 
     if (!approvalState) {
       return false;
     }
 
-    return user.roles.some((role) => approvalState.allowedRoles.includes(role));
+    const allowedRoles = Array.isArray(approvalState.allowedRoles)
+      ? (approvalState.allowedRoles as string[])
+      : [];
+    return user.roles.some((role) => allowedRoles.includes(role));
   }
 
   private async updateEntityState(

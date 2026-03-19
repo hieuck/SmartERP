@@ -25,7 +25,7 @@ export default function ExpandableContent({
   fields,
   column = 3,
   size = 'small',
-  bordered: _bordered = false,
+  bordered = false,
 }: ExpandableContentProps) {
   const { isMobile } = useResponsive();
 
@@ -41,7 +41,7 @@ export default function ExpandableContent({
       items={items}
       column={isMobile ? 1 : column}
       size={size}
-      bordered={false}
+      bordered={bordered}
       layout={isMobile ? 'vertical' : 'horizontal'}
       style={{ padding: '8px 0' }}
       labelStyle={isMobile ? { fontSize: 12, color: '#666', paddingBottom: 4 } : undefined}

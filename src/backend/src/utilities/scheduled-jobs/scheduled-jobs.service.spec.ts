@@ -129,8 +129,8 @@ describe('ScheduledJobsService', () => {
       // Verify tenant1 has 2 jobs
       const tenant1Jobs = await service.listJobs('tenant1');
       expect(tenant1Jobs.length).toBe(2);
-      expect(tenant1Jobs.some(j => j.name === 'Job 1')).toBe(true);
-      expect(tenant1Jobs.some(j => j.name === 'Job 2')).toBe(true);
+      expect(tenant1Jobs.some((j) => j.name === 'Job 1')).toBe(true);
+      expect(tenant1Jobs.some((j) => j.name === 'Job 2')).toBe(true);
 
       // Verify tenant2 has 1 job
       const tenant2Jobs = await service.listJobs('tenant2');
@@ -289,9 +289,7 @@ describe('ScheduledJobsService', () => {
     });
 
     it('should throw NotFoundException for non-existent job', async () => {
-      await expect(service.deleteJob('nonexistent-id')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.deleteJob('nonexistent-id')).rejects.toThrow(NotFoundException);
       await expect(service.deleteJob('nonexistent-id')).rejects.toThrow(
         'Job nonexistent-id not found',
       );
@@ -317,9 +315,7 @@ describe('ScheduledJobsService', () => {
     });
 
     it('should throw NotFoundException for non-existent job', async () => {
-      await expect(service.runJob('nonexistent-id')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.runJob('nonexistent-id')).rejects.toThrow(NotFoundException);
       await expect(service.runJob('nonexistent-id')).rejects.toThrow(
         'Job nonexistent-id not found',
       );
@@ -419,9 +415,7 @@ describe('ScheduledJobsService', () => {
         enabled: true,
       };
 
-      await expect(service.createJob('tenant1', jobData)).rejects.toThrow(
-        'Scheduler error',
-      );
+      await expect(service.createJob('tenant1', jobData)).rejects.toThrow('Scheduler error');
     });
 
     it('should handle unregister errors gracefully', async () => {

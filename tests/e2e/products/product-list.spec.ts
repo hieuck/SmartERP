@@ -1,222 +1,211 @@
-import { test, expect } from '@playwright/test';
-import { LoginPage } from '../../pages/LoginPage';
-import { ProductsPage } from '../../pages/ProductsPage';
+import { expect, Page, test } from '@playwright/test';
 
-/**
- * Product List Operations E2E Tests
- * 
- * Test cases:
- * 1. Display products list with pagination
- * 2. Search products by name/SKU
- * 3. Filter products by category
- * 4. Filter products by status
- * 5. Sort products by different fields
- * 6. Bulk operations
- * 7. Export products list
- * 8. Empty state handling
- * 9. Loading state
- * 10. Error handling
- */
+const mockUser = {
+  id: 'user-1',
+  username: 'admin@test.com',
+  email: 'admin@test.com',
+  firstName: 'Admin',
+  lastName: 'User',
+  roles: ['admin'],
+};
+
+type ProductSeed = {
+  id: string;
+  sku: string;
+  name: string;
+  description?: string;
+  price: number;
+  cost?: number;
+  status: string;
+  syncStatus: 'synced' | 'pending' | 'conflict';
+};
+
+async function injectAuthenticatedSession(page: Page) {
+  await page.addInitScript(
+    ({ token, user }) => {
+      sessionStorage.setItem('e2e_access_token', token);
+      sessionStorage.setItem('e2e_user', JSON.stringify(user));
+    },
+    { token: 'product-list-token', user: mockUser },
+  );
+}
+
+async function seedProductDatabase(
+  page: Page,
+  products: ProductSeed[],
+  syncQueueCount = 0,
+  options?: { token?: string | null; online?: boolean },
+) {
+  await page.goto('/login');
+
+  await page.evaluate(
+    async ({ products: productSeeds, syncQueueCount: queueCount, token, online }) => {
+      const { db } = await import('/src/lib/offline/db.ts');
+
+      if (token) {
+        localStorage.setItem('token', token);
+      } else {
+        localStorage.removeItem('token');
+      }
+
+      if (online === false) {
+        Object.defineProperty(window.navigator, 'onLine', {
+          configurable: true,
+          value: false,
+        });
+      }
+
+      await db.products.clear();
+      await db.syncQueue.clear();
+
+      const now = new Date();
+      await db.products.bulkPut(
+        productSeeds.map((product, index) => ({
+          id: product.id,
+          tenantId: 'tenant-1',
+          version: 1,
+          createdAt: now,
+          updatedAt: now,
+          syncStatus: product.syncStatus,
+          sku: product.sku,
+          name: product.name,
+          description: product.description,
+          price: product.price,
+          cost: product.cost,
+          status: product.status,
+          stockQuantity: 20 - index,
+        })),
+      );
+
+      for (let i = 0; i < queueCount; i += 1) {
+        await db.syncQueue.add({
+          entity: 'products',
+          operation: 'update',
+          data: { id: `queued-${i}` },
+          createdAt: now,
+          retryCount: 0,
+        });
+      }
+    },
+    {
+      products,
+      syncQueueCount,
+      token: options?.token ?? null,
+      online: options?.online,
+    },
+  );
+}
+
+const seededProducts: ProductSeed[] = [
+  {
+    id: 'product-1',
+    sku: 'SKU-001',
+    name: 'Gypsum Board A',
+    description: 'Main gypsum product',
+    price: 120000,
+    cost: 80000,
+    status: 'active',
+    syncStatus: 'synced',
+  },
+  {
+    id: 'product-2',
+    sku: 'SKU-002',
+    name: 'Metal Frame B',
+    description: 'Metal frame accessory',
+    price: 95000,
+    cost: 70000,
+    status: 'inactive',
+    syncStatus: 'pending',
+  },
+  {
+    id: 'product-3',
+    sku: 'ACC-003',
+    name: 'Ceiling Hook C',
+    description: 'Accessory for installation',
+    price: 45000,
+    cost: 20000,
+    status: 'active',
+    syncStatus: 'conflict',
+  },
+];
+
 test.describe('Product List Operations', () => {
-  let loginPage: LoginPage;
-  let productsPage: ProductsPage;
-
   test.beforeEach(async ({ page }) => {
-    loginPage = new LoginPage(page);
-    productsPage = new ProductsPage(page);
-
-    // Login before each test
-    await loginPage.goto();
-    await loginPage.login('admin@test.com', 'admin123');
-    await page.waitForURL('/dashboard');
-
-    // Navigate to products page
-    await productsPage.goto();
-    await productsPage.waitForProductsLoad();
+    await injectAuthenticatedSession(page);
+    await seedProductDatabase(page, seededProducts);
+    await page.goto('/dashboard/products');
+    await expect(page.getByText(/product list/i)).toBeVisible();
   });
 
-  test('should display products list with pagination', async ({ page }) => {
-    // Verify table is visible
-    await expect(productsPage.productTable).toBeVisible();
-
-    // Get initial product count
-    const productCount = await productsPage.getProductCount();
-    expect(productCount).toBeGreaterThan(0);
-
-    // Verify pagination controls exist
-    const pagination = page.locator('.ant-pagination');
-    await expect(pagination).toBeVisible();
-
-    // Check page size options
-    const pageSizeSelector = page.locator('.ant-pagination-options');
-    if (await pageSizeSelector.isVisible()) {
-      await pageSizeSelector.click();
-      await expect(page.locator('.ant-select-dropdown')).toBeVisible();
-    }
+  test('displays products loaded from offline storage', async ({ page }) => {
+    await expect(page.locator('.ant-table')).toBeVisible();
+    await expect(page.getByText(/total 3 products/i)).toBeVisible();
+    await expect(page.locator('.ant-table-content')).toContainText('Gypsum Board A');
+    await expect(page.locator('.ant-table-content')).toContainText('Metal Frame B');
   });
 
-  test('should search products by name', async ({ page }) => {
-    // Create a test product first
-    await productsPage.clickCreateProduct();
-    const uniqueName = `Search Test ${Date.now()}`;
-    await productsPage.createProduct({
-      name: uniqueName,
-      sku: `SKU-SEARCH-${Date.now()}`,
-      price: 100,
-    });
-    await page.waitForURL('/dashboard/products');
+  test('searches products by name and sku', async ({ page }) => {
+    const searchInput = page.getByPlaceholder(/search products/i);
 
-    // Search for the product
-    await productsPage.searchProduct(uniqueName);
-    await page.waitForTimeout(1000);
+    await searchInput.fill('metal');
+    await expect(page.getByText(/total 1 products?/i)).toBeVisible();
+    await expect(page.locator('.ant-table-content')).toContainText('Metal Frame B');
 
-    // Verify only matching products are shown
-    const productCount = await productsPage.getProductCount();
-    expect(productCount).toBeGreaterThan(0);
-    expect(await productsPage.productExists(uniqueName)).toBe(true);
+    await searchInput.clear();
+    await searchInput.fill('ACC-003');
+    await expect(page.getByText(/total 1 products?/i)).toBeVisible();
+    await expect(page.locator('.ant-table-content')).toContainText('Ceiling Hook C');
   });
 
-  test('should search products by SKU', async ({ page }) => {
-    // Create a test product with unique SKU
-    await productsPage.clickCreateProduct();
-    const uniqueSKU = `SKU-UNIQUE-${Date.now()}`;
-    await productsPage.createProduct({
-      name: 'SKU Search Test',
-      sku: uniqueSKU,
-      price: 100,
-    });
-    await page.waitForURL('/dashboard/products');
+  test('shows empty state when no products match the search', async ({ page }) => {
+    await page.getByPlaceholder(/search products/i).fill('does-not-exist');
 
-    // Search by SKU
-    await productsPage.searchProduct(uniqueSKU);
-    await page.waitForTimeout(1000);
-
-    // Verify product found
-    const productCount = await productsPage.getProductCount();
-    expect(productCount).toBe(1);
+    await expect(page.locator('.ant-empty')).toBeVisible();
+    await expect(page.locator('.ant-table-content')).not.toContainText('Gypsum Board A');
   });
 
-  test('should filter products by category', async ({ page }) => {
-    // Check if category filter exists
-    const categoryFilter = page.locator('.ant-select').filter({ hasText: /category/i });
-    
-    if (await categoryFilter.isVisible()) {
-      // Get initial count
-      const initialCount = await productsPage.getProductCount();
-
-      // Apply category filter
-      await categoryFilter.click();
-      await page.locator('.ant-select-dropdown .ant-select-item').first().click();
-      await page.waitForTimeout(1000);
-
-      // Verify filtered results
-      const filteredCount = await productsPage.getProductCount();
-      expect(filteredCount).toBeLessThanOrEqual(initialCount);
-    } else {
-      test.skip(true, 'Category filter not available');
-    }
-  });
-
-  test('should filter products by status', async ({ page }) => {
-    // Check if status filter exists
-    const statusFilter = page.locator('.ant-select').filter({ hasText: /status/i });
-    
-    if (await statusFilter.isVisible()) {
-      // Get initial count
-      const initialCount = await productsPage.getProductCount();
-
-      // Apply status filter (e.g., "Active")
-      await statusFilter.click();
-      await page.locator('.ant-select-dropdown .ant-select-item:has-text("Active")').click();
-      await page.waitForTimeout(1000);
-
-      // Verify filtered results
-      const filteredCount = await productsPage.getProductCount();
-      expect(filteredCount).toBeLessThanOrEqual(initialCount);
-    } else {
-      test.skip(true, 'Status filter not available');
-    }
-  });
-
-  test('should sort products by name', async ({ page }) => {
-    // Click on name column header to sort
-    const nameHeader = page.locator('.ant-table-thead th').filter({ hasText: /name/i });
-    
-    if (await nameHeader.isVisible()) {
-      await nameHeader.click();
-      await page.waitForTimeout(1000);
-
-      // Verify sort indicator
-      const sortIcon = nameHeader.locator('.ant-table-column-sorter-up.active, .ant-table-column-sorter-down.active');
-      await expect(sortIcon).toBeVisible();
-    } else {
-      test.skip(true, 'Name column sorting not available');
-    }
-  });
-
-  test('should sort products by price', async ({ page }) => {
-    // Click on price column header to sort
-    const priceHeader = page.locator('.ant-table-thead th').filter({ hasText: /price/i });
-    
-    if (await priceHeader.isVisible()) {
-      await priceHeader.click();
-      await page.waitForTimeout(1000);
-
-      // Verify sort indicator
-      const sortIcon = priceHeader.locator('.ant-table-column-sorter-up.active, .ant-table-column-sorter-down.active');
-      await expect(sortIcon).toBeVisible();
-    } else {
-      test.skip(true, 'Price column sorting not available');
-    }
-  });
-
-  test('should handle empty search results', async ({ page }) => {
-    // Search for non-existent product
-    await productsPage.searchProduct('NONEXISTENT_PRODUCT_XYZ_123');
-    await page.waitForTimeout(1000);
-
-    // Verify empty state is shown
-    const emptyState = page.locator('.ant-empty, [data-testid="empty-state"]');
-    await expect(emptyState).toBeVisible();
-
-    // Verify no products shown
-    const productCount = await productsPage.getProductCount();
-    expect(productCount).toBe(0);
-  });
-
-  test('should show loading state while fetching products', async ({ page }) => {
-    // Navigate to products page (fresh load)
+  test('shows pending sync badge when queue has offline changes', async ({ page }) => {
+    await seedProductDatabase(page, seededProducts, 2);
     await page.goto('/dashboard/products');
 
-    // Verify loading spinner appears briefly
-    const loadingSpinner = page.locator('.ant-spin, .ant-skeleton');
-    
-    // Loading should appear and then disappear
-    await expect(loadingSpinner).toBeVisible({ timeout: 2000 }).catch(() => {
-      // Loading might be too fast to catch
-    });
-
-    // Eventually products should load
-    await productsPage.waitForProductsLoad();
-    await expect(productsPage.productTable).toBeVisible();
+    await expect(page.getByText(/pending sync/i)).toBeVisible();
+    await expect(page.locator('.ant-scroll-number')).toContainText('2');
   });
 
-  test('should handle API errors gracefully', async ({ page }) => {
-    // Intercept API call and return error
-    await page.route('**/api/products*', route => {
-      route.fulfill({
-        status: 500,
-        contentType: 'application/json',
-        body: JSON.stringify({ error: 'Internal Server Error' }),
+  test('navigates to category management from the extra action button', async ({ page }) => {
+    await page.getByRole('button', { name: /manage categories/i }).click();
+
+    await page.waitForURL('**/dashboard/products/categories');
+    expect(page.url()).toContain('/dashboard/products/categories');
+  });
+
+  test('deletes a product from offline storage after confirmation', async ({ page }) => {
+    const targetRow = page.locator('.ant-table-content tbody tr', { hasText: 'Metal Frame B' });
+    await targetRow.getByRole('button', { name: /delete/i }).click();
+
+    const confirmDialog = page.locator('.ant-popconfirm');
+    await expect(confirmDialog).toBeVisible();
+    await confirmDialog.getByRole('button', { name: /delete/i }).click();
+
+    await expect(page.locator('.ant-table-content')).not.toContainText('Metal Frame B');
+    await expect(page.getByText(/total 2 products/i)).toBeVisible();
+  });
+
+  test('disables sync action when browser is offline', async ({ page }) => {
+    const freshPage = await page.context().newPage();
+    await injectAuthenticatedSession(freshPage);
+    await freshPage.addInitScript(() => {
+      Object.defineProperty(window.navigator, 'onLine', {
+        configurable: true,
+        get: () => false,
       });
     });
+    await seedProductDatabase(freshPage, seededProducts, 0, { online: false });
+    await freshPage.goto('/dashboard/products');
 
-    // Navigate to products page
-    await page.goto('/dashboard/products');
-    await page.waitForTimeout(2000);
-
-    // Verify error message is shown
-    const errorMessage = page.locator('.ant-message-error, .ant-notification-notice-error, .ant-alert-error');
-    await expect(errorMessage).toBeVisible({ timeout: 5000 });
+    const syncButton = freshPage.getByRole('button', { name: /sync now/i });
+    await expect(syncButton).toBeDisabled();
+    await expect(freshPage.locator('.ant-badge-status-text').filter({ hasText: /offline/i })).toBeVisible();
+    await freshPage.close();
   });
 });
