@@ -63,7 +63,7 @@ export default function PageHeader({
         boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03)',
       }}
     >
-      <Space direction="vertical" size={16} style={{ width: '100%' }}>
+      <Space orientation="vertical" size={16} style={{ width: '100%' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Space size={16}>
             {showBack && (

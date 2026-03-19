@@ -120,7 +120,12 @@ function AppContent() {
   return (
     <ConfigProvider theme={theme} locale={antdLocale}>
       <AntApp>
-        <BrowserRouter>
+        <BrowserRouter
+          future={{
+            v7_relativeSplatPath: true,
+            v7_startTransition: true,
+          }}
+        >
           <AppRoutes />
         </BrowserRouter>
       </AntApp>
