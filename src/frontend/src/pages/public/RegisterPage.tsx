@@ -367,7 +367,7 @@ export default function RegisterPage() {
               <Title level={5} style={{ marginBottom: 16 }}>
                 {t('auth:register.benefits.title')}
               </Title>
-              <Space direction="vertical" size="small" style={{ width: '100%' }}>
+              <Space orientation="vertical" size="small" style={{ width: '100%' }}>
                 {benefitItems.map((benefit) => (
                   <div
                     key={benefit}
