@@ -10,11 +10,26 @@ export interface BaseRecord {
   id: string;
   tenantId: string;
   createdBy?: string;
+  userId?: string;
+  uploadedBy?: string;
 }
 
 @Injectable()
 export class PermissionService {
+  getOwnerField(entityName: string): 'createdBy' | 'userId' | 'uploadedBy' {
+    switch (entityName) {
+      case 'Notification':
+        return 'userId';
+      case 'Document':
+        return 'uploadedBy';
+      default:
+        return 'createdBy';
+    }
+  }
+
   canRead(user: User, record: BaseRecord, _entityName: string): boolean {
+    const ownerField = this.getOwnerField(_entityName);
+
     if (user.tenantId !== record.tenantId) {
       return false;
     }
@@ -27,10 +42,12 @@ export class PermissionService {
       return true;
     }
 
-    return record.createdBy === user.id;
+    return record[ownerField] === user.id;
   }
 
   canWrite(user: User, record: BaseRecord, _entityName: string): boolean {
+    const ownerField = this.getOwnerField(_entityName);
+
     if (user.tenantId !== record.tenantId) {
       return false;
     }
@@ -43,7 +60,7 @@ export class PermissionService {
       return true;
     }
 
-    return record.createdBy === user.id;
+    return record[ownerField] === user.id;
   }
 
   canDelete(user: User, record: BaseRecord, _entityName: string): boolean {
@@ -57,13 +74,13 @@ export class PermissionService {
   buildSecureQuery(
     user: User,
     baseWhere: { [key: string]: unknown },
-    _entityName: string,
+    entityName: string,
   ): { [key: string]: unknown } {
     const secureWhere = { ...baseWhere };
     secureWhere.tenantId = user.tenantId;
 
     if (!this.hasRole(user, 'admin') && !this.hasRole(user, 'manager')) {
-      secureWhere.createdBy = user.id;
+      secureWhere[this.getOwnerField(entityName)] = user.id;
     }
 
     return secureWhere;

@@ -46,12 +46,19 @@ export class SecureRepository<T extends Partial<PermissionRecord> = any> {
         throw new ForbiddenException('Access denied to update this record');
       }
     } else {
+      const ownerField = this.permissionService.getOwnerField(this.entityName);
+      const draftEntity = {
+        ...entity,
+        tenantId: user.tenantId,
+        [ownerField]: user.id,
+      } as T;
+
       // Check write permission for new entities
-      if (!this.permissionService.canWrite(user, entity as any, this.entityName)) {
+      if (!this.permissionService.canWrite(user, draftEntity as any, this.entityName)) {
         throw new ForbiddenException('Access denied to create this record');
       }
-      (entity as any).tenantId = user.tenantId;
-      (entity as any).createdBy = user.id;
+
+      Object.assign(entity, draftEntity);
     }
 
     return this.repository.save(entity as any);
