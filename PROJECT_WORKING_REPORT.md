@@ -830,3 +830,10 @@ Verification:
 - Replaced remaining user-facing `Space direction` usage with `orientation` across audit, customer, inventory, invoice, order, payment, product, report, search, supplier, user, and warehouse pages.
 - Verified the edited page set with targeted frontend lint.
 - This batch is intentionally logic-neutral: it removes an Ant Design deprecation source from runtime logs without changing business behavior.
+
+## 2026-03-19 Workflow Approval UI Cleanup
+- Rebuilt [src/frontend/src/components/workflow/WorkflowApproval.tsx](/e:/GitHub/smart-erp/src/frontend/src/components/workflow/WorkflowApproval.tsx) to remove mojibake Vietnamese copy and replace static `message` usage with `App.useApp().message`.
+- Updated [src/frontend/src/components/workflow/WorkflowApproval.test.tsx](/e:/GitHub/smart-erp/src/frontend/src/components/workflow/WorkflowApproval.test.tsx) so the test harness matches the new Ant Design context contract and asserts clean Vietnamese content directly.
+- Verified with:
+  - `npx.cmd vitest run src/components/workflow/WorkflowApproval.test.tsx`
+  - targeted `eslint` for the component and its test

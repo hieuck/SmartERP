@@ -1,9 +1,12 @@
+import { App } from 'antd';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { WorkflowApproval } from './WorkflowApproval';
 
-const { successMock } = vi.hoisted(() => ({
-  successMock: vi.fn(),
+const { messageMock } = vi.hoisted(() => ({
+  messageMock: {
+    success: vi.fn(),
+  },
 }));
 
 vi.mock('@ant-design/icons', () => ({
@@ -13,6 +16,9 @@ vi.mock('@ant-design/icons', () => ({
 }));
 
 vi.mock('antd', () => ({
+  App: Object.assign(({ children }: { children?: React.ReactNode }) => <div>{children}</div>, {
+    useApp: () => ({ message: messageMock }),
+  }),
   Button: ({
     children,
     onClick,
@@ -77,9 +83,6 @@ vi.mock('antd', () => ({
     </div>
   ),
   Tag: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
-  message: {
-    success: successMock,
-  },
 }));
 
 describe('WorkflowApproval', () => {
@@ -88,30 +91,42 @@ describe('WorkflowApproval', () => {
   });
 
   it('opens the detail modal for a selected request', () => {
-    render(<WorkflowApproval />);
+    render(
+      <App>
+        <WorkflowApproval />
+      </App>,
+    );
 
     fireEvent.click(screen.getAllByRole('button', { name: 'icon-eye' })[0]);
 
-    expect(screen.getByText(/Chi tiáº¿t yÃªu cáº§u|Chi tiết yêu cầu/)).toBeInTheDocument();
-    expect(screen.getAllByText(/ĐH-001|ÄH-001/).length).toBeGreaterThan(0);
-    expect(screen.getByLabelText(/Nháº­p ghi chÃº|Nhập ghi chú/)).toBeInTheDocument();
+    expect(screen.getByText('Chi tiết yêu cầu')).toBeInTheDocument();
+    expect(screen.getAllByText('ĐH-001').length).toBeGreaterThan(0);
+    expect(screen.getByLabelText('Nhập ghi chú...')).toBeInTheDocument();
   });
 
   it('approves a pending request and updates the rendered status', () => {
-    render(<WorkflowApproval />);
+    render(
+      <App>
+        <WorkflowApproval />
+      </App>,
+    );
 
-    fireEvent.click(screen.getAllByRole('button', { name: /Duyá»‡t|Duyệt/ })[0]);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Duyệt' })[0]);
 
-    expect(successMock).toHaveBeenCalledWith(expect.stringMatching(/ĐÃ£ phÃª duyá»‡t|Đã phê duyệt/));
-    expect(screen.getByText(/ÄÃ£ duyá»‡t|Đã duyệt/)).toBeInTheDocument();
+    expect(messageMock.success).toHaveBeenCalledWith('Đã phê duyệt');
+    expect(screen.getByText('Đã duyệt')).toBeInTheDocument();
   });
 
   it('rejects a pending request and updates the rendered status', () => {
-    render(<WorkflowApproval />);
+    render(
+      <App>
+        <WorkflowApproval />
+      </App>,
+    );
 
-    fireEvent.click(screen.getAllByRole('button', { name: /Tá»« chá»‘i|Từ chối/ })[0]);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Từ chối' })[0]);
 
-    expect(successMock).toHaveBeenCalledWith(expect.stringMatching(/ÄÃ£ tá»« chá»‘i|Đã từ chối/));
-    expect(screen.getAllByText(/Tá»« chá»‘i|Từ chối/).length).toBeGreaterThan(0);
+    expect(messageMock.success).toHaveBeenCalledWith('Đã từ chối');
+    expect(screen.getAllByText('Từ chối').length).toBeGreaterThan(0);
   });
 });

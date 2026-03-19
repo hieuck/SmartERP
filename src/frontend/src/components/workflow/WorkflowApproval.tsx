@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Table, Button, Space, Modal, Input, Tag, message } from 'antd';
+import { App, Button, Input, Modal, Space, Table, Tag } from 'antd';
 import { CheckOutlined, CloseOutlined, EyeOutlined } from '@ant-design/icons';
 
 const { TextArea } = Input;
@@ -14,6 +14,7 @@ interface ApprovalRequest {
 }
 
 export const WorkflowApproval: React.FC = () => {
+  const { message } = App.useApp();
   const [requests, setRequests] = useState<ApprovalRequest[]>([
     {
       id: '1',
@@ -47,7 +48,11 @@ export const WorkflowApproval: React.FC = () => {
       key: 'status',
       render: (status: string) => {
         const colors = { pending: 'orange', approved: 'green', rejected: 'red' };
-        const labels = { pending: 'Chờ duyệt', approved: 'Đã duyệt', rejected: 'Từ chối' };
+        const labels = {
+          pending: 'Chờ duyệt',
+          approved: 'Đã duyệt',
+          rejected: 'Từ chối',
+        };
         return (
           <Tag color={colors[status as keyof typeof colors]}>
             {labels[status as keyof typeof labels]}
@@ -58,7 +63,7 @@ export const WorkflowApproval: React.FC = () => {
     {
       title: 'Hành động',
       key: 'action',
-      render: (_: any, record: ApprovalRequest) => (
+      render: (_value: string, record: ApprovalRequest) => (
         <Space>
           <Button icon={<EyeOutlined />} onClick={() => handleView(record)} />
           {record.status === 'pending' && (
