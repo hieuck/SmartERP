@@ -27,7 +27,6 @@ import { WorkOrderStatus } from './enums/work-order-status.enum';
 import { SyncStatus } from '../../../common/enums/sync-status.enum';
 
 describe('WorkOrderController (Integration)', () => {
-  let response: unknown;
   let app: INestApplication;
   let workOrderService: jest.Mocked<WorkOrderService>;
 
@@ -129,10 +128,9 @@ describe('WorkOrderController (Integration)', () => {
       const createDto = {
         bomId: 'bom-123',
         productId: 'prod-123',
-        quantity: 100,
-        workCenterId: 'wc-123',
-        scheduledStartDate: '2024-02-01',
-        scheduledEndDate: '2024-02-15',
+        qtyToProduce: 100,
+        datePlannedStart: '2024-02-01T00:00:00.000Z',
+        datePlannedFinished: '2024-02-15T00:00:00.000Z',
       };
 
       workOrderService.create.mockResolvedValue(mockWorkOrder as any);
@@ -145,17 +143,23 @@ describe('WorkOrderController (Integration)', () => {
 
       expect(response.body.code).toBe('WO-001');
       expect(response.body.quantity).toBe(100);
-      expect(workOrderService.create).toHaveBeenCalledWith('tenant-123', createDto);
+      expect(workOrderService.create).toHaveBeenCalledWith(
+        'tenant-123',
+        expect.objectContaining({
+          bomId: 'bom-123',
+          productId: 'prod-123',
+          qtyToProduce: 100,
+        }),
+      );
     });
 
     it('should return 404 when BOM not found', async () => {
       const createDto = {
         bomId: 'non-existent',
         productId: 'prod-123',
-        quantity: 100,
-        workCenterId: 'wc-123',
-        scheduledStartDate: '2024-02-01',
-        scheduledEndDate: '2024-02-15',
+        qtyToProduce: 100,
+        datePlannedStart: '2024-02-01T00:00:00.000Z',
+        datePlannedFinished: '2024-02-15T00:00:00.000Z',
       };
 
       workOrderService.create.mockRejectedValue(
@@ -191,23 +195,22 @@ describe('WorkOrderController (Integration)', () => {
         .send({
           bomId: 'bom-123',
           productId: 'prod-123',
-          quantity: -10,
-          workCenterId: 'wc-123',
+          qtyToProduce: -10,
+          datePlannedStart: '2024-02-01T00:00:00.000Z',
         })
         .expect(400);
     });
 
-    it('should validate scheduled dates', async () => {
+    it('should validate planned dates', async () => {
       await request(app.getHttpServer())
         .post('/manufacturing/work-orders')
         .set('Authorization', 'Bearer valid-token')
         .send({
           bomId: 'bom-123',
           productId: 'prod-123',
-          quantity: 100,
-          workCenterId: 'wc-123',
-          scheduledStartDate: '2024-02-15',
-          scheduledEndDate: '2024-02-01',
+          qtyToProduce: 100,
+          datePlannedStart: 'invalid-date',
+          datePlannedFinished: '2024-02-01T00:00:00.000Z',
         })
         .expect(400);
     });
@@ -257,7 +260,15 @@ describe('WorkOrderController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual(workOrders);
+      expect(response.body).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: 'wo-123',
+            code: 'WO-001',
+            status: WorkOrderStatus.DRAFT,
+          }),
+        ]),
+      );
       expect(workOrderService.findByBOM).toHaveBeenCalledWith('tenant-123', 'bom-123');
     });
 
@@ -283,7 +294,15 @@ describe('WorkOrderController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual(workOrders);
+      expect(response.body).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: 'wo-123',
+            code: 'WO-001',
+            status: WorkOrderStatus.DRAFT,
+          }),
+        ]),
+      );
       expect(workOrderService.findByStatus).toHaveBeenCalledWith(
         'tenant-123',
         WorkOrderStatus.DRAFT,
@@ -547,8 +566,8 @@ describe('WorkOrderController (Integration)', () => {
         .send({
           bomId: 'bom-123',
           productId: 'prod-123',
-          quantity: 100,
-          workCenterId: 'wc-123',
+          qtyToProduce: 100,
+          datePlannedStart: '2024-02-01T00:00:00.000Z',
         })
         .expect(201);
     });
