@@ -59,8 +59,8 @@ const NotificationBell: React.FC = () => {
     }
   };
 
-  const handleMarkAsRead = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleMarkAsRead = async (id: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
     try {
       await notificationService.markAsRead(id);
       setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
@@ -94,7 +94,7 @@ const NotificationBell: React.FC = () => {
   const handleNotificationClick = (notification: Notification) => {
     // Mark as read
     if (!notification.isRead) {
-      handleMarkAsRead(notification.id, {} as React.MouseEvent);
+      void handleMarkAsRead(notification.id);
     }
 
     // Navigate based on notification link or metadata
@@ -105,7 +105,7 @@ const NotificationBell: React.FC = () => {
     }
   };
 
-  const getNotificationIcon = (_type: string) => {
+  const getNotificationIcon = () => {
     // Return appropriate icon based on notification type
     return '📢';
   };
@@ -187,7 +187,7 @@ const NotificationBell: React.FC = () => {
             >
               <List.Item.Meta
                 avatar={
-                  <span style={{ fontSize: 24 }}>{getNotificationIcon(notification.type)}</span>
+                  <span style={{ fontSize: 24 }}>{getNotificationIcon()}</span>
                 }
                 title={
                   <Space>
