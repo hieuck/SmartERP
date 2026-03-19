@@ -762,3 +762,14 @@ Verification:
 - the remaining backend deprecation is currently classified as dependency noise, not an app bug
 - `npm run runtime:smoke` now provides a single health snapshot for frontend, backend, database, and current error-log tails
 
+## 2026-03-19 Runtime Build Hygiene
+- Reproduced a backend runtime failure where `dist/main.js` booted with `MODULE_NOT_FOUND` for `common/logger` and `common/metrics` even though source files existed.
+- Root cause was build artifact hygiene on Windows: stale `dist` plus `tsconfig.build.tsbuildinfo` could leave runtime-critical files missing from the emitted tree.
+- Added `src/backend/scripts/clean-build.cjs` and changed the backend `build` script to clean `dist` and `tsconfig.build.tsbuildinfo` before `nest build`.
+- Verified with `npm.cmd run build`, `npx.cmd jest src/common/interceptors/query-performance.interceptor.spec.ts --runInBand`, and `npm.cmd run runtime:smoke`.
+- Runtime status after the fix: frontend `200`, backend health `200`, database reachable, manufacturing tables present.
+
+## 2026-03-19 Frontend UI Polish Batch
+- Modernized Ant Design `Space` usage in several user-facing components by replacing deprecated `direction` with `orientation`.
+- Preserved proper Vietnamese copy in the landing hero, tenant selector, and warehouse location picker instead of keeping ASCII-only placeholders.
+- Verified targeted frontend lint cleanly for the edited files.
