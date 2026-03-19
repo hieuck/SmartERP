@@ -1,4 +1,11 @@
-import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NestInterceptor,
+  ExecutionContext,
+  CallHandler,
+  Logger,
+  HttpException,
+} from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { MetricsService } from '../metrics/metrics.service';
@@ -52,19 +59,28 @@ export class QueryPerformanceInterceptor implements NestInterceptor {
         error: (error) => {
           const duration = Date.now() - startTime;
           const errorType = error.constructor.name;
+          const statusCode = error instanceof HttpException ? error.getStatus() : 500;
 
           // Record error metrics
           this.metricsService.incrementQueryError(method, url, errorType);
 
-          this.logger.error(`Query failed: ${method} ${url} after ${duration}ms`, {
+          const logMessage = `Query failed: ${method} ${url} after ${duration}ms`;
+          const logContext = {
             method,
             url,
             duration,
+            statusCode,
             error: error.message,
             errorType,
             stack: error.stack,
             timestamp: new Date().toISOString(),
-          });
+          };
+
+          if (statusCode >= 500) {
+            this.logger.error(logMessage, logContext);
+          } else {
+            this.logger.warn(logMessage, logContext);
+          }
         },
       }),
     );

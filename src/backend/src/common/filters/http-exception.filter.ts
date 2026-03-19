@@ -58,19 +58,22 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const userId = user?.id;
     const tenantId = user?.tenantId;
 
-    // Log error with full context
-    this.logger.error(
-      `${request.method} ${request.url} - ${errorMessage} - ${JSON.stringify({
-        statusCode: status,
-        errorCode,
-        userId,
-        tenantId,
-        body: request.body,
-        query: request.query,
-        params: request.params,
-      })}`,
-      exception instanceof Error ? exception.stack : '',
-    );
+    const logMessage = `${request.method} ${request.url} - ${errorMessage} - ${JSON.stringify({
+      statusCode: status,
+      errorCode,
+      userId,
+      tenantId,
+      body: request.body,
+      query: request.query,
+      params: request.params,
+    })}`;
+    const logStack = exception instanceof Error ? exception.stack : '';
+
+    if (status >= 500) {
+      this.logger.error(logMessage, logStack);
+    } else {
+      this.logger.warn(logMessage);
+    }
 
     response.status(status).json(errorResponse);
   }
@@ -85,6 +88,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       403: 'FORBIDDEN',
       404: 'NOT_FOUND',
       409: 'CONFLICT',
+      429: 'TOO_MANY_REQUESTS',
       422: 'UNPROCESSABLE_ENTITY',
       500: 'INTERNAL_SERVER_ERROR',
       502: 'BAD_GATEWAY',

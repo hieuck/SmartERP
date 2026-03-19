@@ -14,7 +14,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
-import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
+import { Throttle } from '@nestjs/throttler';
 import { Response as ExpressResponse } from 'express';
 import { AuthService } from './auth.service';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
@@ -43,7 +43,7 @@ export class AuthController {
     private readonly accountLockoutService: AccountLockoutService,
   ) {}
 
-  @UseGuards(ThrottlerGuard, LocalAuthGuard)
+  @UseGuards(LocalAuthGuard)
   @Throttle({ default: { limit: 100, ttl: 60000 } }) // 100 requests per minute for testing
   @Post('login')
   @HttpCode(HttpStatus.OK)
@@ -73,11 +73,11 @@ export class AuthController {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in ms
     });
 
-    const { refreshToken: _rt, ...response } = result;
+    const response = { ...result };
+    delete response.refreshToken;
     return response;
   }
 
-  @UseGuards(ThrottlerGuard)
   @Throttle({ default: { limit: 50, ttl: 3600000 } }) // 50 registrations per hour for testing
   @Post('register-tenant')
   @ApiOperation({
@@ -89,7 +89,6 @@ export class AuthController {
     return this.authService.registerTenant(registerTenantDto);
   }
 
-  @UseGuards(ThrottlerGuard)
   @Throttle({ default: { limit: 50, ttl: 3600000 } }) // 50 registrations per hour for testing
   @Post('register')
   @ApiOperation({ summary: 'User registration' })
@@ -163,7 +162,6 @@ export class AuthController {
     };
   }
 
-  @UseGuards(ThrottlerGuard)
   @Throttle({ default: { limit: 3, ttl: 3600000 } })
   @Post('forgot-password')
   @ApiOperation({ summary: 'Request password reset' })
@@ -172,7 +170,6 @@ export class AuthController {
     return this.authService.forgotPassword(forgotPasswordDto.email);
   }
 
-  @UseGuards(ThrottlerGuard)
   @Throttle({ default: { limit: 5, ttl: 3600000 } })
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
@@ -192,7 +189,6 @@ export class AuthController {
     return this.authService.resetPassword(resetPasswordDto.token, resetPasswordDto.newPassword);
   }
 
-  @UseGuards(ThrottlerGuard)
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Post('refresh')
   @ApiOperation({ summary: 'Refresh access token' })

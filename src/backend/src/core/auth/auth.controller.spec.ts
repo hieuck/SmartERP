@@ -22,7 +22,6 @@ import { AuthService } from './auth.service';
 import { TokenBlacklistService } from './services/token-blacklist.service';
 import { AccountLockoutService } from './services/account-lockout.service';
 import { JwtService } from '@nestjs/jwt';
-import { ThrottlerGuard } from '@nestjs/throttler';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
@@ -51,6 +50,7 @@ describe('AuthController (Integration)', () => {
 
   const mockAuthResponse = {
     token: 'mock-jwt-token',
+    refreshToken: 'mock-refresh-token',
     user: mockUser,
   };
 
@@ -140,8 +140,6 @@ describe('AuthController (Integration)', () => {
         },
       ],
     })
-      .overrideGuard(ThrottlerGuard)
-      .useValue({ canActivate: () => true })
       .overrideGuard(LocalAuthGuard)
       .useValue(mockLocalAuthGuard)
       .overrideGuard(JwtAuthGuard)
@@ -179,7 +177,13 @@ describe('AuthController (Integration)', () => {
         })
         .expect(200);
 
-      expect(response.body).toEqual(mockAuthResponse);
+      expect(response.body).toEqual({
+        token: mockAuthResponse.token,
+        user: mockAuthResponse.user,
+      });
+      expect(response.headers['set-cookie']).toEqual(
+        expect.arrayContaining([expect.stringContaining('refreshToken=mock-refresh-token')]),
+      );
       expect(accountLockoutService.isAccountLocked).toHaveBeenCalledWith('test@example.com');
       expect(accountLockoutService.resetAttempts).toHaveBeenCalledWith('test@example.com');
       expect(authService.login).toHaveBeenCalled();
@@ -666,6 +670,7 @@ describe('AuthController (Integration)', () => {
 
       authService.refreshToken.mockResolvedValue({
         accessToken: 'new-access-token',
+        user: mockUser,
       });
 
       const response = await request(app.getHttpServer())
@@ -714,7 +719,7 @@ describe('AuthController (Integration)', () => {
     });
 
     it('should require refreshToken field', async () => {
-      await request(app.getHttpServer()).post('/auth/refresh').send({}).expect(400);
+      await request(app.getHttpServer()).post('/auth/refresh').send({}).expect(401);
     });
   });
 });
