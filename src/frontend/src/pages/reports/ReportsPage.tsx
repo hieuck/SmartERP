@@ -13,6 +13,7 @@ import {
   useSalesReport,
   useTopCustomersReport,
 } from '@/hooks/useReports';
+import type { SalesReport } from '@/services/report/reportingService';
 import { BarChartOutlined, FileExcelOutlined, FilePdfOutlined } from '@ant-design/icons';
 import {
   Button,
@@ -26,6 +27,7 @@ import {
   Tabs,
   Typography,
 } from 'antd';
+import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -40,7 +42,7 @@ const ReportsPage: React.FC = () => {
     dayjs().startOf('month').format('YYYY-MM-DD'),
     dayjs().endOf('month').format('YYYY-MM-DD'),
   ]);
-  const [reportData, setReportData] = useState<any>(null);
+  const [reportData, setReportData] = useState<SalesReport | null>(null);
   const [activeTab, setActiveTab] = useState('sales');
   const [selectedReport, setSelectedReport] = useState<string>('sales');
 
@@ -69,8 +71,8 @@ const ReportsPage: React.FC = () => {
   const exportPDF = useExportReportPDF();
   const exportExcel = useExportReportExcel();
 
-  const handleDateRangeChange = (dates: any) => {
-    if (dates) {
+  const handleDateRangeChange = (dates: [Dayjs | null, Dayjs | null] | null) => {
+    if (dates?.[0] && dates[1]) {
       setDateRange([dates[0].format('YYYY-MM-DD'), dates[1].format('YYYY-MM-DD')]);
     }
   };
@@ -78,7 +80,7 @@ const ReportsPage: React.FC = () => {
   const fetchReport = async (reportType: string) => {
     setSelectedReport(reportType);
     try {
-      let data;
+      let data: unknown;
 
       switch (reportType) {
         case 'sales':
@@ -118,11 +120,11 @@ const ReportsPage: React.FC = () => {
           data = null;
       }
 
-      setReportData(data);
+      setReportData(reportType === 'sales' ? (data as SalesReport | null) : null);
       if (data) {
         message.success(t('reports:messages.loadSuccess'));
       }
-    } catch (error) {
+    } catch {
       message.error(t('reports:messages.loadError'));
     }
   };
@@ -134,7 +136,7 @@ const ReportsPage: React.FC = () => {
         endDate: dateRange[1],
       });
       message.success(t('reports:messages.exportPDFSuccess'));
-    } catch (error) {
+    } catch {
       message.error(t('reports:messages.exportPDFError'));
     }
   };
@@ -146,7 +148,7 @@ const ReportsPage: React.FC = () => {
         endDate: dateRange[1],
       });
       message.success(t('reports:messages.exportExcelSuccess'));
-    } catch (error) {
+    } catch {
       message.error(t('reports:messages.exportExcelError'));
     }
   };
@@ -154,9 +156,9 @@ const ReportsPage: React.FC = () => {
   const isLoading = selectedReport === 'sales' ? salesReport.isLoading : false;
 
   const renderSalesReports = () => (
-    <Space direction="vertical" style={{ width: '100%' }} size="large">
+      <Space orientation="vertical" style={{ width: '100%' }} size="large">
       <Card title={t('reports:sales.revenue')}>
-        <Space direction="vertical" style={{ width: '100%' }}>
+        <Space orientation="vertical" style={{ width: '100%' }}>
           <Space>
             <RangePicker
               value={[dayjs(dateRange[0]), dayjs(dateRange[1])]}
@@ -251,7 +253,7 @@ const ReportsPage: React.FC = () => {
   );
 
   const renderInventoryReports = () => (
-    <Space direction="vertical" style={{ width: '100%' }} size="large">
+      <Space orientation="vertical" style={{ width: '100%' }} size="large">
       <Card title={t('reports:inventory.stock')}>
         <Space>
           <Button type="primary" onClick={() => fetchReport('inventory')} loading={isLoading}>
@@ -285,7 +287,7 @@ const ReportsPage: React.FC = () => {
       </Card>
 
       <Card title={t('reports:inventory.movements')}>
-        <Space direction="vertical" style={{ width: '100%' }}>
+        <Space orientation="vertical" style={{ width: '100%' }}>
           <Space>
             <RangePicker
               value={[dayjs(dateRange[0]), dayjs(dateRange[1])]}
@@ -311,9 +313,9 @@ const ReportsPage: React.FC = () => {
   );
 
   const renderCustomerReports = () => (
-    <Space direction="vertical" style={{ width: '100%' }} size="large">
+      <Space orientation="vertical" style={{ width: '100%' }} size="large">
       <Card title={t('reports:customers.report')}>
-        <Space direction="vertical" style={{ width: '100%' }}>
+        <Space orientation="vertical" style={{ width: '100%' }}>
           <Space>
             <RangePicker
               value={[dayjs(dateRange[0]), dayjs(dateRange[1])]}
@@ -343,9 +345,9 @@ const ReportsPage: React.FC = () => {
   );
 
   const renderFinancialReports = () => (
-    <Space direction="vertical" style={{ width: '100%' }} size="large">
+      <Space orientation="vertical" style={{ width: '100%' }} size="large">
       <Card title={t('reports:financial.report')}>
-        <Space direction="vertical" style={{ width: '100%' }}>
+        <Space orientation="vertical" style={{ width: '100%' }}>
           <Space>
             <RangePicker
               value={[dayjs(dateRange[0]), dayjs(dateRange[1])]}

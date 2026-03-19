@@ -149,7 +149,7 @@ export default function LowStockAlert() {
       title: t('inventory:columns.level'),
       key: 'level',
       width: 100,
-      render: (_: any, record: LowStock) => {
+      render: (_value: unknown, record: LowStock) => {
         const colors = { critical: 'red', warning: 'orange', info: 'yellow' };
         return (
           <Tag color={colors[record.level]}>
@@ -308,7 +308,7 @@ export default function LowStockAlert() {
         <Alert
           message={t('inventory:lowStock.alertMessage')}
           description={
-            <Space direction="vertical">
+              <Space orientation="vertical">
               {criticalCount > 0 && (
                 <div>
                   <Tag color="red">{t('inventory:lowStock.level.critical')}</Tag>

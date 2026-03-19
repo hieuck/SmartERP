@@ -1,6 +1,7 @@
 import { useResponsive } from '@/hooks/useResponsive';
 import { logger } from '@/lib/logger/logger.service';
 import { AuditAction, AuditEntity, AuditLog, auditService } from '@/services/audit/auditService';
+import type { ActivityTimeline, AuditQueryParams, AuditStatistics } from '@/services/audit/auditService';
 import { EyeOutlined, FileTextOutlined, UserOutlined } from '@ant-design/icons';
 import {
   Button,
@@ -16,8 +17,9 @@ import {
   Table,
   Tag,
 } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
-import { useEffect, useState } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Bar,
@@ -50,11 +52,11 @@ export default function AuditLogPage() {
   const [loading, setLoading] = useState(false);
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [total, setTotal] = useState(0);
-  const [statistics, setStatistics] = useState<any>(null);
-  const [timeline, setTimeline] = useState<any[]>([]);
+  const [statistics, setStatistics] = useState<AuditStatistics | null>(null);
+  const [timeline, setTimeline] = useState<ActivityTimeline[]>([]);
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
   const [drawerVisible, setDrawerVisible] = useState(false);
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<AuditQueryParams>({
     page: 1,
     limit: 20,
     action: undefined as AuditAction | undefined,
@@ -75,8 +77,8 @@ export default function AuditLogPage() {
       const response = await auditService.getAll(filters);
       setLogs(response.data || []);
       setTotal(response.total || 0);
-    } catch (error: any) {
-      logger.error('AuditLogPage', 'Error fetching audit logs', error);
+    } catch (error: unknown) {
+      logger.error('AuditLogPage', 'Error fetching audit logs', error instanceof Error ? error : new Error('Error fetching audit logs'));
     } finally {
       setLoading(false);
     }
@@ -86,8 +88,8 @@ export default function AuditLogPage() {
     try {
       const stats = await auditService.getStatistics();
       setStatistics(stats);
-    } catch (error: any) {
-      logger.error('AuditLogPage', 'Error fetching statistics', error);
+    } catch (error: unknown) {
+      logger.error('AuditLogPage', 'Error fetching statistics', error instanceof Error ? error : new Error('Error fetching statistics'));
     }
   };
 
@@ -95,8 +97,8 @@ export default function AuditLogPage() {
     try {
       const data = await auditService.getTimeline(30);
       setTimeline(data);
-    } catch (error: any) {
-      logger.error('AuditLogPage', 'Error fetching timeline', error);
+    } catch (error: unknown) {
+      logger.error('AuditLogPage', 'Error fetching timeline', error instanceof Error ? error : new Error('Error fetching timeline'));
     }
   };
 
@@ -105,7 +107,7 @@ export default function AuditLogPage() {
     setDrawerVisible(true);
   };
 
-  const renderValue = (value: any) => {
+  const renderValue = (value: unknown): ReactNode => {
     if (!value) return '-';
     if (typeof value === 'object') {
       return <pre style={{ margin: 0, fontSize: 12 }}>{JSON.stringify(value, null, 2)}</pre>;
@@ -123,7 +125,7 @@ export default function AuditLogPage() {
     return t(`audit:entities.${entityKey}`);
   };
 
-  const columns = [
+  const columns: ColumnsType<AuditLog> = [
     {
       title: t('audit:columns.time'),
       dataIndex: 'createdAt',
@@ -172,7 +174,7 @@ export default function AuditLogPage() {
       key: 'action',
       width: 100,
       fixed: 'right' as const,
-      render: (_: any, record: AuditLog) => (
+      render: (_value: unknown, record: AuditLog) => (
         <Button
           type="link"
           size="small"
@@ -268,7 +270,7 @@ export default function AuditLogPage() {
       </Row>
 
       <Card title={t('audit:title')}>
-        <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+                <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
           <Space wrap>
             <Select
               placeholder={t('audit:filters.action')}
@@ -364,12 +366,12 @@ export default function AuditLogPage() {
             <Descriptions.Item label={t('audit:details.userAgent')}>
               {selectedLog.userAgent || '-'}
             </Descriptions.Item>
-            {selectedLog.oldValue && (
+            {Boolean(selectedLog.oldValue) && (
               <Descriptions.Item label={t('audit:details.oldValue')}>
                 {renderValue(selectedLog.oldValue)}
               </Descriptions.Item>
             )}
-            {selectedLog.newValue && (
+            {Boolean(selectedLog.newValue) && (
               <Descriptions.Item label={t('audit:details.newValue')}>
                 {renderValue(selectedLog.newValue)}
               </Descriptions.Item>

@@ -1,4 +1,5 @@
 import { logger } from '@/lib/logger/logger.service';
+import type { Invoice, Payment, SalesOrder } from '@/lib/offline/db';
 import { syncManager } from '@/lib/offline/sync-manager';
 import { PaymentMethod, PaymentStatus } from '@/services/accounting/paymentService';
 import { offlineServices } from '@/services/offline-services';
@@ -36,16 +37,27 @@ const { Title, Text } = Typography;
 const { Option } = Select;
 const { TextArea } = Input;
 
+type PaymentFormValues = {
+  invoiceId?: string;
+  orderId?: string;
+  amount: number;
+  paymentMethod: PaymentMethod;
+  paymentDate: dayjs.Dayjs;
+  status?: PaymentStatus;
+  transactionId?: string;
+  notes?: string;
+};
+
 const PaymentForm: React.FC = () => {
   const { t } = useTranslation(['payments', 'common']);
-  const [form] = Form.useForm();
+  const [form] = Form.useForm<PaymentFormValues>();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const [loading, setLoading] = useState(false);
-  const [invoices, setInvoices] = useState<any[]>([]);
-  const [orders, setOrders] = useState<any[]>([]);
-  const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
-  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [orders, setOrders] = useState<SalesOrder[]>([]);
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<SalesOrder | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [queueSize, setQueueSize] = useState(0);
@@ -162,9 +174,9 @@ const PaymentForm: React.FC = () => {
           invoiceId: payment.invoiceId,
           orderId: payment.orderId,
           amount: payment.amount,
-          paymentMethod: payment.paymentMethod,
+          paymentMethod: payment.paymentMethod as PaymentMethod,
           paymentDate: dayjs(payment.paymentDate),
-          status: payment.status,
+          status: payment.status as PaymentStatus,
           transactionId: payment.transactionId,
           notes: payment.notes,
         });
@@ -219,20 +231,22 @@ const PaymentForm: React.FC = () => {
     }
   };
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: PaymentFormValues) => {
     try {
       setLoading(true);
 
-      const paymentData = {
+      const paymentData: Omit<Payment, 'id' | 'version' | 'syncStatus' | 'createdAt' | 'updatedAt'> = {
+        tenantId: 'default',
         invoiceId: values.invoiceId,
-        orderId: values.orderId,
+        orderId: values.orderId ?? '',
         amount: values.amount,
         currency: 'VND',
         paymentMethod: values.paymentMethod,
-        paymentDate: values.paymentDate.toISOString(),
+        paymentDate: values.paymentDate.toDate(),
         status: values.status || PaymentStatus.PENDING,
         transactionId: values.transactionId,
         notes: values.notes,
+        metadata: {},
       };
 
       if (id) {
@@ -256,9 +270,9 @@ const PaymentForm: React.FC = () => {
       }
 
       navigate('/dashboard/payments');
-    } catch (error: any) {
-      logger.error('PaymentForm', 'Failed to save payment', error);
-      message.error(error.message || t('common:messages.error'));
+    } catch (error: unknown) {
+      logger.error('PaymentForm', 'Failed to save payment', error as Error);
+      message.error(error instanceof Error ? error.message : t('common:messages.error'));
     } finally {
       setLoading(false);
     }
@@ -361,7 +375,7 @@ const PaymentForm: React.FC = () => {
                   onChange={handleInvoiceChange}
                   optionFilterProp="children"
                   filterOption={(input, option) =>
-                    (option?.children as string).toLowerCase().includes(input.toLowerCase())
+                    String(option?.children ?? '').toLowerCase().includes(input.toLowerCase())
                   }
                 >
                   {invoices.map((invoice) => (
@@ -382,7 +396,7 @@ const PaymentForm: React.FC = () => {
                   onChange={handleOrderChange}
                   optionFilterProp="children"
                   filterOption={(input, option) =>
-                    (option?.children as string).toLowerCase().includes(input.toLowerCase())
+                    String(option?.children ?? '').toLowerCase().includes(input.toLowerCase())
                   }
                 >
                   {orders.map((order) => (
@@ -399,7 +413,7 @@ const PaymentForm: React.FC = () => {
             <Alert
               message={t('payments:paymentInfo')}
               description={
-                <Space direction="vertical" style={{ width: '100%' }}>
+          <Space orientation="vertical" style={{ width: '100%' }}>
                   {selectedInvoice && (
                     <>
                       <Text>
@@ -432,12 +446,12 @@ const PaymentForm: React.FC = () => {
                         {selectedOrder.totalAmount.toLocaleString('vi-VN')} ₫
                       </Text>
                       <Text>
-                        {t('common:paidAmount')}: {selectedOrder.paidAmount.toLocaleString('vi-VN')}{' '}
+                        {t('common:paidAmount')}: {(selectedOrder.paidAmount ?? 0).toLocaleString('vi-VN')}{' '}
                         ₫
                       </Text>
                       <Text strong>
                         {t('common:remainingAmount')}:{' '}
-                        {(selectedOrder.totalAmount - selectedOrder.paidAmount).toLocaleString(
+                        {(selectedOrder.totalAmount - (selectedOrder.paidAmount ?? 0)).toLocaleString(
                           'vi-VN',
                         )}{' '}
                         ₫

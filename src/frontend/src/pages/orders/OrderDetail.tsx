@@ -208,9 +208,23 @@ const OrderDetail: React.FC = () => {
     });
   };
 
-  // Parse items from order.items (Record<string, unknown>)
-  const orderItems: OrderItem[] = order?.items 
-    ? (Array.isArray(order.items) ? order.items : []) as OrderItem[]
+  // Parse items from order.items into a stable UI shape
+  const orderItems: OrderItem[] = Array.isArray(order?.items)
+    ? order.items.map((item, index) => {
+        const record = item as Partial<OrderItem>;
+        const quantity = Number(record.quantity) || 0;
+        const unitPrice = Number(record.unitPrice) || 0;
+
+        return {
+          id: typeof record.id === 'string' ? record.id : `item-${index}`,
+          productId: typeof record.productId === 'string' ? record.productId : '',
+          productName: typeof record.productName === 'string' ? record.productName : undefined,
+          sku: typeof record.sku === 'string' ? record.sku : undefined,
+          quantity,
+          unitPrice,
+          total: Number(record.total) || quantity * unitPrice,
+        };
+      })
     : [];
 
   const columns: ColumnsType<OrderItem> = [
@@ -276,7 +290,7 @@ const OrderDetail: React.FC = () => {
 
   return (
     <div style={{ padding: '24px' }}>
-      <Space direction="vertical" style={{ width: '100%' }} size="large">
+            <Space orientation="vertical" style={{ width: '100%' }} size="large">
         {/* Network Status & Sync */}
         <Card size="small">
           <Space>

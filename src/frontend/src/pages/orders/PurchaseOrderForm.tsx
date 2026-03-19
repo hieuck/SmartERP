@@ -1,6 +1,7 @@
 import MobileFormItemCard from '@/components/common/MobileFormItemCard';
 import { useResponsive } from '@/hooks/useResponsive';
 import { logger } from '@/lib/logger/logger.service';
+import type { Product, PurchaseOrder, Supplier } from '@/lib/offline/db';
 import { syncManager } from '@/lib/offline/sync-manager';
 import { offlineServices } from '@/services/offline-services';
 import {
@@ -44,17 +45,54 @@ interface OrderItem {
   subtotal: number;
 }
 
+type PurchaseOrderFormValues = {
+  supplierId: string;
+  orderDate: dayjs.Dayjs;
+  expectedDate?: dayjs.Dayjs | null;
+  tax?: number;
+  shippingFee?: number;
+  discount?: number;
+  deliveryAddress?: string;
+  paymentTerms?: string;
+  notes?: string;
+};
+
+type PurchaseOrderItemSource = {
+  productId: string;
+  productName?: string;
+  quantity: number;
+  unitCost?: number;
+  unitPrice?: number;
+  discountAmount?: number;
+  discount?: number;
+};
+
+type PurchaseOrderPayload = Omit<
+  PurchaseOrder,
+  'id' | 'version' | 'syncStatus' | 'createdAt' | 'updatedAt'
+> & {
+  taxAmount?: number;
+  items: Array<{
+    productId: string;
+    productName?: string;
+    quantity: number;
+    unitCost: number;
+    discountAmount: number;
+    subtotal: number;
+  }>;
+};
+
 export default function PurchaseOrderForm() {
   const { t } = useTranslation(['purchaseOrders', 'common']);
   const { isMobile } = useResponsive();
-  const [form] = Form.useForm();
+  const [form] = Form.useForm<PurchaseOrderFormValues>();
   const navigate = useNavigate();
   const { id } = useParams();
   const { token } = useToken();
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState<OrderItem[]>([]);
-  const [products, setProducts] = useState<any[]>([]);
-  const [suppliers, setSuppliers] = useState<any[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [totals, setTotals] = useState({ subtotal: 0, tax: 0, shipping: 0, discount: 0, total: 0 });
   const [syncing, setSyncing] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -163,15 +201,16 @@ export default function PurchaseOrderForm() {
         form.setFieldsValue(formValues);
 
         if (order.items && Array.isArray(order.items)) {
-          const mappedItems = order.items.map((item: any, index: number) => {
+          const mappedItems = order.items.map((item, index: number) => {
+            const orderItem = item as PurchaseOrderItemSource;
             const quantity = Number(item.quantity) || 0;
-            const unitPrice = Number(item.unitCost || item.unitPrice) || 0;
-            const discount = Number(item.discountAmount || item.discount) || 0;
+            const unitPrice = Number(orderItem.unitCost || orderItem.unitPrice) || 0;
+            const discount = Number(orderItem.discountAmount || orderItem.discount) || 0;
 
             return {
               key: `${index}`,
-              productId: item.productId,
-              productName: item.productName || 'Unknown',
+              productId: orderItem.productId,
+              productName: orderItem.productName || 'Unknown',
               quantity,
               unitPrice,
               discount,
@@ -184,10 +223,10 @@ export default function PurchaseOrderForm() {
 
         logger.info('PurchaseOrderForm', 'Loaded order from IndexedDB', { id });
       }
-    } catch (error: any) {
-      logger.error('PurchaseOrderForm', 'Failed to load order', error);
+    } catch (error: unknown) {
+      logger.error('PurchaseOrderForm', 'Failed to load order', error as Error);
       message.error(
-        `${t('purchaseOrders:messages.loadOrderError')}: ${error.message || 'Unknown error'}`,
+        `${t('purchaseOrders:messages.loadOrderError')}: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
     } finally {
       setLoading(false);
@@ -210,7 +249,7 @@ export default function PurchaseOrderForm() {
     setItems(items.filter((item) => item.key !== key));
   };
 
-  const updateItem = (key: string, field: keyof OrderItem, value: any) => {
+  const updateItem = (key: string, field: keyof OrderItem, value: string | number) => {
     const newItems = items.map((item) => {
       if (item.key === key) {
         const updated = { ...item, [field]: value };
@@ -246,7 +285,7 @@ export default function PurchaseOrderForm() {
     setTotals({ subtotal, tax, shipping, discount, total });
   };
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: PurchaseOrderFormValues) => {
     if (items.length === 0) {
       message.error(t('purchaseOrders:messages.addProductError'));
       return;
@@ -260,11 +299,12 @@ export default function PurchaseOrderForm() {
 
     try {
       setLoading(true);
-      const orderData = {
+      const orderData: PurchaseOrderPayload = {
+        tenantId: 'default',
         poNumber: `PO-${Date.now()}`,
         supplierId: values.supplierId,
-        orderDate: values.orderDate.format('YYYY-MM-DD'),
-        expectedDeliveryDate: values.expectedDate ? values.expectedDate.format('YYYY-MM-DD') : null,
+        orderDate: values.orderDate.toDate(),
+        expectedDeliveryDate: values.expectedDate ? values.expectedDate.toDate() : undefined,
         discountAmount: values.discount || 0,
         shippingFee: values.shippingFee || 0,
         taxAmount: values.tax || 0,
@@ -284,11 +324,11 @@ export default function PurchaseOrderForm() {
       };
 
       if (id) {
-        await offlineServices.purchaseOrders.update(id, orderData as any);
+        await offlineServices.purchaseOrders.update(id, orderData);
         message.success(t('purchaseOrders:messages.updateSuccess'));
         logger.info('PurchaseOrderForm', 'Updated purchase order', { id });
       } else {
-        await offlineServices.purchaseOrders.create(orderData as any);
+        await offlineServices.purchaseOrders.create(orderData);
         message.success(t('purchaseOrders:messages.createSuccess'));
         logger.info('PurchaseOrderForm', 'Created purchase order');
       }
@@ -304,9 +344,9 @@ export default function PurchaseOrderForm() {
       }
 
       navigate('/orders/purchase');
-    } catch (error: any) {
-      logger.error('PurchaseOrderForm', 'Failed to save order', error);
-      message.error(error.message || t('purchaseOrders:messages.saveError'));
+    } catch (error: unknown) {
+      logger.error('PurchaseOrderForm', 'Failed to save order', error as Error);
+      message.error(error instanceof Error ? error.message : t('purchaseOrders:messages.saveError'));
     } finally {
       setLoading(false);
     }
@@ -357,7 +397,7 @@ export default function PurchaseOrderForm() {
           placeholder={t('purchaseOrders:form.selectProduct')}
           showSearch
           filterOption={(input, option) =>
-            (option?.children as string).toLowerCase().includes(input.toLowerCase())
+            String(option?.children ?? '').toLowerCase().includes(input.toLowerCase())
           }
           style={{ width: '100%' }}
         >
@@ -420,7 +460,7 @@ export default function PurchaseOrderForm() {
     {
       title: '',
       width: '10%',
-      render: (_: any, record: OrderItem) => (
+      render: (_value: unknown, record: OrderItem) => (
         <Button
           type="text"
           danger
@@ -483,12 +523,12 @@ export default function PurchaseOrderForm() {
               placeholder={t('purchaseOrders:form.selectSupplier')}
               showSearch
               filterOption={(input, option) =>
-                (option?.children as string).toLowerCase().includes(input.toLowerCase())
+                String(option?.children ?? '').toLowerCase().includes(input.toLowerCase())
               }
             >
               {suppliers.map((supplier) => (
                 <Option key={supplier.id} value={supplier.id}>
-                  {supplier.name} - {supplier.code}
+                  {supplier.name} {supplier.email ? `- ${supplier.email}` : ''}
                 </Option>
               ))}
             </Select>
@@ -533,7 +573,7 @@ export default function PurchaseOrderForm() {
                       placeholder={t('purchaseOrders:form.selectProduct')}
                       showSearch
                       filterOption={(input, option) =>
-                        (option?.children as string).toLowerCase().includes(input.toLowerCase())
+                        String(option?.children ?? '').toLowerCase().includes(input.toLowerCase())
                       }
                       style={{ width: '100%' }}
                     >
@@ -619,7 +659,7 @@ export default function PurchaseOrderForm() {
           )}
 
           <div style={{ marginTop: 24, textAlign: 'right' }}>
-            <Space direction="vertical" style={{ width: 300 }}>
+                      <Space orientation="vertical" style={{ width: 300 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span>{t('purchaseOrders:form.subtotalLabel')}:</span>
                 <strong>{totals.subtotal.toLocaleString('vi-VN')} đ</strong>

@@ -277,7 +277,7 @@ const PaymentDetail: React.FC = () => {
 
   return (
     <div style={{ padding: '24px' }}>
-      <Space direction="vertical" style={{ width: '100%' }} size="large">
+            <Space orientation="vertical" style={{ width: '100%' }} size="large">
         {/* Network Status & Sync */}
         <Card size="small">
           <Space>

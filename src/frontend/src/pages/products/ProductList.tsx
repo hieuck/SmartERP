@@ -58,12 +58,13 @@ export default function ProductList() {
     try {
       logger.debug('ProductList', 'Loading products from offline storage');
       const allProducts = await offlineServices.products.getAll();
+      const visibleProducts = allProducts.filter((product) => !product.deletedAt);
       
       // Filter by search term
-      let filtered = allProducts;
+      let filtered = visibleProducts;
       if (search) {
         const searchLower = search.toLowerCase();
-        filtered = allProducts.filter(
+        filtered = visibleProducts.filter(
           (p) =>
             p.name.toLowerCase().includes(searchLower) ||
             p.sku.toLowerCase().includes(searchLower) ||
@@ -253,7 +254,7 @@ export default function ProductList() {
       createButtonText={t('products:form.create')}
       onCreateClick={() => navigate('/dashboard/products/new')}
       extraActions={
-        <Space direction={isMobile ? 'vertical' : 'horizontal'} style={{ width: isMobile ? '100%' : 'auto' }}>
+              <Space orientation={isMobile ? 'vertical' : 'horizontal'} style={{ width: isMobile ? '100%' : 'auto' }}>
           <Badge
             status={isOnline ? 'success' : 'error'}
             text={

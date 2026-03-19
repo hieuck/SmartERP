@@ -825,3 +825,8 @@ Verification:
   - `npx.cmd jest src/common/logger/logging.interceptor.spec.ts src/common/middleware/logging.middleware.spec.ts --runInBand`
   - `npm.cmd run build` in `src/backend`
 - Current remaining backend runtime noise is down to dependency-level deprecation from `bcrypt/@mapbox/node-pre-gyp` and query logging for `SELECT 1`, not app-layer request logging.
+
+## 2026-03-19 Frontend Space Deprecation Cleanup
+- Replaced remaining user-facing `Space direction` usage with `orientation` across audit, customer, inventory, invoice, order, payment, product, report, search, supplier, user, and warehouse pages.
+- Verified the edited page set with targeted frontend lint.
+- This batch is intentionally logic-neutral: it removes an Ant Design deprecation source from runtime logs without changing business behavior.

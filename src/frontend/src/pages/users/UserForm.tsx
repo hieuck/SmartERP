@@ -1,4 +1,5 @@
 import { logger } from '@/lib/logger/logger.service';
+import type { User } from '@/lib/offline/db';
 import { syncManager } from '@/lib/offline/sync-manager';
 import authService from '@/services/auth/authService';
 import { offlineServices } from '@/services/offline-services';
@@ -10,11 +11,21 @@ import { useNavigate, useParams } from 'react-router-dom';
 const { Title } = Typography;
 const { Option } = Select;
 
+type UserFormValues = {
+  email: string;
+  password?: string;
+  confirmPassword?: string;
+  firstName?: User['firstName'];
+  lastName?: User['lastName'];
+  role: User['role'];
+  status: User['status'];
+};
+
 const UserForm: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const isEdit = !!id;
-  const [form] = Form.useForm();
+  const [form] = Form.useForm<UserFormValues>();
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -95,7 +106,7 @@ const UserForm: React.FC = () => {
     }
   };
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: UserFormValues) => {
     try {
       setLoading(true);
 
@@ -107,6 +118,10 @@ const UserForm: React.FC = () => {
       } else {
         // Create new user via register endpoint (requires password)
         // Note: This uses authService.register which creates user + auth
+        if (!values.password) {
+          throw new Error('Password is required');
+        }
+
         await authService.register({
           email: values.email,
           password: values.password,
@@ -131,7 +146,7 @@ const UserForm: React.FC = () => {
   return (
     <div style={{ padding: '24px' }}>
       <Card>
-        <Space direction="vertical" style={{ width: '100%' }} size="large">
+          <Space orientation="vertical" style={{ width: '100%' }} size="large">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Title level={3}>
               <UserOutlined /> {isEdit ? 'Chỉnh sửa người dùng' : 'Thêm người dùng mới'}

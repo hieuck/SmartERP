@@ -186,7 +186,7 @@ const WarehouseStockReport = () => {
     {
       title: t('warehouses:report.status'),
       key: 'status',
-      render: (_: any, record: Stock) => {
+      render: (_value: unknown, record: Stock) => {
         const isLow = record.quantity <= record.minStockLevel;
         return isLow ? (
           <Tag color="red" icon={<WarningOutlined />}>
@@ -256,7 +256,7 @@ const WarehouseStockReport = () => {
           </Space>
         }
       >
-        <Space direction="vertical" style={{ width: '100%', marginBottom: 16 }}>
+      <Space orientation="vertical" style={{ width: '100%', marginBottom: 16 }}>
           <Space wrap>
             <Select
               placeholder={t('warehouses:report.selectWarehouse')}

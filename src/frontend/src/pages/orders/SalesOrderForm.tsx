@@ -1,6 +1,7 @@
 import MobileFormItemCard from '@/components/common/MobileFormItemCard';
 import { useResponsive } from '@/hooks/useResponsive';
 import { logger } from '@/lib/logger/logger.service';
+import type { Customer, Product, SalesOrder } from '@/lib/offline/db';
 import { syncManager } from '@/lib/offline/sync-manager';
 import { offlineServices } from '@/services/offline-services';
 import { formatCurrency } from '@/utils/responsive';
@@ -45,17 +46,56 @@ interface OrderItem {
   subtotal: number;
 }
 
+type SalesOrderFormValues = {
+  customerId: string;
+  orderDate: dayjs.Dayjs;
+  deliveryDate?: dayjs.Dayjs | null;
+  tax?: number;
+  shippingFee?: number;
+  discount?: number;
+  shippingAddress?: string;
+  billingAddress?: string;
+  paymentMethod?: string;
+  notes?: string;
+};
+
+type SalesOrderItemSource = {
+  productId: string;
+  productName?: string;
+  quantity: number;
+  unitPrice?: number;
+  discountAmount?: number;
+  discount?: number;
+};
+
+type SalesOrderPayload = Omit<
+  SalesOrder,
+  'id' | 'version' | 'syncStatus' | 'createdAt' | 'updatedAt' | 'items'
+> & {
+  shippingAddress?: string;
+  billingAddress?: string;
+  paymentMethod?: string;
+  items: Array<{
+    productId: string;
+    productName?: string;
+    quantity: number;
+    unitPrice: number;
+    discountAmount: number;
+    subtotal: number;
+  }>;
+};
+
 export default function SalesOrderForm() {
   const { isMobile } = useResponsive();
   const { t, i18n } = useTranslation(['orders', 'commonUi']);
-  const [form] = Form.useForm();
+  const [form] = Form.useForm<SalesOrderFormValues>();
   const navigate = useNavigate();
   const { id } = useParams();
   const { token } = useToken();
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState<OrderItem[]>([]);
-  const [products, setProducts] = useState<any[]>([]);
-  const [customers, setCustomers] = useState<any[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [totals, setTotals] = useState({ subtotal: 0, tax: 0, shipping: 0, discount: 0, total: 0 });
   const [syncing, setSyncing] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -168,15 +208,16 @@ export default function SalesOrderForm() {
 
         if (order.items && Array.isArray(order.items)) {
           setItems(
-            order.items.map((item: any, index: number) => {
-              const quantity = Number(item.quantity) || 0;
-              const unitPrice = Number(item.unitPrice) || 0;
-              const discount = Number(item.discountAmount || item.discount) || 0;
+            order.items.map((item, index: number) => {
+              const orderItem = item as SalesOrderItemSource;
+              const quantity = Number(orderItem.quantity) || 0;
+              const unitPrice = Number(orderItem.unitPrice) || 0;
+              const discount = Number(orderItem.discountAmount || orderItem.discount) || 0;
 
               return {
                 key: `${index}`,
-                productId: item.productId,
-                productName: item.productName,
+                productId: orderItem.productId,
+                productName: orderItem.productName,
                 quantity,
                 unitPrice,
                 discount,
@@ -212,7 +253,7 @@ export default function SalesOrderForm() {
     setItems(items.filter((item) => item.key !== key));
   };
 
-  const updateItem = (key: string, field: keyof OrderItem, value: any) => {
+  const updateItem = (key: string, field: keyof OrderItem, value: string | number) => {
     const newItems = items.map((item) => {
       if (item.key === key) {
         const updated = { ...item, [field]: value };
@@ -248,7 +289,7 @@ export default function SalesOrderForm() {
     setTotals({ subtotal, tax, shipping, discount, total });
   };
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: SalesOrderFormValues) => {
     if (items.length === 0) {
       message.error(t('orders:form.validation.itemsRequired'));
       return;
@@ -262,10 +303,12 @@ export default function SalesOrderForm() {
 
     try {
       setLoading(true);
-      const orderData = {
+      const orderData: SalesOrderPayload = {
+        tenantId: 'default',
+        orderNumber: `SO-${Date.now()}`,
         customerId: values.customerId,
         orderDate: values.orderDate.format('YYYY-MM-DD'),
-        expectedDeliveryDate: values.deliveryDate ? values.deliveryDate.format('YYYY-MM-DD') : null,
+        expectedDeliveryDate: values.deliveryDate ? values.deliveryDate.format('YYYY-MM-DD') : undefined,
         discountAmount: values.discount || 0,
         shippingFee: values.shippingFee || 0,
         taxAmount: values.tax || 0,
@@ -286,11 +329,11 @@ export default function SalesOrderForm() {
       };
 
       if (id) {
-        await offlineServices.salesOrders.update(id, orderData as any);
+        await offlineServices.salesOrders.update(id, orderData);
         message.success(t('orders:form.messages.updateSuccess'));
         logger.info('SalesOrderForm', 'Updated sales order', { id });
       } else {
-        await offlineServices.salesOrders.create(orderData as any);
+        await offlineServices.salesOrders.create(orderData);
         message.success(t('orders:form.messages.createSuccess'));
         logger.info('SalesOrderForm', 'Created sales order');
       }
@@ -306,9 +349,9 @@ export default function SalesOrderForm() {
       }
 
       navigate('/orders/sales');
-    } catch (error: any) {
-      logger.error('SalesOrderForm', 'Failed to save order', error);
-      message.error(error.message || t('orders:form.messages.saveError'));
+    } catch (error: unknown) {
+      logger.error('SalesOrderForm', 'Failed to save order', error as Error);
+      message.error(error instanceof Error ? error.message : t('orders:form.messages.saveError'));
     } finally {
       setLoading(false);
     }
@@ -363,7 +406,7 @@ export default function SalesOrderForm() {
             placeholder={t('orders:form.placeholders.selectProduct')}
             showSearch
             filterOption={(input, option) =>
-              (option?.children as string).toLowerCase().includes(input.toLowerCase())
+              String(option?.children ?? '').toLowerCase().includes(input.toLowerCase())
             }
             style={{ width: '100%' }}
           >
@@ -426,7 +469,7 @@ export default function SalesOrderForm() {
       {
         title: '',
         width: '10%',
-        render: (_: any, record: OrderItem) => (
+        render: (_value: unknown, record: OrderItem) => (
           <Button
             type="text"
             danger
@@ -489,12 +532,12 @@ export default function SalesOrderForm() {
               placeholder={t('orders:form.placeholders.selectCustomer')}
               showSearch
               filterOption={(input, option) =>
-                (option?.children as string).toLowerCase().includes(input.toLowerCase())
+                String(option?.children ?? '').toLowerCase().includes(input.toLowerCase())
               }
             >
               {customers.map((customer) => (
                 <Option key={customer.id} value={customer.id}>
-                  {customer.name} - {customer.code}
+                  {customer.name} {customer.email ? `- ${customer.email}` : ''}
                 </Option>
               ))}
             </Select>
@@ -539,7 +582,7 @@ export default function SalesOrderForm() {
                       placeholder={t('orders:form.placeholders.selectProduct')}
                       showSearch
                       filterOption={(input, option) =>
-                        (option?.children as string).toLowerCase().includes(input.toLowerCase())
+                        String(option?.children ?? '').toLowerCase().includes(input.toLowerCase())
                       }
                       style={{ width: '100%' }}
                     >
@@ -625,7 +668,7 @@ export default function SalesOrderForm() {
           )}
 
           <div style={{ marginTop: 24, textAlign: 'right' }}>
-            <Space direction="vertical" style={{ width: 300 }}>
+                      <Space orientation="vertical" style={{ width: 300 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span>{t('orders:form.totals.subtotal')}:</span>
                 <strong>{memoizedFormatCurrency(totals.subtotal)}</strong>

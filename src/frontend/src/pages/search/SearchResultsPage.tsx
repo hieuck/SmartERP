@@ -23,13 +23,32 @@ import {
   ShoppingCartOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import searchService, { SearchResult } from '@/services/utils/searchService';
+import type { Dayjs } from 'dayjs';
+import searchService, {
+  SearchHit,
+  SearchResult,
+} from '@/services/utils/searchService';
 import AdvancedFilterPanel from '@/components/search/AdvancedFilterPanel';
 import { logger } from '@/lib/logger/logger.service';
 
 const { Search } = Input;
-const { Title, Text } = Typography;
+const { Text } = Typography;
 const { TabPane } = Tabs;
+
+type FilterValue = string | number | boolean | Dayjs[] | null | undefined;
+type FilterMap = Record<string, FilterValue>;
+
+function getStringValue(value: unknown, fallback = ''): string {
+  return typeof value === 'string' ? value : fallback;
+}
+
+function getDisplayValue(value: unknown, fallback = ''): string {
+  if (typeof value === 'string' || typeof value === 'number') {
+    return String(value);
+  }
+
+  return fallback;
+}
 
 const SearchResultsPage: React.FC = () => {
   const { t } = useTranslation();
@@ -40,7 +59,7 @@ const SearchResultsPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<SearchResult | null>(null);
   const [filterVisible, setFilterVisible] = useState(false);
-  const [filters, setFilters] = useState<Record<string, any>>({});
+  const [filters, setFilters] = useState<FilterMap>({});
 
   useEffect(() => {
     const q = searchParams.get('q');
@@ -94,7 +113,7 @@ const SearchResultsPage: React.FC = () => {
     }
   };
 
-  const handleApplyFilters = (newFilters: Record<string, any>) => {
+  const handleApplyFilters = (newFilters: FilterMap) => {
     setFilters(newFilters);
     if (query) {
       performSearch(query);
@@ -118,55 +137,58 @@ const SearchResultsPage: React.FC = () => {
     }
   };
 
-  const renderResultItem = (hit: any) => {
+  const renderResultItem = (hit: SearchHit) => {
     const source = hit._source;
     const type = hit._index;
 
-    let icon, title, description, tags;
+    let icon: React.ReactNode;
+    let title: string;
+    let description: string;
+    let tags: React.ReactNode[] = [];
 
     switch (type) {
       case 'products':
         icon = <ShoppingOutlined style={{ fontSize: 24, color: '#1890ff' }} />;
-        title = source.name;
-        description = `${t('search.fields.sku')}: ${source.sku} | ${t('search.fields.price')}: ${source.salePrice?.toLocaleString()} VND`;
+        title = getStringValue(source.name, t('search.types.unknown'));
+        description = `${t('search.fields.sku')}: ${getDisplayValue(source.sku)} | ${t('search.fields.price')}: ${getDisplayValue(source.salePrice)} VND`;
         tags = [
           <Tag color="blue" key="type">
             {t('search.types.product')}
           </Tag>,
-          <Tag key="status">{source.status}</Tag>,
+          <Tag key="status">{getDisplayValue(source.status)}</Tag>,
         ];
         break;
       case 'customers':
         icon = <UserOutlined style={{ fontSize: 24, color: '#52c41a' }} />;
-        title = source.name;
-        description = `${t('search.fields.code')}: ${source.code} | ${t('search.fields.type')}: ${source.type}`;
+        title = getStringValue(source.name, t('search.types.unknown'));
+        description = `${t('search.fields.code')}: ${getDisplayValue(source.code)} | ${t('search.fields.type')}: ${getDisplayValue(source.type)}`;
         tags = [
           <Tag color="green" key="type">
             {t('search.types.customer')}
           </Tag>,
-          <Tag key="status">{source.status}</Tag>,
+          <Tag key="status">{getDisplayValue(source.status)}</Tag>,
         ];
         break;
       case 'suppliers':
         icon = <TeamOutlined style={{ fontSize: 24, color: '#fa8c16' }} />;
-        title = source.name;
-        description = `${t('search.fields.code')}: ${source.code} | ${t('search.fields.rating')}: ${source.rating || t('search.fields.na')}`;
+        title = getStringValue(source.name, t('search.types.unknown'));
+        description = `${t('search.fields.code')}: ${getDisplayValue(source.code)} | ${t('search.fields.rating')}: ${getDisplayValue(source.rating, t('search.fields.na'))}`;
         tags = [
           <Tag color="orange" key="type">
             {t('search.types.supplier')}
           </Tag>,
-          <Tag key="status">{source.status}</Tag>,
+          <Tag key="status">{getDisplayValue(source.status)}</Tag>,
         ];
         break;
       case 'orders':
         icon = <ShoppingCartOutlined style={{ fontSize: 24, color: '#722ed1' }} />;
-        title = `${t('search.fields.order')} ${source.code}`;
-        description = `${t('search.fields.total')}: ${source.totalAmount?.toLocaleString()} VND | ${t('search.fields.date')}: ${source.orderDate}`;
+        title = `${t('search.fields.order')} ${getDisplayValue(source.code)}`;
+        description = `${t('search.fields.total')}: ${getDisplayValue(source.totalAmount)} VND | ${t('search.fields.date')}: ${getDisplayValue(source.orderDate)}`;
         tags = [
           <Tag color="purple" key="type">
             {source.type === 'sales' ? t('search.types.sales') : t('search.types.purchase')}
           </Tag>,
-          <Tag key="status">{source.status}</Tag>,
+          <Tag key="status">{getDisplayValue(source.status)}</Tag>,
         ];
         break;
       default:
@@ -206,7 +228,7 @@ const SearchResultsPage: React.FC = () => {
   return (
     <div style={{ padding: '24px' }}>
       <Card>
-        <Space direction="vertical" size="large" style={{ width: '100%' }}>
+        <Space orientation="vertical" size="large" style={{ width: '100%' }}>
           <Row gutter={16} align="middle">
             <Col flex="auto">
               <Search

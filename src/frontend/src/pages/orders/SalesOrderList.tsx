@@ -328,7 +328,7 @@ export default function SalesOrderList() {
       createButtonText={t('orders:createButton')}
       onCreateClick={() => navigate('/dashboard/orders/sales/new')}
       extraActions={
-        <Space direction={isMobile ? 'vertical' : 'horizontal'} style={{ width: isMobile ? '100%' : 'auto' }}>
+              <Space orientation={isMobile ? 'vertical' : 'horizontal'} style={{ width: isMobile ? '100%' : 'auto' }}>
           <Badge
             status={isOnline ? 'success' : 'error'}
             text={

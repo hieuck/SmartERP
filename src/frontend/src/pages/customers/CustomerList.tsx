@@ -258,7 +258,7 @@ export default function CustomerList() {
       createButtonText={t('customers:createButton')}
       onCreateClick={() => navigate('/dashboard/customers/new')}
       extraActions={
-        <Space direction={isMobile ? 'vertical' : 'horizontal'} style={{ width: isMobile ? '100%' : 'auto' }}>
+              <Space orientation={isMobile ? 'vertical' : 'horizontal'} style={{ width: isMobile ? '100%' : 'auto' }}>
           <Badge
             status={isOnline ? 'success' : 'error'}
             text={

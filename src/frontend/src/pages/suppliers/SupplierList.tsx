@@ -251,7 +251,7 @@ export default function SupplierList() {
       createButtonText={t('suppliers:createButton')}
       onCreateClick={() => navigate('/dashboard/suppliers/new')}
       extraActions={
-        <Space direction={isMobile ? 'vertical' : 'horizontal'} style={{ width: isMobile ? '100%' : 'auto' }}>
+              <Space orientation={isMobile ? 'vertical' : 'horizontal'} style={{ width: isMobile ? '100%' : 'auto' }}>
           <Badge
             status={isOnline ? 'success' : 'error'}
             text={

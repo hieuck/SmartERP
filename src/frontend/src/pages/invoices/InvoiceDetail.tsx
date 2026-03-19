@@ -276,7 +276,7 @@ const InvoiceDetail: React.FC = () => {
 
   return (
     <div style={{ padding: '24px' }}>
-      <Space direction="vertical" style={{ width: '100%' }} size="large">
+            <Space orientation="vertical" style={{ width: '100%' }} size="large">
         <Card size="small">
           <Space>
             <Badge status={isOnline ? 'success' : 'error'} />
