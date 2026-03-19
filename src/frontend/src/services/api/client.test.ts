@@ -13,6 +13,7 @@ type ResponseRejectedHandler = (error: {
 const requestUse = vi.fn();
 const responseUse = vi.fn();
 const axiosPost = vi.fn();
+const axiosCreate = vi.fn();
 const apiCall = vi.fn();
 const getState = vi.fn();
 const dispatch = vi.fn();
@@ -23,7 +24,7 @@ const updateAccessToken = vi.fn((token: string) => ({
 }));
 
 vi.mock('axios', () => {
-  const create = vi.fn(() => {
+  axiosCreate.mockImplementation(() => {
     const instance = Object.assign(apiCall, {
       interceptors: {
         request: { use: requestUse },
@@ -35,10 +36,10 @@ vi.mock('axios', () => {
 
   return {
     default: {
-      create,
+      create: axiosCreate,
       post: axiosPost,
     },
-    create,
+    create: axiosCreate,
     post: axiosPost,
   };
 });
@@ -74,6 +75,17 @@ describe('api client', () => {
     document.head.appendChild(meta);
   });
 
+  it('prefers the local proxy base URL on localhost development runs', async () => {
+    await importClient();
+
+    expect(axiosCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        baseURL: '/api',
+        withCredentials: true,
+      }),
+    );
+  });
+
   it('adds access token and csrf token in request interceptor', async () => {
     await importClient();
 
@@ -101,7 +113,7 @@ describe('api client', () => {
     });
 
     expect(axiosPost).toHaveBeenCalledWith(
-      'http://localhost:3000/api/auth/refresh',
+      '/api/auth/refresh',
       {},
       { withCredentials: true },
     );

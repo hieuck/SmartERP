@@ -2,7 +2,29 @@ import { store } from '@/store';
 import { clearCredentials, updateAccessToken } from '@/store/slices/authSlice';
 import axios, { InternalAxiosRequestConfig } from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+function resolveApiBaseUrl(): string {
+  const configuredBaseUrl = import.meta.env.VITE_API_URL?.trim();
+
+  if (!configuredBaseUrl) {
+    return '/api';
+  }
+
+  if (!import.meta.env.DEV) {
+    return configuredBaseUrl;
+  }
+
+  if (/^https?:\/\//i.test(configuredBaseUrl)) {
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+    if (isLocalhost) {
+      return '/api';
+    }
+  }
+
+  return configuredBaseUrl;
+}
+
+const API_BASE_URL = resolveApiBaseUrl();
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -16,10 +38,10 @@ const api = axios.create({
 let isRefreshing = false;
 let failedQueue: Array<{
   resolve: (token: string) => void;
-  reject: (error: any) => void;
+  reject: (error: unknown) => void;
 }> = [];
 
-const processQueue = (error: any, token?: string) => {
+const processQueue = (error: unknown, token?: string) => {
   failedQueue.forEach((prom) => {
     if (error) {
       prom.reject(error);
@@ -73,7 +95,7 @@ api.interceptors.response.use(
               originalRequest.headers.Authorization = `Bearer ${token}`;
               resolve(api(originalRequest));
             },
-            reject: (err: any) => reject(err),
+            reject: (err: unknown) => reject(err),
           });
         });
       }
