@@ -5,7 +5,6 @@ import { defineConfig } from 'vite';
 export default defineConfig({
   plugins: [react()],
   resolve: {
-    tsconfigPaths: true,
     alias: {
       '@': path.resolve(__dirname, './src'),
       '@shared/types': path.resolve(__dirname, '../shared/types/src'),
