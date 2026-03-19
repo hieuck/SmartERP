@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, Radio, Button, Space, message, Typography, theme } from 'antd';
+import { App, Modal, Radio, Button, Space, Typography, theme } from 'antd';
 import { DownloadOutlined, FileExcelOutlined, FileTextOutlined } from '@ant-design/icons';
 import importExportService from '@/services/import-export/importExportService';
 import { logger } from '@/lib/logger/logger.service';
@@ -17,6 +17,7 @@ interface ExportDialogProps {
 const ExportDialog: React.FC<ExportDialogProps> = ({ visible, onClose, type, title }) => {
   const [format, setFormat] = useState<'excel' | 'csv'>('excel');
   const [loading, setLoading] = useState(false);
+  const { message } = App.useApp();
   const { token } = useToken();
 
   const handleExport = async () => {
@@ -73,7 +74,7 @@ const ExportDialog: React.FC<ExportDialogProps> = ({ visible, onClose, type, tit
         </Button>,
       ]}
     >
-      <Space direction="vertical" size="large" style={{ width: '100%' }}>
+      <Space orientation="vertical" size="large" style={{ width: '100%' }}>
         <div>
           <Text strong>Select Export Format:</Text>
           <Radio.Group
@@ -81,7 +82,7 @@ const ExportDialog: React.FC<ExportDialogProps> = ({ visible, onClose, type, tit
             onChange={(e) => setFormat(e.target.value)}
             style={{ marginTop: 12, display: 'block' }}
           >
-            <Space direction="vertical">
+            <Space orientation="vertical">
               <Radio value="excel">
                 <Space>
                   <FileExcelOutlined style={{ color: '#52c41a', fontSize: 18 }} />

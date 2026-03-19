@@ -17,8 +17,9 @@ import {
   Table,
   Typography,
   Upload,
-  message,
+  App,
 } from 'antd';
+import type { UploadChangeParam } from 'antd/es/upload';
 import type { UploadFile } from 'antd/es/upload/interface';
 import React, { useState } from 'react';
 
@@ -41,6 +42,7 @@ const ImportWizard: React.FC<ImportWizardProps> = ({
   title,
 }) => {
   const [currentStep, setCurrentStep] = useState(0);
+  const { message } = App.useApp();
   const [file, setFile] = useState<File | null>(null);
   const [fileList, setFileList] = useState<UploadFile[]>([]);
   const [validationResult, setValidationResult] = useState<ImportResult | null>(null);
@@ -67,19 +69,19 @@ const ImportWizard: React.FC<ImportWizardProps> = ({
       const blob = await importExportService.downloadTemplate(type);
       importExportService.downloadBlob(blob, `template_${type}.xlsx`);
       message.success('Template downloaded successfully');
-    } catch (error) {
+    } catch {
       message.error('Failed to download template');
     }
   };
 
-  const handleFileChange = (info: any) => {
+  const handleFileChange = (info: UploadChangeParam<UploadFile>) => {
     let newFileList = [...info.fileList];
     newFileList = newFileList.slice(-1); // Keep only the last file
 
     setFileList(newFileList);
 
     if (info.file.status !== 'uploading') {
-      setFile(info.file.originFileObj);
+      setFile(info.file.originFileObj ?? null);
     }
   };
 
@@ -101,7 +103,7 @@ const ImportWizard: React.FC<ImportWizardProps> = ({
         message.warning(`Validation found ${result.errorCount} errors`);
         setCurrentStep(1);
       }
-    } catch (error) {
+    } catch {
       message.error('Validation failed');
     } finally {
       setLoading(false);
@@ -127,7 +129,7 @@ const ImportWizard: React.FC<ImportWizardProps> = ({
       } else {
         message.error('Import failed');
       }
-    } catch (error) {
+    } catch {
       message.error('Import failed');
       setImportResult({
         success: false,
@@ -166,7 +168,7 @@ const ImportWizard: React.FC<ImportWizardProps> = ({
     switch (currentStep) {
       case 0:
         return (
-          <Space direction="vertical" size="large" style={{ width: '100%' }}>
+          <Space orientation="vertical" size="large" style={{ width: '100%' }}>
             <Alert
               message="Import Instructions"
               description={

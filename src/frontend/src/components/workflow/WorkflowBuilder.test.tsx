@@ -87,8 +87,12 @@ vi.mock('antd', () => ({
     },
   ),
   Space: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  message: {
-    success: successMock,
+  App: {
+    useApp: () => ({
+      message: {
+        success: successMock,
+      },
+    }),
   },
 }));
 

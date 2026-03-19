@@ -196,7 +196,7 @@ const NotificationBell: React.FC = () => {
                   </Space>
                 }
                 description={
-                  <Space direction="vertical" size={0}>
+                  <Space orientation="vertical" size={0}>
                     <Text type="secondary">{notification.message}</Text>
                     <Text type="secondary" style={{ fontSize: 12 }}>
                       {dayjs(notification.createdAt).fromNow()}

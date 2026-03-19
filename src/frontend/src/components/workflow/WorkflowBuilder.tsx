@@ -1,5 +1,5 @@
 import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
-import { Button, Card, Form, Input, message, Select, Space } from 'antd';
+import { App, Button, Card, Form, Input, Select, Space } from 'antd';
 import React, { useState } from 'react';
 import styles from './WorkflowBuilder.module.css';
 
@@ -9,7 +9,7 @@ interface WorkflowStep {
   id: string;
   type: 'approval' | 'notification' | 'condition' | 'automation';
   name: string;
-  config: any;
+  config: Record<string, unknown>;
 }
 
 interface WorkflowBuilderProps {
@@ -18,7 +18,7 @@ interface WorkflowBuilderProps {
 
 export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ onSave }) => {
   const [steps, setSteps] = useState<WorkflowStep[]>([]);
-  const [_form] = Form.useForm();
+  const { message } = App.useApp();
 
   const addStep = () => {
     const newStep: WorkflowStep = {
@@ -34,7 +34,7 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ onSave }) => {
     setSteps(steps.filter((s) => s.id !== id));
   };
 
-  const updateStep = (id: string, field: string, value: any) => {
+  const updateStep = <K extends keyof WorkflowStep>(id: string, field: K, value: WorkflowStep[K]) => {
     setSteps(steps.map((s) => (s.id === id ? { ...s, [field]: value } : s)));
   };
 
@@ -47,7 +47,7 @@ export const WorkflowBuilder: React.FC<WorkflowBuilderProps> = ({ onSave }) => {
 
   return (
     <div className={styles.container}>
-      <Space direction="vertical" className={styles.stepsContainer} size="large">
+      <Space orientation="vertical" className={styles.stepsContainer} size="large">
         <div className={styles.actionBar}>
           <Button type="primary" icon={<PlusOutlined />} onClick={addStep}>
             Thêm bước
