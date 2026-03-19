@@ -179,6 +179,13 @@ describe('PermissionService', () => {
       const result = await service.findAll(mockCurrentUser);
 
       expect(result).toEqual(mockPermissions);
+      expect(queryBuilder.select).toHaveBeenCalledWith([
+        'permission.id',
+        'permission.resource',
+        'permission.actions',
+        'permission.description',
+        'permission.createdAt',
+      ]);
       expect(queryBuilder.where).toHaveBeenCalledWith('permission.tenantId = :tenantId', {
         tenantId: 'test-tenant-id',
       });

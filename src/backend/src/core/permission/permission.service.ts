@@ -54,7 +54,7 @@ export class PermissionService {
       .select([
         'permission.id',
         'permission.resource',
-        'permission.action',
+        'permission.actions',
         'permission.description',
         'permission.createdAt',
       ])
