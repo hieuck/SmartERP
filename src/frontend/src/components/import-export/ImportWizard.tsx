@@ -210,7 +210,7 @@ const ImportWizard: React.FC<ImportWizardProps> = ({
 
       case 1:
         return (
-          <Space direction="vertical" size="large" style={{ width: '100%' }}>
+          <Space orientation="vertical" size="large" style={{ width: '100%' }}>
             {validationResult && !validationResult.success && (
               <>
                 <Alert
@@ -240,7 +240,7 @@ const ImportWizard: React.FC<ImportWizardProps> = ({
 
       case 2:
         return (
-          <Space direction="vertical" size="large" style={{ width: '100%' }}>
+          <Space orientation="vertical" size="large" style={{ width: '100%' }}>
             {validationResult && validationResult.success && !importResult && (
               <>
                 <Alert
