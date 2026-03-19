@@ -1,4 +1,9 @@
 {
+  "scripts": {
+    "test:e2e": "node run-playwright.cjs test",
+    "test:e2e:headed": "node run-playwright.cjs test --headed --project=chromium",
+    "test:e2e:ui": "node run-playwright.cjs test --ui"
+  },
   "devDependencies": {
     "@playwright/test": "^1.58.2",
     "@typescript-eslint/eslint-plugin": "^8.57.0",

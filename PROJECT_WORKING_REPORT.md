@@ -563,6 +563,32 @@ Verification:
 - direct registration API smoke returns `201`
 - `npx playwright test tests/e2e/public/register.spec.ts --project=chromium` passes `6/6`
 
+## Playwright UI Incident
+
+Latest finding:
+
+- Playwright UI was not usable from Windows PowerShell because `npx.ps1` is blocked by Execution Policy on this machine
+- even when bypassing that with `npx.cmd`, Playwright fails in the current restricted environment with `spawn EPERM` because its runner needs child-process IPC
+- this second problem is environmental rather than a test-spec regression, but the repo previously surfaced it as an opaque stack trace
+
+Fix applied:
+
+- added root launchers:
+  - `run-playwright.cjs`
+  - `playwright-ui.cmd`
+  - `playwright-test.cmd`
+  - `playwright-headed.cmd`
+- added root package scripts:
+  - `test:e2e`
+  - `test:e2e:headed`
+  - `test:e2e:ui`
+- the launcher now detects blocked IPC early and prints a clear operator-facing message instead of crashing with raw `EPERM`
+
+Verification:
+
+- `node run-playwright.cjs test --ui` now fails with a clear environment diagnosis
+- `playwright-ui.cmd` and `npm.cmd run test:e2e:ui` both route through the same launcher successfully on Windows PowerShell
+
 That is the most practical path from “green and cleaner” to “consistently TDD-friendly”.
 
 ## Rules For Ongoing Work
