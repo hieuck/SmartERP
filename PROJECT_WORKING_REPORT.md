@@ -800,3 +800,16 @@ Verification:
 - Current conclusion:
   - if Playwright UI still fails in a given terminal/app shell, the remaining blocker is environment-level process/IPC behavior rather than a broken repo command
   - the repo-side fallback command path is currently professional enough to keep using while runtime work continues
+
+## 2026-03-19 Import Export Runtime Hygiene
+- Reduced one more frontend runtime warning source by replacing deprecated Ant Design `Space direction` usage with `orientation` in [src/frontend/src/components/import-export/ImportWizard.tsx](/e:/GitHub/smart-erp/src/frontend/src/components/import-export/ImportWizard.tsx).
+- Added focused guard rails for the import/export feedback paths:
+  - [src/frontend/src/components/import-export/ImportWizard.test.tsx](/e:/GitHub/smart-erp/src/frontend/src/components/import-export/ImportWizard.test.tsx)
+  - [src/frontend/src/components/import-export/ExportDialog.test.tsx](/e:/GitHub/smart-erp/src/frontend/src/components/import-export/ExportDialog.test.tsx)
+- Verified:
+  - `npx.cmd vitest run src/components/import-export/ImportWizard.test.tsx`
+  - `npx.cmd vitest run src/components/import-export/ExportDialog.test.tsx`
+  - targeted `eslint` for the edited import/export files
+- Net effect:
+  - import/export UI feedback is less brittle
+  - one more known deprecation source is removed from the user-facing frontend path
