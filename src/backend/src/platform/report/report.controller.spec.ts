@@ -28,9 +28,10 @@ import request from 'supertest';
 import { ReportController } from './report.controller';
 import { ReportService } from './report.service';
 import { ReportTemplateService } from './report-template.service';
+import { CacheInterceptor } from '../../common/interceptors/cache.interceptor';
 import { JwtAuthGuard } from '../../core/auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
-import { ReportType, AggregationType } from '../enums/platform.enum';
+import { ReportType, AggregationType, ColumnType } from '../enums/platform.enum';
 import { ExecutionStatus } from './enums/execution-status.enum';
 
 describe('ReportController (Integration)', () => {
@@ -67,24 +68,26 @@ describe('ReportController (Integration)', () => {
     orderBy: { field: 'createdAt', order: 'DESC' },
     version: 1,
     syncStatus: 'synced',
-    createdAt: new Date('2024-01-15T10:00:00Z'),
-    updatedAt: new Date('2024-01-15T10:00:00Z'),
+    createdAt: '2024-01-15T10:00:00.000Z',
+    updatedAt: '2024-01-15T10:00:00.000Z',
   };
 
   const mockColumn = {
     id: 'column-123',
     reportId: 'report-123',
     fieldName: 'totalAmount',
-    displayName: 'Total Amount',
-    dataType: 'number',
+    label: 'Total Amount',
+    type: ColumnType.CURRENCY,
     aggregation: AggregationType.SUM,
+    width: 150,
+    sequence: 1,
     isVisible: true,
-    sortOrder: 1,
+    isSortable: true,
     tenantId: 'tenant-123',
     version: 1,
     syncStatus: 'synced',
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   };
 
   const mockExecution = {
@@ -96,12 +99,12 @@ describe('ReportController (Integration)', () => {
     rowCount: 1,
     executionTime: 150,
     executedBy: 'user-123',
-    executedAt: new Date('2024-01-15T10:05:00Z'),
+    executedAt: '2024-01-15T10:05:00.000Z',
     tenantId: 'tenant-123',
     version: 1,
     syncStatus: 'synced',
-    createdAt: new Date('2024-01-15T10:05:00Z'),
-    updatedAt: new Date('2024-01-15T10:05:00Z'),
+    createdAt: '2024-01-15T10:05:00.000Z',
+    updatedAt: '2024-01-15T10:05:00.000Z',
   };
 
   beforeAll(async () => {
@@ -149,6 +152,10 @@ describe('ReportController (Integration)', () => {
       canActivate: jest.fn().mockReturnValue(true),
     };
 
+    const mockCacheInterceptor = {
+      intercept: jest.fn((context, next) => next.handle()),
+    };
+
     const moduleFixture: TestingModule = await Test.createTestingModule({
       controllers: [ReportController],
       providers: [
@@ -166,6 +173,8 @@ describe('ReportController (Integration)', () => {
       .useValue(mockJwtAuthGuard)
       .overrideGuard(RolesGuard)
       .useValue(mockRolesGuard)
+      .overrideInterceptor(CacheInterceptor)
+      .useValue(mockCacheInterceptor)
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -174,6 +183,30 @@ describe('ReportController (Integration)', () => {
 
     reportService = moduleFixture.get(ReportService);
     templateService = moduleFixture.get(ReportTemplateService);
+  });
+
+  beforeEach(() => {
+    reportService.findOne.mockResolvedValue(mockReport as any);
+    reportService.findAll.mockResolvedValue([mockReport] as any);
+    reportService.findPublic.mockResolvedValue([{ ...mockReport, isPublic: true }] as any);
+    reportService.update.mockResolvedValue(mockReport as any);
+    reportService.remove.mockResolvedValue(undefined);
+    reportService.addColumn.mockResolvedValue(mockColumn as any);
+    reportService.removeColumn.mockResolvedValue(undefined);
+    reportService.execute.mockResolvedValue(mockExecution as any);
+    reportService.getExecutionHistory.mockResolvedValue([mockExecution] as any);
+    reportService.getExecution.mockResolvedValue(mockExecution as any);
+
+    templateService.getStandardTemplates.mockReturnValue([
+      { name: 'sales-summary', category: 'sales', description: 'Sales summary report' },
+      { name: 'inventory-status', category: 'inventory', description: 'Inventory status' },
+    ] as any);
+    templateService.getCategories.mockReturnValue(['sales', 'inventory', 'accounting', 'hr'] as any);
+    templateService.getTemplatesByCategory.mockReturnValue([
+      { name: 'sales-summary', category: 'sales', description: 'Sales summary' },
+      { name: 'sales-by-product', category: 'sales', description: 'Sales by product' },
+    ] as any);
+    templateService.createFromTemplate.mockResolvedValue(mockReport as any);
   });
 
   afterAll(async () => {
@@ -401,8 +434,8 @@ describe('ReportController (Integration)', () => {
     it('should add column to report', async () => {
       const columnDto = {
         fieldName: 'totalAmount',
-        displayName: 'Total Amount',
-        dataType: 'number',
+        label: 'Total Amount',
+        type: ColumnType.CURRENCY,
         aggregation: AggregationType.SUM,
       };
 
@@ -440,8 +473,8 @@ describe('ReportController (Integration)', () => {
           .set('Authorization', 'Bearer manager-token')
           .send({
             fieldName: 'amount',
-            displayName: 'Amount',
-            dataType: 'number',
+            label: 'Amount',
+            type: ColumnType.NUMBER,
             aggregation,
           })
           .expect(201);
@@ -456,14 +489,14 @@ describe('ReportController (Integration)', () => {
       await request(app.getHttpServer())
         .post('/reports/report-999/columns')
         .set('Authorization', 'Bearer manager-token')
-        .send({ fieldName: 'test', displayName: 'Test', dataType: 'string' })
+        .send({ fieldName: 'test', label: 'Test', type: ColumnType.TEXT })
         .expect(404);
     });
 
     it('should require authentication', async () => {
       await request(app.getHttpServer())
         .post('/reports/report-123/columns')
-        .send({ fieldName: 'test', displayName: 'Test', dataType: 'string' })
+        .send({ fieldName: 'test', label: 'Test', type: ColumnType.TEXT })
         .expect(401);
     });
   });

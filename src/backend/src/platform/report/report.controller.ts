@@ -9,12 +9,18 @@ import {
   Request,
   Query,
   UseInterceptors,
+  UseGuards,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { CacheTTL } from '@/common/decorators/cache-ttl.decorator';
 import { Roles } from '@/common/decorators/roles.decorator';
+import { RolesGuard } from '@/common/guards/roles.guard';
+import { TenantGuard } from '@/common/guards/tenant.guard';
 import { CacheInterceptor } from '@/common/interceptors/cache.interceptor';
 import { CacheTTL as CacheTTLConstant } from '@/config/cache.config';
+import { JwtAuthGuard } from '@/core/auth/guards/jwt-auth.guard';
 import { AddColumnDto } from './dto/add-column.dto';
 import { CreateReportDto } from './dto/create-report.dto';
 import { ExecuteReportDto } from './dto/execute-report.dto';
@@ -24,6 +30,7 @@ import { ReportTemplateService } from './report-template.service';
 @ApiTags('reports')
 @ApiBearerAuth()
 @Controller('reports')
+@UseGuards(JwtAuthGuard, RolesGuard, TenantGuard)
 export class ReportController {
   constructor(
     private readonly reportService: ReportService,
@@ -52,6 +59,49 @@ export class ReportController {
   @ApiResponse({ status: 200, description: 'Public reports retrieved successfully' })
   async findPublic(@Request() req) {
     return this.reportService.findPublic(req.user.tenantId);
+  }
+
+  @Get('executions/:executionId')
+  @Roles('manager', 'admin', 'analyst', 'user')
+  @ApiOperation({ summary: 'Get execution result by ID' })
+  @ApiResponse({ status: 200, description: 'Execution found' })
+  @ApiResponse({ status: 404, description: 'Execution not found' })
+  async getExecution(@Param('executionId') executionId: string, @Request() req) {
+    return this.reportService.getExecution(executionId, req.user.tenantId);
+  }
+
+  @Get('templates')
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(CacheTTLConstant.VERY_LONG) // 24 hours - templates never change
+  @Roles('manager', 'admin', 'analyst', 'user')
+  @ApiOperation({ summary: 'Get all standard report templates' })
+  @ApiResponse({ status: 200, description: 'Templates retrieved successfully' })
+  async getTemplates() {
+    return this.templateService.getStandardTemplates();
+  }
+
+  @Get('templates/categories')
+  @Roles('manager', 'admin', 'analyst', 'user')
+  @ApiOperation({ summary: 'Get all report categories' })
+  @ApiResponse({ status: 200, description: 'Categories retrieved successfully' })
+  async getCategories() {
+    return this.templateService.getCategories();
+  }
+
+  @Get('templates/category/:category')
+  @Roles('manager', 'admin', 'analyst', 'user')
+  @ApiOperation({ summary: 'Get templates by category' })
+  @ApiResponse({ status: 200, description: 'Templates retrieved successfully' })
+  async getTemplatesByCategory(@Param('category') category: string) {
+    return this.templateService.getTemplatesByCategory(category as any);
+  }
+
+  @Post('templates/:templateName/create')
+  @Roles('manager', 'admin', 'analyst')
+  @ApiOperation({ summary: 'Create report from template' })
+  @ApiResponse({ status: 201, description: 'Report created from template' })
+  async createFromTemplate(@Param('templateName') templateName: string, @Request() req) {
+    return this.templateService.createFromTemplate(templateName, req.user.tenantId, req.user);
   }
 
   @Get(':id')
@@ -100,6 +150,7 @@ export class ReportController {
   }
 
   @Post(':id/execute')
+  @HttpCode(HttpStatus.OK)
   @Roles('manager', 'admin', 'analyst', 'user')
   @ApiOperation({ summary: 'Execute report and get results' })
   @ApiResponse({ status: 200, description: 'Report executed successfully' })
@@ -113,52 +164,11 @@ export class ReportController {
   @ApiResponse({ status: 200, description: 'Execution history retrieved' })
   async getExecutionHistory(
     @Param('id') id: string,
-    @Query('limit') limit: number = 10,
     @Request() req,
+    @Query('limit') limit?: string,
   ) {
-    return this.reportService.getExecutionHistory(id, req.user.tenantId, limit);
-  }
-
-  @Get('executions/:executionId')
-  @Roles('manager', 'admin', 'analyst', 'user')
-  @ApiOperation({ summary: 'Get execution result by ID' })
-  @ApiResponse({ status: 200, description: 'Execution found' })
-  @ApiResponse({ status: 404, description: 'Execution not found' })
-  async getExecution(@Param('executionId') executionId: string, @Request() req) {
-    return this.reportService.getExecution(executionId, req.user.tenantId);
-  }
-
-  @Get('templates')
-  @UseInterceptors(CacheInterceptor)
-  @CacheTTL(CacheTTLConstant.VERY_LONG) // 24 hours - templates never change
-  @Roles('manager', 'admin', 'analyst', 'user')
-  @ApiOperation({ summary: 'Get all standard report templates' })
-  @ApiResponse({ status: 200, description: 'Templates retrieved successfully' })
-  async getTemplates() {
-    return this.templateService.getStandardTemplates();
-  }
-
-  @Get('templates/categories')
-  @Roles('manager', 'admin', 'analyst', 'user')
-  @ApiOperation({ summary: 'Get all report categories' })
-  @ApiResponse({ status: 200, description: 'Categories retrieved successfully' })
-  async getCategories() {
-    return this.templateService.getCategories();
-  }
-
-  @Get('templates/category/:category')
-  @Roles('manager', 'admin', 'analyst', 'user')
-  @ApiOperation({ summary: 'Get templates by category' })
-  @ApiResponse({ status: 200, description: 'Templates retrieved successfully' })
-  async getTemplatesByCategory(@Param('category') category: string) {
-    return this.templateService.getTemplatesByCategory(category as any);
-  }
-
-  @Post('templates/:templateName/create')
-  @Roles('manager', 'admin', 'analyst')
-  @ApiOperation({ summary: 'Create report from template' })
-  @ApiResponse({ status: 201, description: 'Report created from template' })
-  async createFromTemplate(@Param('templateName') templateName: string, @Request() req) {
-    return this.templateService.createFromTemplate(templateName, req.user.tenantId, req.user);
+    const parsedLimit = Number(limit);
+    const safeLimit = Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : 10;
+    return this.reportService.getExecutionHistory(id, req.user.tenantId, safeLimit);
   }
 }
