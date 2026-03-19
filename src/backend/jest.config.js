@@ -3,11 +3,6 @@ module.exports = {
   testEnvironment: 'node',
   roots: ['<rootDir>/src'],
   testMatch: ['**/__tests__/**/*.ts', '**/?(*.)+(spec|test).ts'],
-  globals: {
-    'ts-jest': {
-      isolatedModules: true,
-    },
-  },
   transform: {
     '^.+\\.ts$': 'ts-jest',
     '^.+\\.js$': 'babel-jest',
@@ -45,7 +40,6 @@ module.exports = {
   testTimeout: 10000,
   verbose: true,
   maxWorkers: '50%',
-  transformIgnorePatterns: [
-    'node_modules/(?!uuid)',
-  ],
+  transformIgnorePatterns: ['node_modules/(?!uuid)'],
 };
+

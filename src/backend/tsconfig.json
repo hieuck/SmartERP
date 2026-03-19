@@ -40,7 +40,8 @@
       "@/platform/*": ["./platform/*"],
       "@/integrations/*": ["./integrations/*"],
       "@/utilities/*": ["./utilities/*"]
-    }
+    },
+    "isolatedModules": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
