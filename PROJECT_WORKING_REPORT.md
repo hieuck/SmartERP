@@ -470,6 +470,9 @@ Current status:
 - manufacturing offline service tests added
 - API client tests added
 - aggregate verification now passes for `src/services`: `41` files, `223` tests
+- first page-orchestration batch added for `NotificationListPage` (`3/3` passing)
+- root cause in the first page batch was test-harness drift: deep Ant Design mocks were less reliable than using real components with thin service/router mocks
+- aggregate verification now passes for `src/pages/notifications/NotificationListPage.test.tsx src/services`: `42` files, `226` tests
 - next additions should target page orchestration and shared UI hotspots rather than continuing CRUD-style service test expansion
 
 ### Queue C: Refactor Only After Guard Rails Exist
@@ -550,3 +553,4 @@ Start with **Phase 5 + Phase 6 together**:
 - then summarize which modules are genuinely ready for TDD-led work
 
 That gives the fastest path to a repo we can trust for the next round of engineering decisions.
+
