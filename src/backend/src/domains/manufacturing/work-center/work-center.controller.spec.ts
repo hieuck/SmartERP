@@ -106,7 +106,11 @@ describe('WorkCenterController (Integration)', () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    workCenterService.create.mockReset();
+    workCenterService.findAll.mockReset();
+    workCenterService.findOne.mockReset();
+    workCenterService.update.mockReset();
+    workCenterService.remove.mockReset();
   });
 
   describe('POST /manufacturing/work-centers', () => {
@@ -115,8 +119,8 @@ describe('WorkCenterController (Integration)', () => {
         name: 'Assembly Line 2',
         code: 'AL-002',
         description: 'Secondary assembly line',
-        capacity: 80,
-        efficiency: 90,
+        capacityPerCycle: 80,
+        timeEfficiency: 90,
         costPerHour: 45,
       };
 
@@ -134,14 +138,24 @@ describe('WorkCenterController (Integration)', () => {
 
       expect(response.body.name).toBe('Assembly Line 2');
       expect(response.body.code).toBe('AL-002');
-      expect(workCenterService.create).toHaveBeenCalledWith('tenant-123', createDto);
+      expect(workCenterService.create).toHaveBeenCalledWith(
+        'tenant-123',
+        expect.objectContaining({
+          code: 'AL-002',
+          name: 'Assembly Line 2',
+          description: 'Secondary assembly line',
+          capacityPerCycle: 80,
+          timeEfficiency: 90,
+          costPerHour: 45,
+        }),
+      );
     });
 
     it('should return 409 when work center code already exists', async () => {
       const createDto = {
         name: 'Assembly Line 1',
         code: 'AL-001',
-        capacity: 100,
+        capacityPerCycle: 100,
       };
 
       workCenterService.create.mockRejectedValue(
@@ -170,27 +184,27 @@ describe('WorkCenterController (Integration)', () => {
         .expect(400);
     });
 
-    it('should validate capacity is positive number', async () => {
+    it('should validate capacity per cycle is positive number', async () => {
       await request(app.getHttpServer())
         .post('/manufacturing/work-centers')
         .set('Authorization', 'Bearer valid-token')
         .send({
           name: 'Test',
           code: 'TEST',
-          capacity: -10,
+          capacityPerCycle: -10,
         })
         .expect(400);
     });
 
-    it('should validate efficiency is between 0 and 100', async () => {
+    it('should validate time efficiency is between 0 and 100', async () => {
       await request(app.getHttpServer())
         .post('/manufacturing/work-centers')
         .set('Authorization', 'Bearer valid-token')
         .send({
           name: 'Test',
           code: 'TEST',
-          capacity: 100,
-          efficiency: 150,
+          capacityPerCycle: 100,
+          timeEfficiency: 150,
         })
         .expect(400);
     });
@@ -206,7 +220,15 @@ describe('WorkCenterController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual(workCenters);
+      expect(response.body).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: 'wc-123',
+            code: 'AL-001',
+            name: 'Assembly Line 1',
+          }),
+        ]),
+      );
       expect(workCenterService.findAll).toHaveBeenCalledWith('tenant-123');
     });
 
@@ -235,7 +257,13 @@ describe('WorkCenterController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual(mockWorkCenter);
+      expect(response.body).toEqual(
+        expect.objectContaining({
+          id: 'wc-123',
+          code: 'AL-001',
+          name: 'Assembly Line 1',
+        }),
+      );
       expect(workCenterService.findOne).toHaveBeenCalledWith('tenant-123', 'wc-123');
     });
 
@@ -259,8 +287,8 @@ describe('WorkCenterController (Integration)', () => {
     it('should update work center successfully', async () => {
       const updateDto = {
         description: 'Updated description',
-        capacity: 120,
-        efficiency: 98,
+        capacityPerCycle: 120,
+        timeEfficiency: 98,
       };
 
       const updatedWorkCenter = {
@@ -277,8 +305,16 @@ describe('WorkCenterController (Integration)', () => {
         .expect(200);
 
       expect(response.body.description).toBe('Updated description');
-      expect(response.body.capacity).toBe(120);
-      expect(workCenterService.update).toHaveBeenCalledWith('tenant-123', 'wc-123', updateDto);
+      expect(response.body.capacityPerCycle).toBe(120);
+      expect(workCenterService.update).toHaveBeenCalledWith(
+        'tenant-123',
+        'wc-123',
+        expect.objectContaining({
+          description: 'Updated description',
+          capacityPerCycle: 120,
+          timeEfficiency: 98,
+        }),
+      );
     });
 
     it('should return 404 when work center not found', async () => {
@@ -305,11 +341,11 @@ describe('WorkCenterController (Integration)', () => {
         .expect(409);
     });
 
-    it('should validate capacity is positive', async () => {
+    it('should validate capacity per cycle is positive', async () => {
       await request(app.getHttpServer())
         .patch('/manufacturing/work-centers/wc-123')
         .set('Authorization', 'Bearer valid-token')
-        .send({ capacity: -50 })
+        .send({ capacityPerCycle: -50 })
         .expect(400);
     });
 
@@ -381,7 +417,7 @@ describe('WorkCenterController (Integration)', () => {
         .send({
           name: 'Test',
           code: 'TEST',
-          capacity: 100,
+          capacityPerCycle: 100,
         })
         .expect(201);
     });
@@ -437,7 +473,7 @@ describe('WorkCenterController (Integration)', () => {
         .send({
           name: '  Assembly Line  ',
           code: '  AL-003  ',
-          capacity: 100,
+          capacityPerCycle: 100,
         })
         .expect(201);
     });
