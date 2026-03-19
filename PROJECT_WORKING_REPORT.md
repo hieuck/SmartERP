@@ -479,6 +479,7 @@ Current status:
 - shared form shell covered: `StandardFormPage` (`3/3`)
 - shared page primitives covered: `PageHeader` (`3/3`) and `EmptyState` (`3/3`)
 - detail/action primitives covered: `ExpandableContent` (`3/3`) and `ListItemActions` (`2/2`)
+- lazy loading primitives covered: `LazyDataLoader` and `InfiniteScroll` (`5/5`)
 - testing this shell also exposed a design nuance: cancel fallback logic exists internally, but the cancel button only renders when an explicit `onCancel` is provided
 - real production bug fixed in `NotificationBell`: notification click no longer passes a fake mouse event into `handleMarkAsRead`
 - root cause in the first page batch was test-harness drift: deep Ant Design mocks were less reliable than using real components with thin service/router mocks
