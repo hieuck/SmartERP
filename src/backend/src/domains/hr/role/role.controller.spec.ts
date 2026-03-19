@@ -52,6 +52,11 @@ describe('RoleController (Integration)', () => {
     createdBy: 'user-123',
     updatedBy: null,
   };
+  const serializedMockRole = {
+    ...mockRole,
+    createdAt: mockRole.createdAt.toISOString(),
+    updatedAt: mockRole.updatedAt.toISOString(),
+  };
 
   beforeAll(async () => {
     const mockRoleService = {
@@ -183,7 +188,7 @@ describe('RoleController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual(roles);
+      expect(response.body).toEqual([serializedMockRole]);
       expect(roleService.findAll).toHaveBeenCalledWith(mockUser);
     });
   });
@@ -197,7 +202,7 @@ describe('RoleController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual({ count: 10 });
+      expect(response.text).toBe('10');
       expect(roleService.count).toHaveBeenCalledWith(mockUser);
     });
 
@@ -209,7 +214,7 @@ describe('RoleController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual({ count: 0 });
+      expect(response.text).toBe('0');
     });
   });
 
@@ -222,7 +227,7 @@ describe('RoleController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual(mockRole);
+      expect(response.body).toEqual(serializedMockRole);
       expect(roleService.findByName).toHaveBeenCalledWith('manager', mockUser);
     });
 
@@ -247,7 +252,7 @@ describe('RoleController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual(mockRole);
+      expect(response.body).toEqual(serializedMockRole);
       expect(roleService.findOne).toHaveBeenCalledWith('role-123', mockUser);
     });
 
@@ -310,7 +315,19 @@ describe('RoleController (Integration)', () => {
   describe('PATCH /roles/:id/permissions/add', () => {
     it('should add permissions to role successfully', async () => {
       const permissionIds = ['perm-1', 'perm-2'];
-      const updatedRole = { ...mockRole, permissions: mockPermissions };
+      const updatedPermissions = permissionIds.map(
+        (id) =>
+          ({
+            id,
+            tenantId: 'tenant-123',
+            resource: 'roles',
+            actions: ['read' as any],
+            description: `Permission ${id}`,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          }) as Permission,
+      );
+      const updatedRole = { ...mockRole, permissions: updatedPermissions };
 
       roleService.addPermissions.mockResolvedValue(updatedRole);
 
@@ -320,7 +337,9 @@ describe('RoleController (Integration)', () => {
         .send({ permissionIds })
         .expect(200);
 
-      expect(response.body.permissions).toEqual(permissionIds);
+      expect(response.body.permissions.map((permission: { id: string }) => permission.id)).toEqual(
+        permissionIds,
+      );
       expect(roleService.addPermissions).toHaveBeenCalledWith('role-123', permissionIds, mockUser);
     });
 
