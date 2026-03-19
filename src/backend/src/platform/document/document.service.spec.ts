@@ -5,6 +5,7 @@ import { NotFoundException } from '@nestjs/common';
 import { DocumentService } from './document.service';
 import { Document } from './entities/document.entity';
 import { DocumentType } from './enums/document-type.enum';
+import { AccessLevel } from './enums/access-level.enum';
 import { CacheService } from '@common/cache/cache.service';
 import { PermissionService, User } from '@common/security/permission.service';
 
@@ -22,6 +23,7 @@ describe('DocumentService', () => {
 
   const mockDocument: Document = {
     id: 'doc-1',
+    tenantId: 'tenant-1',
     name: 'Test Document',
     type: DocumentType.FILE,
     filePath: '/uploads/test.pdf',
@@ -30,6 +32,7 @@ describe('DocumentService', () => {
     version: 1,
     parentId: null,
     uploadedBy: 'user-1',
+    accessLevel: AccessLevel.PRIVATE,
     createdAt: new Date(),
   } as Document;
 
@@ -52,6 +55,7 @@ describe('DocumentService', () => {
     };
 
     const mockPermissionService = {
+      getUserId: jest.fn().mockImplementation((user) => user.id ?? user.userId),
       buildSecureQuery: jest.fn(),
       canRead: jest.fn().mockReturnValue(true),
       canWrite: jest.fn().mockReturnValue(true),
@@ -79,6 +83,7 @@ describe('DocumentService', () => {
     documentRepository = module.get(getRepositoryToken(Document));
     cacheService = module.get(CacheService);
     permissionService = module.get(PermissionService);
+    void permissionService;
   });
 
   afterEach(() => {
@@ -147,24 +152,33 @@ describe('DocumentService', () => {
   describe('createFolder', () => {
     it('should create folder successfully', async () => {
       documentRepository.create.mockReturnValue(mockDocument as any);
-      documentRepository.save.mockResolvedValue(mockDocument);
+      const mockSecureRepo = {
+        save: jest.fn().mockResolvedValue(mockDocument),
+      };
+      (service as any).secureDocumentRepo = mockSecureRepo;
 
       const result = await service.createFolder(mockUser, 'New Folder', null);
 
       expect(result).toEqual(mockDocument);
       expect(documentRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
+          tenantId: mockUser.tenantId,
           name: 'New Folder',
           type: DocumentType.FOLDER,
+          uploadedBy: mockUser.id,
         }),
       );
+      expect(mockSecureRepo.save).toHaveBeenCalledWith(mockUser, mockDocument);
     });
   });
 
   describe('createFile', () => {
     it('should create file successfully', async () => {
       documentRepository.create.mockReturnValue(mockDocument as any);
-      documentRepository.save.mockResolvedValue(mockDocument);
+      const mockSecureRepo = {
+        save: jest.fn().mockResolvedValue(mockDocument),
+      };
+      (service as any).secureDocumentRepo = mockSecureRepo;
 
       const result = await service.createFile(mockUser, {
         name: 'test.pdf',
@@ -172,6 +186,16 @@ describe('DocumentService', () => {
       });
 
       expect(result).toEqual(mockDocument);
+      expect(documentRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          tenantId: mockUser.tenantId,
+          name: 'test.pdf',
+          filePath: '/uploads/test.pdf',
+          type: DocumentType.FILE,
+          uploadedBy: mockUser.id,
+        }),
+      );
+      expect(mockSecureRepo.save).toHaveBeenCalledWith(mockUser, mockDocument);
     });
   });
 
@@ -184,7 +208,7 @@ describe('DocumentService', () => {
       cacheService.getOrSet.mockImplementation(async (_key, fn) => fn());
       documentRepository.update.mockResolvedValue({ affected: 1 } as any);
 
-      const result = await service.update(mockUser, 'doc-1', { name: 'Updated' });
+      await service.update(mockUser, 'doc-1', { name: 'Updated' });
 
       expect(documentRepository.update).toHaveBeenCalled();
       expect(cacheService.del).toHaveBeenCalled();
@@ -219,6 +243,14 @@ describe('DocumentService', () => {
       const result = await service.createVersion(mockUser, 'doc-1', '/uploads/test-v2.pdf');
 
       expect(result.version).toBe(2);
+      expect(mockSecureRepo.save).toHaveBeenCalledWith(
+        mockUser,
+        expect.objectContaining({
+          tenantId: mockUser.tenantId,
+          uploadedBy: mockUser.id,
+          version: 2,
+        }),
+      );
     });
   });
 

@@ -50,7 +50,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     // Verify user still exists and is active
     const user = await this.userRepository.findOne({
       where: { id: payload.sub },
-      select: ['id', 'email', 'tenantId', 'role', 'status'],
+      select: ['id', 'email', 'tenantId', 'role', 'roles', 'status'],
     });
 
     if (!user) {
@@ -71,10 +71,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     return {
+      id: user.id,
       userId: user.id,
       email: user.email,
       tenantId: user.tenantId,
       role: user.role,
+      roles: user.roles?.filter(Boolean).length ? user.roles.filter(Boolean) : [user.role],
     };
   }
 }

@@ -68,21 +68,23 @@ export class DocumentService {
 
   async createFolder(user: User, name: string, parentId: string | null): Promise<Document> {
     const doc = this.documentRepository.create({
+      tenantId: user.tenantId,
       name,
       type: DocumentType.FOLDER,
       parentId,
       uploadedBy: user.id,
     });
-    return this.documentRepository.save(doc);
+    return this.secureDocumentRepo.save(user, doc);
   }
 
   async createFile(user: User, data: Partial<Document>): Promise<Document> {
     const doc = this.documentRepository.create({
+      tenantId: user.tenantId,
       ...data,
       type: DocumentType.FILE,
       uploadedBy: user.id,
     });
-    return this.documentRepository.save(doc);
+    return this.secureDocumentRepo.save(user, doc);
   }
 
   async update(user: User, id: string, data: Partial<Document>): Promise<Document> {
@@ -106,6 +108,7 @@ export class DocumentService {
   async createVersion(user: User, id: string, filePath: string): Promise<Document> {
     const original = await this.findById(user, id);
     const saved = await this.secureDocumentRepo.save(user, {
+      tenantId: user.tenantId,
       name: original.name,
       type: original.type,
       parentId: original.parentId,
