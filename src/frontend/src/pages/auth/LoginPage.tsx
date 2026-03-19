@@ -8,6 +8,7 @@ import { LockOutlined, MailOutlined } from '@ant-design/icons';
 import { useMutation } from '@tanstack/react-query';
 import {
   Alert,
+  App,
   Button,
   Card,
   Checkbox,
@@ -15,7 +16,6 @@ import {
   Form,
   Input,
   Layout,
-  message,
   Row,
   Space,
   theme,
@@ -43,6 +43,7 @@ const { useToken } = theme;
  */
 export default function LoginPage() {
   const { token } = useToken();
+  const { message } = App.useApp();
   const { t } = useTranslation(['auth', 'common']);
   const navigate = useNavigate();
   const location = useLocation();
@@ -55,7 +56,7 @@ export default function LoginPage() {
   // Rate limiting: 5 attempts per 60 seconds
   const {
     isLimited,
-    remainingTime: _remainingTime,
+    remainingTime,
     recordAttempt,
   } = useRateLimit({
     maxAttempts: 5,
@@ -111,27 +112,30 @@ export default function LoginPage() {
       // Navigate to dashboard
       navigate('/dashboard', { replace: true });
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       recordAttempt();
+      const apiError = error as {
+        message?: string;
+        response?: { status?: number; data?: { message?: string } };
+      };
 
       // Extract error message from various sources
       let errorMsg = t('auth:login.error');
 
-      if (error?.response?.status === 500) {
+      if (apiError.response?.status === 500) {
         // Handle 500 Internal Server Error
         errorMsg = 'Server error occurred. Please try again later.';
-        console.error('Login 500 error:', error?.response?.data);
-      } else if (error?.response?.status === 423) {
+      } else if (apiError.response?.status === 423) {
         errorMsg = t('common:messages.unauthorized');
-      } else if (error?.response?.data?.message) {
-        errorMsg = error.response.data.message;
-      } else if (error?.response?.status === 401) {
+      } else if (apiError.response?.data?.message) {
+        errorMsg = apiError.response.data.message;
+      } else if (apiError.response?.status === 401) {
         errorMsg = t('auth:login.error');
-      } else if (error?.response?.status === 404) {
+      } else if (apiError.response?.status === 404) {
         errorMsg = t('auth:login.error');
-      } else if (error?.response?.status === 429) {
+      } else if (apiError.response?.status === 429) {
         errorMsg = t('common:messages.error');
-      } else if (error?.message === 'Network Error') {
+      } else if (apiError.message === 'Network Error') {
         errorMsg = t('common:messages.networkError');
       }
 
@@ -264,6 +268,7 @@ export default function LoginPage() {
                     size="large"
                     disabled={loginMutation.isPending}
                     type="email"
+                    autoComplete="email"
                   />
                 </Form.Item>
 
@@ -272,14 +277,15 @@ export default function LoginPage() {
                   label={t('auth:login.password')}
                   rules={[
                     { required: true, message: t('auth:validation.passwordRequired') },
-                    { min: 6, message: t('auth:validation.passwordMinLength') },
+                    { min: 8, message: t('auth:validation.passwordMinLength') },
                   ]}
                 >
                   <Input.Password
                     prefix={<LockOutlined />}
-                    placeholder="••••••••"
+                    placeholder="********"
                     size="large"
                     disabled={loginMutation.isPending || isLimited}
+                    autoComplete="current-password"
                   />
                 </Form.Item>
 
@@ -306,7 +312,7 @@ export default function LoginPage() {
                 {isLimited && (
                   <Alert
                     message={t('common:messages.error')}
-                    description={t('common:messages.error')}
+                    description={`${t('common:messages.error')} (${remainingTime}s)`}
                     type="warning"
                     showIcon
                     style={{ marginBottom: 16 }}
@@ -344,9 +350,9 @@ export default function LoginPage() {
               <Title level={5} style={{ marginBottom: 16 }}>
                 {t('auth:login.demoAccount')}
               </Title>
-              <Space direction="vertical" size="small">
-                <Text>📧 Email: admin@test.com</Text>
-                <Text>🔑 Password: admin123</Text>
+              <Space orientation="vertical" size="small">
+                <Text>Email: admin@test.com</Text>
+                <Text>Password: admin123</Text>
               </Space>
             </Card>
           </Col>

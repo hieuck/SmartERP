@@ -1,10 +1,11 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { App } from 'antd';
 import { BrowserRouter } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { configureStore } from '@reduxjs/toolkit';
 import LoginPage from './LoginPage';
-import { authService } from '@/services/auth/authService';
+import { authService, type LoginResponse } from '@/services/auth/authService';
 import authReducer from '@/store/slices/authSlice';
 import { vi } from 'vitest';
 
@@ -52,13 +53,17 @@ const renderWithProviders = (component: React.ReactElement, store = createTestSt
   return render(
     <Provider store={store}>
       <QueryClientProvider client={queryClient}>
-        <BrowserRouter>{component}</BrowserRouter>
+        <App>
+          <BrowserRouter>{component}</BrowserRouter>
+        </App>
       </QueryClientProvider>
     </Provider>
   );
 };
 
 describe('LoginPage', () => {
+  const mockedLogin = vi.mocked(authService.login);
+
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
@@ -67,7 +72,7 @@ describe('LoginPage', () => {
   it('should render login form', () => {
     renderWithProviders(<LoginPage />);
 
-    expect(screen.getByRole('heading', { name: /login/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'auth:login.title' })).toBeInTheDocument();
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /login/i })).toBeInTheDocument();
@@ -112,12 +117,12 @@ describe('LoginPage', () => {
     fireEvent.click(submitButton);
 
     await waitFor(() => {
-      expect(screen.getByText(/password.*6/i)).toBeInTheDocument();
+      expect(screen.getByText('auth:validation.passwordMinLength')).toBeInTheDocument();
     });
   });
 
   it('should login successfully', async () => {
-    const mockLoginResponse = {
+    const mockLoginResponse: LoginResponse = {
       user: {
         id: '1',
         email: 'test@example.com',
@@ -130,7 +135,7 @@ describe('LoginPage', () => {
       refreshToken: 'refresh-token',
     };
 
-    (authService.login as any).mockResolvedValue(mockLoginResponse);
+    mockedLogin.mockResolvedValue(mockLoginResponse);
 
     renderWithProviders(<LoginPage />);
 
@@ -162,7 +167,7 @@ describe('LoginPage', () => {
       },
     };
 
-    (authService.login as any).mockRejectedValue(mockError);
+    mockedLogin.mockRejectedValue(mockError);
 
     renderWithProviders(<LoginPage />);
 
@@ -181,7 +186,7 @@ describe('LoginPage', () => {
   });
 
   it('should sanitize email input', async () => {
-    const mockLoginResponse = {
+    const mockLoginResponse: LoginResponse = {
       user: {
         id: '1',
         email: 'test@example.com',
@@ -193,7 +198,7 @@ describe('LoginPage', () => {
       token: 'test-token',
     };
 
-    (authService.login as any).mockResolvedValue(mockLoginResponse);
+    mockedLogin.mockResolvedValue(mockLoginResponse);
 
     renderWithProviders(<LoginPage />);
 
@@ -215,7 +220,7 @@ describe('LoginPage', () => {
   });
 
   it('should remember email when checkbox is checked', async () => {
-    const mockLoginResponse = {
+    const mockLoginResponse: LoginResponse = {
       user: {
         id: '1',
         email: 'test@example.com',
@@ -227,7 +232,7 @@ describe('LoginPage', () => {
       token: 'test-token',
     };
 
-    (authService.login as any).mockResolvedValue(mockLoginResponse);
+    mockedLogin.mockResolvedValue(mockLoginResponse);
 
     renderWithProviders(<LoginPage />);
 
@@ -257,7 +262,7 @@ describe('LoginPage', () => {
   });
 
   it('should disable form during login', async () => {
-    (authService.login as any).mockImplementation(
+    mockedLogin.mockImplementation(
       () => new Promise(resolve => setTimeout(resolve, 1000))
     );
 
