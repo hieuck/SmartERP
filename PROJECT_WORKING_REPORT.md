@@ -504,6 +504,8 @@ Current status:
 - settings orchestration hooks covered: `useSettings` (`3/3`)
 - invoice orchestration hooks covered: `useInvoices` (`3/3`)
 - reporting orchestration hooks covered: `useReports` (`3/3`)
+- mobile table utilities covered: `mobileTableHelper` (`3/3`)
+- frontend test harness covered: `test-utils` (`3/3`)
 - testing this shell also exposed a design nuance: cancel fallback logic exists internally, but the cancel button only renders when an explicit `onCancel` is provided
 - real production bug fixed in `NotificationBell`: notification click no longer passes a fake mouse event into `handleMarkAsRead`
 - root cause in the first page batch was test-harness drift: deep Ant Design mocks were less reliable than using real components with thin service/router mocks
