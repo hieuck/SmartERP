@@ -589,6 +589,72 @@ Verification:
 - `node run-playwright.cjs test --ui` now fails with a clear environment diagnosis
 - `playwright-ui.cmd` and `npm.cmd run test:e2e:ui` both route through the same launcher successfully on Windows PowerShell
 
+## Documents Runtime Incident
+
+Latest finding:
+
+- `GET /api/documents` and `POST /api/documents/folders` were failing in live smoke because the `documents` table did not exist in the local database
+- document creation also bypassed `SecureRepository`, so `tenantId` and owner assignment were not guaranteed to follow the same rules as the rest of the secure write path
+
+Fix applied:
+
+- added `src/backend/src/migrations/1710850000000-CreateDocumentTable.ts`
+- updated `DocumentService` create flows to go through `SecureRepository`
+- tightened `document.service.spec.ts` to lock the secure create path
+
+Verification:
+
+- backend `type-check` passes
+- `npx jest src/platform/document/document.service.spec.ts --runInBand` passes `10/10`
+- live smoke now returns:
+  - `GET /api/documents` -> `200`
+  - `POST /api/documents/folders` -> `201`
+
+## Project Runtime Incident
+
+Latest finding:
+
+- `GET /api/projects`, `GET /api/tasks`, and `GET /api/time-tracking` were all failing with `500` because the project schema family was missing from the local database
+
+Fix applied:
+
+- added `src/backend/src/migrations/1710860000000-CreateProjectTables.ts`
+- the migration creates:
+  - `projects`
+  - `tasks`
+  - `task_dependencies`
+  - `time_entries`
+  - the related enum types and supporting indexes
+
+Verification:
+
+- live smoke now returns:
+  - `GET /api/projects` -> `200`
+  - `GET /api/tasks` -> `200`
+  - `GET /api/time-tracking` -> `200`
+
+## Backend Startup Log Cleanup
+
+Latest finding:
+
+- backend startup logs were still showing duplicate Swagger DTO warnings for:
+  - `VerifyPaymentDto`
+  - `CreateProductDto`
+  - `UpdateProductDto`
+
+Fix applied:
+
+- renamed the conflicting DTO classes in:
+  - payment gateway DTOs
+  - ecommerce product-catalog DTOs
+- updated controller/service imports accordingly
+
+Verification:
+
+- backend `type-check` passes
+- backend `build` passes
+- duplicate Swagger DTO warnings no longer appear in the latest backend startup log tail
+
 That is the most practical path from “green and cleaner” to “consistently TDD-friendly”.
 
 ## Rules For Ongoing Work
