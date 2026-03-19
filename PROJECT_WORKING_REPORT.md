@@ -496,6 +496,8 @@ Current status:
 - dashboard builder UI covered: `DashboardBuilder` (`3/3`)
 - document browser UI covered: `DocumentBrowser` (`3/3`)
 - custom field builder UI covered: `FormBuilder` (`3/3`)
+- locale hook covered: `useLocale` (`3/3`)
+- lazy image hooks covered: `useLazyImage` and `useLazyImages` (`3/3`)
 - testing this shell also exposed a design nuance: cancel fallback logic exists internally, but the cancel button only renders when an explicit `onCancel` is provided
 - real production bug fixed in `NotificationBell`: notification click no longer passes a fake mouse event into `handleMarkAsRead`
 - root cause in the first page batch was test-harness drift: deep Ant Design mocks were less reliable than using real components with thin service/router mocks
