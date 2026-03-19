@@ -8,6 +8,7 @@ import { tenantContext } from './lib/context/tenant-context.service';
 import { useLocale } from './hooks/useLocale';
 import { logger } from './lib/logger/logger.service';
 import { AppRoutes } from './routes';
+import { API_BASE_URL } from './services/api/baseUrl';
 import { setCredentials } from './store/slices/authSlice';
 
 const PUBLIC_ENTRY_PATHS = new Set(['/', '/login', '/register']);
@@ -40,8 +41,7 @@ async function initializeAuthState(dispatch: ReturnType<typeof useDispatch>): Pr
         return;
       }
 
-      const apiUrl = import.meta.env.VITE_API_URL || '/api';
-      const response = await axios.post(`${apiUrl}/auth/refresh`, {}, { withCredentials: true });
+      const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {}, { withCredentials: true });
 
       const payload = response.data?.data || response.data;
       const { accessToken: newAccessToken, user } = payload;

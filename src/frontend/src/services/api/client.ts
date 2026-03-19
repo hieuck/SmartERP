@@ -1,30 +1,7 @@
 import { store } from '@/store';
 import { clearCredentials, updateAccessToken } from '@/store/slices/authSlice';
 import axios, { InternalAxiosRequestConfig } from 'axios';
-
-function resolveApiBaseUrl(): string {
-  const configuredBaseUrl = import.meta.env.VITE_API_URL?.trim();
-
-  if (!configuredBaseUrl) {
-    return '/api';
-  }
-
-  if (!import.meta.env.DEV) {
-    return configuredBaseUrl;
-  }
-
-  if (/^https?:\/\//i.test(configuredBaseUrl)) {
-    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-
-    if (isLocalhost) {
-      return '/api';
-    }
-  }
-
-  return configuredBaseUrl;
-}
-
-const API_BASE_URL = resolveApiBaseUrl();
+import { API_BASE_URL } from './baseUrl';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
