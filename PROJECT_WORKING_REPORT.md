@@ -511,6 +511,7 @@ Current status:
 - offline demo covered: `OfflineDemo` (`3/3`)
 - tenant management placeholder covered: `TenantManagement` (`1/1`)
 - work center list orchestration covered: `WorkCenterList` (`3/3`)
+- work order list orchestration covered: `WorkOrderList` (`3/3`)
 - testing this shell also exposed a design nuance: cancel fallback logic exists internally, but the cancel button only renders when an explicit `onCancel` is provided
 - browser smoke on local dev server confirmed Vite boots on `http://localhost:5173/`; current UX blockers are backend-unavailable `auth/refresh` calls and UI deprecation warnings, not startup crashes
 - real production bug fixed in `NotificationBell`: notification click no longer passes a fake mouse event into `handleMarkAsRead`
