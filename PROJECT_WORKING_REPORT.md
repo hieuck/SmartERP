@@ -472,6 +472,7 @@ Current status:
 - aggregate verification now passes for `src/services`: `41` files, `223` tests
 - first page-orchestration batch added for `NotificationListPage` (`3/3` passing)
 - second page-orchestration batch added for `NotificationPreferencesPage` (`3/3` passing)
+- third page-orchestration batch added for offline-first `NotificationList` (`3/3` passing)
 - root cause in the first page batch was test-harness drift: deep Ant Design mocks were less reliable than using real components with thin service/router mocks
 - aggregate verification now passes for `src/pages/notifications/NotificationListPage.test.tsx src/services`: `42` files, `226` tests
 - next additions should target page orchestration and shared UI hotspots rather than continuing CRUD-style service test expansion
