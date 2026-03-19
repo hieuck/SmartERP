@@ -4,6 +4,31 @@ const { spawn } = require('child_process');
 const cliPath = path.join(__dirname, 'node_modules', 'playwright', 'cli.js');
 const ipcProbePath = path.join(__dirname, 'playwright-ipc-child.cjs');
 const args = process.argv.slice(2);
+const isHelpRequested = args.includes('--help') || args.includes('-h');
+const isVersionRequested = args.includes('--version') || args.includes('-v');
+
+if (isHelpRequested || isVersionRequested) {
+  const child = spawn(process.execPath, [cliPath, ...args], {
+    cwd: __dirname,
+    stdio: 'inherit',
+    windowsHide: false,
+  });
+
+  child.on('error', (error) => {
+    console.error(error);
+    process.exit(1);
+  });
+
+  child.on('exit', (code, signal) => {
+    if (signal) {
+      process.kill(process.pid, signal);
+      return;
+    }
+    process.exit(code ?? 0);
+  });
+
+  return;
+}
 
 function canSpawnWithIpc() {
   try {
@@ -12,8 +37,7 @@ function canSpawnWithIpc() {
       windowsHide: true,
     });
 
-    child.on('error', () => {
-    });
+    child.on('error', () => {});
     child.kill();
     return true;
   } catch (error) {
