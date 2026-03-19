@@ -1,4 +1,5 @@
 import {
+  CheckCircleFilled,
   GlobalOutlined,
   LockOutlined,
   MailOutlined,
@@ -21,15 +22,15 @@ import {
   Typography,
   theme,
 } from 'antd';
+import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from '@/components/common/LanguageSwitcher';
 import { authService } from '@/services/auth/authService';
 import { setCredentials } from '@/store/slices/authSlice';
-import LanguageSwitcher from '@/components/common/LanguageSwitcher';
 
 const { Header, Content } = Layout;
-const { Title, Text, Paragraph} = Typography;
+const { Title, Text, Paragraph } = Typography;
 const { useToken } = theme;
 
 interface RegisterFormValues {
@@ -58,6 +59,13 @@ export default function RegisterPage() {
   const [form] = Form.useForm<RegisterFormValues>();
   const { message } = App.useApp();
   const { token } = useToken();
+  const benefitItems = [
+    t('auth:register.benefits.trial'),
+    t('auth:register.benefits.noCard'),
+    t('auth:register.benefits.support'),
+    t('auth:register.benefits.training'),
+    t('auth:register.benefits.cancel'),
+  ];
 
   const handleCompanyNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const companyName = e.target.value;
@@ -72,15 +80,14 @@ export default function RegisterPage() {
   };
 
   const registerMutation = useMutation({
-    mutationFn: async (values: RegisterFormValues) => {
-      return authService.register({
+    mutationFn: async (values: RegisterFormValues) =>
+      authService.register({
         email: values.email,
         password: values.password,
         fullName: values.fullName,
         companyName: values.companyName,
         phone: values.phone,
-      });
-    },
+      }),
     onSuccess: (data) => {
       dispatch(
         setCredentials({
@@ -97,8 +104,7 @@ export default function RegisterPage() {
       setTimeout(() => navigate('/dashboard', { replace: true }), 1500);
     },
     onError: (error: unknown) => {
-      const errorMsg = getErrorMessage(error, t('auth:register.error'));
-      message.error(errorMsg);
+      message.error(getErrorMessage(error, t('auth:register.error')));
     },
   });
 
@@ -109,9 +115,20 @@ export default function RegisterPage() {
   return (
     <Layout style={{ minHeight: '100vh', background: token.colorBgLayout }}>
       <Header
-        style={{ background: token.colorBgContainer, boxShadow: '0 2px 8px rgba(0,0,0,0.1)', padding: '0 24px' }}
+        style={{
+          background: token.colorBgContainer,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          padding: '0 24px',
+        }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: '100%' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            height: '100%',
+          }}
+        >
           <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div
               style={{
@@ -205,7 +222,7 @@ export default function RegisterPage() {
                 </Form.Item>
 
                 <Title level={4} style={{ marginTop: 24, marginBottom: 16 }}>
-                  {t('auth:register.subtitle')}
+                  {t('auth:register.accountInfo')}
                 </Title>
 
                 <Form.Item
@@ -265,7 +282,12 @@ export default function RegisterPage() {
                     },
                   ]}
                 >
-                  <Input.Password prefix={<LockOutlined />} placeholder="••••••••" size="large" />
+                  <Input.Password
+                    prefix={<LockOutlined />}
+                    placeholder="********"
+                    size="large"
+                    autoComplete="new-password"
+                  />
                 </Form.Item>
 
                 <Form.Item
@@ -284,7 +306,12 @@ export default function RegisterPage() {
                     }),
                   ]}
                 >
-                  <Input.Password prefix={<LockOutlined />} placeholder="••••••••" size="large" />
+                  <Input.Password
+                    prefix={<LockOutlined />}
+                    placeholder="********"
+                    size="large"
+                    autoComplete="new-password"
+                  />
                 </Form.Item>
 
                 <Form.Item
@@ -340,12 +367,16 @@ export default function RegisterPage() {
               <Title level={5} style={{ marginBottom: 16 }}>
                 {t('auth:register.benefits.title')}
               </Title>
-              <Space orientation="vertical" size="small">
-                <Text>✓ {t('auth:register.benefits.trial')}</Text>
-                <Text>✓ {t('auth:register.benefits.noCard')}</Text>
-                <Text>✓ {t('auth:register.benefits.support')}</Text>
-                <Text>✓ {t('auth:register.benefits.training')}</Text>
-                <Text>✓ {t('auth:register.benefits.cancel')}</Text>
+              <Space direction="vertical" size="small" style={{ width: '100%' }}>
+                {benefitItems.map((benefit) => (
+                  <div
+                    key={benefit}
+                    style={{ display: 'flex', alignItems: 'center', gap: token.marginSM }}
+                  >
+                    <CheckCircleFilled style={{ color: token.colorSuccess }} />
+                    <Text>{benefit}</Text>
+                  </div>
+                ))}
               </Space>
             </Card>
           </Col>
