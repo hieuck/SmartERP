@@ -20,27 +20,34 @@ import { tap } from 'rxjs/operators';
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
   private readonly logger = new Logger('HTTP');
+  private readonly SUCCESS_LOG_EXCLUDED_PATHS = ['/health', '/health/'];
+
+  private shouldSkipSuccessLog(url: string): boolean {
+    return this.SUCCESS_LOG_EXCLUDED_PATHS.some((path) =>
+      url === path || url.endsWith(path) || url.includes(`${path}/`),
+    );
+  }
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const request = context.switchToHttp().getRequest();
     const { method, url, user } = request;
     const now = Date.now();
 
-    // Extract tenant and user info
     const tenantId = user?.tenantId || 'anonymous';
     const userId = user?.id || 'anonymous';
     const userEmail = user?.email || 'anonymous';
 
-    // Log request
-    this.logger.log({
-      type: 'request',
-      method,
-      url,
-      tenantId,
-      userId,
-      userEmail,
-      timestamp: new Date().toISOString(),
-    });
+    if (!this.shouldSkipSuccessLog(url)) {
+      this.logger.log({
+        type: 'request',
+        method,
+        url,
+        tenantId,
+        userId,
+        userEmail,
+        timestamp: new Date().toISOString(),
+      });
+    }
 
     return next.handle().pipe(
       tap({
@@ -48,7 +55,10 @@ export class LoggingInterceptor implements NestInterceptor {
           const response = context.switchToHttp().getResponse();
           const duration = Date.now() - now;
 
-          // Log successful response
+          if (this.shouldSkipSuccessLog(url)) {
+            return;
+          }
+
           this.logger.log({
             type: 'response',
             method,
@@ -64,7 +74,6 @@ export class LoggingInterceptor implements NestInterceptor {
           const duration = Date.now() - now;
           const statusCode = error instanceof HttpException ? error.getStatus() : 500;
 
-          // Log error response
           const payload = {
             type: 'error',
             method,

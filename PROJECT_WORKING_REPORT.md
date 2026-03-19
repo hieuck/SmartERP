@@ -813,3 +813,15 @@ Verification:
 - Net effect:
   - import/export UI feedback is less brittle
   - one more known deprecation source is removed from the user-facing frontend path
+
+## 2026-03-19 Backend Health Log Hygiene
+- Reduced backend success-path log noise for `/api/health` in:
+  - [src/backend/src/common/logger/logging.interceptor.ts](/e:/GitHub/smart-erp/src/backend/src/common/logger/logging.interceptor.ts)
+  - [src/backend/src/common/middleware/logging.middleware.ts](/e:/GitHub/smart-erp/src/backend/src/common/middleware/logging.middleware.ts)
+- Added/updated tests in:
+  - [src/backend/src/common/logger/logging.interceptor.spec.ts](/e:/GitHub/smart-erp/src/backend/src/common/logger/logging.interceptor.spec.ts)
+  - [src/backend/src/common/middleware/logging.middleware.spec.ts](/e:/GitHub/smart-erp/src/backend/src/common/middleware/logging.middleware.spec.ts)
+- Verified with:
+  - `npx.cmd jest src/common/logger/logging.interceptor.spec.ts src/common/middleware/logging.middleware.spec.ts --runInBand`
+  - `npm.cmd run build` in `src/backend`
+- Current remaining backend runtime noise is down to dependency-level deprecation from `bcrypt/@mapbox/node-pre-gyp` and query logging for `SELECT 1`, not app-layer request logging.
