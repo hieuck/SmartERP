@@ -6,7 +6,7 @@ import { Cache } from 'cache-manager';
 import { ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { RoleService } from './role.service';
 import { Role } from './entities/role.entity';
-import { Permission } from '../permission/entities/permission.entity';
+import { Permission } from '../../../core/permission/entities/permission.entity';
 import { PermissionService, User } from '@/common/security/permission.service';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
@@ -24,16 +24,15 @@ describe('RoleService', () => {
     roles: ['admin'],
   };
 
-  const mockPermission: Permission = {
+  const mockPermission = {
     id: 'permission-1',
     tenantId: 'tenant-1',
     resource: 'users',
-    action: 'read',
+    actions: ['read' as any],
     description: 'Read users',
-    isSystem: false,
     createdAt: new Date(),
     updatedAt: new Date(),
-  };
+  } as Permission;
 
   const mockRole: Role = {
     id: 'role-1',
@@ -582,13 +581,13 @@ describe('RoleService', () => {
 
       // Mock secureRepo.save instead of roleRepository.save
       const secureRepo = (service as any).secureRoleRepo;
-      secureRepo.save = jest.fn((_user: unknown, entity: unknown) => {
+      secureRepo.save = jest.fn((_user: unknown, entity: Role) => {
         // Simulate the filtering logic - only unique permissions
         return Promise.resolve({
           ...entity,
           permissions: entity.permissions.filter(
-            (p: unknown, index: number, self: unknown[]) =>
-              self.findIndex((t: unknown) => t.id === p.id) === index,
+            (p: Permission, index: number, self: Permission[]) =>
+              self.findIndex((t: Permission) => t.id === p.id) === index,
           ),
         } as Role);
       });

@@ -547,6 +547,22 @@ The next best move is:
 2. add frontend tests around page orchestration and complex shared UI flows
 3. only then start splitting the worst frontend god files
 
+## Manual Registration Incident
+
+Latest finding:
+
+- manual registration was failing because the backend monolith never bound port `3000`, so both `/api/auth/refresh` and `/api/auth/register` died with connection-refused errors from the frontend
+- the backend bootstrap failure was caused by HR role wiring drift:
+  - `Role` pointed at a different `Permission` entity than `PermissionModule`
+  - `RoleModule` was not imported into `AppModule`
+  - `RoleModule` also imported `CacheModule` without `register()`
+
+Verification:
+
+- backend now boots successfully and serves `http://localhost:3000/api/health`
+- direct registration API smoke returns `201`
+- `npx playwright test tests/e2e/public/register.spec.ts --project=chromium` passes `6/6`
+
 That is the most practical path from “green and cleaner” to “consistently TDD-friendly”.
 
 ## Rules For Ongoing Work

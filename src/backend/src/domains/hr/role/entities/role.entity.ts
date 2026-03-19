@@ -9,7 +9,7 @@ import {
   JoinTable,
   Index,
 } from 'typeorm';
-import { Permission } from '../../permission/entities/permission.entity';
+import { Permission } from '../../../../core/permission/entities/permission.entity';
 
 @Entity('roles')
 @Index(['tenantId', 'name'], { unique: true })
@@ -29,7 +29,7 @@ export class Role {
   @Column({ default: false })
   isSystem: boolean;
 
-  @ManyToMany(() => Permission, (permission) => (permission as any).roles, {
+  @ManyToMany(() => Permission, (permission) => permission.roles, {
     eager: true,
   })
   @JoinTable({

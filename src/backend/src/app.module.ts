@@ -33,6 +33,7 @@ import { AttendanceModule } from './domains/hr/attendance/attendance.module';
 import { EmployeeModule } from './domains/hr/employee/employee.module';
 import { LeaveModule } from './domains/hr/leave/leave.module';
 import { PayrollModule } from './domains/hr/payroll/payroll.module';
+import { RoleModule } from './domains/hr/role/role.module';
 
 import { BOMModule } from './domains/manufacturing/bom/bom.module';
 import { WorkCenterModule } from './domains/manufacturing/work-center/work-center.module';
@@ -136,6 +137,7 @@ import { CrmModule } from './domains/sales/crm/crm.module';
     EmployeeModule,
     LeaveModule,
     PayrollModule,
+    RoleModule,
     BOMModule,
     WorkCenterModule,
     PurchaseOrderModule,

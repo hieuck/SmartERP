@@ -8,6 +8,7 @@ import {
 } from '@ant-design/icons';
 import { useMutation } from '@tanstack/react-query';
 import {
+  App,
   Button,
   Card,
   Checkbox,
@@ -18,7 +19,6 @@ import {
   Row,
   Space,
   Typography,
-  message,
   theme,
 } from 'antd';
 import { useDispatch } from 'react-redux';
@@ -43,11 +43,20 @@ interface RegisterFormValues {
   terms: boolean;
 }
 
+function getErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  return fallback;
+}
+
 export default function RegisterPage() {
   const { t } = useTranslation(['auth', 'common']);
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [form] = Form.useForm<RegisterFormValues>();
+  const { message } = App.useApp();
   const { token } = useToken();
 
   const handleCompanyNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -87,8 +96,8 @@ export default function RegisterPage() {
       message.success(t('auth:register.success'));
       setTimeout(() => navigate('/dashboard', { replace: true }), 1500);
     },
-    onError: (error: any) => {
-      const errorMsg = error.message || t('auth:register.error');
+    onError: (error: unknown) => {
+      const errorMsg = getErrorMessage(error, t('auth:register.error'));
       message.error(errorMsg);
     },
   });
@@ -161,29 +170,36 @@ export default function RegisterPage() {
                     placeholder={t('auth:register.companyName')}
                     size="large"
                     onChange={handleCompanyNameChange}
+                    autoComplete="organization"
                   />
                 </Form.Item>
 
                 <Form.Item
-                  name="slug"
                   label={t('auth:register.companySlug')}
-                  rules={[
-                    { required: true, message: t('auth:validation.companySlugRequired') },
-                    {
-                      pattern: /^[a-z0-9-]+$/,
-                      message: t('auth:validation.companySlugRequired'),
-                    },
-                  ]}
+                  required
                   extra={t('auth:register.companySlug')}
                 >
                   <Space.Compact style={{ width: '100%' }}>
-                    <Input
-                      prefix={<GlobalOutlined />}
-                      placeholder="company-name"
-                      size="large"
-                      style={{ flex: 1 }}
-                      aria-label={t('auth:register.companySlug')}
-                    />
+                    <Form.Item
+                      name="slug"
+                      noStyle
+                      rules={[
+                        { required: true, message: t('auth:validation.companySlugRequired') },
+                        {
+                          pattern: /^[a-z0-9-]+$/,
+                          message: t('auth:validation.companySlugRequired'),
+                        },
+                      ]}
+                    >
+                      <Input
+                        prefix={<GlobalOutlined />}
+                        placeholder="company-name"
+                        size="large"
+                        style={{ flex: 1 }}
+                        aria-label={t('auth:register.companySlug')}
+                        autoComplete="off"
+                      />
+                    </Form.Item>
                     <Input value=".smarterp.vn" disabled size="large" style={{ width: 120 }} />
                   </Space.Compact>
                 </Form.Item>
@@ -197,7 +213,12 @@ export default function RegisterPage() {
                   label={t('auth:register.firstName')}
                   rules={[{ required: true, message: t('auth:validation.firstNameRequired') }]}
                 >
-                  <Input prefix={<UserOutlined />} placeholder={t('auth:register.firstName')} size="large" />
+                  <Input
+                    prefix={<UserOutlined />}
+                    placeholder={t('auth:register.firstName')}
+                    size="large"
+                    autoComplete="name"
+                  />
                 </Form.Item>
 
                 <Form.Item
@@ -208,7 +229,12 @@ export default function RegisterPage() {
                     { type: 'email', message: t('auth:validation.emailInvalid') },
                   ]}
                 >
-                  <Input prefix={<MailOutlined />} placeholder="email@example.com" size="large" />
+                  <Input
+                    prefix={<MailOutlined />}
+                    placeholder="email@example.com"
+                    size="large"
+                    autoComplete="email"
+                  />
                 </Form.Item>
 
                 <Form.Item
@@ -219,7 +245,12 @@ export default function RegisterPage() {
                     { pattern: /^[0-9]{10,11}$/, message: t('common:validation.phone') },
                   ]}
                 >
-                  <Input prefix={<PhoneOutlined />} placeholder="0912345678" size="large" />
+                  <Input
+                    prefix={<PhoneOutlined />}
+                    placeholder="0912345678"
+                    size="large"
+                    autoComplete="tel"
+                  />
                 </Form.Item>
 
                 <Form.Item
@@ -309,7 +340,7 @@ export default function RegisterPage() {
               <Title level={5} style={{ marginBottom: 16 }}>
                 {t('auth:register.benefits.title')}
               </Title>
-              <Space direction="vertical" size="small">
+              <Space orientation="vertical" size="small">
                 <Text>✓ {t('auth:register.benefits.trial')}</Text>
                 <Text>✓ {t('auth:register.benefits.noCard')}</Text>
                 <Text>✓ {t('auth:register.benefits.support')}</Text>

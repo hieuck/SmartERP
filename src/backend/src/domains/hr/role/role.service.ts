@@ -10,7 +10,7 @@ import { Repository } from 'typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { Role } from './entities/role.entity';
-import { Permission } from '../permission/entities/permission.entity';
+import { Permission } from '../../../core/permission/entities/permission.entity';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { SecureRepository } from '@/common/security/secure-repository';
