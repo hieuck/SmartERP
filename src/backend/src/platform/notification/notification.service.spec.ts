@@ -53,6 +53,7 @@ describe('NotificationService', () => {
 
     const mockPermissionService = {
       getOwnerField: jest.fn().mockReturnValue('userId'),
+      getUserId: jest.fn().mockImplementation((user) => user.id ?? user.userId),
       buildSecureQuery: jest.fn((user, where) => ({ ...where, tenantId: user.tenantId })),
       canRead: jest.fn().mockReturnValue(true),
       canWrite: jest.fn().mockReturnValue(true),

@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 
 export interface User {
-  id: string;
+  id?: string;
+  userId?: string;
   tenantId: string;
   roles: string[];
 }
@@ -16,6 +17,10 @@ export interface BaseRecord {
 
 @Injectable()
 export class PermissionService {
+  getUserId(user: User): string | undefined {
+    return user.id ?? user.userId;
+  }
+
   getOwnerField(entityName: string): 'createdBy' | 'userId' | 'uploadedBy' {
     switch (entityName) {
       case 'Notification':
@@ -29,6 +34,7 @@ export class PermissionService {
 
   canRead(user: User, record: BaseRecord, _entityName: string): boolean {
     const ownerField = this.getOwnerField(_entityName);
+    const userId = this.getUserId(user);
 
     if (user.tenantId !== record.tenantId) {
       return false;
@@ -42,11 +48,12 @@ export class PermissionService {
       return true;
     }
 
-    return record[ownerField] === user.id;
+    return record[ownerField] === userId;
   }
 
   canWrite(user: User, record: BaseRecord, _entityName: string): boolean {
     const ownerField = this.getOwnerField(_entityName);
+    const userId = this.getUserId(user);
 
     if (user.tenantId !== record.tenantId) {
       return false;
@@ -60,7 +67,7 @@ export class PermissionService {
       return true;
     }
 
-    return record[ownerField] === user.id;
+    return record[ownerField] === userId;
   }
 
   canDelete(user: User, record: BaseRecord, _entityName: string): boolean {
@@ -78,9 +85,10 @@ export class PermissionService {
   ): { [key: string]: unknown } {
     const secureWhere = { ...baseWhere };
     secureWhere.tenantId = user.tenantId;
+    const userId = this.getUserId(user);
 
     if (!this.hasRole(user, 'admin') && !this.hasRole(user, 'manager')) {
-      secureWhere[this.getOwnerField(entityName)] = user.id;
+      secureWhere[this.getOwnerField(entityName)] = userId;
     }
 
     return secureWhere;

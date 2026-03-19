@@ -47,10 +47,11 @@ export class SecureRepository<T extends Partial<PermissionRecord> = any> {
       }
     } else {
       const ownerField = this.permissionService.getOwnerField(this.entityName);
+      const userId = this.permissionService.getUserId(user);
       const draftEntity = {
         ...entity,
         tenantId: user.tenantId,
-        [ownerField]: user.id,
+        [ownerField]: userId,
       } as T;
 
       // Check write permission for new entities
