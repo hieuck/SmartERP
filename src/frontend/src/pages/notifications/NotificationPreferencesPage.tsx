@@ -1,17 +1,15 @@
 import { logger } from '@/lib/logger/logger.service';
 import notificationService from '@/services/notification/notificationService';
 import { BellOutlined, MailOutlined, SaveOutlined } from '@ant-design/icons';
-import type { DividerProps } from 'antd';
-import { Alert, Button, Card, Divider, Form, message, Space, Spin, Switch, Typography } from 'antd';
+import { Alert, App, Button, Card, Divider, Form, Space, Spin, Switch, Typography } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-
-const DIVIDER_LEFT: DividerProps['orientation'] = 'left';
 
 const { Title, Text, Paragraph } = Typography;
 
 const NotificationPreferencesPage: React.FC = () => {
   const { t } = useTranslation();
+  const { message } = App.useApp();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -41,7 +39,7 @@ const NotificationPreferencesPage: React.FC = () => {
     try {
       const result = await notificationService.testEmail();
       setEmailConnected(result.connected);
-    } catch (error) {
+    } catch {
       setEmailConnected(false);
     } finally {
       setTestingEmail(false);
@@ -73,7 +71,7 @@ const NotificationPreferencesPage: React.FC = () => {
   return (
     <div style={{ padding: '24px' }}>
       <Card>
-        <Space direction="vertical" size="large" style={{ width: '100%' }}>
+        <Space orientation="vertical" size="large" style={{ width: '100%' }}>
           <div>
             <Title level={3}>
               <BellOutlined /> {t('notifications.preferences.title')}
@@ -92,7 +90,7 @@ const NotificationPreferencesPage: React.FC = () => {
           )}
 
           <Form form={form} layout="vertical" onFinish={handleSave}>
-            <Divider orientation={DIVIDER_LEFT}>{t('notifications.preferences.channels')}</Divider>
+            <Divider>{t('notifications.preferences.channels')}</Divider>
 
             <Form.Item
               name="inAppEnabled"
@@ -115,7 +113,7 @@ const NotificationPreferencesPage: React.FC = () => {
               <Switch disabled={!emailConnected} />
             </Form.Item>
 
-            <Divider orientation={DIVIDER_LEFT}>{t('notifications.preferences.types')}</Divider>
+            <Divider>{t('notifications.preferences.types')}</Divider>
 
             <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
               {t('notifications.preferences.typesDescription')}

@@ -9,7 +9,7 @@ import {
   Button,
   Space,
   Divider,
-  message,
+  App,
   Popconfirm,
   List,
 } from 'antd';
@@ -20,12 +20,15 @@ import dayjs from 'dayjs';
 const { RangePicker } = DatePicker;
 const { Option } = Select;
 
+type FilterValue = string | number | boolean | dayjs.Dayjs[] | null | undefined;
+type FilterMap = Record<string, FilterValue>;
+
 interface AdvancedFilterPanelProps {
   visible: boolean;
   onClose: () => void;
-  onApplyFilters: (filters: Record<string, any>) => void;
+  onApplyFilters: (filters: FilterMap) => void;
   module: 'products' | 'customers' | 'suppliers' | 'orders';
-  initialFilters?: Record<string, any>;
+  initialFilters?: FilterMap;
 }
 
 const AdvancedFilterPanel: React.FC<AdvancedFilterPanelProps> = ({
@@ -36,6 +39,7 @@ const AdvancedFilterPanel: React.FC<AdvancedFilterPanelProps> = ({
   initialFilters = {},
 }) => {
   const [form] = Form.useForm();
+  const { message } = App.useApp();
   const [savedFilters, setSavedFilters] = useState<SavedFilter[]>([]);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [filterName, setFilterName] = useState('');
@@ -59,7 +63,7 @@ const AdvancedFilterPanel: React.FC<AdvancedFilterPanelProps> = ({
     const values = form.getFieldsValue();
 
     // Clean up empty values
-    const filters: Record<string, any> = {};
+    const filters: FilterMap = {};
     Object.keys(values).forEach((key) => {
       if (values[key] !== undefined && values[key] !== null && values[key] !== '') {
         filters[key] = values[key];
@@ -82,7 +86,7 @@ const AdvancedFilterPanel: React.FC<AdvancedFilterPanelProps> = ({
     }
 
     const values = form.getFieldsValue();
-    const filters: Record<string, any> = {};
+    const filters: FilterMap = {};
     Object.keys(values).forEach((key) => {
       if (values[key] !== undefined && values[key] !== null && values[key] !== '') {
         filters[key] = values[key];
@@ -241,7 +245,7 @@ const AdvancedFilterPanel: React.FC<AdvancedFilterPanelProps> = ({
       {showSaveDialog && (
         <>
           <Divider />
-          <Space direction="vertical" style={{ width: '100%' }}>
+          <Space orientation="vertical" style={{ width: '100%' }}>
             <Input
               placeholder="Enter filter name"
               value={filterName}

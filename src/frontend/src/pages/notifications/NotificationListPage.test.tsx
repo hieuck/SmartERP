@@ -1,3 +1,4 @@
+import { App } from 'antd';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import NotificationListPage from './NotificationListPage';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -68,7 +69,7 @@ describe('NotificationListPage', () => {
   });
 
   it('loads notifications on mount and when switching to unread tab', async () => {
-    render(<NotificationListPage />);
+    render(<App><NotificationListPage /></App>);
 
     await waitFor(() => {
       expect(getNotifications).toHaveBeenNthCalledWith(1, {
@@ -92,7 +93,7 @@ describe('NotificationListPage', () => {
   it('marks all notifications as read', async () => {
     markAllAsRead.mockResolvedValue(undefined);
 
-    render(<NotificationListPage />);
+    render(<App><NotificationListPage /></App>);
 
     await screen.findByText('Low stock');
     fireEvent.click(screen.getByRole('button', { name: /notifications:center\.markAllRead/i }));
@@ -105,7 +106,7 @@ describe('NotificationListPage', () => {
   it('marks a notification as read and navigates to its link when clicked', async () => {
     markAsRead.mockResolvedValue(undefined);
 
-    render(<NotificationListPage />);
+    render(<App><NotificationListPage /></App>);
 
     const item = await screen.findByText('Low stock');
     fireEvent.click(item);

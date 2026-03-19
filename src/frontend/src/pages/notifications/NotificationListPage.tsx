@@ -12,7 +12,7 @@ import {
   Tabs,
   Tag,
   Typography,
-  message,
+  App,
   theme,
 } from 'antd';
 import dayjs from 'dayjs';
@@ -29,6 +29,7 @@ const { useToken } = theme;
 
 const NotificationListPage: React.FC = () => {
   const { token } = useToken();
+  const { message } = App.useApp();
   const { t } = useTranslation(['notifications', 'common']);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
@@ -64,7 +65,7 @@ const NotificationListPage: React.FC = () => {
       await notificationService.markAsRead(id);
       setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
       message.success(t('notifications:messages.markedAsRead'));
-    } catch (error) {
+    } catch {
       message.error(t('notifications:messages.markReadError'));
     }
   };
@@ -74,7 +75,7 @@ const NotificationListPage: React.FC = () => {
       await notificationService.markAllAsRead();
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
       message.success(t('notifications:messages.allMarkedAsRead'));
-    } catch (error) {
+    } catch {
       message.error(t('notifications:messages.markAllReadError'));
     }
   };
@@ -85,7 +86,7 @@ const NotificationListPage: React.FC = () => {
       setNotifications((prev) => prev.filter((n) => n.id !== id));
       setTotal((prev) => prev - 1);
       message.success(t('notifications:messages.deleteSuccess'));
-    } catch (error) {
+    } catch {
       message.error(t('notifications:messages.deleteError'));
     }
   };
@@ -126,7 +127,7 @@ const NotificationListPage: React.FC = () => {
   return (
     <div style={{ padding: '24px' }}>
       <Card>
-        <Space direction="vertical" size="large" style={{ width: '100%' }}>
+        <Space orientation="vertical" size="large" style={{ width: '100%' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Title level={3}>
               <BellOutlined /> {t('notifications:notification.list')}
@@ -234,7 +235,7 @@ const NotificationListPage: React.FC = () => {
                       </Space>
                     }
                     description={
-                      <Space direction="vertical" size={4}>
+                      <Space orientation="vertical" size={4}>
                         <Text>{notification.message}</Text>
                         <Text type="secondary" style={{ fontSize: 12 }}>
                           {dayjs(notification.createdAt).format('YYYY-MM-DD HH:mm')} (

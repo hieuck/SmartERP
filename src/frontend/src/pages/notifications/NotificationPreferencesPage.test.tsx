@@ -1,3 +1,4 @@
+import { App } from 'antd';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import NotificationPreferencesPage from './NotificationPreferencesPage';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -56,7 +57,7 @@ describe('NotificationPreferencesPage', () => {
   });
 
   it('loads preferences and email connection state on mount', async () => {
-    render(<NotificationPreferencesPage />);
+    render(<App><NotificationPreferencesPage /></App>);
 
     await waitFor(() => {
       expect(getPreferences).toHaveBeenCalled();
@@ -72,7 +73,7 @@ describe('NotificationPreferencesPage', () => {
   it('shows warning when email service is not connected', async () => {
     testEmail.mockResolvedValue({ connected: false, message: 'SMTP unavailable' });
 
-    render(<NotificationPreferencesPage />);
+    render(<App><NotificationPreferencesPage /></App>);
 
     expect(
       await screen.findByText('notifications.preferences.emailServiceNotConfigured'),
@@ -80,7 +81,7 @@ describe('NotificationPreferencesPage', () => {
   });
 
   it('saves the loaded preferences', async () => {
-    render(<NotificationPreferencesPage />);
+    render(<App><NotificationPreferencesPage /></App>);
 
     await screen.findByText('notifications.preferences.title');
     fireEvent.click(screen.getByRole('button', { name: /notifications\.preferences\.savePreferences/i }));
