@@ -1,16 +1,33 @@
-// @ts-nocheck
 import { PermissionService, User } from '@/common/security/permission.service';
 import { SecureRepository } from '@/common/security/secure-repository';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CreatePaymentDto, RefundPaymentDto, VerifyPaymentDto } from './dto/create-payment.dto';
+import {
+  CreatePaymentDto,
+  GatewayVerifyPaymentDto,
+  RefundPaymentDto,
+} from './dto/create-payment.dto';
 import { PaymentTransaction } from './entities/payment-transaction.entity';
 import { PaymentWebhook } from './entities/payment-webhook.entity';
 import { MomoService } from './providers/momo/momo.service';
 import { PayPalService } from './providers/paypal/paypal.service';
 import { StripeService } from './providers/stripe/stripe.service';
 import { VNPayService } from './providers/vnpay/vnpay.service';
+
+type PaymentVerificationResult = {
+  success: boolean;
+  message: string;
+  transactionId?: string;
+};
+
+type TransactionFilters = {
+  orderId?: string;
+  gateway?: string;
+  status?: string;
+  limit?: number;
+  offset?: number;
+};
 
 @Injectable()
 export class PaymentGatewayService {
@@ -42,12 +59,16 @@ export class PaymentGatewayService {
     );
   }
 
+  private getErrorMessage(error: unknown): string {
+    return error instanceof Error ? error.message : String(error);
+  }
+
   /**
    * Create payment transaction
    */
   async createPayment(user: User, dto: CreatePaymentDto): Promise<PaymentTransaction> {
     // Create transaction record with SecureRepository (auto tenant isolation)
-    const transaction = {
+    const transaction: Partial<PaymentTransaction> = {
       orderId: dto.orderId,
       gateway: dto.gateway,
       amount: dto.amount,
@@ -60,7 +81,7 @@ export class PaymentGatewayService {
     const savedTransaction = await this.secureTransactionRepo.save(user, transaction);
 
     // Generate payment URL based on gateway
-    let paymentUrl: string;
+    let paymentUrl = '';
     let additionalData: Record<string, unknown> = {};
 
     try {
@@ -135,10 +156,10 @@ export class PaymentGatewayService {
     } catch (error) {
       // Update transaction with error using SecureRepository
       savedTransaction.status = 'failed';
-      savedTransaction.errorMessage = error.message;
+      savedTransaction.errorMessage = this.getErrorMessage(error);
       await this.secureTransactionRepo.save(user, savedTransaction);
 
-      this.logger.error(`Payment creation failed: ${error.message}`);
+      this.logger.error(`Payment creation failed: ${this.getErrorMessage(error)}`);
       throw error;
     }
   }
@@ -148,7 +169,7 @@ export class PaymentGatewayService {
    */
   async verifyPayment(
     user: User,
-    dto: VerifyPaymentDto,
+    dto: GatewayVerifyPaymentDto,
   ): Promise<{
     success: boolean;
     message: string;
@@ -163,7 +184,7 @@ export class PaymentGatewayService {
       throw new BadRequestException('Transaction not found');
     }
 
-    let verificationResult: { success: boolean; message: string; transactionId?: string };
+    let verificationResult: PaymentVerificationResult;
 
     // Verify based on gateway
     switch (dto.gateway) {
@@ -217,7 +238,7 @@ export class PaymentGatewayService {
   ): Promise<void> {
     // Save webhook with SecureRepository
     const eventType = String(payload.type || payload.event_type || 'unknown');
-    const webhook = {
+    const webhook: Partial<PaymentWebhook> = {
       gateway,
       eventType,
       payload,
@@ -229,7 +250,7 @@ export class PaymentGatewayService {
 
     try {
       // Process webhook based on gateway
-      let result: { success: boolean; message: string; transactionId?: string };
+      let result: PaymentVerificationResult;
 
       switch (gateway) {
         case 'vnpay':
@@ -274,7 +295,7 @@ export class PaymentGatewayService {
 
       this.logger.log(`Webhook processed: ${savedWebhook.id}`);
     } catch (error) {
-      this.logger.error(`Webhook processing failed: ${error.message}`);
+      this.logger.error(`Webhook processing failed: ${this.getErrorMessage(error)}`);
       throw error;
     }
   }
@@ -333,7 +354,7 @@ export class PaymentGatewayService {
 
       return transaction;
     } catch (error) {
-      this.logger.error(`Refund failed: ${error.message}`);
+      this.logger.error(`Refund failed: ${this.getErrorMessage(error)}`);
       throw error;
     }
   }
@@ -358,16 +379,10 @@ export class PaymentGatewayService {
    */
   async listTransactions(
     user: User,
-    filters?: {
-      orderId?: string;
-      gateway?: string;
-      status?: string;
-      limit?: number;
-      offset?: number;
-    },
+    filters?: TransactionFilters,
   ): Promise<{ transactions: PaymentTransaction[]; total: number }> {
     // Build where conditions
-    const where: unknown = { tenantId: user.tenantId };
+    const where: Partial<PaymentTransaction> = { tenantId: user.tenantId };
 
     if (filters?.orderId) {
       where.orderId = filters.orderId;

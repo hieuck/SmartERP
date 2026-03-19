@@ -11,7 +11,7 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ProductStatus } from '../../enums/ecommerce.enum';
 
-export class CreateProductDto {
+export class EcommerceCreateProductDto {
   @ApiProperty({ example: 'PROD-001' })
   @IsString()
   sku: string;

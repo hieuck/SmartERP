@@ -3,7 +3,11 @@ import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { User } from '@/common/security/permission.service';
 import { Request } from 'express';
 import { PaymentGatewayService } from './payment-gateway.service';
-import { CreatePaymentDto, VerifyPaymentDto, RefundPaymentDto } from './dto/create-payment.dto';
+import {
+  CreatePaymentDto,
+  GatewayVerifyPaymentDto,
+  RefundPaymentDto,
+} from './dto/create-payment.dto';
 
 @Controller('payment-gateway')
 export class PaymentGatewayController {
@@ -30,7 +34,7 @@ export class PaymentGatewayController {
   async verifyPayment(
     @CurrentUser() user: User,
     @Req() req: Request & { tenantId?: string },
-    @Body() dto: VerifyPaymentDto,
+    @Body() dto: GatewayVerifyPaymentDto,
   ) {
     return this.paymentGatewayService.verifyPayment(user, dto);
   }

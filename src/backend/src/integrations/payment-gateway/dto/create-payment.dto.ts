@@ -15,7 +15,7 @@ export class CreatePaymentDto {
   ipAddress?: string;
 }
 
-export class VerifyPaymentDto {
+export class GatewayVerifyPaymentDto {
   transactionId: string;
   gateway: string;
   params: Record<string, unknown>;

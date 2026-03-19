@@ -15,9 +15,9 @@ import { CacheTTL } from '../../../common/decorators/cache-ttl.decorator';
 import { Roles } from '../../../common/decorators/roles.decorator';
 import { CacheInterceptor } from '../../../common/interceptors/cache.interceptor';
 import { CacheTTL as CacheTTLConstant } from '../../../config/cache.config';
-import { CreateProductDto } from './dto/create-product.dto';
+import { EcommerceCreateProductDto } from './dto/create-product.dto';
 import { SearchProductDto } from './dto/search-product.dto';
-import { UpdateProductDto } from './dto/update-product.dto';
+import { EcommerceUpdateProductDto } from './dto/update-product.dto';
 import { ProductCatalogService } from './product-catalog.service';
 
 @ApiTags('ecommerce-products')
@@ -30,7 +30,7 @@ export class ProductCatalogController {
   @Roles('manager', 'admin')
   @ApiOperation({ summary: 'Create new product' })
   @ApiResponse({ status: 201, description: 'Product created successfully' })
-  async create(@Body() dto: CreateProductDto, @Request() req) {
+  async create(@Body() dto: EcommerceCreateProductDto, @Request() req) {
     return this.productCatalogService.create(dto as any, req.user);
   }
 
@@ -74,7 +74,7 @@ export class ProductCatalogController {
   @Roles('manager', 'admin')
   @ApiOperation({ summary: 'Update product' })
   @ApiResponse({ status: 200, description: 'Product updated successfully' })
-  async update(@Param('id') id: string, @Body() dto: UpdateProductDto, @Request() req) {
+  async update(@Param('id') id: string, @Body() dto: EcommerceUpdateProductDto, @Request() req) {
     return this.productCatalogService.update(id, dto as any, req.user);
   }
 
