@@ -510,6 +510,7 @@ Current status:
 - product offline demo covered: `ProductOfflineDemo` (`3/3`)
 - offline demo covered: `OfflineDemo` (`3/3`)
 - testing this shell also exposed a design nuance: cancel fallback logic exists internally, but the cancel button only renders when an explicit `onCancel` is provided
+- browser smoke on local dev server confirmed Vite boots on `http://localhost:5173/`; current UX blockers are backend-unavailable `auth/refresh` calls and UI deprecation warnings, not startup crashes
 - real production bug fixed in `NotificationBell`: notification click no longer passes a fake mouse event into `handleMarkAsRead`
 - root cause in the first page batch was test-harness drift: deep Ant Design mocks were less reliable than using real components with thin service/router mocks
 - aggregate verification now passes for `src/pages/notifications/NotificationListPage.test.tsx src/services`: `42` files, `226` tests
