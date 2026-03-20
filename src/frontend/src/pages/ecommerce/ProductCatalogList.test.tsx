@@ -163,6 +163,14 @@ describe('ProductCatalogList', () => {
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/ecommerce/products/new');
   });
 
+  it('navigates to edit form from row actions', async () => {
+    render(<ProductCatalogList />);
+
+    fireEvent.click(screen.getAllByText('catalog.actions.edit')[0]);
+
+    expect(navigateMock).toHaveBeenCalledWith('/dashboard/ecommerce/products/p-1');
+  });
+
   it('publishes an unpublished product and shows success feedback', async () => {
     render(<ProductCatalogList />);
 

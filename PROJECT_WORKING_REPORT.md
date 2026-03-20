@@ -22,6 +22,10 @@
   - frontend session-restore logic now clears stale `session_hint` cookies when `/auth/refresh` fails or returns an unusable payload
   - this keeps SmartERP from retrying pointless refresh requests on every new page load after a dead session hint is left behind
   - browser verification now shows the intended behavior: a stale hint causes at most one `401` refresh attempt, the cookie is removed, and the next reload makes no refresh request at all
+- ecommerce product catalog UX is now more complete and properly localized:
+  - the catalog list now exposes an explicit edit action that leads into the existing product form route instead of leaving edit mode hidden behind a dead-end list
+  - Vietnamese ecommerce copy has been restored from mojibake into readable product, order, and form labels
+  - browser smoke confirms the ecommerce routes still render cleanly after the localization and list-action changes
 
 - ecommerce product catalog runtime has now been recovered end-to-end:
   - frontend list and form pages now use the shared API client instead of bypassing auth with raw `axios`

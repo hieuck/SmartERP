@@ -78,9 +78,12 @@ export default function ProductCatalogList() {
     {
       title: '',
       key: 'actions',
-      width: 160,
+      width: 220,
       render: (_, record) => (
         <Space>
+          <Button size="small" onClick={() => navigate(`/dashboard/ecommerce/products/${record.id}`)}>
+            {t('catalog.actions.edit')}
+          </Button>
           {record.isPublished ? (
             <Button size="small" onClick={() => unpublishMutation.mutate(record.id)}>
               {t('catalog.actions.unpublish')}

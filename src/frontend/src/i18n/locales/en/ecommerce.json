@@ -17,6 +17,7 @@
       "out_of_stock": "Out of Stock"
     },
     "actions": {
+      "edit": "Edit",
       "publish": "Publish",
       "unpublish": "Unpublish"
     },

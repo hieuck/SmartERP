@@ -17,6 +17,7 @@
       "out_of_stock": "Hết hàng"
     },
     "actions": {
+      "edit": "Chỉnh sửa",
       "publish": "Đăng bán",
       "unpublish": "Ẩn"
     },
@@ -70,7 +71,7 @@
     "title": "Đơn hàng online",
     "searchPlaceholder": "Tìm theo số đơn hàng...",
     "columns": {
-      "orderNumber": "Số ĐH",
+      "orderNumber": "Số đơn hàng",
       "customer": "Khách hàng",
       "total": "Tổng tiền",
       "status": "Trạng thái",
