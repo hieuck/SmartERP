@@ -85,7 +85,7 @@ export default function LoginPage() {
     onSuccess: (data) => {
       // Validate response data
       if (!data?.user?.id || !data?.token) {
-        message.error('Invalid response from server');
+        message.error(t('auth:login.invalidResponse'));
         return;
       }
 
@@ -124,7 +124,7 @@ export default function LoginPage() {
 
       if (apiError.response?.status === 500) {
         // Handle 500 Internal Server Error
-        errorMsg = 'Server error occurred. Please try again later.';
+        errorMsg = t('auth:login.serverError');
       } else if (apiError.response?.status === 423) {
         errorMsg = t('common:messages.unauthorized');
       } else if (apiError.response?.data?.message) {

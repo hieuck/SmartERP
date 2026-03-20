@@ -914,3 +914,18 @@ Verification:
   - backend still restores sessions when a refresh cookie exists
   - missing-cookie bootstrap hits now land as info/expected logs instead of warning noise
   - backend stderr remains limited to dependency-level `DEP0169`
+
+## 2026-03-20 Auth Locale Cleanup
+- Cleaned authentication localization assets in:
+  - [src/frontend/src/i18n/locales/vi/auth.json](/e:/GitHub/smart-erp/src/frontend/src/i18n/locales/vi/auth.json)
+  - [src/frontend/src/i18n/locales/en/auth.json](/e:/GitHub/smart-erp/src/frontend/src/i18n/locales/en/auth.json)
+- Removed hardcoded English error messages from [src/frontend/src/pages/auth/LoginPage.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/auth/LoginPage.tsx) by routing malformed-response and server-error feedback through i18n keys.
+- Verified with:
+  - `npx.cmd vitest run src/pages/public/RegisterPage.test.tsx src/pages/auth/LoginPage.test.tsx`
+  - targeted frontend `eslint` on `src/pages/auth/LoginPage.tsx`
+  - `npm.cmd run build` in `src/frontend`
+  - `npm.cmd run runtime:smoke`
+- Current runtime snapshot after the batch:
+  - frontend dev server still healthy on `127.0.0.1:5173`
+  - frontend stderr still empty
+  - backend/database smoke unchanged and healthy
