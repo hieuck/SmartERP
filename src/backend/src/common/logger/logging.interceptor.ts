@@ -23,8 +23,8 @@ export class LoggingInterceptor implements NestInterceptor {
   private readonly SUCCESS_LOG_EXCLUDED_PATHS = ['/health', '/health/'];
 
   private shouldSkipSuccessLog(url: string): boolean {
-    return this.SUCCESS_LOG_EXCLUDED_PATHS.some((path) =>
-      url === path || url.endsWith(path) || url.includes(`${path}/`),
+    return this.SUCCESS_LOG_EXCLUDED_PATHS.some(
+      (path) => url === path || url.endsWith(path) || url.includes(`${path}/`),
     );
   }
 

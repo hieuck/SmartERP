@@ -24,8 +24,8 @@ export class QueryPerformanceInterceptor implements NestInterceptor {
   constructor(private readonly metricsService: MetricsService) {}
 
   private shouldSkipSlowQueryLogging(url: string): boolean {
-    return this.SLOW_QUERY_EXCLUDED_PATHS.some((path) =>
-      url === path || url.endsWith(path) || url.includes(`${path}/`),
+    return this.SLOW_QUERY_EXCLUDED_PATHS.some(
+      (path) => url === path || url.endsWith(path) || url.includes(`${path}/`),
     );
   }
 

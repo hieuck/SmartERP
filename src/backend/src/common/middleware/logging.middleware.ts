@@ -7,8 +7,8 @@ export class LoggingMiddleware implements NestMiddleware {
   private readonly SUCCESS_LOG_EXCLUDED_PATHS = ['/health', '/health/'];
 
   private shouldSkipSuccessLog(url: string): boolean {
-    return this.SUCCESS_LOG_EXCLUDED_PATHS.some((path) =>
-      url === path || url.endsWith(path) || url.includes(`${path}/`),
+    return this.SUCCESS_LOG_EXCLUDED_PATHS.some(
+      (path) => url === path || url.endsWith(path) || url.includes(`${path}/`),
     );
   }
 
@@ -25,7 +25,10 @@ export class LoggingMiddleware implements NestMiddleware {
         this.logger.error(`ERROR ${logMessage}`);
       } else if (statusCode >= 400) {
         this.logger.warn(`WARN ${logMessage}`);
-      } else if (process.env.NODE_ENV === 'development' && !this.shouldSkipSuccessLog(originalUrl)) {
+      } else if (
+        process.env.NODE_ENV === 'development' &&
+        !this.shouldSkipSuccessLog(originalUrl)
+      ) {
         this.logger.log(`OK ${logMessage}`);
       }
     });

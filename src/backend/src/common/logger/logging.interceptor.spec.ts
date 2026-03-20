@@ -8,8 +8,9 @@ describe('LoggingInterceptor', () => {
     const warn = jest.fn();
     const error = jest.fn();
 
-    (interceptor as unknown as { logger: { log: jest.Mock; warn: jest.Mock; error: jest.Mock } })
-      .logger = {
+    (
+      interceptor as unknown as { logger: { log: jest.Mock; warn: jest.Mock; error: jest.Mock } }
+    ).logger = {
       log: jest.fn(),
       warn,
       error,
@@ -55,8 +56,9 @@ describe('LoggingInterceptor', () => {
     const warn = jest.fn();
     const error = jest.fn();
 
-    (interceptor as unknown as { logger: { log: jest.Mock; warn: jest.Mock; error: jest.Mock } })
-      .logger = {
+    (
+      interceptor as unknown as { logger: { log: jest.Mock; warn: jest.Mock; error: jest.Mock } }
+    ).logger = {
       log,
       warn,
       error,
