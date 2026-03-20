@@ -1,6 +1,6 @@
 import StandardListPage from '@/components/common/StandardListPage';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Button, Space, Tag, message } from 'antd';
+import { App, Button, Space, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import axios from 'axios';
 import { useState } from 'react';
@@ -18,6 +18,7 @@ interface EcommerceProduct {
 
 export default function ProductCatalogList() {
   const { t } = useTranslation('ecommerce');
+  const { message } = App.useApp();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const queryClient = useQueryClient();
