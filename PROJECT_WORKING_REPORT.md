@@ -26,6 +26,12 @@
   - the catalog list now exposes an explicit edit action that leads into the existing product form route instead of leaving edit mode hidden behind a dead-end list
   - Vietnamese ecommerce copy has been restored from mojibake into readable product, order, and form labels
   - browser smoke confirms the ecommerce routes still render cleanly after the localization and list-action changes
+- browser smoke execution is now more resilient in daily operations:
+  - `tools/browser-smoke.mjs` no longer depends exclusively on `networkidle` for every route, which reduces the chance of the whole smoke run hanging on one noisy page
+  - each route now uses explicit navigation and idle timeouts and reports a route-level failure instead of stalling the entire command
+- a transient local infrastructure incident was observed and recovered during verification:
+  - Docker Desktop restarted around `11:41`, which brought down `postgres` and `redis` and caused a temporary `503` on `/api/health`
+  - the data stack was brought back with the compose development infrastructure, and both `runtime:smoke` and `runtime:browser-smoke` returned to green afterward
 
 - ecommerce product catalog runtime has now been recovered end-to-end:
   - frontend list and form pages now use the shared API client instead of bypassing auth with raw `axios`
