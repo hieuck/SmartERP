@@ -13,25 +13,23 @@ export function initSentry() {
   const environment = process.env.NODE_ENV || 'development';
   const release = process.env.APP_VERSION || '1.0.0';
 
-  // Only initialize if DSN is provided
   if (!dsn) {
-    console.warn('⚠️  Sentry DSN not provided. Error tracking disabled.');
+    if (environment === 'production') {
+      console.warn('Sentry DSN not configured. Error tracking disabled.');
+    }
     return;
   }
-
-  // Removed console statement
 
   Sentry.init({
     dsn,
     environment,
     release: `smart-erp-backend@${release}`,
 
-    // Performance Monitoring
+    // Performance monitoring
     tracesSampleRate: environment === 'production' ? 0.1 : 1.0,
 
-    // Filter out non-error events in production
-    beforeSend(event, _hint) {
-      // Don't send events in development unless it's an error
+    // Filter out non-error events in development
+    beforeSend(event) {
       if (environment === 'development' && event.level !== 'error') {
         return null;
       }
@@ -39,23 +37,16 @@ export function initSentry() {
       return event;
     },
 
-    // Ignore specific errors
     ignoreErrors: [
-      // Database connection errors (handled by health checks)
       'ECONNREFUSED',
       'ETIMEDOUT',
-      // Redis connection errors (handled by health checks)
       'Redis connection',
-      // Expected validation errors
       'ValidationError',
       'BadRequestException',
     ],
   });
 }
 
-/**
- * Set user context for Sentry
- */
 export function setSentryUser(user: { id: string; email: string; tenantId: string }) {
   Sentry.setUser({
     id: user.id,
@@ -64,32 +55,20 @@ export function setSentryUser(user: { id: string; email: string; tenantId: strin
   });
 }
 
-/**
- * Clear user context
- */
 export function clearSentryUser() {
   Sentry.setUser(null);
 }
 
-/**
- * Capture exception manually
- */
 export function captureException(error: Error, context?: Record<string, unknown>) {
   Sentry.captureException(error, {
     extra: context,
   });
 }
 
-/**
- * Capture message manually
- */
 export function captureMessage(message: string, level: Sentry.SeverityLevel = 'info') {
   Sentry.captureMessage(message, level);
 }
 
-/**
- * Add breadcrumb for debugging
- */
 export function addBreadcrumb(message: string, data?: Record<string, unknown>) {
   Sentry.addBreadcrumb({
     message,

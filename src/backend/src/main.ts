@@ -5,10 +5,9 @@ import { LoggerService } from '@common/logger/logger.service';
 import { MetricsInterceptor } from '@common/metrics/metrics.interceptor';
 import { MetricsService } from '@common/metrics/metrics.service';
 import { ResponseTransformInterceptor } from '@common/response/field-filter.interceptor';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { Logger } from '@nestjs/common';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
@@ -17,8 +16,8 @@ import { AppModule } from './app.module';
 import { initSentry } from './config/sentry.config';
 
 async function bootstrap() {
-  // Initialize Sentry for error tracking (Day 4-7: Add Monitoring)
   initSentry();
+
   const app = await NestFactory.create(AppModule, {
     logger: ['error', 'warn', 'log', 'debug', 'verbose'],
   });
@@ -48,19 +47,17 @@ async function bootstrap() {
       xssFilter: true,
     }),
   );
+  logger.log('Security headers enabled (Helmet)');
 
-  logger.log('🔒 Security headers enabled (Helmet.js)');
-
-  app.use(cookieParser()); // cookie-parser for httpOnly cookie support
-  logger.log('🍪 Cookie parser enabled');
+  app.use(cookieParser());
+  logger.log('Cookie parser enabled');
 
   app.use(compression());
-  logger.log('📦 Response compression enabled');
+  logger.log('Response compression enabled');
 
   app.useGlobalFilters(new HttpExceptionFilter());
 
   const metricsService = app.get(MetricsService);
-
   app.useGlobalInterceptors(
     new CorrelationIdInterceptor(),
     new QueryPerformanceInterceptor(metricsService),
@@ -68,23 +65,20 @@ async function bootstrap() {
     new ResponseTransformInterceptor(),
   );
 
-  // CORS configuration - supports localhost and optional LAN IP via CORS_ORIGIN env
   const corsOriginEnv = process.env.CORS_ORIGIN || '';
   const allowedOrigins = [
     'http://localhost:5173',
     'http://127.0.0.1:5173',
     ...corsOriginEnv
       .split(',')
-      .map((o) => o.trim())
+      .map((origin) => origin.trim())
       .filter(Boolean),
   ];
 
   app.enableCors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (mobile apps, Postman, etc.)
       if (!origin) return callback(null, true);
 
-      // Allow localhost and LAN IPs
       if (
         origin.startsWith('http://localhost:') ||
         origin.startsWith('http://127.0.0.1:') ||
@@ -93,7 +87,6 @@ async function bootstrap() {
         return callback(null, true);
       }
 
-      // Check against allowed origins
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
@@ -136,29 +129,26 @@ async function bootstrap() {
   const port = process.env.PORT || 3000;
   await app.listen(port);
 
-  logger.log(`🚀 SmartERP Monolith running on: http://localhost:${port}`);
-  logger.log(`📚 API Documentation: http://localhost:${port}/api/docs`);
-  logger.log(`📊 Health Check: http://localhost:${port}/api/health`);
-  logger.log(`📈 Metrics: http://localhost:${port}/api/metrics`);
+  logger.log(`SmartERP Monolith running on http://localhost:${port}`);
+  logger.log(`API documentation available at http://localhost:${port}/api/docs`);
+  logger.log(`Health check available at http://localhost:${port}/api/health`);
+  logger.log(`Metrics available at http://localhost:${port}/api/metrics`);
 
-  // Auto-seed demo data in development
   if (process.env.NODE_ENV !== 'production') {
     try {
       const { SeedService } = await import('./utilities/seed/seed.service');
       const seedService = app.get(SeedService);
       const result = await seedService.seedDemoData();
-      logger.log(`🌱 ${result.message}`);
-      logger.log(
-        `📧 Demo credentials: ${result.credentials.email} / ${result.credentials.password}`,
-      );
-    } catch (error) {
-      logger.warn('⚠️  Failed to seed demo data (this is normal if data already exists)');
+
+      logger.log(`Demo data seed result: ${result.message}`);
+      logger.log(`Demo credentials: ${result.credentials.email} / ${result.credentials.password}`);
+    } catch {
+      logger.warn('Demo data seeding skipped or already applied.');
     }
   }
 }
 
 bootstrap().catch((error) => {
-  // Use NestJS built-in logger as fallback when app fails to bootstrap
   const fallbackLogger = new Logger('Bootstrap');
   fallbackLogger.error('Failed to start application', error.stack || error);
   process.exit(1);
