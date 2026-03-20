@@ -47,9 +47,8 @@ async function mockDashboardApis(page: Page) {
 }
 
 async function fillRegisterForm(page: Page) {
-  await page.getByLabel(/company slug|mã công ty/i).fill('smart-erp-demo');
   await page.getByLabel(/company name|tên công ty/i).fill('Smart ERP Demo');
-  await page.getByLabel(/first name|tên/i).fill('Owner');
+  await page.getByLabel(/full name|họ và tên/i).fill('Owner Admin');
   await page.getByLabel(/^email$/i).fill(registerPayload.user.email);
   await page.getByLabel(/phone number|số điện thoại/i).fill('0912345678');
   await page.getByLabel(/^password$/i).fill('StrongPass1');
@@ -64,23 +63,24 @@ test.describe('Register Page', () => {
   test('renders the registration form with company and account fields', async ({ page }) => {
     await expect(page.getByRole('heading', { level: 2 })).toBeVisible();
     await expect(page.getByLabel(/company name|tên công ty/i)).toBeVisible();
-    await expect(page.getByLabel(/company slug|mã công ty/i)).toBeVisible();
+    await expect(page.getByLabel(/workspace url|địa chỉ workspace/i)).toBeVisible();
     await expect(page.getByLabel(/^email$/i)).toBeVisible();
     await expect(page.getByLabel(/^password$/i)).toHaveAttribute('autocomplete', 'new-password');
-    await expect(page.getByLabel(/confirm password|xÃ¡c nháº­n máº­t kháº©u/i)).toHaveAttribute(
+    await expect(page.getByLabel(/confirm password|xác nhận mật khẩu/i)).toHaveAttribute(
       'autocomplete',
       'new-password',
     );
     await expect(page.getByRole('button', { name: /register|đăng ký/i })).toBeVisible();
   });
 
-  test('auto-generates a normalized slug from company name', async ({ page }) => {
+  test('auto-generates a normalized workspace URL preview from company name', async ({ page }) => {
     const companyNameInput = page.getByLabel(/company name|tên công ty/i);
-    const slugInput = page.getByLabel(/company slug|mã công ty/i);
+    const workspaceUrlInput = page.getByLabel(/workspace url|địa chỉ workspace/i);
 
     await companyNameInput.fill('Công ty Đặng Khoa');
 
-    await expect(slugInput).toHaveValue('cong-ty-dang-khoa');
+    await expect(workspaceUrlInput).toHaveValue('cong-ty-dang-khoa');
+    await expect(workspaceUrlInput).toHaveAttribute('readonly', '');
   });
 
   test('requires users to accept terms before registration', async ({ page }) => {
@@ -96,7 +96,9 @@ test.describe('Register Page', () => {
     await page.locator('input[type="checkbox"]').first().check();
     await page.getByRole('button', { name: /register|đăng ký/i }).click();
 
-    await expect(page.locator('.ant-form-item-explain-error').filter({ hasText: /do not match|không khớp/i })).toBeVisible();
+    await expect(
+      page.locator('.ant-form-item-explain-error').filter({ hasText: /do not match|không khớp/i }),
+    ).toBeVisible();
   });
 
   test('submits successfully and redirects to dashboard when API succeeds', async ({ page }) => {

@@ -1,5 +1,5 @@
 import { App } from 'antd';
-import { fireEvent, screen } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from '@/test/test-utils';
 import RegisterPage from './RegisterPage';
@@ -15,8 +15,9 @@ vi.mock('react-i18next', () => {
     'auth:register.companyInfo': 'Company Information',
     'auth:register.accountInfo': 'Account Information',
     'auth:register.companyName': 'Company Name',
-    'auth:register.companySlug': 'Company Slug',
-    'auth:register.firstName': 'Full Name',
+    'auth:register.workspaceUrl': 'Workspace URL',
+    'auth:register.workspaceUrlHelp': 'SmartERP generates your workspace URL automatically from your company name.',
+    'auth:register.fullName': 'Full Name',
     'auth:register.email': 'Email',
     'auth:register.phone': 'Phone Number',
     'auth:register.password': 'Password',
@@ -38,11 +39,11 @@ vi.mock('react-i18next', () => {
     'auth:register.benefits.training': 'Onboarding training included',
     'auth:register.benefits.cancel': 'Cancel whenever you need',
     'auth:validation.companyNameRequired': 'Company name is required',
-    'auth:validation.companySlugRequired': 'Company slug is required',
-    'auth:validation.firstNameRequired': 'Full name is required',
+    'auth:validation.fullNameRequired': 'Full name is required',
     'auth:validation.emailRequired': 'Email is required',
     'auth:validation.emailInvalid': 'Email is invalid',
     'auth:validation.passwordRequired': 'Password is required',
+    'auth:validation.confirmPasswordRequired': 'Please confirm your password',
     'auth:validation.passwordMinLength': 'Password must be at least 8 characters',
     'auth:validation.agreeTermsRequired': 'Please accept the terms',
     'common:validation.required': 'Required',
@@ -114,7 +115,7 @@ describe('RegisterPage', () => {
     expect(confirmPasswordInput).toHaveAttribute('autocomplete', 'new-password');
   });
 
-  it('auto-generates a normalized company slug as users type the company name', () => {
+  it('auto-generates a normalized workspace URL preview from the company name', async () => {
     render(
       <App>
         <RegisterPage />
@@ -122,10 +123,12 @@ describe('RegisterPage', () => {
     );
 
     fireEvent.change(screen.getByLabelText('Company Name'), {
-      target: { value: 'C\u00f4ng ty \u0110\u1eb7ng Khoa' },
+      target: { value: 'Công ty Đặng Khoa' },
     });
 
-    expect(screen.getByLabelText('Company Slug')).toHaveValue('cong-ty-dang-khoa');
+    const workspaceInput = screen.getByLabelText('Workspace URL');
+    await waitFor(() => expect(workspaceInput).toHaveValue('cong-ty-dang-khoa'));
+    expect(workspaceInput).toHaveAttribute('readonly');
   });
 
   it('uses browser-friendly autocomplete values on key registration inputs', () => {
@@ -139,5 +142,18 @@ describe('RegisterPage', () => {
     expect(screen.getByLabelText('Full Name')).toHaveAttribute('autocomplete', 'name');
     expect(screen.getByLabelText('Email')).toHaveAttribute('autocomplete', 'email');
     expect(screen.getByLabelText('Phone Number')).toHaveAttribute('autocomplete', 'tel');
+  });
+
+  it('renders legal acknowledgements as plain text instead of dead placeholder links', () => {
+    render(
+      <App>
+        <RegisterPage />
+      </App>,
+    );
+
+    expect(screen.getByText('Terms of Service')).toBeInTheDocument();
+    expect(screen.getByText('Privacy Policy')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Terms of Service' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Privacy Policy' })).not.toBeInTheDocument();
   });
 });

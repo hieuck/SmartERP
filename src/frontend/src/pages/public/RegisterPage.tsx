@@ -35,7 +35,6 @@ const { useToken } = theme;
 
 interface RegisterFormValues {
   companyName: string;
-  slug: string;
   fullName: string;
   email: string;
   phone: string;
@@ -52,11 +51,23 @@ function getErrorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
+function normalizeCompanySlug(companyName: string): string {
+  return companyName
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 export default function RegisterPage() {
   const { t } = useTranslation(['auth', 'common']);
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [form] = Form.useForm<RegisterFormValues>();
+  const companyName = Form.useWatch('companyName', form) ?? '';
+  const workspaceSlugPreview = normalizeCompanySlug(companyName);
   const { message } = App.useApp();
   const { token } = useToken();
   const benefitItems = [
@@ -66,18 +77,6 @@ export default function RegisterPage() {
     t('auth:register.benefits.training'),
     t('auth:register.benefits.cancel'),
   ];
-
-  const handleCompanyNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const companyName = e.target.value;
-    const slug = companyName
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/đ/g, 'd')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '');
-    form.setFieldsValue({ slug });
-  };
 
   const registerMutation = useMutation({
     mutationFn: async (values: RegisterFormValues) =>
@@ -186,37 +185,22 @@ export default function RegisterPage() {
                     prefix={<ShopOutlined />}
                     placeholder={t('auth:register.companyName')}
                     size="large"
-                    onChange={handleCompanyNameChange}
                     autoComplete="organization"
                   />
                 </Form.Item>
 
-                <Form.Item
-                  label={t('auth:register.companySlug')}
-                  required
-                  extra={t('auth:register.companySlug')}
-                >
+                <Form.Item label={t('auth:register.workspaceUrl')} extra={t('auth:register.workspaceUrlHelp')}>
                   <Space.Compact style={{ width: '100%' }}>
-                    <Form.Item
-                      name="slug"
-                      noStyle
-                      rules={[
-                        { required: true, message: t('auth:validation.companySlugRequired') },
-                        {
-                          pattern: /^[a-z0-9-]+$/,
-                          message: t('auth:validation.companySlugRequired'),
-                        },
-                      ]}
-                    >
-                      <Input
-                        prefix={<GlobalOutlined />}
-                        placeholder="company-name"
-                        size="large"
-                        style={{ flex: 1 }}
-                        aria-label={t('auth:register.companySlug')}
-                        autoComplete="off"
-                      />
-                    </Form.Item>
+                    <Input
+                      prefix={<GlobalOutlined />}
+                      placeholder="your-company"
+                      size="large"
+                      style={{ flex: 1 }}
+                      aria-label={t('auth:register.workspaceUrl')}
+                      autoComplete="off"
+                      readOnly
+                      value={workspaceSlugPreview}
+                    />
                     <Input value=".smarterp.vn" disabled size="large" style={{ width: 120 }} />
                   </Space.Compact>
                 </Form.Item>
@@ -227,12 +211,12 @@ export default function RegisterPage() {
 
                 <Form.Item
                   name="fullName"
-                  label={t('auth:register.firstName')}
-                  rules={[{ required: true, message: t('auth:validation.firstNameRequired') }]}
+                  label={t('auth:register.fullName')}
+                  rules={[{ required: true, message: t('auth:validation.fullNameRequired') }]}
                 >
                   <Input
                     prefix={<UserOutlined />}
-                    placeholder={t('auth:register.firstName')}
+                    placeholder={t('auth:register.fullName')}
                     size="large"
                     autoComplete="name"
                   />
@@ -295,7 +279,7 @@ export default function RegisterPage() {
                   label={t('auth:register.confirmPassword')}
                   dependencies={['password']}
                   rules={[
-                    { required: true, message: t('auth:validation.passwordRequired') },
+                    { required: true, message: t('auth:validation.confirmPasswordRequired') },
                     ({ getFieldValue }) => ({
                       validator(_, value) {
                         if (!value || getFieldValue('password') === value) {
@@ -328,13 +312,9 @@ export default function RegisterPage() {
                 >
                   <Checkbox>
                     {t('auth:register.agreeTerms')}{' '}
-                    <a href="#" style={{ color: '#1890ff' }}>
-                      {t('auth:register.termsOfService')}
-                    </a>{' '}
+                    <Text underline>{t('auth:register.termsOfService')}</Text>{' '}
                     {t('auth:register.and')}{' '}
-                    <a href="#" style={{ color: '#1890ff' }}>
-                      {t('auth:register.privacyPolicy')}
-                    </a>
+                    <Text underline>{t('auth:register.privacyPolicy')}</Text>
                   </Checkbox>
                 </Form.Item>
 
@@ -348,7 +328,9 @@ export default function RegisterPage() {
                     block
                     style={{ height: 48, fontSize: 16, fontWeight: 600 }}
                   >
-                    {registerMutation.isPending ? t('common:messages.loading') : t('auth:register.registerButton')}
+                    {registerMutation.isPending
+                      ? t('common:messages.loading')
+                      : t('auth:register.registerButton')}
                   </Button>
                 </Form.Item>
 

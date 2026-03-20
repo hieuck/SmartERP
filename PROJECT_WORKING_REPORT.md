@@ -6,6 +6,22 @@
 
 ## Latest Checkpoint (2026-03-20)
 
+- public registration flow is now aligned with the real backend contract:
+  - the page no longer asks users to submit a custom `slug` that backend `POST /api/auth/register` ignores
+  - signup now shows a derived workspace URL preview generated from company name instead
+  - `fullName` is labeled correctly instead of reusing `firstName`
+  - confirm-password validation copy is specific to the confirm field
+- authentication localization is cleaner and more trustworthy:
+  - [src/frontend/src/i18n/locales/vi/auth.json](/e:/GitHub/smart-erp/src/frontend/src/i18n/locales/vi/auth.json) was rewritten from mojibake into valid Vietnamese
+  - English auth copy now includes explicit `fullName`, `workspaceUrl`, and confirm-password validation keys
+- `/register` browser smoke is now clean again:
+  - no console warnings
+  - no console errors
+  - no failed requests
+  - body preview reflects the corrected Vietnamese copy and workspace URL preview
+- the remaining backend stderr `DEP0169` warning has been traced to the dependency chain:
+  - `bcrypt` -> `@mapbox/node-pre-gyp` -> `url.parse()`
+  - this is currently dependency-owned noise, not repo-owned app code
 - runtime is healthy again through the managed local launcher:
   - frontend `http://127.0.0.1:5173`
   - backend `http://127.0.0.1:3000/api/health`
