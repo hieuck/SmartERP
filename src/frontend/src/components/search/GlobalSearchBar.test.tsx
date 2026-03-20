@@ -128,7 +128,7 @@ describe('GlobalSearchBar', () => {
     expect(screen.getByText('Product')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /Laptop/ }));
-    expect(navigateMock).toHaveBeenCalledWith('/products/product-1');
+    expect(navigateMock).toHaveBeenCalledWith('/dashboard/products/product-1');
   });
 
   it('shows translated empty state and submits full search route', async () => {
@@ -149,6 +149,6 @@ describe('GlobalSearchBar', () => {
     expect(screen.getByText('No results found')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'submit-search' }));
-    expect(navigateMock).toHaveBeenCalledWith('/search?q=manual%20lookup');
+    expect(navigateMock).toHaveBeenCalledWith('/dashboard/search?q=manual%20lookup');
   });
 });

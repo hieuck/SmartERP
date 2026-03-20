@@ -1,5 +1,6 @@
 import { logger } from '@/lib/logger/logger.service';
 import searchService, { SearchResult } from '@/services/utils/searchService';
+import { buildSearchResultsRoute, buildSearchRoute } from './searchRoutes';
 import { SearchOutlined } from '@ant-design/icons';
 import { AutoComplete, Empty, Input, Spin, Tag } from 'antd';
 import { debounce } from 'lodash';
@@ -12,8 +13,7 @@ const { Search } = Input;
 interface SearchOption {
   value: string;
   label: React.ReactNode;
-  type: string;
-  id: string;
+  route: string;
 }
 
 const GlobalSearchBar: React.FC = () => {
@@ -34,8 +34,9 @@ const GlobalSearchBar: React.FC = () => {
       const result: SearchResult = await searchService.globalSearch(query, 0, 10);
 
       const searchOptions: SearchOption[] = result.hits.hits.map((hit) => {
-        const source = hit._source as Record<string, string>;
+        const source = hit._source as Record<string, unknown>;
         const type = hit._index;
+        const route = buildSearchRoute(type, hit._id, source);
 
         let label: React.ReactNode;
 
@@ -46,7 +47,7 @@ const GlobalSearchBar: React.FC = () => {
                 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
               >
                 <span>
-                  {source.name} ({source.sku})
+                  {String(source.name ?? '')} ({String(source.sku ?? '')})
                 </span>
                 <Tag color="blue">{t('types.product')}</Tag>
               </div>
@@ -58,7 +59,7 @@ const GlobalSearchBar: React.FC = () => {
                 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
               >
                 <span>
-                  {source.name} ({source.code})
+                  {String(source.name ?? '')} ({String(source.code ?? '')})
                 </span>
                 <Tag color="green">{t('types.customer')}</Tag>
               </div>
@@ -70,7 +71,7 @@ const GlobalSearchBar: React.FC = () => {
                 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
               >
                 <span>
-                  {source.name} ({source.code})
+                  {String(source.name ?? '')} ({String(source.code ?? '')})
                 </span>
                 <Tag color="orange">{t('types.supplier')}</Tag>
               </div>
@@ -82,9 +83,15 @@ const GlobalSearchBar: React.FC = () => {
                 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
               >
                 <span>
-                  {t('fields.order')} {source.code}
+                  {t('fields.order')} {String(source.code ?? '')}
                 </span>
-                <Tag color="purple">{source.type === 'sales' ? t('types.sales') : t('types.purchase')}</Tag>
+                <Tag color="purple">
+                  {source.type === 'sales'
+                    ? t('types.sales')
+                    : source.type === 'purchase'
+                      ? t('types.purchase')
+                      : t('types.order')}
+                </Tag>
               </div>
             );
             break;
@@ -95,8 +102,7 @@ const GlobalSearchBar: React.FC = () => {
         return {
           value: `${type}-${hit._id}`,
           label,
-          type,
-          id: hit._id,
+          route,
         };
       });
 
@@ -120,33 +126,16 @@ const GlobalSearchBar: React.FC = () => {
   }, [searchQuery, debouncedSearch]);
 
   const handleSelect = (_value: string, option: SearchOption) => {
-    // Navigate to the selected item
-    const route = getRouteForItem(option.type, option.id);
-    if (route) {
-      navigate(route);
+    if (option.route) {
+      navigate(option.route);
       setSearchQuery('');
       setOptions([]);
     }
   };
 
-  const getRouteForItem = (type: string, id: string): string => {
-    switch (type) {
-      case 'products':
-        return `/products/${id}`;
-      case 'customers':
-        return `/customers/${id}`;
-      case 'suppliers':
-        return `/suppliers/${id}`;
-      case 'orders':
-        return `/orders/${id}`;
-      default:
-        return '';
-    }
-  };
-
   const handleSearch = (value: string) => {
     if (value) {
-      navigate(`/search?q=${encodeURIComponent(value)}`);
+      navigate(buildSearchResultsRoute(value));
       setSearchQuery('');
       setOptions([]);
     }

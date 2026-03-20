@@ -29,6 +29,7 @@ import searchService, {
   SearchResult,
 } from '@/services/utils/searchService';
 import AdvancedFilterPanel from '@/components/search/AdvancedFilterPanel';
+import { buildSearchRoute } from '@/components/search/searchRoutes';
 import { logger } from '@/lib/logger/logger.service';
 
 const { Search } = Input;
@@ -120,20 +121,10 @@ const SearchResultsPage: React.FC = () => {
     }
   };
 
-  const handleItemClick = (type: string, id: string) => {
-    switch (type) {
-      case 'products':
-        navigate(`/products/${id}`);
-        break;
-      case 'customers':
-        navigate(`/customers/${id}`);
-        break;
-      case 'suppliers':
-        navigate(`/suppliers/${id}`);
-        break;
-      case 'orders':
-        navigate(`/orders/${id}`);
-        break;
+  const handleItemClick = (type: string, id: string, source: Record<string, unknown>) => {
+    const route = buildSearchRoute(type, id, source);
+    if (route) {
+      navigate(route);
     }
   };
 
@@ -201,7 +192,7 @@ const SearchResultsPage: React.FC = () => {
     return (
       <List.Item
         key={hit._id}
-        onClick={() => handleItemClick(type, hit._id)}
+        onClick={() => handleItemClick(type, hit._id, source)}
         style={{ cursor: 'pointer' }}
       >
         <List.Item.Meta avatar={icon} title={<a>{title}</a>} description={description} />

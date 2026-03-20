@@ -1098,3 +1098,30 @@ Verification:
   - frontend/backend/database smoke remains green
   - frontend stderr remains empty
   - backend stderr remains limited to dependency-owned `DEP0169`
+
+## 2026-03-20 Search Routing Recovery
+- Root cause:
+  - search UI was building routes that do not exist in the current router tree:
+    - global search submit used `/search?q=...`
+    - search result items used `/products/:id`, `/customers/:id`, `/suppliers/:id`, `/orders/:id`
+  - the real protected app lives under `/dashboard/*`, so the live browser emitted `No routes matched location "/search?q=test"` even after the search page itself was cleaned up
+- Fixed in:
+  - [src/frontend/src/components/search/searchRoutes.ts](/e:/GitHub/smart-erp/src/frontend/src/components/search/searchRoutes.ts)
+  - [src/frontend/src/components/search/searchRoutes.test.ts](/e:/GitHub/smart-erp/src/frontend/src/components/search/searchRoutes.test.ts)
+  - [src/frontend/src/components/search/GlobalSearchBar.tsx](/e:/GitHub/smart-erp/src/frontend/src/components/search/GlobalSearchBar.tsx)
+  - [src/frontend/src/components/search/GlobalSearchBar.test.tsx](/e:/GitHub/smart-erp/src/frontend/src/components/search/GlobalSearchBar.test.tsx)
+  - [src/frontend/src/pages/search/SearchResultsPage.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/search/SearchResultsPage.tsx)
+- Implementation details:
+  - introduced a shared route builder for search flows instead of hardcoding paths in multiple components
+  - mapped entity detail navigation to `/dashboard/products/:id`, `/dashboard/customers/:id`, `/dashboard/suppliers/:id`
+  - mapped orders by order type to `/dashboard/orders/sales/:id` or `/dashboard/orders/purchase/:id`
+  - mapped full search submit to `/dashboard/search?q=...`
+- Verified with:
+  - `npx.cmd vitest run src/components/search/AdvancedFilterPanel.test.tsx src/components/search/GlobalSearchBar.test.tsx src/components/search/searchRoutes.test.ts` in `src/frontend`
+  - `npm.cmd run build` in `src/frontend`
+  - `npm.cmd run runtime:smoke`
+  - browser smoke with injected E2E session and mocked search API on `http://127.0.0.1:5173/dashboard/search?q=test`
+- Current browser/runtime snapshot after the batch:
+  - route mismatch warning is gone
+  - tenant context error is gone when the injected token is structurally valid
+  - remaining browser warnings now point to Ant Design deprecations in layout/search shells rather than broken search navigation
