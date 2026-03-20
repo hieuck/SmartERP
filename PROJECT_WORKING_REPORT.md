@@ -6,6 +6,13 @@
 
 ## Latest Checkpoint (2026-03-20)
 
+- system settings shell has been brought closer to the current frontend standard:
+  - [src/frontend/src/pages/settings/SystemSettingsPage.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/settings/SystemSettingsPage.tsx) now uses `App.useApp().message` and `Tabs.items` instead of legacy static `message` and `Tabs.TabPane`
+  - the settings route remains healthy after the batch: frontend type-check passes and runtime smoke stayed green
+- database log noise from `openpg` is currently classified as external to the repo:
+  - a targeted repository scan found no `openpg` references under the project source/config paths
+  - Postgres continues to report intermittent failed logins for user `openpg`, but the SmartERP runtime itself remains healthy and unaffected
+  - this should be treated as environment noise unless a future trace ties it back to a local tool or extension
 - reporting shell has been modernized and locked with focused coverage:
   - [src/frontend/src/pages/reports/ReportsPage.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/reports/ReportsPage.tsx) now uses `App.useApp().message` and the modern `Tabs.items` API instead of legacy static `message` and `Tabs.TabPane`
   - a focused Vitest suite now covers report loading feedback, PDF export feedback, and tab switching in [src/frontend/src/pages/reports/ReportsPage.test.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/reports/ReportsPage.test.tsx)
