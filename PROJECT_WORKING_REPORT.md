@@ -14,6 +14,10 @@
 - authentication localization is cleaner and more trustworthy:
   - [src/frontend/src/i18n/locales/vi/auth.json](/e:/GitHub/smart-erp/src/frontend/src/i18n/locales/vi/auth.json) was rewritten from mojibake into valid Vietnamese
   - English auth copy now includes explicit `fullName`, `workspaceUrl`, and confirm-password validation keys
+- public legal routes now exist and are monitored:
+  - `/terms` and `/privacy` now render dedicated public pages instead of falling through to unmatched routes
+  - runtime browser smoke now exercises both routes alongside login/register/dashboard flows
+  - the pages use the same public shell, theme controls, and localization-aware copy as the rest of the public surface
 - `/register` browser smoke is now clean again:
   - no console warnings
   - no console errors

@@ -15,7 +15,9 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import LoginPage from '@/pages/auth/LoginPage';
 import Dashboard from '@/pages/Dashboard';
 import LandingPage from '@/pages/public/LandingPage';
+import PrivacyPage from '@/pages/public/PrivacyPage';
 import RegisterPage from '@/pages/public/RegisterPage';
+import TermsPage from '@/pages/public/TermsPage';
 
 // Lazy load feature pages (Requirement 22.10, 24.4)
 const ProductList = lazy(() => import('@/pages/products/ProductList'));
@@ -132,6 +134,8 @@ export function AppRoutes() {
         path="/login"
         element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />}
       />
+      <Route path="/terms" element={<TermsPage />} />
+      <Route path="/privacy" element={<PrivacyPage />} />
 
       {/* Protected routes */}
       <Route
