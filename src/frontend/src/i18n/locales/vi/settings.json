@@ -98,7 +98,7 @@
     "key": "Khóa",
     "value": "Giá trị",
     "type": "Loại",
-    "description": "Mô tả",
+    "descriptionLabel": "Mô tả",
     "isPublic": "Công khai",
     "category": "Danh mục",
     "categories": {
@@ -116,6 +116,42 @@
       "number": "Số",
       "boolean": "Đúng/Sai",
       "json": "JSON"
+    },
+    "table": {
+      "key": "Khóa",
+      "value": "Giá trị",
+      "type": "Loại",
+      "description": "Mô tả",
+      "isPublic": "Công khai",
+      "actions": "Thao tác"
+    },
+    "addButton": "Thêm cài đặt",
+    "addTitle": "Thêm cài đặt",
+    "editTitle": "Chỉnh sửa cài đặt",
+    "deleteConfirm": "Bạn có chắc muốn xóa cài đặt này?",
+    "messages": {
+      "createSuccess": "Đã tạo cài đặt thành công",
+      "updateSuccess": "Đã cập nhật cài đặt thành công",
+      "deleteSuccess": "Đã xóa cài đặt thành công",
+      "saveError": "Không thể lưu cài đặt: {{error}}",
+      "deleteError": "Không thể xóa cài đặt: {{error}}",
+      "unknownError": "Lỗi không xác định"
+    },
+    "form": {
+      "key": "Khóa",
+      "keyRequired": "Vui lòng nhập khóa cài đặt",
+      "keyPlaceholder": "VD: app.theme",
+      "type": "Loại",
+      "typeRequired": "Vui lòng chọn kiểu dữ liệu",
+      "value": "Giá trị",
+      "valueJson": "Giá trị JSON",
+      "valueRequired": "Vui lòng nhập giá trị",
+      "valuePlaceholder": "Nhập giá trị",
+      "jsonInvalid": "JSON không hợp lệ",
+      "jsonPlaceholder": "{\"key\": \"value\"}",
+      "description": "Mô tả",
+      "descriptionPlaceholder": "Mô tả chức năng của cài đặt này",
+      "isPublic": "Công khai"
     }
   },
   "actions": {

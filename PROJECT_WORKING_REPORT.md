@@ -1553,3 +1553,22 @@ Verification:
   - backend settings endpoints now return `200` with empty arrays instead of `500`
   - `/dashboard/settings` now renders instead of crashing in the error boundary
   - backend error log tail still contains older pre-fix `settings` failures, but fresh probes after the migration are clean
+
+## 2026-03-20 Settings Localization Cleanup
+- Root cause:
+  - after the settings runtime contract was fixed, `/dashboard/settings` still surfaced raw `systemSettings.*` translation keys
+  - [src/frontend/src/i18n/locales/en/settings.json](/e:/GitHub/smart-erp/src/frontend/src/i18n/locales/en/settings.json) and especially [src/frontend/src/i18n/locales/vi/settings.json](/e:/GitHub/smart-erp/src/frontend/src/i18n/locales/vi/settings.json) were missing the nested `table`, `form`, `messages`, and modal title keys used by [SettingsPage](/e:/GitHub/smart-erp/src/frontend/src/pages/settings/SettingsPage.tsx)
+  - the Vietnamese locale file also had pervasive mojibake, so patching a few keys would have left the page partially corrupted
+- Fixed in:
+  - [src/frontend/src/i18n/locales/en/settings.json](/e:/GitHub/smart-erp/src/frontend/src/i18n/locales/en/settings.json)
+  - [src/frontend/src/i18n/locales/vi/settings.json](/e:/GitHub/smart-erp/src/frontend/src/i18n/locales/vi/settings.json)
+- Implementation details:
+  - added the missing `systemSettings.table`, `systemSettings.form`, `systemSettings.messages`, `addTitle`, `editTitle`, and `addButton` keys used by the settings page
+  - rewrote the Vietnamese settings locale file as clean UTF-8 instead of leaving mojibake fragments in place
+  - kept the existing settings namespace structure so the rest of the settings surfaces remain compatible
+- Verified with:
+  - `npm.cmd run type-check` in `src/frontend`
+  - browser smoke via Playwright/Chromium against `/dashboard/settings`
+- Current browser/runtime snapshot after the batch:
+  - `/dashboard/settings` now renders localized Vietnamese copy instead of raw translation keys
+  - no frontend warnings or page errors were emitted during the smoke run

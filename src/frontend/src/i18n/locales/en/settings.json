@@ -116,6 +116,42 @@
       "number": "Number",
       "boolean": "Boolean",
       "json": "JSON"
+    },
+    "table": {
+      "key": "Key",
+      "value": "Value",
+      "type": "Type",
+      "description": "Description",
+      "isPublic": "Public",
+      "actions": "Actions"
+    },
+    "addButton": "Add Setting",
+    "addTitle": "Add Setting",
+    "editTitle": "Edit Setting",
+    "deleteConfirm": "Are you sure you want to delete this setting?",
+    "messages": {
+      "createSuccess": "Setting created successfully",
+      "updateSuccess": "Setting updated successfully",
+      "deleteSuccess": "Setting deleted successfully",
+      "saveError": "Unable to save setting: {{error}}",
+      "deleteError": "Unable to delete setting: {{error}}",
+      "unknownError": "Unknown error"
+    },
+    "form": {
+      "key": "Key",
+      "keyRequired": "Please enter a setting key",
+      "keyPlaceholder": "e.g., app.theme",
+      "type": "Type",
+      "typeRequired": "Please select a data type",
+      "value": "Value",
+      "valueJson": "JSON Value",
+      "valueRequired": "Please enter a value",
+      "valuePlaceholder": "Enter value",
+      "jsonInvalid": "Invalid JSON",
+      "jsonPlaceholder": "{\"key\": \"value\"}",
+      "description": "Description",
+      "descriptionPlaceholder": "Describe what this setting controls",
+      "isPublic": "Public"
     }
   },
   "actions": {
