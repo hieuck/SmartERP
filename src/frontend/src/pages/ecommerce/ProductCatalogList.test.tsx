@@ -4,16 +4,16 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import ProductCatalogList from './ProductCatalogList';
 
 const {
-  axiosGetMock,
-  axiosPatchMock,
+  apiGetMock,
+  apiPatchMock,
   invalidateQueriesMock,
   messageSuccessMock,
   navigateMock,
   mutatePublishMock,
   mutateUnpublishMock,
 } = vi.hoisted(() => ({
-  axiosGetMock: vi.fn(),
-  axiosPatchMock: vi.fn(),
+  apiGetMock: vi.fn(),
+  apiPatchMock: vi.fn(),
   invalidateQueriesMock: vi.fn(),
   messageSuccessMock: vi.fn(),
   navigateMock: vi.fn(),
@@ -28,10 +28,10 @@ vi.mock('react-i18next', () => ({
   }),
 }));
 
-vi.mock('axios', () => ({
+vi.mock('@/services/api/client', () => ({
   default: {
-    get: axiosGetMock,
-    patch: axiosPatchMock,
+    get: apiGetMock,
+    patch: apiPatchMock,
   },
 }));
 
@@ -145,15 +145,15 @@ vi.mock('@/components/common/StandardListPage', () => ({
 describe('ProductCatalogList', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    axiosGetMock.mockResolvedValue({ data: { data: [] } });
-    axiosPatchMock.mockResolvedValue({ data: { success: true } });
+    apiGetMock.mockResolvedValue({ data: { data: [] } });
+    apiPatchMock.mockResolvedValue({ data: { success: true } });
   });
 
   it('renders localized list shell and create action', async () => {
     render(<ProductCatalogList />);
 
     await waitFor(() => {
-      expect(axiosGetMock).toHaveBeenCalledWith('/api/ecommerce/products', {
+      expect(apiGetMock).toHaveBeenCalledWith('/ecommerce/products', {
         params: { search: '' },
       });
     });
@@ -169,7 +169,7 @@ describe('ProductCatalogList', () => {
     fireEvent.click(screen.getByText('catalog.actions.publish'));
 
     await waitFor(() => {
-      expect(axiosPatchMock).toHaveBeenCalledWith('/api/ecommerce/products/p-2/publish');
+      expect(apiPatchMock).toHaveBeenCalledWith('/ecommerce/products/p-2/publish');
       expect(messageSuccessMock).toHaveBeenCalledWith('catalog.messages.publishSuccess');
       expect(invalidateQueriesMock).toHaveBeenCalledWith({
         queryKey: ['ecommerce-products'],
@@ -183,7 +183,7 @@ describe('ProductCatalogList', () => {
     fireEvent.click(screen.getByText('catalog.actions.unpublish'));
 
     await waitFor(() => {
-      expect(axiosPatchMock).toHaveBeenCalledWith('/api/ecommerce/products/p-1/unpublish');
+      expect(apiPatchMock).toHaveBeenCalledWith('/ecommerce/products/p-1/unpublish');
       expect(messageSuccessMock).toHaveBeenCalledWith('catalog.messages.unpublishSuccess');
       expect(invalidateQueriesMock).toHaveBeenCalledWith({
         queryKey: ['ecommerce-products'],

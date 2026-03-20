@@ -4,14 +4,18 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import ProductCatalogForm from './ProductCatalogForm';
 
 const {
-  axiosGetMock,
+  apiGetMock,
+  apiPatchMock,
+  apiPostMock,
   invalidateQueriesMock,
   mutateMock,
   navigateMock,
   setFieldsValueMock,
   useParamsMock,
 } = vi.hoisted(() => ({
-  axiosGetMock: vi.fn(),
+  apiGetMock: vi.fn(),
+  apiPatchMock: vi.fn(),
+  apiPostMock: vi.fn(),
   invalidateQueriesMock: vi.fn(),
   mutateMock: vi.fn(),
   navigateMock: vi.fn(),
@@ -25,11 +29,11 @@ vi.mock('react-i18next', () => ({
   }),
 }));
 
-vi.mock('axios', () => ({
+vi.mock('@/services/api/client', () => ({
   default: {
-    get: axiosGetMock,
-    post: vi.fn(),
-    put: vi.fn(),
+    get: apiGetMock,
+    patch: apiPatchMock,
+    post: apiPostMock,
   },
 }));
 
@@ -133,7 +137,7 @@ describe('ProductCatalogForm', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     useParamsMock.mockReturnValue({});
-    axiosGetMock.mockResolvedValue({
+    apiGetMock.mockResolvedValue({
       data: {
         sku: 'SKU-001',
         name: 'Laptop Pro',
@@ -159,7 +163,7 @@ describe('ProductCatalogForm', () => {
     expect(screen.getByText('catalog.form.titleEdit')).toBeInTheDocument();
 
     await waitFor(() => {
-      expect(axiosGetMock).toHaveBeenCalledWith('/api/ecommerce/products/P-1');
+      expect(apiGetMock).toHaveBeenCalledWith('/ecommerce/products/P-1');
       expect(setFieldsValueMock).toHaveBeenCalledWith({
         sku: 'SKU-001',
         name: 'Laptop Pro',

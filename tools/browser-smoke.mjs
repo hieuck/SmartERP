@@ -13,7 +13,13 @@ const publicRoutes = [
   '/terms',
   '/privacy',
 ];
-const protectedRoutes = ['/dashboard', '/dashboard/users', '/dashboard/search?q=demo'];
+const protectedRoutes = [
+  '/dashboard',
+  '/dashboard/users',
+  '/dashboard/search?q=demo',
+  '/dashboard/ecommerce/products',
+  '/dashboard/ecommerce/products/new',
+];
 
 function unique(items) {
   return [...new Set(items)];

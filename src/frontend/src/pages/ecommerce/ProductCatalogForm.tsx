@@ -1,4 +1,5 @@
 import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons';
+import apiClient from '@/services/api/client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   App,
@@ -12,7 +13,6 @@ import {
   Switch,
   Typography,
 } from 'antd';
-import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -43,7 +43,7 @@ export default function ProductCatalogForm() {
   useQuery({
     queryKey: ['ecommerce-product', id],
     queryFn: async () => {
-      const res = await axios.get(`/api/ecommerce/products/${id}`);
+      const res = await apiClient.get(`/ecommerce/products/${id}`);
       form.setFieldsValue(res.data);
       return res.data;
     },
@@ -53,8 +53,8 @@ export default function ProductCatalogForm() {
   const saveMutation = useMutation({
     mutationFn: (values: ProductFormValues) =>
       isEdit
-        ? axios.put(`/api/ecommerce/products/${id}`, values)
-        : axios.post('/api/ecommerce/products', values),
+        ? apiClient.patch(`/ecommerce/products/${id}`, values)
+        : apiClient.post('/ecommerce/products', values),
     onSuccess: () => {
       message.success(
         isEdit

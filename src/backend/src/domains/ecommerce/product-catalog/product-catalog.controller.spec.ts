@@ -19,6 +19,7 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe, HttpException, HttpStatus } from '@nestjs/common';
+import type { NextFunction, Request as ExpressRequest, Response as ExpressResponse } from 'express';
 import request from 'supertest';
 import { ProductCatalogController } from './product-catalog.controller';
 import { ProductCatalogService } from './product-catalog.service';
@@ -74,6 +75,21 @@ describe('ProductCatalogController (Integration)', () => {
     trackInventory: true,
     categoryId: 'cat-1',
     tags: ['electronics', 'gadgets'],
+  };
+
+  const serializeProduct = <T extends { createdAt: Date }>(product: T) => ({
+    ...product,
+    createdAt: product.createdAt.toISOString(),
+  });
+
+  const attachMockUser = (targetApp: INestApplication, user = mockUser) => {
+    targetApp.use((req: ExpressRequest, _res: ExpressResponse, next: NextFunction) => {
+      if (req.headers.authorization === 'Bearer valid-token') {
+        (req as ExpressRequest & { user?: typeof mockUser }).user = user;
+      }
+
+      next();
+    });
   };
 
   beforeAll(async () => {
@@ -152,6 +168,7 @@ describe('ProductCatalogController (Integration)', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
+    attachMockUser(app);
     app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
     await app.init();
 
@@ -176,7 +193,7 @@ describe('ProductCatalogController (Integration)', () => {
         .send(mockCreateProductDto)
         .expect(201);
 
-      expect(response.body).toEqual(mockProduct);
+      expect(response.body).toEqual(serializeProduct(mockProduct));
       expect(productService.create).toHaveBeenCalledWith(mockCreateProductDto, mockUser);
     });
 
@@ -230,6 +247,12 @@ describe('ProductCatalogController (Integration)', () => {
         .compile();
 
       const testApp = testModule.createNestApplication();
+      attachMockUser(testApp, customerUser);
+      testApp.useGlobalGuards({
+        canActivate: jest.fn().mockImplementation(() => {
+          throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
+        }),
+      });
       testApp.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
       await testApp.init();
 
@@ -252,7 +275,7 @@ describe('ProductCatalogController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual([mockProduct]);
+      expect(response.body).toEqual([serializeProduct(mockProduct)]);
       expect(productService.search).toHaveBeenCalledWith('', mockUser);
     });
 
@@ -281,6 +304,40 @@ describe('ProductCatalogController (Integration)', () => {
     it('should return 401 when not authenticated', async () => {
       await request(app.getHttpServer()).get('/ecommerce/products').expect(401);
     });
+
+    it('should return 401 when auth context is missing', async () => {
+      const permissiveJwtGuard = {
+        canActivate: jest.fn().mockImplementation(() => true),
+      };
+
+      const testModule = await Test.createTestingModule({
+        controllers: [ProductCatalogController],
+        providers: [
+          {
+            provide: ProductCatalogService,
+            useValue: productService,
+          },
+        ],
+      })
+        .overrideGuard(JwtAuthGuard)
+        .useValue(permissiveJwtGuard)
+        .overrideGuard(TenantGuard)
+        .useValue({ canActivate: jest.fn().mockReturnValue(true) })
+        .overrideGuard(RolesGuard)
+        .useValue({ canActivate: jest.fn().mockReturnValue(true) })
+        .overrideInterceptor(CacheInterceptor)
+        .useValue({ intercept: jest.fn().mockImplementation((context, next) => next.handle()) })
+        .compile();
+
+      const testApp = testModule.createNestApplication();
+      testApp.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+      await testApp.init();
+
+      await request(testApp.getHttpServer()).get('/ecommerce/products').expect(401);
+
+      expect(productService.search).not.toHaveBeenCalled();
+      await testApp.close();
+    });
   });
 
   describe('GET /ecommerce/products/:id', () => {
@@ -292,7 +349,7 @@ describe('ProductCatalogController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual(mockProduct);
+      expect(response.body).toEqual(serializeProduct(mockProduct));
       expect(productService.findOne).toHaveBeenCalledWith('prod-123', mockUser);
     });
 
@@ -321,7 +378,7 @@ describe('ProductCatalogController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual(mockProduct);
+      expect(response.body).toEqual(serializeProduct(mockProduct));
       expect(productService.findBySku).toHaveBeenCalledWith('PROD-001', mockUser);
     });
 
@@ -350,7 +407,7 @@ describe('ProductCatalogController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual(mockProduct);
+      expect(response.body).toEqual(serializeProduct(mockProduct));
       expect(productService.findBySlug).toHaveBeenCalledWith('test-product', mockUser);
     });
 
@@ -547,7 +604,7 @@ describe('ProductCatalogController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual(lowStockProducts);
+      expect(response.body).toEqual(lowStockProducts.map(serializeProduct));
       expect(productService.findLowStock).toHaveBeenCalledWith(mockUser);
     });
 
@@ -579,7 +636,7 @@ describe('ProductCatalogController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual(outOfStockProducts);
+      expect(response.body).toEqual(outOfStockProducts.map(serializeProduct));
       expect(productService.findOutOfStock).toHaveBeenCalledWith(mockUser);
     });
 

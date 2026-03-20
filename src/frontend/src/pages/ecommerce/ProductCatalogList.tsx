@@ -1,8 +1,8 @@
 import StandardListPage from '@/components/common/StandardListPage';
+import apiClient from '@/services/api/client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { App, Button, Space, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import axios from 'axios';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -26,13 +26,13 @@ export default function ProductCatalogList() {
   const { data, isLoading } = useQuery({
     queryKey: ['ecommerce-products', search],
     queryFn: async () => {
-      const res = await axios.get('/api/ecommerce/products', { params: { search } });
+      const res = await apiClient.get('/ecommerce/products', { params: { search } });
       return res.data;
     },
   });
 
   const publishMutation = useMutation({
-    mutationFn: (id: string) => axios.patch(`/api/ecommerce/products/${id}/publish`),
+    mutationFn: (id: string) => apiClient.patch(`/ecommerce/products/${id}/publish`),
     onSuccess: () => {
       message.success(t('catalog.messages.publishSuccess'));
       queryClient.invalidateQueries({ queryKey: ['ecommerce-products'] });
@@ -40,7 +40,7 @@ export default function ProductCatalogList() {
   });
 
   const unpublishMutation = useMutation({
-    mutationFn: (id: string) => axios.patch(`/api/ecommerce/products/${id}/unpublish`),
+    mutationFn: (id: string) => apiClient.patch(`/ecommerce/products/${id}/unpublish`),
     onSuccess: () => {
       message.success(t('catalog.messages.unpublishSuccess'));
       queryClient.invalidateQueries({ queryKey: ['ecommerce-products'] });

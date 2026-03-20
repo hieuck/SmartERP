@@ -6,6 +6,23 @@
 
 ## Latest Checkpoint (2026-03-20)
 
+- ecommerce product catalog runtime has now been recovered end-to-end:
+  - frontend list and form pages now use the shared API client instead of bypassing auth with raw `axios`
+  - backend product-catalog controller now uses the standard auth/tenant/roles guard stack
+  - local database now includes the missing `product_catalog` table required by the ecommerce catalog module
+- root cause of the live `/dashboard/ecommerce/products` failure was layered, not singular:
+  - frontend was calling `/api/ecommerce/products` outside the shared auth client path
+  - backend `ProductCatalogController` did not apply `JwtAuthGuard` or `TenantGuard`, so authenticated requests still arrived with `req.user` missing
+  - after auth wiring was corrected, backend runtime exposed the next real failure: Postgres schema drift because relation `product_catalog` did not exist
+- guard rails for this recovery are now in place:
+  - focused frontend page tests for catalog list/form pass against the new API-client contract
+  - focused backend controller integration tests pass with explicit auth-context coverage
+  - browser smoke now exercises both `/dashboard/ecommerce/products` and `/dashboard/ecommerce/products/new`
+  - a real login browser flow now reaches the ecommerce catalog list without failed requests
+- there is one follow-up operational debt now clearly identified:
+  - `npm run db:migrate` still fails on this existing development database because historical migrations are not fully idempotent against partially provisioned schema state
+  - this no longer blocks ecommerce catalog runtime, but it should be handled as a separate migration-history cleanup batch rather than ignored
+
 - public registration flow is now aligned with the real backend contract:
   - the page no longer asks users to submit a custom `slug` that backend `POST /api/auth/register` ignores
   - signup now shows a derived workspace URL preview generated from company name instead
