@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Card, Form, Input, Button, Switch, message, Tabs, Space, Upload, Divider } from 'antd';
+import { App, Card, Form, Input, Button, Switch, Tabs, Space, Upload, Divider } from 'antd';
 import { SaveOutlined, ReloadOutlined, UploadOutlined } from '@ant-design/icons';
 import type { UploadProps } from 'antd';
 import type { UploadChangeParam, UploadFile } from 'antd/es/upload';
@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { loadPrintConfig, clearConfigCache, PrintConfig } from '@/utils/printConfig';
 
 export default function PrintSettings() {
+  const { message } = App.useApp();
   const { t } = useTranslation(['settings', 'common']);
   const [form] = Form.useForm<PrintConfig>();
   const [loading, setLoading] = useState(false);
@@ -335,7 +336,7 @@ export default function PrintSettings() {
     <div>
       <Card
         title={t('print.title')}
-        bordered={false}
+        variant="borderless"
         extra={
           <Space>
             <Button icon={<ReloadOutlined />} onClick={handleReset}>

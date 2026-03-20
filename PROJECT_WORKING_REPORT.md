@@ -6,6 +6,24 @@
 
 ## Latest Checkpoint (2026-03-20)
 
+- tenant settings runtime has been recovered end-to-end with a clean forward migration instead of patching historical schema state in place:
+  - [src/backend/src/migrations/1761004800000-RecoverSettingsTable.ts](/e:/GitHub/smart-erp/src/backend/src/migrations/1761004800000-RecoverSettingsTable.ts) now safely renames legacy `system_settings`, backfills tenant-aware settings rows, and creates the indexes expected by the current `Setting` entity
+  - `npm run db:init` in [src/backend](/e:/GitHub/smart-erp/src/backend) now applies the recovery migration cleanly on the active local database, and authenticated `GET /api/settings?category=GENERAL` now returns `200`
+  - this keeps migration history professional: the old [init-schema.ts](/e:/GitHub/smart-erp/src/backend/src/migrations/init-schema.ts) bootstrap was restored instead of being silently rewritten
+- frontend settings pages now match the real backend contract instead of calling a dead `/config/*` API family:
+  - [src/frontend/src/services/utils/configService.ts](/e:/GitHub/smart-erp/src/frontend/src/services/utils/configService.ts) now reads and writes through `/settings` and `/settings/bulk`, maps grouped settings into the forms the UI expects, and uses the real email module endpoints for reachability/test-send flows
+  - [src/frontend/src/pages/settings/SystemSettingsPage.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/settings/SystemSettingsPage.tsx) now loads grouped settings once, keeps all tab forms mounted with `forceRender`, and no longer emits the form-instance warning on first load
+  - [src/frontend/src/pages/settings/PrintSettings.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/settings/PrintSettings.tsx) now uses `App.useApp().message` and `Card` `variant="borderless"` instead of deprecated/static APIs
+- settings localization and smoke coverage are now trustworthy for real user flows:
+  - [src/frontend/src/i18n/locales/en/settings.json](/e:/GitHub/smart-erp/src/frontend/src/i18n/locales/en/settings.json) and [src/frontend/src/i18n/locales/vi/settings.json](/e:/GitHub/smart-erp/src/frontend/src/i18n/locales/vi/settings.json) were rewritten to match the actual settings pages, remove mojibake in Vietnamese, and restore missing print/settings keys
+  - [tools/browser-smoke.mjs](/e:/GitHub/smart-erp/tools/browser-smoke.mjs) now includes `/dashboard/settings`, `/dashboard/settings/system`, and `/dashboard/settings/print`
+  - `runtime:browser-smoke` is now clean again across all tracked settings routes with no failed requests, no console errors, and no component deprecation warnings
+- focused verification for the settings batch is green:
+  - frontend `type-check` passes
+  - backend `type-check` passes
+  - [configService.test.ts](/e:/GitHub/smart-erp/src/frontend/src/services/utils/configService.test.ts) and [printConfig.test.ts](/e:/GitHub/smart-erp/src/frontend/src/utils/printConfig.test.ts) pass under Vitest
+  - [settings.controller.spec.ts](/e:/GitHub/smart-erp/src/backend/src/core/settings/settings.controller.spec.ts) and [settings.service.spec.ts](/e:/GitHub/smart-erp/src/backend/src/core/settings/settings.service.spec.ts) pass under Jest
+
 - the customer, stock, and payment list shells now use app-context feedback instead of legacy static message calls:
   - [src/frontend/src/pages/customers/CustomerList.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/customers/CustomerList.tsx), [src/frontend/src/pages/inventory/StockList.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/inventory/StockList.tsx), and [src/frontend/src/pages/payments/PaymentList.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/payments/PaymentList.tsx) now pull `message` from `App.useApp()`
   - this removes another cluster of theme/context debt from core business list pages without changing the user-facing workflows

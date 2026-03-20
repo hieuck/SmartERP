@@ -1,10 +1,4 @@
-import configService, {
-  type BackupConfig,
-  type CodeFormats,
-  type CompanyInfo,
-  type EmailConfig,
-  type GeneralConfig,
-} from './configService';
+import configService from './configService';
 import api from './api';
 import { vi } from 'vitest';
 
@@ -12,33 +6,249 @@ vi.mock('./api');
 
 const mockApiGet = vi.mocked(api.get);
 const mockApiPost = vi.mocked(api.post);
-const mockApiPut = vi.mocked(api.put);
+
+const generalSettings = [
+  {
+    id: '1',
+    key: 'company.name',
+    value: 'SmartERP',
+    category: 'GENERAL',
+    dataType: 'STRING',
+    isPublic: false,
+    createdAt: '2026-03-20T00:00:00.000Z',
+    updatedAt: '2026-03-20T00:00:00.000Z',
+  },
+  {
+    id: '2',
+    key: 'company.address',
+    value: 'HCM',
+    category: 'GENERAL',
+    dataType: 'STRING',
+    isPublic: false,
+    createdAt: '2026-03-20T00:00:00.000Z',
+    updatedAt: '2026-03-20T00:00:00.000Z',
+  },
+  {
+    id: '3',
+    key: 'company.phone',
+    value: '0900',
+    category: 'GENERAL',
+    dataType: 'STRING',
+    isPublic: false,
+    createdAt: '2026-03-20T00:00:00.000Z',
+    updatedAt: '2026-03-20T00:00:00.000Z',
+  },
+  {
+    id: '4',
+    key: 'company.email',
+    value: 'hi@smarterp.vn',
+    category: 'GENERAL',
+    dataType: 'STRING',
+    isPublic: false,
+    createdAt: '2026-03-20T00:00:00.000Z',
+    updatedAt: '2026-03-20T00:00:00.000Z',
+  },
+  {
+    id: '5',
+    key: 'codes.productPrefix',
+    value: 'SP',
+    category: 'GENERAL',
+    dataType: 'STRING',
+    isPublic: false,
+    createdAt: '2026-03-20T00:00:00.000Z',
+    updatedAt: '2026-03-20T00:00:00.000Z',
+  },
+  {
+    id: '6',
+    key: 'general.defaultTaxRate',
+    value: '8',
+    category: 'GENERAL',
+    dataType: 'NUMBER',
+    isPublic: false,
+    createdAt: '2026-03-20T00:00:00.000Z',
+    updatedAt: '2026-03-20T00:00:00.000Z',
+  },
+];
 
 describe('configService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('gets all configs and company info', async () => {
-    const allConfigs = {
-      company: { name: 'SmartERP', address: 'HCM', phone: '0900', email: 'hi@smarterp.vn' },
-      codeFormats: {
-        productPrefix: 'SP',
-        customerPrefix: 'KH',
-        supplierPrefix: 'NCC',
-        salesOrderPrefix: 'SO',
-        purchaseOrderPrefix: 'PO',
-        receiptPrefix: 'RC',
-        issuePrefix: 'IS',
+  it('maps the settings envelope into grouped config sections', async () => {
+    mockApiGet.mockResolvedValueOnce({
+      data: {
+        success: true,
+        data: [
+          ...generalSettings,
+          {
+            id: '7',
+            key: 'email.host',
+            value: 'smtp.example.com',
+            category: 'EMAIL',
+            dataType: 'STRING',
+            isPublic: false,
+            createdAt: '2026-03-20T00:00:00.000Z',
+            updatedAt: '2026-03-20T00:00:00.000Z',
+          },
+          {
+            id: '8',
+            key: 'backup.enabled',
+            value: 'true',
+            category: 'INTEGRATION',
+            dataType: 'BOOLEAN',
+            isPublic: false,
+            createdAt: '2026-03-20T00:00:00.000Z',
+            updatedAt: '2026-03-20T00:00:00.000Z',
+          },
+        ],
       },
-      general: {
-        defaultTaxRate: 10,
-        currency: 'VND',
-        timezone: 'Asia/Saigon',
-        language: 'vi',
-        dateFormat: 'DD/MM/YYYY',
+    });
+
+    const result = await configService.getAllConfigs();
+
+    expect(api.get).toHaveBeenCalledWith('/settings', { params: undefined });
+    expect(result.company).toMatchObject({
+      name: 'SmartERP',
+      address: 'HCM',
+      phone: '0900',
+      email: 'hi@smarterp.vn',
+    });
+    expect(result.codeFormats.productPrefix).toBe('SP');
+    expect(result.general.defaultTaxRate).toBe(8);
+    expect(result.email.host).toBe('smtp.example.com');
+    expect(result.backup.enabled).toBe(true);
+  });
+
+  it('saves company, code, general, email, and backup settings through bulk upsert', async () => {
+    mockApiPost.mockResolvedValue({ data: { success: true, data: [] } });
+
+    await configService.updateCompanyInfo({
+      name: 'SmartERP',
+      address: 'HCM',
+      phone: '0900',
+      email: 'hi@smarterp.vn',
+      taxCode: '123',
+      logo: '{"src":"logo"}',
+    });
+    await configService.updateCodeFormats({
+      productPrefix: 'SP',
+      customerPrefix: 'KH',
+      supplierPrefix: 'NCC',
+      salesOrderPrefix: 'SO',
+      purchaseOrderPrefix: 'PO',
+      receiptPrefix: 'PN',
+      issuePrefix: 'PX',
+    });
+    await configService.updateGeneralConfig({
+      defaultTaxRate: 10,
+      currency: 'VND',
+      timezone: 'Asia/Ho_Chi_Minh',
+      language: 'vi',
+      dateFormat: 'DD/MM/YYYY',
+    });
+    await configService.updateEmailConfig({
+      host: 'smtp.example.com',
+      port: 587,
+      secure: false,
+      user: 'mailer',
+      password: 'secret',
+      from: 'noreply@example.com',
+    });
+    await configService.updateBackupConfig({
+      enabled: true,
+      frequency: 'weekly',
+      time: '23:00',
+      retention: 12,
+    });
+
+    expect(api.post).toHaveBeenNthCalledWith(
+      1,
+      '/settings/bulk',
+      expect.objectContaining({
+        settings: expect.arrayContaining([
+          expect.objectContaining({ key: 'company.name', value: 'SmartERP', category: 'GENERAL' }),
+          expect.objectContaining({ key: 'company.logo', dataType: 'JSON' }),
+        ]),
+      }),
+    );
+    expect(api.post).toHaveBeenNthCalledWith(
+      2,
+      '/settings/bulk',
+      expect.objectContaining({
+        settings: expect.arrayContaining([
+          expect.objectContaining({ key: 'codes.productPrefix', value: 'SP' }),
+          expect.objectContaining({ key: 'codes.issuePrefix', value: 'PX' }),
+        ]),
+      }),
+    );
+    expect(api.post).toHaveBeenNthCalledWith(
+      3,
+      '/settings/bulk',
+      expect.objectContaining({
+        settings: expect.arrayContaining([
+          expect.objectContaining({
+            key: 'general.defaultTaxRate',
+            value: '10',
+            dataType: 'NUMBER',
+          }),
+        ]),
+      }),
+    );
+    expect(api.post).toHaveBeenNthCalledWith(
+      4,
+      '/settings/bulk',
+      expect.objectContaining({
+        settings: expect.arrayContaining([
+          expect.objectContaining({ key: 'email.port', value: '587', dataType: 'NUMBER' }),
+          expect.objectContaining({ key: 'email.secure', value: 'false', dataType: 'BOOLEAN' }),
+        ]),
+      }),
+    );
+    expect(api.post).toHaveBeenNthCalledWith(
+      5,
+      '/settings/bulk',
+      expect.objectContaining({
+        settings: expect.arrayContaining([
+          expect.objectContaining({ key: 'backup.enabled', value: 'true', dataType: 'BOOLEAN' }),
+          expect.objectContaining({ key: 'backup.retention', value: '12', dataType: 'NUMBER' }),
+        ]),
+      }),
+    );
+  });
+
+  it('builds config history from current settings and seeds defaults via bulk upsert', async () => {
+    mockApiGet.mockResolvedValueOnce({ data: { success: true, data: generalSettings } });
+    mockApiPost.mockResolvedValueOnce({ data: { success: true, data: [] } });
+
+    const history = await configService.getConfigHistory('company.name');
+    await configService.initializeDefaults();
+
+    expect(history).toEqual([
+      {
+        key: 'company.name',
+        value: 'SmartERP',
+        timestamp: '2026-03-20T00:00:00.000Z',
       },
-      email: {
+    ]);
+    expect(api.post).toHaveBeenCalledWith(
+      '/settings/bulk',
+      expect.objectContaining({
+        settings: expect.arrayContaining([
+          expect.objectContaining({ key: 'codes.productPrefix', value: 'SP' }),
+          expect.objectContaining({ key: 'backup.frequency', value: 'daily' }),
+        ]),
+      }),
+    );
+  });
+
+  it('uses the live email module endpoints for reachability and test sends', async () => {
+    mockApiGet.mockResolvedValueOnce({ data: { success: true, data: [] } });
+    mockApiPost.mockResolvedValueOnce({ data: { success: true, data: { id: 'log-1' } } });
+
+    const testResult = await configService.testEmailConnection();
+    const sendResult = await configService.sendTestEmail(
+      {
         host: 'smtp.example.com',
         port: 587,
         secure: false,
@@ -46,145 +256,20 @@ describe('configService', () => {
         password: 'secret',
         from: 'noreply@example.com',
       },
-      backup: {
-        enabled: true,
-        frequency: 'daily' as const,
-        time: '01:00',
-        retention: 30,
-      },
-    };
-    const company = allConfigs.company;
-    mockApiGet.mockResolvedValueOnce({ data: allConfigs });
-    mockApiGet.mockResolvedValueOnce({ data: company });
+      'test@example.com',
+    );
 
-    const allResult = await configService.getAllConfigs();
-    const companyResult = await configService.getCompanyInfo();
-
-    expect(api.get).toHaveBeenNthCalledWith(1, '/config');
-    expect(api.get).toHaveBeenNthCalledWith(2, '/config/company/info');
-    expect(allResult).toEqual(allConfigs);
-    expect(companyResult).toEqual(company);
-  });
-
-  it('updates company, code formats, general, email, and backup config', async () => {
-    const company: CompanyInfo = {
-      name: 'SmartERP',
-      address: 'HCM',
-      phone: '0900',
-      email: 'hi@smarterp.vn',
-    };
-    const codeFormats: CodeFormats = {
-      productPrefix: 'SP',
-      customerPrefix: 'KH',
-      supplierPrefix: 'NCC',
-      salesOrderPrefix: 'SO',
-      purchaseOrderPrefix: 'PO',
-      receiptPrefix: 'RC',
-      issuePrefix: 'IS',
-    };
-    const general: GeneralConfig = {
-      defaultTaxRate: 8,
-      currency: 'VND',
-      timezone: 'Asia/Saigon',
-      language: 'vi',
-      dateFormat: 'DD/MM/YYYY',
-    };
-    const email: EmailConfig = {
-      host: 'smtp.example.com',
-      port: 465,
-      secure: true,
-      user: 'mailer',
-      password: 'secret',
-      from: 'noreply@example.com',
-    };
-    const backup: BackupConfig = {
-      enabled: true,
-      frequency: 'weekly',
-      time: '23:00',
-      retention: 12,
-    };
-    mockApiPut.mockResolvedValueOnce({ data: company });
-    mockApiPut.mockResolvedValueOnce({ data: codeFormats });
-    mockApiPut.mockResolvedValueOnce({ data: general });
-    mockApiPut.mockResolvedValueOnce({ data: email });
-    mockApiPut.mockResolvedValueOnce({ data: backup });
-
-    const companyResult = await configService.updateCompanyInfo(company);
-    const codeResult = await configService.updateCodeFormats(codeFormats);
-    const generalResult = await configService.updateGeneralConfig(general);
-    const emailResult = await configService.updateEmailConfig(email);
-    const backupResult = await configService.updateBackupConfig(backup);
-
-    expect(api.put).toHaveBeenNthCalledWith(1, '/config/company/info', company);
-    expect(api.put).toHaveBeenNthCalledWith(2, '/config/code-formats', codeFormats);
-    expect(api.put).toHaveBeenNthCalledWith(3, '/config/general', general);
-    expect(api.put).toHaveBeenNthCalledWith(4, '/config/email', email);
-    expect(api.put).toHaveBeenNthCalledWith(5, '/config/backup', backup);
-    expect(companyResult).toEqual(company);
-    expect(codeResult).toEqual(codeFormats);
-    expect(generalResult).toEqual(general);
-    expect(emailResult).toEqual(email);
-    expect(backupResult).toEqual(backup);
-  });
-
-  it('gets individual config groups and config history', async () => {
-    const codeFormats = { productPrefix: 'SP' };
-    const general = { currency: 'VND' };
-    const email = { host: 'smtp.example.com' };
-    const backup = { enabled: true };
-    const history = [{ key: 'general.currency', value: 'VND', timestamp: '2026-03-19T00:00:00Z' }];
-    mockApiGet.mockResolvedValueOnce({ data: codeFormats });
-    mockApiGet.mockResolvedValueOnce({ data: general });
-    mockApiGet.mockResolvedValueOnce({ data: email });
-    mockApiGet.mockResolvedValueOnce({ data: backup });
-    mockApiGet.mockResolvedValueOnce({ data: history });
-
-    const codeResult = await configService.getCodeFormats();
-    const generalResult = await configService.getGeneralConfig();
-    const emailResult = await configService.getEmailConfig();
-    const backupResult = await configService.getBackupConfig();
-    const historyResult = await configService.getConfigHistory('general.currency');
-
-    expect(api.get).toHaveBeenNthCalledWith(1, '/config/code-formats');
-    expect(api.get).toHaveBeenNthCalledWith(2, '/config/general');
-    expect(api.get).toHaveBeenNthCalledWith(3, '/config/email');
-    expect(api.get).toHaveBeenNthCalledWith(4, '/config/backup');
-    expect(api.get).toHaveBeenNthCalledWith(5, '/config/history', {
-      params: { key: 'general.currency' },
-    });
-    expect(codeResult).toEqual(codeFormats);
-    expect(generalResult).toEqual(general);
-    expect(emailResult).toEqual(email);
-    expect(backupResult).toEqual(backup);
-    expect(historyResult).toEqual(history);
-  });
-
-  it('tests email connection, sends test email, and initializes defaults', async () => {
-    const emailConfig: EmailConfig = {
-      host: 'smtp.example.com',
-      port: 587,
-      secure: false,
-      user: 'mailer',
-      password: 'secret',
-      from: 'noreply@example.com',
-    };
-    const testResult = { success: true, message: 'Connected' };
-    const sendResult = { success: true, message: 'Email sent' };
-    mockApiPost.mockResolvedValueOnce({ data: testResult });
-    mockApiPost.mockResolvedValueOnce({ data: sendResult });
-    mockApiPost.mockResolvedValueOnce({ data: undefined });
-
-    const connectionResult = await configService.testEmailConnection(emailConfig);
-    const sendEmailResult = await configService.sendTestEmail(emailConfig, 'test@example.com');
-    await configService.initializeDefaults();
-
-    expect(api.post).toHaveBeenNthCalledWith(1, '/config/email/test-connection', emailConfig);
-    expect(api.post).toHaveBeenNthCalledWith(2, '/config/email/send-test', {
-      ...emailConfig,
+    expect(api.get).toHaveBeenCalledWith('/email/logs');
+    expect(api.post).toHaveBeenCalledWith('/email/send', {
       to: 'test@example.com',
+      subject: 'SmartERP test email',
+      body: 'This is a test email from SmartERP settings.',
     });
-    expect(api.post).toHaveBeenNthCalledWith(3, '/config/initialize');
-    expect(connectionResult).toEqual(testResult);
-    expect(sendEmailResult).toEqual(sendResult);
+    expect(testResult.success).toBe(true);
+    expect(testResult.message).toContain('reachable');
+    expect(sendResult).toEqual({
+      success: true,
+      message: 'Test email sent successfully.',
+    });
   });
 });

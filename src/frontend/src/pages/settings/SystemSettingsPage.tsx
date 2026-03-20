@@ -69,22 +69,17 @@ const SystemSettingsPage: React.FC = () => {
   const loadAllConfigs = async () => {
     setLoading(true);
     try {
-      const [company, codes, general, email, backup] = await Promise.all([
-        configService.getCompanyInfo(),
-        configService.getCodeFormats(),
-        configService.getGeneralConfig(),
-        configService.getEmailConfig(),
-        configService.getBackupConfig(),
-      ]);
+      const configs = await configService.getAllConfigs();
 
-      if (company) companyForm.setFieldsValue(company);
-      if (codes) codeForm.setFieldsValue(codes);
-      if (general) generalForm.setFieldsValue(general);
-      if (email) emailForm.setFieldsValue(email);
-      if (backup) {
+      companyForm.setFieldsValue(configs.company);
+      codeForm.setFieldsValue(configs.codeFormats);
+      generalForm.setFieldsValue(configs.general);
+      emailForm.setFieldsValue(configs.email);
+
+      if (configs.backup) {
         backupForm.setFieldsValue({
-          ...backup,
-          time: backup.time ? dayjs(backup.time, 'HH:mm') : null,
+          ...configs.backup,
+          time: configs.backup.time ? dayjs(configs.backup.time, 'HH:mm') : null,
         });
       }
     } catch (error) {
@@ -150,8 +145,8 @@ const SystemSettingsPage: React.FC = () => {
   const handleTestEmailConnection = async () => {
     setTestingEmail(true);
     try {
-      const values = await emailForm.validateFields();
-      const result = await configService.testEmailConnection(values);
+      await emailForm.validateFields();
+      const result = await configService.testEmailConnection();
       if (result.success) {
         message.success(t('email.messages.testSuccess'));
       } else {
@@ -194,6 +189,7 @@ const SystemSettingsPage: React.FC = () => {
   const tabItems = [
     {
       key: 'company',
+      forceRender: true,
       label: t('company.tab'),
       children: (
         <Form form={companyForm} layout="vertical">
@@ -251,11 +247,12 @@ const SystemSettingsPage: React.FC = () => {
     },
     {
       key: 'codes',
+      forceRender: true,
       label: t('codes.tab'),
       children: (
         <>
           <Alert
-            message={t('codes.alertTitle')}
+            title={t('codes.alertTitle')}
             description={t('codes.alertDescription')}
             type="info"
             showIcon
@@ -307,6 +304,7 @@ const SystemSettingsPage: React.FC = () => {
     },
     {
       key: 'general',
+      forceRender: true,
       label: t('general.tab'),
       children: (
         <Form form={generalForm} layout="vertical">
@@ -380,6 +378,7 @@ const SystemSettingsPage: React.FC = () => {
     },
     {
       key: 'email',
+      forceRender: true,
       label: (
         <span>
           <MailOutlined /> {t('email.tab')}
@@ -388,7 +387,7 @@ const SystemSettingsPage: React.FC = () => {
       children: (
         <>
           <Alert
-            message={t('email.alertTitle')}
+            title={t('email.alertTitle')}
             description={t('email.alertDescription')}
             type="info"
             showIcon
@@ -468,6 +467,7 @@ const SystemSettingsPage: React.FC = () => {
     },
     {
       key: 'backup',
+      forceRender: true,
       label: (
         <span>
           <DatabaseOutlined /> {t('backup.tab')}
@@ -476,7 +476,7 @@ const SystemSettingsPage: React.FC = () => {
       children: (
         <>
           <Alert
-            message={t('backup.alertTitle')}
+            title={t('backup.alertTitle')}
             description={t('backup.alertDescription')}
             type="info"
             showIcon

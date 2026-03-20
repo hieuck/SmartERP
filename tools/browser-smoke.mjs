@@ -19,6 +19,9 @@ const protectedRoutes = [
   '/dashboard',
   '/dashboard/users',
   '/dashboard/search?q=demo',
+  '/dashboard/settings',
+  '/dashboard/settings/system',
+  '/dashboard/settings/print',
   '/dashboard/ecommerce/products',
   '/dashboard/ecommerce/products/new',
 ];
