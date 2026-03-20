@@ -22,6 +22,7 @@ const protectedRoutes = [
   '/dashboard/notifications',
   '/dashboard/notifications/center',
   '/dashboard/notifications/preferences',
+  '/dashboard/audit',
   '/dashboard/settings',
   '/dashboard/settings/system',
   '/dashboard/settings/print',

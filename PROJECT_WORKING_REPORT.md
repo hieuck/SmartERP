@@ -1611,3 +1611,33 @@ Verification:
 - Current browser/runtime snapshot after the batch:
   - `/dashboard/settings` now renders localized Vietnamese copy instead of raw translation keys
   - no frontend warnings or page errors were emitted during the smoke run
+
+## 2026-03-20 Audit Runtime Recovery
+- Root cause:
+  - [src/frontend/src/services/audit/auditService.ts](/e:/GitHub/smart-erp/src/frontend/src/services/audit/auditService.ts) had drifted from the current backend contract in two different ways
+  - the frontend assumed audit endpoints returned raw arrays/objects, while the backend wraps payloads in the standard `{ success, data, message }` envelope
+  - local runtime also lacked the tenant-scoped `audit_logs` table, and once the table was created the entity still mapped camelCase property names to snake_case columns incorrectly
+- Fixed in:
+  - [src/backend/src/migrations/1761006000000-CreateAuditLogsTable.ts](/e:/GitHub/smart-erp/src/backend/src/migrations/1761006000000-CreateAuditLogsTable.ts)
+  - [src/backend/src/platform/audit/entities/audit-log.entity.ts](/e:/GitHub/smart-erp/src/backend/src/platform/audit/entities/audit-log.entity.ts)
+  - [src/backend/src/platform/audit/audit.service.ts](/e:/GitHub/smart-erp/src/backend/src/platform/audit/audit.service.ts)
+  - [src/frontend/src/services/audit/auditService.ts](/e:/GitHub/smart-erp/src/frontend/src/services/audit/auditService.ts)
+  - [src/frontend/src/services/audit/auditService.test.ts](/e:/GitHub/smart-erp/src/frontend/src/services/audit/auditService.test.ts)
+  - [src/frontend/src/pages/audit/AuditLogPage.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/audit/AuditLogPage.tsx)
+  - [tools/browser-smoke.mjs](/e:/GitHub/smart-erp/tools/browser-smoke.mjs)
+- Implementation details:
+  - added the missing `audit_logs` migration with the columns and indexes expected by the current audit module
+  - mapped `tenantId`, `userId`, `entityType`, `entityId`, `oldValue`, `newValue`, `ipAddress`, `userAgent`, and `createdAt` explicitly onto the snake_case database columns
+  - restored `tenantId` persistence when writing audit log entries
+  - frontend audit service now unwraps the standard API envelope before building logs, statistics, and timeline data
+  - `/dashboard/audit` is now part of browser smoke so future runtime drift is caught automatically
+- Verified with:
+  - `npm.cmd run db:init` in `src/backend`
+  - `npx.cmd jest src/platform/audit/audit.service.spec.ts src/platform/audit/audit.controller.spec.ts --runInBand` in `src/backend`
+  - `npx.cmd vitest run src/services/audit/auditService.test.ts` in `src/frontend`
+  - direct authenticated probes to `/api/audit/logs` and `/api/audit/summary?startDate=...&endDate=...`
+  - Playwright/Chromium browser probe against `/dashboard/audit`
+- Current browser/runtime snapshot after the batch:
+  - `/dashboard/audit` renders cleanly with no failed requests, warnings, or page errors
+  - audit API endpoints now return `200` with empty-state payloads instead of `500`
+  - backend runtime stderr is back to the single dependency-owned `DEP0169` deprecation warning

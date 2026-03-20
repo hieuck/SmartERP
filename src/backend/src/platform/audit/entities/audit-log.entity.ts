@@ -9,10 +9,10 @@ export class AuditLog {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'uuid' })
+  @Column({ type: 'uuid', name: 'tenant_id' })
   tenantId: string;
 
-  @Column({ type: 'uuid' })
+  @Column({ type: 'uuid', name: 'user_id' })
   userId: string;
 
   @Column({
@@ -21,27 +21,27 @@ export class AuditLog {
   })
   action: AuditAction;
 
-  @Column()
+  @Column({ name: 'entity_type' })
   entityType: string;
 
-  @Column({ type: 'uuid', nullable: true })
+  @Column({ type: 'uuid', nullable: true, name: 'entity_id' })
   entityId: string;
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: 'jsonb', nullable: true, name: 'old_value' })
   oldValue: Record<string, unknown>;
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: 'jsonb', nullable: true, name: 'new_value' })
   newValue: Record<string, unknown>;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, name: 'ip_address' })
   ipAddress: string;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, name: 'user_agent' })
   userAgent: string;
 
   @Column({ type: 'text', nullable: true })
   description: string;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 }

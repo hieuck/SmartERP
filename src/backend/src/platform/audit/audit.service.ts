@@ -33,6 +33,7 @@ export class AuditService {
     description?: string,
   ): Promise<AuditLog> {
     const log = this.auditRepository.create({
+      tenantId: user.tenantId,
       userId: user.id,
       action,
       entityType,

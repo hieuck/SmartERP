@@ -120,7 +120,7 @@ export default function AuditLogPage() {
     return t(`audit:actions.${actionKey}`);
   };
 
-  const getEntityLabel = (entity: AuditEntity): string => {
+  const getEntityLabel = (entity: AuditEntity | string): string => {
     const entityKey = entity.toLowerCase().replace(/_/g, '');
     return t(`audit:entities.${entityKey}`);
   };
@@ -213,7 +213,7 @@ export default function AuditLogPage() {
             <Statistic
               title={t('audit:statistics.creates')}
               value={statistics?.byAction?.[AuditAction.CREATE] || 0}
-              valueStyle={{ color: '#52c41a' }}
+              styles={{ content: { color: '#52c41a' } }}
             />
           </Card>
         </Col>
@@ -222,7 +222,7 @@ export default function AuditLogPage() {
             <Statistic
               title={t('audit:statistics.deletes')}
               value={statistics?.byAction?.[AuditAction.DELETE] || 0}
-              valueStyle={{ color: '#cf1322' }}
+              styles={{ content: { color: '#cf1322' } }}
             />
           </Card>
         </Col>
@@ -336,7 +336,7 @@ export default function AuditLogPage() {
       <Drawer
         title={t('audit:details.title')}
         placement="right"
-        width={isMobile ? '100%' : 600}
+        size={isMobile ? 'large' : 'default'}
         onClose={() => setDrawerVisible(false)}
         open={drawerVisible}
       >
