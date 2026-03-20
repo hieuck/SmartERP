@@ -11,6 +11,20 @@ export class HttpExceptionFilter implements ExceptionFilter {
     this.logger.setContext('ExceptionFilter');
   }
 
+  private isExpectedRefreshMiss(
+    method: string,
+    url: string,
+    status: number,
+    errorMessage: string,
+  ): boolean {
+    return (
+      method === 'POST' &&
+      status === HttpStatus.UNAUTHORIZED &&
+      errorMessage === 'Refresh token not provided' &&
+      (url === '/api/auth/refresh' || url.endsWith('/api/auth/refresh'))
+    );
+  }
+
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
@@ -71,6 +85,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     if (status >= 500) {
       this.logger.error(logMessage, logStack);
+    } else if (this.isExpectedRefreshMiss(request.method, request.url, status, errorMessage)) {
+      this.logger.log(logMessage);
     } else {
       this.logger.warn(logMessage);
     }

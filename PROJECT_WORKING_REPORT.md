@@ -892,3 +892,25 @@ Verification:
   - backend health healthy on port `3000`
   - database smoke healthy against `erp_production`
   - frontend error log empty
+
+## 2026-03-20 Auth Refresh Log Downgrade
+- Kept public-route session restoration behavior intact, but reclassified missing refresh-cookie bootstrap traffic as expected-noise instead of warning/error in:
+  - [src/backend/src/common/logger/logging.interceptor.ts](/e:/GitHub/smart-erp/src/backend/src/common/logger/logging.interceptor.ts)
+  - [src/backend/src/common/middleware/logging.middleware.ts](/e:/GitHub/smart-erp/src/backend/src/common/middleware/logging.middleware.ts)
+  - [src/backend/src/common/interceptors/query-performance.interceptor.ts](/e:/GitHub/smart-erp/src/backend/src/common/interceptors/query-performance.interceptor.ts)
+  - [src/backend/src/common/filters/http-exception.filter.ts](/e:/GitHub/smart-erp/src/backend/src/common/filters/http-exception.filter.ts)
+- Added/updated focused tests in:
+  - [src/backend/src/common/logger/logging.interceptor.spec.ts](/e:/GitHub/smart-erp/src/backend/src/common/logger/logging.interceptor.spec.ts)
+  - [src/backend/src/common/middleware/logging.middleware.spec.ts](/e:/GitHub/smart-erp/src/backend/src/common/middleware/logging.middleware.spec.ts)
+  - [src/backend/src/common/interceptors/query-performance.interceptor.spec.ts](/e:/GitHub/smart-erp/src/backend/src/common/interceptors/query-performance.interceptor.spec.ts)
+  - [src/backend/src/common/filters/http-exception.filter.spec.ts](/e:/GitHub/smart-erp/src/backend/src/common/filters/http-exception.filter.spec.ts)
+- Verified with:
+  - `npx.cmd jest src/common/logger/logging.interceptor.spec.ts src/common/middleware/logging.middleware.spec.ts src/common/interceptors/query-performance.interceptor.spec.ts src/common/filters/http-exception.filter.spec.ts --runInBand`
+  - targeted backend `eslint`
+  - `npm.cmd run build` in `src/backend`
+  - direct `POST /api/auth/refresh` probe after restart
+  - `npm.cmd run runtime:smoke`
+- Net effect:
+  - backend still restores sessions when a refresh cookie exists
+  - missing-cookie bootstrap hits now land as info/expected logs instead of warning noise
+  - backend stderr remains limited to dependency-level `DEP0169`

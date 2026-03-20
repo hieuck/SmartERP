@@ -12,6 +12,14 @@ export class LoggingMiddleware implements NestMiddleware {
     );
   }
 
+  private isExpectedRefreshMiss(method: string, url: string, statusCode: number): boolean {
+    return (
+      method === 'POST' &&
+      statusCode === 401 &&
+      (url === '/api/auth/refresh' || url.endsWith('/api/auth/refresh'))
+    );
+  }
+
   use(req: Request, res: Response, next: NextFunction) {
     const startTime = Date.now();
     const { method, originalUrl } = req;
@@ -23,6 +31,8 @@ export class LoggingMiddleware implements NestMiddleware {
 
       if (statusCode >= 500) {
         this.logger.error(`ERROR ${logMessage}`);
+      } else if (this.isExpectedRefreshMiss(method, originalUrl, statusCode)) {
+        this.logger.log(`EXPECTED ${logMessage}`);
       } else if (statusCode >= 400) {
         this.logger.warn(`WARN ${logMessage}`);
       } else if (

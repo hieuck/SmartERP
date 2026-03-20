@@ -9,7 +9,10 @@ describe('HttpExceptionFilter', () => {
 
   beforeEach(() => {
     filter = new HttpExceptionFilter();
-    (filter as unknown as { logger: { warn: jest.Mock; error: jest.Mock } }).logger = {
+    (
+      filter as unknown as { logger: { log: jest.Mock; warn: jest.Mock; error: jest.Mock } }
+    ).logger = {
+      log: jest.fn(),
       warn: jest.fn(),
       error: jest.fn(),
     };
@@ -64,5 +67,25 @@ describe('HttpExceptionFilter', () => {
       },
     });
     expect((filter as unknown as { logger: { warn: jest.Mock } }).logger.warn).toHaveBeenCalled();
+  });
+
+  it('downgrades refresh token misses to info logs', () => {
+    filter.catch(
+      new HttpException('Refresh token not provided', HttpStatus.UNAUTHORIZED),
+      createHost(),
+    );
+
+    expect(statusMock).toHaveBeenCalledWith(HttpStatus.UNAUTHORIZED);
+    expect(jsonMock).toHaveBeenCalledWith({
+      success: false,
+      error: {
+        code: 'UNAUTHORIZED',
+        message: 'Refresh token not provided',
+      },
+    });
+    expect((filter as unknown as { logger: { log: jest.Mock } }).logger.log).toHaveBeenCalled();
+    expect(
+      (filter as unknown as { logger: { warn: jest.Mock } }).logger.warn,
+    ).not.toHaveBeenCalled();
   });
 });

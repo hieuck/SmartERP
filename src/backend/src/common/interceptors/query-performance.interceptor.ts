@@ -29,6 +29,14 @@ export class QueryPerformanceInterceptor implements NestInterceptor {
     );
   }
 
+  private isExpectedRefreshMiss(url: string, statusCode: number, errorMessage: string): boolean {
+    return (
+      statusCode === 401 &&
+      errorMessage === 'Refresh token not provided' &&
+      (url === '/api/auth/refresh' || url.endsWith('/api/auth/refresh'))
+    );
+  }
+
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const request = context.switchToHttp().getRequest();
     const response = context.switchToHttp().getResponse();
@@ -85,6 +93,8 @@ export class QueryPerformanceInterceptor implements NestInterceptor {
 
           if (statusCode >= 500) {
             this.logger.error(logMessage, logContext);
+          } else if (this.isExpectedRefreshMiss(url, statusCode, logContext.error)) {
+            this.logger.log(logMessage, logContext);
           } else {
             this.logger.warn(logMessage, logContext);
           }

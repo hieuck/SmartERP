@@ -38,9 +38,13 @@ describe('QueryPerformanceInterceptor', () => {
       incrementQueryError: jest.fn(),
     };
     const interceptor = new QueryPerformanceInterceptor(metricsService as never);
+    const log = jest.fn();
     const warn = jest.fn();
     const error = jest.fn();
-    (interceptor as unknown as { logger: { warn: jest.Mock; error: jest.Mock } }).logger = {
+    (
+      interceptor as unknown as { logger: { log: jest.Mock; warn: jest.Mock; error: jest.Mock } }
+    ).logger = {
+      log,
       warn,
       error,
     };
@@ -56,7 +60,8 @@ describe('QueryPerformanceInterceptor', () => {
             '/api/auth/refresh',
             'UnauthorizedException',
           );
-          expect(warn).toHaveBeenCalled();
+          expect(log).toHaveBeenCalled();
+          expect(warn).not.toHaveBeenCalled();
           expect(error).not.toHaveBeenCalled();
           done();
         },
@@ -71,9 +76,13 @@ describe('QueryPerformanceInterceptor', () => {
       incrementQueryError: jest.fn(),
     };
     const interceptor = new QueryPerformanceInterceptor(metricsService as never);
+    const log = jest.fn();
     const warn = jest.fn();
     const error = jest.fn();
-    (interceptor as unknown as { logger: { warn: jest.Mock; error: jest.Mock } }).logger = {
+    (
+      interceptor as unknown as { logger: { log: jest.Mock; warn: jest.Mock; error: jest.Mock } }
+    ).logger = {
+      log,
       warn,
       error,
     };
@@ -93,6 +102,7 @@ describe('QueryPerformanceInterceptor', () => {
             250,
           );
           expect(metricsService.incrementSlowQuery).not.toHaveBeenCalled();
+          expect(log).not.toHaveBeenCalled();
           expect(warn).not.toHaveBeenCalled();
           expect(error).not.toHaveBeenCalled();
           dateNowSpy.mockRestore();

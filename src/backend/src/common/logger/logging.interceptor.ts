@@ -28,6 +28,14 @@ export class LoggingInterceptor implements NestInterceptor {
     );
   }
 
+  private isExpectedRefreshMiss(url: string, statusCode: number, errorMessage: string): boolean {
+    return (
+      statusCode === 401 &&
+      errorMessage === 'Refresh token not provided' &&
+      (url === '/api/auth/refresh' || url.endsWith('/api/auth/refresh'))
+    );
+  }
+
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const request = context.switchToHttp().getRequest();
     const { method, url, user } = request;
@@ -73,13 +81,14 @@ export class LoggingInterceptor implements NestInterceptor {
         error: (error) => {
           const duration = Date.now() - now;
           const statusCode = error instanceof HttpException ? error.getStatus() : 500;
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
           const payload = {
             type: 'error',
             method,
             url,
             statusCode,
-            error: error.message,
+            error: errorMessage,
             stack: error.stack,
             duration: `${duration}ms`,
             tenantId,
@@ -89,6 +98,8 @@ export class LoggingInterceptor implements NestInterceptor {
 
           if (statusCode >= 500) {
             this.logger.error(payload);
+          } else if (this.isExpectedRefreshMiss(url, statusCode, errorMessage)) {
+            this.logger.log(payload);
           } else {
             this.logger.warn(payload);
           }

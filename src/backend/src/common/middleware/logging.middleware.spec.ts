@@ -52,4 +52,25 @@ describe('LoggingMiddleware', () => {
     expect(logSpy).not.toHaveBeenCalled();
     expect(warnSpy).not.toHaveBeenCalled();
   });
+
+  it('downgrades refresh token misses to expected logs', () => {
+    process.env.NODE_ENV = 'development';
+    const middleware = new LoggingMiddleware();
+    const logSpy = jest.spyOn(Logger.prototype, 'log').mockImplementation();
+    const warnSpy = jest.spyOn(Logger.prototype, 'warn').mockImplementation();
+    const errorSpy = jest.spyOn(Logger.prototype, 'error').mockImplementation();
+    const req = { method: 'POST', originalUrl: '/api/auth/refresh' } as Request;
+    const res = createResponse(401);
+    const next = jest.fn() as NextFunction;
+
+    middleware.use(req, res, next);
+    res.emit('finish');
+
+    expect(next).toHaveBeenCalled();
+    expect(logSpy).toHaveBeenCalledWith(
+      expect.stringContaining('EXPECTED [POST] /api/auth/refresh - 401 -'),
+    );
+    expect(warnSpy).not.toHaveBeenCalled();
+    expect(errorSpy).not.toHaveBeenCalled();
+  });
 });

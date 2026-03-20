@@ -5,13 +5,14 @@ import { LoggingInterceptor } from './logging.interceptor';
 describe('LoggingInterceptor', () => {
   it('logs auth failures as warnings instead of errors', (done) => {
     const interceptor = new LoggingInterceptor();
+    const log = jest.fn();
     const warn = jest.fn();
     const error = jest.fn();
 
     (
       interceptor as unknown as { logger: { log: jest.Mock; warn: jest.Mock; error: jest.Mock } }
     ).logger = {
-      log: jest.fn(),
+      log,
       warn,
       error,
     };
@@ -35,7 +36,7 @@ describe('LoggingInterceptor', () => {
       } as CallHandler)
       .subscribe({
         error: () => {
-          expect(warn).toHaveBeenCalledWith(
+          expect(log).toHaveBeenCalledWith(
             expect.objectContaining({
               type: 'error',
               method: 'POST',
@@ -44,6 +45,7 @@ describe('LoggingInterceptor', () => {
               error: 'Refresh token not provided',
             }),
           );
+          expect(warn).not.toHaveBeenCalled();
           expect(error).not.toHaveBeenCalled();
           done();
         },
