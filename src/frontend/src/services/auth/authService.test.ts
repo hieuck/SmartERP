@@ -1,5 +1,6 @@
 import { authService, RegisterRequest, LoginRequest } from './authService';
 import api from './api';
+import { hasRecentSessionRefreshFailure, markSessionRefreshFailure } from '@/lib/auth/sessionRefresh';
 import { logger } from '@/lib/logger/logger.service';
 import { vi } from 'vitest';
 
@@ -13,10 +14,12 @@ const mockApiGet = vi.mocked(api.get);
 describe('authService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    sessionStorage.clear();
   });
 
   describe('register', () => {
     it('should register user successfully', async () => {
+      markSessionRefreshFailure();
       const mockData: RegisterRequest = {
         email: 'test@example.com',
         password: 'password123',
@@ -47,6 +50,7 @@ describe('authService', () => {
 
       expect(api.post).toHaveBeenCalledWith('/auth/register', mockData);
       expect(result).toEqual(mockResponse.data.data);
+      expect(hasRecentSessionRefreshFailure()).toBe(false);
     });
 
     it('should handle registration error', async () => {
@@ -88,6 +92,7 @@ describe('authService', () => {
 
   describe('login', () => {
     it('should login user successfully', async () => {
+      markSessionRefreshFailure();
       const mockCredentials: LoginRequest = {
         email: 'test@example.com',
         password: 'password123',
@@ -115,6 +120,7 @@ describe('authService', () => {
 
       expect(api.post).toHaveBeenCalledWith('/auth/login', mockCredentials);
       expect(result).toEqual(mockResponse.data.data);
+      expect(hasRecentSessionRefreshFailure()).toBe(false);
     });
 
     it('should handle 401 unauthorized error', async () => {

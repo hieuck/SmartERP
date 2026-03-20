@@ -1,5 +1,5 @@
 import api from './api';
-import { clearSessionRefreshHint } from '@/lib/auth/sessionRefresh';
+import { clearSessionRefreshFailure, clearSessionRefreshHint } from '@/lib/auth/sessionRefresh';
 import { logger } from '@/lib/logger/logger.service';
 
 export interface RegisterRequest {
@@ -85,6 +85,7 @@ export const authService = {
       const response = await api.post('/auth/register', data);
       // Backend returns { success, data: { token, user }, message }
       // Unwrap to get { token, user }
+      clearSessionRefreshFailure();
       return response.data.data || response.data;
     } catch (error: unknown) {
       throw new Error(getApiErrorMessage(error, 'Registration failed'));
@@ -102,6 +103,7 @@ export const authService = {
       const response = await api.post('/auth/login', credentials);
       // Backend returns { success, data: { token, user }, message }
       // Unwrap to get { token, user }
+      clearSessionRefreshFailure();
       return response.data.data || response.data;
     } catch (error: unknown) {
       const apiError = getApiError(error);
@@ -133,6 +135,7 @@ export const authService = {
       // Log error but don't throw - logout should always succeed locally
       logger.error('AuthService', 'Logout error', error instanceof Error ? error : new Error('Logout error'));
     } finally {
+      clearSessionRefreshFailure();
       clearSessionRefreshHint();
     }
   },

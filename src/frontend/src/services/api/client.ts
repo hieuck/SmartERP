@@ -1,7 +1,11 @@
 import { store } from '@/store';
 import { clearCredentials, updateAccessToken } from '@/store/slices/authSlice';
 import axios, { InternalAxiosRequestConfig } from 'axios';
-import { clearSessionRefreshHint } from '@/lib/auth/sessionRefresh';
+import {
+  clearSessionRefreshFailure,
+  clearSessionRefreshHint,
+  markSessionRefreshFailure,
+} from '@/lib/auth/sessionRefresh';
 import { API_BASE_URL } from './baseUrl';
 
 const api = axios.create({
@@ -93,6 +97,7 @@ api.interceptors.response.use(
 
         // Update Redux store with new access token
         store.dispatch(updateAccessToken(newAccessToken));
+        clearSessionRefreshFailure();
 
         // Update original request with new token
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
@@ -105,6 +110,7 @@ api.interceptors.response.use(
       } catch (refreshError) {
         // Refresh failed - clear credentials
         store.dispatch(clearCredentials());
+        markSessionRefreshFailure();
         clearSessionRefreshHint();
         processQueue(refreshError, undefined);
 

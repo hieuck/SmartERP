@@ -5,9 +5,11 @@ import { useDispatch } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider, useThemeContext } from './contexts/ThemeContext';
 import {
+  clearSessionRefreshFailure,
   clearSessionRefreshHint,
   hasSessionRefreshHint,
   isPublicEntryPath,
+  markSessionRefreshFailure,
   shouldAttemptSessionRefresh,
 } from './lib/auth/sessionRefresh';
 import { tenantContext } from './lib/context/tenant-context.service';
@@ -54,12 +56,15 @@ async function initializeAuthState(dispatch: ReturnType<typeof useDispatch>): Pr
       if (newAccessToken && user) {
         dispatch(setCredentials({ user, accessToken: newAccessToken }));
         tenantContext.initialize(newAccessToken);
+        clearSessionRefreshFailure();
         logger.info('App', 'Session restored successfully');
       } else {
+        markSessionRefreshFailure();
         clearSessionRefreshHint();
         logger.info('App', 'Refresh succeeded without a usable session payload');
       }
     } catch {
+      markSessionRefreshFailure();
       clearSessionRefreshHint();
       logger.info('App', 'No valid session found');
     } finally {
