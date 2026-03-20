@@ -23,7 +23,6 @@ import {
 } from '@/hooks/useSettings';
 import { Setting, SettingCategory, SettingDataType } from '@/services/utils/settingsService';
 
-const { TabPane } = Tabs;
 const { TextArea } = Input;
 
 export default function SettingsPage() {
@@ -216,6 +215,26 @@ export default function SettingsPage() {
     },
   ];
 
+  const tabItems = Object.entries(categoryLabels).map(([key, label]) => ({
+    key,
+    label,
+    children: (
+      <Table
+        loading={
+          isLoading ||
+          createMutation.isPending ||
+          updateMutation.isPending ||
+          deleteMutation.isPending
+        }
+        dataSource={settings}
+        columns={columns}
+        rowKey="key"
+        scroll={{ x: 'max-content' }}
+        pagination={false}
+      />
+    ),
+  }));
+
   return (
     <div>
       <Card
@@ -229,25 +248,8 @@ export default function SettingsPage() {
         <Tabs
           activeKey={activeCategory}
           onChange={(key) => setActiveCategory(key as SettingCategory)}
-        >
-          {Object.entries(categoryLabels).map(([key, label]) => (
-            <TabPane tab={label} key={key}>
-              <Table
-                loading={
-                  isLoading ||
-                  createMutation.isPending ||
-                  updateMutation.isPending ||
-                  deleteMutation.isPending
-                }
-                dataSource={settings}
-                columns={columns}
-                rowKey="key"
-                scroll={{ x: 'max-content' }}
-                pagination={false}
-              />
-            </TabPane>
-          ))}
-        </Tabs>
+          items={tabItems}
+        />
       </Card>
 
       <Modal
