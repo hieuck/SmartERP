@@ -18,6 +18,7 @@
 - database runtime status is now clearer:
   - local table smoke confirms `41` tables currently exist, including `product_catalog`
   - the ecommerce runtime recovery is now backed by both application code and reproducible migration history
+  - `src/backend/scripts/init-db-schema.ts` now runs pending migrations whenever TypeORM reports them, instead of skipping schema initialization just because the database already has some tables
   - a smaller follow-up remains: the migration runner still emits a `pg` deprecation warning that should be traced separately, but it no longer blocks boot or schema updates
 - runtime smoke reporting is now more trustworthy for day-to-day operations:
   - `tools/runtime-smoke.mjs` no longer reports stale backend/frontend error tails from hours-old incidents as if they were current runtime failures

@@ -3,11 +3,11 @@ import { DataSource } from 'typeorm';
 import { AppModule } from '../src/app.module';
 
 /**
- * Initialize database schema by starting NestJS app
- * This ensures all entities are loaded correctly through the app's TypeORM config
+ * Initialize database schema by bootstrapping the Nest application context.
+ * The script now checks pending migrations instead of only looking at table count.
  */
 async function initSchema() {
-  console.log('🔄 Initializing NestJS application context...');
+  console.log('Initializing NestJS application context...');
 
   const app = await NestFactory.createApplicationContext(AppModule, {
     logger: ['error', 'warn'],
@@ -16,42 +16,41 @@ async function initSchema() {
   try {
     const dataSource = app.get(DataSource);
 
-    console.log('📊 Database connection established');
-    console.log(`📁 Database: ${dataSource.options.database}`);
+    console.log('Database connection established');
+    console.log(`Database: ${dataSource.options.database}`);
 
-    // Check if schema needs initialization
     const tables = await dataSource.query(`
-      SELECT COUNT(*) as count 
-      FROM information_schema.tables 
-      WHERE table_schema = 'public' 
+      SELECT COUNT(*) as count
+      FROM information_schema.tables
+      WHERE table_schema = 'public'
       AND table_type = 'BASE TABLE'
     `);
 
-    const tableCount = parseInt(tables[0].count);
+    const tableCount = Number.parseInt(tables[0].count, 10);
+    const hasPendingMigrations = await dataSource.showMigrations();
 
-    if (tableCount === 0) {
-      console.log('✨ No tables found. Running migrations...');
+    console.log(`Existing tables: ${tableCount}`);
+    console.log(`Pending migrations: ${hasPendingMigrations ? 'yes' : 'no'}`);
 
-      // Run migrations instead of synchronize
+    if (tableCount === 0 || hasPendingMigrations) {
+      console.log('Running pending migrations...');
+
       const migrations = await dataSource.runMigrations();
-      
-      console.log(`✅ Ran ${migrations.length} migration(s)`);
+      console.log(`Ran ${migrations.length} migration(s)`);
 
-      // Count tables again
       const newTables = await dataSource.query(`
-        SELECT COUNT(*) as count 
-        FROM information_schema.tables 
-        WHERE table_schema = 'public' 
+        SELECT COUNT(*) as count
+        FROM information_schema.tables
+        WHERE table_schema = 'public'
         AND table_type = 'BASE TABLE'
       `);
 
-      console.log(`✅ Schema initialized! Created ${newTables[0].count} tables`);
+      console.log(`Schema initialized. Current table count: ${newTables[0].count}`);
     } else {
-      console.log(`ℹ️  Database already has ${tableCount} tables. Skipping initialization.`);
-      console.log('💡 Use migrations for schema changes: npm run migration:generate');
+      console.log('Schema is already up to date. No migration needed.');
     }
   } catch (error) {
-    console.error('❌ Error:', error);
+    console.error('Error:', error);
     throw error;
   } finally {
     await app.close();
@@ -60,10 +59,10 @@ async function initSchema() {
 
 initSchema()
   .then(() => {
-    console.log('✅ Done!');
+    console.log('Done');
     process.exit(0);
   })
   .catch((error) => {
-    console.error('❌ Failed:', error);
+    console.error('Failed:', error);
     process.exit(1);
   });
