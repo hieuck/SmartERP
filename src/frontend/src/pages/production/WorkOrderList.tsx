@@ -13,7 +13,7 @@ import {
 } from '@ant-design/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { MenuProps } from 'antd';
-import { App, Button, Dropdown, Modal, Select, Space, Tag } from 'antd';
+import { App, Button, Dropdown, Select, Space, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { useState } from 'react';
@@ -31,7 +31,7 @@ const statusColors: Record<WorkOrderStatus, string> = {
 };
 
 export default function WorkOrderList() {
-  const { message } = App.useApp();
+  const { message, modal } = App.useApp();
   const navigate = useNavigate();
   const { t } = useTranslation('production');
   const queryClient = useQueryClient();
@@ -133,7 +133,7 @@ export default function WorkOrderList() {
             icon: <CheckCircleOutlined />,
             label: t('workOrders.complete'),
             onClick: () =>
-              Modal.confirm({
+              modal.confirm({
                 title: t('workOrders.completeConfirm'),
                 onOk: () => finishMutation.mutate({ id: record.id, qty: record.qtyToProduce }),
               }),
@@ -149,7 +149,7 @@ export default function WorkOrderList() {
             label: t('actions.cancel'),
             danger: true,
             onClick: () =>
-              Modal.confirm({
+              modal.confirm({
                 title: t('messages.deleteConfirm'),
                 onOk: () => cancelMutation.mutate(record.id),
               }),

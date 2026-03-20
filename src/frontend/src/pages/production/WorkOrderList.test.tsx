@@ -109,6 +109,9 @@ vi.mock('antd', () => ({
           error: vi.fn(),
           success: vi.fn(),
         },
+        modal: {
+          confirm: vi.fn(),
+        },
       }),
     },
   ),

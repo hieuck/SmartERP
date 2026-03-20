@@ -1,5 +1,17 @@
 import api from '@/services/api/client';
 
+interface ApiEnvelope<T> {
+  data?: T;
+}
+
+function unwrapApiData<T>(payload: T | ApiEnvelope<T>): T {
+  if (payload && typeof payload === 'object' && 'data' in payload) {
+    return (payload as ApiEnvelope<T>).data as T;
+  }
+
+  return payload as T;
+}
+
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
 export enum WorkOrderStatus {
@@ -125,73 +137,73 @@ const manufacturingService = {
   // Work Orders
   async getWorkOrders(): Promise<WorkOrder[]> {
     const res = await api.get('/manufacturing/work-orders');
-    return res.data;
+    return unwrapApiData(res.data);
   },
 
   async getWorkOrdersByStatus(status: WorkOrderStatus): Promise<WorkOrder[]> {
     const res = await api.get(`/manufacturing/work-orders/status/${status}`);
-    return res.data;
+    return unwrapApiData(res.data);
   },
 
   async getWorkOrderById(id: string): Promise<WorkOrder> {
     const res = await api.get(`/manufacturing/work-orders/${id}`);
-    return res.data;
+    return unwrapApiData(res.data);
   },
 
   async createWorkOrder(dto: CreateWorkOrderDto): Promise<WorkOrder> {
     const res = await api.post('/manufacturing/work-orders', dto);
-    return res.data;
+    return unwrapApiData(res.data);
   },
 
   async updateWorkOrder(id: string, dto: UpdateWorkOrderDto): Promise<WorkOrder> {
     const res = await api.patch(`/manufacturing/work-orders/${id}`, dto);
-    return res.data;
+    return unwrapApiData(res.data);
   },
 
   async confirmWorkOrder(id: string): Promise<WorkOrder> {
     const res = await api.patch(`/manufacturing/work-orders/${id}/confirm`);
-    return res.data;
+    return unwrapApiData(res.data);
   },
 
   async startWorkOrder(id: string): Promise<WorkOrder> {
     const res = await api.patch(`/manufacturing/work-orders/${id}/start`);
-    return res.data;
+    return unwrapApiData(res.data);
   },
 
   async finishWorkOrder(id: string, producedQuantity: number): Promise<WorkOrder> {
     const res = await api.patch(`/manufacturing/work-orders/${id}/finish`, { producedQuantity });
-    return res.data;
+    return unwrapApiData(res.data);
   },
 
   async cancelWorkOrder(id: string): Promise<WorkOrder> {
     const res = await api.patch(`/manufacturing/work-orders/${id}/cancel`);
-    return res.data;
+    return unwrapApiData(res.data);
   },
 
   // BOMs
   async getBOMs(): Promise<BOM[]> {
     const res = await api.get('/manufacturing/bom');
-    return res.data;
+    return unwrapApiData(res.data);
   },
 
   async getBOMsByProduct(productId: string): Promise<BOM[]> {
     const res = await api.get(`/manufacturing/bom/product/${productId}`);
-    return res.data;
+    return unwrapApiData(res.data);
   },
 
   async getBOMById(id: string): Promise<BOM> {
     const res = await api.get(`/manufacturing/bom/${id}`);
-    return res.data;
+    return unwrapApiData(res.data);
   },
 
   async createBOM(dto: CreateBOMDto): Promise<BOM> {
     const res = await api.post('/manufacturing/bom', dto);
-    return res.data;
+    return unwrapApiData(res.data);
   },
 
   async updateBOM(id: string, dto: UpdateBOMDto): Promise<BOM> {
     const res = await api.patch(`/manufacturing/bom/${id}`, dto);
-    return res.data;
+    return unwrapApiData(res.data);
   },
 
   async deleteBOM(id: string): Promise<void> {
@@ -200,7 +212,7 @@ const manufacturingService = {
 
   async addBOMLine(bomId: string, dto: BOMLineItemDto): Promise<BOMLine> {
     const res = await api.post(`/manufacturing/bom/${bomId}/lines`, dto);
-    return res.data;
+    return unwrapApiData(res.data);
   },
 
   async removeBOMLine(bomId: string, lineId: string): Promise<void> {
@@ -210,22 +222,22 @@ const manufacturingService = {
   // Work Centers
   async getWorkCenters(): Promise<WorkCenter[]> {
     const res = await api.get('/manufacturing/work-centers');
-    return res.data;
+    return unwrapApiData(res.data);
   },
 
   async getWorkCenterById(id: string): Promise<WorkCenter> {
     const res = await api.get(`/manufacturing/work-centers/${id}`);
-    return res.data;
+    return unwrapApiData(res.data);
   },
 
   async createWorkCenter(dto: CreateWorkCenterDto): Promise<WorkCenter> {
     const res = await api.post('/manufacturing/work-centers', dto);
-    return res.data;
+    return unwrapApiData(res.data);
   },
 
   async updateWorkCenter(id: string, dto: UpdateWorkCenterDto): Promise<WorkCenter> {
     const res = await api.patch(`/manufacturing/work-centers/${id}`, dto);
-    return res.data;
+    return unwrapApiData(res.data);
   },
 
   async deleteWorkCenter(id: string): Promise<void> {

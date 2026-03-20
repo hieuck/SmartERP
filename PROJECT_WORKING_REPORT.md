@@ -1450,3 +1450,29 @@ Verification:
 - Current frontend snapshot after the batch:
   - notifications shell is aligned with the newer feedback pattern used across recently cleaned pages
   - no TypeScript regressions were introduced
+
+## 2026-03-20 Manufacturing Runtime Contract Recovery
+- Root cause:
+  - production list pages for work centers and work orders assumed `manufacturingService` returned arrays directly
+  - the real backend contract for `/api/manufacturing/work-centers` and `/api/manufacturing/work-orders` is the standard envelope `{ success, data, message }`
+  - [manufacturing.service.ts](/e:/GitHub/smart-erp/src/frontend/src/services/manufacturing/manufacturing.service.ts) was returning `response.data` raw, so the pages received envelope objects and crashed on `.filter(...)`
+- Fixed in:
+  - [src/frontend/src/services/manufacturing/manufacturing.service.ts](/e:/GitHub/smart-erp/src/frontend/src/services/manufacturing/manufacturing.service.ts)
+  - [src/frontend/src/services/manufacturing/manufacturing.service.test.ts](/e:/GitHub/smart-erp/src/frontend/src/services/manufacturing/manufacturing.service.test.ts)
+  - [src/frontend/src/pages/production/WorkCenterList.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/production/WorkCenterList.tsx)
+  - [src/frontend/src/pages/production/WorkCenterList.test.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/production/WorkCenterList.test.tsx)
+  - [src/frontend/src/pages/production/WorkOrderList.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/production/WorkOrderList.tsx)
+  - [src/frontend/src/pages/production/WorkOrderList.test.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/production/WorkOrderList.test.tsx)
+- Implementation details:
+  - manufacturing service now unwraps the standard API envelope before returning list and detail payloads
+  - service tests now lock the envelope contract for BOM, work center, and work order list endpoints
+  - the two production list pages were also modernized to use `App.useApp().modal.confirm` instead of static `Modal.confirm`
+- Verified with:
+  - `npx.cmd vitest run src/services/manufacturing/manufacturing.service.test.ts src/pages/production/WorkCenterList.test.tsx src/pages/production/WorkOrderList.test.tsx` in `src/frontend`
+  - `npm.cmd run type-check` in `src/frontend`
+  - direct backend probes confirmed both endpoints return `{ success, data, message }`
+  - browser smoke via Playwright/Chromium against `/dashboard/production/work-centers` and `/dashboard/production/work-orders`
+- Current browser/runtime snapshot after the batch:
+  - both production routes now render successfully with no console errors
+  - frontend stderr remains empty after exercising the pages
+  - backend stderr still only shows the known dependency-owned `DEP0169` warning from the bcrypt toolchain
