@@ -144,16 +144,14 @@ describe('RegisterPage', () => {
     expect(screen.getByLabelText('Phone Number')).toHaveAttribute('autocomplete', 'tel');
   });
 
-  it('renders legal acknowledgements as plain text instead of dead placeholder links', () => {
+  it('renders legal acknowledgements as working internal links', () => {
     render(
       <App>
         <RegisterPage />
       </App>,
     );
 
-    expect(screen.getByText('Terms of Service')).toBeInTheDocument();
-    expect(screen.getByText('Privacy Policy')).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'Terms of Service' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'Privacy Policy' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Terms of Service' })).toHaveAttribute('href', '/terms');
+    expect(screen.getByRole('link', { name: 'Privacy Policy' })).toHaveAttribute('href', '/privacy');
   });
 });

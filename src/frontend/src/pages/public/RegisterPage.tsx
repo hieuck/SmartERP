@@ -312,9 +312,9 @@ export default function RegisterPage() {
                 >
                   <Checkbox>
                     {t('auth:register.agreeTerms')}{' '}
-                    <Text underline>{t('auth:register.termsOfService')}</Text>{' '}
+                    <Link to="/terms">{t('auth:register.termsOfService')}</Link>{' '}
                     {t('auth:register.and')}{' '}
-                    <Text underline>{t('auth:register.privacyPolicy')}</Text>
+                    <Link to="/privacy">{t('auth:register.privacyPolicy')}</Link>
                   </Checkbox>
                 </Form.Item>
 
