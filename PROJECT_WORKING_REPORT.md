@@ -18,6 +18,10 @@
 - runtime smoke reporting is now more trustworthy for day-to-day operations:
   - `tools/runtime-smoke.mjs` no longer reports stale backend/frontend error tails from hours-old incidents as if they were current runtime failures
   - the smoke check now surfaces only recent stderr activity, which makes the launcher report usable for ongoing project operations instead of incident archaeology
+- auth bootstrap noise has been tightened at the source:
+  - frontend session-restore logic now clears stale `session_hint` cookies when `/auth/refresh` fails or returns an unusable payload
+  - this keeps SmartERP from retrying pointless refresh requests on every new page load after a dead session hint is left behind
+  - browser verification now shows the intended behavior: a stale hint causes at most one `401` refresh attempt, the cookie is removed, and the next reload makes no refresh request at all
 
 - ecommerce product catalog runtime has now been recovered end-to-end:
   - frontend list and form pages now use the shared API client instead of bypassing auth with raw `axios`

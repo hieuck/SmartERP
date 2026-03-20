@@ -4,6 +4,12 @@ import { useEffect, useRef, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider, useThemeContext } from './contexts/ThemeContext';
+import {
+  clearSessionRefreshHint,
+  hasSessionRefreshHint,
+  isPublicEntryPath,
+  shouldAttemptSessionRefresh,
+} from './lib/auth/sessionRefresh';
 import { tenantContext } from './lib/context/tenant-context.service';
 import { useLocale } from './hooks/useLocale';
 import { logger } from './lib/logger/logger.service';
@@ -11,23 +17,8 @@ import { AppRoutes } from './routes';
 import { API_BASE_URL } from './services/api/baseUrl';
 import { setCredentials } from './store/slices/authSlice';
 
-const PUBLIC_ENTRY_PATHS = new Set(['/', '/login', '/register']);
-const SESSION_HINT_COOKIE = 'session_hint=1';
-
 let authInitializationPromise: Promise<void> | null = null;
 let authInitializationCompleted = false;
-
-function isPublicEntryPath(pathname: string): boolean {
-  return PUBLIC_ENTRY_PATHS.has(pathname);
-}
-
-export function hasSessionRefreshHint(): boolean {
-  return document.cookie.split('; ').includes(SESSION_HINT_COOKIE);
-}
-
-export function shouldAttemptSessionRefresh(pathname: string, hasHint = hasSessionRefreshHint()) {
-  return !isPublicEntryPath(pathname) || hasHint;
-}
 
 async function initializeAuthState(dispatch: ReturnType<typeof useDispatch>): Promise<void> {
   if (authInitializationCompleted) {
@@ -65,9 +56,11 @@ async function initializeAuthState(dispatch: ReturnType<typeof useDispatch>): Pr
         tenantContext.initialize(newAccessToken);
         logger.info('App', 'Session restored successfully');
       } else {
+        clearSessionRefreshHint();
         logger.info('App', 'Refresh succeeded without a usable session payload');
       }
     } catch {
+      clearSessionRefreshHint();
       logger.info('App', 'No valid session found');
     } finally {
       authInitializationCompleted = true;

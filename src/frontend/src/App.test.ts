@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { hasSessionRefreshHint, shouldAttemptSessionRefresh } from './App';
+import {
+  clearSessionRefreshHint,
+  hasSessionRefreshHint,
+  shouldAttemptSessionRefresh,
+} from './lib/auth/sessionRefresh';
 
 describe('App auth bootstrap guards', () => {
   beforeEach(() => {
@@ -14,14 +18,23 @@ describe('App auth bootstrap guards', () => {
     expect(hasSessionRefreshHint()).toBe(true);
   });
 
+  it('clears stale session refresh hint cookies', () => {
+    document.cookie = 'session_hint=1; path=/';
+
+    clearSessionRefreshHint();
+
+    expect(hasSessionRefreshHint()).toBe(false);
+  });
+
   it('skips public entry refresh when no session hint exists', () => {
     expect(shouldAttemptSessionRefresh('/login', false)).toBe(false);
     expect(shouldAttemptSessionRefresh('/register', false)).toBe(false);
     expect(shouldAttemptSessionRefresh('/', false)).toBe(false);
+    expect(shouldAttemptSessionRefresh('/dashboard', false)).toBe(false);
   });
 
-  it('allows protected entry refresh or hinted public refresh', () => {
-    expect(shouldAttemptSessionRefresh('/dashboard', false)).toBe(true);
+  it('allows refresh only when a session hint exists', () => {
+    expect(shouldAttemptSessionRefresh('/dashboard', true)).toBe(true);
     expect(shouldAttemptSessionRefresh('/login', true)).toBe(true);
   });
 });

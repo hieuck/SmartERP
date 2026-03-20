@@ -1,6 +1,7 @@
 import { store } from '@/store';
 import { clearCredentials, updateAccessToken } from '@/store/slices/authSlice';
 import axios, { InternalAxiosRequestConfig } from 'axios';
+import { clearSessionRefreshHint } from '@/lib/auth/sessionRefresh';
 import { API_BASE_URL } from './baseUrl';
 
 const api = axios.create({
@@ -10,10 +11,6 @@ const api = axios.create({
   },
   withCredentials: true, // Enable sending cookies
 });
-
-const clearSessionRefreshHint = () => {
-  document.cookie = 'session_hint=; Max-Age=0; path=/; SameSite=Lax';
-};
 
 // Token refresh queue to prevent multiple refresh calls
 let isRefreshing = false;

@@ -90,7 +90,7 @@ function MobileListViewComponent<T extends object>({
       ) : dataSource.length === 0 ? (
         <Empty description={t('messages.noData')} />
       ) : (
-        dataSource.map((item, index) => {
+        dataSource.map((item) => {
         // Get menu items for actions - cast to MenuProps['items']
         const menuItems = ListItemActions({
           record: item,
