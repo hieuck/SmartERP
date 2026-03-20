@@ -1,10 +1,10 @@
 import { DeleteOutlined, EditOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons';
 import {
+  App,
   Button,
   Card,
   Form,
   Input,
-  message,
   Modal,
   Popconfirm,
   Select,
@@ -26,6 +26,7 @@ import { Setting, SettingCategory, SettingDataType } from '@/services/utils/sett
 const { TextArea } = Input;
 
 export default function SettingsPage() {
+  const { message } = App.useApp();
   const { t } = useTranslation(['settings', 'common']);
   const [activeCategory, setActiveCategory] = useState<SettingCategory>(SettingCategory.GENERAL);
   const [modalVisible, setModalVisible] = useState(false);

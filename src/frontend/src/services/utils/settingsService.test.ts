@@ -20,6 +20,24 @@ describe('settingsService', () => {
     vi.clearAllMocks();
   });
 
+  it('unwraps envelope responses for list endpoints', async () => {
+    const generalSettings = [{ key: 'app.name', category: SettingCategory.GENERAL }];
+    const publicSettings = [{ key: 'public.theme', category: SettingCategory.GENERAL }];
+    mockApiGet
+      .mockResolvedValueOnce({
+        data: { success: true, data: generalSettings, message: 'Data retrieved successfully' },
+      })
+      .mockResolvedValueOnce({
+        data: { success: true, data: publicSettings, message: 'Data retrieved successfully' },
+      });
+
+    const allResult = await settingsService.getAll();
+    const publicResult = await settingsService.getPublic();
+
+    expect(allResult).toEqual(generalSettings);
+    expect(publicResult).toEqual(publicSettings);
+  });
+
   it('gets all settings and settings by category through the same endpoint', async () => {
     const generalSettings = [{ key: 'app.name', category: SettingCategory.GENERAL }];
     const emailSettings = [{ key: 'email.from', category: SettingCategory.EMAIL }];
@@ -72,6 +90,34 @@ describe('settingsService', () => {
     expect(api.post).toHaveBeenCalledWith('/settings', createPayload);
     expect(api.patch).toHaveBeenCalledWith('/settings/app.name', updatePayload);
     expect(api.delete).toHaveBeenCalledWith('/settings/app.name');
+    expect(createResult).toEqual(created);
+    expect(updateResult).toEqual(updated);
+  });
+
+  it('unwraps envelope responses for write operations', async () => {
+    const createPayload: CreateSettingDto = {
+      key: 'app.name',
+      value: 'SmartERP',
+      dataType: SettingDataType.STRING,
+      category: SettingCategory.GENERAL,
+      isPublic: true,
+    };
+    const updatePayload: UpdateSettingDto = {
+      value: 'SmartERP Next',
+      isPublic: false,
+    };
+    const created = { id: 'setting-1', ...createPayload };
+    const updated = { id: 'setting-1', ...updatePayload, category: SettingCategory.GENERAL };
+    mockApiPost.mockResolvedValueOnce({
+      data: { success: true, data: created, message: 'Created' },
+    });
+    mockApiPatch.mockResolvedValueOnce({
+      data: { success: true, data: updated, message: 'Updated' },
+    });
+
+    const createResult = await settingsService.create(createPayload);
+    const updateResult = await settingsService.update('app.name', updatePayload);
+
     expect(createResult).toEqual(created);
     expect(updateResult).toEqual(updated);
   });

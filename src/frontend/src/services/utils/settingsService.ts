@@ -1,5 +1,17 @@
 import api from './api';
 
+interface ApiEnvelope<T> {
+  data?: T;
+}
+
+function unwrapApiData<T>(payload: T | ApiEnvelope<T>): T {
+  if (payload && typeof payload === 'object' && 'data' in payload) {
+    return (payload as ApiEnvelope<T>).data as T;
+  }
+
+  return payload as T;
+}
+
 // Sync with backend: SettingDataType
 export enum SettingDataType {
   STRING = 'STRING',
@@ -55,27 +67,27 @@ export interface UpdateSettingDto {
 export const settingsService = {
   getAll: async (category?: SettingCategory): Promise<Setting[]> => {
     const response = await api.get('/settings', { params: { category } });
-    return response.data;
+    return unwrapApiData(response.data);
   },
 
   getByCategory: async (category: SettingCategory): Promise<Setting[]> => {
     const response = await api.get('/settings', { params: { category } });
-    return response.data;
+    return unwrapApiData(response.data);
   },
 
   getByKey: async (key: string): Promise<Setting> => {
     const response = await api.get(`/settings/${key}`);
-    return response.data;
+    return unwrapApiData(response.data);
   },
 
   create: async (data: CreateSettingDto): Promise<Setting> => {
     const response = await api.post('/settings', data);
-    return response.data;
+    return unwrapApiData(response.data);
   },
 
   update: async (key: string, data: UpdateSettingDto): Promise<Setting> => {
     const response = await api.patch(`/settings/${key}`, data);
-    return response.data;
+    return unwrapApiData(response.data);
   },
 
   delete: async (key: string): Promise<void> => {
@@ -84,11 +96,11 @@ export const settingsService = {
 
   bulkUpsert: async (settings: CreateSettingDto[]): Promise<Setting[]> => {
     const response = await api.post('/settings/bulk', { settings });
-    return response.data;
+    return unwrapApiData(response.data);
   },
 
   getPublic: async (): Promise<Setting[]> => {
     const response = await api.get('/settings/public');
-    return response.data;
+    return unwrapApiData(response.data);
   },
 };

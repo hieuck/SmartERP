@@ -1526,3 +1526,30 @@ Verification:
   - both canonical and legacy BOM URLs render successfully
   - BOM form no longer emits the Ant Design `rowKey(index)` deprecation warning
   - no new frontend stderr output was introduced by the route standardization
+
+## 2026-03-20 Settings Runtime Recovery
+- Root cause:
+  - backend `core/settings` bound [Setting](/e:/GitHub/smart-erp/src/backend/src/core/settings/entities/setting.entity.ts) to a tenant-scoped `settings` table that did not exist in the local database
+  - the database only had the older global `system_settings` table, which belongs to a different module and schema contract
+  - after the backend schema was repaired, frontend settings utilities were still returning the raw `{ success, data, message }` envelope, so [SettingsPage](/e:/GitHub/smart-erp/src/frontend/src/pages/settings/SettingsPage.tsx) crashed inside Ant Design `Table`
+- Fixed in:
+  - [src/backend/src/migrations/1761004800000-CreateSettingsTable.ts](/e:/GitHub/smart-erp/src/backend/src/migrations/1761004800000-CreateSettingsTable.ts)
+  - [src/frontend/src/services/utils/settingsService.ts](/e:/GitHub/smart-erp/src/frontend/src/services/utils/settingsService.ts)
+  - [src/frontend/src/services/utils/settingsService.test.ts](/e:/GitHub/smart-erp/src/frontend/src/services/utils/settingsService.test.ts)
+  - [src/frontend/src/pages/settings/SettingsPage.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/settings/SettingsPage.tsx)
+- Implementation details:
+  - added a migration that creates the tenant-scoped `settings` table with the columns expected by the current entity and indexes used by the settings service
+  - optional backfill from `system_settings` only runs when that table actually exposes `tenant_id`, avoiding unsafe fake tenant mapping on older schemas
+  - frontend settings service now unwraps the standard API envelope before returning list/detail payloads
+  - settings page feedback now uses `App.useApp().message` instead of static Ant Design message APIs
+- Verified with:
+  - `npm.cmd run db:init` in `src/backend`
+  - `npm.cmd run type-check` in `src/backend`
+  - direct authenticated probes to `/api/settings/public` and `/api/settings?category=GENERAL`
+  - `npx.cmd vitest run src/services/utils/settingsService.test.ts src/hooks/useSettings.test.ts` in `src/frontend`
+  - `npm.cmd run type-check` in `src/frontend`
+  - browser smoke via Playwright/Chromium against `/dashboard/settings`
+- Current browser/runtime snapshot after the batch:
+  - backend settings endpoints now return `200` with empty arrays instead of `500`
+  - `/dashboard/settings` now renders instead of crashing in the error boundary
+  - backend error log tail still contains older pre-fix `settings` failures, but fresh probes after the migration are clean
