@@ -1,0 +1,95 @@
+{
+  "entities": {
+    "products": "Products",
+    "customers": "Customers",
+    "suppliers": "Suppliers"
+  },
+  "wizard": {
+    "title": "Import {{entity}}",
+    "instructions": {
+      "title": "Import Instructions",
+      "step1": "1. Download the template file",
+      "step2": "2. Fill in your data following the template format",
+      "step3": "3. Upload the completed file",
+      "step4": "4. Review validation results and fix any errors",
+      "step5": "5. Complete the import"
+    },
+    "upload": {
+      "title": "Upload File",
+      "text": "Click or drag file to upload",
+      "hint": "Support for Excel (.xlsx, .xls) and CSV (.csv) files"
+    },
+    "validation": {
+      "title": "Validation Errors Found",
+      "description": "Found {{count}} errors in {{rows}} rows. Please fix the errors and try again.",
+      "nextStepsTitle": "Next Steps",
+      "nextStepsDescription": "Fix the errors in your file and upload again, or go back to select a different file.",
+      "successTitle": "Validation Successful",
+      "successDescription": "Ready to import {{count}} records."
+    },
+    "importing": {
+      "title": "Importing...",
+      "description": "Please wait while we import your data..."
+    },
+    "result": {
+      "failedTitle": "Import Failed",
+      "successTitle": "Import Completed Successfully!",
+      "summaryTitle": "Import Summary:"
+    },
+    "summary": {
+      "title": "Summary:",
+      "totalRows": "Total rows",
+      "validRecords": "Valid records",
+      "errors": "Errors",
+      "processedRows": "Total rows processed",
+      "importedRows": "Successfully imported"
+    },
+    "columns": {
+      "row": "Row",
+      "field": "Field",
+      "error": "Error"
+    },
+    "steps": {
+      "upload": "Upload",
+      "validate": "Validate",
+      "import": "Import"
+    },
+    "buttons": {
+      "downloadTemplate": "Download Template",
+      "cancel": "Cancel",
+      "back": "Back",
+      "validateContinue": "Validate & Continue",
+      "startImport": "Start Import",
+      "done": "Done",
+      "importAnother": "Import Another File"
+    },
+    "messages": {
+      "templateDownloaded": "Template downloaded successfully",
+      "templateDownloadFailed": "Failed to download template",
+      "fileRequired": "Please select a file",
+      "validationPassed": "Validation passed! Ready to import.",
+      "validationFoundErrors": "Validation found {{count}} errors",
+      "validationFailed": "Validation failed",
+      "importFailed": "Import failed",
+      "importServerError": "Import failed due to server error"
+    }
+  },
+  "export": {
+    "title": "Export {{entity}}",
+    "formatTitle": "Select Export Format:",
+    "formats": {
+      "excel": "Excel (.xlsx)",
+      "csv": "CSV (.csv)"
+    },
+    "description": "The export will include all {{entity}} data with their complete information.",
+    "buttons": {
+      "cancel": "Cancel",
+      "export": "Export"
+    },
+    "messages": {
+      "success": "Export completed successfully",
+      "error": "Failed to export data",
+      "invalidType": "Invalid export type"
+    }
+  }
+}

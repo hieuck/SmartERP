@@ -22,6 +22,7 @@ import {
 import type { UploadChangeParam } from 'antd/es/upload';
 import type { UploadFile } from 'antd/es/upload/interface';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 const { Text, Title, Paragraph } = Typography;
 const { Dragger } = Upload;
@@ -43,6 +44,7 @@ const ImportWizard: React.FC<ImportWizardProps> = ({
 }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const { message } = App.useApp();
+  const { t } = useTranslation('importExport');
   const [file, setFile] = useState<File | null>(null);
   const [fileList, setFileList] = useState<UploadFile[]>([]);
   const [validationResult, setValidationResult] = useState<ImportResult | null>(null);
@@ -68,9 +70,9 @@ const ImportWizard: React.FC<ImportWizardProps> = ({
     try {
       const blob = await importExportService.downloadTemplate(type);
       importExportService.downloadBlob(blob, `template_${type}.xlsx`);
-      message.success('Template downloaded successfully');
+      message.success(t('wizard.messages.templateDownloaded'));
     } catch {
-      message.error('Failed to download template');
+      message.error(t('wizard.messages.templateDownloadFailed'));
     }
   };
 
@@ -87,7 +89,7 @@ const ImportWizard: React.FC<ImportWizardProps> = ({
 
   const handleValidate = async () => {
     if (!file) {
-      message.error('Please select a file');
+      message.error(t('wizard.messages.fileRequired'));
       return;
     }
 
@@ -97,14 +99,16 @@ const ImportWizard: React.FC<ImportWizardProps> = ({
       setValidationResult(result);
 
       if (result.success) {
-        message.success('Validation passed! Ready to import.');
+        message.success(t('wizard.messages.validationPassed'));
         setCurrentStep(2);
       } else {
-        message.warning(`Validation found ${result.errorCount} errors`);
+        message.warning(
+          t('wizard.messages.validationFoundErrors', { count: result.errorCount }),
+        );
         setCurrentStep(1);
       }
     } catch {
-      message.error('Validation failed');
+      message.error(t('wizard.messages.validationFailed'));
     } finally {
       setLoading(false);
     }
@@ -127,13 +131,13 @@ const ImportWizard: React.FC<ImportWizardProps> = ({
           onSuccess();
         }
       } else {
-        message.error('Import failed');
+        message.error(t('wizard.messages.importFailed'));
       }
     } catch {
-      message.error('Import failed');
+      message.error(t('wizard.messages.importFailed'));
       setImportResult({
         success: false,
-        message: 'Import failed due to server error',
+        message: t('wizard.messages.importServerError'),
         totalRows: 0,
         successCount: 0,
         errorCount: 0,
@@ -146,19 +150,19 @@ const ImportWizard: React.FC<ImportWizardProps> = ({
 
   const errorColumns = [
     {
-      title: 'Row',
+      title: t('wizard.columns.row'),
       dataIndex: 'row',
       key: 'row',
       width: 80,
     },
     {
-      title: 'Field',
+      title: t('wizard.columns.field'),
       dataIndex: 'field',
       key: 'field',
       width: 150,
     },
     {
-      title: 'Error',
+      title: t('wizard.columns.error'),
       dataIndex: 'message',
       key: 'message',
     },
@@ -170,14 +174,14 @@ const ImportWizard: React.FC<ImportWizardProps> = ({
         return (
           <Space orientation="vertical" size="large" style={{ width: '100%' }}>
             <Alert
-              message="Import Instructions"
+              message={t('wizard.instructions.title')}
               description={
                 <div>
-                  <p>1. Download the template file</p>
-                  <p>2. Fill in your data following the template format</p>
-                  <p>3. Upload the completed file</p>
-                  <p>4. Review validation results and fix any errors</p>
-                  <p>5. Complete the import</p>
+                  <p>{t('wizard.instructions.step1')}</p>
+                  <p>{t('wizard.instructions.step2')}</p>
+                  <p>{t('wizard.instructions.step3')}</p>
+                  <p>{t('wizard.instructions.step4')}</p>
+                  <p>{t('wizard.instructions.step5')}</p>
                 </div>
               }
               type="info"
@@ -185,10 +189,10 @@ const ImportWizard: React.FC<ImportWizardProps> = ({
             />
 
             <Button icon={<DownloadOutlined />} onClick={handleDownloadTemplate} block size="large">
-              Download Template
+              {t('wizard.buttons.downloadTemplate')}
             </Button>
 
-            <Divider>Upload File</Divider>
+            <Divider>{t('wizard.upload.title')}</Divider>
 
             <Dragger
               fileList={fileList}
@@ -200,10 +204,8 @@ const ImportWizard: React.FC<ImportWizardProps> = ({
               <p className="ant-upload-drag-icon">
                 <FileExcelOutlined />
               </p>
-              <p className="ant-upload-text">Click or drag file to upload</p>
-              <p className="ant-upload-hint">
-                Support for Excel (.xlsx, .xls) and CSV (.csv) files
-              </p>
+              <p className="ant-upload-text">{t('wizard.upload.text')}</p>
+              <p className="ant-upload-hint">{t('wizard.upload.hint')}</p>
             </Dragger>
           </Space>
         );
@@ -214,8 +216,11 @@ const ImportWizard: React.FC<ImportWizardProps> = ({
             {validationResult && !validationResult.success && (
               <>
                 <Alert
-                  message="Validation Errors Found"
-                  description={`Found ${validationResult.errorCount} errors in ${validationResult.totalRows} rows. Please fix the errors and try again.`}
+                  message={t('wizard.validation.title')}
+                  description={t('wizard.validation.description', {
+                    count: validationResult.errorCount,
+                    rows: validationResult.totalRows,
+                  })}
                   type="error"
                   showIcon
                 />
@@ -229,8 +234,8 @@ const ImportWizard: React.FC<ImportWizardProps> = ({
                 />
 
                 <Alert
-                  message="Next Steps"
-                  description="Fix the errors in your file and upload again, or go back to select a different file."
+                  message={t('wizard.validation.nextStepsTitle')}
+                  description={t('wizard.validation.nextStepsDescription')}
                   type="info"
                 />
               </>
@@ -244,19 +249,21 @@ const ImportWizard: React.FC<ImportWizardProps> = ({
             {validationResult && validationResult.success && !importResult && (
               <>
                 <Alert
-                  message="Validation Successful"
-                  description={`Ready to import ${validationResult.successCount} records.`}
+                  message={t('wizard.validation.successTitle')}
+                  description={t('wizard.validation.successDescription', {
+                    count: validationResult.successCount,
+                  })}
                   type="success"
                   showIcon
                   icon={<CheckCircleOutlined />}
                 />
 
                 <div>
-                  <Text strong>Summary:</Text>
+                  <Text strong>{t('wizard.summary.title')}</Text>
                   <ul>
-                    <li>Total rows: {validationResult.totalRows}</li>
-                    <li>Valid records: {validationResult.successCount}</li>
-                    <li>Errors: {validationResult.errorCount}</li>
+                    <li>{t('wizard.summary.totalRows')}: {validationResult.totalRows}</li>
+                    <li>{t('wizard.summary.validRecords')}: {validationResult.successCount}</li>
+                    <li>{t('wizard.summary.errors')}: {validationResult.errorCount}</li>
                   </ul>
                 </div>
               </>
@@ -264,15 +271,15 @@ const ImportWizard: React.FC<ImportWizardProps> = ({
 
             {loading && (
               <>
-                <Title level={4}>Importing...</Title>
+                <Title level={4}>{t('wizard.importing.title')}</Title>
                 <Progress percent={uploadProgress} status="active" />
-                <Text type="secondary">Please wait while we import your data...</Text>
+                <Text type="secondary">{t('wizard.importing.description')}</Text>
               </>
             )}
 
             {importResult && !importResult.success && (
               <Alert
-                message="Import Failed"
+                message={t('wizard.result.failedTitle')}
                 description={importResult.message}
                 type="error"
                 showIcon
@@ -285,26 +292,26 @@ const ImportWizard: React.FC<ImportWizardProps> = ({
         return (
           <Result
             status="success"
-            title="Import Completed Successfully!"
+            title={t('wizard.result.successTitle')}
             subTitle={importResult?.message}
             extra={[
               <Button type="primary" key="done" onClick={handleClose}>
-                Done
+                {t('wizard.buttons.done')}
               </Button>,
               <Button key="another" onClick={handleReset}>
-                Import Another File
+                {t('wizard.buttons.importAnother')}
               </Button>,
             ]}
           >
             {importResult && (
               <div style={{ textAlign: 'left', maxWidth: 400, margin: '0 auto' }}>
                 <Paragraph>
-                  <Text strong>Import Summary:</Text>
+                  <Text strong>{t('wizard.result.summaryTitle')}</Text>
                 </Paragraph>
                 <ul>
-                  <li>Total rows processed: {importResult.totalRows}</li>
-                  <li>Successfully imported: {importResult.successCount}</li>
-                  <li>Errors: {importResult.errorCount}</li>
+                  <li>{t('wizard.summary.processedRows')}: {importResult.totalRows}</li>
+                  <li>{t('wizard.summary.importedRows')}: {importResult.successCount}</li>
+                  <li>{t('wizard.summary.errors')}: {importResult.errorCount}</li>
                 </ul>
               </div>
             )}
@@ -324,7 +331,7 @@ const ImportWizard: React.FC<ImportWizardProps> = ({
 
   return (
     <Modal
-      title={title || `Import ${type.charAt(0).toUpperCase() + type.slice(1)}`}
+      title={title || t('wizard.title', { entity: t(`entities.${type}`) })}
       open={visible}
       onCancel={handleClose}
       width={800}
@@ -332,11 +339,11 @@ const ImportWizard: React.FC<ImportWizardProps> = ({
         currentStep !== 3
           ? [
               <Button key="cancel" onClick={handleClose}>
-                Cancel
+                {t('wizard.buttons.cancel')}
               </Button>,
               currentStep === 1 && (
                 <Button key="back" onClick={() => setCurrentStep(0)}>
-                  Back
+                  {t('wizard.buttons.back')}
                 </Button>
               ),
               currentStep === 0 && (
@@ -347,12 +354,12 @@ const ImportWizard: React.FC<ImportWizardProps> = ({
                   loading={loading}
                   disabled={!file}
                 >
-                  Validate & Continue
+                  {t('wizard.buttons.validateContinue')}
                 </Button>
               ),
               currentStep === 2 && validationResult?.success && !importResult && (
                 <Button key="import" type="primary" onClick={handleImport} loading={loading}>
-                  Start Import
+                  {t('wizard.buttons.startImport')}
                 </Button>
               ),
             ]
@@ -364,9 +371,9 @@ const ImportWizard: React.FC<ImportWizardProps> = ({
           current={currentStep}
           style={{ marginBottom: 24 }}
           items={[
-            { title: 'Upload', icon: <UploadOutlined />, status: getStepStatus(0) },
-            { title: 'Validate', icon: <CheckCircleOutlined />, status: getStepStatus(1) },
-            { title: 'Import', icon: <FileExcelOutlined />, status: getStepStatus(2) },
+            { title: t('wizard.steps.upload'), icon: <UploadOutlined />, status: getStepStatus(0) },
+            { title: t('wizard.steps.validate'), icon: <CheckCircleOutlined />, status: getStepStatus(1) },
+            { title: t('wizard.steps.import'), icon: <FileExcelOutlined />, status: getStepStatus(2) },
           ]}
         />
       )}

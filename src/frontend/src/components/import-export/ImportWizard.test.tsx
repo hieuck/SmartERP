@@ -115,6 +115,40 @@ vi.mock('@ant-design/icons', () => ({
   UploadOutlined: () => <span>icon-upload</span>,
 }));
 
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, values?: Record<string, string | number>) => {
+      const entity = String(values?.entity ?? '');
+      const count = String(values?.count ?? '');
+      const rows = String(values?.rows ?? '');
+      const translations: Record<string, string> = {
+        'entities.products': 'Products',
+        'entities.customers': 'Customers',
+        'entities.suppliers': 'Suppliers',
+        'wizard.title': `Import ${entity}`,
+        'wizard.instructions.title': 'Import Instructions',
+        'wizard.buttons.downloadTemplate': 'Download Template',
+        'wizard.buttons.validateContinue': 'Validate & Continue',
+        'wizard.messages.templateDownloaded': 'Template downloaded successfully',
+        'wizard.messages.templateDownloadFailed': 'Failed to download template',
+        'wizard.messages.validationFoundErrors': `Validation found ${count} errors`,
+        'wizard.messages.fileRequired': 'Please select a file',
+        'wizard.messages.validationPassed': 'Validation passed! Ready to import.',
+        'wizard.messages.validationFailed': 'Validation failed',
+        'wizard.messages.importFailed': 'Import failed',
+        'wizard.messages.importServerError': 'Import failed due to server error',
+        'wizard.upload.title': 'Upload File',
+      };
+
+      if (key === 'wizard.validation.description') {
+        return `Found ${count} errors in ${rows} rows. Please fix the errors and try again.`;
+      }
+
+      return translations[key] ?? key;
+    },
+  }),
+}));
+
 describe('ImportWizard', () => {
   beforeEach(() => {
     vi.clearAllMocks();

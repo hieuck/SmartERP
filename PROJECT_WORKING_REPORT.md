@@ -1017,3 +1017,28 @@ Verification:
   - backend health on `3000` healthy
   - database smoke healthy against `erp_production`
   - backend stderr still only shows dependency-owned `DEP0169` from the `bcrypt` toolchain
+
+## 2026-03-20 Import Export Localization Cleanup
+- Root cause:
+  - [src/frontend/src/components/import-export/ImportWizard.tsx](/e:/GitHub/smart-erp/src/frontend/src/components/import-export/ImportWizard.tsx) and [src/frontend/src/components/import-export/ExportDialog.tsx](/e:/GitHub/smart-erp/src/frontend/src/components/import-export/ExportDialog.tsx) still shipped hardcoded English copy in a user-facing workflow
+  - the import/export flow had tests, but it was not actually connected to the i18n resource graph yet
+- Fixed in:
+  - [src/frontend/src/components/import-export/ImportWizard.tsx](/e:/GitHub/smart-erp/src/frontend/src/components/import-export/ImportWizard.tsx)
+  - [src/frontend/src/components/import-export/ExportDialog.tsx](/e:/GitHub/smart-erp/src/frontend/src/components/import-export/ExportDialog.tsx)
+  - [src/frontend/src/components/import-export/ImportWizard.test.tsx](/e:/GitHub/smart-erp/src/frontend/src/components/import-export/ImportWizard.test.tsx)
+  - [src/frontend/src/components/import-export/ExportDialog.test.tsx](/e:/GitHub/smart-erp/src/frontend/src/components/import-export/ExportDialog.test.tsx)
+  - [src/frontend/src/i18n/locales/en/importExport.json](/e:/GitHub/smart-erp/src/frontend/src/i18n/locales/en/importExport.json)
+  - [src/frontend/src/i18n/locales/vi/importExport.json](/e:/GitHub/smart-erp/src/frontend/src/i18n/locales/vi/importExport.json)
+  - [src/frontend/src/i18n/config.ts](/e:/GitHub/smart-erp/src/frontend/src/i18n/config.ts)
+- Implementation details:
+  - introduced a dedicated `importExport` namespace instead of leaving these flows on hardcoded strings
+  - localized wizard steps, validation/import result summaries, export format copy, and user-facing success/error messages
+  - kept the existing component tests as regression guards and updated them to use translated copy through a mocked `useTranslation`
+- Verified with:
+  - `npx.cmd vitest run src/components/import-export/ImportWizard.test.tsx src/components/import-export/ExportDialog.test.tsx`
+  - `npm.cmd run build` in `src/frontend`
+  - `npm.cmd run runtime:smoke`
+- Current runtime snapshot after the batch:
+  - frontend/backend/database smoke remains green
+  - frontend stderr remains empty
+  - backend stderr remains limited to dependency-owned `DEP0169`

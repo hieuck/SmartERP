@@ -1,0 +1,95 @@
+{
+  "entities": {
+    "products": "sản phẩm",
+    "customers": "khách hàng",
+    "suppliers": "nhà cung cấp"
+  },
+  "wizard": {
+    "title": "Nhập {{entity}}",
+    "instructions": {
+      "title": "Hướng dẫn nhập dữ liệu",
+      "step1": "1. Tải xuống file mẫu",
+      "step2": "2. Điền dữ liệu theo đúng định dạng mẫu",
+      "step3": "3. Tải lên file đã hoàn thành",
+      "step4": "4. Xem kết quả kiểm tra và sửa lỗi nếu có",
+      "step5": "5. Hoàn tất quá trình nhập"
+    },
+    "upload": {
+      "title": "Tải lên file",
+      "text": "Nhấn hoặc kéo thả file để tải lên",
+      "hint": "Hỗ trợ file Excel (.xlsx, .xls) và CSV (.csv)"
+    },
+    "validation": {
+      "title": "Phát hiện lỗi kiểm tra dữ liệu",
+      "description": "Tìm thấy {{count}} lỗi trong {{rows}} dòng. Vui lòng sửa lỗi và thử lại.",
+      "nextStepsTitle": "Bước tiếp theo",
+      "nextStepsDescription": "Hãy sửa lỗi trong file rồi tải lại, hoặc quay lại để chọn file khác.",
+      "successTitle": "Kiểm tra dữ liệu thành công",
+      "successDescription": "Sẵn sàng nhập {{count}} bản ghi."
+    },
+    "importing": {
+      "title": "Đang nhập dữ liệu...",
+      "description": "Vui lòng chờ trong khi hệ thống nhập dữ liệu của bạn..."
+    },
+    "result": {
+      "failedTitle": "Nhập dữ liệu thất bại",
+      "successTitle": "Nhập dữ liệu thành công!",
+      "summaryTitle": "Tóm tắt kết quả nhập:"
+    },
+    "summary": {
+      "title": "Tóm tắt:",
+      "totalRows": "Tổng số dòng",
+      "validRecords": "Bản ghi hợp lệ",
+      "errors": "Lỗi",
+      "processedRows": "Tổng số dòng đã xử lý",
+      "importedRows": "Nhập thành công"
+    },
+    "columns": {
+      "row": "Dòng",
+      "field": "Trường",
+      "error": "Lỗi"
+    },
+    "steps": {
+      "upload": "Tải lên",
+      "validate": "Kiểm tra",
+      "import": "Nhập dữ liệu"
+    },
+    "buttons": {
+      "downloadTemplate": "Tải file mẫu",
+      "cancel": "Hủy",
+      "back": "Quay lại",
+      "validateContinue": "Kiểm tra và tiếp tục",
+      "startImport": "Bắt đầu nhập",
+      "done": "Hoàn tất",
+      "importAnother": "Nhập file khác"
+    },
+    "messages": {
+      "templateDownloaded": "Tải file mẫu thành công",
+      "templateDownloadFailed": "Không thể tải file mẫu",
+      "fileRequired": "Vui lòng chọn file",
+      "validationPassed": "Kiểm tra dữ liệu thành công. Sẵn sàng để nhập.",
+      "validationFoundErrors": "Phát hiện {{count}} lỗi khi kiểm tra dữ liệu",
+      "validationFailed": "Kiểm tra dữ liệu thất bại",
+      "importFailed": "Nhập dữ liệu thất bại",
+      "importServerError": "Nhập dữ liệu thất bại do lỗi máy chủ"
+    }
+  },
+  "export": {
+    "title": "Xuất {{entity}}",
+    "formatTitle": "Chọn định dạng xuất:",
+    "formats": {
+      "excel": "Excel (.xlsx)",
+      "csv": "CSV (.csv)"
+    },
+    "description": "File xuất sẽ bao gồm toàn bộ dữ liệu {{entity}} cùng thông tin chi tiết.",
+    "buttons": {
+      "cancel": "Hủy",
+      "export": "Xuất dữ liệu"
+    },
+    "messages": {
+      "success": "Xuất dữ liệu thành công",
+      "error": "Không thể xuất dữ liệu",
+      "invalidType": "Loại dữ liệu xuất không hợp lệ"
+    }
+  }
+}

@@ -3,6 +3,7 @@ import { App, Modal, Radio, Button, Space, Typography, theme } from 'antd';
 import { DownloadOutlined, FileExcelOutlined, FileTextOutlined } from '@ant-design/icons';
 import importExportService from '@/services/import-export/importExportService';
 import { logger } from '@/lib/logger/logger.service';
+import { useTranslation } from 'react-i18next';
 
 const { Text } = Typography;
 const { useToken } = theme;
@@ -19,6 +20,7 @@ const ExportDialog: React.FC<ExportDialogProps> = ({ visible, onClose, type, tit
   const [loading, setLoading] = useState(false);
   const { message } = App.useApp();
   const { token } = useToken();
+  const { t } = useTranslation('importExport');
 
   const handleExport = async () => {
     setLoading(true);
@@ -40,15 +42,15 @@ const ExportDialog: React.FC<ExportDialogProps> = ({ visible, onClose, type, tit
           filename = `suppliers.${format === 'excel' ? 'xlsx' : 'csv'}`;
           break;
         default:
-          throw new Error('Invalid export type');
+          throw new Error(t('export.messages.invalidType'));
       }
 
       importExportService.downloadBlob(blob, filename);
-      message.success('Export completed successfully');
+      message.success(t('export.messages.success'));
       onClose();
     } catch (error) {
       logger.error('ExportDialog', 'Export error', error as Error);
-      message.error('Failed to export data');
+      message.error(t('export.messages.error'));
     } finally {
       setLoading(false);
     }
@@ -56,12 +58,12 @@ const ExportDialog: React.FC<ExportDialogProps> = ({ visible, onClose, type, tit
 
   return (
     <Modal
-      title={title || `Export ${type.charAt(0).toUpperCase() + type.slice(1)}`}
+      title={title || t('export.title', { entity: t(`entities.${type}`) })}
       open={visible}
       onCancel={onClose}
       footer={[
         <Button key="cancel" onClick={onClose}>
-          Cancel
+          {t('export.buttons.cancel')}
         </Button>,
         <Button
           key="export"
@@ -70,13 +72,13 @@ const ExportDialog: React.FC<ExportDialogProps> = ({ visible, onClose, type, tit
           loading={loading}
           onClick={handleExport}
         >
-          Export
+          {t('export.buttons.export')}
         </Button>,
       ]}
     >
       <Space orientation="vertical" size="large" style={{ width: '100%' }}>
         <div>
-          <Text strong>Select Export Format:</Text>
+          <Text strong>{t('export.formatTitle')}</Text>
           <Radio.Group
             value={format}
             onChange={(e) => setFormat(e.target.value)}
@@ -86,13 +88,13 @@ const ExportDialog: React.FC<ExportDialogProps> = ({ visible, onClose, type, tit
               <Radio value="excel">
                 <Space>
                   <FileExcelOutlined style={{ color: '#52c41a', fontSize: 18 }} />
-                  <span>Excel (.xlsx)</span>
+                  <span>{t('export.formats.excel')}</span>
                 </Space>
               </Radio>
               <Radio value="csv">
                 <Space>
                   <FileTextOutlined style={{ color: token.colorPrimary, fontSize: 18 }} />
-                  <span>CSV (.csv)</span>
+                  <span>{t('export.formats.csv')}</span>
                 </Space>
               </Radio>
             </Space>
@@ -101,7 +103,7 @@ const ExportDialog: React.FC<ExportDialogProps> = ({ visible, onClose, type, tit
 
         <div>
           <Text type="secondary">
-            The export will include all {type} data with their complete information.
+            {t('export.description', { entity: t(`entities.${type}`) })}
           </Text>
         </div>
       </Space>

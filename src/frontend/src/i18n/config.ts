@@ -8,6 +8,7 @@ import enCommon from './locales/en/common.json';
 import enCustomers from './locales/en/customers.json';
 import enDashboard from './locales/en/dashboard.json';
 import enInventory from './locales/en/inventory.json';
+import enImportExport from './locales/en/importExport.json';
 import enInvoices from './locales/en/invoices.json';
 import enLayout from './locales/en/layout.json';
 import enNotifications from './locales/en/notifications.json';
@@ -27,6 +28,7 @@ import viCommon from './locales/vi/common.json';
 import viCustomers from './locales/vi/customers.json';
 import viDashboard from './locales/vi/dashboard.json';
 import viInventory from './locales/vi/inventory.json';
+import viImportExport from './locales/vi/importExport.json';
 import viInvoices from './locales/vi/invoices.json';
 import viLayout from './locales/vi/layout.json';
 import viNotifications from './locales/vi/notifications.json';
@@ -79,6 +81,7 @@ const resources = {
     orders: enOrders,
     customers: enCustomers,
     inventory: enInventory,
+    importExport: enImportExport,
     warehouses: enWarehouses,
     suppliers: enSuppliers,
     payments: enPayments,
@@ -112,6 +115,7 @@ const resources = {
     orders: viOrders,
     customers: viCustomers,
     inventory: viInventory,
+    importExport: viImportExport,
     warehouses: viWarehouses,
     suppliers: viSuppliers,
     payments: viPayments,
@@ -154,6 +158,7 @@ i18n
       'orders',
       'customers',
       'inventory',
+      'importExport',
       'warehouses',
       'suppliers',
       'payments',

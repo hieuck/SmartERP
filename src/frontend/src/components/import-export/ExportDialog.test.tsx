@@ -141,6 +141,34 @@ vi.mock('@ant-design/icons', () => ({
   FileTextOutlined: () => <span>icon-text</span>,
 }));
 
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, values?: Record<string, string>) => {
+      const entity = values?.entity ?? '';
+      const translations: Record<string, string> = {
+        'entities.products': 'Products',
+        'entities.customers': 'Customers',
+        'entities.suppliers': 'Suppliers',
+        'export.title': `Export ${entity}`,
+        'export.formatTitle': 'Select Export Format:',
+        'export.formats.excel': 'Excel (.xlsx)',
+        'export.formats.csv': 'CSV (.csv)',
+        'export.buttons.cancel': 'Cancel',
+        'export.buttons.export': 'Export',
+        'export.messages.success': 'Export completed successfully',
+        'export.messages.error': 'Failed to export data',
+        'export.messages.invalidType': 'Invalid export type',
+      };
+
+      if (key === 'export.description') {
+        return `The export will include all ${entity.toLowerCase()} data with their complete information.`;
+      }
+
+      return translations[key] ?? key;
+    },
+  }),
+}));
+
 describe('ExportDialog', () => {
   beforeEach(() => {
     vi.clearAllMocks();
