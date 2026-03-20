@@ -6,6 +6,9 @@
 
 ## Latest Checkpoint (2026-03-20)
 
+- sales order detail no longer ships broken copy in the live UI:
+  - [src/frontend/src/pages/orders/OrderDetail.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/orders/OrderDetail.tsx) was rewritten to remove mojibake labels and to use app-context feedback/confirmation flows
+  - frontend type-check and runtime smoke remained green after the rewrite
 - invoice and payment detail pages now follow the app-context confirmation pattern:
   - [src/frontend/src/pages/invoices/InvoiceDetail.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/invoices/InvoiceDetail.tsx) and [src/frontend/src/pages/payments/PaymentDetail.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/payments/PaymentDetail.tsx) now use `App.useApp()` for feedback/confirm flows instead of relying on static antd modal/message surfaces
   - frontend type-check and runtime smoke remained green after the batch

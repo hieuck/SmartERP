@@ -1,37 +1,23 @@
-import React, { useEffect, useState } from 'react';
-import {
-  Card,
-  Descriptions,
-  Table,
-  Tag,
-  Button,
-  Space,
-  Typography,
-  Spin,
-  message,
-  Modal,
-  Badge,
-} from 'antd';
 import {
   ArrowLeftOutlined,
-  EditOutlined,
   CheckOutlined,
   CloseOutlined,
+  DisconnectOutlined,
   DollarOutlined,
+  EditOutlined,
   SyncOutlined,
   WifiOutlined,
-  DisconnectOutlined,
 } from '@ant-design/icons';
-import { useNavigate, useParams } from 'react-router-dom';
-import {
-  OrderStatus,
-} from '@/services/order/orderService';
 import { offlineServices } from '@/services/offline-services';
 import { syncManager } from '@/lib/offline/sync-manager';
 import { logger } from '@/lib/logger/logger.service';
 import type { SalesOrder } from '@/lib/offline/db';
-import dayjs from 'dayjs';
+import { OrderStatus } from '@/services/order/orderService';
+import { App, Badge, Button, Card, Descriptions, Space, Spin, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
+import dayjs from 'dayjs';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const { Title, Text } = Typography;
 
@@ -66,6 +52,7 @@ interface OrderItem {
 }
 
 const OrderDetail: React.FC = () => {
+  const { message, modal } = App.useApp();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const [order, setOrder] = useState<SalesOrder | null>(null);
@@ -74,12 +61,11 @@ const OrderDetail: React.FC = () => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [syncQueueSize, setSyncQueueSize] = useState(0);
 
-  // Load order from IndexedDB
   const loadOrder = async () => {
     try {
       setLoading(true);
       if (!id) return;
-      
+
       const data = await offlineServices.salesOrders.getById(id);
       setOrder(data || null);
       logger.info('OrderDetail', 'Loaded order from IndexedDB', { id });
@@ -91,19 +77,18 @@ const OrderDetail: React.FC = () => {
     }
   };
 
-  // Auto-sync on mount when online
   useEffect(() => {
     const initSync = async () => {
-      if (navigator.onLine) {
-        const token = localStorage.getItem('token');
-        if (token) {
-          try {
-            await syncManager.sync(token);
-            logger.info('OrderDetail', 'Auto-sync completed');
-          } catch (error) {
-            logger.error('OrderDetail', 'Auto-sync failed', error as Error);
-          }
-        }
+      if (!navigator.onLine) return;
+
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      try {
+        await syncManager.sync(token);
+        logger.info('OrderDetail', 'Auto-sync completed');
+      } catch (error) {
+        logger.error('OrderDetail', 'Auto-sync failed', error as Error);
       }
     };
 
@@ -111,7 +96,6 @@ const OrderDetail: React.FC = () => {
     loadOrder();
   }, [id]);
 
-  // Monitor network status
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
@@ -125,7 +109,6 @@ const OrderDetail: React.FC = () => {
     };
   }, []);
 
-  // Update sync queue size
   useEffect(() => {
     const updateQueueSize = async () => {
       const size = await syncManager.getQueueSize();
@@ -138,7 +121,6 @@ const OrderDetail: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Manual sync
   const handleSync = async () => {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -149,7 +131,7 @@ const OrderDetail: React.FC = () => {
     try {
       setSyncing(true);
       const result = await syncManager.sync(token);
-      
+
       if (result.success) {
         message.success(`Đồng bộ thành công: ${result.pulled} pulled, ${result.pushed} pushed`);
         await loadOrder();
@@ -167,7 +149,7 @@ const OrderDetail: React.FC = () => {
   const handleConfirm = async () => {
     if (!order) return;
 
-    Modal.confirm({
+    modal.confirm({
       title: 'Xác nhận đơn hàng',
       content: 'Bạn có chắc chắn muốn xác nhận đơn hàng này?',
       onOk: async () => {
@@ -189,7 +171,7 @@ const OrderDetail: React.FC = () => {
   const handleCancel = async () => {
     if (!order) return;
 
-    Modal.confirm({
+    modal.confirm({
       title: 'Hủy đơn hàng',
       content: 'Bạn có chắc chắn muốn hủy đơn hàng này?',
       onOk: async () => {
@@ -208,7 +190,6 @@ const OrderDetail: React.FC = () => {
     });
   };
 
-  // Parse items from order.items into a stable UI shape
   const orderItems: OrderItem[] = Array.isArray(order?.items)
     ? order.items.map((item, index) => {
         const record = item as Partial<OrderItem>;
@@ -253,7 +234,7 @@ const OrderDetail: React.FC = () => {
       key: 'unitPrice',
       width: 130,
       align: 'right',
-      render: (value: number) => `${value.toLocaleString('vi-VN')} ₫`,
+      render: (value: number) => `${value.toLocaleString('vi-VN')} VND`,
     },
     {
       title: 'Thành tiền',
@@ -261,7 +242,7 @@ const OrderDetail: React.FC = () => {
       key: 'total',
       width: 150,
       align: 'right',
-      render: (value: number) => `${value.toLocaleString('vi-VN')} ₫`,
+      render: (value: number) => `${value.toLocaleString('vi-VN')} VND`,
     },
   ];
 
@@ -290,8 +271,7 @@ const OrderDetail: React.FC = () => {
 
   return (
     <div style={{ padding: '24px' }}>
-            <Space orientation="vertical" style={{ width: '100%' }} size="large">
-        {/* Network Status & Sync */}
+      <Space orientation="vertical" style={{ width: '100%' }} size="large">
         <Card size="small">
           <Space>
             <Badge status={isOnline ? 'success' : 'error'} />
@@ -366,7 +346,7 @@ const OrderDetail: React.FC = () => {
             </Descriptions.Item>
             <Descriptions.Item label="Tổng tiền">
               <Text strong style={{ fontSize: 16 }}>
-                {order.totalAmount.toLocaleString('vi-VN')} ₫
+                {order.totalAmount.toLocaleString('vi-VN')} VND
               </Text>
             </Descriptions.Item>
             <Descriptions.Item label="Trạng thái đồng bộ">
@@ -398,7 +378,7 @@ const OrderDetail: React.FC = () => {
                     </Table.Summary.Cell>
                     <Table.Summary.Cell index={1} align="right">
                       <Text strong style={{ fontSize: 16 }}>
-                        {total.toLocaleString('vi-VN')} ₫
+                        {total.toLocaleString('vi-VN')} VND
                       </Text>
                     </Table.Summary.Cell>
                   </Table.Summary.Row>
