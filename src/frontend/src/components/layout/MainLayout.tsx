@@ -41,8 +41,8 @@ export default function MainLayout() {
           placement="left"
           onClose={() => setMobileDrawerOpen(false)}
           open={mobileDrawerOpen}
-          bodyStyle={{ padding: 0 }}
-          width={256}
+          styles={{ body: { padding: 0 } }}
+          size={256}
         >
           <Sidebar collapsed={false} />
         </Drawer>

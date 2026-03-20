@@ -34,7 +34,6 @@ import { logger } from '@/lib/logger/logger.service';
 
 const { Search } = Input;
 const { Text } = Typography;
-const { TabPane } = Tabs;
 
 type FilterValue = string | number | boolean | Dayjs[] | null | undefined;
 type FilterMap = Record<string, FilterValue>;
@@ -253,13 +252,17 @@ const SearchResultsPage: React.FC = () => {
             </div>
           )}
 
-          <Tabs activeKey={activeTab} onChange={handleTabChange}>
-            <TabPane tab={t('tabs.all')} key="all" />
-            <TabPane tab={t('tabs.products')} key="products" />
-            <TabPane tab={t('tabs.customers')} key="customers" />
-            <TabPane tab={t('tabs.suppliers')} key="suppliers" />
-            <TabPane tab={t('tabs.orders')} key="orders" />
-          </Tabs>
+          <Tabs
+            activeKey={activeTab}
+            onChange={handleTabChange}
+            items={[
+              { key: 'all', label: t('tabs.all') },
+              { key: 'products', label: t('tabs.products') },
+              { key: 'customers', label: t('tabs.customers') },
+              { key: 'suppliers', label: t('tabs.suppliers') },
+              { key: 'orders', label: t('tabs.orders') },
+            ]}
+          />
 
           {loading ? (
             <div style={{ textAlign: 'center', padding: '50px' }}>

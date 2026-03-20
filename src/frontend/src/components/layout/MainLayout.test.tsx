@@ -4,8 +4,51 @@ import MainLayout from './MainLayout';
 import { ResponsiveInfo, useResponsive } from '@/hooks/useResponsive';
 import { vi } from 'vitest';
 
+const { useResponsiveMock } = vi.hoisted(() => ({
+  useResponsiveMock: vi.fn(),
+}));
+
 // Mock dependencies
-vi.mock('@/hooks/useResponsive');
+vi.mock('@/hooks/useResponsive', () => ({
+  useResponsive: useResponsiveMock,
+}));
+vi.mock('antd', () => {
+  const Layout = Object.assign(
+    ({
+      children,
+      style,
+    }: {
+      children: React.ReactNode;
+      style?: React.CSSProperties;
+    }) => <div style={style}>{children}</div>,
+    {
+      Content: ({
+        children,
+        className,
+        style,
+      }: {
+        children?: React.ReactNode;
+        className?: string;
+        style?: React.CSSProperties;
+      }) => (
+        <div className={className} style={style}>
+          {children}
+        </div>
+      ),
+    },
+  );
+
+  return {
+    Layout,
+    Drawer: ({
+      children,
+      open,
+    }: {
+      children?: React.ReactNode;
+      open?: boolean;
+    }) => (open ? <div data-testid="mobile-drawer">{children}</div> : null),
+  };
+});
 vi.mock('./Sidebar', () => ({
   __esModule: true,
   default: ({ collapsed }: { collapsed: boolean }) => (

@@ -1125,3 +1125,31 @@ Verification:
   - route mismatch warning is gone
   - tenant context error is gone when the injected token is structurally valid
   - remaining browser warnings now point to Ant Design deprecations in layout/search shells rather than broken search navigation
+
+## 2026-03-20 Search Shell Deprecation Cleanup
+- Root cause:
+  - browser smoke on the live search flow was still emitting Ant Design deprecations from shell components, not business logic:
+    - `Drawer.bodyStyle`
+    - `Drawer.width`
+    - `Spin.tip`
+    - `Tabs.TabPane`
+- Fixed in:
+  - [src/frontend/src/components/layout/MainLayout.tsx](/e:/GitHub/smart-erp/src/frontend/src/components/layout/MainLayout.tsx)
+  - [src/frontend/src/components/layout/MainLayout.test.tsx](/e:/GitHub/smart-erp/src/frontend/src/components/layout/MainLayout.test.tsx)
+  - [src/frontend/src/pages/search/SearchResultsPage.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/search/SearchResultsPage.tsx)
+  - [src/frontend/src/routes/index.tsx](/e:/GitHub/smart-erp/src/frontend/src/routes/index.tsx)
+- Implementation details:
+  - migrated mobile drawer body padding to `styles.body`
+  - replaced drawer sizing with `size`
+  - replaced route loader `Spin.tip` with `description`
+  - migrated search result tabs from legacy `TabPane` children to `items`
+  - hardened `MainLayout` tests with an explicit Ant Design mock so Vitest no longer emits jsdom drawer noise
+- Verified with:
+  - `npx.cmd vitest run src/components/layout/MainLayout.test.tsx src/components/search/AdvancedFilterPanel.test.tsx src/components/search/GlobalSearchBar.test.tsx src/components/search/searchRoutes.test.ts` in `src/frontend`
+  - `npm.cmd run build` in `src/frontend`
+  - `npm.cmd run runtime:smoke`
+  - browser smoke with injected E2E session and mocked search API on `http://127.0.0.1:5173/dashboard/search?q=test`
+- Current browser/runtime snapshot after the batch:
+  - no Ant Design deprecation warnings remain on the exercised search flow
+  - frontend stderr remains empty
+  - backend/database smoke remains green
