@@ -49,6 +49,7 @@ data/*.db-wal
 
 # Runtime (portable - không commit vào git)
 runtime/
+output/*.pid
 
 # PostgreSQL portable
 postgresql-temp/
