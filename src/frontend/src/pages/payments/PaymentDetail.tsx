@@ -1,17 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import {
-  Card,
-  Descriptions,
-  Tag,
-  Button,
-  Space,
-  Typography,
-  Spin,
-  message,
-  Modal,
-  Alert,
-  Badge,
-} from 'antd';
+import { App, Alert, Badge, Button, Card, Descriptions, Space, Spin, Tag, Typography } from 'antd';
 import {
   ArrowLeftOutlined,
   EditOutlined,
@@ -39,6 +27,7 @@ const { Title, Text } = Typography;
 
 const PaymentDetail: React.FC = () => {
   const { t } = useTranslation(['payments', 'common', 'invoices', 'orders']);
+  const { message, modal } = App.useApp();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const [payment, setPayment] = useState<Payment | null>(null);
@@ -184,7 +173,7 @@ const PaymentDetail: React.FC = () => {
   const handleComplete = async () => {
     if (!payment) return;
 
-    Modal.confirm({
+    modal.confirm({
       title: t('common:actions.complete'),
       content: t('payments:messages.completeConfirm'),
       onOk: async () => {
@@ -206,7 +195,7 @@ const PaymentDetail: React.FC = () => {
   const handleRefund = async () => {
     if (!payment) return;
 
-    Modal.confirm({
+    modal.confirm({
       title: t('common:actions.refund'),
       content: t('payments:messages.refundConfirm', { amount: payment.amount.toLocaleString('vi-VN') }),
       onOk: async () => {
@@ -228,7 +217,7 @@ const PaymentDetail: React.FC = () => {
   const handleReconcile = async () => {
     if (!payment) return;
 
-    Modal.confirm({
+    modal.confirm({
       title: t('payments:actions.reconcile'),
       content: t('payments:messages.reconcileConfirm'),
       onOk: async () => {

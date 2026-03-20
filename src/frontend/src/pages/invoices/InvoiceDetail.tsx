@@ -1,17 +1,5 @@
 ﻿import React, { useEffect, useState } from 'react';
-import {
-  Card,
-  Descriptions,
-  Table,
-  Tag,
-  Button,
-  Space,
-  Typography,
-  Spin,
-  message,
-  Modal,
-  Badge,
-} from 'antd';
+import { App, Badge, Button, Card, Descriptions, Space, Spin, Table, Tag, Typography } from 'antd';
 import {
   ArrowLeftOutlined,
   EditOutlined,
@@ -57,6 +45,7 @@ interface InvoiceItem {
 
 const InvoiceDetail: React.FC = () => {
   const { t } = useTranslation(['invoices', 'common']);
+  const { message, modal } = App.useApp();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const [invoice, setInvoice] = useState<Invoice | null>(null);
@@ -153,7 +142,7 @@ const InvoiceDetail: React.FC = () => {
   const handleSend = async () => {
     if (!invoice) return;
 
-    Modal.confirm({
+    modal.confirm({
       title: t('invoices:detail.sendConfirmTitle'),
       content: t('invoices:detail.sendConfirmContent'),
       onOk: async () => {
@@ -175,7 +164,7 @@ const InvoiceDetail: React.FC = () => {
   const handleCancel = async () => {
     if (!invoice) return;
 
-    Modal.confirm({
+    modal.confirm({
       title: t('invoices:detail.cancelConfirmTitle'),
       content: t('invoices:detail.cancelConfirmContent'),
       onOk: async () => {

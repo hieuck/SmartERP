@@ -6,6 +6,9 @@
 
 ## Latest Checkpoint (2026-03-20)
 
+- invoice and payment detail pages now follow the app-context confirmation pattern:
+  - [src/frontend/src/pages/invoices/InvoiceDetail.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/invoices/InvoiceDetail.tsx) and [src/frontend/src/pages/payments/PaymentDetail.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/payments/PaymentDetail.tsx) now use `App.useApp()` for feedback/confirm flows instead of relying on static antd modal/message surfaces
+  - frontend type-check and runtime smoke remained green after the batch
 - user management now uses the same context-aware confirmation pattern as the rest of the modernized shell:
   - [src/frontend/src/pages/users/UserList.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/users/UserList.tsx) now routes reset-password and delete confirmations through `App.useApp().modal.confirm`
   - [src/frontend/src/pages/users/UserList.test.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/users/UserList.test.tsx) now covers the reset-password confirmation path directly instead of only create/search happy paths
