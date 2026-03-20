@@ -15,18 +15,7 @@ import {
 } from '@/hooks/useReports';
 import type { SalesReport } from '@/services/report/reportingService';
 import { BarChartOutlined, FileExcelOutlined, FilePdfOutlined } from '@ant-design/icons';
-import {
-  Button,
-  Card,
-  Col,
-  DatePicker,
-  message,
-  Row,
-  Space,
-  Statistic,
-  Tabs,
-  Typography,
-} from 'antd';
+import { App, Button, Card, Col, DatePicker, Row, Space, Statistic, Tabs, Typography } from 'antd';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 import React, { useState } from 'react';
@@ -36,6 +25,7 @@ const { RangePicker } = DatePicker;
 const { Title } = Typography;
 
 const ReportsPage: React.FC = () => {
+  const { message } = App.useApp();
   const { t } = useTranslation(['reports', 'common']);
 
   const [dateRange, setDateRange] = useState<[string, string]>([
@@ -46,7 +36,6 @@ const ReportsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('sales');
   const [selectedReport, setSelectedReport] = useState<string>('sales');
 
-  // Hooks for different reports
   const salesReport = useSalesReport({ startDate: dateRange[0], endDate: dateRange[1] });
   const dailySalesReport = useDailySalesReport({ startDate: dateRange[0], endDate: dateRange[1] });
   const productPerformanceReport = useProductPerformanceReport({
@@ -79,6 +68,7 @@ const ReportsPage: React.FC = () => {
 
   const fetchReport = async (reportType: string) => {
     setSelectedReport(reportType);
+
     try {
       let data: unknown;
 
@@ -121,6 +111,7 @@ const ReportsPage: React.FC = () => {
       }
 
       setReportData(reportType === 'sales' ? (data as SalesReport | null) : null);
+
       if (data) {
         message.success(t('reports:messages.loadSuccess'));
       }
@@ -156,7 +147,7 @@ const ReportsPage: React.FC = () => {
   const isLoading = selectedReport === 'sales' ? salesReport.isLoading : false;
 
   const renderSalesReports = () => (
-      <Space orientation="vertical" style={{ width: '100%' }} size="large">
+    <Space orientation="vertical" style={{ width: '100%' }} size="large">
       <Card title={t('reports:sales.revenue')}>
         <Space orientation="vertical" style={{ width: '100%' }}>
           <Space>
@@ -189,7 +180,7 @@ const ReportsPage: React.FC = () => {
                 <Statistic
                   title={t('reports:sales.totalRevenue')}
                   value={reportData.totalRevenue}
-                  suffix="₫"
+                  suffix="VND"
                 />
               </Col>
               <Col span={8}>
@@ -199,7 +190,7 @@ const ReportsPage: React.FC = () => {
                 <Statistic
                   title={t('reports:sales.averageOrderValue')}
                   value={reportData.averageOrderValue}
-                  suffix="₫"
+                  suffix="VND"
                 />
               </Col>
             </Row>
@@ -253,7 +244,7 @@ const ReportsPage: React.FC = () => {
   );
 
   const renderInventoryReports = () => (
-      <Space orientation="vertical" style={{ width: '100%' }} size="large">
+    <Space orientation="vertical" style={{ width: '100%' }} size="large">
       <Card title={t('reports:inventory.stock')}>
         <Space>
           <Button type="primary" onClick={() => fetchReport('inventory')} loading={isLoading}>
@@ -313,7 +304,7 @@ const ReportsPage: React.FC = () => {
   );
 
   const renderCustomerReports = () => (
-      <Space orientation="vertical" style={{ width: '100%' }} size="large">
+    <Space orientation="vertical" style={{ width: '100%' }} size="large">
       <Card title={t('reports:customers.report')}>
         <Space orientation="vertical" style={{ width: '100%' }}>
           <Space>
@@ -345,7 +336,7 @@ const ReportsPage: React.FC = () => {
   );
 
   const renderFinancialReports = () => (
-      <Space orientation="vertical" style={{ width: '100%' }} size="large">
+    <Space orientation="vertical" style={{ width: '100%' }} size="large">
       <Card title={t('reports:financial.report')}>
         <Space orientation="vertical" style={{ width: '100%' }}>
           <Space>
@@ -393,20 +384,32 @@ const ReportsPage: React.FC = () => {
         <Title level={3}>
           <BarChartOutlined /> {t('reports:title')}
         </Title>
-        <Tabs activeKey={activeTab} onChange={setActiveTab}>
-          <Tabs.TabPane tab={t('reports:tabs.sales')} key="sales">
-            {renderSalesReports()}
-          </Tabs.TabPane>
-          <Tabs.TabPane tab={t('reports:tabs.inventory')} key="inventory">
-            {renderInventoryReports()}
-          </Tabs.TabPane>
-          <Tabs.TabPane tab={t('reports:tabs.customers')} key="customers">
-            {renderCustomerReports()}
-          </Tabs.TabPane>
-          <Tabs.TabPane tab={t('reports:tabs.financial')} key="financial">
-            {renderFinancialReports()}
-          </Tabs.TabPane>
-        </Tabs>
+        <Tabs
+          activeKey={activeTab}
+          onChange={setActiveTab}
+          items={[
+            {
+              key: 'sales',
+              label: t('reports:tabs.sales'),
+              children: renderSalesReports(),
+            },
+            {
+              key: 'inventory',
+              label: t('reports:tabs.inventory'),
+              children: renderInventoryReports(),
+            },
+            {
+              key: 'customers',
+              label: t('reports:tabs.customers'),
+              children: renderCustomerReports(),
+            },
+            {
+              key: 'financial',
+              label: t('reports:tabs.financial'),
+              children: renderFinancialReports(),
+            },
+          ]}
+        />
       </Card>
     </div>
   );

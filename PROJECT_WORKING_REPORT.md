@@ -6,6 +6,13 @@
 
 ## Latest Checkpoint (2026-03-20)
 
+- reporting shell has been modernized and locked with focused coverage:
+  - [src/frontend/src/pages/reports/ReportsPage.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/reports/ReportsPage.tsx) now uses `App.useApp().message` and the modern `Tabs.items` API instead of legacy static `message` and `Tabs.TabPane`
+  - a focused Vitest suite now covers report loading feedback, PDF export feedback, and tab switching in [src/frontend/src/pages/reports/ReportsPage.test.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/reports/ReportsPage.test.tsx)
+  - sales summary display no longer leaks mojibake currency suffixes into the UI
+- ecommerce product-catalog runtime has been reconfirmed as healthy in the live browser flow:
+  - `runtime:browser-smoke` now reaches both `/dashboard/ecommerce/products` and `/dashboard/ecommerce/products/new` without failed requests
+  - the old `relation "product_catalog" does not exist` entries still present in raw backend stderr are now confirmed to be stale incident history, not a currently reproducible runtime failure
 - production list feedback is now aligned with the modern frontend shell:
   - [src/frontend/src/pages/production/WorkCenterList.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/production/WorkCenterList.tsx) and [src/frontend/src/pages/production/WorkOrderList.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/production/WorkOrderList.tsx) now use `App.useApp().message` instead of the legacy static `message` API
   - their colocated Vitest suites were updated to mock the app context rather than the deprecated static surface
