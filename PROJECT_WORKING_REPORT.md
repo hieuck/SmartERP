@@ -18,6 +18,10 @@
   - `/terms` and `/privacy` now render dedicated public pages instead of falling through to unmatched routes
   - runtime browser smoke now exercises both routes alongside login/register/dashboard flows
   - the pages use the same public shell, theme controls, and localization-aware copy as the rest of the public surface
+- public password recovery routes now exist and are monitored:
+  - `/forgot-password` now sends reset requests through the existing backend endpoint
+  - `/reset-password?token=...` now supports a real frontend reset form instead of a dead route
+  - runtime browser smoke now exercises both pages with the rest of the public auth flow
 - `/register` browser smoke is now clean again:
   - no console warnings
   - no console errors

@@ -4,7 +4,14 @@ const frontendUrl = process.env.SMARTERP_FRONTEND_URL ?? 'http://127.0.0.1:5173'
 const backendApiUrl = process.env.SMARTERP_BACKEND_API_URL ?? 'http://127.0.0.1:3000/api';
 const failOnWarnings = process.env.SMARTERP_FAIL_ON_WARNINGS === '1';
 
-const publicRoutes = ['/login', '/register', '/terms', '/privacy'];
+const publicRoutes = [
+  '/login',
+  '/register',
+  '/forgot-password',
+  '/reset-password?token=smoke-test-token',
+  '/terms',
+  '/privacy',
+];
 const protectedRoutes = ['/dashboard', '/dashboard/users', '/dashboard/search?q=demo'];
 
 function unique(items) {

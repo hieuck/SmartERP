@@ -12,7 +12,9 @@ import { useSelector } from 'react-redux';
 import { Navigate, Route, Routes } from 'react-router-dom';
 
 // Eager load critical pages
+import ForgotPasswordPage from '@/pages/auth/ForgotPasswordPage';
 import LoginPage from '@/pages/auth/LoginPage';
+import ResetPasswordPage from '@/pages/auth/ResetPasswordPage';
 import Dashboard from '@/pages/Dashboard';
 import LandingPage from '@/pages/public/LandingPage';
 import PrivacyPage from '@/pages/public/PrivacyPage';
@@ -133,6 +135,14 @@ export function AppRoutes() {
       <Route
         path="/login"
         element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />}
+      />
+      <Route
+        path="/forgot-password"
+        element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <ForgotPasswordPage />}
+      />
+      <Route
+        path="/reset-password"
+        element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <ResetPasswordPage />}
       />
       <Route path="/terms" element={<TermsPage />} />
       <Route path="/privacy" element={<PrivacyPage />} />

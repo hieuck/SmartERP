@@ -301,4 +301,74 @@ describe('authService', () => {
       await expect(authService.changePassword(mockData)).rejects.toThrow('Old password is incorrect');
     });
   });
+
+  describe('forgotPassword', () => {
+    it('should request a password reset successfully', async () => {
+      const mockResponse = {
+        data: {
+          data: {
+            message: 'If the email exists, a password reset link has been sent',
+          },
+        },
+      };
+
+      mockApiPost.mockResolvedValue(mockResponse);
+
+      const result = await authService.forgotPassword('test@example.com');
+
+      expect(api.post).toHaveBeenCalledWith('/auth/forgot-password', {
+        email: 'test@example.com',
+      });
+      expect(result).toEqual(mockResponse.data.data);
+    });
+
+    it('should surface forgot password API errors', async () => {
+      mockApiPost.mockRejectedValue({
+        response: {
+          data: {
+            message: 'Too many requests',
+          },
+        },
+      });
+
+      await expect(authService.forgotPassword('test@example.com')).rejects.toThrow('Too many requests');
+    });
+  });
+
+  describe('resetPassword', () => {
+    it('should reset a password successfully', async () => {
+      const payload = {
+        token: 'reset-token',
+        newPassword: 'NewPassword1',
+      };
+      const mockResponse = {
+        data: {
+          data: {
+            message: 'Password reset successful',
+          },
+        },
+      };
+
+      mockApiPost.mockResolvedValue(mockResponse);
+
+      const result = await authService.resetPassword(payload);
+
+      expect(api.post).toHaveBeenCalledWith('/auth/reset-password', payload);
+      expect(result).toEqual(mockResponse.data.data);
+    });
+
+    it('should surface reset password API errors', async () => {
+      mockApiPost.mockRejectedValue({
+        response: {
+          data: {
+            message: 'Invalid reset token',
+          },
+        },
+      });
+
+      await expect(
+        authService.resetPassword({ token: 'reset-token', newPassword: 'NewPassword1' }),
+      ).rejects.toThrow('Invalid reset token');
+    });
+  });
 });

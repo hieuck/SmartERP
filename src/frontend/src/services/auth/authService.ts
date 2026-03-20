@@ -35,6 +35,11 @@ export interface ChangePasswordRequest {
   newPassword: string;
 }
 
+export interface ResetPasswordRequest {
+  token: string;
+  newPassword: string;
+}
+
 interface ApiErrorPayload {
   message?: string;
 }
@@ -168,6 +173,36 @@ export const authService = {
       await api.post('/auth/change-password', data);
     } catch (error: unknown) {
       throw new Error(getApiErrorMessage(error, 'Password change failed'));
+    }
+  },
+
+  /**
+   * Request a password reset link
+   * @param email - User email address
+   * @returns API response message
+   * @throws Error if request fails
+   */
+  forgotPassword: async (email: string): Promise<{ message?: string }> => {
+    try {
+      const response = await api.post('/auth/forgot-password', { email });
+      return response.data.data || response.data;
+    } catch (error: unknown) {
+      throw new Error(getApiErrorMessage(error, 'Password reset request failed'));
+    }
+  },
+
+  /**
+   * Reset password with email token
+   * @param data - Reset password payload
+   * @returns API response message
+   * @throws Error if reset fails
+   */
+  resetPassword: async (data: ResetPasswordRequest): Promise<{ message?: string }> => {
+    try {
+      const response = await api.post('/auth/reset-password', data);
+      return response.data.data || response.data;
+    } catch (error: unknown) {
+      throw new Error(getApiErrorMessage(error, 'Password reset failed'));
     }
   },
 };
