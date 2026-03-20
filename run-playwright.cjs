@@ -1,3 +1,4 @@
+const net = require('node:net');
 const path = require('path');
 const { spawn } = require('child_process');
 
@@ -13,18 +14,38 @@ const hasUiHost = args.some((arg) => arg === '--ui-host' || arg.startsWith('--ui
 const hasUiPort = args.some((arg) => arg === '--ui-port' || arg.startsWith('--ui-port='));
 const normalizedArgs = [...args];
 
-if (isUiRequested && !isHelpRequested && !isVersionRequested) {
-  if (!hasUiHost) {
-    normalizedArgs.push('--ui-host', DEFAULT_UI_HOST);
+function parseOptionValue(optionName, fallbackValue) {
+  const optionIndex = normalizedArgs.findIndex((arg) => arg === optionName);
+  if (optionIndex >= 0) {
+    return normalizedArgs[optionIndex + 1] ?? fallbackValue;
   }
 
-  if (!hasUiPort) {
-    normalizedArgs.push('--ui-port', DEFAULT_UI_PORT);
+  const inlineOption = normalizedArgs.find((arg) => arg.startsWith(`${optionName}=`));
+  if (inlineOption) {
+    return inlineOption.split('=')[1] ?? fallbackValue;
   }
+
+  return fallbackValue;
 }
 
-if (isHelpRequested || isVersionRequested) {
-  const child = spawn(process.execPath, [cliPath, ...args], {
+function setOptionValue(optionName, value) {
+  const optionIndex = normalizedArgs.findIndex((arg) => arg === optionName);
+  if (optionIndex >= 0) {
+    normalizedArgs[optionIndex + 1] = value;
+    return;
+  }
+
+  const inlineIndex = normalizedArgs.findIndex((arg) => arg.startsWith(`${optionName}=`));
+  if (inlineIndex >= 0) {
+    normalizedArgs[inlineIndex] = `${optionName}=${value}`;
+    return;
+  }
+
+  normalizedArgs.push(optionName, value);
+}
+
+function spawnAndForward(cliArgs) {
+  const child = spawn(process.execPath, [cliPath, ...cliArgs], {
     cwd: __dirname,
     stdio: 'inherit',
     windowsHide: false,
@@ -40,10 +61,9 @@ if (isHelpRequested || isVersionRequested) {
       process.kill(process.pid, signal);
       return;
     }
+
     process.exit(code ?? 0);
   });
-
-  return;
 }
 
 function canSpawnWithIpc() {
@@ -60,53 +80,155 @@ function canSpawnWithIpc() {
     if (error && error.code === 'EPERM') {
       return false;
     }
+
     throw error;
   }
 }
 
-if (!canSpawnWithIpc()) {
-  console.error(
-    [
-      'Playwright cannot start in this environment because child-process IPC is blocked.',
-      'Use this command from a normal local terminal session instead of a restricted shell or sandbox:',
-      '  node run-playwright.cjs test --ui',
-      'On Windows PowerShell, prefer `playwright-ui.cmd` or `npm.cmd run test:e2e:ui` over `npx playwright test --ui` to avoid Execution Policy issues.',
-    ].join('\n'),
-  );
-  process.exit(1);
+function isPortAvailable(host, port) {
+  return new Promise((resolve, reject) => {
+    const server = net.createServer();
+    server.unref();
+
+    server.once('error', (error) => {
+      if (error && error.code === 'EADDRINUSE') {
+        resolve(false);
+        return;
+      }
+
+      reject(error);
+    });
+
+    server.once('listening', () => {
+      server.close(() => resolve(true));
+    });
+
+    server.listen(port, host);
+  });
 }
 
-if (isUiRequested) {
-  const uiHostIndex = normalizedArgs.findIndex((arg) => arg === '--ui-host');
-  const uiPortIndex = normalizedArgs.findIndex((arg) => arg === '--ui-port');
-  const uiHost =
-    uiHostIndex >= 0 ? normalizedArgs[uiHostIndex + 1] : normalizedArgs.find((arg) => arg.startsWith('--ui-host='))?.split('=')[1] ?? DEFAULT_UI_HOST;
-  const uiPort =
-    uiPortIndex >= 0 ? normalizedArgs[uiPortIndex + 1] : normalizedArgs.find((arg) => arg.startsWith('--ui-port='))?.split('=')[1] ?? DEFAULT_UI_PORT;
+async function servesPlaywrightUi(host, port) {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 2_000);
+    const response = await fetch(`http://${host}:${port}`, {
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
 
-  console.error(
-    [
-      `Starting Playwright UI on http://${uiHost}:${uiPort}`,
-      'If the browser window does not open automatically, copy that URL into a normal local browser session.',
-    ].join('\n'),
-  );
+    if (!response.ok) {
+      return false;
+    }
+
+    const html = await response.text();
+    return html.includes('playwright-') || html.includes('Playwright');
+  } catch {
+    return false;
+  }
 }
 
-const child = spawn(process.execPath, [cliPath, ...normalizedArgs], {
-  cwd: __dirname,
-  stdio: 'inherit',
-  windowsHide: false,
-});
+async function findAvailablePort(host, startPort, maxAttempts = 10) {
+  for (let offset = 0; offset < maxAttempts; offset += 1) {
+    const port = startPort + offset;
+    if (await isPortAvailable(host, port)) {
+      return port;
+    }
+  }
 
-child.on('error', (error) => {
-  console.error(error);
-  process.exit(1);
-});
+  return null;
+}
 
-child.on('exit', (code, signal) => {
-  if (signal) {
-    process.kill(process.pid, signal);
+async function main() {
+  if (isUiRequested && !isHelpRequested && !isVersionRequested) {
+    if (!hasUiHost) {
+      setOptionValue('--ui-host', DEFAULT_UI_HOST);
+    }
+
+    if (!hasUiPort) {
+      setOptionValue('--ui-port', DEFAULT_UI_PORT);
+    }
+  }
+
+  if (isHelpRequested || isVersionRequested) {
+    spawnAndForward(args);
     return;
   }
-  process.exit(code ?? 0);
+
+  if (!canSpawnWithIpc()) {
+    console.error(
+      [
+        'Playwright cannot start in this environment because child-process IPC is blocked.',
+        'Use this command from a normal local terminal session instead of a restricted shell or sandbox:',
+        '  node run-playwright.cjs test --ui',
+        'On Windows PowerShell, prefer `playwright-ui.cmd` or `npm.cmd run test:e2e:ui` over `npx playwright test --ui` to avoid Execution Policy issues.',
+      ].join('\n'),
+    );
+    process.exit(1);
+  }
+
+  if (isUiRequested) {
+    const uiHost = parseOptionValue('--ui-host', DEFAULT_UI_HOST);
+    let uiPort = parseOptionValue('--ui-port', DEFAULT_UI_PORT);
+    const existingUiUrl = `http://${uiHost}:${uiPort}`;
+    const portAvailable = await isPortAvailable(uiHost, Number(uiPort));
+
+    if (!portAvailable) {
+      const isPlaywrightUiAlreadyRunning = await servesPlaywrightUi(uiHost, uiPort);
+
+      if (isPlaywrightUiAlreadyRunning) {
+        console.error(
+          [
+            `Playwright UI is already running on ${existingUiUrl}.`,
+            'Reusing the existing UI server instead of starting a duplicate.',
+          ].join('\n'),
+        );
+        process.exit(0);
+      }
+
+      if (hasUiPort) {
+        console.error(
+          [
+            `Playwright UI could not start because port ${uiPort} is already in use by another process.`,
+            'Provide a different `--ui-port` value or stop the process currently using that port.',
+          ].join('\n'),
+        );
+        process.exit(1);
+      }
+
+      const fallbackPort = await findAvailablePort(uiHost, Number(uiPort) + 1);
+      if (fallbackPort === null) {
+        console.error(
+          [
+            `Playwright UI could not find an available port starting from ${uiPort}.`,
+            'Stop the process currently using the default UI port or start with an explicit `--ui-port`.',
+          ].join('\n'),
+        );
+        process.exit(1);
+      }
+
+      uiPort = String(fallbackPort);
+      setOptionValue('--ui-port', uiPort);
+
+      console.error(
+        [
+          `Playwright UI default port ${DEFAULT_UI_PORT} is busy.`,
+          `Starting Playwright UI on http://${uiHost}:${uiPort} instead.`,
+        ].join('\n'),
+      );
+    } else {
+      console.error(
+        [
+          `Starting Playwright UI on http://${uiHost}:${uiPort}`,
+          'If the browser window does not open automatically, copy that URL into a normal local browser session.',
+        ].join('\n'),
+      );
+    }
+  }
+
+  spawnAndForward(normalizedArgs);
+}
+
+main().catch((error) => {
+  console.error(error);
+  process.exit(1);
 });

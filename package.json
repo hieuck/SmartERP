@@ -2,7 +2,7 @@
   "scripts": {
     "test:e2e": "node run-playwright.cjs test",
     "test:e2e:headed": "node run-playwright.cjs test --headed --project=chromium",
-    "test:e2e:ui": "node run-playwright.cjs test --ui --ui-host 127.0.0.1 --ui-port 9323",
+    "test:e2e:ui": "node run-playwright.cjs test --ui",
     "runtime:browser-smoke": "node tools/browser-smoke.mjs",
     "runtime:start": "node tools/runtime-start.mjs",
     "runtime:stop": "node tools/runtime-stop.mjs",
