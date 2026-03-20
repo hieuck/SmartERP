@@ -17,9 +17,9 @@ describe('reportingService', () => {
     const sales = { totalRevenue: 1000 };
     const dailySales = [{ date: '2026-03-01', revenue: 100, orders: 2, customers: 2 }];
     const productPerformance = [{ productId: 'prod-1', revenue: 500 }];
-    mockApiGet.mockResolvedValueOnce({ data: sales });
-    mockApiGet.mockResolvedValueOnce({ data: dailySales });
-    mockApiGet.mockResolvedValueOnce({ data: productPerformance });
+    mockApiGet.mockResolvedValueOnce({ data: { data: sales } });
+    mockApiGet.mockResolvedValueOnce({ data: { data: dailySales } });
+    mockApiGet.mockResolvedValueOnce({ data: { data: productPerformance } });
 
     const salesResult = await reportingService.getSalesReport(params);
     const dailyResult = await reportingService.getDailySales(params);
@@ -39,11 +39,11 @@ describe('reportingService', () => {
     const movements = [{ productId: 'prod-1', quantity: 5 }];
     const customers = { totalCustomers: 20 };
     const topCustomers = [{ customerId: 'cus-1', totalSpent: 1000 }];
-    mockApiGet.mockResolvedValueOnce({ data: inventory });
-    mockApiGet.mockResolvedValueOnce({ data: lowStock });
-    mockApiGet.mockResolvedValueOnce({ data: movements });
-    mockApiGet.mockResolvedValueOnce({ data: customers });
-    mockApiGet.mockResolvedValueOnce({ data: topCustomers });
+    mockApiGet.mockResolvedValueOnce({ data: { data: inventory } });
+    mockApiGet.mockResolvedValueOnce({ data: { data: lowStock } });
+    mockApiGet.mockResolvedValueOnce({ data: { data: movements } });
+    mockApiGet.mockResolvedValueOnce({ data: { data: customers } });
+    mockApiGet.mockResolvedValueOnce({ data: { data: topCustomers } });
 
     const inventoryResult = await reportingService.getInventoryReport();
     const lowStockResult = await reportingService.getLowStockReport();
@@ -70,9 +70,9 @@ describe('reportingService', () => {
     const profitLoss = { grossProfit: 700 };
     const cashFlow = [{ date: '2026-03-01', income: 200, expense: 50, balance: 150 }];
     const blob = new Blob(['report'], { type: 'application/pdf' });
-    mockApiGet.mockResolvedValueOnce({ data: financial });
-    mockApiGet.mockResolvedValueOnce({ data: profitLoss });
-    mockApiGet.mockResolvedValueOnce({ data: cashFlow });
+    mockApiGet.mockResolvedValueOnce({ data: { data: financial } });
+    mockApiGet.mockResolvedValueOnce({ data: { data: profitLoss } });
+    mockApiGet.mockResolvedValueOnce({ data: { data: cashFlow } });
     mockApiGet.mockResolvedValueOnce({ data: blob });
     mockApiGet.mockResolvedValueOnce({ data: blob });
     mockApiGet.mockResolvedValueOnce({ data: blob });

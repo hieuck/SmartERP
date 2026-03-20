@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ReportsService } from './reports.service';
 import { ReportsController } from './reports.controller';
+import { ReportingController } from './reporting.controller';
 import { Account } from '@/domains/accounting/account/entities/account.entity';
 import { JournalLine } from '@/domains/accounting/account/entities/journal-line.entity';
 import { Product } from '@/domains/inventory/product/entities/product.entity';
@@ -15,7 +16,7 @@ import { SecurityModule } from '@/common/security/security.module';
     TypeOrmModule.forFeature([Account, JournalLine, Product, Customer, Invoice, Payment]),
     SecurityModule,
   ],
-  controllers: [ReportsController],
+  controllers: [ReportsController, ReportingController],
   providers: [ReportsService],
   exports: [ReportsService],
 })

@@ -26,6 +26,7 @@ const protectedRoutes = [
   '/dashboard/accounting/accounts',
   '/dashboard/accounting/accounts/new',
   '/dashboard/accounting/journal-entries',
+  '/dashboard/reports',
   '/dashboard/settings',
   '/dashboard/settings/system',
   '/dashboard/settings/print',

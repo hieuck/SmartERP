@@ -1,5 +1,13 @@
 import api from './api';
 
+function unwrapApiData<T>(payload: T | { data?: T }): T {
+  if (payload && typeof payload === 'object' && 'data' in payload) {
+    return (payload as { data?: T }).data as T;
+  }
+
+  return payload as T;
+}
+
 export interface DateRangeParams {
   startDate: string;
   endDate: string;
@@ -95,60 +103,60 @@ export const reportingService = {
   // Sales Reports
   getSalesReport: async (params: DateRangeParams): Promise<SalesReport> => {
     const response = await api.get('/reporting/sales', { params });
-    return response.data;
+    return unwrapApiData<SalesReport>(response.data);
   },
 
   getDailySales: async (params: DateRangeParams): Promise<DailySales[]> => {
     const response = await api.get('/reporting/daily-sales', { params });
-    return response.data;
+    return unwrapApiData<DailySales[]>(response.data);
   },
 
   getProductPerformance: async (params: DateRangeParams): Promise<ProductPerformance[]> => {
     const response = await api.get('/reporting/product-performance', { params });
-    return response.data;
+    return unwrapApiData<ProductPerformance[]>(response.data);
   },
 
   // Inventory Reports
   getInventoryReport: async (): Promise<InventoryReport> => {
     const response = await api.get('/reporting/inventory');
-    return response.data;
+    return unwrapApiData<InventoryReport>(response.data);
   },
 
   getLowStockReport: async () => {
     const response = await api.get('/reporting/inventory/low-stock');
-    return response.data;
+    return unwrapApiData(response.data);
   },
 
   getStockMovementReport: async (params: DateRangeParams) => {
     const response = await api.get('/reporting/inventory/movements', { params });
-    return response.data;
+    return unwrapApiData(response.data);
   },
 
   // Customer Reports
   getCustomerReport: async (params?: DateRangeParams): Promise<CustomerReport> => {
     const response = await api.get('/reporting/customers', { params });
-    return response.data;
+    return unwrapApiData<CustomerReport>(response.data);
   },
 
   getTopCustomers: async (limit: number = 10) => {
     const response = await api.get('/reporting/customers/top', { params: { limit } });
-    return response.data;
+    return unwrapApiData(response.data);
   },
 
   // Financial Reports
   getFinancialReport: async (params: DateRangeParams): Promise<FinancialReport> => {
     const response = await api.get('/reporting/financial', { params });
-    return response.data;
+    return unwrapApiData<FinancialReport>(response.data);
   },
 
   getProfitLoss: async (params: DateRangeParams) => {
     const response = await api.get('/reporting/financial/profit-loss', { params });
-    return response.data;
+    return unwrapApiData(response.data);
   },
 
   getCashFlow: async (params: DateRangeParams) => {
     const response = await api.get('/reporting/financial/cash-flow', { params });
-    return response.data;
+    return unwrapApiData(response.data);
   },
 
   // Export Functions
@@ -157,14 +165,14 @@ export const reportingService = {
       params,
       responseType: 'blob',
     });
-    return response.data;
+    return unwrapApiData(response.data);
   },
 
   exportInventoryReport: async (format: 'pdf' | 'excel' = 'pdf') => {
     const response = await api.get(`/reporting/inventory/export/${format}`, {
       responseType: 'blob',
     });
-    return response.data;
+    return unwrapApiData(response.data);
   },
 
   exportCustomerReport: async (params: DateRangeParams, format: 'pdf' | 'excel' = 'pdf') => {
@@ -172,7 +180,7 @@ export const reportingService = {
       params,
       responseType: 'blob',
     });
-    return response.data;
+    return unwrapApiData(response.data);
   },
 
   exportFinancialReport: async (params: DateRangeParams, format: 'pdf' | 'excel' = 'pdf') => {
@@ -180,7 +188,7 @@ export const reportingService = {
       params,
       responseType: 'blob',
     });
-    return response.data;
+    return unwrapApiData(response.data);
   },
 };
 

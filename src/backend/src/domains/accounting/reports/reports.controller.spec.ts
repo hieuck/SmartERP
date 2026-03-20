@@ -29,6 +29,11 @@ describe('ReportsController (Integration)', () => {
     tenantId: 'tenant-123',
     roles: ['accountant'],
   };
+  const accountId = '123e4567-e89b-12d3-a456-426614174001';
+  const customerId = '123e4567-e89b-12d3-a456-426614174002';
+  const productId = '123e4567-e89b-12d3-a456-426614174003';
+  const warehouseId = '123e4567-e89b-12d3-a456-426614174004';
+  const categoryId = '123e4567-e89b-12d3-a456-426614174005';
 
   const mockTrialBalance = {
     asOfDate: new Date('2024-01-31'),
@@ -63,6 +68,21 @@ describe('ReportsController (Integration)', () => {
       },
     ],
     closingBalance: 15000,
+  };
+  const serializedMockTrialBalance = {
+    ...mockTrialBalance,
+    asOfDate: mockTrialBalance.asOfDate.toISOString(),
+  };
+  const serializedMockGeneralLedger = {
+    ...mockGeneralLedger,
+    period: {
+      startDate: mockGeneralLedger.period.startDate.toISOString(),
+      endDate: mockGeneralLedger.period.endDate.toISOString(),
+    },
+    transactions: mockGeneralLedger.transactions.map((transaction) => ({
+      ...transaction,
+      date: transaction.date.toISOString(),
+    })),
   };
 
   beforeAll(async () => {
@@ -127,7 +147,7 @@ describe('ReportsController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual(mockTrialBalance);
+      expect(response.body).toEqual(serializedMockTrialBalance);
       expect(reportsService.getTrialBalance).toHaveBeenCalledWith(mockUser, expect.any(Date));
     });
 
@@ -153,15 +173,15 @@ describe('ReportsController (Integration)', () => {
 
       const response = await request(app.getHttpServer())
         .get(
-          '/accounting/reports/general-ledger?accountId=acc-1&startDate=2024-01-01&endDate=2024-01-31',
+          `/accounting/reports/general-ledger?accountId=${accountId}&startDate=2024-01-01&endDate=2024-01-31`,
         )
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual(mockGeneralLedger);
+      expect(response.body).toEqual(serializedMockGeneralLedger);
       expect(reportsService.getGeneralLedger).toHaveBeenCalledWith(
         mockUser,
-        'acc-1',
+        accountId,
         new Date('2024-01-01'),
         new Date('2024-01-31'),
       );
@@ -185,6 +205,11 @@ describe('ReportsController (Integration)', () => {
         financingActivities: 2000,
         netCashFlow: 7000,
       };
+      const serializedMockCashFlow = {
+        ...mockCashFlow,
+        startDate: mockCashFlow.startDate.toISOString(),
+        endDate: mockCashFlow.endDate.toISOString(),
+      };
 
       reportsService.getCashFlowStatement.mockResolvedValue(mockCashFlow);
 
@@ -193,7 +218,7 @@ describe('ReportsController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual(mockCashFlow);
+      expect(response.body).toEqual(serializedMockCashFlow);
     });
 
     it('should validate required date parameters', async () => {
@@ -225,6 +250,13 @@ describe('ReportsController (Integration)', () => {
           },
         ],
       };
+      const serializedMockSalesSummary = {
+        ...mockSalesSummary,
+        period: {
+          startDate: mockSalesSummary.period.startDate.toISOString(),
+          endDate: mockSalesSummary.period.endDate.toISOString(),
+        },
+      };
 
       reportsService.getSalesSummary.mockResolvedValue(mockSalesSummary);
 
@@ -233,7 +265,7 @@ describe('ReportsController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual(mockSalesSummary);
+      expect(response.body).toEqual(serializedMockSalesSummary);
     });
 
     it('should accept optional customerId parameter', async () => {
@@ -241,7 +273,7 @@ describe('ReportsController (Integration)', () => {
 
       await request(app.getHttpServer())
         .get(
-          '/accounting/reports/sales-summary?startDate=2024-01-01&endDate=2024-01-31&customerId=cust-123',
+          `/accounting/reports/sales-summary?startDate=2024-01-01&endDate=2024-01-31&customerId=${customerId}`,
         )
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -250,7 +282,7 @@ describe('ReportsController (Integration)', () => {
         mockUser,
         new Date('2024-01-01'),
         new Date('2024-01-31'),
-        'cust-123',
+        customerId,
       );
     });
   });
@@ -308,15 +340,15 @@ describe('ReportsController (Integration)', () => {
 
       await request(app.getHttpServer())
         .get(
-          '/accounting/reports/inventory-summary?productId=prod-1&categoryId=cat-1&lowStockOnly=true',
+          `/accounting/reports/inventory-summary?productId=${productId}&categoryId=${categoryId}&lowStockOnly=true`,
         )
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
       expect(reportsService.getInventorySummary).toHaveBeenCalledWith(
         mockUser,
-        'prod-1',
-        'cat-1',
+        productId,
+        categoryId,
         'true',
       );
     });
@@ -352,11 +384,17 @@ describe('ReportsController (Integration)', () => {
       reportsService.getInventoryValuation.mockResolvedValue({} as any);
 
       await request(app.getHttpServer())
-        .get('/accounting/reports/inventory-valuation?productId=prod-1&warehouseId=wh-1')
+        .get(
+          `/accounting/reports/inventory-valuation?productId=${productId}&warehouseId=${warehouseId}`,
+        )
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(reportsService.getInventoryValuation).toHaveBeenCalledWith(mockUser, 'prod-1', 'wh-1');
+      expect(reportsService.getInventoryValuation).toHaveBeenCalledWith(
+        mockUser,
+        productId,
+        warehouseId,
+      );
     });
   });
 
@@ -378,6 +416,13 @@ describe('ReportsController (Integration)', () => {
         totalQuantityIn: 50,
         totalQuantityOut: 0,
       };
+      const serializedMockMovement = {
+        ...mockMovement,
+        movements: mockMovement.movements.map((movement) => ({
+          ...movement,
+          date: movement.date.toISOString(),
+        })),
+      };
 
       reportsService.getInventoryMovement.mockResolvedValue(mockMovement);
 
@@ -386,7 +431,7 @@ describe('ReportsController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual(mockMovement);
+      expect(response.body).toEqual(serializedMockMovement);
     });
 
     it('should validate required date parameters', async () => {
@@ -401,7 +446,7 @@ describe('ReportsController (Integration)', () => {
 
       await request(app.getHttpServer())
         .get(
-          '/accounting/reports/inventory-movement?startDate=2024-01-01&endDate=2024-01-31&productId=prod-1&warehouseId=wh-1',
+          `/accounting/reports/inventory-movement?startDate=2024-01-01&endDate=2024-01-31&productId=${productId}&warehouseId=${warehouseId}`,
         )
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
@@ -410,8 +455,8 @@ describe('ReportsController (Integration)', () => {
         mockUser,
         new Date('2024-01-01'),
         new Date('2024-01-31'),
-        'prod-1',
-        'wh-1',
+        productId,
+        warehouseId,
       );
     });
   });

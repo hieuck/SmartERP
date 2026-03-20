@@ -1716,3 +1716,32 @@ Verification:
   - authenticated ecommerce order APIs now return `200` instead of `500`
   - `/dashboard/ecommerce/orders` is part of browser smoke coverage alongside the broader ecommerce surfaces
   - backend stderr remains clean apart from the known dependency-owned `DEP0169` deprecation warning
+
+## 2026-03-20 Reporting Runtime Recovery
+- Root cause:
+  - [src/frontend/src/pages/reports/ReportsPage.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/reports/ReportsPage.tsx) was mounting a report dashboard that depended on the `/api/reporting/*` namespace, but the backend only exposed `accounting/reports/*`, so the page immediately generated a wall of `404` requests on load
+  - even once routes existed, [src/frontend/src/services/report/reportingService.ts](/e:/GitHub/smart-erp/src/frontend/src/services/report/reportingService.ts) still assumed raw payloads instead of the standard `{ success, data }` API envelope
+- Fixed in:
+  - [src/backend/src/domains/accounting/reports/reporting.controller.ts](/e:/GitHub/smart-erp/src/backend/src/domains/accounting/reports/reporting.controller.ts)
+  - [src/backend/src/domains/accounting/reports/reports.module.ts](/e:/GitHub/smart-erp/src/backend/src/domains/accounting/reports/reports.module.ts)
+  - [src/backend/src/domains/accounting/reports/reports.controller.spec.ts](/e:/GitHub/smart-erp/src/backend/src/domains/accounting/reports/reports.controller.spec.ts)
+  - [src/frontend/src/services/report/reportingService.ts](/e:/GitHub/smart-erp/src/frontend/src/services/report/reportingService.ts)
+  - [src/frontend/src/services/report/reportingService.test.ts](/e:/GitHub/smart-erp/src/frontend/src/services/report/reportingService.test.ts)
+  - [tools/browser-smoke.mjs](/e:/GitHub/smart-erp/tools/browser-smoke.mjs)
+- Implementation details:
+  - added a backend reporting facade under `/reporting/*` that maps the existing accounting report service into the contract already expected by the current dashboard UI
+  - preserved richer reports where the backend already had enough data, and returned safe empty-state payloads for the dashboard surfaces that do not yet have a full analytics engine behind them
+  - kept export endpoints available for the frontend by returning downloadable payloads rather than leaving broken links behind
+  - updated the frontend reporting service to unwrap the standard API envelope before exposing data to hooks and pages
+  - added `/dashboard/reports` to browser smoke so future route drift shows up immediately
+- Verified with:
+  - `npx.cmd vitest run src/services/report/reportingService.test.ts` in `src/frontend`
+  - `npx.cmd jest src/domains/accounting/reports/reports.controller.spec.ts src/domains/accounting/reports/reports.service.spec.ts --runInBand` in `src/backend`
+  - `npm.cmd run build` in `src/backend`
+  - `npm.cmd run type-check` in `src/frontend`
+  - direct authenticated probes to `/api/reporting/sales`, `/api/reporting/inventory`, `/api/reporting/customers`, and `/api/reporting/financial`
+  - Playwright/Chromium browser probe against `/dashboard/reports`
+- Current browser/runtime snapshot after the batch:
+  - `/dashboard/reports` now renders cleanly with no failed requests or console errors
+  - the reporting namespace returns `200` empty-state payloads instead of `404`
+  - backend stderr remains limited to the known dependency-owned `DEP0169` warning
