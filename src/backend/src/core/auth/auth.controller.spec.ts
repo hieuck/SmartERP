@@ -182,7 +182,10 @@ describe('AuthController (Integration)', () => {
         user: mockAuthResponse.user,
       });
       expect(response.headers['set-cookie']).toEqual(
-        expect.arrayContaining([expect.stringContaining('refreshToken=mock-refresh-token')]),
+        expect.arrayContaining([
+          expect.stringContaining('refreshToken=mock-refresh-token'),
+          expect.stringContaining('session_hint=1'),
+        ]),
       );
       expect(accountLockoutService.isAccountLocked).toHaveBeenCalledWith('test@example.com');
       expect(accountLockoutService.resetAttempts).toHaveBeenCalledWith('test@example.com');
@@ -263,6 +266,12 @@ describe('AuthController (Integration)', () => {
       expect(response.body.user).toEqual(mockUser);
       expect(response.body.token).toBe('mock-jwt-token');
       expect(response.body.refreshToken).toBe('mock-refresh-token');
+      expect(response.headers['set-cookie']).toEqual(
+        expect.arrayContaining([
+          expect.stringContaining('refreshToken=mock-refresh-token'),
+          expect.stringContaining('session_hint=1'),
+        ]),
+      );
       expect(authService.registerTenant).toHaveBeenCalledWith(registerDto);
     });
 
@@ -354,6 +363,12 @@ describe('AuthController (Integration)', () => {
         .expect(201);
 
       expect(response.body.user).toEqual(mockUser);
+      expect(response.headers['set-cookie']).toEqual(
+        expect.arrayContaining([
+          expect.stringContaining('refreshToken=mock-refresh-token'),
+          expect.stringContaining('session_hint=1'),
+        ]),
+      );
       expect(authService.registerTenant).toHaveBeenCalledWith({
         companyName: 'Test Company',
         subdomain: 'test-company',
@@ -512,6 +527,12 @@ describe('AuthController (Integration)', () => {
 
       expect(response.body.message).toBe('Logged out successfully');
       expect(response.body.statusCode).toBe(200);
+      expect(response.headers['set-cookie']).toEqual(
+        expect.arrayContaining([
+          expect.stringContaining('refreshToken=;'),
+          expect.stringContaining('session_hint=;'),
+        ]),
+      );
     });
 
     it('should require authentication for logout', async () => {
@@ -529,6 +550,12 @@ describe('AuthController (Integration)', () => {
         .expect(200);
 
       expect(response.body.message).toBe('Logged out successfully');
+      expect(response.headers['set-cookie']).toEqual(
+        expect.arrayContaining([
+          expect.stringContaining('refreshToken=;'),
+          expect.stringContaining('session_hint=;'),
+        ]),
+      );
     });
 
     it('should not revoke expired token', async () => {
@@ -548,6 +575,12 @@ describe('AuthController (Integration)', () => {
         .expect(200);
 
       expect(response.body.message).toBe('Logged out successfully');
+      expect(response.headers['set-cookie']).toEqual(
+        expect.arrayContaining([
+          expect.stringContaining('refreshToken=;'),
+          expect.stringContaining('session_hint=;'),
+        ]),
+      );
       expect(tokenBlacklistService.revokeToken).not.toHaveBeenCalled();
     });
   });

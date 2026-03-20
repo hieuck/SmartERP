@@ -36,12 +36,46 @@ class LoginDto {
 @Controller('auth')
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
+  private readonly SESSION_HINT_COOKIE = 'session_hint';
 
   constructor(
     private readonly authService: AuthService,
     private readonly tokenBlacklistService: TokenBlacklistService,
     private readonly accountLockoutService: AccountLockoutService,
   ) {}
+
+  private setSessionCookies(res: ExpressResponse, refreshToken: string) {
+    const isProduction = process.env.NODE_ENV === 'production';
+
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    res.cookie(this.SESSION_HINT_COOKIE, '1', {
+      httpOnly: false,
+      secure: isProduction,
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+  }
+
+  private clearSessionCookies(res: ExpressResponse) {
+    const isProduction = process.env.NODE_ENV === 'production';
+
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'lax',
+    });
+    res.clearCookie(this.SESSION_HINT_COOKIE, {
+      httpOnly: false,
+      secure: isProduction,
+      sameSite: 'lax',
+    });
+  }
 
   @UseGuards(LocalAuthGuard)
   @Throttle({ default: { limit: 100, ttl: 60000 } }) // 100 requests per minute for testing
@@ -65,13 +99,7 @@ export class AuthController {
 
     const result = await this.authService.login(req.user);
 
-    // Set refresh token as httpOnly cookie (7d)
-    res.cookie('refreshToken', result.refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in ms
-    });
+    this.setSessionCookies(res, result.refreshToken);
 
     const response = { ...result };
     delete response.refreshToken;
@@ -85,16 +113,21 @@ export class AuthController {
     description: 'Creates a new tenant (company) with an admin user. Includes 14-day free trial.',
   })
   @ApiBody({ type: RegisterTenantDto })
-  async registerTenant(@Body() registerTenantDto: RegisterTenantDto) {
-    return this.authService.registerTenant(registerTenantDto);
+  async registerTenant(
+    @Body() registerTenantDto: RegisterTenantDto,
+    @Res({ passthrough: true }) res: ExpressResponse,
+  ) {
+    const response = await this.authService.registerTenant(registerTenantDto);
+    this.setSessionCookies(res, response.refreshToken);
+    return response;
   }
 
   @Throttle({ default: { limit: 50, ttl: 3600000 } }) // 50 registrations per hour for testing
   @Post('register')
   @ApiOperation({ summary: 'User registration' })
   @ApiBody({ type: RegisterDto })
-  async register(@Body() registerDto: RegisterDto) {
-    return this.authService.registerTenant({
+  async register(@Body() registerDto: RegisterDto, @Res({ passthrough: true }) res: ExpressResponse) {
+    const response = await this.authService.registerTenant({
       companyName: registerDto.companyName,
       subdomain: registerDto.companyName.toLowerCase().replace(/\s+/g, '-'),
       email: registerDto.email,
@@ -103,6 +136,8 @@ export class AuthController {
       lastName: registerDto.fullName.split(' ').slice(1).join(' '),
       phone: registerDto.phone,
     });
+    this.setSessionCookies(res, response.refreshToken);
+    return response;
   }
 
   @Get('verify-email')
@@ -136,7 +171,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'User logout' })
-  async logout(@Request() req) {
+  async logout(@Request() req, @Res({ passthrough: true }) res: ExpressResponse) {
     const authHeader = req.headers.authorization;
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
@@ -155,6 +190,8 @@ export class AuthController {
         this.logger.error(`Failed to revoke token on logout: ${error.message}`);
       }
     }
+
+    this.clearSessionCookies(res);
 
     return {
       message: 'Logged out successfully',

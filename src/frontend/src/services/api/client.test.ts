@@ -67,6 +67,7 @@ describe('api client', () => {
     vi.clearAllMocks();
     apiCall.mockResolvedValue({ data: 'retried' });
     getState.mockReturnValue({ auth: { accessToken: 'token-123' } });
+    document.cookie = 'session_hint=; Max-Age=0; path=/';
 
     const meta = document.createElement('meta');
     meta.setAttribute('name', 'csrf-token');
@@ -131,6 +132,7 @@ describe('api client', () => {
     await importClient();
 
     axiosPost.mockRejectedValueOnce(new Error('refresh failed'));
+    document.cookie = 'session_hint=1; path=/';
     const responseRejectedHandler = responseUse.mock.calls[0][1] as ResponseRejectedHandler;
     const originalLocation = window.location;
 
@@ -152,6 +154,7 @@ describe('api client', () => {
 
     expect(clearCredentials).toHaveBeenCalled();
     expect(dispatch).toHaveBeenCalledWith({ type: 'auth/clearCredentials' });
+    expect(document.cookie.includes('session_hint=1')).toBe(false);
     expect(window.location.href).toBe('/login');
 
     Object.defineProperty(window, 'location', {

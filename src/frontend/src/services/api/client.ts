@@ -11,6 +11,10 @@ const api = axios.create({
   withCredentials: true, // Enable sending cookies
 });
 
+const clearSessionRefreshHint = () => {
+  document.cookie = 'session_hint=; Max-Age=0; path=/; SameSite=Lax';
+};
+
 // Token refresh queue to prevent multiple refresh calls
 let isRefreshing = false;
 let failedQueue: Array<{
@@ -104,6 +108,7 @@ api.interceptors.response.use(
       } catch (refreshError) {
         // Refresh failed - clear credentials
         store.dispatch(clearCredentials());
+        clearSessionRefreshHint();
         processQueue(refreshError, undefined);
 
         // Only redirect if not already on login page to prevent infinite loop

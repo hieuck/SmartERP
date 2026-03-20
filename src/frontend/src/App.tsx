@@ -12,12 +12,21 @@ import { API_BASE_URL } from './services/api/baseUrl';
 import { setCredentials } from './store/slices/authSlice';
 
 const PUBLIC_ENTRY_PATHS = new Set(['/', '/login', '/register']);
+const SESSION_HINT_COOKIE = 'session_hint=1';
 
 let authInitializationPromise: Promise<void> | null = null;
 let authInitializationCompleted = false;
 
 function isPublicEntryPath(pathname: string): boolean {
   return PUBLIC_ENTRY_PATHS.has(pathname);
+}
+
+export function hasSessionRefreshHint(): boolean {
+  return document.cookie.split('; ').includes(SESSION_HINT_COOKIE);
+}
+
+export function shouldAttemptSessionRefresh(pathname: string, hasHint = hasSessionRefreshHint()) {
+  return !isPublicEntryPath(pathname) || hasHint;
 }
 
 async function initializeAuthState(dispatch: ReturnType<typeof useDispatch>): Promise<void> {
@@ -38,6 +47,11 @@ async function initializeAuthState(dispatch: ReturnType<typeof useDispatch>): Pr
         dispatch(setCredentials({ user: JSON.parse(e2eUser), accessToken: e2eToken }));
         tenantContext.initialize(e2eToken);
         logger.info('App', 'E2E session restored');
+        return;
+      }
+
+      if (!hasSessionRefreshHint()) {
+        logger.info('App', 'Skipping session restore without session hint');
         return;
       }
 
@@ -82,6 +96,7 @@ function AppContent() {
   useEffect(() => {
     isMountedRef.current = true;
     const shouldBlockForAuthInit = !isPublicEntryPath(window.location.pathname);
+    const shouldAttemptRefresh = shouldAttemptSessionRefresh(window.location.pathname);
 
     const runInitialization = async () => {
       await initializeAuthState(dispatch);
@@ -90,11 +105,13 @@ function AppContent() {
       }
     };
 
-    if (shouldBlockForAuthInit) {
+    if (shouldBlockForAuthInit && shouldAttemptRefresh) {
       void runInitialization();
-    } else {
+    } else if (shouldAttemptRefresh) {
       setIsInitializing(false);
       void initializeAuthState(dispatch);
+    } else {
+      setIsInitializing(false);
     }
 
     return () => {
