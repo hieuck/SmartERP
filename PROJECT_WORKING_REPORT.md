@@ -6,6 +6,9 @@
 
 ## Latest Checkpoint (2026-03-20)
 
+- marketplace module browser has been realigned with its intended UI contract:
+  - [src/frontend/src/components/marketplace/ModuleBrowser.tsx](/e:/GitHub/smart-erp/src/frontend/src/components/marketplace/ModuleBrowser.tsx) now uses clean Vietnamese copy and `App.useApp().modal.confirm` instead of mojibake text plus static modal calls
+  - the existing focused suite in [src/frontend/src/components/marketplace/ModuleBrowser.test.tsx](/e:/GitHub/smart-erp/src/frontend/src/components/marketplace/ModuleBrowser.test.tsx) now matches the modern app context contract rather than the deprecated static modal surface
 - document version history is no longer carrying broken encoding or legacy modal usage:
   - [src/frontend/src/components/documents/VersionHistory.tsx](/e:/GitHub/smart-erp/src/frontend/src/components/documents/VersionHistory.tsx) was rewritten to remove mojibake Vietnamese copy and to use `App.useApp().modal.confirm` instead of static `Modal.confirm`
   - its focused Vitest suite now asserts the corrected copy and the context-aware rollback confirmation flow

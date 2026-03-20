@@ -1,6 +1,6 @@
+import { CheckCircleOutlined, DownloadOutlined } from '@ant-design/icons';
+import { App, Button, Card, Col, Rate, Row, Tag } from 'antd';
 import React, { useState } from 'react';
-import { App, Button, Card, Col, Modal, Rate, Row, Tag } from 'antd';
-import { DownloadOutlined, CheckCircleOutlined } from '@ant-design/icons';
 
 interface Module {
   id: string;
@@ -14,7 +14,7 @@ interface Module {
 }
 
 export const ModuleBrowser: React.FC = () => {
-  const { message } = App.useApp();
+  const { message, modal } = App.useApp();
   const [modules, setModules] = useState<Module[]>([
     {
       id: '1',
@@ -49,22 +49,26 @@ export const ModuleBrowser: React.FC = () => {
   ]);
 
   const handleInstall = (id: string) => {
-    Modal.confirm({
+    modal.confirm({
       title: 'Xác nhận cài đặt',
       content: 'Bạn có chắc chắn muốn cài đặt module này?',
       onOk: () => {
-        setModules(modules.map((m) => (m.id === id ? { ...m, installed: true } : m)));
+        setModules((currentModules) =>
+          currentModules.map((module) => (module.id === id ? { ...module, installed: true } : module)),
+        );
         message.success('Đã cài đặt module thành công');
       },
     });
   };
 
   const handleUninstall = (id: string) => {
-    Modal.confirm({
+    modal.confirm({
       title: 'Xác nhận gỡ bỏ',
       content: 'Bạn có chắc chắn muốn gỡ bỏ module này?',
       onOk: () => {
-        setModules(modules.map((m) => (m.id === id ? { ...m, installed: false } : m)));
+        setModules((currentModules) =>
+          currentModules.map((module) => (module.id === id ? { ...module, installed: false } : module)),
+        );
         message.success('Đã gỡ bỏ module');
       },
     });

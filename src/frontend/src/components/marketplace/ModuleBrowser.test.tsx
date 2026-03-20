@@ -19,7 +19,12 @@ vi.mock('antd', async () => {
     ...actual,
     App: Object.assign(
       ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-      { useApp: () => ({ message: { success: messageSuccessMock } }) },
+      {
+        useApp: () => ({
+          message: { success: messageSuccessMock },
+          modal: { confirm: modalConfirmMock },
+        }),
+      },
     ),
     Row: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
     Col: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
@@ -39,7 +44,6 @@ vi.mock('antd', async () => {
     ),
     Tag: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
     Rate: ({ value }: { value: number }) => <span>rating-{value}</span>,
-    Modal: { confirm: modalConfirmMock },
   };
 });
 
