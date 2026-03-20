@@ -17,7 +17,7 @@ import {
   FileTextOutlined,
   SyncOutlined,
 } from '@ant-design/icons';
-import { Badge, Button, DatePicker, Select, Space, Tag, message } from 'antd';
+import { App, Badge, Button, DatePicker, Select, Space, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -46,6 +46,7 @@ const statusColors: Record<InvoiceStatus, string> = {
 export default function InvoiceList() {
   const navigate = useNavigate();
   const { t } = useTranslation(['invoices', 'common']);
+  const { message } = App.useApp();
   const { isMobile } = useResponsive();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<InvoiceStatus | undefined>();
@@ -345,7 +346,8 @@ export default function InvoiceList() {
       onCreateClick={() => navigate('/dashboard/invoices/new')}
       extraActions={
         <Space
-          direction={isMobile ? 'vertical' : 'horizontal'}
+          data-testid="invoice-sync-actions"
+          orientation={isMobile ? 'vertical' : 'horizontal'}
           style={{ width: isMobile ? '100%' : 'auto' }}
         >
           <Badge
@@ -353,14 +355,14 @@ export default function InvoiceList() {
             text={
               <Space size="small">
                 {isOnline ? <CloudOutlined /> : <DisconnectOutlined />}
-                {isOnline ? 'Online' : 'Offline'}
+                {isOnline ? t('invoices:sync.online') : t('invoices:sync.offline')}
               </Space>
             }
           />
 
           {queueSize > 0 && (
             <Badge count={queueSize} showZero={false}>
-              <Tag color="warning">Pending Sync</Tag>
+              <Tag color="warning">{t('invoices:sync.pendingQueue')}</Tag>
             </Badge>
           )}
 
@@ -371,7 +373,7 @@ export default function InvoiceList() {
             disabled={!isOnline}
             style={{ width: isMobile ? '100%' : 'auto' }}
           >
-            {syncing ? 'Syncing...' : 'Sync Now'}
+            {syncing ? t('invoices:sync.syncing') : t('invoices:sync.syncNow')}
           </Button>
         </Space>
       }

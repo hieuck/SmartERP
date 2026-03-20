@@ -23,7 +23,12 @@
   },
   "sync": {
     "synced": "Synced",
-    "pending": "Not Synced"
+    "pending": "Not Synced",
+    "online": "Online",
+    "offline": "Offline",
+    "pendingQueue": "Pending Sync",
+    "syncNow": "Sync Now",
+    "syncing": "Syncing..."
   },
   "actions": {
     "viewDetail": "View Details",

@@ -993,3 +993,27 @@ Verification:
   - `StockReceiptForm` route chunk dropped from ~1.2 MB to ~8 kB
   - frontend build no longer emits the chunk-size warning
   - the remaining large vendor chunks are now intentional dependency-family chunks instead of route-level accidents
+
+## 2026-03-20 Invoice List Runtime Warning Cleanup
+- Root cause:
+  - [src/frontend/src/pages/invoices/InvoiceList.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/invoices/InvoiceList.tsx) was still using static `antd` `message` plus deprecated `Space` prop `direction`
+  - the page also had hardcoded English runtime labels for sync state, which was inconsistent with the rest of the localized UI
+- Fixed in:
+  - [src/frontend/src/pages/invoices/InvoiceList.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/invoices/InvoiceList.tsx)
+  - [src/frontend/src/pages/invoices/InvoiceList.test.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/invoices/InvoiceList.test.tsx)
+  - [src/frontend/src/i18n/locales/en/invoices.json](/e:/GitHub/smart-erp/src/frontend/src/i18n/locales/en/invoices.json)
+  - [src/frontend/src/i18n/locales/vi/invoices.json](/e:/GitHub/smart-erp/src/frontend/src/i18n/locales/vi/invoices.json)
+- Implementation details:
+  - switched the page to `App.useApp().message` so feedback is theme/context-safe under Ant Design 6
+  - replaced `direction` with `orientation`
+  - localized sync status labels (`online`, `offline`, `pending queue`, `sync now`, `syncing`)
+  - added a focused regression test to lock both orientation behavior and message-context usage
+- Verified with:
+  - `npx.cmd vitest run src/pages/invoices/InvoiceList.test.tsx`
+  - `npm.cmd run build` in `src/frontend`
+  - `npm.cmd run runtime:smoke`
+- Current runtime snapshot after the batch:
+  - frontend `127.0.0.1:5173` healthy
+  - backend health on `3000` healthy
+  - database smoke healthy against `erp_production`
+  - backend stderr still only shows dependency-owned `DEP0169` from the `bcrypt` toolchain

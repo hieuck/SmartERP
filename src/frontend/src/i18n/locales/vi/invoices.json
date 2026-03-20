@@ -23,7 +23,12 @@
   },
   "sync": {
     "synced": "Đã đồng bộ",
-    "pending": "Chưa đồng bộ"
+    "pending": "Chưa đồng bộ",
+    "online": "Trực tuyến",
+    "offline": "Ngoại tuyến",
+    "pendingQueue": "Chờ đồng bộ",
+    "syncNow": "Đồng bộ ngay",
+    "syncing": "Đang đồng bộ..."
   },
   "actions": {
     "viewDetail": "Xem chi tiết",
