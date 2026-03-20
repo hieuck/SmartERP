@@ -22,6 +22,8 @@ const protectedRoutes = [
   '/dashboard/settings',
   '/dashboard/settings/system',
   '/dashboard/settings/print',
+  '/dashboard/production/work-centers',
+  '/dashboard/production/work-orders',
   '/dashboard/ecommerce/products',
   '/dashboard/ecommerce/products/new',
 ];

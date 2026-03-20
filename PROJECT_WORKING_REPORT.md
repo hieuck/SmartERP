@@ -6,6 +6,11 @@
 
 ## Latest Checkpoint (2026-03-20)
 
+- browser smoke now covers the manufacturing list routes that were previously repaired but not yet guarded at runtime:
+  - [tools/browser-smoke.mjs](/e:/GitHub/smart-erp/tools/browser-smoke.mjs) now exercises `/dashboard/production/work-centers` and `/dashboard/production/work-orders`
+  - a fresh smoke run is clean for both routes: no failed requests, no console warnings, and no console errors
+  - this closes the gap between the earlier manufacturing fixes and the daily operational guard rails used to keep regressions visible
+
 - local runtime tooling is now more trustworthy for day-to-day operations instead of silently relying on stale pid files:
   - [tools/runtime-start.mjs](/e:/GitHub/smart-erp/tools/runtime-start.mjs) now syncs the frontend/backend pid files to the actual listening process when services are already running
   - [tools/runtime-smoke.mjs](/e:/GitHub/smart-erp/tools/runtime-smoke.mjs) now reports tracked pid, listener pid, and `pidDrift` for both frontend and backend
