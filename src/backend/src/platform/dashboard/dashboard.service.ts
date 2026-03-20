@@ -338,29 +338,30 @@ export class DashboardService {
         this.logger.log(
           `Fetching low stock products for tenant: ${user.tenantId}, limit: ${limit}`,
         );
-        const inventory = await this.inventoryRepository
-          .createQueryBuilder('inv')
-          .select([
-            'inv.id',
-            'inv.quantity',
-            'inv.reorderPoint',
-            'product.id',
-            'product.name',
-            'product.sku',
-          ])
-          .leftJoin('inv.product', 'product')
-          .where('inv.tenantId = :tenantId', { tenantId: user.tenantId })
-          .andWhere('inv.quantity <= inv.reorderPoint')
-          .orderBy('inv.quantity', 'ASC')
-          .take(limit)
-          .getMany();
+        const inventory = await this.inventoryRepository.query(
+          `
+            SELECT
+              products.id,
+              products.name,
+              products.sku,
+              COALESCE(stock.quantity, 0) AS "currentStock",
+              COALESCE(stock.min_stock, 0) AS "minStock"
+            FROM stock
+            INNER JOIN products ON products.id = stock.product_id
+            WHERE products.tenant_id = $1
+              AND COALESCE(stock.quantity, 0) <= COALESCE(stock.min_stock, 0)
+            ORDER BY COALESCE(stock.quantity, 0) ASC
+            LIMIT $2
+          `,
+          [user.tenantId, limit],
+        );
 
-        return inventory.map((item) => ({
-          id: (item.product as any)?.id || (item as any).id,
-          name: item.product?.name || 'Unknown',
-          sku: item.product?.sku || 'N/A',
-          currentStock: item.quantity,
-          minStock: item.reorderPoint || 0,
+        return inventory.map((item: Record<string, unknown>) => ({
+          id: String(item.id ?? ''),
+          name: String(item.name ?? 'Unknown'),
+          sku: String(item.sku ?? 'N/A'),
+          currentStock: Number(item.currentStock) || 0,
+          minStock: Number(item.minStock) || 0,
         }));
       },
       CacheTTL.MEDIUM,
@@ -420,8 +421,8 @@ export class DashboardService {
 
   private async getPaymentStats(user: User) {
     const [pending, completed, totalAmount] = await Promise.all([
-      this.paymentRepository.count({ where: { tenantId: user.tenantId, status: 'pending' } }),
-      this.paymentRepository.count({ where: { tenantId: user.tenantId, status: 'completed' } }),
+      this.countPaymentsByStatus(user, 'pending'),
+      this.countPaymentsByStatus(user, 'completed'),
       this.calculateTotalPayments(user),
     ]);
     return { pending, completed, totalAmount };
@@ -453,27 +454,45 @@ export class DashboardService {
   }
 
   private async calculateInventoryValue(user: User): Promise<number> {
-    const result = await this.inventoryRepository
-      .createQueryBuilder('inv')
-      .select('SUM(inv.totalValue)', 'total')
-      .where('inv.tenantId = :tenantId', { tenantId: user.tenantId })
-      .getRawOne();
+    const [result] = await this.inventoryRepository.query(
+      `
+        SELECT COALESCE(SUM(COALESCE(stock.total_value, 0)), 0)::numeric AS total
+        FROM stock
+        INNER JOIN products ON products.id = stock.product_id
+        WHERE products.tenant_id = $1
+      `,
+      [user.tenantId],
+    );
     return Number(result?.total) || 0;
   }
 
   private async countLowStock(user: User): Promise<number> {
-    return this.inventoryRepository
-      .createQueryBuilder('inv')
-      .where('inv.tenantId = :tenantId', { tenantId: user.tenantId })
-      .andWhere('inv.quantity <= inv.reorderPoint')
-      .andWhere('inv.quantity > 0')
-      .getCount();
+    const [result] = await this.inventoryRepository.query(
+      `
+        SELECT COUNT(*)::int AS count
+        FROM stock
+        INNER JOIN products ON products.id = stock.product_id
+        WHERE products.tenant_id = $1
+          AND COALESCE(stock.quantity, 0) <= COALESCE(stock.min_stock, 0)
+          AND COALESCE(stock.quantity, 0) > 0
+      `,
+      [user.tenantId],
+    );
+    return Number(result?.count) || 0;
   }
 
   private async countOutOfStock(user: User): Promise<number> {
-    return this.inventoryRepository.count({
-      where: { tenantId: user.tenantId, quantity: 0 } as any,
-    });
+    const [result] = await this.inventoryRepository.query(
+      `
+        SELECT COUNT(*)::int AS count
+        FROM stock
+        INNER JOIN products ON products.id = stock.product_id
+        WHERE products.tenant_id = $1
+          AND COALESCE(stock.quantity, 0) = 0
+      `,
+      [user.tenantId],
+    );
+    return Number(result?.count) || 0;
   }
 
   private async countNewCustomers(user: User, startDate: Date, endDate: Date): Promise<number> {
@@ -488,9 +507,19 @@ export class DashboardService {
   private async calculateTotalPayments(user: User): Promise<number> {
     const result = await this.paymentRepository
       .createQueryBuilder('payment')
+      .leftJoin(Order, 'order', 'order.id = payment.orderId')
       .select('SUM(payment.amount)', 'total')
-      .where('payment.tenantId = :tenantId', { tenantId: user.tenantId })
+      .where('order.tenantId = :tenantId', { tenantId: user.tenantId })
       .getRawOne();
     return Number(result?.total) || 0;
+  }
+
+  private async countPaymentsByStatus(user: User, status: string): Promise<number> {
+    return this.paymentRepository
+      .createQueryBuilder('payment')
+      .leftJoin(Order, 'order', 'order.id = payment.orderId')
+      .where('order.tenantId = :tenantId', { tenantId: user.tenantId })
+      .andWhere('payment.status = :status', { status })
+      .getCount();
   }
 }

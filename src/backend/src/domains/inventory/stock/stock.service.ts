@@ -51,14 +51,23 @@ export class StockService {
 
     const quantity = createInventoryDto.quantity || 0;
     const unitCost = createInventoryDto.unitCost || 0;
+    const minStockLevel = createInventoryDto.minQuantity || 0;
+    const maxStockLevel = createInventoryDto.maxQuantity || 0;
     const totalValue = quantity * unitCost;
 
     const inventory = {
-      ...createInventoryDto,
+      productId: createInventoryDto.productId,
+      warehouseId: createInventoryDto.warehouseId || null,
       quantity,
       availableQuantity: quantity,
       reservedQuantity: 0,
+      minStockLevel,
+      maxStockLevel,
+      reorderPoint: minStockLevel,
+      reorderQuantity: maxStockLevel > minStockLevel ? maxStockLevel - minStockLevel : 0,
+      unitCost,
       totalValue,
+      location: createInventoryDto.location,
       lastRestockDate: quantity > 0 ? new Date() : null,
     };
 
@@ -154,7 +163,27 @@ export class StockService {
       updateInventoryDto.unitCost !== undefined ? updateInventoryDto.unitCost : inventory.unitCost;
     const totalValue = newQuantity * (newUnitCost || 0);
 
-    Object.assign(inventory, updateInventoryDto);
+    if (updateInventoryDto.quantity !== undefined) {
+      inventory.quantity = updateInventoryDto.quantity;
+    }
+    if (updateInventoryDto.minQuantity !== undefined) {
+      inventory.minStockLevel = updateInventoryDto.minQuantity;
+    }
+    if (updateInventoryDto.maxQuantity !== undefined) {
+      inventory.maxStockLevel = updateInventoryDto.maxQuantity;
+    }
+    if (updateInventoryDto.reorderPoint !== undefined) {
+      inventory.reorderPoint = updateInventoryDto.reorderPoint;
+    } else if (updateInventoryDto.minQuantity !== undefined) {
+      inventory.reorderPoint = updateInventoryDto.minQuantity;
+    }
+    if (updateInventoryDto.unitCost !== undefined) {
+      inventory.unitCost = updateInventoryDto.unitCost;
+    }
+    if (updateInventoryDto.location !== undefined) {
+      inventory.location = updateInventoryDto.location;
+    }
+
     inventory.totalValue = totalValue;
 
     // Recalculate available quantity
@@ -251,7 +280,10 @@ export class StockService {
     });
 
     return allInventory
-      .filter((inv) => inv.reorderPoint > 0 && inv.quantity <= inv.reorderPoint)
+      .filter((inv) => {
+        const threshold = inv.reorderPoint > 0 ? inv.reorderPoint : inv.minStockLevel;
+        return threshold > 0 && inv.quantity <= threshold;
+      })
       .sort((a, b) => a.quantity - b.quantity);
   }
 

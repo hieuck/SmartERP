@@ -1,55 +1,116 @@
-import { Entity, Column, Index, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, Column, Index, ManyToOne, JoinColumn, ValueTransformer } from 'typeorm';
 
 import { BaseEntity } from '@/common/entities/base.entity';
 import { Product } from '../../product/entities/product.entity';
 
-@Entity('inventory')
+const decimalTransformer: ValueTransformer = {
+  to: (value: number | null | undefined) => value,
+  from: (value: string | number | null) => (value === null ? null : Number(value)),
+};
+
+@Entity('stock')
 @Index(['tenantId', 'productId', 'warehouseId'], { unique: true })
 @Index(['tenantId', 'quantity']) // Low stock queries
 @Index(['tenantId', 'warehouseId']) // Warehouse filtering
 @Index(['tenantId', 'productId']) // Product inventory lookup
 export class Inventory extends BaseEntity {
-  @Column({ name: 'product_id' })
+  @Column({ name: 'product_id', type: 'uuid' })
   productId: string;
 
   @ManyToOne(() => Product, { nullable: true })
   @JoinColumn({ name: 'product_id' })
   product?: Product;
 
-  @Column({ name: 'warehouse_id', nullable: true })
+  @Column({ name: 'warehouse_id', type: 'uuid', nullable: true })
   warehouseId?: string;
 
-  @Column({ type: 'int', default: 0 })
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0, transformer: decimalTransformer })
   quantity: number;
 
-  @Column({ type: 'int', default: 0, name: 'reserved_quantity' })
+  @Column({
+    type: 'decimal',
+    precision: 10,
+    scale: 2,
+    default: 0,
+    name: 'reserved',
+    transformer: decimalTransformer,
+  })
   reservedQuantity: number;
 
-  @Column({ type: 'int', default: 0, name: 'available_quantity' })
+  @Column({
+    type: 'decimal',
+    precision: 10,
+    scale: 2,
+    default: 0,
+    name: 'available',
+    transformer: decimalTransformer,
+  })
   availableQuantity: number;
 
-  @Column({ type: 'int', default: 0, name: 'min_stock_level' })
+  @Column({
+    type: 'decimal',
+    precision: 10,
+    scale: 2,
+    default: 0,
+    name: 'min_stock',
+    transformer: decimalTransformer,
+  })
   minStockLevel: number;
 
-  @Column({ type: 'int', default: 0, name: 'max_stock_level' })
+  @Column({
+    type: 'decimal',
+    precision: 10,
+    scale: 2,
+    default: 0,
+    name: 'max_stock',
+    transformer: decimalTransformer,
+  })
   maxStockLevel: number;
 
-  @Column({ type: 'int', default: 0, name: 'reorder_point' })
+  @Column({
+    type: 'decimal',
+    precision: 10,
+    scale: 2,
+    default: 0,
+    name: 'reorder_point',
+    transformer: decimalTransformer,
+  })
   reorderPoint: number;
 
-  @Column({ type: 'int', default: 0, name: 'reorder_quantity' })
+  @Column({
+    type: 'decimal',
+    precision: 10,
+    scale: 2,
+    default: 0,
+    name: 'reorder_quantity',
+    transformer: decimalTransformer,
+  })
   reorderQuantity: number;
 
-  @Column({ nullable: true, name: 'last_restock_date' })
+  @Column({ type: 'timestamp', nullable: true, name: 'last_restock_date' })
   lastRestockDate?: Date;
 
-  @Column({ nullable: true, name: 'last_count_date' })
+  @Column({ type: 'timestamp', nullable: true, name: 'last_count_date' })
   lastCountDate?: Date;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true, name: 'unit_cost' })
+  @Column({
+    type: 'decimal',
+    precision: 10,
+    scale: 2,
+    nullable: true,
+    name: 'unit_cost',
+    transformer: decimalTransformer,
+  })
   unitCost?: number;
 
-  @Column({ type: 'decimal', precision: 15, scale: 2, default: 0, name: 'total_value' })
+  @Column({
+    type: 'decimal',
+    precision: 15,
+    scale: 2,
+    default: 0,
+    name: 'total_value',
+    transformer: decimalTransformer,
+  })
   totalValue: number;
 
   @Column({ nullable: true })
@@ -70,6 +131,6 @@ export class Inventory extends BaseEntity {
   @Column({ nullable: true })
   notes?: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'uuid', nullable: true, name: 'updated_by' })
   updatedBy?: string;
 }

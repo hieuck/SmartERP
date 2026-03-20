@@ -6,6 +6,28 @@
 
 ## Latest Checkpoint (2026-03-20)
 
+- local runtime bootstrap is now deterministic instead of depending on half-initialized state:
+  - [tools/runtime-start.mjs](/e:/GitHub/smart-erp/tools/runtime-start.mjs) now brings up `postgres` and `redis`, runs `db:init`, and reseeds demo credentials before checking app liveness
+  - [src/backend/scripts/seed-data.ts](/e:/GitHub/smart-erp/src/backend/scripts/seed-data.ts), [src/backend/src/utilities/seed/seed.service.ts](/e:/GitHub/smart-erp/src/backend/src/utilities/seed/seed.service.ts), and [src/backend/package.json](/e:/GitHub/smart-erp/src/backend/package.json) now keep demo credentials stable at `admin@demo.com / admin123`
+- backend schema drift that was breaking live dashboard access has been repaired at the source:
+  - [src/backend/src/app.module.ts](/e:/GitHub/smart-erp/src/backend/src/app.module.ts) now resolves migrations from the actual runtime directory instead of a broken relative glob
+  - [src/backend/src/migrations/1761003600000-AlignPaymentsTableWithEntity.ts](/e:/GitHub/smart-erp/src/backend/src/migrations/1761003600000-AlignPaymentsTableWithEntity.ts) and [src/backend/src/migrations/1761004200000-AlignStockTableWithInventoryEntity.ts](/e:/GitHub/smart-erp/src/backend/src/migrations/1761004200000-AlignStockTableWithInventoryEntity.ts) align legacy local tables with the current entity contract
+  - Postgres now has the columns and indexes required by both `payments` and `stock`, and the migration ledger records both recovery steps
+- stock and dashboard now agree on one inventory model:
+  - [src/backend/src/domains/inventory/stock/entities/inventory.entity.ts](/e:/GitHub/smart-erp/src/backend/src/domains/inventory/stock/entities/inventory.entity.ts) now maps to the real `stock` table with correct column names and numeric transformers
+  - [src/backend/src/domains/inventory/stock/stock.service.ts](/e:/GitHub/smart-erp/src/backend/src/domains/inventory/stock/stock.service.ts) now maps DTO thresholds into stock fields consistently instead of leaking mismatched `minQuantity` / `minStockLevel` semantics
+  - [src/backend/src/platform/dashboard/dashboard.service.ts](/e:/GitHub/smart-erp/src/backend/src/platform/dashboard/dashboard.service.ts) and its specs now use stock-aware queries instead of relying on the nonexistent `inventory` table or legacy `payments.tenant_id` filters
+- live runtime verification is back to green on the active local environment:
+  - `runtime:smoke` passes with frontend, backend live/ready, and database checks green
+  - `runtime:browser-smoke` passes across public auth/legal routes plus dashboard, users, search, and ecommerce product routes
+  - direct authenticated calls to `/api/dashboard/overview`, `/api/stock/count`, `/api/stock/low-stock`, and `/api/stock/total-value` now return `200`
+- current database log review shows the old `payments.tenant_id` and `relation "inventory"` errors are historical, not still reproducing after the recovery batch:
+  - current backend stderr is back to dependency-owned `DEP0169` noise only
+  - Postgres tail still contains earlier failures from before the schema repair, but no fresh recurrence after the clean restart and smoke run
+- next frontend modernization queue is clearer thanks to a fresh scan:
+  - the highest-value remaining user-facing pages still carrying static `message` / `Modal.confirm` debt are currently concentrated in invoices, payments, stock, customers, warehouses, and purchasing/production list pages
+  - `InstallationWizard.tsx` is the clearest remaining copy/localization review target in the marketplace cluster
+
 - sales order detail no longer ships broken copy in the live UI:
   - [src/frontend/src/pages/orders/OrderDetail.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/orders/OrderDetail.tsx) was rewritten to remove mojibake labels and to use app-context feedback/confirmation flows
   - frontend type-check and runtime smoke remained green after the rewrite

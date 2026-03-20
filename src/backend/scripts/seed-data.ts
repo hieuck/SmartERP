@@ -1,18 +1,22 @@
-import { DataSource } from 'typeorm';
-import { config } from 'dotenv';
 import * as bcrypt from 'bcrypt';
+import { config } from 'dotenv';
+import { DataSource } from 'typeorm';
 
 config();
 
+const DEMO_ADMIN_EMAIL = 'admin@demo.com';
+const DEMO_ADMIN_PASSWORD = 'admin123';
+const DEMO_USER_EMAIL = 'user@demo.com';
+const DEMO_USER_PASSWORD = 'Test@123';
+
 /**
- * Professional seed data script using TypeORM
- * Creates demo tenant and admin user for testing
+ * Ensures demo tenant and users exist with consistent credentials.
  */
 async function seedData() {
   const dataSource = new DataSource({
     type: 'postgres',
     host: process.env.DB_HOST || 'localhost',
-    port: parseInt(process.env.DB_PORT || '5432'),
+    port: parseInt(process.env.DB_PORT || '5432', 10),
     username: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || 'postgres',
     database: process.env.DB_NAME || 'erp_production',
@@ -22,66 +26,108 @@ async function seedData() {
   });
 
   try {
-    console.log('🔄 Connecting to database...');
+    console.log('Connecting to database...');
     await dataSource.initialize();
-    console.log('✅ Database connected');
+    console.log('Database connected');
 
-    // Check if data already exists
-    const tenantCount = await dataSource.query('SELECT COUNT(*) FROM tenants');
-    if (parseInt(tenantCount[0].count) > 0) {
-      console.log('⚠️  Data already exists, skipping seed');
-      await dataSource.destroy();
-      process.exit(0);
+    console.log('Ensuring demo data...');
+
+    const existingTenantResult = await dataSource.query(
+      `SELECT id FROM tenants WHERE code = 'DEMO' LIMIT 1`,
+    );
+
+    let tenantId = existingTenantResult[0]?.id as string | undefined;
+    if (!tenantId) {
+      const tenantResult = await dataSource.query(`
+        INSERT INTO tenants (
+          code, name, status, timezone, currency, language,
+          company_name, company_email, subscription_plan, max_users
+        ) VALUES (
+          'DEMO', 'Demo Company', 'active', 'Asia/Ho_Chi_Minh', 'VND', 'vi',
+          'Demo Company Ltd.', 'demo@example.com', 'trial', 50
+        ) RETURNING id
+      `);
+      tenantId = tenantResult[0].id as string;
+      console.log(`Created tenant: ${tenantId}`);
+    } else {
+      console.log(`Reusing tenant: ${tenantId}`);
     }
 
-    console.log('🔄 Seeding demo data...');
+    const adminPasswordHash = await bcrypt.hash(DEMO_ADMIN_PASSWORD, 10);
+    const existingAdminResult = await dataSource.query(
+      `SELECT id FROM users WHERE email = $1 LIMIT 1`,
+      [DEMO_ADMIN_EMAIL],
+    );
 
-    // Create demo tenant
-    const tenantResult = await dataSource.query(`
-      INSERT INTO tenants (
-        code, name, status, timezone, currency, language,
-        company_name, company_email, subscription_plan, max_users
-      ) VALUES (
-        'DEMO', 'Demo Company', 'active', 'Asia/Ho_Chi_Minh', 'VND', 'vi',
-        'Demo Company Ltd.', 'demo@example.com', 'trial', 50
-      ) RETURNING id
-    `);
-    const tenantId = tenantResult[0].id;
-    console.log(`✅ Created tenant: ${tenantId}`);
+    if (existingAdminResult.length > 0) {
+      await dataSource.query(
+        `UPDATE users
+         SET tenant_id = $1,
+             password = $2,
+             first_name = 'Admin',
+             last_name = 'User',
+             role = 'admin',
+             roles = 'admin,user',
+             status = 'active',
+             email_verified = true
+         WHERE email = $3`,
+        [tenantId, adminPasswordHash, DEMO_ADMIN_EMAIL],
+      );
+      console.log(`Updated admin user: ${DEMO_ADMIN_EMAIL} / ${DEMO_ADMIN_PASSWORD}`);
+    } else {
+      await dataSource.query(
+        `INSERT INTO users (
+          tenant_id, email, password, first_name, last_name,
+          role, roles, status, email_verified
+        ) VALUES (
+          $1, $2, $3, 'Admin', 'User',
+          'admin', 'admin,user', 'active', true
+        )`,
+        [tenantId, DEMO_ADMIN_EMAIL, adminPasswordHash],
+      );
+      console.log(`Created admin user: ${DEMO_ADMIN_EMAIL} / ${DEMO_ADMIN_PASSWORD}`);
+    }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash('Admin@123', 10);
+    const userPasswordHash = await bcrypt.hash(DEMO_USER_PASSWORD, 10);
+    const existingUserResult = await dataSource.query(
+      `SELECT id FROM users WHERE email = $1 LIMIT 1`,
+      [DEMO_USER_EMAIL],
+    );
 
-    // Create admin user
-    await dataSource.query(`
-      INSERT INTO users (
-        tenant_id, email, password, first_name, last_name,
-        role, roles, status, email_verified
-      ) VALUES (
-        $1, 'admin@demo.com', $2, 'Admin', 'User',
-        'admin', 'admin,user', 'active', true
-      )
-    `, [tenantId, hashedPassword]);
-    console.log('✅ Created admin user: admin@demo.com / Admin@123');
-
-    // Create test user
-    const testPassword = await bcrypt.hash('Test@123', 10);
-    await dataSource.query(`
-      INSERT INTO users (
-        tenant_id, email, password, first_name, last_name,
-        role, roles, status, email_verified
-      ) VALUES (
-        $1, 'user@demo.com', $2, 'Test', 'User',
-        'user', 'user', 'active', true
-      )
-    `, [tenantId, testPassword]);
-    console.log('✅ Created test user: user@demo.com / Test@123');
+    if (existingUserResult.length > 0) {
+      await dataSource.query(
+        `UPDATE users
+         SET tenant_id = $1,
+             password = $2,
+             first_name = 'Test',
+             last_name = 'User',
+             role = 'user',
+             roles = 'user',
+             status = 'active',
+             email_verified = true
+         WHERE email = $3`,
+        [tenantId, userPasswordHash, DEMO_USER_EMAIL],
+      );
+      console.log(`Updated test user: ${DEMO_USER_EMAIL} / ${DEMO_USER_PASSWORD}`);
+    } else {
+      await dataSource.query(
+        `INSERT INTO users (
+          tenant_id, email, password, first_name, last_name,
+          role, roles, status, email_verified
+        ) VALUES (
+          $1, $2, $3, 'Test', 'User',
+          'user', 'user', 'active', true
+        )`,
+        [tenantId, DEMO_USER_EMAIL, userPasswordHash],
+      );
+      console.log(`Created test user: ${DEMO_USER_EMAIL} / ${DEMO_USER_PASSWORD}`);
+    }
 
     await dataSource.destroy();
-    console.log('✅ Seed data completed successfully');
+    console.log('Seed data completed successfully');
     process.exit(0);
   } catch (error) {
-    console.error('❌ Seed data failed:', error);
+    console.error('Seed data failed:', error);
     await dataSource.destroy().catch(() => {});
     process.exit(1);
   }

@@ -12,6 +12,8 @@ const backendDir = path.join(rootDir, 'src', 'backend');
 const frontendUrl = 'http://127.0.0.1:5173';
 const backendLiveUrl = 'http://127.0.0.1:3000/api/health/live';
 const backendReadyUrl = 'http://127.0.0.1:3000/api/health';
+const postgresHost = '127.0.0.1:5432';
+const redisHost = '127.0.0.1:6379';
 
 const services = {
   frontend: {
@@ -204,8 +206,23 @@ async function ensureBackend() {
   return 'started';
 }
 
+async function ensureInfrastructure() {
+  await runCommand('docker', ['compose', 'up', '-d', 'postgres', 'redis'], rootDir);
+}
+
+async function ensureDatabaseSchema() {
+  await runCommand('npm.cmd', ['run', 'db:init'], backendDir);
+}
+
+async function ensureDemoData() {
+  await runCommand('npm.cmd', ['run', 'db:seed-demo'], backendDir);
+}
+
 async function main() {
   await ensureOutputDir();
+  await ensureInfrastructure();
+  await ensureDatabaseSchema();
+  await ensureDemoData();
 
   const frontend = await ensureFrontend();
   const backend = await ensureBackend();
@@ -218,6 +235,8 @@ async function main() {
         frontendUrl,
         backendLiveUrl,
         backendReadyUrl,
+        postgresHost,
+        redisHost,
       },
       null,
       2,

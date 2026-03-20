@@ -59,7 +59,7 @@ describe('DashboardService', () => {
         },
         {
           provide: getRepositoryToken(Inventory),
-          useValue: { count: jest.fn(), createQueryBuilder: jest.fn() },
+          useValue: { count: jest.fn(), createQueryBuilder: jest.fn(), query: jest.fn() },
         },
         {
           provide: getRepositoryToken(Payment),
@@ -92,8 +92,15 @@ describe('DashboardService', () => {
       customerRepository.count.mockResolvedValue(20);
       customerRepository.createQueryBuilder.mockReturnValue(qb as any);
       inventoryRepository.createQueryBuilder.mockReturnValue(qb as any);
+      inventoryRepository.query
+        .mockResolvedValueOnce([{ count: 3 }])
+        .mockResolvedValueOnce([{ count: 1 }])
+        .mockResolvedValueOnce([{ total: '2500' }]);
       paymentRepository.count.mockResolvedValue(15);
-      paymentRepository.createQueryBuilder.mockReturnValue(qb as any);
+      paymentRepository.createQueryBuilder
+        .mockReturnValueOnce(qb as any)
+        .mockReturnValueOnce(qb as any)
+        .mockReturnValueOnce(qb as any);
 
       const result = await service.getOverview(mockUser);
 
@@ -103,6 +110,97 @@ describe('DashboardService', () => {
       expect(result.inventory).toBeDefined();
       expect(result.customers).toBeDefined();
       expect(result.payments).toBeDefined();
+    });
+
+    it('should compute payment stats through payment queries instead of tenantId count filters', async () => {
+      cacheService.getOrSet.mockImplementation(async (key, fn) => fn());
+
+      const sharedQueryBuilder = createQueryBuilder();
+      sharedQueryBuilder.getRawOne.mockResolvedValue({ total: '10000' });
+      sharedQueryBuilder.getCount.mockResolvedValue(5);
+      orderRepository.createQueryBuilder.mockReturnValue(sharedQueryBuilder as any);
+      orderRepository.count.mockResolvedValue(10);
+
+      productRepository.count.mockResolvedValue(50);
+      customerRepository.count.mockResolvedValue(20);
+      customerRepository.createQueryBuilder.mockReturnValue(sharedQueryBuilder as any);
+      inventoryRepository.createQueryBuilder.mockReturnValue(sharedQueryBuilder as any);
+      inventoryRepository.query
+        .mockResolvedValueOnce([{ count: 3 }])
+        .mockResolvedValueOnce([{ count: 1 }])
+        .mockResolvedValueOnce([{ total: '2500' }]);
+
+      const pendingPaymentsQueryBuilder = createQueryBuilder();
+      pendingPaymentsQueryBuilder.getCount.mockResolvedValue(2);
+
+      const completedPaymentsQueryBuilder = createQueryBuilder();
+      completedPaymentsQueryBuilder.getCount.mockResolvedValue(7);
+
+      const totalPaymentsQueryBuilder = createQueryBuilder();
+      totalPaymentsQueryBuilder.getRawOne.mockResolvedValue({ total: '4500' });
+
+      paymentRepository.count.mockRejectedValue(
+        new Error('legacy tenantId count path should not be used'),
+      );
+      paymentRepository.createQueryBuilder
+        .mockReturnValueOnce(pendingPaymentsQueryBuilder as any)
+        .mockReturnValueOnce(completedPaymentsQueryBuilder as any)
+        .mockReturnValueOnce(totalPaymentsQueryBuilder as any);
+
+      const result = await service.getOverview(mockUser);
+
+      expect(result.payments).toEqual({
+        pending: 2,
+        completed: 7,
+        totalAmount: 4500,
+      });
+      expect(paymentRepository.count).not.toHaveBeenCalled();
+    });
+
+    it('should compute inventory stats through stock table queries instead of inventory tenant filters', async () => {
+      cacheService.getOrSet.mockImplementation(async (key, fn) => fn());
+
+      const orderQueryBuilder = createQueryBuilder();
+      orderQueryBuilder.getRawOne.mockResolvedValue({ total: '10000' });
+      orderQueryBuilder.getCount.mockResolvedValue(5);
+      orderRepository.createQueryBuilder.mockReturnValue(orderQueryBuilder as any);
+      orderRepository.count.mockResolvedValue(10);
+
+      productRepository.count.mockResolvedValue(50);
+      customerRepository.count.mockResolvedValue(20);
+      customerRepository.createQueryBuilder.mockReturnValue(orderQueryBuilder as any);
+
+      inventoryRepository.count.mockRejectedValue(
+        new Error('legacy inventory tenant filter path should not be used'),
+      );
+      inventoryRepository.query
+        .mockResolvedValueOnce([{ count: 3 }])
+        .mockResolvedValueOnce([{ count: 1 }])
+        .mockResolvedValueOnce([{ total: '2500' }]);
+
+      const pendingPaymentsQueryBuilder = createQueryBuilder();
+      pendingPaymentsQueryBuilder.getCount.mockResolvedValue(2);
+
+      const completedPaymentsQueryBuilder = createQueryBuilder();
+      completedPaymentsQueryBuilder.getCount.mockResolvedValue(7);
+
+      const totalPaymentsQueryBuilder = createQueryBuilder();
+      totalPaymentsQueryBuilder.getRawOne.mockResolvedValue({ total: '4500' });
+
+      paymentRepository.createQueryBuilder
+        .mockReturnValueOnce(pendingPaymentsQueryBuilder as any)
+        .mockReturnValueOnce(completedPaymentsQueryBuilder as any)
+        .mockReturnValueOnce(totalPaymentsQueryBuilder as any);
+
+      const result = await service.getOverview(mockUser);
+
+      expect(result.inventory).toEqual({
+        totalProducts: 50,
+        lowStock: 3,
+        outOfStock: 1,
+        totalValue: 2500,
+      });
+      expect(inventoryRepository.count).not.toHaveBeenCalled();
     });
   });
 
@@ -188,16 +286,15 @@ describe('DashboardService', () => {
     it('should return low stock products', async () => {
       cacheService.getOrSet.mockImplementation(async (key, fn) => fn());
 
-      const qb = createQueryBuilder();
-      qb.getMany.mockResolvedValue([
+      inventoryRepository.query.mockResolvedValue([
         {
-          id: 'inv-1',
-          quantity: 5,
-          reorderPoint: 10,
-          product: { id: 'prod-1', name: 'Product 1', sku: 'SKU-001' },
+          id: 'prod-1',
+          name: 'Product 1',
+          sku: 'SKU-001',
+          currentStock: '5',
+          minStock: '10',
         },
       ]);
-      inventoryRepository.createQueryBuilder.mockReturnValue(qb as any);
 
       const result = await service.getLowStockProducts(mockUser, 10);
 

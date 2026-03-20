@@ -3,6 +3,7 @@ import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { join } from 'path';
 
 import { LoggingMiddleware } from './common/middleware/logging.middleware';
 import { MetricsMiddleware } from './common/middleware/metrics.middleware';
@@ -99,9 +100,7 @@ import { CrmModule } from './domains/sales/crm/crm.module';
             configService.get<string>('NODE_ENV'),
             configService.get<string>('DB_LOGGING'),
           ),
-          migrations: isProduction
-            ? [__dirname + '/dist/migrations/*.js']
-            : [__dirname + '/../migrations/*.ts'],
+          migrations: [join(__dirname, 'migrations', isProduction ? '*.js' : '*.ts')],
           migrationsRun: isProduction,
         };
       },

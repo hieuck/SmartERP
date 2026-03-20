@@ -31,6 +31,8 @@ const FULL_PERMISSION_ACTIONS = [
   PermissionAction.DELETE,
   PermissionAction.EXECUTE,
 ];
+const DEMO_ADMIN_EMAIL = 'admin@demo.com';
+const DEMO_ADMIN_PASSWORD = 'admin123';
 
 @Injectable()
 export class SeedService {
@@ -63,13 +65,13 @@ export class SeedService {
 
     // Check if admin user exists
     const existingUser = await this.userRepo.findOne({
-      where: { email: 'admin@demo.com' },
+      where: { email: DEMO_ADMIN_EMAIL },
     });
 
     if (!existingUser) {
-      const hashedPassword = await bcrypt.hash('admin123', 10);
+      const hashedPassword = await bcrypt.hash(DEMO_ADMIN_PASSWORD, 10);
       const user = this.userRepo.create({
-        email: 'admin@demo.com',
+        email: DEMO_ADMIN_EMAIL,
         password: hashedPassword,
         firstName: 'Admin',
         lastName: 'User',
@@ -79,8 +81,14 @@ export class SeedService {
         status: 'active',
       });
       await this.userRepo.save(user);
-    } else if (!existingUser.roles?.includes('admin')) {
-      existingUser.roles = ['admin'];
+    } else {
+      existingUser.password = await bcrypt.hash(DEMO_ADMIN_PASSWORD, 10);
+      existingUser.status = 'active';
+      existingUser.role = 'admin';
+      existingUser.tenantId = tenant.id;
+      existingUser.roles = existingUser.roles?.includes('admin')
+        ? existingUser.roles
+        : ['admin', ...(existingUser.roles ?? []).filter((role) => role !== 'admin')];
       await this.userRepo.save(existingUser);
     }
 
@@ -91,8 +99,8 @@ export class SeedService {
       success: true,
       message: 'Demo data seeded successfully',
       credentials: {
-        email: 'admin@demo.com',
-        password: 'admin123',
+        email: DEMO_ADMIN_EMAIL,
+        password: DEMO_ADMIN_PASSWORD,
         tenant: 'DEMO',
       },
     };

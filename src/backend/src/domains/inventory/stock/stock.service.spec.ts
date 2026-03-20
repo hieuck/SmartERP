@@ -113,6 +113,8 @@ describe('StockService', () => {
         productId: 'prod-1',
         warehouseId: 'wh-1',
         quantity: 100,
+        minQuantity: 20,
+        maxQuantity: 500,
         unitCost: 50,
       };
 
@@ -132,6 +134,28 @@ describe('StockService', () => {
       expect(result.reservedQuantity).toBe(0);
       expect(result.totalValue).toBe(5000);
       expect(mockInventoryRepository.save).toHaveBeenCalled();
+    });
+
+    it('should map min and max quantities into stock thresholds', async () => {
+      const createDto = {
+        productId: 'prod-1',
+        warehouseId: 'wh-1',
+        quantity: 100,
+        minQuantity: 25,
+        maxQuantity: 250,
+        unitCost: 50,
+      };
+
+      mockInventoryRepository.findOne.mockResolvedValue(null);
+      mockInventoryRepository.save.mockImplementation((entity) => Promise.resolve(entity as any));
+
+      await service.create(mockUser, createDto);
+
+      const savedEntity = mockInventoryRepository.save.mock.calls[0][0];
+      expect(savedEntity.minStockLevel).toBe(25);
+      expect(savedEntity.maxStockLevel).toBe(250);
+      expect(savedEntity.reorderPoint).toBe(25);
+      expect(savedEntity.reorderQuantity).toBe(225);
     });
 
     it('should throw ConflictException if inventory already exists', async () => {
@@ -404,6 +428,21 @@ describe('StockService', () => {
       const savedEntity = mockInventoryRepository.save.mock.calls[0][0];
       expect(savedEntity.availableQuantity).toBe(170); // 200 - 30
     });
+
+    it('should map minQuantity to minStockLevel and default reorderPoint', async () => {
+      const updateDto = { minQuantity: 15, maxQuantity: 120 };
+
+      mockInventoryRepository.findOne.mockResolvedValue(mockInventory);
+      mockCacheService.getOrSet.mockResolvedValue(mockInventory);
+      mockInventoryRepository.save.mockImplementation((entity) => Promise.resolve(entity as any));
+
+      await service.update(mockUser, 'inv-1', updateDto);
+
+      const savedEntity = mockInventoryRepository.save.mock.calls[0][0];
+      expect(savedEntity.minStockLevel).toBe(15);
+      expect(savedEntity.maxStockLevel).toBe(120);
+      expect(savedEntity.reorderPoint).toBe(15);
+    });
   });
 
   describe('adjustQuantity', () => {
@@ -628,7 +667,7 @@ describe('StockService', () => {
 
     it('should ignore items with reorderPoint = 0', async () => {
       const inventories = [
-        { ...mockInventory, id: 'inv-1', quantity: 5, reorderPoint: 0 },
+        { ...mockInventory, id: 'inv-1', quantity: 5, reorderPoint: 0, minStockLevel: 0 },
         { ...mockInventory, id: 'inv-2', quantity: 10, reorderPoint: 20 },
       ];
 

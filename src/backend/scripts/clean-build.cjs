@@ -7,5 +7,10 @@ const targets = [
 ];
 
 for (const target of targets) {
-  fs.rmSync(target, { recursive: true, force: true });
+  fs.rmSync(target, {
+    recursive: true,
+    force: true,
+    maxRetries: 10,
+    retryDelay: 200,
+  });
 }
