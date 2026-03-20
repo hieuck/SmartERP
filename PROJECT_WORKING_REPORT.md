@@ -844,3 +844,12 @@ Verification:
 - Verified with:
   - `npx.cmd vitest run src/components/tenancy/TenantSelector.test.tsx`
   - `npx.cmd eslint src/components/tenancy/TenantSelector.tsx src/components/tenancy/TenantSelector.test.tsx`
+
+## 2026-03-20 Frontend Test Encoding Cleanup
+- Rewrote mojibake-tolerant tests so they now assert one correct user-facing string instead of passing on either broken or clean text:
+  - [src/frontend/src/components/collaboration/CommentSection.test.tsx](/e:/GitHub/smart-erp/src/frontend/src/components/collaboration/CommentSection.test.tsx)
+  - [src/frontend/src/components/documents/VersionHistory.test.tsx](/e:/GitHub/smart-erp/src/frontend/src/components/documents/VersionHistory.test.tsx)
+  - [src/frontend/src/components/workflow/WorkflowBuilder.test.tsx](/e:/GitHub/smart-erp/src/frontend/src/components/workflow/WorkflowBuilder.test.tsx)
+- Verified with:
+  - `npx.cmd vitest run src/components/collaboration/CommentSection.test.tsx src/components/documents/VersionHistory.test.tsx src/components/workflow/WorkflowBuilder.test.tsx`
+  - targeted `eslint` on the three updated test files

@@ -64,15 +64,17 @@ describe('VersionHistory', () => {
   it('renders version history content when visible', () => {
     render(<VersionHistory documentId="DOC-001" visible onClose={vi.fn()} />);
 
-    expect(screen.getByText(/Lá»‹ch sá»­ phiÃªn báº£n - DOC-001|Lịch sử phiên bản - DOC-001/)).toBeInTheDocument();
-    expect(screen.getByText(/v2.*Hiá»‡n táº¡i|v2.*Hiện tại/)).toBeInTheDocument();
-    expect(screen.getByText(/Nguyá»…n VÄƒn A|Nguyễn Văn A/)).toBeInTheDocument();
-    expect(screen.getAllByRole('button', { name: /Táº£i xuá»‘ng|Tải xuống/ }).length).toBe(2);
+    expect(screen.getByText('Lịch sử phiên bản - DOC-001')).toBeInTheDocument();
+    expect(screen.getByText(/v2.*Hiện tại/)).toBeInTheDocument();
+    expect(screen.getByText('Nguyễn Văn A')).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Tải xuống' }).length).toBe(2);
   });
 
   it('hides the modal when visible is false and forwards close actions', () => {
     const onClose = vi.fn();
-    const { rerender } = render(<VersionHistory documentId="DOC-001" visible={false} onClose={onClose} />);
+    const { rerender } = render(
+      <VersionHistory documentId="DOC-001" visible={false} onClose={onClose} />,
+    );
 
     expect(screen.queryByText(/DOC-001/)).not.toBeInTheDocument();
 
@@ -85,13 +87,13 @@ describe('VersionHistory', () => {
   it('opens a rollback confirmation for non-current versions only', () => {
     render(<VersionHistory documentId="DOC-001" visible onClose={vi.fn()} />);
 
-    expect(screen.getAllByRole('button', { name: /KhÃ´i phá»¥c|Khôi phục/ }).length).toBe(1);
-    fireEvent.click(screen.getByRole('button', { name: /KhÃ´i phá»¥c|Khôi phục/ }));
+    expect(screen.getAllByRole('button', { name: 'Khôi phục' }).length).toBe(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Khôi phục' }));
 
     expect(confirmMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        title: expect.stringMatching(/XÃ¡c nháº­n khÃ´i phá»¥c|Xác nhận khôi phục/),
-        content: expect.stringMatching(/phiÃªn báº£n 1|phiên bản 1/),
+        title: 'Xác nhận khôi phục',
+        content: expect.stringContaining('phiên bản 1'),
         onOk: expect.any(Function),
       }),
     );

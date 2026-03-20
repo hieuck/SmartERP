@@ -62,7 +62,13 @@ vi.mock('antd', () => ({
   }: {
     value?: string;
     onChange?: (event: { target: { value: string } }) => void;
-  }) => <input aria-label="step-name" value={value} onChange={(event) => onChange?.({ target: { value: event.target.value } })} />,
+  }) => (
+    <input
+      aria-label="step-name"
+      value={value}
+      onChange={(event) => onChange?.({ target: { value: event.target.value } })}
+    />
+  ),
   Select: Object.assign(
     ({
       value,
@@ -104,9 +110,9 @@ describe('WorkflowBuilder', () => {
   it('adds a workflow step and lets the user rename it', () => {
     render(<WorkflowBuilder />);
 
-    fireEvent.click(screen.getByRole('button', { name: /ThÃªm bÆ°á»›c|Thêm bước/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Thêm bước' }));
 
-    expect(screen.getByText(/BÆ°á»›c 1|Bước 1/)).toBeInTheDocument();
+    expect(screen.getByText('Bước 1')).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('step-name'), { target: { value: 'Approval step' } });
 
@@ -116,14 +122,14 @@ describe('WorkflowBuilder', () => {
   it('switches step type and removes the step', () => {
     render(<WorkflowBuilder />);
 
-    fireEvent.click(screen.getByRole('button', { name: /ThÃªm bÆ°á»›c|Thêm bước/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Thêm bước' }));
     fireEvent.click(screen.getByRole('button', { name: 'approval' }));
 
     expect(screen.getByRole('button', { name: 'notification' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'icon-delete' }));
 
-    expect(screen.queryByText(/BÆ°á»›c 1|Bước 1/)).not.toBeInTheDocument();
+    expect(screen.queryByText('Bước 1')).not.toBeInTheDocument();
   });
 
   it('saves the current steps and shows a success message', () => {
@@ -131,15 +137,15 @@ describe('WorkflowBuilder', () => {
 
     render(<WorkflowBuilder onSave={onSave} />);
 
-    fireEvent.click(screen.getByRole('button', { name: /ThÃªm bÆ°á»›c|Thêm bước/ }));
-    fireEvent.click(screen.getByRole('button', { name: /LÆ°u quy trÃ¬nh|Lưu quy trình/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Thêm bước' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Lưu quy trình' }));
 
     expect(onSave).toHaveBeenCalledWith([
       expect.objectContaining({
         type: 'approval',
-        name: expect.stringMatching(/BÆ°á»›c má»›i|Bước mới/),
+        name: 'Bước mới',
       }),
     ]);
-    expect(successMock).toHaveBeenCalledWith(expect.stringMatching(/ÄÃ£ lÆ°u quy trÃ¬nh|Đã lưu quy trình/));
+    expect(successMock).toHaveBeenCalledWith('Đã lưu quy trình');
   });
 });

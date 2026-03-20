@@ -93,36 +93,35 @@ describe('CommentSection', () => {
     const { container } = render(<CommentSection recordId="order-1" />);
 
     expect(container.firstChild).toHaveAttribute('data-record-id', 'order-1');
-    expect(screen.getByText(/2 bÃ¬nh luáº­n|2 bình luận/)).toBeInTheDocument();
-    expect(screen.getAllByText(/Nguyá»…n VÄƒn A|Nguyễn Văn A/).length).toBeGreaterThan(0);
-    expect(screen.getByText(/Tráº§n Thá»‹ B|Trần Thị B/)).toBeInTheDocument();
+    expect(screen.getByText('2 bình luận')).toBeInTheDocument();
+    expect(screen.getAllByText('Nguyễn Văn A').length).toBeGreaterThan(0);
+    expect(screen.getByText('Trần Thị B')).toBeInTheDocument();
   });
 
   it('ignores empty submissions', () => {
     render(<CommentSection recordId="order-1" />);
 
-    fireEvent.click(screen.getByRole('button', { name: /Gá»­i bÃ¬nh luáº­n|Gửi bình luận/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Gửi bình luận' }));
 
-    expect(screen.getByText(/2 bÃ¬nh luáº­n|2 bình luận/)).toBeInTheDocument();
-    expect(screen.queryByText(/NgÆ°á»i dÃ¹ng hiá»‡n táº¡i|Người dùng hiện tại/)).not.toBeInTheDocument();
+    expect(screen.getByText('2 bình luận')).toBeInTheDocument();
+    expect(screen.queryByText('Người dùng hiện tại')).not.toBeInTheDocument();
   });
 
   it('adds a new comment after the submit delay', () => {
     render(<CommentSection recordId="order-1" />);
 
-    fireEvent.change(
-      screen.getByLabelText(/Nháº­p bÃ¬nh luáº­n|Nhập bình luận/),
-      { target: { value: 'Need quick approval' } },
-    );
-    fireEvent.click(screen.getByRole('button', { name: /Gá»­i bÃ¬nh luáº­n|Gửi bình luận/ }));
+    fireEvent.change(screen.getByLabelText('Nhập bình luận... (Sử dụng @ để mention người dùng)'), {
+      target: { value: 'Need quick approval' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Gửi bình luận' }));
 
     act(() => {
       vi.advanceTimersByTime(500);
     });
 
-    expect(screen.getByText(/3 bÃ¬nh luáº­n|3 bình luận/)).toBeInTheDocument();
-    expect(screen.getByText(/NgÆ°á»i dÃ¹ng hiá»‡n táº¡i|Người dùng hiện tại/)).toBeInTheDocument();
+    expect(screen.getByText('3 bình luận')).toBeInTheDocument();
+    expect(screen.getByText('Người dùng hiện tại')).toBeInTheDocument();
     expect(screen.getByText('Need quick approval')).toBeInTheDocument();
-    expect(screen.getByText(/Vá»«a xong|Vừa xong/)).toBeInTheDocument();
+    expect(screen.getByText('Vừa xong')).toBeInTheDocument();
   });
 });
