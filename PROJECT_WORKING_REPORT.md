@@ -6,6 +6,14 @@
 
 ## Latest Checkpoint (2026-03-20)
 
+- local runtime tooling is now more trustworthy for day-to-day operations instead of silently relying on stale pid files:
+  - [tools/runtime-start.mjs](/e:/GitHub/smart-erp/tools/runtime-start.mjs) now syncs the frontend/backend pid files to the actual listening process when services are already running
+  - [tools/runtime-smoke.mjs](/e:/GitHub/smart-erp/tools/runtime-smoke.mjs) now reports tracked pid, listener pid, and `pidDrift` for both frontend and backend
+  - a real verification run now reports `pidDrift: false` for both services after a clean `runtime-start` + `runtime-smoke` sequence
+- the root cause of the earlier process-drift false positive was tooling-side, not app-side:
+  - the Windows listener lookup used PowerShell variable `$pid`, which clashes with PowerShell's automatic process-id variable and produced false listener ownership
+  - the helper now uses a neutral variable name and the smoke report reflects the real listener processes (`5173` -> frontend Vite, `3000` -> backend monolith)
+
 - tenant settings runtime has been recovered end-to-end with a clean forward migration instead of patching historical schema state in place:
   - [src/backend/src/migrations/1761004800000-RecoverSettingsTable.ts](/e:/GitHub/smart-erp/src/backend/src/migrations/1761004800000-RecoverSettingsTable.ts) now safely renames legacy `system_settings`, backfills tenant-aware settings rows, and creates the indexes expected by the current `Setting` entity
   - `npm run db:init` in [src/backend](/e:/GitHub/smart-erp/src/backend) now applies the recovery migration cleanly on the active local database, and authenticated `GET /api/settings?category=GENERAL` now returns `200`

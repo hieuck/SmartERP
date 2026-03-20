@@ -1,11 +1,14 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { execFile } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { promisify } from 'node:util';
 import pg from '../src/backend/node_modules/pg/lib/index.js';
 
 const { Client } = pg;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '..');
+const execFileAsync = promisify(execFile);
 
 const frontendUrl = process.env.FRONTEND_URL || 'http://127.0.0.1:5173';
 const backendLiveUrl = process.env.BACKEND_LIVE_URL || 'http://127.0.0.1:3000/api/health/live';
@@ -17,6 +20,10 @@ const dbConfig = {
   user: process.env.PGUSER || 'postgres',
   password: process.env.PGPASSWORD || 'postgres',
   database: process.env.PGDATABASE || 'erp_production',
+};
+const pidFiles = {
+  frontend: path.join(rootDir, 'output', 'frontend-runtime.pid'),
+  backend: path.join(rootDir, 'output', 'backend-runtime.pid'),
 };
 
 const manufacturingTables = ['work_centers', 'boms', 'bom_lines', 'work_orders'];
@@ -74,6 +81,70 @@ async function tailRecentFile(relativePath, lines = 10) {
   return tailFile(relativePath, lines);
 }
 
+async function readTrackedPid(filePath) {
+  try {
+    const content = await fs.readFile(filePath, 'utf8');
+    const pid = Number.parseInt(content.trim(), 10);
+    return Number.isInteger(pid) && pid > 0 ? pid : null;
+  } catch {
+    return null;
+  }
+}
+
+async function findListeningPid(port) {
+  if (process.platform !== 'win32') {
+    return null;
+  }
+
+  try {
+    const { stdout } = await execFileAsync(
+      'powershell.exe',
+      [
+        '-NoProfile',
+        '-Command',
+        [
+          `$listenerPid = (Get-NetTCPConnection -State Listen -LocalPort ${port} -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty OwningProcess)`,
+          'if ($listenerPid) { Write-Output $listenerPid }',
+        ].join('; '),
+      ],
+      { windowsHide: true },
+    );
+
+    const pid = Number.parseInt(stdout.trim(), 10);
+    return Number.isInteger(pid) && pid > 0 ? pid : null;
+  } catch {
+    return null;
+  }
+}
+
+async function collectProcessState() {
+  const [frontendTrackedPid, backendTrackedPid, frontendListenerPid, backendListenerPid] = await Promise.all([
+    readTrackedPid(pidFiles.frontend),
+    readTrackedPid(pidFiles.backend),
+    findListeningPid(5173),
+    findListeningPid(3000),
+  ]);
+
+  return {
+    frontend: {
+      trackedPid: frontendTrackedPid,
+      listenerPid: frontendListenerPid,
+      pidDrift:
+        frontendTrackedPid !== null &&
+        frontendListenerPid !== null &&
+        frontendTrackedPid !== frontendListenerPid,
+    },
+    backend: {
+      trackedPid: backendTrackedPid,
+      listenerPid: backendListenerPid,
+      pidDrift:
+        backendTrackedPid !== null &&
+        backendListenerPid !== null &&
+        backendTrackedPid !== backendListenerPid,
+    },
+  };
+}
+
 async function checkDatabase() {
   const client = new Client(dbConfig);
   try {
@@ -107,13 +178,14 @@ async function checkDatabase() {
 }
 
 async function main() {
-  const [frontend, backendLive, backendReady, database, backendErrTail, frontendErrTail] = await Promise.all([
+  const [frontend, backendLive, backendReady, database, backendErrTail, frontendErrTail, processes] = await Promise.all([
     checkHttp(frontendUrl),
     checkHttp(backendLiveUrl),
     checkHttp(backendReadyUrl),
     checkDatabase(),
     tailRecentFile('output/backend-runtime.err.log'),
     tailRecentFile('output/frontend-runtime.err.log'),
+    collectProcessState(),
   ]);
 
   const report = {
@@ -128,6 +200,7 @@ async function main() {
       backendErrTail,
       frontendErrTail,
     },
+    processes,
     runtimeLogMaxAgeMs,
   };
 

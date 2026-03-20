@@ -1,13 +1,15 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { spawn } from 'node:child_process';
+import { execFile, spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { promisify } from 'node:util';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '..');
 const outputDir = path.join(rootDir, 'output');
 const frontendDir = path.join(rootDir, 'src', 'frontend');
 const backendDir = path.join(rootDir, 'src', 'backend');
+const execFileAsync = promisify(execFile);
 
 const frontendUrl = 'http://127.0.0.1:5173';
 const backendLiveUrl = 'http://127.0.0.1:3000/api/health/live';
@@ -19,6 +21,7 @@ const services = {
   frontend: {
     cwd: frontendDir,
     url: frontendUrl,
+    port: 5173,
     pidFile: path.join(outputDir, 'frontend-runtime.pid'),
     stdoutFile: path.join(outputDir, 'frontend-runtime.out.log'),
     stderrFile: path.join(outputDir, 'frontend-runtime.err.log'),
@@ -29,6 +32,7 @@ const services = {
   backend: {
     cwd: backendDir,
     url: backendLiveUrl,
+    port: 3000,
     pidFile: path.join(outputDir, 'backend-runtime.pid'),
     stdoutFile: path.join(outputDir, 'backend-runtime.out.log'),
     stderrFile: path.join(outputDir, 'backend-runtime.err.log'),
@@ -70,6 +74,32 @@ async function readPid(pidFile) {
   try {
     const content = await fs.readFile(pidFile, 'utf8');
     const pid = Number(content.trim());
+    return Number.isInteger(pid) && pid > 0 ? pid : null;
+  } catch {
+    return null;
+  }
+}
+
+async function findListeningPid(port) {
+  if (process.platform !== 'win32') {
+    return null;
+  }
+
+  try {
+    const { stdout } = await execFileAsync(
+      'powershell.exe',
+      [
+        '-NoProfile',
+        '-Command',
+        [
+          `$listenerPid = (Get-NetTCPConnection -State Listen -LocalPort ${port} -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty OwningProcess)`,
+          'if ($listenerPid) { Write-Output $listenerPid }',
+        ].join('; '),
+      ],
+      { windowsHide: true },
+    );
+
+    const pid = Number.parseInt(stdout.trim(), 10);
     return Number.isInteger(pid) && pid > 0 ? pid : null;
   } catch {
     return null;
@@ -158,6 +188,20 @@ async function stopIfOwned(service) {
   await fs.rm(service.pidFile, { force: true });
 }
 
+async function syncPidFileToListener(service) {
+  const listenerPid = await findListeningPid(service.port);
+  if (!listenerPid) {
+    return null;
+  }
+
+  const trackedPid = await readPid(service.pidFile);
+  if (trackedPid !== listenerPid) {
+    await fs.writeFile(service.pidFile, `${listenerPid}\n`, 'utf8');
+  }
+
+  return listenerPid;
+}
+
 async function openLogs(service) {
   const stdout = await fs.open(service.stdoutFile, 'w');
   const stderr = await fs.open(service.stderrFile, 'w');
@@ -187,6 +231,7 @@ async function startDetached(service) {
 
 async function ensureFrontend() {
   if (await isHealthy(services.frontend.url)) {
+    await syncPidFileToListener(services.frontend);
     return 'already-running';
   }
 
@@ -197,6 +242,7 @@ async function ensureFrontend() {
 
 async function ensureBackend() {
   if (await isHealthy(services.backend.url)) {
+    await syncPidFileToListener(services.backend);
     return 'already-running';
   }
 
