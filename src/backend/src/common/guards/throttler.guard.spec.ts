@@ -32,11 +32,15 @@ describe('CustomThrottlerGuard', () => {
   let guard: TestableThrottlerGuard;
 
   beforeEach(() => {
-    guard = new TestableThrottlerGuard({ throttlers: [{ ttl: 60000, limit: 10 }] } as never, {
-      increment: jest.fn(),
-    } as never, {
-      getAllAndOverride: jest.fn(),
-    } as never);
+    guard = new TestableThrottlerGuard(
+      { throttlers: [{ ttl: 60000, limit: 10 }] } as never,
+      {
+        increment: jest.fn(),
+      } as never,
+      {
+        getAllAndOverride: jest.fn(),
+      } as never,
+    );
   });
 
   it('uses user id as tracker when authenticated', async () => {

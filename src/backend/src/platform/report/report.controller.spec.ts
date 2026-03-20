@@ -201,7 +201,12 @@ describe('ReportController (Integration)', () => {
       { name: 'sales-summary', category: 'sales', description: 'Sales summary report' },
       { name: 'inventory-status', category: 'inventory', description: 'Inventory status' },
     ] as any);
-    templateService.getCategories.mockReturnValue(['sales', 'inventory', 'accounting', 'hr'] as any);
+    templateService.getCategories.mockReturnValue([
+      'sales',
+      'inventory',
+      'accounting',
+      'hr',
+    ] as any);
     templateService.getTemplatesByCategory.mockReturnValue([
       { name: 'sales-summary', category: 'sales', description: 'Sales summary' },
       { name: 'sales-by-product', category: 'sales', description: 'Sales by product' },

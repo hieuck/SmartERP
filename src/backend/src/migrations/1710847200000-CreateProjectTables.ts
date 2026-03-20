@@ -109,23 +109,49 @@ export class CreateProjectTables1710847200000 implements MigrationInterface {
     `);
 
     await queryRunner.query(`CREATE INDEX "IDX_projects_tenant_id" ON "projects" ("tenant_id")`);
-    await queryRunner.query(`CREATE INDEX "IDX_projects_tenant_status" ON "projects" ("tenant_id", "status")`);
-    await queryRunner.query(`CREATE INDEX "IDX_projects_tenant_manager" ON "projects" ("tenant_id", "project_manager_id")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_projects_tenant_status" ON "projects" ("tenant_id", "status")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_projects_tenant_manager" ON "projects" ("tenant_id", "project_manager_id")`,
+    );
 
     await queryRunner.query(`CREATE INDEX "IDX_tasks_tenant_id" ON "tasks" ("tenant_id")`);
-    await queryRunner.query(`CREATE INDEX "IDX_tasks_tenant_project" ON "tasks" ("tenant_id", "project_id")`);
-    await queryRunner.query(`CREATE INDEX "IDX_tasks_tenant_assignee" ON "tasks" ("tenant_id", "assignee_id")`);
-    await queryRunner.query(`CREATE INDEX "IDX_tasks_tenant_status" ON "tasks" ("tenant_id", "status")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_tasks_tenant_project" ON "tasks" ("tenant_id", "project_id")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_tasks_tenant_assignee" ON "tasks" ("tenant_id", "assignee_id")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_tasks_tenant_status" ON "tasks" ("tenant_id", "status")`,
+    );
 
-    await queryRunner.query(`CREATE INDEX "IDX_task_dependencies_tenant_id" ON "task_dependencies" ("tenant_id")`);
-    await queryRunner.query(`CREATE INDEX "IDX_task_dependencies_tenant_task" ON "task_dependencies" ("tenant_id", "task_id")`);
-    await queryRunner.query(`CREATE INDEX "IDX_task_dependencies_tenant_depends" ON "task_dependencies" ("tenant_id", "depends_on_task_id")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_task_dependencies_tenant_id" ON "task_dependencies" ("tenant_id")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_task_dependencies_tenant_task" ON "task_dependencies" ("tenant_id", "task_id")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_task_dependencies_tenant_depends" ON "task_dependencies" ("tenant_id", "depends_on_task_id")`,
+    );
 
-    await queryRunner.query(`CREATE INDEX "IDX_time_entries_tenant_id" ON "time_entries" ("tenant_id")`);
-    await queryRunner.query(`CREATE INDEX "IDX_time_entries_tenant_user" ON "time_entries" ("tenant_id", "user_id")`);
-    await queryRunner.query(`CREATE INDEX "IDX_time_entries_tenant_task" ON "time_entries" ("tenant_id", "task_id")`);
-    await queryRunner.query(`CREATE INDEX "IDX_time_entries_tenant_project" ON "time_entries" ("tenant_id", "project_id")`);
-    await queryRunner.query(`CREATE INDEX "IDX_time_entries_tenant_date" ON "time_entries" ("tenant_id", "date")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_time_entries_tenant_id" ON "time_entries" ("tenant_id")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_time_entries_tenant_user" ON "time_entries" ("tenant_id", "user_id")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_time_entries_tenant_task" ON "time_entries" ("tenant_id", "task_id")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_time_entries_tenant_project" ON "time_entries" ("tenant_id", "project_id")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_time_entries_tenant_date" ON "time_entries" ("tenant_id", "date")`,
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
