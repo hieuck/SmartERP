@@ -929,3 +929,17 @@ Verification:
   - frontend dev server still healthy on `127.0.0.1:5173`
   - frontend stderr still empty
   - backend/database smoke unchanged and healthy
+
+## 2026-03-20 User Management Locale Cleanup
+- Cleaned the Vietnamese user-management locale file in [src/frontend/src/i18n/locales/vi/users.json](/e:/GitHub/smart-erp/src/frontend/src/i18n/locales/vi/users.json).
+- Replaced static `antd` message usage with `App.useApp().message` in [src/frontend/src/pages/users/UserList.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/users/UserList.tsx).
+- Updated [src/frontend/src/pages/users/UserList.test.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/users/UserList.test.tsx) so the mocked Ant Design shape matches the context-based message contract.
+- Verified with:
+  - `npx.cmd vitest run src/pages/users/UserList.test.tsx`
+  - targeted frontend `eslint` on `src/pages/users/UserList.tsx` and `src/pages/users/UserList.test.tsx`
+  - `npm.cmd run build` in `src/frontend`
+  - `npm.cmd run runtime:smoke`
+- Current runtime snapshot after the batch:
+  - frontend/backend/database smoke remains green
+  - frontend stderr remains empty
+  - backend stderr remains limited to dependency-level `DEP0169`

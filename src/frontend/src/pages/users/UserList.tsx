@@ -6,7 +6,7 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Tag, message, Modal, Dropdown, Button, Space, Badge } from 'antd';
+import { App, Tag, Modal, Dropdown, Button, Space, Badge } from 'antd';
 import type { MenuProps } from 'antd/es/menu';
 import {
   UserOutlined,
@@ -43,6 +43,7 @@ const roleColors: Record<string, string> = {
 export default function UserList() {
   const navigate = useNavigate();
   const { t } = useTranslation(['users', 'commonUi', 'common']);
+  const { message } = App.useApp();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);

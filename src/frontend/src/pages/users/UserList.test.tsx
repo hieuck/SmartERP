@@ -109,6 +109,11 @@ vi.mock('@ant-design/icons', () => ({
 }));
 
 vi.mock('antd', () => ({
+  App: Object.assign(({ children }: { children?: React.ReactNode }) => <div>{children}</div>, {
+    useApp: () => ({
+      message: messageMock,
+    }),
+  }),
   Badge: ({ children, text }: { children?: React.ReactNode; text?: React.ReactNode }) => (
     <div>
       {text}
@@ -129,7 +134,6 @@ vi.mock('antd', () => ({
     </button>
   ),
   Dropdown: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
-  message: messageMock,
   Modal: {
     confirm: vi.fn(),
   },
