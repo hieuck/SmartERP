@@ -14,7 +14,7 @@ import {
   MoreOutlined,
   WarningOutlined,
 } from '@ant-design/icons';
-import { Badge, Button, Card, Dropdown, Empty, List, message, Space, Spin, Tag, theme } from 'antd';
+import { App, Badge, Button, Card, Dropdown, Empty, List, Space, Spin, Tag, theme } from 'antd';
 import dayjs from 'dayjs';
 import 'dayjs/locale/vi';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -51,6 +51,7 @@ const priorityColors: Record<NotificationPriority, string> = {
 
 export default function NotificationCenter() {
   const { token } = useToken();
+  const { message } = App.useApp();
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);

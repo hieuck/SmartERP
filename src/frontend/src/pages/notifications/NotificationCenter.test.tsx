@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { App } from 'antd';
 import NotificationCenter from './NotificationCenter';
 import { NotificationPriority, NotificationType } from '@/services/notification/notificationService';
 
@@ -73,6 +74,14 @@ vi.mock('dayjs/plugin/relativeTime', () => ({
 }));
 
 vi.mock('antd', () => ({
+  App: Object.assign(({ children }: { children?: React.ReactNode }) => <div>{children}</div>, {
+    useApp: () => ({
+      message: {
+        success: messageSuccessMock,
+        error: messageErrorMock,
+      },
+    }),
+  }),
   Badge: ({
     count,
     text,
@@ -165,10 +174,6 @@ vi.mock('antd', () => ({
   Space: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   Spin: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   Tag: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
-  message: {
-    success: messageSuccessMock,
-    error: messageErrorMock,
-  },
   theme: {
     useToken: () => ({
       token: {
@@ -203,7 +208,11 @@ describe('NotificationCenter', () => {
   });
 
   it('loads notifications and unread count on mount', async () => {
-    render(<NotificationCenter />);
+    render(
+      <App>
+        <NotificationCenter />
+      </App>,
+    );
 
     await waitFor(() => {
       expect(getAllMock).toHaveBeenCalledWith({ page: 1, limit: 50, isRead: undefined });
@@ -217,7 +226,11 @@ describe('NotificationCenter', () => {
   });
 
   it('switches to unread filter and reloads the list', async () => {
-    render(<NotificationCenter />);
+    render(
+      <App>
+        <NotificationCenter />
+      </App>,
+    );
 
     await screen.findByText('Unread notification');
     fireEvent.click(screen.getByRole('button', { name: 'notifications.center.unread (3)' }));
@@ -228,7 +241,11 @@ describe('NotificationCenter', () => {
   });
 
   it('marks notifications as read and deletes them through dropdown actions', async () => {
-    render(<NotificationCenter />);
+    render(
+      <App>
+        <NotificationCenter />
+      </App>,
+    );
 
     await screen.findByText('Unread notification');
 

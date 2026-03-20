@@ -24,7 +24,6 @@ import { useNavigate } from 'react-router-dom';
 dayjs.extend(relativeTime);
 
 const { Title, Text } = Typography;
-const { TabPane } = Tabs;
 const { useToken } = theme;
 
 const NotificationListPage: React.FC = () => {
@@ -124,6 +123,17 @@ const NotificationListPage: React.FC = () => {
     return labelMap[type] || type;
   };
 
+  const tabItems = [
+    {
+      key: 'all',
+      label: t('notifications:center.all'),
+    },
+    {
+      key: 'unread',
+      label: t('notifications:center.unread'),
+    },
+  ];
+
   return (
     <div style={{ padding: '24px' }}>
       <Card>
@@ -155,10 +165,8 @@ const NotificationListPage: React.FC = () => {
               setActiveTab(key as 'all' | 'unread');
               setPage(1);
             }}
-          >
-            <TabPane tab={t('notifications:center.all')} key="all" />
-            <TabPane tab={t('notifications:center.unread')} key="unread" />
-          </Tabs>
+            items={tabItems}
+          />
 
           {loading ? (
             <div style={{ textAlign: 'center', padding: '50px' }}>

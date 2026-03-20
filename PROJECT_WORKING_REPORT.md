@@ -1369,3 +1369,21 @@ Verification:
 - Current runtime snapshot after the batch:
   - local runtime tooling is less noisy during transient DB turbulence
   - readiness is still visible in reports without being conflated with process liveness
+
+## 2026-03-20 Notification Shell Modernization
+- Root cause:
+  - the notification center still used static `antd` message APIs outside the app context
+  - the notification list page still rendered tabs through the legacy `Tabs.TabPane` pattern
+- Fixed in:
+  - [src/frontend/src/pages/notifications/NotificationCenter.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/notifications/NotificationCenter.tsx)
+  - [src/frontend/src/pages/notifications/NotificationCenter.test.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/notifications/NotificationCenter.test.tsx)
+  - [src/frontend/src/pages/notifications/NotificationListPage.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/notifications/NotificationListPage.tsx)
+- Implementation details:
+  - notification feedback now goes through `App.useApp().message`, which is compatible with theme/context-aware Ant Design usage
+  - the notification list page now uses `Tabs.items` instead of `Tabs.TabPane`
+- Verified with:
+  - `npx.cmd vitest run src/pages/notifications/NotificationCenter.test.tsx src/pages/notifications/NotificationListPage.test.tsx` in `src/frontend`
+  - `npm.cmd run type-check` in `src/frontend`
+- Current frontend snapshot after the batch:
+  - notifications shell is aligned with the newer feedback pattern used across recently cleaned pages
+  - no TypeScript regressions were introduced
