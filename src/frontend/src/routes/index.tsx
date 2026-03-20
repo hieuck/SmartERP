@@ -77,6 +77,7 @@ const TaskList = lazy(() => import('@/pages/project/TaskList'));
 
 // Ecommerce
 const ProductCatalogList = lazy(() => import('@/pages/ecommerce/ProductCatalogList'));
+const ProductCatalogForm = lazy(() => import('@/pages/ecommerce/ProductCatalogForm'));
 const EcommerceOrderList = lazy(() => import('@/pages/ecommerce/EcommerceOrderList'));
 
 // Production / Manufacturing
@@ -598,6 +599,22 @@ export function AppRoutes() {
           element={
             <LazyRoute>
               <ProductCatalogList />
+            </LazyRoute>
+          }
+        />
+        <Route
+          path="ecommerce/products/new"
+          element={
+            <LazyRoute>
+              <ProductCatalogForm />
+            </LazyRoute>
+          }
+        />
+        <Route
+          path="ecommerce/products/:id"
+          element={
+            <LazyRoute>
+              <ProductCatalogForm />
             </LazyRoute>
           }
         />

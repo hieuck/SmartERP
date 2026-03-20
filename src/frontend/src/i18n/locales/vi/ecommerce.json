@@ -1,24 +1,30 @@
 {
-  "title": "Thương Mại Điện Tử",
+  "title": "Thương mại điện tử",
   "catalog": {
-    "title": "Danh Mục Sản Phẩm",
-    "createButton": "Thêm Sản Phẩm",
+    "title": "Danh mục sản phẩm",
+    "createButton": "Thêm sản phẩm",
     "searchPlaceholder": "Tìm kiếm sản phẩm...",
     "columns": {
       "sku": "Mã SKU",
-      "name": "Tên Sản Phẩm",
+      "name": "Tên sản phẩm",
       "price": "Giá",
-      "stock": "Tồn Kho",
-      "status": "Trạng Thái"
+      "stock": "Tồn kho",
+      "status": "Trạng thái"
     },
     "status": {
-      "published": "Đã Đăng",
+      "published": "Đã đăng",
       "unpublished": "Nháp",
-      "out_of_stock": "Hết Hàng"
+      "out_of_stock": "Hết hàng"
     },
     "actions": {
-      "publish": "Đăng Bán",
+      "publish": "Đăng bán",
       "unpublish": "Ẩn"
+    },
+    "categories": {
+      "electronics": "Điện tử",
+      "clothing": "Thời trang",
+      "food": "Thực phẩm",
+      "other": "Khác"
     },
     "messages": {
       "publishSuccess": "Đã đăng sản phẩm",
@@ -27,33 +33,64 @@
       "deleteSuccess": "Đã xóa sản phẩm",
       "loadError": "Không thể tải danh sách sản phẩm",
       "total": "Tổng {{total}} sản phẩm"
+    },
+    "form": {
+      "titleCreate": "Thêm sản phẩm",
+      "titleEdit": "Chỉnh sửa sản phẩm",
+      "back": "Quay lại",
+      "fields": {
+        "description": "Mô tả",
+        "compareAtPrice": "Giá niêm yết",
+        "category": "Danh mục"
+      },
+      "placeholders": {
+        "name": "Nhập tên sản phẩm",
+        "description": "Nhập mô tả ngắn cho sản phẩm",
+        "category": "Chọn danh mục"
+      },
+      "validation": {
+        "skuRequired": "Vui lòng nhập mã SKU",
+        "nameRequired": "Vui lòng nhập tên sản phẩm",
+        "priceRequired": "Vui lòng nhập giá bán",
+        "stockRequired": "Vui lòng nhập tồn kho"
+      },
+      "buttons": {
+        "create": "Tạo mới",
+        "update": "Cập nhật",
+        "cancel": "Hủy"
+      },
+      "messages": {
+        "createSuccess": "Tạo sản phẩm thành công",
+        "updateSuccess": "Cập nhật sản phẩm thành công",
+        "saveError": "Không thể lưu sản phẩm"
+      }
     }
   },
   "orders": {
-    "title": "Đơn Hàng Online",
+    "title": "Đơn hàng online",
     "searchPlaceholder": "Tìm theo số đơn hàng...",
     "columns": {
       "orderNumber": "Số ĐH",
-      "customer": "Khách Hàng",
-      "total": "Tổng Tiền",
-      "status": "Trạng Thái",
-      "paymentStatus": "Thanh Toán",
-      "createdAt": "Ngày Tạo"
+      "customer": "Khách hàng",
+      "total": "Tổng tiền",
+      "status": "Trạng thái",
+      "paymentStatus": "Thanh toán",
+      "createdAt": "Ngày tạo"
     },
     "status": {
-      "pending": "Chờ Xử Lý",
-      "confirmed": "Đã Xác Nhận",
-      "processing": "Đang Xử Lý",
-      "shipped": "Đã Giao Vận",
-      "delivered": "Đã Giao Hàng",
-      "cancelled": "Đã Hủy",
-      "refunded": "Đã Hoàn Tiền"
+      "pending": "Chờ xử lý",
+      "confirmed": "Đã xác nhận",
+      "processing": "Đang xử lý",
+      "shipped": "Đã giao vận",
+      "delivered": "Đã giao hàng",
+      "cancelled": "Đã hủy",
+      "refunded": "Đã hoàn tiền"
     },
     "paymentStatus": {
-      "pending": "Chờ Thanh Toán",
-      "paid": "Đã Thanh Toán",
-      "failed": "Thất Bại",
-      "refunded": "Đã Hoàn Tiền"
+      "pending": "Chờ thanh toán",
+      "paid": "Đã thanh toán",
+      "failed": "Thất bại",
+      "refunded": "Đã hoàn tiền"
     },
     "messages": {
       "loadError": "Không thể tải đơn hàng",

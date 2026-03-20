@@ -20,6 +20,12 @@
       "publish": "Publish",
       "unpublish": "Unpublish"
     },
+    "categories": {
+      "electronics": "Electronics",
+      "clothing": "Clothing",
+      "food": "Food",
+      "other": "Other"
+    },
     "messages": {
       "publishSuccess": "Product published",
       "unpublishSuccess": "Product unpublished",
@@ -27,6 +33,37 @@
       "deleteSuccess": "Product deleted",
       "loadError": "Failed to load products",
       "total": "Total {{total}} products"
+    },
+    "form": {
+      "titleCreate": "New Product",
+      "titleEdit": "Edit Product",
+      "back": "Back",
+      "fields": {
+        "description": "Description",
+        "compareAtPrice": "Compare-at Price",
+        "category": "Category"
+      },
+      "placeholders": {
+        "name": "Enter product name",
+        "description": "Enter a short product description",
+        "category": "Select category"
+      },
+      "validation": {
+        "skuRequired": "Please enter SKU",
+        "nameRequired": "Please enter product name",
+        "priceRequired": "Please enter price",
+        "stockRequired": "Please enter stock quantity"
+      },
+      "buttons": {
+        "create": "Create",
+        "update": "Update",
+        "cancel": "Cancel"
+      },
+      "messages": {
+        "createSuccess": "Product created successfully",
+        "updateSuccess": "Product updated successfully",
+        "saveError": "Failed to save product"
+      }
     }
   },
   "orders": {
