@@ -15,6 +15,9 @@
   - local table smoke confirms `41` tables currently exist, including `product_catalog`
   - the ecommerce runtime recovery is now backed by both application code and reproducible migration history
   - a smaller follow-up remains: the migration runner still emits a `pg` deprecation warning that should be traced separately, but it no longer blocks boot or schema updates
+- runtime smoke reporting is now more trustworthy for day-to-day operations:
+  - `tools/runtime-smoke.mjs` no longer reports stale backend/frontend error tails from hours-old incidents as if they were current runtime failures
+  - the smoke check now surfaces only recent stderr activity, which makes the launcher report usable for ongoing project operations instead of incident archaeology
 
 - ecommerce product catalog runtime has now been recovered end-to-end:
   - frontend list and form pages now use the shared API client instead of bypassing auth with raw `axios`

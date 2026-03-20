@@ -9,6 +9,7 @@ const rootDir = path.resolve(__dirname, '..');
 
 const frontendUrl = process.env.FRONTEND_URL || 'http://127.0.0.1:5173';
 const backendHealthUrl = process.env.BACKEND_HEALTH_URL || 'http://127.0.0.1:3000/api/health';
+const runtimeLogMaxAgeMs = Number(process.env.RUNTIME_LOG_MAX_AGE_MS || 5 * 60 * 1000);
 const dbConfig = {
   host: process.env.PGHOST || '127.0.0.1',
   port: Number(process.env.PGPORT || '5432'),
@@ -57,6 +58,21 @@ async function tailFile(relativePath, lines = 10) {
   }
 }
 
+async function tailRecentFile(relativePath, lines = 10) {
+  const absolutePath = path.join(rootDir, relativePath);
+
+  try {
+    const stats = await fs.stat(absolutePath);
+    if (Date.now() - stats.mtimeMs > runtimeLogMaxAgeMs) {
+      return [];
+    }
+  } catch (error) {
+    return [`<unavailable: ${error instanceof Error ? error.message : String(error)}>`];
+  }
+
+  return tailFile(relativePath, lines);
+}
+
 async function checkDatabase() {
   const client = new Client(dbConfig);
   try {
@@ -94,8 +110,8 @@ async function main() {
     checkHttp(frontendUrl),
     checkHttp(backendHealthUrl),
     checkDatabase(),
-    tailFile('output/backend-runtime.err.log'),
-    tailFile('output/frontend-runtime.err.log'),
+    tailRecentFile('output/backend-runtime.err.log'),
+    tailRecentFile('output/frontend-runtime.err.log'),
   ]);
 
   const report = {
@@ -107,6 +123,7 @@ async function main() {
       backendErrTail,
       frontendErrTail,
     },
+    runtimeLogMaxAgeMs,
   };
 
   console.log(JSON.stringify(report, null, 2));
