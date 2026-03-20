@@ -48,7 +48,9 @@ vi.mock('antd', () => {
     label,
     shouldUpdate,
   }: {
-    children?: React.ReactNode | ((ctx: { getFieldValue: (name: string) => string | undefined }) => React.ReactNode);
+    children?:
+      | React.ReactNode
+      | ((ctx: { getFieldValue: (name: string) => string | undefined }) => React.ReactNode);
     label?: React.ReactNode;
     shouldUpdate?: unknown;
   }) => {
@@ -65,7 +67,7 @@ vi.mock('antd', () => {
     return (
       <div>
         <div>{label}</div>
-        <div>{children}</div>
+        <div>{children as React.ReactNode}</div>
       </div>
     );
   };
@@ -123,12 +125,9 @@ vi.mock('antd', () => {
         </div>
       ) : null,
     Row: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
-    Select: Object.assign(
-      ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
-      {
-        Option: ({ children }: { children?: React.ReactNode }) => <option>{children}</option>,
-      },
-    ),
+    Select: Object.assign(({ children }: { children?: React.ReactNode }) => <div>{children}</div>, {
+      Option: ({ children }: { children?: React.ReactNode }) => <option>{children}</option>,
+    }),
   };
 });
 
@@ -140,21 +139,21 @@ describe('DashboardBuilder', () => {
   it('renders the seeded widgets', () => {
     render(<DashboardBuilder />);
 
-    expect(screen.getByText(/Doanh thu thÃ¡ng|Doanh thu tháng/)).toBeInTheDocument();
-    expect(screen.getByText(/Xu hÆ°á»›ng bÃ¡n hÃ ng|Xu hướng bán hàng/)).toBeInTheDocument();
-    expect(screen.getByText(/Top sáº£n pháº©m|Top sản phẩm/)).toBeInTheDocument();
+    expect(screen.getByText(/Doanh thu tháng|Doanh thu tháng/)).toBeInTheDocument();
+    expect(screen.getByText(/Xu hướng bán hàng|Xu hướng bán hàng/)).toBeInTheDocument();
+    expect(screen.getByText(/Top sản phẩm|Top sản phẩm/)).toBeInTheDocument();
   });
 
   it('adds a widget through the modal submit flow', () => {
     render(<DashboardBuilder />);
 
-    fireEvent.click(screen.getByRole('button', { name: /ThÃªm widget|Thêm widget/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Thêm widget/ }));
     expect(screen.getByRole('button', { name: 'confirm-modal' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'confirm-modal' }));
 
     expect(screen.getByText('New Widget')).toBeInTheDocument();
-    expect(screen.getByText(/Báº£ng dá»¯ liá»‡u|Bảng dữ liệu/)).toBeInTheDocument();
+    expect(screen.getByText(/Bảng dữ liệu/)).toBeInTheDocument();
     expect(resetFieldsMock).toHaveBeenCalled();
   });
 
@@ -163,6 +162,6 @@ describe('DashboardBuilder', () => {
 
     fireEvent.click(screen.getAllByRole('button', { name: 'icon-delete' })[0]);
 
-    expect(screen.queryByText(/Doanh thu thÃ¡ng|Doanh thu tháng/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Doanh thu tháng/)).not.toBeInTheDocument();
   });
 });

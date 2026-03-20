@@ -63,12 +63,12 @@ describe('useInvoices hooks', () => {
     invoiceServiceMock.getAll.mockResolvedValue({ data: [{ id: 'INV-1' }] });
     invoiceServiceMock.getById.mockResolvedValue({ id: 'INV-1' });
 
-    const filters = { page: 2, status: 'draft' };
+    const filters = { page: 2, status: 'draft' } as never;
     const { result: listResult } = renderHook(() => useInvoices(filters));
     const { result: detailResult } = renderHook(() => useInvoice('INV-1'));
 
-    const listQuery = listResult.current as { queryKey: unknown[]; queryFn: () => Promise<unknown> };
-    const detailQuery = detailResult.current as {
+    const listQuery = listResult.current as unknown as { queryKey: unknown[]; queryFn: () => Promise<unknown> };
+    const detailQuery = detailResult.current as unknown as {
       queryKey: unknown[];
       enabled: boolean;
       queryFn: () => Promise<unknown>;
@@ -93,7 +93,7 @@ describe('useInvoices hooks', () => {
     const { result: updateResult } = renderHook(() => useUpdateInvoice());
     const { result: sendResult } = renderHook(() => useSendInvoice());
 
-    await createResult.current.mutateAsync({ number: 'INV-1' });
+    await createResult.current.mutateAsync({ number: 'INV-1' } as never);
     await updateResult.current.mutateAsync({ id: 'INV-1', data: { notes: 'updated' } });
     await sendResult.current.mutateAsync('INV-1');
 

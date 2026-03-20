@@ -57,14 +57,14 @@ describe('useReports hooks', () => {
     const { result: topCustomersResult } = renderHook(() => useTopCustomersReport(params));
     const { result: cashFlowResult } = renderHook(() => useCashFlowReport(params));
 
-    const salesQuery = salesResult.current as { queryKey: unknown[]; enabled: boolean; queryFn: () => Promise<unknown> };
-    const inventoryQuery = inventoryResult.current as { queryKey: unknown[]; queryFn: () => Promise<unknown> };
-    const topCustomersQuery = topCustomersResult.current as {
+    const salesQuery = salesResult.current as unknown as { queryKey: unknown[]; enabled: boolean; queryFn: () => Promise<unknown> };
+    const inventoryQuery = inventoryResult.current as unknown as { queryKey: unknown[]; queryFn: () => Promise<unknown> };
+    const topCustomersQuery = topCustomersResult.current as unknown as {
       queryKey: unknown[];
       enabled: boolean;
       queryFn: () => Promise<unknown>;
     };
-    const cashFlowQuery = cashFlowResult.current as {
+    const cashFlowQuery = cashFlowResult.current as unknown as {
       queryKey: unknown[];
       enabled: boolean;
       queryFn: () => Promise<unknown>;

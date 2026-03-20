@@ -60,7 +60,7 @@ describe('useSettings hooks', () => {
     settingsServiceMock.getByCategory.mockResolvedValue([{ key: 'theme' }]);
 
     const { result } = renderHook(() => useSettingsByCategory(category as never));
-    const query = result.current as { queryKey: unknown[]; enabled: boolean; queryFn: () => Promise<unknown> };
+    const query = result.current as unknown as { queryKey: unknown[]; enabled: boolean; queryFn: () => Promise<unknown> };
 
     expect(query.queryKey).toEqual(['settings', category]);
     expect(query.enabled).toBe(true);
@@ -75,7 +75,7 @@ describe('useSettings hooks', () => {
     const { result: createResult } = renderHook(() => useCreateSetting());
     const { result: updateResult } = renderHook(() => useUpdateSetting());
 
-    await createResult.current.mutateAsync({ key: 'theme' });
+    await createResult.current.mutateAsync({ key: 'theme' } as never);
     await updateResult.current.mutateAsync({ key: 'theme', data: { value: 'dark' } });
 
     expect(settingsServiceMock.create).toHaveBeenCalledWith({ key: 'theme' });
@@ -91,7 +91,7 @@ describe('useSettings hooks', () => {
 
     const { result } = renderHook(() => useDeleteSetting());
 
-    await result.current.mutateAsync({ key: 'theme', category: 'general' });
+    await result.current.mutateAsync({ key: 'theme', category: 'general' as never });
 
     expect(settingsServiceMock.delete).toHaveBeenCalledWith('theme');
     expect(invalidateQueriesMock).toHaveBeenCalledWith({

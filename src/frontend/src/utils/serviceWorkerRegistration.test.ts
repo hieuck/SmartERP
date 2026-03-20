@@ -26,7 +26,7 @@ describe('serviceWorkerRegistration', () => {
       installing: null,
       onupdatefound: null,
     });
-    const setIntervalSpy = vi.spyOn(global, 'setInterval').mockImplementation((() => 1) as typeof setInterval);
+    const setIntervalSpy = vi.spyOn(global, 'setInterval').mockImplementation((() => 1) as unknown as typeof setInterval);
 
     Object.defineProperty(navigator, 'serviceWorker', {
       configurable: true,

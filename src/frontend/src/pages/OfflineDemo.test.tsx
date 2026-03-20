@@ -111,7 +111,7 @@ vi.mock('antd', () => {
       columns?: Array<{
         key?: string;
         dataIndex?: string;
-        render?: (value: unknown, record: Record<string, unknown>) => React.ReactNode;
+        render?: ((value: unknown, record: Record<string, unknown>) => React.ReactNode) | ((record: Record<string, unknown>) => React.ReactNode);
       }>;
     }) => (
       <div>
@@ -122,7 +122,7 @@ vi.mock('antd', () => {
                 {column.render
                   ? column.dataIndex
                     ? column.render(record[column.dataIndex], record)
-                    : column.render(record)
+                    : (column.render as (record: Record<string, unknown>) => React.ReactNode)(record)
                   : String(column.dataIndex ? record[column.dataIndex] ?? '' : '')}
               </div>
             ))}

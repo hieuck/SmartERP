@@ -60,7 +60,7 @@ vi.mock('react-i18next', () => ({
 vi.mock('dayjs', () => {
   const dayjsMock = ((value: string) => ({
     fromNow: () => `fromNow:${value}`,
-  })) as unknown as typeof import('dayjs').default;
+  })) as unknown as typeof import('dayjs');
   (dayjsMock as unknown as { extend: (plugin: unknown) => void; locale: (locale: string) => void }).extend = vi.fn();
   (dayjsMock as unknown as { extend: (plugin: unknown) => void; locale: (locale: string) => void }).locale = vi.fn();
   return {

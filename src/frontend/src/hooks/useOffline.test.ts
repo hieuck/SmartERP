@@ -86,7 +86,7 @@ describe('useOffline', () => {
       .mockImplementation(((callback: TimerHandler) => {
         intervalCallback = callback as () => void | Promise<void>;
         return 1 as unknown as ReturnType<typeof setInterval>;
-      }) as typeof setInterval);
+      }) as unknown as typeof setInterval);
     const clearIntervalSpy = vi
       .spyOn(window, 'clearInterval')
       .mockImplementation(() => undefined);
