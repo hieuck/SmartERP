@@ -1153,3 +1153,26 @@ Verification:
   - no Ant Design deprecation warnings remain on the exercised search flow
   - frontend stderr remains empty
   - backend/database smoke remains green
+
+## 2026-03-20 Telemetry Bootstrap Noise Cleanup
+- Root cause:
+  - public-entry browser smoke on `/login` and `/register` was still producing avoidable warning noise on every page load when telemetry was intentionally unconfigured in development
+  - the frontend monitoring bootstrap was treating missing Sentry DSN and missing GA4 ID as warnings even in development, where those omissions are normal
+- Fixed in:
+  - [src/frontend/src/lib/monitoring/sentry.ts](/e:/GitHub/smart-erp/src/frontend/src/lib/monitoring/sentry.ts)
+  - [src/frontend/src/lib/monitoring/sentry.test.ts](/e:/GitHub/smart-erp/src/frontend/src/lib/monitoring/sentry.test.ts)
+  - [src/frontend/src/lib/monitoring/analytics.ts](/e:/GitHub/smart-erp/src/frontend/src/lib/monitoring/analytics.ts)
+  - [src/frontend/src/lib/monitoring/analytics.test.ts](/e:/GitHub/smart-erp/src/frontend/src/lib/monitoring/analytics.test.ts)
+- Implementation details:
+  - missing telemetry configuration is now silent in development
+  - missing telemetry configuration still warns in production, where it is operationally relevant
+  - GA4 no longer logs a redundant “disabled in development” info message
+- Verified with:
+  - `npx.cmd vitest run src/lib/monitoring/sentry.test.ts src/lib/monitoring/analytics.test.ts` in `src/frontend`
+  - `npm.cmd run build` in `src/frontend`
+  - `npm.cmd run runtime:smoke`
+  - browser smoke on `http://127.0.0.1:5173/login` and `http://127.0.0.1:5173/register`
+- Current browser/runtime snapshot after the batch:
+  - `/login` and `/register` no longer emit telemetry warnings in dev
+  - frontend stderr remains empty
+  - backend/database smoke remains green

@@ -16,7 +16,9 @@ export function initSentry() {
 
   // Only initialize if DSN is provided
   if (!dsn) {
-    logger.warn('sentry', 'Sentry DSN not provided. Error tracking disabled.');
+    if (environment === 'production') {
+      logger.warn('sentry', 'Sentry DSN not provided. Error tracking disabled.');
+    }
     return;
   }
 

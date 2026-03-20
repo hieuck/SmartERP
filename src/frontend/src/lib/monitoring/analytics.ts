@@ -13,13 +13,14 @@ export function initGA4() {
 
   // Only initialize if measurement ID is provided
   if (!measurementId) {
-    logger.warn('analytics', 'GA4 Measurement ID not provided. Analytics disabled.');
+    if (environment === 'production') {
+      logger.warn('analytics', 'GA4 Measurement ID not provided. Analytics disabled.');
+    }
     return;
   }
 
   // Don't track in development
   if (environment === 'development') {
-    logger.info('analytics', 'GA4 disabled in development');
     return;
   }
 
