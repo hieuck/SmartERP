@@ -3,6 +3,8 @@ import { chromium } from 'playwright';
 const frontendUrl = process.env.SMARTERP_FRONTEND_URL ?? 'http://127.0.0.1:5173';
 const backendApiUrl = process.env.SMARTERP_BACKEND_API_URL ?? 'http://127.0.0.1:3000/api';
 const failOnWarnings = process.env.SMARTERP_FAIL_ON_WARNINGS === '1';
+const routeNavigationTimeoutMs = Number(process.env.SMARTERP_ROUTE_TIMEOUT_MS ?? '15000');
+const routeIdleTimeoutMs = Number(process.env.SMARTERP_ROUTE_IDLE_TIMEOUT_MS ?? '5000');
 
 const publicRoutes = [
   '/',
@@ -80,19 +82,44 @@ async function collectRoute(browser, route, session) {
     }, session);
   }
 
-  await page.goto(`${frontendUrl}${route}`, { waitUntil: 'networkidle' });
-  await page.waitForTimeout(1000);
+  let bodyPreview = '';
 
-  const bodyText = await page.locator('body').innerText();
-  await page.close();
+  try {
+    await page.goto(`${frontendUrl}${route}`, {
+      waitUntil: 'domcontentloaded',
+      timeout: routeNavigationTimeoutMs,
+    });
+    await page.waitForLoadState('networkidle', { timeout: routeIdleTimeoutMs }).catch(() => {});
+    await page.waitForTimeout(500);
 
-  return {
-    route,
-    warnings: unique(consoleWarnings),
-    errors: unique(consoleErrors),
-    failedRequests: unique(failedRequests),
-    bodyPreview: bodyText.slice(0, 300),
-  };
+    bodyPreview = (await page.locator('body').innerText()).slice(0, 300);
+
+    return {
+      route,
+      warnings: unique(consoleWarnings),
+      errors: unique(consoleErrors),
+      failedRequests: unique(failedRequests),
+      bodyPreview,
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const routeErrors = unique([...consoleErrors, `Route check failed: ${message}`]);
+    try {
+      bodyPreview = (await page.locator('body').innerText()).slice(0, 300);
+    } catch {
+      bodyPreview = '';
+    }
+
+    return {
+      route,
+      warnings: unique(consoleWarnings),
+      errors: routeErrors,
+      failedRequests: unique(failedRequests),
+      bodyPreview,
+    };
+  } finally {
+    await page.close();
+  }
 }
 
 async function main() {
@@ -111,6 +138,8 @@ async function main() {
       checkedAt: new Date().toISOString(),
       frontendUrl,
       backendApiUrl,
+      routeNavigationTimeoutMs,
+      routeIdleTimeoutMs,
       routes,
     };
 
