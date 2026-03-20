@@ -89,6 +89,8 @@ describe('AccountService', () => {
       canWrite: jest.fn().mockReturnValue(true),
       canDelete: jest.fn().mockReturnValue(true),
       buildSecureQuery: jest.fn((_user, where) => where),
+      getOwnerField: jest.fn().mockReturnValue('createdBy'),
+      getUserId: jest.fn((user: User) => user.id),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -327,7 +329,7 @@ describe('AccountService', () => {
       await service.findAllJournalEntries(mockUser, startDate, endDate);
 
       expect(journalEntryRepository.find).toHaveBeenCalledWith({
-        where: { entryDate: Between(startDate, endDate) },
+        where: { date: Between(startDate, endDate) },
         order: { createdAt: 'DESC' },
       });
     });

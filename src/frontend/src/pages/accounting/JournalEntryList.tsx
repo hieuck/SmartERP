@@ -1,25 +1,18 @@
 import StandardListPage from '@/components/common/StandardListPage';
+import journalEntryService, {
+  type JournalEntry,
+} from '@/services/accounting/journalEntryService';
 import { formatDate } from '@/utils/responsive';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Button, DatePicker, Space, Tag, message } from 'antd';
+import { App, Button, DatePicker, Space, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import axios from 'axios';
 import dayjs, { Dayjs } from 'dayjs';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-interface JournalEntry {
-  id: string;
-  date: string;
-  reference: string;
-  description: string;
-  totalDebit: number;
-  totalCredit: number;
-  status: string;
-}
-
 export default function JournalEntryList() {
+  const { message } = App.useApp();
   const navigate = useNavigate();
   const { t } = useTranslation('accounting');
   const [search, setSearch] = useState('');
@@ -29,19 +22,15 @@ export default function JournalEntryList() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['journal-entries', startDate?.toISOString(), endDate?.toISOString()],
-    queryFn: async () => {
-      const res = await axios.get('/api/accounting/journal-entries', {
-        params: {
-          startDate: startDate?.toISOString(),
-          endDate: endDate?.toISOString(),
-        },
-      });
-      return res.data;
-    },
+    queryFn: () =>
+      journalEntryService.getAll({
+        startDate: startDate?.toISOString(),
+        endDate: endDate?.toISOString(),
+      }),
   });
 
   const postMutation = useMutation({
-    mutationFn: (id: string) => axios.post(`/api/accounting/journal-entries/${id}/post`),
+    mutationFn: (id: string) => journalEntryService.post(id),
     onSuccess: () => {
       message.success(t('journalEntries.messages.postSuccess'));
       queryClient.invalidateQueries({ queryKey: ['journal-entries'] });

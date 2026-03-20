@@ -1641,3 +1641,41 @@ Verification:
   - `/dashboard/audit` renders cleanly with no failed requests, warnings, or page errors
   - audit API endpoints now return `200` with empty-state payloads instead of `500`
   - backend runtime stderr is back to the single dependency-owned `DEP0169` deprecation warning
+
+## 2026-03-20 Accounting Runtime Recovery
+- Root cause:
+  - the accounting accounts and journal routes had two separate drifts at once: frontend pages were bypassing the shared API client with raw `axios`, and the local database did not have the `accounts`, `journal_entries`, or `journal_lines` tables required by the backend entities
+  - after the schema gap was repaired, journal filtering still broke because [src/backend/src/domains/accounting/account/account.service.ts](/e:/GitHub/smart-erp/src/backend/src/domains/accounting/account/account.service.ts) queried a non-existent `entryDate` property instead of the entity field `date`
+  - the accounting locale namespace also still contained mojibake and missing keys around update/cancel flows
+- Fixed in:
+  - [src/backend/src/migrations/1761006600000-CreateAccountingTables.ts](/e:/GitHub/smart-erp/src/backend/src/migrations/1761006600000-CreateAccountingTables.ts)
+  - [src/backend/src/domains/accounting/account/account.service.ts](/e:/GitHub/smart-erp/src/backend/src/domains/accounting/account/account.service.ts)
+  - [src/backend/src/domains/accounting/account/account.service.spec.ts](/e:/GitHub/smart-erp/src/backend/src/domains/accounting/account/account.service.spec.ts)
+  - [src/frontend/src/services/accounting/accountService.ts](/e:/GitHub/smart-erp/src/frontend/src/services/accounting/accountService.ts)
+  - [src/frontend/src/services/accounting/accountService.test.ts](/e:/GitHub/smart-erp/src/frontend/src/services/accounting/accountService.test.ts)
+  - [src/frontend/src/services/accounting/journalEntryService.ts](/e:/GitHub/smart-erp/src/frontend/src/services/accounting/journalEntryService.ts)
+  - [src/frontend/src/services/accounting/journalEntryService.test.ts](/e:/GitHub/smart-erp/src/frontend/src/services/accounting/journalEntryService.test.ts)
+  - [src/frontend/src/pages/accounting/ChartOfAccounts.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/accounting/ChartOfAccounts.tsx)
+  - [src/frontend/src/pages/accounting/AccountForm.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/accounting/AccountForm.tsx)
+  - [src/frontend/src/pages/accounting/JournalEntryList.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/accounting/JournalEntryList.tsx)
+  - [src/frontend/src/i18n/locales/en/accounting.json](/e:/GitHub/smart-erp/src/frontend/src/i18n/locales/en/accounting.json)
+  - [src/frontend/src/i18n/locales/vi/accounting.json](/e:/GitHub/smart-erp/src/frontend/src/i18n/locales/vi/accounting.json)
+  - [tools/browser-smoke.mjs](/e:/GitHub/smart-erp/tools/browser-smoke.mjs)
+- Implementation details:
+  - added the missing accounting tables with the columns expected by the current entities and local multi-tenant sync metadata conventions
+  - switched accounting pages from raw `axios` to shared accounting services backed by the standard API client, so auth headers and refresh behavior are handled consistently
+  - frontend services now unwrap the standard `{ success, data }` envelope before returning account and journal data to pages
+  - rewrote the accounting locale files as clean UTF-8 and added the missing `income`, `updateError`, `postError`, and cancel-action keys used by the current UI
+  - `/dashboard/accounting/accounts`, `/dashboard/accounting/accounts/new`, and `/dashboard/accounting/journal-entries` are now covered by browser smoke
+- Verified with:
+  - `npm.cmd run db:init` in `src/backend`
+  - `npm.cmd run build` in `src/backend`
+  - `npx.cmd jest src/domains/accounting/account/account.service.spec.ts src/domains/accounting/account/account.controller.spec.ts --runInBand` in `src/backend`
+  - `npx.cmd vitest run src/services/accounting/accountService.test.ts src/services/accounting/journalEntryService.test.ts` in `src/frontend`
+  - `npm.cmd run type-check` in both `src/frontend` and `src/backend`
+  - direct authenticated probes to `/api/accounting/accounts` and `/api/accounting/journal-entries`
+  - Playwright/Chromium browser probes against the three accounting routes
+- Current browser/runtime snapshot after the batch:
+  - the accounting list/form routes render clean empty states with no failed requests or console noise
+  - authenticated backend probes for accounts and journal entries now return `200`
+  - runtime log noise remains limited to the known dependency-owned `DEP0169` warning

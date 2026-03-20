@@ -1,31 +1,17 @@
+import accountService, {
+  type Account,
+  type AccountFormValues,
+  type AccountType,
+} from '@/services/accounting/accountService';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Button, Checkbox, Form, Input, Select, Space, message } from 'antd';
-import axios from 'axios';
+import { App, Button, Checkbox, Form, Input, Select, Space } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 
-interface Account {
-  id: string;
-  code: string;
-  name: string;
-  type: string;
-  parentId?: string;
-  isGroup: boolean;
-  description?: string;
-}
-
-interface AccountFormValues {
-  code: string;
-  name: string;
-  type: string;
-  parentId?: string;
-  isGroup: boolean;
-  description?: string;
-}
-
-const ACCOUNT_TYPES = ['asset', 'liability', 'equity', 'revenue', 'expense'];
+const ACCOUNT_TYPES: AccountType[] = ['asset', 'liability', 'equity', 'income', 'expense'];
 
 export default function AccountForm() {
+  const { message } = App.useApp();
   const { t } = useTranslation('accounting');
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
@@ -35,27 +21,22 @@ export default function AccountForm() {
 
   const { data: accounts = [] } = useQuery<Account[]>({
     queryKey: ['accounts'],
-    queryFn: async () => {
-      const res = await axios.get('/api/accounting/accounts');
-      return res.data?.data ?? [];
-    },
+    queryFn: () => accountService.getAll(),
   });
 
   useQuery({
     queryKey: ['account', id],
     queryFn: async () => {
-      const res = await axios.get(`/api/accounting/accounts/${id}`);
-      form.setFieldsValue(res.data);
-      return res.data;
+      const account = await accountService.getById(id!);
+      form.setFieldsValue(account);
+      return account;
     },
     enabled: isEdit,
   });
 
   const mutation = useMutation({
     mutationFn: (values: AccountFormValues) =>
-      isEdit
-        ? axios.put(`/api/accounting/accounts/${id}`, values)
-        : axios.post('/api/accounting/accounts', values),
+      isEdit ? accountService.update(id!, values) : accountService.create(values),
     onSuccess: () => {
       message.success(
         t(isEdit ? 'accounts.messages.updateSuccess' : 'accounts.messages.createSuccess'),
@@ -65,7 +46,7 @@ export default function AccountForm() {
     },
     onError: () =>
       message.error(
-        t(isEdit ? 'accounts.messages.updateSuccess' : 'accounts.messages.createError'),
+        t(isEdit ? 'accounts.messages.updateError' : 'accounts.messages.createError'),
       ),
   });
 
@@ -114,7 +95,7 @@ export default function AccountForm() {
               {isEdit ? t('accounts.form.title_edit') : t('accounts.createButton')}
             </Button>
             <Button onClick={() => navigate('/dashboard/accounting/accounts')}>
-              {t('accounts.actions.cancel', { defaultValue: 'Cancel' })}
+              {t('accounts.actions.cancel')}
             </Button>
           </Space>
         </Form.Item>

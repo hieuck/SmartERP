@@ -295,7 +295,7 @@ export class AccountService {
   ): Promise<JournalEntry[]> {
     const where: Record<string, unknown> = {};
     if (startDate && endDate) {
-      where.entryDate = Between(startDate, endDate);
+      where.date = Between(startDate, endDate);
     }
     return this.secureJournalRepo.find(user, { where, order: { createdAt: 'DESC' } });
   }

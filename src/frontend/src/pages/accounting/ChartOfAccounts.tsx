@@ -1,30 +1,22 @@
 import StandardListPage from '@/components/common/StandardListPage';
+import accountService, { type Account } from '@/services/accounting/accountService';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Tag, message } from 'antd';
+import { App, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import axios from 'axios';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-
-interface Account {
-  id: string;
-  code: string;
-  name: string;
-  type: string;
-  balance: number;
-  isGroup: boolean;
-}
 
 const TYPE_COLORS: Record<string, string> = {
   asset: 'blue',
   liability: 'red',
   equity: 'purple',
-  revenue: 'green',
+  income: 'green',
   expense: 'orange',
 };
 
 export default function ChartOfAccounts() {
+  const { message } = App.useApp();
   const navigate = useNavigate();
   const { t } = useTranslation('accounting');
   const [search, setSearch] = useState('');
@@ -32,14 +24,11 @@ export default function ChartOfAccounts() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['accounts'],
-    queryFn: async () => {
-      const res = await axios.get('/api/accounting/accounts');
-      return res.data;
-    },
+    queryFn: () => accountService.getAll(),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => axios.delete(`/api/accounting/accounts/${id}`),
+    mutationFn: (id: string) => accountService.delete(id),
     onSuccess: () => {
       message.success(t('accounts.messages.deleteSuccess'));
       queryClient.invalidateQueries({ queryKey: ['accounts'] });

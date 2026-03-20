@@ -15,6 +15,7 @@
       "asset": "Tài sản",
       "liability": "Nợ phải trả",
       "equity": "Vốn chủ sở hữu",
+      "income": "Thu nhập",
       "revenue": "Doanh thu",
       "expense": "Chi phí"
     },
@@ -28,11 +29,15 @@
       "isGroup": "Tài khoản nhóm",
       "description": "Mô tả"
     },
+    "actions": {
+      "cancel": "Hủy"
+    },
     "messages": {
       "loadError": "Không thể tải danh sách tài khoản",
       "createSuccess": "Tạo tài khoản thành công",
       "createError": "Không thể tạo tài khoản",
       "updateSuccess": "Cập nhật tài khoản thành công",
+      "updateError": "Không thể cập nhật tài khoản",
       "deleteSuccess": "Xóa tài khoản thành công",
       "deleteConfirm": "Bạn có chắc muốn xóa tài khoản này?"
     }
@@ -50,7 +55,8 @@
     },
     "status": {
       "draft": "Nháp",
-      "posted": "Đã ghi sổ"
+      "posted": "Đã ghi sổ",
+      "cancelled": "Đã hủy"
     },
     "form": {
       "title_create": "Thêm bút toán mới",
@@ -68,7 +74,9 @@
     "messages": {
       "loadError": "Không thể tải danh sách bút toán",
       "createSuccess": "Tạo bút toán thành công",
+      "createError": "Không thể tạo bút toán",
       "postSuccess": "Đã ghi sổ bút toán",
+      "postError": "Không thể ghi sổ bút toán",
       "deleteConfirm": "Bạn có chắc muốn xóa bút toán này?"
     }
   },

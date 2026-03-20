@@ -15,6 +15,7 @@
       "asset": "Asset",
       "liability": "Liability",
       "equity": "Equity",
+      "income": "Income",
       "revenue": "Revenue",
       "expense": "Expense"
     },
@@ -28,11 +29,15 @@
       "isGroup": "Group Account",
       "description": "Description"
     },
+    "actions": {
+      "cancel": "Cancel"
+    },
     "messages": {
       "loadError": "Failed to load accounts",
       "createSuccess": "Account created successfully",
       "createError": "Failed to create account",
       "updateSuccess": "Account updated successfully",
+      "updateError": "Failed to update account",
       "deleteSuccess": "Account deleted successfully",
       "deleteConfirm": "Are you sure you want to delete this account?"
     }
@@ -50,7 +55,8 @@
     },
     "status": {
       "draft": "Draft",
-      "posted": "Posted"
+      "posted": "Posted",
+      "cancelled": "Cancelled"
     },
     "form": {
       "title_create": "New Journal Entry",
@@ -68,7 +74,9 @@
     "messages": {
       "loadError": "Failed to load journal entries",
       "createSuccess": "Journal entry created",
+      "createError": "Failed to create journal entry",
       "postSuccess": "Journal entry posted",
+      "postError": "Failed to post journal entry",
       "deleteConfirm": "Are you sure you want to delete this entry?"
     }
   },
