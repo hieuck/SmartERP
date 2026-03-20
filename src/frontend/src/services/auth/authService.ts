@@ -1,4 +1,5 @@
 import api from './api';
+import { clearSessionRefreshHint } from '@/lib/auth/sessionRefresh';
 import { logger } from '@/lib/logger/logger.service';
 
 export interface RegisterRequest {
@@ -131,6 +132,8 @@ export const authService = {
     } catch (error: unknown) {
       // Log error but don't throw - logout should always succeed locally
       logger.error('AuthService', 'Logout error', error instanceof Error ? error : new Error('Logout error'));
+    } finally {
+      clearSessionRefreshHint();
     }
   },
 

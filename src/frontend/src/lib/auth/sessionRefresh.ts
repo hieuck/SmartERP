@@ -18,6 +18,14 @@ export function clearSessionRefreshHint() {
   document.cookie = `${SESSION_HINT_COOKIE_KEY}=; Max-Age=0; path=/; SameSite=Lax`;
 }
 
-export function shouldAttemptSessionRefresh(_pathname: string, hasHint = hasSessionRefreshHint()) {
-  return hasHint;
+export function hasInjectedE2ESession() {
+  return Boolean(sessionStorage.getItem('e2e_access_token') && sessionStorage.getItem('e2e_user'));
+}
+
+export function shouldAttemptSessionRefresh(
+  _pathname: string,
+  hasHint = hasSessionRefreshHint(),
+  hasInjectedSession = hasInjectedE2ESession(),
+) {
+  return hasHint || hasInjectedSession;
 }

@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { authService } from '@/services/auth/authService';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { clearCredentials } from '@/store/slices/authSlice';
@@ -45,6 +46,7 @@ export const useSessionTimeout = (config: UseSessionTimeoutConfig = {}) => {
     // Set logout timeout
     timeoutRef.current = setTimeout(() => {
       // Session expired due to inactivity
+      void authService.logout();
       dispatch(clearCredentials());
       navigate('/login', { replace: true });
     }, timeoutMs);

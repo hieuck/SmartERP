@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   clearSessionRefreshHint,
+  hasInjectedE2ESession,
   hasSessionRefreshHint,
   shouldAttemptSessionRefresh,
 } from './lib/auth/sessionRefresh';
@@ -8,6 +9,7 @@ import {
 describe('App auth bootstrap guards', () => {
   beforeEach(() => {
     document.cookie = 'session_hint=; Max-Age=0; path=/';
+    sessionStorage.clear();
   });
 
   it('detects session refresh hint cookie', () => {
@@ -36,5 +38,13 @@ describe('App auth bootstrap guards', () => {
   it('allows refresh only when a session hint exists', () => {
     expect(shouldAttemptSessionRefresh('/dashboard', true)).toBe(true);
     expect(shouldAttemptSessionRefresh('/login', true)).toBe(true);
+  });
+
+  it('restores E2E sessions without requiring a session hint cookie', () => {
+    sessionStorage.setItem('e2e_access_token', 'demo-token');
+    sessionStorage.setItem('e2e_user', JSON.stringify({ id: 'demo-user' }));
+
+    expect(hasInjectedE2ESession()).toBe(true);
+    expect(shouldAttemptSessionRefresh('/dashboard', false, true)).toBe(true);
   });
 });

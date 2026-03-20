@@ -2,6 +2,7 @@ import LanguageSwitcher from '@/components/common/LanguageSwitcher';
 import ThemeToggle from '@/components/common/ThemeToggle';
 import { OfflineStatus } from '@/components/OfflineStatus';
 import { useTheme } from '@/hooks/useTheme';
+import { authService } from '@/services/auth/authService';
 import { RootState } from '@/store';
 import { logout } from '@/store/slices/authSlice';
 import {
@@ -32,6 +33,7 @@ export default function Header({ collapsed, onToggle }: HeaderProps) {
   const user = useSelector((state: RootState) => state.auth.user);
 
   const handleLogout = () => {
+    void authService.logout();
     dispatch(logout());
     navigate('/login');
   };

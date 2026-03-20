@@ -183,12 +183,17 @@ describe('authService', () => {
   });
 
   describe('logout', () => {
+    beforeEach(() => {
+      document.cookie = 'session_hint=1; path=/';
+    });
+
     it('should logout successfully', async () => {
       mockApiPost.mockResolvedValue({});
 
       await authService.logout();
 
       expect(api.post).toHaveBeenCalledWith('/auth/logout');
+      expect(document.cookie.includes('session_hint=1')).toBe(false);
     });
 
     it('should not throw error on logout failure', async () => {
@@ -197,6 +202,7 @@ describe('authService', () => {
 
       await expect(authService.logout()).resolves.not.toThrow();
       expect(logger.error).toHaveBeenCalledWith('AuthService', 'Logout error', mockError);
+      expect(document.cookie.includes('session_hint=1')).toBe(false);
     });
   });
 

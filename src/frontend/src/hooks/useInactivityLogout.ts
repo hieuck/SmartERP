@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { authService } from '@/services/auth/authService';
 import { useDispatch } from 'react-redux';
 import { logout } from '@/store/slices/authSlice';
 import { message } from 'antd';
@@ -21,6 +22,7 @@ export const useInactivityLogout = () => {
     // Set new timeout
     timeoutRef.current = setTimeout(() => {
       message.warning('You have been logged out due to inactivity');
+      void authService.logout();
       dispatch(logout());
       window.location.href = '/login';
     }, INACTIVITY_TIMEOUT);
