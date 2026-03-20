@@ -13,6 +13,7 @@ const isUiRequested = args.includes('--ui');
 const hasUiHost = args.some((arg) => arg === '--ui-host' || arg.startsWith('--ui-host='));
 const hasUiPort = args.some((arg) => arg === '--ui-port' || arg.startsWith('--ui-port='));
 const normalizedArgs = [...args];
+const UI_REUSE_SAFE_ARGS = new Set(['test', '--ui']);
 
 function parseOptionValue(optionName, fallbackValue) {
   const optionIndex = normalizedArgs.findIndex((arg) => arg === optionName);
@@ -64,6 +65,29 @@ function spawnAndForward(cliArgs) {
 
     process.exit(code ?? 0);
   });
+}
+
+function isUiReuseSafeInvocation(cliArgs) {
+  for (let index = 0; index < cliArgs.length; index += 1) {
+    const arg = cliArgs[index];
+
+    if (UI_REUSE_SAFE_ARGS.has(arg)) {
+      continue;
+    }
+
+    if (arg === '--ui-host' || arg === '--ui-port') {
+      index += 1;
+      continue;
+    }
+
+    if (arg.startsWith('--ui-host=') || arg.startsWith('--ui-port=')) {
+      continue;
+    }
+
+    return false;
+  }
+
+  return true;
 }
 
 function canSpawnWithIpc() {
@@ -176,6 +200,17 @@ async function main() {
       const isPlaywrightUiAlreadyRunning = await servesPlaywrightUi(uiHost, uiPort);
 
       if (isPlaywrightUiAlreadyRunning) {
+        if (!isUiReuseSafeInvocation(normalizedArgs)) {
+          console.error(
+            [
+              `Playwright UI is already running on ${existingUiUrl}.`,
+              'This launcher will not silently reuse an existing UI session when extra test arguments are provided.',
+              'Stop the existing UI process or launch with a different `--ui-port` to guarantee the requested filters/projects are applied.',
+            ].join('\n'),
+          );
+          process.exit(1);
+        }
+
         console.error(
           [
             `Playwright UI is already running on ${existingUiUrl}.`,
