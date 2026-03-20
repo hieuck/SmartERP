@@ -22,6 +22,7 @@
   - `/forgot-password` now sends reset requests through the existing backend endpoint
   - `/reset-password?token=...` now supports a real frontend reset form instead of a dead route
   - runtime browser smoke now exercises both pages with the rest of the public auth flow
+  - dedicated Playwright coverage now verifies forgot-password success/error and reset-password invalid-token/success states
 - `/register` browser smoke is now clean again:
   - no console warnings
   - no console errors
