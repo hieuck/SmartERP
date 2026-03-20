@@ -1476,3 +1476,53 @@ Verification:
   - both production routes now render successfully with no console errors
   - frontend stderr remains empty after exercising the pages
   - backend stderr still only shows the known dependency-owned `DEP0169` warning from the bcrypt toolchain
+
+## 2026-03-20 Auth Bootstrap Refresh Noise Cleanup
+- Root cause:
+  - app bootstrap still relied on the `session_hint` cookie alone to decide whether to call `/api/auth/refresh`
+  - when the refresh-token cookie had already disappeared but `session_hint` remained, public route visits could still trigger useless refresh calls and backend log noise
+  - the public-route guard list was also incomplete, so some public pages were not treated consistently by the auth bootstrap helpers
+- Fixed in:
+  - [src/frontend/src/lib/auth/sessionRefresh.ts](/e:/GitHub/smart-erp/src/frontend/src/lib/auth/sessionRefresh.ts)
+  - [src/frontend/src/App.tsx](/e:/GitHub/smart-erp/src/frontend/src/App.tsx)
+  - [src/frontend/src/App.test.ts](/e:/GitHub/smart-erp/src/frontend/src/App.test.ts)
+  - [src/frontend/src/services/auth/authService.ts](/e:/GitHub/smart-erp/src/frontend/src/services/auth/authService.ts)
+  - [src/frontend/src/services/auth/authService.test.ts](/e:/GitHub/smart-erp/src/frontend/src/services/auth/authService.test.ts)
+  - [src/frontend/src/services/api/client.ts](/e:/GitHub/smart-erp/src/frontend/src/services/api/client.ts)
+- Implementation details:
+  - the session-refresh helper now recognizes all public auth/legal routes instead of only `/`, `/login`, and `/register`
+  - a small session-scoped negative cache now records recent refresh failures so stale `session_hint` cookies do not keep retriggering `/auth/refresh`
+  - successful login, register, and token refresh flows clear that failure cache so valid sessions still restore normally
+  - app bootstrap now marks failed refresh attempts explicitly and stops retrying the same stale session hint during the same browser session
+- Verified with:
+  - `npx.cmd vitest run src/App.test.ts src/services/auth/authService.test.ts src/services/api/client.test.ts` in `src/frontend`
+  - `npm.cmd run type-check` in `src/frontend`
+  - `npm.cmd run runtime:browser-smoke`
+  - targeted Playwright/Chromium public-route probe with a forced stale `session_hint` cookie, followed by backend log inspection
+- Current browser/runtime snapshot after the batch:
+  - public auth and legal routes remain clean in browser smoke
+  - forced stale `session_hint` probes no longer produced new `/api/auth/refresh` entries in the backend runtime log
+  - backend runtime log noise is now dominated by real backend drift rather than repeated anonymous refresh misses
+
+## 2026-03-20 BOM Route Standardization
+- Root cause:
+  - the manufacturing BOM cluster used singular route segments (`/dashboard/production/bom`) while adjacent manufacturing modules used plural resources
+  - browser validation against plural URLs showed blank pages with `No routes matched location`, which exposed the inconsistency
+  - BOM pages also still relied on static Ant Design feedback APIs, and the form table used `rowKey` based on the deprecated `index` parameter
+- Fixed in:
+  - [src/frontend/src/routes/index.tsx](/e:/GitHub/smart-erp/src/frontend/src/routes/index.tsx)
+  - [src/frontend/src/pages/production/BOMList.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/production/BOMList.tsx)
+  - [src/frontend/src/pages/production/BOMForm.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/production/BOMForm.tsx)
+- Implementation details:
+  - canonical manufacturing BOM routes now use `/dashboard/production/boms`, `/boms/new`, and `/boms/:id/edit`
+  - legacy singular aliases remain mounted so older links and bookmarks still work during the transition
+  - BOM list feedback now uses `App.useApp().message` and `App.useApp().modal.confirm`
+  - BOM form line items now carry stable local keys, so the embedded table no longer depends on deprecated index-based row keys
+- Verified with:
+  - `npx.cmd vitest run src/pages/production/BOMList.test.tsx` in `src/frontend`
+  - `npm.cmd run type-check` in `src/frontend`
+  - browser smoke via Playwright/Chromium against `/dashboard/production/boms`, `/dashboard/production/boms/new`, `/dashboard/production/bom`, and `/dashboard/production/bom/new`
+- Current browser/runtime snapshot after the batch:
+  - both canonical and legacy BOM URLs render successfully
+  - BOM form no longer emits the Ant Design `rowKey(index)` deprecation warning
+  - no new frontend stderr output was introduced by the route standardization

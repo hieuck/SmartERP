@@ -815,6 +815,30 @@ export function AppRoutes() {
           }
         />
         <Route
+          path="production/boms"
+          element={
+            <LazyRoute>
+              <BOMList />
+            </LazyRoute>
+          }
+        />
+        <Route
+          path="production/boms/new"
+          element={
+            <LazyRoute>
+              <BOMForm />
+            </LazyRoute>
+          }
+        />
+        <Route
+          path="production/boms/:id/edit"
+          element={
+            <LazyRoute>
+              <BOMForm />
+            </LazyRoute>
+          }
+        />
+        <Route
           path="production/bom"
           element={
             <LazyRoute>

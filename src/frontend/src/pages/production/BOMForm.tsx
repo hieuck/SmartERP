@@ -6,6 +6,7 @@ import manufacturingService, {
 import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  App,
   Button,
   Card,
   Col,
@@ -17,7 +18,6 @@ import {
   Space,
   Switch,
   Table,
-  message,
 } from 'antd';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -25,14 +25,23 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 const { Option } = Select;
 
+interface EditableBOMLine extends BOMLineItemDto {
+  key: string;
+}
+
+function createBOMLineKey() {
+  return `bom-line-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
 export default function BOMForm() {
   const { id } = useParams<{ id: string }>();
   const isEdit = Boolean(id);
+  const { message } = App.useApp();
   const navigate = useNavigate();
   const { t } = useTranslation('production');
   const queryClient = useQueryClient();
   const [form] = Form.useForm();
-  const [lines, setLines] = useState<BOMLineItemDto[]>([]);
+  const [lines, setLines] = useState<EditableBOMLine[]>([]);
 
   const { data: bom, isLoading: loadingData } = useQuery({
     queryKey: ['bom', id],
@@ -50,6 +59,7 @@ export default function BOMForm() {
       });
       setLines(
         bom.lines.map((l) => ({
+          key: createBOMLineKey(),
           productId: l.productId,
           quantity: l.quantity,
           unitCost: l.unitCost,
@@ -63,7 +73,7 @@ export default function BOMForm() {
     onSuccess: () => {
       message.success(t('messages.saveSuccess'));
       queryClient.invalidateQueries({ queryKey: ['boms'] });
-      navigate('/dashboard/production/bom');
+      navigate('/dashboard/production/boms');
     },
     onError: () => message.error(t('messages.saveError')),
   });
@@ -74,7 +84,7 @@ export default function BOMForm() {
       message.success(t('messages.saveSuccess'));
       queryClient.invalidateQueries({ queryKey: ['boms'] });
       queryClient.invalidateQueries({ queryKey: ['bom', id] });
-      navigate('/dashboard/production/bom');
+      navigate('/dashboard/production/boms');
     },
     onError: () => message.error(t('messages.saveError')),
   });
@@ -85,7 +95,7 @@ export default function BOMForm() {
       productQty: values.productQty as number,
       type: values.type as BOMType,
       isActive: values.isActive as boolean | undefined,
-      lines,
+      lines: lines.map(({ key, ...line }) => line),
     };
     if (isEdit) {
       updateMutation.mutate(dto);
@@ -94,7 +104,11 @@ export default function BOMForm() {
     }
   };
 
-  const addLine = () => setLines((prev) => [...prev, { productId: '', quantity: 1, unitCost: 0 }]);
+  const addLine = () =>
+    setLines((prev) => [
+      ...prev,
+      { key: createBOMLineKey(), productId: '', quantity: 1, unitCost: 0 },
+    ]);
 
   const removeLine = (index: number) => setLines((prev) => prev.filter((_, i) => i !== index));
 
@@ -108,7 +122,7 @@ export default function BOMForm() {
       title: t('bom.lineProductId'),
       dataIndex: 'productId',
       key: 'productId',
-      render: (v: string, _: BOMLineItemDto, i: number) => (
+      render: (v: string, _: EditableBOMLine, i: number) => (
         <Input
           value={v}
           size="small"
@@ -121,7 +135,7 @@ export default function BOMForm() {
       dataIndex: 'quantity',
       key: 'quantity',
       width: 110,
-      render: (v: number, _: BOMLineItemDto, i: number) => (
+      render: (v: number, _: EditableBOMLine, i: number) => (
         <InputNumber
           value={v}
           min={0.01}
@@ -136,7 +150,7 @@ export default function BOMForm() {
       dataIndex: 'unitCost',
       key: 'unitCost',
       width: 110,
-      render: (v: number, _: BOMLineItemDto, i: number) => (
+      render: (v: number, _: EditableBOMLine, i: number) => (
         <InputNumber
           value={v}
           min={0}
@@ -150,7 +164,7 @@ export default function BOMForm() {
       title: '',
       key: 'remove',
       width: 50,
-      render: (_: unknown, __: BOMLineItemDto, i: number) => (
+      render: (_: unknown, __: EditableBOMLine, i: number) => (
         <Button
           type="text"
           danger
@@ -168,7 +182,7 @@ export default function BOMForm() {
       loading={loadingData}
       extra={
         <Space>
-          <Button onClick={() => navigate('/dashboard/production/bom')}>
+          <Button onClick={() => navigate('/dashboard/production/boms')}>
             {t('actions.cancel')}
           </Button>
           <Button type="primary" onClick={() => form.submit()} loading={isSaving}>
@@ -227,9 +241,9 @@ export default function BOMForm() {
             {t('bom.addLine')}
           </Button>
         </Space>
-        <Table<BOMLineItemDto>
+        <Table<EditableBOMLine>
           size="small"
-          rowKey={(_, i) => String(i)}
+          rowKey="key"
           dataSource={lines}
           columns={lineColumns}
           pagination={false}

@@ -3,13 +3,14 @@ import manufacturingService, { BOM, BOMType } from '@/services/manufacturing/man
 import { ApartmentOutlined, DeleteOutlined, EditOutlined, MoreOutlined } from '@ant-design/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { MenuProps } from 'antd';
-import { Button, Dropdown, message, Modal, Space, Tag } from 'antd';
+import { App, Button, Dropdown, Space, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 export default function BOMList() {
+  const { message, modal } = App.useApp();
   const navigate = useNavigate();
   const { t } = useTranslation('production');
   const queryClient = useQueryClient();
@@ -51,7 +52,7 @@ export default function BOMList() {
       key: 'edit',
       icon: <EditOutlined />,
       label: t('actions.edit'),
-      onClick: () => navigate(`/dashboard/production/bom/${record.id}/edit`),
+      onClick: () => navigate(`/dashboard/production/boms/${record.id}/edit`),
     },
     { type: 'divider' as const },
     {
@@ -60,7 +61,7 @@ export default function BOMList() {
       label: t('actions.delete'),
       danger: true,
       onClick: () =>
-        Modal.confirm({
+        modal.confirm({
           title: t('messages.deleteConfirm'),
           onOk: () => deleteMutation.mutate(record.id),
         }),
@@ -77,7 +78,7 @@ export default function BOMList() {
         <Button
           type="link"
           style={{ padding: 0 }}
-          onClick={() => navigate(`/dashboard/production/bom/${record.id}/edit`)}
+          onClick={() => navigate(`/dashboard/production/boms/${record.id}/edit`)}
         >
           {text}
         </Button>
@@ -155,7 +156,7 @@ export default function BOMList() {
         </Space>
       }
       createButtonText={t('bom.create')}
-      onCreateClick={() => navigate('/dashboard/production/bom/new')}
+      onCreateClick={() => navigate('/dashboard/production/boms/new')}
       searchPlaceholder={t('bom.searchPlaceholder')}
       searchValue={search}
       onSearchChange={(v) => {
