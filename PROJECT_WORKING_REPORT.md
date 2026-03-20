@@ -23,6 +23,12 @@
   - deprecated Ant Design `Card` sizing and `Statistic.valueStyle` usage removed
   - shared list shell no longer relies on deprecated `List`/`bordered` APIs
   - browser smoke for `/dashboard` and `/dashboard/users` now reports no console warnings or errors
+- browser smoke is now codified as a repo tool:
+  - `npm run runtime:browser-smoke`
+  - covers login, register, dashboard, users, and search with a real demo session
+  - reports console warnings, console errors, failed requests, and a body preview per route
+- public demo credentials are now consistent between frontend UI and backend seed logs:
+  - login page now shows `admin@demo.com / admin123`
 
 ## Current Status Snapshot
 

@@ -29,6 +29,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 const { Header, Content } = Layout;
 const { Title, Text, Paragraph } = Typography;
 const { useToken } = theme;
+const DEMO_EMAIL = 'admin@demo.com';
+const DEMO_PASSWORD = 'admin123';
 
 /**
  * LoginPage Component
@@ -264,7 +266,7 @@ export default function LoginPage() {
                 >
                   <Input
                     prefix={<MailOutlined />}
-                    placeholder="admin@test.com"
+                    placeholder={DEMO_EMAIL}
                     size="large"
                     disabled={loginMutation.isPending}
                     type="email"
@@ -351,8 +353,8 @@ export default function LoginPage() {
                 {t('auth:login.demoAccount')}
               </Title>
               <Space orientation="vertical" size="small">
-                <Text>Email: admin@test.com</Text>
-                <Text>Password: admin123</Text>
+                <Text>Email: {DEMO_EMAIL}</Text>
+                <Text>Password: {DEMO_PASSWORD}</Text>
               </Space>
             </Card>
           </Col>

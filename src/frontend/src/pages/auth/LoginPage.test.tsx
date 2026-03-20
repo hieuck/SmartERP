@@ -301,7 +301,7 @@ describe('LoginPage', () => {
   it('should show demo credentials', () => {
     renderWithProviders(<LoginPage />);
 
-    expect(screen.getByText(/admin@test.com/i)).toBeInTheDocument();
+    expect(screen.getByText(/admin@demo.com/i)).toBeInTheDocument();
     expect(screen.getByText(/admin123/i)).toBeInTheDocument();
   });
 });
