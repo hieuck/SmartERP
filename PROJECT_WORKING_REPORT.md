@@ -853,3 +853,42 @@ Verification:
 - Verified with:
   - `npx.cmd vitest run src/components/collaboration/CommentSection.test.tsx src/components/documents/VersionHistory.test.tsx src/components/workflow/WorkflowBuilder.test.tsx`
   - targeted `eslint` on the three updated test files
+
+## 2026-03-20 Database Logging Hygiene
+- Introduced opt-in TypeORM query logging in:
+  - [src/backend/src/config/database.config.ts](/e:/GitHub/smart-erp/src/backend/src/config/database.config.ts)
+  - [src/backend/src/app.module.ts](/e:/GitHub/smart-erp/src/backend/src/app.module.ts)
+- Added focused coverage in [src/backend/src/config/database.config.spec.ts](/e:/GitHub/smart-erp/src/backend/src/config/database.config.spec.ts) for:
+  - development default without query logs
+  - production-style minimal logging
+  - explicit `DB_LOGGING=true|minimal|false`
+- Verified with:
+  - `npx.cmd jest src/config/database.config.spec.ts --runInBand`
+  - targeted backend `eslint`
+  - `npm.cmd run build` in `src/backend`
+  - fresh backend restart plus `npm.cmd run runtime:smoke`
+- Current conclusion:
+  - app-layer SQL `query:` noise is gone from the fresh backend runtime log
+  - backend stderr is down to dependency-level `DEP0169`, not repository code
+
+## 2026-03-20 Common Locale and Dashboard Feedback Cleanup
+- Repaired baseline localization quality in:
+  - [src/frontend/src/i18n/locales/vi/common.json](/e:/GitHub/smart-erp/src/frontend/src/i18n/locales/vi/common.json)
+  - [src/frontend/src/i18n/locales/en/common.json](/e:/GitHub/smart-erp/src/frontend/src/i18n/locales/en/common.json)
+- Reason for reprioritization:
+  - the Vietnamese common locale file was mojibake across the entire file, which is a higher-severity professionalism/localization issue than individual page warnings
+- Modernized dashboard feedback in [src/frontend/src/pages/Dashboard.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/Dashboard.tsx):
+  - replaced static `message.error(...)` with `App.useApp().message`
+  - removed manual string concatenation for error feedback
+- Added focused regression coverage in [src/frontend/src/pages/Dashboard.test.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/Dashboard.test.tsx) for:
+  - successful dashboard shell render
+  - contextual error message rendering on failed data load
+- Verified with:
+  - `npx.cmd vitest run src/pages/Dashboard.test.tsx`
+  - `npm.cmd run build` in `src/frontend`
+  - `npm.cmd run runtime:smoke`
+- Current runtime snapshot after the batch:
+  - frontend `127.0.0.1:5173` healthy
+  - backend health healthy on port `3000`
+  - database smoke healthy against `erp_production`
+  - frontend error log empty

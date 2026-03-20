@@ -18,7 +18,7 @@ import {
   UserOutlined,
   WarningOutlined,
 } from '@ant-design/icons';
-import { Card, Col, Row, Spin, Statistic, Table, message } from 'antd';
+import { App, Card, Col, Row, Spin, Statistic, Table } from 'antd';
 import dayjs from 'dayjs';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -50,6 +50,7 @@ function getErrorMessage(error: unknown, fallback: string): string {
 
 export default function Dashboard() {
   const { t, i18n } = useTranslation(['dashboard', 'common']);
+  const { message } = App.useApp();
   const { isMobile, isTablet } = useResponsive();
   const [loading, setLoading] = useState(true);
   const [overview, setOverview] = useState<DashboardOverview | null>(null);
@@ -80,7 +81,7 @@ export default function Dashboard() {
       setTopCustomers(customersData);
       setRevenueByCategory(categoryData);
     } catch (error: unknown) {
-      message.error(t('common:messages.error') + ': ' + getErrorMessage(error, t('common:messages.error')));
+      message.error(getErrorMessage(error, t('common:messages.error')));
     } finally {
       setLoading(false);
     }

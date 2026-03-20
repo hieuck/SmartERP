@@ -56,7 +56,7 @@
     "createSuccess": "Tạo mới thành công",
     "updateSuccess": "Cập nhật thành công",
     "saveSuccess": "Lưu thay đổi thành công",
-    "validationError": "Vui lòng kiểm tra lại form",
+    "validationError": "Vui lòng kiểm tra lại biểu mẫu",
     "networkError": "Lỗi kết nối. Vui lòng thử lại.",
     "unauthorized": "Bạn không có quyền thực hiện thao tác này",
     "sessionExpired": "Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại."
@@ -78,10 +78,10 @@
     "reason": "Lý do"
   },
   "actions": {
-    "title": "Thao Tác",
+    "title": "Thao tác",
     "delete": "Xóa",
     "cancel": "Hủy",
-    "confirm": "Xác Nhận"
+    "confirm": "Xác nhận"
   },
   "pagination": {
     "showing": "Hiển thị {{from}} đến {{to}} trong tổng số {{total}} mục",
