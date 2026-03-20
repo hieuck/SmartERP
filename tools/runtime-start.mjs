@@ -10,7 +10,8 @@ const frontendDir = path.join(rootDir, 'src', 'frontend');
 const backendDir = path.join(rootDir, 'src', 'backend');
 
 const frontendUrl = 'http://127.0.0.1:5173';
-const backendHealthUrl = 'http://127.0.0.1:3000/api/health';
+const backendLiveUrl = 'http://127.0.0.1:3000/api/health/live';
+const backendReadyUrl = 'http://127.0.0.1:3000/api/health';
 
 const services = {
   frontend: {
@@ -25,7 +26,7 @@ const services = {
   },
   backend: {
     cwd: backendDir,
-    url: backendHealthUrl,
+    url: backendLiveUrl,
     pidFile: path.join(outputDir, 'backend-runtime.pid'),
     stdoutFile: path.join(outputDir, 'backend-runtime.out.log'),
     stderrFile: path.join(outputDir, 'backend-runtime.err.log'),
@@ -215,7 +216,8 @@ async function main() {
         frontend,
         backend,
         frontendUrl,
-        backendHealthUrl,
+        backendLiveUrl,
+        backendReadyUrl,
       },
       null,
       2,

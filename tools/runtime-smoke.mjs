@@ -8,7 +8,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '..');
 
 const frontendUrl = process.env.FRONTEND_URL || 'http://127.0.0.1:5173';
-const backendHealthUrl = process.env.BACKEND_HEALTH_URL || 'http://127.0.0.1:3000/api/health';
+const backendLiveUrl = process.env.BACKEND_LIVE_URL || 'http://127.0.0.1:3000/api/health/live';
+const backendReadyUrl = process.env.BACKEND_HEALTH_URL || 'http://127.0.0.1:3000/api/health';
 const runtimeLogMaxAgeMs = Number(process.env.RUNTIME_LOG_MAX_AGE_MS || 5 * 60 * 1000);
 const dbConfig = {
   host: process.env.PGHOST || '127.0.0.1',
@@ -106,9 +107,10 @@ async function checkDatabase() {
 }
 
 async function main() {
-  const [frontend, backend, database, backendErrTail, frontendErrTail] = await Promise.all([
+  const [frontend, backendLive, backendReady, database, backendErrTail, frontendErrTail] = await Promise.all([
     checkHttp(frontendUrl),
-    checkHttp(backendHealthUrl),
+    checkHttp(backendLiveUrl),
+    checkHttp(backendReadyUrl),
     checkDatabase(),
     tailRecentFile('output/backend-runtime.err.log'),
     tailRecentFile('output/frontend-runtime.err.log'),
@@ -117,7 +119,10 @@ async function main() {
   const report = {
     checkedAt: new Date().toISOString(),
     frontend,
-    backend,
+    backend: {
+      live: backendLive,
+      ready: backendReady,
+    },
     database,
     logTails: {
       backendErrTail,
@@ -128,7 +133,7 @@ async function main() {
 
   console.log(JSON.stringify(report, null, 2));
 
-  const hasFailure = !frontend.ok || !backend.ok || !database.ok;
+  const hasFailure = !frontend.ok || !backendLive.ok || !database.ok;
   process.exitCode = hasFailure ? 1 : 0;
 }
 

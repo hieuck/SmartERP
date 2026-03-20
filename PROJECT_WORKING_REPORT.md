@@ -1350,3 +1350,22 @@ Verification:
   - public auth routes remain clean in browser smoke
   - no new frontend warnings or failed requests were introduced by the timeout cleanup
   - session expiry logic is now testable at hook level instead of living only in route side effects
+
+## 2026-03-20 Runtime Probe Separation
+- Root cause:
+  - runtime tooling was still treating `/api/health` as the single signal for “backend up”
+  - that endpoint is a deep readiness probe, so a short database wobble could make local runtime workflows look broken even when the HTTP process itself was alive
+  - the backend already exposed a lightweight liveness route, but the launcher and smoke tooling were not using it
+- Fixed in:
+  - [tools/runtime-start.mjs](/e:/GitHub/smart-erp/tools/runtime-start.mjs)
+  - [tools/runtime-smoke.mjs](/e:/GitHub/smart-erp/tools/runtime-smoke.mjs)
+- Implementation details:
+  - runtime start now waits on `/api/health/live` for backend liveness
+  - runtime smoke reports both backend `live` and backend `ready`
+  - smoke exit status now keys off frontend liveness, backend liveness, and direct database connectivity instead of treating deep readiness as the only “backend alive” signal
+- Verified with:
+  - `npm.cmd run runtime:start`
+  - `npm.cmd run runtime:smoke`
+- Current runtime snapshot after the batch:
+  - local runtime tooling is less noisy during transient DB turbulence
+  - readiness is still visible in reports without being conflated with process liveness
