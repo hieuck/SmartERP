@@ -6,6 +6,7 @@ import { offlineServices } from '@/services/offline-services';
 import { ArrowLeftOutlined, SaveOutlined, SyncOutlined, UserOutlined } from '@ant-design/icons';
 import { Badge, Button, Card, Form, Input, message, Select, Space, Typography } from 'antd';
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 
 const { Title } = Typography;
@@ -22,6 +23,7 @@ type UserFormValues = {
 };
 
 const UserForm: React.FC = () => {
+  const { t } = useTranslation('users');
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const isEdit = !!id;
@@ -31,24 +33,19 @@ const UserForm: React.FC = () => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [queueSize, setQueueSize] = useState(0);
 
-  // Monitor network status
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
-
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
-
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
   }, []);
 
-  // Load user data for edit
   const loadUser = async () => {
     if (!isEdit || !id) return;
-
     try {
       const user = await offlineServices.users.getById(id);
       if (user) {
@@ -63,38 +60,30 @@ const UserForm: React.FC = () => {
       }
     } catch (error) {
       logger.error('UserForm', 'Failed to load user', error as Error);
-      message.error('Không thể tải người dùng');
+      message.error(t('messages.loadError'));
     }
   };
 
-  // Load queue size
   const loadQueueSize = async () => {
     const size = await syncManager.getQueueSize();
     setQueueSize(size);
   };
 
-  // Initial load
   useEffect(() => {
     loadUser();
     loadQueueSize();
   }, [id]);
 
-  // Auto-sync when online
   useEffect(() => {
-    if (isOnline) {
-      handleSync();
-    }
+    if (isOnline) handleSync();
   }, [isOnline]);
 
-  // Manual sync
   const handleSync = async () => {
     const token = localStorage.getItem('token');
     if (!token) return;
-
     try {
       setSyncing(true);
       const result = await syncManager.sync(token);
-
       if (result.success) {
         await loadQueueSize();
         if (isEdit) await loadUser();
@@ -109,35 +98,27 @@ const UserForm: React.FC = () => {
   const handleSubmit = async (values: UserFormValues) => {
     try {
       setLoading(true);
-
       if (isEdit && id) {
-        // Update existing user
         await offlineServices.users.update(id, values);
-        message.success('Cập nhật người dùng thành công');
+        message.success(t('form.messages.updateSuccess'));
         logger.info('UserForm', 'User updated', { id });
       } else {
-        // Create new user via register endpoint (requires password)
-        // Note: This uses authService.register which creates user + auth
-        if (!values.password) {
-          throw new Error('Password is required');
-        }
-
+        if (!values.password) throw new Error('Password is required');
         await authService.register({
           email: values.email,
           password: values.password,
           firstName: values.firstName,
           lastName: values.lastName,
-          tenantId: 1, // Default tenant
+          tenantId: 1,
         });
-        message.success('Tạo người dùng thành công');
+        message.success(t('form.messages.createSuccess'));
         logger.info('UserForm', 'User created via register');
       }
-
       await loadQueueSize();
       navigate('/dashboard/users');
     } catch (error) {
       logger.error('UserForm', 'Failed to save user', error as Error);
-      message.error('Có lỗi xảy ra');
+      message.error(t('form.messages.saveError'));
     } finally {
       setLoading(false);
     }
@@ -146,10 +127,10 @@ const UserForm: React.FC = () => {
   return (
     <div style={{ padding: '24px' }}>
       <Card>
-          <Space orientation="vertical" style={{ width: '100%' }} size="large">
+        <Space orientation="vertical" style={{ width: '100%' }} size="large">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Title level={3}>
-              <UserOutlined /> {isEdit ? 'Chỉnh sửa người dùng' : 'Thêm người dùng mới'}
+              <UserOutlined /> {isEdit ? t('form.titleEdit') : t('form.titleCreate')}
             </Title>
             <Space>
               <Badge count={queueSize} offset={[-5, 5]}>
@@ -159,15 +140,15 @@ const UserForm: React.FC = () => {
                   loading={syncing}
                   disabled={!isOnline}
                 >
-                  Đồng bộ
+                  {t('sync.syncNow')}
                 </Button>
               </Badge>
               <Badge
                 status={isOnline ? 'success' : 'error'}
-                text={isOnline ? 'Online' : 'Offline'}
+                text={isOnline ? t('sync.online') : t('sync.offline')}
               />
               <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/dashboard/users')}>
-                Quay lại
+                {t('form.back')}
               </Button>
             </Space>
           </div>
@@ -176,17 +157,14 @@ const UserForm: React.FC = () => {
             form={form}
             layout="vertical"
             onFinish={handleSubmit}
-            initialValues={{
-              role: 'USER',
-              status: 'active',
-            }}
+            initialValues={{ role: 'USER', status: 'active' }}
           >
             <Form.Item
-              label="Email"
+              label={t('columns.email')}
               name="email"
               rules={[
-                { required: true, message: 'Vui lòng nhập email' },
-                { type: 'email', message: 'Email không hợp lệ' },
+                { required: true, message: t('form.validation.emailRequired') },
+                { type: 'email', message: t('form.validation.emailInvalid') },
               ]}
             >
               <Input placeholder="user@example.com" disabled={isEdit} />
@@ -194,72 +172,72 @@ const UserForm: React.FC = () => {
 
             {!isEdit && (
               <Form.Item
-                label="Mật khẩu"
+                label={t('form.fields.password')}
                 name="password"
                 rules={[
-                  { required: true, message: 'Vui lòng nhập mật khẩu' },
-                  { min: 6, message: 'Mật khẩu phải có ít nhất 6 ký tự' },
+                  { required: true, message: t('form.validation.passwordRequired') },
+                  { min: 6, message: t('form.validation.passwordMin') },
                 ]}
               >
-                <Input.Password placeholder="Nhập mật khẩu" />
+                <Input.Password placeholder={t('form.placeholders.password')} />
               </Form.Item>
             )}
 
             {!isEdit && (
               <Form.Item
-                label="Xác nhận mật khẩu"
+                label={t('form.fields.confirmPassword')}
                 name="confirmPassword"
                 dependencies={['password']}
                 rules={[
-                  { required: true, message: 'Vui lòng xác nhận mật khẩu' },
+                  { required: true, message: t('form.validation.confirmPasswordRequired') },
                   ({ getFieldValue }) => ({
                     validator(_, value) {
                       if (!value || getFieldValue('password') === value) {
                         return Promise.resolve();
                       }
-                      return Promise.reject(new Error('Mật khẩu không khớp'));
+                      return Promise.reject(new Error(t('form.validation.passwordMismatch')));
                     },
                   }),
                 ]}
               >
-                <Input.Password placeholder="Nhập lại mật khẩu" />
+                <Input.Password placeholder={t('form.placeholders.confirmPassword')} />
               </Form.Item>
             )}
 
             <Form.Item
-              label="Họ"
+              label={t('form.fields.firstName')}
               name="firstName"
-              rules={[{ required: true, message: 'Vui lòng nhập họ' }]}
+              rules={[{ required: true, message: t('form.validation.firstNameRequired') }]}
             >
-              <Input placeholder="Nguyễn" />
+              <Input placeholder={t('form.placeholders.firstName')} />
             </Form.Item>
 
             <Form.Item
-              label="Tên"
+              label={t('form.fields.lastName')}
               name="lastName"
-              rules={[{ required: true, message: 'Vui lòng nhập tên' }]}
+              rules={[{ required: true, message: t('form.validation.lastNameRequired') }]}
             >
-              <Input placeholder="Văn A" />
+              <Input placeholder={t('form.placeholders.lastName')} />
             </Form.Item>
 
             <Form.Item
-              label="Vai trò"
+              label={t('columns.role')}
               name="role"
-              rules={[{ required: true, message: 'Vui lòng chọn vai trò' }]}
+              rules={[{ required: true, message: t('form.validation.roleRequired') }]}
             >
-              <Select placeholder="Chọn vai trò">
-                <Option value="ADMIN">Quản trị viên</Option>
-                <Option value="MANAGER">Quản lý</Option>
-                <Option value="USER">Người dùng</Option>
-                <Option value="VIEWER">Xem</Option>
+              <Select placeholder={t('form.placeholders.role')}>
+                <Option value="ADMIN">{t('roles.admin')}</Option>
+                <Option value="MANAGER">{t('roles.manager')}</Option>
+                <Option value="USER">{t('roles.user')}</Option>
+                <Option value="VIEWER">{t('roles.viewer')}</Option>
               </Select>
             </Form.Item>
 
             {isEdit && (
-              <Form.Item label="Trạng thái" name="status">
-                <Select placeholder="Chọn trạng thái">
-                  <Option value="active">Hoạt động</Option>
-                  <Option value="inactive">Vô hiệu</Option>
+              <Form.Item label={t('columns.status')} name="status">
+                <Select placeholder={t('form.placeholders.status')}>
+                  <Option value="active">{t('status.active')}</Option>
+                  <Option value="inactive">{t('status.inactive')}</Option>
                 </Select>
               </Form.Item>
             )}
@@ -267,9 +245,11 @@ const UserForm: React.FC = () => {
             <Form.Item>
               <Space>
                 <Button type="primary" htmlType="submit" icon={<SaveOutlined />} loading={loading}>
-                  {isEdit ? 'Cập nhật' : 'Tạo mới'}
+                  {isEdit ? t('form.buttons.update') : t('form.buttons.create')}
                 </Button>
-                <Button onClick={() => navigate('/dashboard/users')}>Hủy</Button>
+                <Button onClick={() => navigate('/dashboard/users')}>
+                  {t('form.buttons.cancel')}
+                </Button>
               </Space>
             </Form.Item>
           </Form>

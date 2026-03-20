@@ -52,5 +52,45 @@
     "resetPasswordDescription": "Are you sure you want to reset password for this user?",
     "resetPasswordError": "Failed to reset password",
     "featureNotAvailable": "This feature is not yet available"
+  },
+  "form": {
+    "titleCreate": "Add New User",
+    "titleEdit": "Edit User",
+    "back": "Back",
+    "fields": {
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "firstName": "First Name",
+      "lastName": "Last Name"
+    },
+    "placeholders": {
+      "password": "Enter password",
+      "confirmPassword": "Re-enter password",
+      "firstName": "John",
+      "lastName": "Doe",
+      "role": "Select role",
+      "status": "Select status"
+    },
+    "validation": {
+      "emailRequired": "Please enter email",
+      "emailInvalid": "Invalid email",
+      "passwordRequired": "Please enter password",
+      "passwordMin": "Password must be at least 6 characters",
+      "confirmPasswordRequired": "Please confirm password",
+      "passwordMismatch": "Passwords do not match",
+      "firstNameRequired": "Please enter first name",
+      "lastNameRequired": "Please enter last name",
+      "roleRequired": "Please select a role"
+    },
+    "buttons": {
+      "update": "Update",
+      "create": "Create",
+      "cancel": "Cancel"
+    },
+    "messages": {
+      "updateSuccess": "User updated successfully",
+      "createSuccess": "User created successfully",
+      "saveError": "An error occurred"
+    }
   }
 }
