@@ -943,3 +943,53 @@ Verification:
   - frontend/backend/database smoke remains green
   - frontend stderr remains empty
   - backend stderr remains limited to dependency-level `DEP0169`
+
+## 2026-03-20 Session Hint Bootstrap Cleanup
+- Root cause:
+  - frontend bootstrap was probing `POST /api/auth/refresh` on public entry routes even when no refresh session could exist
+  - backend login/register flows did not expose a non-sensitive session hint, and logout did not clear auth cookies
+- Fixed backend session cookie handling in:
+  - [src/backend/src/core/auth/auth.controller.ts](/e:/GitHub/smart-erp/src/backend/src/core/auth/auth.controller.ts)
+  - [src/backend/src/core/auth/auth.controller.spec.ts](/e:/GitHub/smart-erp/src/backend/src/core/auth/auth.controller.spec.ts)
+- Fixed frontend bootstrap/refresh guard in:
+  - [src/frontend/src/App.tsx](/e:/GitHub/smart-erp/src/frontend/src/App.tsx)
+  - [src/frontend/src/App.test.ts](/e:/GitHub/smart-erp/src/frontend/src/App.test.ts)
+  - [src/frontend/src/services/api/client.ts](/e:/GitHub/smart-erp/src/frontend/src/services/api/client.ts)
+  - [src/frontend/src/services/api/client.test.ts](/e:/GitHub/smart-erp/src/frontend/src/services/api/client.test.ts)
+- Implementation details:
+  - backend now sets both `refreshToken` and `session_hint=1` on `login`, `register`, and `register-tenant`
+  - backend now clears both cookies on `logout`
+  - frontend now skips public-route refresh bootstrap when no `session_hint` cookie exists
+  - frontend clears `session_hint` locally if token refresh fails
+- Verified with:
+  - `npx.cmd jest src/core/auth/auth.controller.spec.ts --runInBand`
+  - `npx.cmd vitest run src/App.test.ts src/services/api/client.test.ts`
+  - `npm.cmd run build` in `src/backend`
+  - `npm.cmd run build` in `src/frontend`
+  - `npm.cmd run runtime:smoke`
+- Net effect:
+  - anonymous `/api/auth/refresh` bootstrap noise is no longer required for public-entry loads
+  - login/register/logout cookie behavior is now coherent across frontend and backend
+
+## 2026-03-20 Frontend Build Chunk Recovery
+- Root cause:
+  - `manualChunks` in [src/frontend/vite.config.ts](/e:/GitHub/smart-erp/src/frontend/vite.config.ts) was grouping by page names and under-matching Ant Design transitive packages
+  - this caused misleading giant route chunks first, then a monolithic `ui-vendor` chunk
+- Fixed chunk strategy in [src/frontend/vite.config.ts](/e:/GitHub/smart-erp/src/frontend/vite.config.ts):
+  - removed feature/page-based manual chunking
+  - split vendor families by dependency ecosystem instead:
+    - `react-vendor`
+    - `redux-vendor`
+    - `axios`
+    - `chart-vendor`
+    - `icons-vendor`
+    - `style-vendor`
+    - `rc-vendor`
+    - `ui-vendor`
+- Verified with:
+  - targeted frontend `eslint` on `vite.config.ts`
+  - `npm.cmd run build` in `src/frontend`
+- Net effect:
+  - `StockReceiptForm` route chunk dropped from ~1.2 MB to ~8 kB
+  - frontend build no longer emits the chunk-size warning
+  - the remaining large vendor chunks are now intentional dependency-family chunks instead of route-level accidents

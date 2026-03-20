@@ -35,6 +35,42 @@ export default defineConfig({
           // Vendor chunks
           if (id.includes('node_modules')) {
             if (
+              id.includes('/@ant-design/icons') ||
+              id.includes('\\@ant-design\\icons') ||
+              id.includes('/@ant-design/icons-svg') ||
+              id.includes('\\@ant-design\\icons-svg')
+            ) {
+              return 'icons-vendor';
+            }
+            if (
+              id.includes('/@emotion/') ||
+              id.includes('\\@emotion\\') ||
+              id.includes('/stylis/') ||
+              id.includes('\\stylis\\') ||
+              id.includes('/@ant-design/cssinjs') ||
+              id.includes('\\@ant-design\\cssinjs')
+            ) {
+              return 'style-vendor';
+            }
+            if (
+              id.includes('/@rc-component/') ||
+              id.includes('\\@rc-component\\') ||
+              id.includes('/rc-') ||
+              id.includes('\\rc-') ||
+              id.includes('/rc-util/') ||
+              id.includes('\\rc-util\\')
+            ) {
+              return 'rc-vendor';
+            }
+            if (
+              id.includes('/antd/') ||
+              id.includes('\\antd\\') ||
+              id.includes('/@ant-design/') ||
+              id.includes('\\@ant-design\\')
+            ) {
+              return 'ui-vendor';
+            }
+            if (
               id.includes('react') ||
               id.includes('react-dom') ||
               id.includes('react-router-dom')
@@ -47,9 +83,6 @@ export default defineConfig({
             if (id.includes('@tanstack/react-query')) {
               return 'query-vendor';
             }
-            if (id.includes('antd')) {
-              return 'ui-vendor';
-            }
             if (id.includes('recharts')) {
               return 'chart-vendor';
             }
@@ -60,25 +93,6 @@ export default defineConfig({
             ) {
               return 'form-vendor';
             }
-          }
-          // Feature chunks
-          if (
-            id.includes('SalesOrderList') ||
-            id.includes('SalesOrderForm') ||
-            id.includes('PurchaseOrderList') ||
-            id.includes('PurchaseOrderForm')
-          ) {
-            return 'orders';
-          }
-          if (
-            id.includes('StockList') ||
-            id.includes('StockReceiptList') ||
-            id.includes('StockReceiptForm')
-          ) {
-            return 'inventory';
-          }
-          if (id.includes('ReportsPage')) {
-            return 'reports';
           }
         },
       },
