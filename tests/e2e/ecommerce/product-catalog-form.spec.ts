@@ -27,12 +27,8 @@ test.describe('Ecommerce Product Catalog Form', () => {
   test('loads create mode route', async ({ page }) => {
     await page.goto('/dashboard/ecommerce/products/new');
 
-    await expect(
-      page.getByRole('heading', { name: /Thêm sản phẩm|New Product/i }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole('button', { name: /Tạo mới|Create/i }),
-    ).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Thêm sản phẩm|New Product/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Tạo mới|Create/i })).toBeVisible();
     await expect(page.getByPlaceholder(/SKU-001/i)).toBeVisible();
   });
 
