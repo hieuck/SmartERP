@@ -42,6 +42,39 @@ vi.mock('@ant-design/icons', () => ({
   DeleteOutlined: () => <span>icon-delete</span>,
 }));
 
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, values?: Record<string, string>) => {
+      const name = values?.name ?? '';
+      const date = values?.date ?? '';
+      const translations: Record<string, string> = {
+        'advancedFilters.title': 'Advanced Filters',
+        'advancedFilters.actions.reset': 'Reset',
+        'advancedFilters.actions.saveFilter': 'Save Filter',
+        'advancedFilters.actions.apply': 'Apply Filters',
+        'advancedFilters.actions.saveCurrent': 'Save Current Filters',
+        'advancedFilters.actions.load': 'Load',
+        'advancedFilters.actions.confirm': 'Yes',
+        'advancedFilters.actions.cancel': 'No',
+        'advancedFilters.messages.enterName': 'Please enter a filter name',
+        'advancedFilters.messages.atLeastOne': 'Please set at least one filter',
+        'advancedFilters.messages.saved': 'Filter saved successfully',
+        'advancedFilters.messages.loaded': `Filter "${name}" loaded`,
+        'advancedFilters.messages.deleted': 'Filter deleted',
+        'advancedFilters.savedFilters': 'Saved Filters',
+        'advancedFilters.deleteConfirm': 'Delete this filter?',
+        'advancedFilters.placeholders.filterName': 'Enter filter name',
+      };
+
+      if (key === 'advancedFilters.createdAt') {
+        return `Created: ${date}`;
+      }
+
+      return translations[key] ?? key;
+    },
+  }),
+}));
+
 vi.mock('antd', () => {
   const formInstance = {
     setFieldsValue: setFieldsValueMock,

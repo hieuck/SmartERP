@@ -1042,3 +1042,59 @@ Verification:
   - frontend/backend/database smoke remains green
   - frontend stderr remains empty
   - backend stderr remains limited to dependency-owned `DEP0169`
+
+## 2026-03-20 Stable Runtime Launcher
+- Root cause:
+  - managed local runtime was still implicitly relying on `nest start --watch` through backend `start:dev`
+  - on Windows, Nest CLI watch mode was crashing on restart because `treeKillSync` failed during `taskkill`, which made `runtime:smoke` unreliable even when app code was healthy
+- Fixed in:
+  - [package.json](/e:/GitHub/smart-erp/package.json)
+  - [tools/runtime-start.mjs](/e:/GitHub/smart-erp/tools/runtime-start.mjs)
+  - [tools/runtime-stop.mjs](/e:/GitHub/smart-erp/tools/runtime-stop.mjs)
+- Implementation details:
+  - added root `runtime:start` and `runtime:stop`
+  - `runtime:start` now:
+    - keeps the frontend Vite dev server if already healthy
+    - builds the backend once
+    - starts backend in stable mode via `node dist/main.js` instead of watch mode
+    - writes pid/log files under `output/`
+  - `runtime:stop` now stops only the runtime processes owned by these pid files
+  - repeated `runtime:start` runs are idempotent and report `already-running` when services are already healthy
+- Verified with:
+  - `npm.cmd run runtime:stop`
+  - `npm.cmd run runtime:start`
+  - `npm.cmd run runtime:start` again for idempotency
+  - `npm.cmd run runtime:smoke`
+- Current runtime snapshot after the batch:
+  - frontend `127.0.0.1:5173` healthy
+  - backend health on `3000` healthy
+  - database smoke healthy against `erp_production`
+  - backend stderr reduced to dependency-level `DEP0169`
+  - frontend stderr empty
+
+## 2026-03-20 Search Localization and Namespace Cleanup
+- Root cause:
+  - [src/frontend/src/pages/search/SearchResultsPage.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/search/SearchResultsPage.tsx) was using the wrong translation access pattern for the `search` namespace
+  - [src/frontend/src/components/search/GlobalSearchBar.tsx](/e:/GitHub/smart-erp/src/frontend/src/components/search/GlobalSearchBar.tsx) still contained hardcoded English placeholder, empty-state, and tag labels
+  - [src/frontend/src/i18n/locales/vi/search.json](/e:/GitHub/smart-erp/src/frontend/src/i18n/locales/vi/search.json) contained mojibake instead of clean Vietnamese copy
+- Fixed in:
+  - [src/frontend/src/components/search/AdvancedFilterPanel.tsx](/e:/GitHub/smart-erp/src/frontend/src/components/search/AdvancedFilterPanel.tsx)
+  - [src/frontend/src/components/search/AdvancedFilterPanel.test.tsx](/e:/GitHub/smart-erp/src/frontend/src/components/search/AdvancedFilterPanel.test.tsx)
+  - [src/frontend/src/components/search/GlobalSearchBar.tsx](/e:/GitHub/smart-erp/src/frontend/src/components/search/GlobalSearchBar.tsx)
+  - [src/frontend/src/components/search/GlobalSearchBar.test.tsx](/e:/GitHub/smart-erp/src/frontend/src/components/search/GlobalSearchBar.test.tsx)
+  - [src/frontend/src/pages/search/SearchResultsPage.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/search/SearchResultsPage.tsx)
+  - [src/frontend/src/i18n/locales/en/search.json](/e:/GitHub/smart-erp/src/frontend/src/i18n/locales/en/search.json)
+  - [src/frontend/src/i18n/locales/vi/search.json](/e:/GitHub/smart-erp/src/frontend/src/i18n/locales/vi/search.json)
+- Implementation details:
+  - kept `AdvancedFilterPanel` on the `search` namespace and localized all saved-filter user messages/labels
+  - moved `GlobalSearchBar` onto search translations for placeholder, empty state, and entity tags
+  - switched `SearchResultsPage` to `useTranslation('search')` and corrected all key lookups to match the namespace shape
+  - replaced mojibake Vietnamese search copy with clean localized strings
+- Verified with:
+  - `npx.cmd vitest run src/components/search/AdvancedFilterPanel.test.tsx src/components/search/GlobalSearchBar.test.tsx` in `src/frontend`
+  - `npm.cmd run build` in `src/frontend`
+  - `npm.cmd run runtime:smoke`
+- Current runtime snapshot after the batch:
+  - frontend/backend/database smoke remains green
+  - frontend stderr remains empty
+  - backend stderr remains limited to dependency-owned `DEP0169`

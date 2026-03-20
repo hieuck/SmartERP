@@ -4,6 +4,7 @@ import { SearchOutlined } from '@ant-design/icons';
 import { AutoComplete, Empty, Input, Spin, Tag } from 'antd';
 import { debounce } from 'lodash';
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 const { Search } = Input;
@@ -20,6 +21,7 @@ const GlobalSearchBar: React.FC = () => {
   const [options, setOptions] = useState<SearchOption[]>([]);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { t } = useTranslation('search');
 
   const performSearch = async (query: string) => {
     if (!query || query.length < 2) {
@@ -46,7 +48,7 @@ const GlobalSearchBar: React.FC = () => {
                 <span>
                   {source.name} ({source.sku})
                 </span>
-                <Tag color="blue">Product</Tag>
+                <Tag color="blue">{t('types.product')}</Tag>
               </div>
             );
             break;
@@ -58,7 +60,7 @@ const GlobalSearchBar: React.FC = () => {
                 <span>
                   {source.name} ({source.code})
                 </span>
-                <Tag color="green">Customer</Tag>
+                <Tag color="green">{t('types.customer')}</Tag>
               </div>
             );
             break;
@@ -70,7 +72,7 @@ const GlobalSearchBar: React.FC = () => {
                 <span>
                   {source.name} ({source.code})
                 </span>
-                <Tag color="orange">Supplier</Tag>
+                <Tag color="orange">{t('types.supplier')}</Tag>
               </div>
             );
             break;
@@ -79,8 +81,10 @@ const GlobalSearchBar: React.FC = () => {
               <div
                 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
               >
-                <span>Order {source.code}</span>
-                <Tag color="purple">{source.type === 'sales' ? 'Sales' : 'Purchase'}</Tag>
+                <span>
+                  {t('fields.order')} {source.code}
+                </span>
+                <Tag color="purple">{source.type === 'sales' ? t('types.sales') : t('types.purchase')}</Tag>
               </div>
             );
             break;
@@ -161,12 +165,12 @@ const GlobalSearchBar: React.FC = () => {
             <Spin />
           </div>
         ) : searchQuery.length >= 2 ? (
-          <Empty description="No results found" />
+          <Empty description={t('search.noResults')} />
         ) : null
       }
     >
       <Search
-        placeholder="Search products, customers, orders..."
+        placeholder={t('search.placeholder')}
         prefix={<SearchOutlined />}
         onSearch={handleSearch}
         loading={loading}

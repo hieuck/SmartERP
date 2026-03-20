@@ -35,5 +35,63 @@
     "order": "Đơn hàng",
     "status": "Trạng thái",
     "na": "Không có"
+  },
+  "advancedFilters": {
+    "title": "Bộ lọc nâng cao",
+    "savedFilters": "Bộ lọc đã lưu",
+    "deleteConfirm": "Xóa bộ lọc này?",
+    "createdAt": "Tạo lúc: {{date}}",
+    "actions": {
+      "reset": "Đặt lại",
+      "saveFilter": "Lưu bộ lọc",
+      "apply": "Áp dụng bộ lọc",
+      "saveCurrent": "Lưu bộ lọc hiện tại",
+      "load": "Tải",
+      "confirm": "Đồng ý",
+      "cancel": "Hủy"
+    },
+    "messages": {
+      "enterName": "Vui lòng nhập tên bộ lọc",
+      "atLeastOne": "Vui lòng thiết lập ít nhất một điều kiện lọc",
+      "saved": "Đã lưu bộ lọc thành công",
+      "loaded": "Đã tải bộ lọc \"{{name}}\"",
+      "deleted": "Đã xóa bộ lọc"
+    },
+    "fields": {
+      "category": "Danh mục",
+      "status": "Trạng thái",
+      "priceRange": "Khoảng giá",
+      "customerType": "Loại khách hàng",
+      "minRating": "Điểm đánh giá tối thiểu",
+      "orderType": "Loại đơn hàng",
+      "dateRange": "Khoảng ngày"
+    },
+    "placeholders": {
+      "enterCategory": "Nhập danh mục",
+      "selectStatus": "Chọn trạng thái",
+      "selectType": "Chọn loại",
+      "filterName": "Nhập tên bộ lọc",
+      "min": "Tối thiểu",
+      "max": "Tối đa",
+      "rating": "0-5"
+    },
+    "options": {
+      "active": "Hoạt động",
+      "inactive": "Ngừng hoạt động",
+      "discontinued": "Ngừng kinh doanh",
+      "blocked": "Bị khóa",
+      "individual": "Cá nhân",
+      "business": "Doanh nghiệp",
+      "reseller": "Đại lý",
+      "vip": "VIP",
+      "salesOrder": "Đơn bán hàng",
+      "purchaseOrder": "Đơn mua hàng",
+      "draft": "Nháp",
+      "confirmed": "Đã xác nhận",
+      "preparing": "Đang chuẩn bị",
+      "shipping": "Đang giao",
+      "completed": "Hoàn tất",
+      "cancelled": "Đã hủy"
+    }
   }
 }

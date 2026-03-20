@@ -35,5 +35,63 @@
     "order": "Order",
     "status": "Status",
     "na": "N/A"
+  },
+  "advancedFilters": {
+    "title": "Advanced Filters",
+    "savedFilters": "Saved Filters",
+    "deleteConfirm": "Delete this filter?",
+    "createdAt": "Created: {{date}}",
+    "actions": {
+      "reset": "Reset",
+      "saveFilter": "Save Filter",
+      "apply": "Apply Filters",
+      "saveCurrent": "Save Current Filters",
+      "load": "Load",
+      "confirm": "Yes",
+      "cancel": "No"
+    },
+    "messages": {
+      "enterName": "Please enter a filter name",
+      "atLeastOne": "Please set at least one filter",
+      "saved": "Filter saved successfully",
+      "loaded": "Filter \"{{name}}\" loaded",
+      "deleted": "Filter deleted"
+    },
+    "fields": {
+      "category": "Category",
+      "status": "Status",
+      "priceRange": "Price Range",
+      "customerType": "Customer Type",
+      "minRating": "Minimum Rating",
+      "orderType": "Order Type",
+      "dateRange": "Date Range"
+    },
+    "placeholders": {
+      "enterCategory": "Enter category",
+      "selectStatus": "Select status",
+      "selectType": "Select type",
+      "filterName": "Enter filter name",
+      "min": "Min",
+      "max": "Max",
+      "rating": "0-5"
+    },
+    "options": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "discontinued": "Discontinued",
+      "blocked": "Blocked",
+      "individual": "Individual",
+      "business": "Business",
+      "reseller": "Reseller",
+      "vip": "VIP",
+      "salesOrder": "Sales Order",
+      "purchaseOrder": "Purchase Order",
+      "draft": "Draft",
+      "confirmed": "Confirmed",
+      "preparing": "Preparing",
+      "shipping": "Shipping",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    }
   }
 }

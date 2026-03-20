@@ -51,7 +51,7 @@ function getDisplayValue(value: unknown, fallback = ''): string {
 }
 
 const SearchResultsPage: React.FC = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation('search');
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const [query, setQuery] = useState(searchParams.get('q') || '');
@@ -149,51 +149,51 @@ const SearchResultsPage: React.FC = () => {
     switch (type) {
       case 'products':
         icon = <ShoppingOutlined style={{ fontSize: 24, color: '#1890ff' }} />;
-        title = getStringValue(source.name, t('search.types.unknown'));
-        description = `${t('search.fields.sku')}: ${getDisplayValue(source.sku)} | ${t('search.fields.price')}: ${getDisplayValue(source.salePrice)} VND`;
+        title = getStringValue(source.name, t('types.unknown'));
+        description = `${t('fields.sku')}: ${getDisplayValue(source.sku)} | ${t('fields.price')}: ${getDisplayValue(source.salePrice)} VND`;
         tags = [
           <Tag color="blue" key="type">
-            {t('search.types.product')}
+            {t('types.product')}
           </Tag>,
           <Tag key="status">{getDisplayValue(source.status)}</Tag>,
         ];
         break;
       case 'customers':
         icon = <UserOutlined style={{ fontSize: 24, color: '#52c41a' }} />;
-        title = getStringValue(source.name, t('search.types.unknown'));
-        description = `${t('search.fields.code')}: ${getDisplayValue(source.code)} | ${t('search.fields.type')}: ${getDisplayValue(source.type)}`;
+        title = getStringValue(source.name, t('types.unknown'));
+        description = `${t('fields.code')}: ${getDisplayValue(source.code)} | ${t('fields.type')}: ${getDisplayValue(source.type)}`;
         tags = [
           <Tag color="green" key="type">
-            {t('search.types.customer')}
+            {t('types.customer')}
           </Tag>,
           <Tag key="status">{getDisplayValue(source.status)}</Tag>,
         ];
         break;
       case 'suppliers':
         icon = <TeamOutlined style={{ fontSize: 24, color: '#fa8c16' }} />;
-        title = getStringValue(source.name, t('search.types.unknown'));
-        description = `${t('search.fields.code')}: ${getDisplayValue(source.code)} | ${t('search.fields.rating')}: ${getDisplayValue(source.rating, t('search.fields.na'))}`;
+        title = getStringValue(source.name, t('types.unknown'));
+        description = `${t('fields.code')}: ${getDisplayValue(source.code)} | ${t('fields.rating')}: ${getDisplayValue(source.rating, t('fields.na'))}`;
         tags = [
           <Tag color="orange" key="type">
-            {t('search.types.supplier')}
+            {t('types.supplier')}
           </Tag>,
           <Tag key="status">{getDisplayValue(source.status)}</Tag>,
         ];
         break;
       case 'orders':
         icon = <ShoppingCartOutlined style={{ fontSize: 24, color: '#722ed1' }} />;
-        title = `${t('search.fields.order')} ${getDisplayValue(source.code)}`;
-        description = `${t('search.fields.total')}: ${getDisplayValue(source.totalAmount)} VND | ${t('search.fields.date')}: ${getDisplayValue(source.orderDate)}`;
+        title = `${t('fields.order')} ${getDisplayValue(source.code)}`;
+        description = `${t('fields.total')}: ${getDisplayValue(source.totalAmount)} VND | ${t('fields.date')}: ${getDisplayValue(source.orderDate)}`;
         tags = [
           <Tag color="purple" key="type">
-            {source.type === 'sales' ? t('search.types.sales') : t('search.types.purchase')}
+            {source.type === 'sales' ? t('types.sales') : t('types.purchase')}
           </Tag>,
           <Tag key="status">{getDisplayValue(source.status)}</Tag>,
         ];
         break;
       default:
         icon = <SearchOutlined style={{ fontSize: 24 }} />;
-        title = t('search.types.unknown');
+        title = t('types.unknown');
         description = '';
         tags = [];
     }
@@ -232,7 +232,7 @@ const SearchResultsPage: React.FC = () => {
           <Row gutter={16} align="middle">
             <Col flex="auto">
               <Search
-                placeholder={t('search.search.placeholder')}
+                placeholder={t('search.placeholder')}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onSearch={handleSearch}
@@ -248,7 +248,7 @@ const SearchResultsPage: React.FC = () => {
                   onClick={() => setFilterVisible(true)}
                   size="large"
                 >
-                  {t('search.search.filters')}
+                  {t('search.filters')}
                 </Button>
               </Col>
             )}
@@ -257,17 +257,17 @@ const SearchResultsPage: React.FC = () => {
           {results && (
             <div>
               <Text type="secondary">
-                {t('search.search.resultsFound', { count: results.hits.total.value, query })}
+                {t('search.resultsFound', { count: results.hits.total.value, query })}
               </Text>
             </div>
           )}
 
           <Tabs activeKey={activeTab} onChange={handleTabChange}>
-            <TabPane tab={t('search.tabs.all')} key="all" />
-            <TabPane tab={t('search.tabs.products')} key="products" />
-            <TabPane tab={t('search.tabs.customers')} key="customers" />
-            <TabPane tab={t('search.tabs.suppliers')} key="suppliers" />
-            <TabPane tab={t('search.tabs.orders')} key="orders" />
+            <TabPane tab={t('tabs.all')} key="all" />
+            <TabPane tab={t('tabs.products')} key="products" />
+            <TabPane tab={t('tabs.customers')} key="customers" />
+            <TabPane tab={t('tabs.suppliers')} key="suppliers" />
+            <TabPane tab={t('tabs.orders')} key="orders" />
           </Tabs>
 
           {loading ? (
@@ -283,13 +283,13 @@ const SearchResultsPage: React.FC = () => {
                 pageSize: 20,
                 total: results.hits.total.value,
                 showSizeChanger: true,
-                showTotal: (total) => t('search.search.totalItems', { total }),
+                showTotal: (total) => t('search.totalItems', { total }),
               }}
             />
           ) : query ? (
-            <Empty description={t('search.search.noResults')} />
+            <Empty description={t('search.noResults')} />
           ) : (
-            <Empty description={t('search.search.enterQuery')} />
+            <Empty description={t('search.enterQuery')} />
           )}
         </Space>
       </Card>
