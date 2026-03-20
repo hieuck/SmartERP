@@ -1,7 +1,26 @@
-import { DataSource } from 'typeorm';
+import { DataSource, LoggerOptions } from 'typeorm';
 import { config } from 'dotenv';
 
 config();
+
+export function getTypeOrmLogging(
+  nodeEnv = process.env.NODE_ENV,
+  dbLogging = process.env.DB_LOGGING,
+): LoggerOptions {
+  if (dbLogging === 'true') {
+    return ['error', 'warn', 'schema', 'migration', 'query'];
+  }
+
+  if (dbLogging === 'minimal') {
+    return ['error', 'warn', 'schema', 'migration'];
+  }
+
+  if (dbLogging === 'false') {
+    return false;
+  }
+
+  return nodeEnv === 'production' ? ['error', 'warn', 'schema', 'migration'] : false;
+}
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -16,16 +35,8 @@ export default new DataSource({
   username: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD || 'postgres',
   database: process.env.DB_NAME || 'erp_production',
-
-  // Entities - relative to backend root
   entities: isProduction ? ['dist/**/*.entity.js'] : ['src/**/*.entity.ts'],
-
-  // Migrations - relative to backend root
   migrations: isProduction ? ['dist/migrations/*.js'] : ['src/migrations/*.ts'],
-
-  // Disable synchronize - use migrations
   synchronize: false,
-
-  // Logging
-  logging: process.env.NODE_ENV === 'development',
+  logging: getTypeOrmLogging(),
 });

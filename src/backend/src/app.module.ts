@@ -62,6 +62,7 @@ import { PaymentGatewayModule } from './integrations/payment-gateway/payment-gat
 import { ShippingModule } from './integrations/shipping/shipping.module';
 
 import { getCacheConfig } from './config/cache.config';
+import { getTypeOrmLogging } from './config/database.config';
 import { HealthModule } from './utilities/health/health.module';
 import { ImportExportModule } from './utilities/import-export/import-export.module';
 import { ScheduledJobsModule } from './utilities/scheduled-jobs/scheduled-jobs.module';
@@ -94,7 +95,10 @@ import { CrmModule } from './domains/sales/crm/crm.module';
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
           autoLoadEntities: true,
           synchronize: false, // Always false - use migrations instead
-          logging: configService.get('NODE_ENV') === 'development',
+          logging: getTypeOrmLogging(
+            configService.get<string>('NODE_ENV'),
+            configService.get<string>('DB_LOGGING'),
+          ),
           migrations: isProduction
             ? [__dirname + '/dist/migrations/*.js']
             : [__dirname + '/../migrations/*.ts'],
