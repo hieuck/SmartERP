@@ -1679,3 +1679,40 @@ Verification:
   - the accounting list/form routes render clean empty states with no failed requests or console noise
   - authenticated backend probes for accounts and journal entries now return `200`
   - runtime log noise remains limited to the known dependency-owned `DEP0169` warning
+
+## 2026-03-20 Ecommerce Order Runtime Recovery
+- Root cause:
+  - the ecommerce order list route was failing for two real reasons at the same time: [src/backend/src/domains/ecommerce/order/order.controller.ts](/e:/GitHub/smart-erp/src/backend/src/domains/ecommerce/order/order.controller.ts) was missing auth guards on the controller, and the local database schema still reflected the older snake_case `orders` table without the `order_items` relation table expected by the current entities
+  - after the controller was protected, the runtime still failed because the service queried camelCase column names in raw QueryBuilder clauses against a snake_case PostgreSQL schema
+  - the frontend order list also depended on a slightly different payload shape (`totalAmount`) than the current backend entity (`total`)
+- Fixed in:
+  - [src/backend/src/domains/ecommerce/order/order.controller.ts](/e:/GitHub/smart-erp/src/backend/src/domains/ecommerce/order/order.controller.ts)
+  - [src/backend/src/domains/ecommerce/order/order.controller.spec.ts](/e:/GitHub/smart-erp/src/backend/src/domains/ecommerce/order/order.controller.spec.ts)
+  - [src/backend/src/domains/ecommerce/order/entities/order.entity.ts](/e:/GitHub/smart-erp/src/backend/src/domains/ecommerce/order/entities/order.entity.ts)
+  - [src/backend/src/domains/ecommerce/order/entities/order-item.entity.ts](/e:/GitHub/smart-erp/src/backend/src/domains/ecommerce/order/entities/order-item.entity.ts)
+  - [src/backend/src/domains/ecommerce/order/order.service.ts](/e:/GitHub/smart-erp/src/backend/src/domains/ecommerce/order/order.service.ts)
+  - [src/backend/src/domains/ecommerce/order/order.service.spec.ts](/e:/GitHub/smart-erp/src/backend/src/domains/ecommerce/order/order.service.spec.ts)
+  - [src/backend/src/migrations/1761007200000-RecoverEcommerceOrderTables.ts](/e:/GitHub/smart-erp/src/backend/src/migrations/1761007200000-RecoverEcommerceOrderTables.ts)
+  - [src/frontend/src/services/order/orderService.ts](/e:/GitHub/smart-erp/src/frontend/src/services/order/orderService.ts)
+  - [src/frontend/src/services/order/orderService.test.ts](/e:/GitHub/smart-erp/src/frontend/src/services/order/orderService.test.ts)
+  - [src/frontend/src/pages/ecommerce/EcommerceOrderList.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/ecommerce/EcommerceOrderList.tsx)
+  - [tools/browser-smoke.mjs](/e:/GitHub/smart-erp/tools/browser-smoke.mjs)
+- Implementation details:
+  - added guard protection back onto the order controller so `CurrentUser` is always available on protected ecommerce order routes
+  - mapped ecommerce order entities explicitly onto the local snake_case schema instead of pretending the database had camelCase columns
+  - added a recovery migration that creates `order_items`, adds the missing ecommerce order columns, and backfills line items from the legacy JSONB `orders.items` payload when possible
+  - updated raw QueryBuilder filters/order clauses in the backend service to use the actual snake_case column names
+  - normalized the frontend order service so list/detail consumers can safely use `totalAmount` while the backend keeps `total_amount` mapped to the entity field `total`
+  - added `/dashboard/ecommerce/orders` to browser smoke to keep this route under ongoing runtime watch
+- Verified with:
+  - `npm.cmd run db:init` in `src/backend`
+  - `npm.cmd run build` in `src/backend`
+  - `npx.cmd jest src/domains/ecommerce/order/order.service.spec.ts src/domains/ecommerce/order/order.controller.spec.ts --runInBand` in `src/backend`
+  - `npx.cmd vitest run src/services/order/orderService.test.ts` in `src/frontend`
+  - `npm.cmd run type-check` in `src/frontend`
+  - direct authenticated probes to `/api/orders` and `/api/orders/statistics`
+  - `npm.cmd run runtime:browser-smoke`
+- Current browser/runtime snapshot after the batch:
+  - authenticated ecommerce order APIs now return `200` instead of `500`
+  - `/dashboard/ecommerce/orders` is part of browser smoke coverage alongside the broader ecommerce surfaces
+  - backend stderr remains clean apart from the known dependency-owned `DEP0169` deprecation warning

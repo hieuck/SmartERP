@@ -28,7 +28,7 @@ describe('orderService', () => {
       paymentStatus: PaymentStatus.UNPAID,
     };
     const response = { data: [{ id: 'order-1', orderNumber: 'SO-001' }], meta: { total: 1 } };
-    mockApiGet.mockResolvedValue({ data: response });
+    mockApiGet.mockResolvedValue({ data: { data: response.data, meta: response.meta } });
 
     const result = await orderService.getAll(params);
 
@@ -38,7 +38,7 @@ describe('orderService', () => {
 
   it('gets an order by id', async () => {
     const order = { id: 'order-1', orderNumber: 'SO-001', status: OrderStatus.DRAFT };
-    mockApiGet.mockResolvedValue({ data: order });
+    mockApiGet.mockResolvedValue({ data: { data: order } });
 
     const result = await orderService.getById('order-1');
 
@@ -55,7 +55,7 @@ describe('orderService', () => {
       shippingFee: 5,
     };
     const created = { id: 'order-1', ...payload, status: OrderStatus.DRAFT };
-    mockApiPost.mockResolvedValue({ data: created });
+    mockApiPost.mockResolvedValue({ data: { data: created } });
 
     const result = await orderService.create(payload);
 
@@ -69,7 +69,7 @@ describe('orderService', () => {
       notes: 'Urgent delivery',
     };
     const updated = { id: 'order-1', ...payload };
-    mockApiPut.mockResolvedValue({ data: updated });
+    mockApiPut.mockResolvedValue({ data: { data: updated } });
 
     const result = await orderService.update('order-1', payload);
 
@@ -88,8 +88,8 @@ describe('orderService', () => {
   it('confirms and cancels an order', async () => {
     const confirmed = { id: 'order-1', status: OrderStatus.CONFIRMED };
     const cancelled = { id: 'order-1', status: OrderStatus.CANCELLED };
-    mockApiPost.mockResolvedValueOnce({ data: confirmed });
-    mockApiPost.mockResolvedValueOnce({ data: cancelled });
+    mockApiPost.mockResolvedValueOnce({ data: { data: confirmed } });
+    mockApiPost.mockResolvedValueOnce({ data: { data: cancelled } });
 
     const confirmedResult = await orderService.confirm('order-1');
     const cancelledResult = await orderService.cancel('order-1', 'Customer changed mind');
@@ -104,7 +104,7 @@ describe('orderService', () => {
 
   it('updates order status', async () => {
     const updated = { id: 'order-1', status: OrderStatus.SHIPPED };
-    mockApiPatch.mockResolvedValue({ data: updated });
+    mockApiPatch.mockResolvedValue({ data: { data: updated } });
 
     const result = await orderService.updateStatus('order-1', OrderStatus.SHIPPED);
 
@@ -120,7 +120,7 @@ describe('orderService', () => {
       paidAmount: 150,
       paymentStatus: PaymentStatus.PARTIAL,
     };
-    mockApiPost.mockResolvedValue({ data: updated });
+    mockApiPost.mockResolvedValue({ data: { data: updated } });
 
     const result = await orderService.recordPayment('order-1', 150);
 
@@ -148,7 +148,7 @@ describe('orderService', () => {
         [PaymentStatus.PAID]: 70,
       },
     };
-    mockApiGet.mockResolvedValue({ data: stats });
+    mockApiGet.mockResolvedValue({ data: { data: stats } });
 
     const result = await orderService.getStatistics();
 

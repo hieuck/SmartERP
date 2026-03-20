@@ -4,18 +4,23 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Patch,
   Post,
   Query,
   Req,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
 import { CacheTTL } from '../../../common/decorators/cache-ttl.decorator';
+import { TenantGuard } from '../../../common/guards/tenant.guard';
 import { CacheInterceptor } from '../../../common/interceptors/cache.interceptor';
 import { CacheTTL as CacheTTLConstant } from '../../../config/cache.config';
+import { JwtAuthGuard } from '../../../core/auth/guards/jwt-auth.guard';
 import { CancelOrderDto } from './dto/cancel-order.dto';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { ProcessPaymentDto, VerifyPaymentDto } from './dto/payment.dto';
@@ -30,6 +35,8 @@ type RequestWithUser = Request & {
 };
 
 @ApiTags('Orders')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard, TenantGuard)
 @Controller('orders')
 export class OrderController {
   constructor(
@@ -124,6 +131,7 @@ export class OrderController {
   }
 
   @Post(':id/cancel')
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Cancel order' })
   @ApiResponse({ status: 200, description: 'Order cancelled successfully' })
   @ApiResponse({ status: 400, description: 'Order cannot be cancelled' })
@@ -134,6 +142,7 @@ export class OrderController {
   }
 
   @Post('payment/process')
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Process payment' })
   @ApiResponse({ status: 200, description: 'Payment processed successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
@@ -142,6 +151,7 @@ export class OrderController {
   }
 
   @Post('payment/verify')
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Verify payment' })
   @ApiResponse({ status: 200, description: 'Payment verified successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
@@ -150,6 +160,7 @@ export class OrderController {
   }
 
   @Post('payment/refund')
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Refund payment' })
   @ApiResponse({ status: 200, description: 'Payment refunded successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })

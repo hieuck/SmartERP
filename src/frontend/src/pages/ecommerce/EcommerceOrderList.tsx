@@ -1,8 +1,8 @@
 import StandardListPage from '@/components/common/StandardListPage';
+import orderService from '@/services/order/orderService';
 import { useQuery } from '@tanstack/react-query';
 import { Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import axios from 'axios';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -10,7 +10,8 @@ interface EcommerceOrder {
   id: string;
   orderNumber: string;
   customerId: string;
-  totalAmount: number;
+  totalAmount?: number;
+  total?: number;
   status: string;
   paymentStatus: string;
   createdAt: string;
@@ -39,10 +40,7 @@ export default function EcommerceOrderList() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['ecommerce-orders'],
-    queryFn: async () => {
-      const res = await axios.get('/api/orders');
-      return res.data;
-    },
+    queryFn: () => orderService.getAll({}),
   });
 
   const orders: EcommerceOrder[] = Array.isArray(data) ? data : (data?.data ?? []);
@@ -62,7 +60,8 @@ export default function EcommerceOrderList() {
       title: t('orders.columns.total'),
       dataIndex: 'totalAmount',
       key: 'totalAmount',
-      render: (v: number) => v?.toLocaleString(),
+      render: (_: number | undefined, record: EcommerceOrder) =>
+        (record.totalAmount ?? record.total ?? 0).toLocaleString(),
     },
     {
       title: t('orders.columns.status'),

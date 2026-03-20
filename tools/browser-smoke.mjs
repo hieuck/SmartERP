@@ -31,6 +31,7 @@ const protectedRoutes = [
   '/dashboard/settings/print',
   '/dashboard/production/work-centers',
   '/dashboard/production/work-orders',
+  '/dashboard/ecommerce/orders',
   '/dashboard/ecommerce/products',
   '/dashboard/ecommerce/products/new',
 ];

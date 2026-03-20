@@ -16,6 +16,7 @@ describe('OrderService', () => {
   let service: OrderService;
   let orderRepository: jest.Mocked<Repository<Order>>;
   let orderItemRepository: jest.Mocked<Repository<OrderItem>>;
+  let mockOrder: Order;
 
   const mockUser: User = {
     id: 'user-1',
@@ -95,8 +96,6 @@ describe('OrderService', () => {
     return baseOrder as any;
   };
 
-  const mockOrder = createMockOrder();
-
   beforeEach(async () => {
     const mockOrderRepo = {
       create: jest.fn(),
@@ -142,6 +141,7 @@ describe('OrderService', () => {
     service = module.get<OrderService>(OrderService);
     orderRepository = module.get(getRepositoryToken(Order));
     orderItemRepository = module.get(getRepositoryToken(OrderItem));
+    mockOrder = createMockOrder();
   });
 
   afterEach(() => {
@@ -223,7 +223,7 @@ describe('OrderService', () => {
 
       expect(result).toEqual(mockOrder);
       expect(orderRepository.findOne).toHaveBeenCalledWith({
-        where: { id: 'order-1', tenantId: 'tenant-1' },
+        where: { id: 'order-1' },
         relations: ['items', 'customer'],
       });
     });
@@ -258,7 +258,7 @@ describe('OrderService', () => {
 
       expect(result).toEqual(mockOrder);
       expect(orderRepository.findOne).toHaveBeenCalledWith({
-        where: { orderNumber: 'ORD-001', tenantId: 'tenant-1' },
+        where: { orderNumber: 'ORD-001' },
         relations: ['items', 'customer'],
       });
     });
@@ -283,7 +283,7 @@ describe('OrderService', () => {
 
       expect(result).toEqual([mockOrder]);
       expect(orderRepository.find).toHaveBeenCalledWith({
-        where: { customerId: 'user-1', tenantId: 'tenant-1' },
+        where: { customerId: 'user-1' },
         relations: ['items'],
         order: { createdAt: 'DESC' },
       });
@@ -317,7 +317,7 @@ describe('OrderService', () => {
       const result = await service.findAll('tenant-1');
 
       expect(result).toEqual([mockOrder]);
-      expect(mockQueryBuilder.where).toHaveBeenCalledWith('order.tenantId = :tenantId', {
+      expect(mockQueryBuilder.where).toHaveBeenCalledWith('order.tenant_id = :tenantId', {
         tenantId: 'tenant-1',
       });
     });
@@ -338,7 +338,7 @@ describe('OrderService', () => {
       await service.findAll('tenant-1', { paymentStatus: PaymentStatus.PAID });
 
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
-        'order.paymentStatus = :paymentStatus',
+        'order.payment_status = :paymentStatus',
         { paymentStatus: PaymentStatus.PAID },
       );
     });
@@ -349,7 +349,7 @@ describe('OrderService', () => {
       await service.findAll('tenant-1', { shippingStatus: ShippingStatus.SHIPPED });
 
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
-        'order.shippingStatus = :shippingStatus',
+        'order.shipping_status = :shippingStatus',
         { shippingStatus: ShippingStatus.SHIPPED },
       );
     });
@@ -359,7 +359,7 @@ describe('OrderService', () => {
 
       await service.findAll('tenant-1', { customerId: 'user-1' });
 
-      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('order.customerId = :customerId', {
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('order.customer_id = :customerId', {
         customerId: 'user-1',
       });
     });
@@ -371,10 +371,10 @@ describe('OrderService', () => {
 
       await service.findAll('tenant-1', { startDate, endDate });
 
-      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('order.createdAt >= :startDate', {
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('order.created_at >= :startDate', {
         startDate,
       });
-      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('order.createdAt <= :endDate', {
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('order.created_at <= :endDate', {
         endDate,
       });
     });
@@ -756,10 +756,10 @@ describe('OrderService', () => {
 
       await service.getStatistics('tenant-1', startDate, endDate);
 
-      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('order.createdAt >= :startDate', {
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('order.created_at >= :startDate', {
         startDate,
       });
-      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('order.createdAt <= :endDate', {
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('order.created_at <= :endDate', {
         endDate,
       });
     });

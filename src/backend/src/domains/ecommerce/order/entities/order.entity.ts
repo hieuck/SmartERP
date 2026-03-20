@@ -25,23 +25,24 @@ export class Order {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ unique: true })
+  @Column({ name: 'order_number', unique: true })
   orderNumber: string; // ORD-YYYY-NNNN
 
-  @Column({ nullable: true })
+  @Column({ name: 'customer_id', nullable: true })
   customerId: string;
 
   @ManyToOne('User', { nullable: true })
-  @JoinColumn({ name: 'customerId' })
+  @JoinColumn({ name: 'customer_id' })
   customer: User;
 
-  @Column({ nullable: true })
+  @Column({ name: 'cart_id', nullable: true })
   cartId: string; // Reference to original cart
 
   @Column({ type: 'enum', enum: OrderStatus, default: OrderStatus.PENDING })
   status: OrderStatus;
 
   @Column({
+    name: 'payment_status',
     type: 'enum',
     enum: PaymentStatus,
     default: PaymentStatus.PENDING,
@@ -49,6 +50,7 @@ export class Order {
   paymentStatus: PaymentStatus;
 
   @Column({
+    name: 'shipping_status',
     type: 'enum',
     enum: ShippingStatus,
     default: ShippingStatus.PENDING,
@@ -74,74 +76,74 @@ export class Order {
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   discount: number;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  @Column({ name: 'total_amount', type: 'decimal', precision: 10, scale: 2, default: 0 })
   total: number;
 
   // Coupon
-  @Column({ nullable: true })
+  @Column({ name: 'coupon_code', nullable: true })
   couponCode: string;
 
   // Customer info
-  @Column()
+  @Column({ name: 'customer_email' })
   customerEmail: string;
 
-  @Column({ nullable: true })
+  @Column({ name: 'customer_phone', nullable: true })
   customerPhone: string;
 
   // Addresses (JSON for flexibility)
-  @Column({ type: 'jsonb' })
+  @Column({ name: 'shipping_address', type: 'jsonb' })
   shippingAddress: unknown;
 
-  @Column({ type: 'jsonb' })
+  @Column({ name: 'billing_address', type: 'jsonb' })
   billingAddress: unknown;
 
   // Payment info
-  @Column({ nullable: true })
+  @Column({ name: 'payment_method', nullable: true })
   paymentMethod: string; // stripe, paypal, vnpay, momo, cod
 
-  @Column({ nullable: true })
+  @Column({ name: 'payment_transaction_id', nullable: true })
   paymentTransactionId: string;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ name: 'paid_at', type: 'timestamp', nullable: true })
   paidAt: Date;
 
   // Shipping info
-  @Column({ nullable: true })
+  @Column({ name: 'shipping_method', nullable: true })
   shippingMethod: string;
 
-  @Column({ nullable: true })
+  @Column({ name: 'tracking_number', nullable: true })
   trackingNumber: string;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ name: 'shipped_at', type: 'timestamp', nullable: true })
   shippedAt: Date;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ name: 'delivered_at', type: 'timestamp', nullable: true })
   deliveredAt: Date;
 
   // Notes
-  @Column({ type: 'text', nullable: true })
+  @Column({ name: 'customer_notes', type: 'text', nullable: true })
   customerNotes: string;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ name: 'internal_notes', type: 'text', nullable: true })
   internalNotes: string;
 
   // Cancellation
-  @Column({ nullable: true })
+  @Column({ name: 'cancelled_by', nullable: true })
   cancelledBy: string;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ name: 'cancellation_reason', type: 'text', nullable: true })
   cancellationReason: string;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ name: 'cancelled_at', type: 'timestamp', nullable: true })
   cancelledAt: Date;
 
-  @Column()
+  @Column({ name: 'tenant_id' })
   tenantId: string;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
   // Auto-generate order number

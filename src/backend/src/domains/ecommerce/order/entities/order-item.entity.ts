@@ -17,23 +17,23 @@ export class OrderItem {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
+  @Column({ name: 'order_id' })
   orderId: string;
 
   @ManyToOne(() => Order, (order) => order.items, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'orderId' })
+  @JoinColumn({ name: 'order_id' })
   order: Order;
 
-  @Column({ nullable: true })
+  @Column({ name: 'product_id', nullable: true })
   productId: string;
 
-  @Column()
+  @Column({ name: 'product_name' })
   productName: string;
 
-  @Column()
+  @Column({ name: 'product_sku' })
   productSku: string;
 
-  @Column({ nullable: true })
+  @Column({ name: 'product_image', nullable: true })
   productImage: string;
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
@@ -42,19 +42,19 @@ export class OrderItem {
   @Column({ type: 'integer' })
   quantity: number;
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ name: 'selected_variant', type: 'jsonb', nullable: true })
   selectedVariant: unknown;
 
   @Column({ type: 'text', nullable: true })
   notes: string;
 
-  @Column()
+  @Column({ name: 'tenant_id' })
   tenantId: string;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
   // Helper: Calculate line total

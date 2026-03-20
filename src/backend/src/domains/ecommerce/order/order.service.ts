@@ -122,37 +122,37 @@ export class OrderService {
       .createQueryBuilder('order')
       .leftJoinAndSelect('order.items', 'items')
       .leftJoinAndSelect('order.customer', 'customer')
-      .where('order.tenantId = :tenantId', { tenantId });
+      .where('order.tenant_id = :tenantId', { tenantId });
 
     if (filters?.status) {
       query.andWhere('order.status = :status', { status: filters.status });
     }
 
     if (filters?.paymentStatus) {
-      query.andWhere('order.paymentStatus = :paymentStatus', {
+      query.andWhere('order.payment_status = :paymentStatus', {
         paymentStatus: filters.paymentStatus,
       });
     }
 
     if (filters?.shippingStatus) {
-      query.andWhere('order.shippingStatus = :shippingStatus', {
+      query.andWhere('order.shipping_status = :shippingStatus', {
         shippingStatus: filters.shippingStatus,
       });
     }
 
     if (filters?.customerId) {
-      query.andWhere('order.customerId = :customerId', { customerId: filters.customerId });
+      query.andWhere('order.customer_id = :customerId', { customerId: filters.customerId });
     }
 
     if (filters?.startDate) {
-      query.andWhere('order.createdAt >= :startDate', { startDate: filters.startDate });
+      query.andWhere('order.created_at >= :startDate', { startDate: filters.startDate });
     }
 
     if (filters?.endDate) {
-      query.andWhere('order.createdAt <= :endDate', { endDate: filters.endDate });
+      query.andWhere('order.created_at <= :endDate', { endDate: filters.endDate });
     }
 
-    query.orderBy('order.createdAt', 'DESC');
+    query.orderBy('order.created_at', 'DESC');
     return query.getMany();
   }
 
@@ -286,14 +286,14 @@ export class OrderService {
   }> {
     const query = this.orderRepository
       .createQueryBuilder('order')
-      .where('order.tenantId = :tenantId', { tenantId });
+      .where('order.tenant_id = :tenantId', { tenantId });
 
     if (startDate) {
-      query.andWhere('order.createdAt >= :startDate', { startDate });
+      query.andWhere('order.created_at >= :startDate', { startDate });
     }
 
     if (endDate) {
-      query.andWhere('order.createdAt <= :endDate', { endDate });
+      query.andWhere('order.created_at <= :endDate', { endDate });
     }
 
     const orders = await query.getMany();

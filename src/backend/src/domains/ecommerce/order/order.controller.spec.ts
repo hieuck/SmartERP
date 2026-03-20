@@ -67,6 +67,10 @@ describe('OrderController (Integration)', () => {
     ],
     createdAt: new Date('2024-01-01'),
   };
+  const serializedMockOrder = {
+    ...mockOrder,
+    createdAt: mockOrder.createdAt.toISOString(),
+  };
 
   const mockCreateOrderDto = {
     customerEmail: 'customer@example.com',
@@ -186,7 +190,7 @@ describe('OrderController (Integration)', () => {
         .send(mockCreateOrderDto)
         .expect(201);
 
-      expect(response.body).toEqual(mockOrder);
+      expect(response.body).toEqual(serializedMockOrder);
       expect(orderService.create).toHaveBeenCalledWith(mockCreateOrderDto, mockUser);
     });
 
@@ -212,7 +216,7 @@ describe('OrderController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual([mockOrder]);
+      expect(response.body).toEqual([serializedMockOrder]);
       expect(orderService.findAll).toHaveBeenCalledWith('tenant-123', {
         status: undefined,
         paymentStatus: undefined,
@@ -373,7 +377,7 @@ describe('OrderController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual([mockOrder]);
+      expect(response.body).toEqual([serializedMockOrder]);
       expect(orderService.findByCustomer).toHaveBeenCalledWith('user-123', mockUser);
     });
 
@@ -402,7 +406,7 @@ describe('OrderController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual(mockOrder);
+      expect(response.body).toEqual(serializedMockOrder);
       expect(orderService.findByOrderNumber).toHaveBeenCalledWith('ORD-2024-001', mockUser);
     });
 
@@ -431,7 +435,7 @@ describe('OrderController (Integration)', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(response.body).toEqual(mockOrder);
+      expect(response.body).toEqual(serializedMockOrder);
       expect(orderService.findOne).toHaveBeenCalledWith('order-123', mockUser);
     });
 
@@ -466,7 +470,7 @@ describe('OrderController (Integration)', () => {
       expect(orderService.updateStatus).toHaveBeenCalledWith(
         'order-123',
         { status: OrderStatus.CONFIRMED },
-        mockUser,
+        mockUser.tenantId,
         mockUser,
       );
     });
@@ -539,7 +543,7 @@ describe('OrderController (Integration)', () => {
       expect(orderService.cancel).toHaveBeenCalledWith(
         'order-123',
         { reason: 'Customer requested cancellation' },
-        mockUser,
+        mockUser.tenantId,
         mockUser,
       );
     });
