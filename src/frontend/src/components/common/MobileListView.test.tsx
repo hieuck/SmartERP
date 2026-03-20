@@ -54,21 +54,7 @@ vi.mock('antd', () => ({
     </div>
   ),
   Empty: ({ description }: { description?: React.ReactNode }) => <div>{description}</div>,
-  List: ({
-    dataSource = [],
-    renderItem,
-    locale,
-  }: {
-    dataSource?: unknown[];
-    renderItem: (item: unknown, index: number) => React.ReactNode;
-    locale?: { emptyText?: React.ReactNode };
-  }) => (
-    <div>
-      {dataSource.length === 0
-        ? locale?.emptyText
-        : dataSource.map((item, index) => <div key={index}>{renderItem(item, index)}</div>)}
-    </div>
-  ),
+  Pagination: () => <div>pagination</div>,
   theme: {
     useToken: () => ({
       token: {

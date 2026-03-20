@@ -115,7 +115,7 @@ function StandardListPageComponent<T extends object>({
             extraActions={extraActions}
           />
         }
-        bordered={true}
+        variant="outlined"
         style={{ margin: 0 }}
         size={getCardSize(responsive)}
         styles={{

@@ -14,11 +14,15 @@
   - backend now exposes frontend-compatible search routes
   - backend search supports suppliers and purchase orders
   - frontend search unwraps the standard backend response envelope
-  - browser smoke for `/dashboard/search?q=demo` runs without failed requests or console errors
+- browser smoke for `/dashboard/search?q=demo` runs without failed requests or console errors
 - a real cache-layer bug was fixed:
   - `cacheManager.get()` returning `null` on cache miss was being treated as a hit
   - this caused runtime responses like `{ success: true, data: null }`
   - the fix is now covered by backend cache specs
+- dashboard and user-list runtime warnings were cleaned up:
+  - deprecated Ant Design `Card` sizing and `Statistic.valueStyle` usage removed
+  - shared list shell no longer relies on deprecated `List`/`bordered` APIs
+  - browser smoke for `/dashboard` and `/dashboard/users` now reports no console warnings or errors
 
 ## Current Status Snapshot
 

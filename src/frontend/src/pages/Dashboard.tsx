@@ -142,13 +142,13 @@ export default function Dashboard() {
       {/* Revenue KPI Cards */}
       <Row gutter={gutterSize} style={{ marginBottom: isMobile ? SPACING.md : SPACING.lg }}>
         <Col xs={24} sm={12} lg={6}>
-          <Card size={isMobile ? 'small' : 'default'}>
+          <Card size={isMobile ? 'small' : 'medium'}>
             <Statistic
               title={t('dashboard:kpi.revenueToday')}
               value={overview?.revenue?.today || 0}
               prefix={<DollarOutlined />}
               formatter={(value) => formatCurrency(Number(value))}
-              valueStyle={{ color: '#3f8600', fontSize: statisticFontSize }}
+              styles={{ content: { color: '#3f8600', fontSize: statisticFontSize } }}
             />
             <div
               style={{
@@ -170,13 +170,13 @@ export default function Dashboard() {
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
-          <Card size={isMobile ? 'small' : 'default'}>
+          <Card size={isMobile ? 'small' : 'medium'}>
             <Statistic
               title={t('dashboard:kpi.revenueWeek')}
               value={overview?.revenue?.thisWeek || 0}
               prefix={<DollarOutlined />}
               formatter={(value) => formatCurrency(Number(value))}
-              valueStyle={{ fontSize: statisticFontSize }}
+              styles={{ content: { fontSize: statisticFontSize } }}
             />
             <div
               style={{
@@ -190,12 +190,12 @@ export default function Dashboard() {
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
-          <Card size={isMobile ? 'small' : 'default'}>
+          <Card size={isMobile ? 'small' : 'medium'}>
             <Statistic
               title={t('dashboard:kpi.totalOrders')}
               value={overview?.orders?.total || 0}
               prefix={<ShoppingCartOutlined />}
-              valueStyle={{ fontSize: statisticFontSize }}
+              styles={{ content: { fontSize: statisticFontSize } }}
             />
             <div
               style={{
@@ -210,12 +210,12 @@ export default function Dashboard() {
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
-          <Card size={isMobile ? 'small' : 'default'}>
+          <Card size={isMobile ? 'small' : 'medium'}>
             <Statistic
               title={t('dashboard:kpi.totalCustomers')}
               value={overview?.customers?.total || 0}
               prefix={<UserOutlined />}
-              valueStyle={{ fontSize: statisticFontSize }}
+              styles={{ content: { fontSize: statisticFontSize } }}
             />
             <div
               style={{
@@ -234,12 +234,12 @@ export default function Dashboard() {
       {/* Inventory & Payment KPI Cards */}
       <Row gutter={gutterSize} style={{ marginBottom: isMobile ? SPACING.md : SPACING.lg }}>
         <Col xs={24} sm={12} lg={6}>
-          <Card size={isMobile ? 'small' : 'default'}>
+          <Card size={isMobile ? 'small' : 'medium'}>
             <Statistic
               title={t('dashboard:kpi.totalProducts')}
               value={overview?.inventory?.totalProducts || 0}
               prefix={<InboxOutlined />}
-              valueStyle={{ fontSize: statisticFontSize }}
+              styles={{ content: { fontSize: statisticFontSize } }}
             />
             <div
               style={{
@@ -254,12 +254,12 @@ export default function Dashboard() {
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
-          <Card size={isMobile ? 'small' : 'default'}>
+          <Card size={isMobile ? 'small' : 'medium'}>
             <Statistic
               title={t('dashboard:kpi.lowStock')}
               value={overview?.inventory?.lowStock || 0}
               prefix={<WarningOutlined />}
-              valueStyle={{ color: '#cf1322', fontSize: statisticFontSize }}
+              styles={{ content: { color: '#cf1322', fontSize: statisticFontSize } }}
             />
             <div
               style={{
@@ -273,12 +273,12 @@ export default function Dashboard() {
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
-          <Card size={isMobile ? 'small' : 'default'}>
+          <Card size={isMobile ? 'small' : 'medium'}>
             <Statistic
               title={t('dashboard:kpi.pendingPayments')}
               value={overview?.payments?.pending || 0}
               prefix={<CreditCardOutlined />}
-              valueStyle={{ color: '#faad14', fontSize: statisticFontSize }}
+              styles={{ content: { color: '#faad14', fontSize: statisticFontSize } }}
             />
             <div
               style={{
@@ -292,13 +292,13 @@ export default function Dashboard() {
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
-          <Card size={isMobile ? 'small' : 'default'}>
+          <Card size={isMobile ? 'small' : 'medium'}>
             <Statistic
               title={t('dashboard:kpi.totalPayments')}
               value={overview?.payments?.totalAmount || 0}
               prefix={<DollarOutlined />}
               formatter={(value) => formatCurrency(Number(value))}
-              valueStyle={{ fontSize: statisticFontSize }}
+              styles={{ content: { fontSize: statisticFontSize } }}
             />
           </Card>
         </Col>
@@ -307,7 +307,7 @@ export default function Dashboard() {
       {/* Sales Chart */}
       <Row gutter={gutterSize} style={{ marginBottom: isMobile ? SPACING.md : SPACING.lg }}>
         <Col xs={24} lg={16}>
-          <Card title={t('dashboard:charts.salesOverview')} size={isMobile ? 'small' : 'default'}>
+          <Card title={t('dashboard:charts.salesOverview')} size={isMobile ? 'small' : 'medium'}>
             <ResponsiveContainer width="100%" height={chartHeight}>
               <LineChart data={salesChart}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -356,7 +356,7 @@ export default function Dashboard() {
         <Col xs={24} lg={8}>
           <Card
             title={t('dashboard:charts.revenueByCategory')}
-            size={isMobile ? 'small' : 'default'}
+            size={isMobile ? 'small' : 'medium'}
           >
             <ResponsiveContainer width="100%" height={chartHeight}>
               <PieChart>
@@ -384,7 +384,7 @@ export default function Dashboard() {
       {/* Top Products & Customers */}
       <Row gutter={gutterSize}>
         <Col xs={24} lg={12}>
-          <Card title={t('dashboard:charts.topProducts')} size={isMobile ? 'small' : 'default'}>
+          <Card title={t('dashboard:charts.topProducts')} size={isMobile ? 'small' : 'medium'}>
             <ResponsiveContainer width="100%" height={chartHeight}>
               <BarChart data={topProducts} layout="horizontal">
                 <CartesianGrid strokeDasharray="3 3" />
@@ -418,7 +418,7 @@ export default function Dashboard() {
         </Col>
 
         <Col xs={24} lg={12}>
-          <Card title={t('dashboard:charts.topCustomers')} size={isMobile ? 'small' : 'default'}>
+          <Card title={t('dashboard:charts.topCustomers')} size={isMobile ? 'small' : 'medium'}>
             <Table
               size="small"
               scroll={{ x: 'max-content', y: chartHeight }}

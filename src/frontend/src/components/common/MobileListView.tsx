@@ -5,7 +5,7 @@
 
 import { MoreOutlined } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
-import { Button, Card, Collapse, Dropdown, Empty, List, theme } from 'antd';
+import { Button, Card, Collapse, Dropdown, Empty, Pagination, theme } from 'antd';
 import type { ColumnsType, ColumnType, TableProps } from 'antd/es/table';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -48,38 +48,49 @@ function MobileListViewComponent<T extends object>({
   const { t } = useTranslation('commonUi');
   const { token } = useToken();
 
+  const paginationNode =
+    pagination && pagination.total > 0 ? (
+      <div style={{ marginTop: 12, display: 'flex', justifyContent: 'center' }}>
+        <Pagination
+          current={pagination.current}
+          pageSize={pagination.pageSize}
+          total={pagination.total}
+          showSizeChanger={false}
+          simple
+          onChange={pagination.onChange}
+        />
+      </div>
+    ) : null;
+
   // If custom render provided, use it
   if (mobileRenderItem) {
     return (
-      <List
-        dataSource={dataSource}
-        loading={loading}
-        renderItem={(item) => (
-          <div onClick={() => onMobileItemClick?.(item)}>{mobileRenderItem(item)}</div>
+      <div>
+        {loading ? (
+          <div>{t('messages.loading')}</div>
+        ) : dataSource.length === 0 ? (
+          <Empty description={t('messages.noData')} />
+        ) : (
+          dataSource.map((item, index) => (
+            <div key={index} onClick={() => onMobileItemClick?.(item)}>
+              {mobileRenderItem(item)}
+            </div>
+          ))
         )}
-        pagination={
-          pagination
-            ? {
-                current: pagination.current,
-                pageSize: pagination.pageSize,
-                total: pagination.total,
-                showSizeChanger: false,
-                simple: true,
-                onChange: pagination.onChange,
-              }
-            : false
-        }
-        locale={{ emptyText: <Empty description={t('messages.noData')} /> }}
-      />
+        {paginationNode}
+      </div>
     );
   }
 
   // Default card-based rendering
   return (
-    <List
-      dataSource={dataSource}
-      loading={loading}
-      renderItem={(item) => {
+    <div>
+      {loading ? (
+        <div>{t('messages.loading')}</div>
+      ) : dataSource.length === 0 ? (
+        <Empty description={t('messages.noData')} />
+      ) : (
+        dataSource.map((item, index) => {
         // Get menu items for actions - cast to MenuProps['items']
         const menuItems = ListItemActions({
           record: item,
@@ -163,21 +174,10 @@ function MobileListViewComponent<T extends object>({
             )}
           </Card>
         );
-      }}
-      pagination={
-        pagination
-          ? {
-              current: pagination.current,
-              pageSize: pagination.pageSize,
-              total: pagination.total,
-              showSizeChanger: false,
-              simple: true,
-              onChange: pagination.onChange,
-            }
-          : false
-      }
-      locale={{ emptyText: <Empty description={t('messages.noData')} /> }}
-    />
+      })
+      )}
+      {paginationNode}
+    </div>
   );
 }
 

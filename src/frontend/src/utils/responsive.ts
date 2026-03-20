@@ -49,8 +49,8 @@ export const getGutter = (responsive: ResponsiveInfo): [number, number] => {
 /**
  * Get responsive card size
  */
-export const getCardSize = (responsive: ResponsiveInfo): 'small' | 'default' => {
-  return responsive.isMobile ? 'small' : 'default';
+export const getCardSize = (responsive: ResponsiveInfo): 'small' | 'medium' => {
+  return responsive.isMobile ? 'small' : 'medium';
 };
 
 /**

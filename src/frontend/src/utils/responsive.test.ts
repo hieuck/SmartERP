@@ -35,7 +35,7 @@ describe('responsive utilities', () => {
       getResponsiveValue(desktop, { mobile: 'm', tablet: 't', desktop: 'd' }),
     ).toBe('d');
     expect(getCardSize(mobile)).toBe('small');
-    expect(getCardSize(desktop)).toBe('default');
+    expect(getCardSize(desktop)).toBe('medium');
     expect(getButtonSize(mobile)).toBe('middle');
     expect(getTableSize(mobile)).toBe('small');
     expect(getTableSize(desktop)).toBe('middle');
