@@ -25,6 +25,7 @@
     "unread": "Unread",
     "noNotifications": "No notifications",
     "new": "New",
+    "viewDetail": "View details",
     "viewDetails": "View details",
     "delete": "Delete",
     "markAsRead": "Mark as read"
@@ -90,6 +91,7 @@
   "messages": {
     "loadError": "Failed to load notifications",
     "cannotLoad": "Cannot load notifications",
+    "unknownError": "An unknown error occurred",
     "markedAsRead": "Marked as read",
     "markReadError": "Cannot mark as read",
     "allMarkedAsRead": "All notifications marked as read",

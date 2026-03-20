@@ -1,7 +1,7 @@
 {
   "notification": {
     "list": "Danh sách thông báo",
-    "create": "Thêm thông báo",
+    "create": "Tạo thông báo",
     "searchPlaceholder": "Tìm kiếm thông báo...",
     "title": "Tiêu đề",
     "message": "Nội dung",
@@ -20,11 +20,12 @@
   "center": {
     "title": "Trung tâm thông báo",
     "markAllRead": "Đánh dấu tất cả đã đọc",
-    "settings": "Cài đặt",
+    "settings": "Tùy chọn",
     "all": "Tất cả",
     "unread": "Chưa đọc",
     "noNotifications": "Không có thông báo",
     "new": "Mới",
+    "viewDetail": "Xem chi tiết",
     "viewDetails": "Xem chi tiết",
     "delete": "Xóa",
     "markAsRead": "Đánh dấu đã đọc"
@@ -40,25 +41,25 @@
     "emailDescription": "Nhận thông báo qua email",
     "emailNotConfigured": "Dịch vụ email chưa được cấu hình",
     "emailServiceNotConfigured": "Dịch vụ email chưa được cấu hình",
-    "emailServiceNotConfiguredDescription": "Thông báo qua email hiện không khả dụng. Vui lòng liên hệ quản trị viên để cấu hình dịch vụ email.",
+    "emailServiceNotConfiguredDescription": "Thông báo qua email hiện chưa khả dụng. Vui lòng liên hệ quản trị viên để cấu hình dịch vụ email.",
     "lowStock": "Cảnh báo tồn kho thấp",
-    "lowStockDescription": "Nhận thông báo khi tồn kho sản phẩm dưới mức tối thiểu",
+    "lowStockDescription": "Nhận thông báo khi tồn kho sản phẩm xuống dưới mức tối thiểu",
     "newOrder": "Đơn hàng mới",
     "newOrderDescription": "Nhận thông báo khi có đơn hàng mới",
     "orderStatusChange": "Thay đổi trạng thái đơn hàng",
     "orderStatusChangeDescription": "Nhận thông báo khi trạng thái đơn hàng được cập nhật",
     "overdueDebt": "Cảnh báo nợ quá hạn",
     "overdueDebtDescription": "Nhận thông báo về các khoản thanh toán quá hạn",
-    "deliveryDate": "Nhắc nhở ngày giao hàng",
+    "deliveryDate": "Nhắc ngày giao hàng",
     "deliveryDateDescription": "Nhận thông báo khi đơn đặt hàng đến ngày giao dự kiến",
     "savePreferences": "Lưu tùy chọn",
     "reset": "Đặt lại"
   },
   "types": {
-    "info": "THÔNG TIN",
-    "warning": "CẢNH BÁO",
-    "success": "THÀNH CÔNG",
-    "error": "LỖI",
+    "info": "Thông tin",
+    "warning": "Cảnh báo",
+    "success": "Thành công",
+    "error": "Lỗi",
     "lowStock": "Tồn kho thấp",
     "newOrder": "Đơn hàng mới",
     "orderUpdate": "Cập nhật đơn hàng",
@@ -72,8 +73,8 @@
     "urgent": "Khẩn cấp"
   },
   "status": {
-    "unread": "CHƯA ĐỌC",
-    "read": "ĐÃ ĐỌC"
+    "unread": "Chưa đọc",
+    "read": "Đã đọc"
   },
   "filters": {
     "status": "Lọc theo trạng thái",
@@ -90,6 +91,7 @@
   "messages": {
     "loadError": "Không thể tải thông báo",
     "cannotLoad": "Không thể tải thông báo",
+    "unknownError": "Đã xảy ra lỗi không xác định",
     "markedAsRead": "Đã đánh dấu đã đọc",
     "markReadError": "Không thể đánh dấu đã đọc",
     "allMarkedAsRead": "Đã đánh dấu tất cả đã đọc",

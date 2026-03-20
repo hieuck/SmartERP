@@ -52,7 +52,7 @@ const priorityColors: Record<NotificationPriority, string> = {
 export default function NotificationCenter() {
   const { token } = useToken();
   const { message } = App.useApp();
-  const { t } = useTranslation();
+  const { t } = useTranslation('notifications');
   const [loading, setLoading] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -61,10 +61,10 @@ export default function NotificationCenter() {
   // Priority labels using i18n
   const getPriorityLabel = (priority: NotificationPriority): string => {
     const labels: Record<NotificationPriority, string> = {
-      [NotificationPriority.LOW]: t('notifications.priority.low'),
-      [NotificationPriority.MEDIUM]: t('notifications.priority.medium'),
-      [NotificationPriority.HIGH]: t('notifications.priority.high'),
-      [NotificationPriority.URGENT]: t('notifications.priority.urgent'),
+      [NotificationPriority.LOW]: t('priority.low'),
+      [NotificationPriority.MEDIUM]: t('priority.medium'),
+      [NotificationPriority.HIGH]: t('priority.high'),
+      [NotificationPriority.URGENT]: t('priority.urgent'),
     };
     return labels[priority];
   };
@@ -82,12 +82,12 @@ export default function NotificationCenter() {
         limit: 50,
         isRead: filter === 'unread' ? false : undefined,
       });
-      setNotifications(response.data || []);
+      setNotifications(Array.isArray(response) ? response : response.data || []);
     } catch (error: unknown) {
       message.error(
-        t('notifications.messages.cannotLoad') +
+        t('messages.cannotLoad') +
           ': ' +
-          getErrorMessage(error, t('notifications.messages.unknownError')),
+          getErrorMessage(error, t('messages.unknownError')),
       );
     } finally {
       setLoading(false);
@@ -106,14 +106,14 @@ export default function NotificationCenter() {
   const handleMarkAsRead = async (id: string) => {
     try {
       await notificationService.markAsRead(id);
-      message.success(t('notifications.messages.markedAsRead'));
+      message.success(t('messages.markedAsRead'));
       fetchNotifications();
       fetchUnreadCount();
     } catch (error: unknown) {
       message.error(
-        t('notifications.messages.markReadError') +
+        t('messages.markReadError') +
           ': ' +
-          getErrorMessage(error, t('notifications.messages.unknownError')),
+          getErrorMessage(error, t('messages.unknownError')),
       );
     }
   };
@@ -121,14 +121,14 @@ export default function NotificationCenter() {
   const handleMarkAllAsRead = async () => {
     try {
       await notificationService.markAllAsRead();
-      message.success(t('notifications.messages.allMarkedAsRead'));
+      message.success(t('messages.allMarkedAsRead'));
       fetchNotifications();
       fetchUnreadCount();
     } catch (error: unknown) {
       message.error(
-        t('notifications.messages.markAllReadError') +
+        t('messages.markAllReadError') +
           ': ' +
-          getErrorMessage(error, t('notifications.messages.unknownError')),
+          getErrorMessage(error, t('messages.unknownError')),
       );
     }
   };
@@ -136,14 +136,14 @@ export default function NotificationCenter() {
   const handleDelete = async (id: string) => {
     try {
       await notificationService.delete(id);
-      message.success(t('notifications.messages.deleteSuccess'));
+      message.success(t('messages.deleteSuccess'));
       fetchNotifications();
       fetchUnreadCount();
     } catch (error: unknown) {
       message.error(
-        t('notifications.messages.deleteError') +
+        t('messages.deleteError') +
           ': ' +
-          getErrorMessage(error, t('notifications.messages.unknownError')),
+          getErrorMessage(error, t('messages.unknownError')),
       );
     }
   };
@@ -154,29 +154,29 @@ export default function NotificationCenter() {
         title={
           <Space>
             <BellOutlined />
-            <span>{t('notifications.center.title')}</span>
+            <span>{t('center.title')}</span>
             {unreadCount > 0 && <Badge count={unreadCount} />}
           </Space>
         }
         extra={
           <Space>
-            <Button.Group>
+            <Space.Compact>
               <Button
                 type={filter === 'all' ? 'primary' : 'default'}
                 onClick={() => setFilter('all')}
               >
-                {t('notifications.center.all')}
+                {t('center.all')}
               </Button>
               <Button
                 type={filter === 'unread' ? 'primary' : 'default'}
                 onClick={() => setFilter('unread')}
               >
-                {t('notifications.center.unread')} ({unreadCount})
+                {t('center.unread')} ({unreadCount})
               </Button>
-            </Button.Group>
+            </Space.Compact>
             {unreadCount > 0 && (
               <Button icon={<CheckOutlined />} onClick={handleMarkAllAsRead}>
-                {t('notifications.center.markAllRead')}
+                {t('center.markAllRead')}
               </Button>
             )}
           </Space>
@@ -184,7 +184,7 @@ export default function NotificationCenter() {
       >
         <Spin spinning={loading}>
           {notifications.length === 0 ? (
-            <Empty description={t('notifications.center.noNotifications')} />
+            <Empty description={t('center.noNotifications')} />
           ) : (
             <List
               itemLayout="horizontal"
@@ -205,7 +205,7 @@ export default function NotificationCenter() {
                             ? [
                                 {
                                   key: 'read',
-                                  label: t('notifications.center.markAsRead'),
+                                  label: t('center.markAsRead'),
                                   icon: <CheckOutlined />,
                                   onClick: () => handleMarkAsRead(item.id),
                                 },
@@ -213,7 +213,7 @@ export default function NotificationCenter() {
                             : []),
                           {
                             key: 'delete',
-                            label: t('notifications.center.delete'),
+                            label: t('center.delete'),
                             icon: <DeleteOutlined />,
                             danger: true,
                             onClick: () => handleDelete(item.id),
@@ -237,7 +237,7 @@ export default function NotificationCenter() {
                           {getPriorityLabel(item.priority as NotificationPriority)}
                         </Tag>
                         {!item.isRead && (
-                          <Badge status="processing" text={t('notifications.center.new')} />
+                          <Badge status="processing" text={t('center.new')} />
                         )}
                       </Space>
                     }

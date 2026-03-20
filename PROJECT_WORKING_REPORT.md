@@ -6,6 +6,14 @@
 
 ## Latest Checkpoint (2026-03-20)
 
+- notifications runtime has been aligned with the actual backend contract and is now guarded in browser smoke:
+  - [src/frontend/src/services/notification/notificationService.ts](/e:/GitHub/smart-erp/src/frontend/src/services/notification/notificationService.ts) now uses the real notification endpoints (`/notifications/unread/count`, `POST /notifications/:id/read`, `POST /notifications/read-all`) instead of stale legacy paths
+  - notification preferences no longer depend on nonexistent `/notification-preferences` or unstable `/notifications/test-email`; they now persist through tenant settings and infer email availability from configured email settings
+  - [src/frontend/src/pages/notifications/NotificationCenter.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/notifications/NotificationCenter.tsx) no longer uses deprecated `Button.Group`, and [src/frontend/src/pages/notifications/NotificationPreferencesPage.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/notifications/NotificationPreferencesPage.tsx) no longer emits the deprecated `Alert.message` warning
+  - [src/frontend/src/pages/notifications/NotificationListPage.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/notifications/NotificationListPage.tsx) now routes its settings action to the real `/dashboard/notifications/preferences` page instead of the dead `/settings/notifications` path
+  - [tools/browser-smoke.mjs](/e:/GitHub/smart-erp/tools/browser-smoke.mjs) now covers `/dashboard/notifications`, `/dashboard/notifications/center`, and `/dashboard/notifications/preferences`
+  - focused Vitest coverage for the notification service and notification pages is green, and an authenticated Playwright probe for those three routes now returns with no warnings, no console errors, and no failed requests
+
 - browser smoke now covers the manufacturing list routes that were previously repaired but not yet guarded at runtime:
   - [tools/browser-smoke.mjs](/e:/GitHub/smart-erp/tools/browser-smoke.mjs) now exercises `/dashboard/production/work-centers` and `/dashboard/production/work-orders`
   - a fresh smoke run is clean for both routes: no failed requests, no console warnings, and no console errors

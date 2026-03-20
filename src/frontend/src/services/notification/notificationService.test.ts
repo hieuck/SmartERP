@@ -5,14 +5,29 @@ import notificationService, {
   type NotificationPreferences,
 } from './notificationService';
 import api from './api';
+import { settingsService } from '../utils/settingsService';
 import { vi } from 'vitest';
 
 vi.mock('./api');
+vi.mock('../utils/settingsService', () => ({
+  SettingCategory: {
+    NOTIFICATION: 'NOTIFICATION',
+    EMAIL: 'EMAIL',
+  },
+  SettingDataType: {
+    BOOLEAN: 'BOOLEAN',
+  },
+  settingsService: {
+    getByCategory: vi.fn(),
+    bulkUpsert: vi.fn(),
+  },
+}));
 
 const mockApiGet = vi.mocked(api.get);
 const mockApiPost = vi.mocked(api.post);
-const mockApiPatch = vi.mocked(api.patch);
 const mockApiDelete = vi.mocked(api.delete);
+const mockSettingsGetByCategory = vi.mocked(settingsService.getByCategory);
+const mockSettingsBulkUpsert = vi.mocked(settingsService.bulkUpsert);
 
 describe('notificationService', () => {
   beforeEach(() => {
@@ -27,7 +42,7 @@ describe('notificationService', () => {
     const result = await notificationService.getAll(params);
 
     expect(api.get).toHaveBeenCalledWith('/notifications', { params });
-    expect(result).toEqual(mockResponse.data);
+    expect(result).toEqual([]);
   });
 
   it('gets a notification by id', async () => {
@@ -37,7 +52,7 @@ describe('notificationService', () => {
     const result = await notificationService.getById('noti-1');
 
     expect(api.get).toHaveBeenCalledWith('/notifications/noti-1');
-    expect(result).toEqual(mockNotification);
+    expect(result).toEqual({ ...mockNotification, isRead: false });
   });
 
   it('creates a notification', async () => {
@@ -58,21 +73,21 @@ describe('notificationService', () => {
   });
 
   it('marks a notification as read', async () => {
-    const mockNotification = { id: 'noti-1', isRead: true };
-    mockApiPatch.mockResolvedValue({ data: mockNotification });
+    const mockNotification = { id: 'noti-1', status: 'READ' };
+    mockApiPost.mockResolvedValue({ data: mockNotification });
 
     const result = await notificationService.markAsRead('noti-1');
 
-    expect(api.patch).toHaveBeenCalledWith('/notifications/noti-1/read');
-    expect(result).toEqual(mockNotification);
+    expect(api.post).toHaveBeenCalledWith('/notifications/noti-1/read');
+    expect(result).toEqual({ ...mockNotification, isRead: true });
   });
 
   it('marks all notifications as read', async () => {
-    mockApiPatch.mockResolvedValue({ data: undefined });
+    mockApiPost.mockResolvedValue({ data: undefined });
 
     await notificationService.markAllAsRead();
 
-    expect(api.patch).toHaveBeenCalledWith('/notifications/read-all');
+    expect(api.post).toHaveBeenCalledWith('/notifications/read-all');
   });
 
   it('deletes a notification', async () => {
@@ -88,7 +103,7 @@ describe('notificationService', () => {
 
     const result = await notificationService.getUnreadCount();
 
-    expect(api.get).toHaveBeenCalledWith('/notifications/unread-count');
+    expect(api.get).toHaveBeenCalledWith('/notifications/unread/count');
     expect(result).toBe(7);
   });
 
@@ -112,53 +127,63 @@ describe('notificationService', () => {
   });
 
   it('unwraps legacy getNotifications response with meta total', async () => {
-    const mockData = [{ id: 'noti-1' }];
+    const mockPayload = {
+      data: [{ id: 'noti-1', status: 'UNREAD' }],
+      meta: { total: 15 },
+    };
     mockApiGet.mockResolvedValue({
-      data: {
-        data: mockData,
-        meta: { total: 15 },
-      },
+      data: mockPayload,
     });
 
     const result = await notificationService.getNotifications({ page: 1, limit: 10 });
 
     expect(result).toEqual({
-      data: mockData,
+      data: [{ ...mockPayload.data[0], isRead: false }],
       total: 15,
     });
   });
 
   it('falls back to array length in legacy getNotifications response', async () => {
-    const mockData = [{ id: 'noti-1' }, { id: 'noti-2' }];
+    const mockData = [{ id: 'noti-1', status: 'READ' }, { id: 'noti-2', status: 'UNREAD' }];
     mockApiGet.mockResolvedValue({ data: mockData });
 
     const result = await notificationService.getNotifications();
 
     expect(result).toEqual({
-      data: mockData,
+      data: [
+        { ...mockData[0], isRead: true },
+        { ...mockData[1], isRead: false },
+      ],
       total: 2,
     });
   });
 
   it('unwraps notification preferences response', async () => {
-    const preferences: NotificationPreferences = {
-      userId: 'user-1',
-      emailEnabled: true,
-      inAppEnabled: true,
-      types: {
-        lowStock: true,
-        newOrder: true,
-        orderStatusChange: false,
-        overdueDebt: true,
-        deliveryDate: false,
-      },
-    };
-    mockApiGet.mockResolvedValue({ data: { data: preferences } });
+    mockSettingsGetByCategory.mockResolvedValue([
+      { key: 'notifications.emailEnabled', value: 'true' },
+      { key: 'notifications.inAppEnabled', value: 'false' },
+      { key: 'notifications.types.lowStock', value: 'true' },
+      { key: 'notifications.types.newOrder', value: 'false' },
+      { key: 'notifications.types.orderStatusChange', value: 'true' },
+      { key: 'notifications.types.overdueDebt', value: 'false' },
+      { key: 'notifications.types.deliveryDate', value: 'true' },
+    ] as never);
 
     const result = await notificationService.getPreferences();
 
-    expect(api.get).toHaveBeenCalledWith('/notification-preferences');
-    expect(result).toEqual(preferences);
+    expect(settingsService.getByCategory).toHaveBeenCalledWith('NOTIFICATION');
+    expect(result).toEqual({
+      userId: '',
+      emailEnabled: true,
+      inAppEnabled: false,
+      types: {
+        lowStock: true,
+        newOrder: false,
+        orderStatusChange: true,
+        overdueDebt: false,
+        deliveryDate: true,
+      },
+    });
   });
 
   it('updates preferences and unwraps response', async () => {
@@ -166,7 +191,7 @@ describe('notificationService', () => {
       emailEnabled: false,
     };
     const updated = {
-      userId: 'user-1',
+      userId: '',
       emailEnabled: false,
       inAppEnabled: true,
       types: {
@@ -177,21 +202,34 @@ describe('notificationService', () => {
         deliveryDate: true,
       },
     };
-    mockApiPatch.mockResolvedValue({ data: { data: updated } });
+    mockSettingsBulkUpsert.mockResolvedValue([] as never);
 
     const result = await notificationService.updatePreferences(patch);
 
-    expect(api.patch).toHaveBeenCalledWith('/notification-preferences', patch);
+    expect(settingsService.bulkUpsert).toHaveBeenCalled();
     expect(result).toEqual(updated);
   });
 
-  it('unwraps test email response', async () => {
-    const mockResponse = { connected: true, message: 'SMTP ready' };
-    mockApiGet.mockResolvedValue({ data: { data: mockResponse } });
+  it('checks email connectivity via email logs', async () => {
+    mockSettingsGetByCategory.mockResolvedValue([{ key: 'smtp.host', value: 'localhost' }] as never);
 
     const result = await notificationService.testEmail();
 
-    expect(api.get).toHaveBeenCalledWith('/notifications/test-email');
-    expect(result).toEqual(mockResponse);
+    expect(settingsService.getByCategory).toHaveBeenCalledWith('EMAIL');
+    expect(result).toEqual({
+      connected: true,
+      message: 'Email service is available',
+    });
+  });
+
+  it('returns disconnected email status when logs endpoint fails', async () => {
+    mockSettingsGetByCategory.mockRejectedValue(new Error('boom'));
+
+    const result = await notificationService.testEmail();
+
+    expect(result).toEqual({
+      connected: false,
+      message: 'Email service is unavailable',
+    });
   });
 });

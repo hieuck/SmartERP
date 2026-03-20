@@ -64,9 +64,9 @@ describe('NotificationPreferencesPage', () => {
       expect(testEmail).toHaveBeenCalled();
     });
 
-    expect(await screen.findByText('notifications.preferences.title')).toBeInTheDocument();
+    expect(await screen.findByText('preferences.title')).toBeInTheDocument();
     expect(
-      screen.queryByText('notifications.preferences.emailServiceNotConfigured'),
+      screen.queryByText('preferences.emailServiceNotConfigured'),
     ).not.toBeInTheDocument();
   });
 
@@ -76,15 +76,15 @@ describe('NotificationPreferencesPage', () => {
     render(<App><NotificationPreferencesPage /></App>);
 
     expect(
-      await screen.findByText('notifications.preferences.emailServiceNotConfigured'),
+      await screen.findByText('preferences.emailServiceNotConfigured'),
     ).toBeInTheDocument();
   });
 
   it('saves the loaded preferences', async () => {
     render(<App><NotificationPreferencesPage /></App>);
 
-    await screen.findByText('notifications.preferences.title');
-    fireEvent.click(screen.getByRole('button', { name: /notifications\.preferences\.savePreferences/i }));
+    await screen.findByText('preferences.title');
+    fireEvent.click(screen.getByRole('button', { name: /preferences\.savePreferences/i }));
 
     await waitFor(() => {
       expect(updatePreferences).toHaveBeenCalledWith({

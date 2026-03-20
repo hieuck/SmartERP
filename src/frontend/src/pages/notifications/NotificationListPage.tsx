@@ -152,7 +152,7 @@ const NotificationListPage: React.FC = () => {
               </Button>
               <Button
                 icon={<SettingOutlined />}
-                onClick={() => navigate('/settings/notifications')}
+                onClick={() => navigate('/dashboard/notifications/preferences')}
               >
                 {t('notifications:center.settings')}
               </Button>

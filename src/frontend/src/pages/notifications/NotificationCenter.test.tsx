@@ -171,7 +171,9 @@ vi.mock('antd', () => ({
       ),
     },
   ),
-  Space: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  Space: Object.assign(({ children }: { children: React.ReactNode }) => <div>{children}</div>, {
+    Compact: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  }),
   Spin: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   Tag: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
   theme: {
@@ -220,9 +222,9 @@ describe('NotificationCenter', () => {
     });
 
     expect(await screen.findByText('Unread notification')).toBeInTheDocument();
-    expect(screen.getByText('notifications.center.title')).toBeInTheDocument();
+    expect(screen.getByText('center.title')).toBeInTheDocument();
     expect(screen.getByText('badge:3')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'notifications.center.markAllRead' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'center.markAllRead' })).toBeInTheDocument();
   });
 
   it('switches to unread filter and reloads the list', async () => {
@@ -233,7 +235,7 @@ describe('NotificationCenter', () => {
     );
 
     await screen.findByText('Unread notification');
-    fireEvent.click(screen.getByRole('button', { name: 'notifications.center.unread (3)' }));
+    fireEvent.click(screen.getByRole('button', { name: 'center.unread (3)' }));
 
     await waitFor(() => {
       expect(getAllMock).toHaveBeenLastCalledWith({ page: 1, limit: 50, isRead: false });
@@ -249,15 +251,15 @@ describe('NotificationCenter', () => {
 
     await screen.findByText('Unread notification');
 
-    fireEvent.click(screen.getByRole('button', { name: 'notifications.center.markAsRead' }));
-    fireEvent.click(screen.getByRole('button', { name: 'notifications.center.delete' }));
+    fireEvent.click(screen.getByRole('button', { name: 'center.markAsRead' }));
+    fireEvent.click(screen.getByRole('button', { name: 'center.delete' }));
 
     await waitFor(() => {
       expect(markAsReadMock).toHaveBeenCalledWith('notif-1');
       expect(deleteMock).toHaveBeenCalledWith('notif-1');
     });
 
-    expect(messageSuccessMock).toHaveBeenCalledWith('notifications.messages.markedAsRead');
-    expect(messageSuccessMock).toHaveBeenCalledWith('notifications.messages.deleteSuccess');
+    expect(messageSuccessMock).toHaveBeenCalledWith('messages.markedAsRead');
+    expect(messageSuccessMock).toHaveBeenCalledWith('messages.deleteSuccess');
   });
 });
