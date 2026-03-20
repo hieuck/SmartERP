@@ -7,7 +7,9 @@ test.describe('Landing Page', () => {
 
   test('renders hero content and primary call-to-action buttons', async ({ page }) => {
     await expect(page.getByRole('main')).toBeVisible();
-    await expect(page.locator('h1').first()).toBeVisible();
+    await expect(page.locator('h1').first()).toContainText(
+      /quản lý sản xuất và kinh doanh|production and business management/i,
+    );
     await expect(page.locator('a[href="/register"]').first()).toBeVisible();
     await expect(page.locator('a[href="/login"]').first()).toBeVisible();
   });
@@ -23,7 +25,9 @@ test.describe('Landing Page', () => {
     const secondFaqTrigger = page.getByRole('tab').nth(1);
     await secondFaqTrigger.click();
 
-    await expect(page.getByRole('tabpanel')).toContainText(/Không cần|Khong can/i);
+    await expect(page.getByRole('tabpanel')).toContainText(
+      /Không cần|technical knowledge|operational teams/i,
+    );
   });
 
   test('shows footer links for legal pages', async ({ page }) => {

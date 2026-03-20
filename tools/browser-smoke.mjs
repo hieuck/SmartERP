@@ -5,6 +5,7 @@ const backendApiUrl = process.env.SMARTERP_BACKEND_API_URL ?? 'http://127.0.0.1:
 const failOnWarnings = process.env.SMARTERP_FAIL_ON_WARNINGS === '1';
 
 const publicRoutes = [
+  '/',
   '/login',
   '/register',
   '/forgot-password',

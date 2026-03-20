@@ -1,16 +1,17 @@
-import { Link } from 'react-router-dom';
-import { Button, Typography, theme, Grid } from 'antd';
 import { ArrowRightOutlined } from '@ant-design/icons';
+import { Button, Grid, Typography, theme } from 'antd';
+import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 
 const { Title, Paragraph } = Typography;
 const { useToken } = theme;
 const { useBreakpoint } = Grid;
 
 export default function CTA() {
+  const { t } = useTranslation('landing');
   const { token } = useToken();
   const screens = useBreakpoint();
 
-  // Responsive styles
   const isMobile = !screens.sm;
   const buttonHeight = isMobile ? 44 : 50;
   const buttonFontSize = isMobile ? 15 : 18;
@@ -21,10 +22,17 @@ export default function CTA() {
     <div style={{ padding: '80px 24px', background: token.colorPrimary, textAlign: 'center' }}>
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
         <Title level={2} style={{ color: token.colorWhite, marginBottom: 24 }}>
-          Sẵn sàng bắt đầu?
+          {t('cta.title')}
         </Title>
-        <Paragraph style={{ color: token.colorWhite, fontSize: paragraphFontSize, marginBottom: 40, opacity: 0.9 }}>
-          Dùng thử miễn phí 14 ngày, không cần thẻ tín dụng
+        <Paragraph
+          style={{
+            color: token.colorWhite,
+            fontSize: paragraphFontSize,
+            marginBottom: 40,
+            opacity: 0.9,
+          }}
+        >
+          {t('cta.description')}
         </Paragraph>
         <Link to="/register">
           <Button
@@ -39,7 +47,7 @@ export default function CTA() {
               color: token.colorPrimary,
             }}
           >
-            Đăng ký ngay
+            {t('cta.button')}
           </Button>
         </Link>
       </div>

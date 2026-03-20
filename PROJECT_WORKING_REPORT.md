@@ -1227,3 +1227,54 @@ Verification:
   - `/login` and `/register` no longer emit telemetry warnings in dev
   - frontend stderr remains empty
   - backend/database smoke remains green
+
+## 2026-03-20 Playwright UI Launcher Recovery
+- Root cause:
+  - `npm run test:e2e:ui` and [playwright-ui.cmd](/e:/GitHub/smart-erp/playwright-ui.cmd) were hardcoding `127.0.0.1:9323`
+  - if a Playwright UI instance was already running, the launcher crashed with `EADDRINUSE` instead of reusing the existing UI or choosing a safe fallback
+- Fixed in:
+  - [run-playwright.cjs](/e:/GitHub/smart-erp/run-playwright.cjs)
+  - [package.json](/e:/GitHub/smart-erp/package.json)
+  - [playwright-ui.cmd](/e:/GitHub/smart-erp/playwright-ui.cmd)
+- Implementation details:
+  - the wrapper now owns default UI host/port injection instead of the npm/cmd shims
+  - when the target port is already serving Playwright UI, the launcher exits cleanly and points users to the running UI instead of crashing
+  - when the default port is busy with some other process, the wrapper can pick the next available port automatically
+  - explicit custom `--ui-port` values still fail fast with a clear message if they are unavailable
+- Verified with:
+  - `npm.cmd run test:e2e:ui`
+  - direct HTTP probe to `http://127.0.0.1:9323`
+- Current runtime snapshot after the batch:
+  - Playwright UI launcher is now reusable during day-to-day dev workflows
+  - the default local UI endpoint remains `http://127.0.0.1:9323`
+
+## 2026-03-20 Landing Page Localization Recovery
+- Root cause:
+  - the public landing page `/` still contained mojibake and hardcoded copy in the marketing surface even after public auth and legal flows were cleaned up
+  - [tools/browser-smoke.mjs](/e:/GitHub/smart-erp/tools/browser-smoke.mjs) was not exercising `/`, so the regression was easy to miss in routine smoke runs
+- Fixed in:
+  - [src/frontend/src/pages/public/LandingPage.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/public/LandingPage.tsx)
+  - [src/frontend/src/components/marketing/Hero.tsx](/e:/GitHub/smart-erp/src/frontend/src/components/marketing/Hero.tsx)
+  - [src/frontend/src/components/marketing/Features.tsx](/e:/GitHub/smart-erp/src/frontend/src/components/marketing/Features.tsx)
+  - [src/frontend/src/components/marketing/CTA.tsx](/e:/GitHub/smart-erp/src/frontend/src/components/marketing/CTA.tsx)
+  - [src/frontend/src/components/marketing/Pricing.tsx](/e:/GitHub/smart-erp/src/frontend/src/components/marketing/Pricing.tsx)
+  - [src/frontend/src/constants/landing-page.ts](/e:/GitHub/smart-erp/src/frontend/src/constants/landing-page.ts)
+  - [src/frontend/src/i18n/locales/en/landing.json](/e:/GitHub/smart-erp/src/frontend/src/i18n/locales/en/landing.json)
+  - [src/frontend/src/i18n/locales/vi/landing.json](/e:/GitHub/smart-erp/src/frontend/src/i18n/locales/vi/landing.json)
+  - [tests/e2e/public/landing.spec.ts](/e:/GitHub/smart-erp/tests/e2e/public/landing.spec.ts)
+  - [tools/browser-smoke.mjs](/e:/GitHub/smart-erp/tools/browser-smoke.mjs)
+- Implementation details:
+  - marketing copy now comes from the `landing` namespace instead of corrupted hardcoded strings
+  - testimonial and FAQ content are localized through i18n rather than embedded mojibake constants
+  - the landing page footer now uses internal links for legal routes
+  - browser smoke now covers `/` so the public marketing surface is checked with the rest of the public/auth routes
+  - landing E2E assertions were updated to be locale-aware because Playwright runs with `en-US`
+- Verified with:
+  - `npm.cmd run build` in `src/frontend`
+  - `npm.cmd run runtime:browser-smoke`
+  - `npx.cmd playwright test tests/e2e/public/landing.spec.ts --project=chromium`
+  - targeted `eslint` in `src/frontend` for landing and marketing files
+- Current browser/runtime snapshot after the batch:
+  - `/` now renders clean localized marketing copy
+  - browser smoke shows no warnings, errors, or failed requests on the landing page
+  - the landing E2E suite passes again on Chromium

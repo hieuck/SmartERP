@@ -1,66 +1,64 @@
-import { Row, Col, Card, Typography, theme } from 'antd';
 import {
   AppstoreOutlined,
-  TeamOutlined,
   BarChartOutlined,
-  ShoppingCartOutlined,
-  ToolOutlined,
   FileTextOutlined,
+  ShoppingCartOutlined,
+  TeamOutlined,
+  ToolOutlined,
 } from '@ant-design/icons';
+import { Card, Col, Row, Typography, theme } from 'antd';
+import { useTranslation } from 'react-i18next';
 
 const { Title, Paragraph } = Typography;
 const { useToken } = theme;
 
 export default function Features() {
+  const { t } = useTranslation('landing');
   const { token } = useToken();
-
-  const features = [
+  const featureItems = [
     {
+      key: 'inventory',
       icon: <AppstoreOutlined style={{ fontSize: 32, color: token.colorPrimary }} />,
-      title: 'Quản lý kho hàng',
-      description:
-        'Theo dõi tồn kho, nhập xuất hàng hóa tự động, cảnh báo hết hàng cho mọi loại sản phẩm',
     },
     {
+      key: 'sales',
       icon: <ShoppingCartOutlined style={{ fontSize: 32, color: token.colorPrimary }} />,
-      title: 'Quản lý bán hàng',
-      description: 'Đơn hàng, báo giá, hóa đơn, công nợ khách hàng - linh hoạt với mọi ngành hàng',
     },
     {
+      key: 'production',
       icon: <ToolOutlined style={{ fontSize: 32, color: token.colorPrimary }} />,
-      title: 'Quản lý sản xuất',
-      description: 'Lệnh sản xuất, nguyên vật liệu, quy trình sản xuất, kiểm tra chất lượng',
     },
     {
+      key: 'hr',
       icon: <TeamOutlined style={{ fontSize: 32, color: token.colorPrimary }} />,
-      title: 'Quản lý nhân sự',
-      description: 'Chấm công, tính lương, ứng lương, quản lý ca làm việc cho mọi quy mô',
     },
     {
+      key: 'reports',
       icon: <BarChartOutlined style={{ fontSize: 32, color: token.colorPrimary }} />,
-      title: 'Báo cáo thống kê',
-      description: 'Dashboard trực quan, báo cáo doanh thu, lợi nhuận, tồn kho theo thời gian thực',
     },
     {
+      key: 'documents',
       icon: <FileTextOutlined style={{ fontSize: 32, color: token.colorPrimary }} />,
-      title: 'Quản lý tài liệu',
-      description: 'Hóa đơn, chứng từ, hợp đồng, xuất file Excel/PDF tự động',
     },
-  ];
+  ] as const;
 
   return (
     <div style={{ padding: '80px 24px', background: token.colorBgElevated }}>
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
         <Title level={2} style={{ textAlign: 'center', marginBottom: 60, color: token.colorText }}>
-          Tính năng nổi bật
+          {t('features.title')}
         </Title>
         <Row gutter={[32, 32]}>
-          {features.map((feature, index) => (
-            <Col xs={24} sm={12} lg={8} key={index}>
+          {featureItems.map((feature) => (
+            <Col xs={24} sm={12} lg={8} key={feature.key}>
               <Card hoverable style={{ height: '100%', textAlign: 'center' }}>
                 <div style={{ marginBottom: 16 }}>{feature.icon}</div>
-                <Title level={4} style={{ color: token.colorText }}>{feature.title}</Title>
-                <Paragraph style={{ color: token.colorTextSecondary }}>{feature.description}</Paragraph>
+                <Title level={4} style={{ color: token.colorText }}>
+                  {t(`features.items.${feature.key}.title`)}
+                </Title>
+                <Paragraph style={{ color: token.colorTextSecondary }}>
+                  {t(`features.items.${feature.key}.description`)}
+                </Paragraph>
               </Card>
             </Col>
           ))}

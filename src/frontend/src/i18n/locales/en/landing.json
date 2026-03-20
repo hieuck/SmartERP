@@ -1,28 +1,158 @@
 {
   "seo": {
-    "title": "SmartERP - Production & Business Management Solution",
-    "description": "Professional ERP software for manufacturing and trading businesses. Manage inventory, sales, production, HR. Free 14-day trial.",
-    "keywords": "ERP, inventory management, production management, management software, SmartERP",
-    "ogTitle": "SmartERP - Production & Business Management Solution",
-    "ogDescription": "Professional ERP software for manufacturing and trading businesses. Free 14-day trial."
+    "title": "SmartERP - Production and Business Management Solution",
+    "description": "Professional ERP software for manufacturing and trading businesses. Manage inventory, sales, production, HR, and reporting in one workspace.",
+    "keywords": "ERP, inventory management, production management, business software, SmartERP",
+    "ogTitle": "SmartERP - Production and Business Management Solution",
+    "ogDescription": "Professional ERP software for manufacturing and trading businesses. Start a free 14-day trial."
+  },
+  "hero": {
+    "title": "Production and business management in one modern workspace",
+    "description": "SmartERP helps manufacturers and trading teams run inventory, orders, production, HR, and reporting with cleaner day-to-day operations.",
+    "trialCta": "Start your 14-day trial",
+    "loginCta": "Sign in"
+  },
+  "features": {
+    "title": "Key capabilities",
+    "items": {
+      "inventory": {
+        "title": "Inventory control",
+        "description": "Track stock, receipts, issues, and replenishment signals across warehouses with a clearer operational view."
+      },
+      "sales": {
+        "title": "Sales operations",
+        "description": "Manage quotes, orders, invoices, and receivables in one flow for both B2B and retail teams."
+      },
+      "production": {
+        "title": "Production planning",
+        "description": "Coordinate work orders, BOMs, materials, and quality checkpoints from planning to completion."
+      },
+      "hr": {
+        "title": "People operations",
+        "description": "Handle attendance, shifts, employee records, and payroll-ready data without switching systems."
+      },
+      "reports": {
+        "title": "Live reporting",
+        "description": "Use dashboards and operational reports to monitor revenue, margins, stock, and team performance."
+      },
+      "documents": {
+        "title": "Business documents",
+        "description": "Keep invoices, supporting documents, and exported files organized and ready for audit trails."
+      }
+    }
   },
   "sections": {
     "testimonials": {
-      "title": "What Our Customers Say"
+      "title": "What customers say",
+      "items": [
+        {
+          "name": "Nguyen Van A",
+          "company": "ABC Manufacturing",
+          "role": "Operations Director",
+          "content": "SmartERP gave our warehouse team far better stock visibility and helped us avoid both shortages and overstock."
+        },
+        {
+          "name": "Tran Thi B",
+          "company": "XYZ Factory",
+          "role": "Production Manager",
+          "content": "The rollout was straightforward, and our production planning became more disciplined within the first quarter."
+        },
+        {
+          "name": "Le Van C",
+          "company": "DEF Workshop",
+          "role": "Business Owner",
+          "content": "The reporting is easy to follow and helps us make faster business decisions without waiting for manual spreadsheets."
+        }
+      ]
     },
     "faq": {
-      "title": "Frequently Asked Questions"
+      "title": "Frequently asked questions",
+      "items": [
+        {
+          "label": "Is SmartERP suitable for a small manufacturing business?",
+          "children": "Yes. SmartERP is designed to scale from small workshops to larger factory operations, so teams can start lean and expand later."
+        },
+        {
+          "label": "Do I need technical knowledge to use it?",
+          "children": "No. The product is designed for operational teams, and onboarding can be done without an internal engineering team."
+        },
+        {
+          "label": "Is our data secure?",
+          "children": "Your workspace data is isolated by tenant, protected in transit, and backed by standard operational safeguards."
+        },
+        {
+          "label": "Can we cancel whenever we want?",
+          "children": "Yes. Trial access and future paid plans are intended to stay flexible so businesses can evaluate without long lock-in."
+        }
+      ]
     },
     "contact": {
-      "title": "Contact Us",
+      "title": "Contact SmartERP",
       "hotline": "Hotline",
       "email": "Email",
       "address": "Address"
     }
   },
+  "pricing": {
+    "title": "Pricing",
+    "popularBadge": "Most popular",
+    "plans": {
+      "basic": {
+        "name": "Starter",
+        "price": "299,000 VND / month",
+        "description": "For small workshops and growing teams",
+        "cta": "Try now",
+        "features": [
+          "Core inventory workflows",
+          "Sales order and invoicing basics",
+          "Operational reporting",
+          "Email support",
+          "1 user",
+          "1 warehouse"
+        ]
+      },
+      "pro": {
+        "name": "Professional",
+        "price": "599,000 VND / month",
+        "description": "For structured production and multi-team operations",
+        "cta": "Try now",
+        "features": [
+          "Everything in Starter",
+          "Production workflows",
+          "HR workflows",
+          "Advanced reporting",
+          "Priority support",
+          "Up to 10 users",
+          "Multiple warehouses",
+          "API integration"
+        ]
+      },
+      "enterprise": {
+        "name": "Enterprise",
+        "price": "Contact us",
+        "description": "For tailored rollouts and larger organizations",
+        "cta": "Talk to sales",
+        "features": [
+          "Everything in Professional",
+          "Custom rollout planning",
+          "Dedicated onboarding",
+          "Priority support",
+          "Unlimited users",
+          "Unlimited warehouses",
+          "Dedicated account manager",
+          "SLA commitments"
+        ]
+      }
+    }
+  },
+  "cta": {
+    "title": "Ready to see SmartERP in action?",
+    "description": "Start a 14-day trial and explore a cleaner operating workflow without a credit card.",
+    "button": "Create a workspace"
+  },
   "footer": {
     "title": "SmartERP",
-    "description": "Comprehensive management solution for manufacturing and trading businesses",
+    "description": "A modern operating system for manufacturing and trading businesses.",
     "contact": "Contact",
     "legal": "Legal",
     "privacy": "Privacy Policy",

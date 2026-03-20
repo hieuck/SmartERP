@@ -1,32 +1,162 @@
 {
   "seo": {
-    "title": "SmartERP - Giải pháp quản lý sản xuất & kinh doanh",
-    "description": "Phần mềm ERP chuyên nghiệp cho doanh nghiệp sản xuất và thương mại. Quản lý kho hàng, bán hàng, sản xuất, nhân sự. Dùng thử miễn phí 14 ngày.",
+    "title": "SmartERP - Giải pháp quản lý sản xuất và kinh doanh",
+    "description": "Phần mềm ERP hiện đại cho doanh nghiệp sản xuất và thương mại. Quản lý kho, đơn hàng, sản xuất, nhân sự và báo cáo trong cùng một workspace.",
     "keywords": "ERP, quản lý kho, quản lý sản xuất, phần mềm quản lý, SmartERP",
-    "ogTitle": "SmartERP - Giải pháp quản lý sản xuất & kinh doanh",
-    "ogDescription": "Phần mềm ERP chuyên nghiệp cho doanh nghiệp sản xuất và thương mại. Dùng thử miễn phí 14 ngày."
+    "ogTitle": "SmartERP - Giải pháp quản lý sản xuất và kinh doanh",
+    "ogDescription": "Phần mềm ERP hiện đại cho doanh nghiệp sản xuất và thương mại. Dùng thử miễn phí 14 ngày."
+  },
+  "hero": {
+    "title": "Quản lý sản xuất và kinh doanh trong một workspace hiện đại",
+    "description": "SmartERP giúp đội vận hành kiểm soát kho, đơn hàng, sản xuất, nhân sự và báo cáo gọn gàng hơn trong mỗi ngày làm việc.",
+    "trialCta": "Dùng thử 14 ngày",
+    "loginCta": "Đăng nhập"
+  },
+  "features": {
+    "title": "Tính năng nổi bật",
+    "items": {
+      "inventory": {
+        "title": "Quản lý kho hàng",
+        "description": "Theo dõi tồn kho, nhập xuất và cảnh báo bổ sung hàng hóa theo từng kho một cách rõ ràng hơn."
+      },
+      "sales": {
+        "title": "Quản lý bán hàng",
+        "description": "Xử lý báo giá, đơn hàng, hóa đơn và công nợ trong một quy trình thống nhất cho đội kinh doanh."
+      },
+      "production": {
+        "title": "Quản lý sản xuất",
+        "description": "Phối hợp lệnh sản xuất, BOM, nguyên vật liệu và các mốc kiểm soát chất lượng từ đầu đến cuối."
+      },
+      "hr": {
+        "title": "Quản lý nhân sự",
+        "description": "Theo dõi chấm công, ca làm, hồ sơ nhân viên và dữ liệu sẵn sàng cho lương mà không cần đổi công cụ."
+      },
+      "reports": {
+        "title": "Báo cáo trực quan",
+        "description": "Theo dõi doanh thu, biên lợi nhuận, tồn kho và hiệu suất đội vận hành bằng dashboard và báo cáo sống."
+      },
+      "documents": {
+        "title": "Tài liệu doanh nghiệp",
+        "description": "Lưu trữ hóa đơn, chứng từ và file xuất một cách có tổ chức, phù hợp cho đội vận hành và kiểm toán."
+      }
+    }
   },
   "sections": {
     "testimonials": {
-      "title": "Khách hàng nói gì về chúng tôi"
+      "title": "Khách hàng nói gì về SmartERP",
+      "items": [
+        {
+          "name": "Nguyễn Văn A",
+          "company": "Công ty ABC",
+          "role": "Giám đốc vận hành",
+          "content": "SmartERP giúp đội kho của chúng tôi nhìn tồn kho rõ hơn rất nhiều và giảm được cả thiếu hàng lẫn tồn dư."
+        },
+        {
+          "name": "Trần Thị B",
+          "company": "Nhà máy XYZ",
+          "role": "Quản lý sản xuất",
+          "content": "Quá trình triển khai khá gọn, đội ngũ sử dụng bắt nhịp nhanh và kế hoạch sản xuất ổn định hơn chỉ sau vài tháng."
+        },
+        {
+          "name": "Lê Văn C",
+          "company": "Xưởng DEF",
+          "role": "Chủ doanh nghiệp",
+          "content": "Báo cáo dễ đọc, dễ theo dõi và giúp chúng tôi ra quyết định nhanh hơn thay vì phụ thuộc vào bảng tính thủ công."
+        }
+      ]
     },
     "faq": {
-      "title": "Câu hỏi thường gặp"
+      "title": "Câu hỏi thường gặp",
+      "items": [
+        {
+          "label": "SmartERP có phù hợp với doanh nghiệp sản xuất nhỏ không?",
+          "children": "Có. SmartERP được thiết kế để bắt đầu gọn nhẹ cho xưởng nhỏ và vẫn mở rộng tốt khi doanh nghiệp phát triển."
+        },
+        {
+          "label": "Tôi có cần kiến thức kỹ thuật để sử dụng không?",
+          "children": "Không cần. Giao diện hướng đến đội vận hành, nên doanh nghiệp có thể onboard mà không cần đội kỹ thuật nội bộ."
+        },
+        {
+          "label": "Dữ liệu của doanh nghiệp có an toàn không?",
+          "children": "Dữ liệu workspace được tách tenant, bảo vệ khi truyền tải và được vận hành với các biện pháp an toàn tiêu chuẩn."
+        },
+        {
+          "label": "Tôi có thể dừng hoặc hủy bất cứ lúc nào không?",
+          "children": "Có. Giai đoạn dùng thử và các gói sau này được thiết kế linh hoạt để doanh nghiệp đánh giá trước khi mở rộng."
+        }
+      ]
     },
     "contact": {
-      "title": "Liên hệ với chúng tôi",
+      "title": "Liên hệ SmartERP",
       "hotline": "Hotline",
       "email": "Email",
       "address": "Địa chỉ"
     }
   },
+  "pricing": {
+    "title": "Bảng giá",
+    "popularBadge": "Phổ biến nhất",
+    "plans": {
+      "basic": {
+        "name": "Gói cơ bản",
+        "price": "299.000 VND / tháng",
+        "description": "Phù hợp cho xưởng nhỏ và đội ngũ đang mở rộng",
+        "cta": "Dùng thử ngay",
+        "features": [
+          "Nghiệp vụ kho căn bản",
+          "Đơn hàng và hóa đơn cơ bản",
+          "Báo cáo vận hành",
+          "Hỗ trợ qua email",
+          "1 người dùng",
+          "1 kho hàng"
+        ]
+      },
+      "pro": {
+        "name": "Gói chuyên nghiệp",
+        "price": "599.000 VND / tháng",
+        "description": "Phù hợp cho vận hành sản xuất có quy trình và nhiều bộ phận",
+        "cta": "Dùng thử ngay",
+        "features": [
+          "Tất cả tính năng gói cơ bản",
+          "Quy trình sản xuất",
+          "Quy trình nhân sự",
+          "Báo cáo nâng cao",
+          "Hỗ trợ ưu tiên",
+          "Tối đa 10 người dùng",
+          "Nhiều kho hàng",
+          "Tích hợp API"
+        ]
+      },
+      "enterprise": {
+        "name": "Gói doanh nghiệp",
+        "price": "Liên hệ",
+        "description": "Phù hợp cho triển khai tùy biến và tổ chức quy mô lớn",
+        "cta": "Liên hệ tư vấn",
+        "features": [
+          "Tất cả tính năng gói chuyên nghiệp",
+          "Kế hoạch triển khai tùy chỉnh",
+          "Onboarding chuyên sâu",
+          "Hỗ trợ ưu tiên",
+          "Không giới hạn người dùng",
+          "Không giới hạn kho hàng",
+          "Quản lý tài khoản riêng",
+          "Cam kết SLA"
+        ]
+      }
+    }
+  },
+  "cta": {
+    "title": "Sẵn sàng trải nghiệm SmartERP?",
+    "description": "Bắt đầu dùng thử 14 ngày để xem quy trình vận hành gọn hơn mà không cần thẻ tín dụng.",
+    "button": "Tạo workspace ngay"
+  },
   "footer": {
     "title": "SmartERP",
-    "description": "Giải pháp quản lý toàn diện cho doanh nghiệp sản xuất và thương mại",
+    "description": "Hệ thống vận hành hiện đại cho doanh nghiệp sản xuất và thương mại.",
     "contact": "Liên hệ",
     "legal": "Pháp lý",
     "privacy": "Chính sách bảo mật",
-    "terms": "Điều khoản sử dụng",
+    "terms": "Điều khoản dịch vụ",
     "copyright": "© 2026 SmartERP. All rights reserved."
   }
 }

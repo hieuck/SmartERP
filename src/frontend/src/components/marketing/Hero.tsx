@@ -1,5 +1,6 @@
 import { ArrowRightOutlined } from '@ant-design/icons';
 import { Button, Grid, Space, Typography, theme } from 'antd';
+import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
 const { Title, Paragraph } = Typography;
@@ -7,6 +8,7 @@ const { useToken } = theme;
 const { useBreakpoint } = Grid;
 
 export default function Hero() {
+  const { t } = useTranslation('landing');
   const { token } = useToken();
   const screens = useBreakpoint();
 
@@ -27,7 +29,7 @@ export default function Hero() {
     >
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
         <Title style={{ color: token.colorWhite, fontSize: titleFontSize, marginBottom: 24 }}>
-          Gi?i ph?p qu?n l? s?n xu?t v? kinh doanh
+          {t('hero.title')}
         </Title>
         <Paragraph
           style={{
@@ -37,7 +39,7 @@ export default function Hero() {
             opacity: 0.9,
           }}
         >
-          Ph?n m?m ERP chuy?n nghi?p cho doanh nghi?p s?n xu?t v? th??ng m?i
+          {t('hero.description')}
         </Paragraph>
         <Space
           size={isMobile ? 'middle' : 'large'}
@@ -56,7 +58,7 @@ export default function Hero() {
                 width: isMobile ? '100%' : 'auto',
               }}
             >
-              D?ng th? 14 ng?y mi?n ph?
+              {t('hero.trialCta')}
             </Button>
           </Link>
           <Link to="/login" style={{ width: isMobile ? '100%' : 'auto' }}>
@@ -71,7 +73,7 @@ export default function Hero() {
                 width: isMobile ? '100%' : 'auto',
               }}
             >
-              ??ng nh?p
+              {t('hero.loginCta')}
             </Button>
           </Link>
         </Space>

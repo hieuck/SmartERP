@@ -1,61 +1,48 @@
-import { Link } from 'react-router-dom';
-import { Row, Col, Card, Button, Typography, theme } from 'antd';
 import { CheckCircleOutlined } from '@ant-design/icons';
+import { Button, Card, Col, Row, Typography, theme } from 'antd';
+import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 
 const { Title, Paragraph, Text } = Typography;
 const { useToken } = theme;
 
-const pricingFeatures = {
-  basic: [
-    'Quản lý kho hàng cơ bản',
-    'Quản lý bán hàng',
-    'Báo cáo cơ bản',
-    'Hỗ trợ email',
-    '1 người dùng',
-    '1 kho hàng',
-  ],
-  pro: [
-    'Tất cả tính năng gói cơ bản',
-    'Quản lý sản xuất',
-    'Quản lý nhân sự',
-    'Báo cáo nâng cao',
-    'Hỗ trợ 24/7',
-    'Tối đa 10 người dùng',
-    'Nhiều kho hàng',
-    'Tích hợp API',
-  ],
-  enterprise: [
-    'Tất cả tính năng gói chuyên nghiệp',
-    'Tùy chỉnh theo yêu cầu',
-    'Đào tạo chuyên sâu',
-    'Hỗ trợ ưu tiên',
-    'Không giới hạn người dùng',
-    'Không giới hạn kho hàng',
-    'Dedicated account manager',
-    'SLA 99.9%',
-  ],
-};
+interface PricingPlan {
+  name: string;
+  price: string;
+  description: string;
+  cta: string;
+  features: string[];
+}
 
 export default function Pricing() {
+  const { t } = useTranslation('landing');
   const { token } = useToken();
+
+  const plans = {
+    basic: t('pricing.plans.basic', { returnObjects: true }) as PricingPlan,
+    pro: t('pricing.plans.pro', { returnObjects: true }) as PricingPlan,
+    enterprise: t('pricing.plans.enterprise', { returnObjects: true }) as PricingPlan,
+  };
 
   return (
     <div style={{ padding: '80px 24px', background: token.colorBgElevated }}>
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
         <Title level={2} style={{ textAlign: 'center', marginBottom: 60, color: token.colorText }}>
-          Bảng giá
+          {t('pricing.title')}
         </Title>
         <Row gutter={[32, 32]} justify="center">
           <Col xs={24} sm={12} lg={8}>
             <Card hoverable style={{ textAlign: 'center', height: '100%' }}>
-              <Title level={3} style={{ color: token.colorText }}>Gói cơ bản</Title>
-              <Title level={2} style={{ color: token.colorPrimary }}>
-                299.000đ/tháng
+              <Title level={3} style={{ color: token.colorText }}>
+                {plans.basic.name}
               </Title>
-              <Paragraph style={{ color: token.colorTextSecondary }}>Phù hợp cho xưởng nhỏ</Paragraph>
+              <Title level={2} style={{ color: token.colorPrimary }}>
+                {plans.basic.price}
+              </Title>
+              <Paragraph style={{ color: token.colorTextSecondary }}>{plans.basic.description}</Paragraph>
               <div style={{ textAlign: 'left', marginBottom: 24 }}>
-                {pricingFeatures.basic.map((feature, idx) => (
-                  <div key={idx} style={{ marginBottom: 8 }}>
+                {plans.basic.features.map((feature) => (
+                  <div key={feature} style={{ marginBottom: 8 }}>
                     <CheckCircleOutlined style={{ color: token.colorSuccess, marginRight: 8 }} />
                     <Text style={{ color: token.colorText }}>{feature}</Text>
                   </div>
@@ -63,7 +50,7 @@ export default function Pricing() {
               </div>
               <Link to="/register">
                 <Button type="primary" size="large" block>
-                  Dùng thử ngay
+                  {plans.basic.cta}
                 </Button>
               </Link>
             </Card>
@@ -71,7 +58,11 @@ export default function Pricing() {
           <Col xs={24} sm={12} lg={8}>
             <Card
               hoverable
-              style={{ textAlign: 'center', border: `2px solid ${token.colorPrimary}`, height: '100%' }}
+              style={{
+                textAlign: 'center',
+                border: `2px solid ${token.colorPrimary}`,
+                height: '100%',
+              }}
             >
               <div
                 style={{
@@ -83,16 +74,18 @@ export default function Pricing() {
                   marginBottom: 16,
                 }}
               >
-                Phổ biến nhất
+                {t('pricing.popularBadge')}
               </div>
-              <Title level={3} style={{ color: token.colorText }}>Gói chuyên nghiệp</Title>
-              <Title level={2} style={{ color: token.colorPrimary }}>
-                599.000đ/tháng
+              <Title level={3} style={{ color: token.colorText }}>
+                {plans.pro.name}
               </Title>
-              <Paragraph style={{ color: token.colorTextSecondary }}>Phù hợp cho nhà máy vừa</Paragraph>
+              <Title level={2} style={{ color: token.colorPrimary }}>
+                {plans.pro.price}
+              </Title>
+              <Paragraph style={{ color: token.colorTextSecondary }}>{plans.pro.description}</Paragraph>
               <div style={{ textAlign: 'left', marginBottom: 24 }}>
-                {pricingFeatures.pro.map((feature, idx) => (
-                  <div key={idx} style={{ marginBottom: 8 }}>
+                {plans.pro.features.map((feature) => (
+                  <div key={feature} style={{ marginBottom: 8 }}>
                     <CheckCircleOutlined style={{ color: token.colorSuccess, marginRight: 8 }} />
                     <Text style={{ color: token.colorText }}>{feature}</Text>
                   </div>
@@ -100,28 +93,32 @@ export default function Pricing() {
               </div>
               <Link to="/register">
                 <Button type="primary" size="large" block>
-                  Dùng thử ngay
+                  {plans.pro.cta}
                 </Button>
               </Link>
             </Card>
           </Col>
           <Col xs={24} sm={12} lg={8}>
             <Card hoverable style={{ textAlign: 'center', height: '100%' }}>
-              <Title level={3} style={{ color: token.colorText }}>Gói doanh nghiệp</Title>
-              <Title level={2} style={{ color: token.colorPrimary }}>
-                Liên hệ
+              <Title level={3} style={{ color: token.colorText }}>
+                {plans.enterprise.name}
               </Title>
-              <Paragraph style={{ color: token.colorTextSecondary }}>Giải pháp tùy chỉnh</Paragraph>
+              <Title level={2} style={{ color: token.colorPrimary }}>
+                {plans.enterprise.price}
+              </Title>
+              <Paragraph style={{ color: token.colorTextSecondary }}>
+                {plans.enterprise.description}
+              </Paragraph>
               <div style={{ textAlign: 'left', marginBottom: 24 }}>
-                {pricingFeatures.enterprise.map((feature, idx) => (
-                  <div key={idx} style={{ marginBottom: 8 }}>
+                {plans.enterprise.features.map((feature) => (
+                  <div key={feature} style={{ marginBottom: 8 }}>
                     <CheckCircleOutlined style={{ color: token.colorSuccess, marginRight: 8 }} />
                     <Text style={{ color: token.colorText }}>{feature}</Text>
                   </div>
                 ))}
               </div>
               <Button size="large" block>
-                Liên hệ tư vấn
+                {plans.enterprise.cta}
               </Button>
             </Card>
           </Col>
