@@ -68,6 +68,7 @@
     "isActive": "Active",
     "active": "Active",
     "inactive": "Inactive",
+    "autoCodeHint": "Automatically generated from the name",
     "status": "Status",
     "searchPlaceholder": "Search work centers..."
   },

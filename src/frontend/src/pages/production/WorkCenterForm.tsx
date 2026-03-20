@@ -2,7 +2,7 @@ import manufacturingService, {
   CreateWorkCenterDto,
 } from '@/services/manufacturing/manufacturing.service';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Button, Card, Col, Form, Input, InputNumber, Row, Space, Switch, message } from 'antd';
+import { App, Button, Card, Col, Form, Input, InputNumber, Row, Space, Switch } from 'antd';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -12,6 +12,7 @@ const { TextArea } = Input;
 export default function WorkCenterForm() {
   const { id } = useParams<{ id: string }>();
   const isEdit = Boolean(id);
+  const { message } = App.useApp();
   const navigate = useNavigate();
   const { t } = useTranslation('production');
   const queryClient = useQueryClient();
@@ -24,8 +25,10 @@ export default function WorkCenterForm() {
   });
 
   useEffect(() => {
-    if (workCenter) form.setFieldsValue(workCenter);
-  }, [workCenter, form]);
+    if (workCenter) {
+      form.setFieldsValue(workCenter);
+    }
+  }, [form, workCenter]);
 
   const createMutation = useMutation({
     mutationFn: (dto: CreateWorkCenterDto) => manufacturingService.createWorkCenter(dto),
@@ -58,13 +61,19 @@ export default function WorkCenterForm() {
       .replace(/^_|_$/g, '')
       .slice(0, 30);
 
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!isEdit) form.setFieldValue('code', generateCode(e.target.value));
+  const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!isEdit) {
+      form.setFieldValue('code', generateCode(event.target.value));
+    }
   };
 
   const onFinish = (values: CreateWorkCenterDto) => {
-    if (isEdit) updateMutation.mutate(values);
-    else createMutation.mutate(values);
+    if (isEdit) {
+      updateMutation.mutate(values);
+      return;
+    }
+
+    createMutation.mutate(values);
   };
 
   const isSaving = createMutation.isPending || updateMutation.isPending;
@@ -88,14 +97,23 @@ export default function WorkCenterForm() {
         form={form}
         layout="vertical"
         onFinish={onFinish}
-        initialValues={{ isActive: true, timeEfficiency: 100, capacityPerCycle: 1, costPerHour: 0 }}
+        initialValues={{
+          isActive: true,
+          timeEfficiency: 100,
+          capacityPerCycle: 1,
+          costPerHour: 0,
+        }}
       >
         <Row gutter={16}>
           <Col xs={24} sm={12}>
             <Form.Item
               name="code"
               label={t('workCenter.code')}
-              extra={!isEdit ? 'Tự động tạo từ tên' : undefined}
+              extra={
+                !isEdit
+                  ? t('workCenter.autoCodeHint', { defaultValue: 'Tự động tạo từ tên' })
+                  : undefined
+              }
             >
               <Input />
             </Form.Item>
@@ -116,7 +134,16 @@ export default function WorkCenterForm() {
           </Col>
           <Col xs={24} sm={8}>
             <Form.Item name="timeEfficiency" label={t('workCenter.timeEfficiency')}>
-              <InputNumber min={0} max={100} style={{ width: '100%' }} addonAfter="%" />
+              <InputNumber<number>
+                min={0}
+                max={100}
+                style={{ width: '100%' }}
+                formatter={(value) => (value == null ? '' : `${value}%`)}
+                parser={(value) => {
+                  const parsed = Number((value ?? '').replace('%', ''));
+                  return Number.isNaN(parsed) ? 0 : parsed;
+                }}
+              />
             </Form.Item>
           </Col>
           <Col xs={24} sm={8}>
