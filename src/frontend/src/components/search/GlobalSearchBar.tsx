@@ -59,7 +59,7 @@ const GlobalSearchBar: React.FC = () => {
                 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
               >
                 <span>
-                  {String(source.name ?? '')} ({String(source.code ?? '')})
+                  {String(source.name ?? '')} ({String(source.email ?? '')})
                 </span>
                 <Tag color="green">{t('types.customer')}</Tag>
               </div>
@@ -71,7 +71,7 @@ const GlobalSearchBar: React.FC = () => {
                 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
               >
                 <span>
-                  {String(source.name ?? '')} ({String(source.code ?? '')})
+                  {String(source.name ?? '')} ({String(source.email ?? '')})
                 </span>
                 <Tag color="orange">{t('types.supplier')}</Tag>
               </div>
@@ -83,7 +83,8 @@ const GlobalSearchBar: React.FC = () => {
                 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
               >
                 <span>
-                  {t('fields.order')} {String(source.code ?? '')}
+                  {t('fields.order')}{' '}
+                  {String(source.orderNumber ?? source.poNumber ?? source.code ?? '')}
                 </span>
                 <Tag color="purple">
                   {source.type === 'sales'

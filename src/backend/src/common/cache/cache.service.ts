@@ -25,6 +25,11 @@ export class CacheService {
   async get<T>(key: string): Promise<T | undefined> {
     try {
       const value = await this.cacheManager.get<T>(key);
+      if (value === null || value === undefined) {
+        this.logger.debug(`Cache MISS: ${key}`);
+        return undefined;
+      }
+
       if (value) {
         this.logger.debug(`Cache HIT: ${key}`);
       } else {

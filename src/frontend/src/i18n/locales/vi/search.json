@@ -34,6 +34,9 @@
     "date": "Ngày",
     "order": "Đơn hàng",
     "status": "Trạng thái",
+    "email": "Email",
+    "phone": "Điện thoại",
+    "orderNumber": "Số đơn",
     "na": "Không có"
   },
   "advancedFilters": {

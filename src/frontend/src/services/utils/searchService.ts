@@ -41,7 +41,7 @@ const searchService = {
     const response = await api.get('/search/global', {
       params: { q: query, from, size },
     });
-    return response.data;
+    return response.data.data || response.data;
   },
 
   // Search products
@@ -49,7 +49,7 @@ const searchService = {
     const response = await api.get('/search/products', {
       params: { q: query, ...filters },
     });
-    return response.data;
+    return response.data.data || response.data;
   },
 
   // Search customers
@@ -57,7 +57,7 @@ const searchService = {
     const response = await api.get('/search/customers', {
       params: { q: query, ...filters },
     });
-    return response.data;
+    return response.data.data || response.data;
   },
 
   // Search suppliers
@@ -65,7 +65,7 @@ const searchService = {
     const response = await api.get('/search/suppliers', {
       params: { q: query, ...filters },
     });
-    return response.data;
+    return response.data.data || response.data;
   },
 
   // Search orders
@@ -73,7 +73,7 @@ const searchService = {
     const response = await api.get('/search/orders', {
       params: { q: query, ...filters },
     });
-    return response.data;
+    return response.data.data || response.data;
   },
 
   // Get search suggestions
@@ -81,13 +81,13 @@ const searchService = {
     const response = await api.get('/search/suggest', {
       params: { q: query, field, index },
     });
-    return response.data;
+    return response.data.data || response.data;
   },
 
   // Advanced search with complex filters
   advancedSearch: async (searchQuery: SearchQuery): Promise<SearchResult> => {
     const response = await api.post('/search/advanced', searchQuery);
-    return response.data;
+    return response.data.data || response.data;
   },
 
   // Saved filters management (stored in localStorage for now)

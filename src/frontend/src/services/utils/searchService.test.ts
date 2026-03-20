@@ -47,6 +47,21 @@ describe('searchService', () => {
     expect(result).toEqual(mockResult);
   });
 
+  it('unwraps backend response envelopes for compatibility routes', async () => {
+    const mockResult = { hits: { total: { value: 1 }, hits: [] } };
+    mockApiGet.mockResolvedValue({
+      data: {
+        success: true,
+        data: mockResult,
+        message: 'Data retrieved successfully',
+      },
+    });
+
+    const result = await searchService.searchOrders('SO-001');
+
+    expect(result).toEqual(mockResult);
+  });
+
   it('performs product search with filters', async () => {
     const filters = { status: 'active', categoryId: 'cat-1' };
     const mockResult = { hits: { total: { value: 2 }, hits: [] } };

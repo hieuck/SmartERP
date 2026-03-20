@@ -50,6 +50,17 @@ function getDisplayValue(value: unknown, fallback = ''): string {
   return fallback;
 }
 
+function getFirstDisplayValue(values: unknown[], fallback = ''): string {
+  for (const value of values) {
+    const resolved = getDisplayValue(value);
+    if (resolved) {
+      return resolved;
+    }
+  }
+
+  return fallback;
+}
+
 const SearchResultsPage: React.FC = () => {
   const { t } = useTranslation('search');
   const [searchParams, setSearchParams] = useSearchParams();
@@ -140,7 +151,7 @@ const SearchResultsPage: React.FC = () => {
       case 'products':
         icon = <ShoppingOutlined style={{ fontSize: 24, color: '#1890ff' }} />;
         title = getStringValue(source.name, t('types.unknown'));
-        description = `${t('fields.sku')}: ${getDisplayValue(source.sku)} | ${t('fields.price')}: ${getDisplayValue(source.salePrice)} VND`;
+        description = `${t('fields.sku')}: ${getDisplayValue(source.sku)} | ${t('fields.price')}: ${getFirstDisplayValue([source.salePrice, source.price], t('fields.na'))} VND`;
         tags = [
           <Tag color="blue" key="type">
             {t('types.product')}
@@ -151,7 +162,7 @@ const SearchResultsPage: React.FC = () => {
       case 'customers':
         icon = <UserOutlined style={{ fontSize: 24, color: '#52c41a' }} />;
         title = getStringValue(source.name, t('types.unknown'));
-        description = `${t('fields.code')}: ${getDisplayValue(source.code)} | ${t('fields.type')}: ${getDisplayValue(source.type)}`;
+        description = `${t('fields.email')}: ${getDisplayValue(source.email, t('fields.na'))} | ${t('fields.phone')}: ${getDisplayValue(source.phone, t('fields.na'))}`;
         tags = [
           <Tag color="green" key="type">
             {t('types.customer')}
@@ -162,7 +173,7 @@ const SearchResultsPage: React.FC = () => {
       case 'suppliers':
         icon = <TeamOutlined style={{ fontSize: 24, color: '#fa8c16' }} />;
         title = getStringValue(source.name, t('types.unknown'));
-        description = `${t('fields.code')}: ${getDisplayValue(source.code)} | ${t('fields.rating')}: ${getDisplayValue(source.rating, t('fields.na'))}`;
+        description = `${t('fields.email')}: ${getDisplayValue(source.email, t('fields.na'))} | ${t('fields.phone')}: ${getDisplayValue(source.phone, t('fields.na'))}`;
         tags = [
           <Tag color="orange" key="type">
             {t('types.supplier')}
@@ -172,7 +183,7 @@ const SearchResultsPage: React.FC = () => {
         break;
       case 'orders':
         icon = <ShoppingCartOutlined style={{ fontSize: 24, color: '#722ed1' }} />;
-        title = `${t('fields.order')} ${getDisplayValue(source.code)}`;
+        title = `${t('fields.order')} ${getFirstDisplayValue([source.orderNumber, source.poNumber, source.code], t('types.unknown'))}`;
         description = `${t('fields.total')}: ${getDisplayValue(source.totalAmount)} VND | ${t('fields.date')}: ${getDisplayValue(source.orderDate)}`;
         tags = [
           <Tag color="purple" key="type">

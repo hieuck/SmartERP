@@ -4,6 +4,22 @@
 **Project:** SmartERP  
 **Purpose:** Shared working report for stabilizing the codebase and creating a reliable plan of execution.
 
+## Latest Checkpoint (2026-03-20)
+
+- runtime is healthy again through the managed local launcher:
+  - frontend `http://127.0.0.1:5173`
+  - backend `http://127.0.0.1:3000/api/health`
+  - database smoke for `erp_production`
+- the search stack has been corrected end-to-end:
+  - backend now exposes frontend-compatible search routes
+  - backend search supports suppliers and purchase orders
+  - frontend search unwraps the standard backend response envelope
+  - browser smoke for `/dashboard/search?q=demo` runs without failed requests or console errors
+- a real cache-layer bug was fixed:
+  - `cacheManager.get()` returning `null` on cache miss was being treated as a hit
+  - this caused runtime responses like `{ success: true, data: null }`
+  - the fix is now covered by backend cache specs
+
 ## Current Status Snapshot
 
 As of this checkpoint:

@@ -60,12 +60,12 @@ describe('CacheService', () => {
       expect(result).toBeUndefined();
     });
 
-    it('should handle null values correctly', async () => {
+    it('should treat null cache values as a miss', async () => {
       mockCacheManager.get.mockResolvedValue(null);
 
       const result = await service.get('null-key');
 
-      expect(result).toBeNull();
+      expect(result).toBeUndefined();
     });
   });
 
@@ -159,11 +159,11 @@ describe('CacheService', () => {
 
   describe('reset', () => {
     it('should reset all cache', async () => {
-      mockCacheManager.reset.mockResolvedValue(undefined);
+      (mockCacheManager as { clear?: jest.Mock }).clear = jest.fn().mockResolvedValue(undefined);
 
       await service.reset();
 
-      expect(mockCacheManager.reset).toHaveBeenCalled();
+      expect((mockCacheManager as { clear?: jest.Mock }).clear).toHaveBeenCalled();
     });
 
     it('should handle cache reset errors gracefully', async () => {
@@ -196,6 +196,19 @@ describe('CacheService', () => {
 
       expect(result).toEqual(factoryValue);
       expect(factory).toHaveBeenCalled();
+      expect(mockCacheManager.set).toHaveBeenCalledWith('test-key', factoryValue, 300000);
+    });
+
+    it('should treat cached null values as a miss and repopulate the cache', async () => {
+      const factoryValue = { id: '1', name: 'Rebuilt' };
+      mockCacheManager.get.mockResolvedValue(null);
+      mockCacheManager.set.mockResolvedValue(undefined);
+
+      const factory = jest.fn().mockResolvedValue(factoryValue);
+      const result = await service.getOrSet('test-key', factory, 300);
+
+      expect(result).toEqual(factoryValue);
+      expect(factory).toHaveBeenCalledTimes(1);
       expect(mockCacheManager.set).toHaveBeenCalledWith('test-key', factoryValue, 300000);
     });
 
@@ -356,12 +369,12 @@ describe('CacheService', () => {
       expect(result).toBe(false);
     });
 
-    it('should return true for null values', async () => {
+    it('should return false for null values', async () => {
       mockCacheManager.get.mockResolvedValue(null);
 
       const result = await service.has('null-key');
 
-      expect(result).toBe(true);
+      expect(result).toBe(false);
     });
 
     it('should return true for false boolean values', async () => {

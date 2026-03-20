@@ -34,6 +34,9 @@
     "date": "Date",
     "order": "Order",
     "status": "Status",
+    "email": "Email",
+    "phone": "Phone",
+    "orderNumber": "Order Number",
     "na": "N/A"
   },
   "advancedFilters": {

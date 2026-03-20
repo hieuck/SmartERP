@@ -1,19 +1,50 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { SearchService } from './search.service';
+import { CacheTTL } from '@/common/cache/cache.config';
+import { CacheService } from '@/common/cache/cache.service';
+import { User } from '@/common/security/permission.service';
 import { Product } from '@/domains/inventory/product/entities/product.entity';
 import { Customer } from '@/domains/sales/customer/entities/customer.entity';
 import { Order } from '@/domains/sales/order/entities/order.entity';
-import { CacheService } from '@/common/cache/cache.service';
-import { User } from '@/common/security/permission.service';
-import { CacheTTL } from '@/common/cache/cache.config';
+import { Supplier } from '@/domains/purchasing/supplier/entities/supplier.entity';
+import { PurchaseOrder } from '@/domains/purchasing/purchase-order/entities/purchase-order.entity';
+import { SearchService } from './search.service';
+
+type QueryBuilderMock<T> = {
+  leftJoinAndSelect: jest.MockedFunction<(relation: string, alias: string) => QueryBuilderMock<T>>;
+  where: jest.MockedFunction<(query: string, params?: Record<string, unknown>) => QueryBuilderMock<T>>;
+  andWhere: jest.MockedFunction<
+    (query: string, params?: Record<string, unknown>) => QueryBuilderMock<T>
+  >;
+  take: jest.MockedFunction<(limit: number) => QueryBuilderMock<T>>;
+  getMany: jest.MockedFunction<() => Promise<T[]>>;
+};
+
+function createQueryBuilderMock<T>(results: T[]): QueryBuilderMock<T> {
+  const builder = {
+    leftJoinAndSelect: jest.fn(),
+    where: jest.fn(),
+    andWhere: jest.fn(),
+    take: jest.fn(),
+    getMany: jest.fn().mockResolvedValue(results),
+  } as unknown as QueryBuilderMock<T>;
+
+  builder.leftJoinAndSelect.mockReturnValue(builder);
+  builder.where.mockReturnValue(builder);
+  builder.andWhere.mockReturnValue(builder);
+  builder.take.mockReturnValue(builder);
+
+  return builder;
+}
 
 describe('SearchService', () => {
   let service: SearchService;
   let productRepository: jest.Mocked<Repository<Product>>;
   let customerRepository: jest.Mocked<Repository<Customer>>;
   let orderRepository: jest.Mocked<Repository<Order>>;
+  let supplierRepository: jest.Mocked<Repository<Supplier>>;
+  let purchaseOrderRepository: jest.Mocked<Repository<PurchaseOrder>>;
   let cacheService: jest.Mocked<CacheService>;
 
   const mockUser: User = {
@@ -28,57 +59,69 @@ describe('SearchService', () => {
     sku: 'TEST-001',
     description: 'Test description',
     price: 100,
-  };
+    status: 'active',
+  } as Product;
 
   const mockCustomer = {
     id: 'customer-1',
     name: 'John Doe',
     email: 'john@example.com',
     phone: '1234567890',
-  };
+    status: 'active',
+  } as Customer;
+
+  const mockSupplier = {
+    id: 'supplier-1',
+    name: 'ACME Supply',
+    email: 'supply@example.com',
+    phone: '0987654321',
+    status: 'active',
+  } as Supplier;
 
   const mockOrder = {
     id: 'order-1',
-    orderNumber: 'ORD-001',
+    orderNumber: 'SO-001',
     totalAmount: 500,
     status: 'pending',
-  };
+    createdAt: new Date('2026-03-20T09:00:00.000Z'),
+  } as Order;
+
+  const mockPurchaseOrder = {
+    id: 'purchase-order-1',
+    poNumber: 'PO-001',
+    totalAmount: 900,
+    status: 'confirmed',
+    orderDate: new Date('2026-03-21T09:00:00.000Z'),
+    createdAt: new Date('2026-03-20T10:00:00.000Z'),
+  } as PurchaseOrder;
 
   beforeEach(async () => {
-    const mockProductRepository = {
-      createQueryBuilder: jest.fn(),
-    };
-
-    const mockCustomerRepository = {
-      createQueryBuilder: jest.fn(),
-    };
-
-    const mockOrderRepository = {
-      createQueryBuilder: jest.fn(),
-    };
-
-    const mockCacheService = {
-      getOrSet: jest.fn(),
-    };
-
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         SearchService,
         {
           provide: getRepositoryToken(Product),
-          useValue: mockProductRepository,
+          useValue: { createQueryBuilder: jest.fn() },
         },
         {
           provide: getRepositoryToken(Customer),
-          useValue: mockCustomerRepository,
+          useValue: { createQueryBuilder: jest.fn() },
         },
         {
           provide: getRepositoryToken(Order),
-          useValue: mockOrderRepository,
+          useValue: { createQueryBuilder: jest.fn() },
+        },
+        {
+          provide: getRepositoryToken(Supplier),
+          useValue: { createQueryBuilder: jest.fn() },
+        },
+        {
+          provide: getRepositoryToken(PurchaseOrder),
+          useValue: { createQueryBuilder: jest.fn() },
         },
         {
           provide: CacheService,
-          useValue: mockCacheService,
+          useValue: { getOrSet: jest.fn() },
         },
       ],
     }).compile();
@@ -87,7 +130,17 @@ describe('SearchService', () => {
     productRepository = module.get(getRepositoryToken(Product));
     customerRepository = module.get(getRepositoryToken(Customer));
     orderRepository = module.get(getRepositoryToken(Order));
+    supplierRepository = module.get(getRepositoryToken(Supplier));
+    purchaseOrderRepository = module.get(getRepositoryToken(PurchaseOrder));
     cacheService = module.get(CacheService);
+
+    productRepository.createQueryBuilder.mockReturnValue(createQueryBuilderMock([]) as never);
+    customerRepository.createQueryBuilder.mockReturnValue(createQueryBuilderMock([]) as never);
+    orderRepository.createQueryBuilder.mockReturnValue(createQueryBuilderMock([]) as never);
+    supplierRepository.createQueryBuilder.mockReturnValue(createQueryBuilderMock([]) as never);
+    purchaseOrderRepository.createQueryBuilder.mockReturnValue(createQueryBuilderMock([]) as never);
+
+    cacheService.getOrSet.mockImplementation(async (_key, factory) => factory());
   });
 
   afterEach(() => {
@@ -95,322 +148,202 @@ describe('SearchService', () => {
   });
 
   describe('search', () => {
-    it('should return cached results if available', async () => {
+    it('returns cached legacy results when cache resolves immediately', async () => {
       const cachedResults = [
-        { type: 'product', id: 'product-1', title: 'Test Product', description: 'SKU: TEST-001' },
+        { type: 'product', id: 'product-1', title: 'Cached Product', description: 'cached' },
       ];
       cacheService.getOrSet.mockResolvedValue(cachedResults);
 
-      const result = await service.search(mockUser, 'test');
+      const result = await service.search(mockUser, 'cached');
 
       expect(result).toEqual(cachedResults);
-      expect(cacheService.getOrSet).toHaveBeenCalled();
-    });
-
-    it('should search products by name, sku, and description', async () => {
-      const mockQueryBuilder = {
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        take: jest.fn().mockReturnThis(),
-        getMany: jest.fn().mockResolvedValue([mockProduct]),
-      };
-      productRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
-      customerRepository.createQueryBuilder.mockReturnValue({
-        ...mockQueryBuilder,
-        getMany: jest.fn().mockResolvedValue([]),
-      } as any);
-      orderRepository.createQueryBuilder.mockReturnValue({
-        ...mockQueryBuilder,
-        getMany: jest.fn().mockResolvedValue([]),
-      } as any);
-
-      cacheService.getOrSet.mockImplementation(async (_key, fn) => fn());
-
-      const result = await service.search(mockUser, 'test');
-
-      expect(result).toHaveLength(1);
-      expect(result[0]).toEqual({
-        type: 'product',
-        id: 'product-1',
-        title: 'Test Product',
-        description: 'SKU: TEST-001 - Price: 100',
-        metadata: { sku: 'TEST-001', price: 100 },
-      });
-      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
-        '(product.name ILIKE :query OR product.sku ILIKE :query OR product.description ILIKE :query)',
-        { query: '%test%' },
-      );
-    });
-
-    it('should search customers by name, email, and phone', async () => {
-      const mockQueryBuilder = {
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        take: jest.fn().mockReturnThis(),
-        getMany: jest.fn().mockResolvedValue([]),
-      };
-      productRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
-      customerRepository.createQueryBuilder.mockReturnValue({
-        ...mockQueryBuilder,
-        getMany: jest.fn().mockResolvedValue([mockCustomer]),
-      } as any);
-      orderRepository.createQueryBuilder.mockReturnValue({
-        ...mockQueryBuilder,
-        getMany: jest.fn().mockResolvedValue([]),
-      } as any);
-
-      cacheService.getOrSet.mockImplementation(async (_key, fn) => fn());
-
-      const result = await service.search(mockUser, 'john');
-
-      expect(result).toHaveLength(1);
-      expect(result[0]).toEqual({
-        type: 'customer',
-        id: 'customer-1',
-        title: 'John Doe',
-        description: 'Email: john@example.com - Phone: 1234567890',
-        metadata: { email: 'john@example.com', phone: '1234567890' },
-      });
-    });
-
-    it('should search orders by order number', async () => {
-      const mockQueryBuilder = {
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        take: jest.fn().mockReturnThis(),
-        getMany: jest.fn().mockResolvedValue([]),
-      };
-      productRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
-      customerRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
-      orderRepository.createQueryBuilder.mockReturnValue({
-        ...mockQueryBuilder,
-        getMany: jest.fn().mockResolvedValue([mockOrder]),
-      } as any);
-
-      cacheService.getOrSet.mockImplementation(async (_key, fn) => fn());
-
-      const result = await service.search(mockUser, 'ORD');
-
-      expect(result).toHaveLength(1);
-      expect(result[0]).toEqual({
-        type: 'order',
-        id: 'order-1',
-        title: 'Order ORD-001',
-        description: 'Total: 500 - Status: pending',
-        metadata: { orderNumber: 'ORD-001', total: 500, status: 'pending' },
-      });
-    });
-
-    it('should return combined results from all entities', async () => {
-      const mockQueryBuilder = {
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        take: jest.fn().mockReturnThis(),
-        getMany: jest.fn(),
-      };
-      mockQueryBuilder.getMany
-        .mockResolvedValueOnce([mockProduct])
-        .mockResolvedValueOnce([mockCustomer])
-        .mockResolvedValueOnce([mockOrder]);
-
-      productRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
-      customerRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
-      orderRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
-
-      cacheService.getOrSet.mockImplementation(async (_key, fn) => fn());
-
-      const result = await service.search(mockUser, 'test');
-
-      expect(result).toHaveLength(3);
-      expect(result.map((r) => r.type)).toEqual(['product', 'customer', 'order']);
-    });
-
-    it('should return empty array when no results found', async () => {
-      const mockQueryBuilder = {
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        take: jest.fn().mockReturnThis(),
-        getMany: jest.fn().mockResolvedValue([]),
-      };
-      productRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
-      customerRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
-      orderRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
-
-      cacheService.getOrSet.mockImplementation(async (_key, fn) => fn());
-
-      const result = await service.search(mockUser, 'nonexistent');
-
-      expect(result).toEqual([]);
-    });
-
-    it('should limit results to 10 per entity', async () => {
-      const mockQueryBuilder = {
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        take: jest.fn().mockReturnThis(),
-        getMany: jest.fn().mockResolvedValue([]),
-      };
-      productRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
-      customerRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
-      orderRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
-
-      cacheService.getOrSet.mockImplementation(async (_key, fn) => fn());
-
-      await service.search(mockUser, 'test');
-
-      expect(mockQueryBuilder.take).toHaveBeenCalledWith(10);
-      expect(mockQueryBuilder.take).toHaveBeenCalledTimes(3); // Once for each entity
-    });
-
-    it('should use correct cache key with tenant and query', async () => {
-      const mockQueryBuilder = {
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        take: jest.fn().mockReturnThis(),
-        getMany: jest.fn().mockResolvedValue([]),
-      };
-      productRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
-      customerRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
-      orderRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
-
-      cacheService.getOrSet.mockImplementation(async (_key, fn) => fn());
-
-      await service.search(mockUser, 'test query');
-
       expect(cacheService.getOrSet).toHaveBeenCalledWith(
-        expect.stringContaining('search:tenant-1:query:test query'),
+        expect.stringContaining('search:tenant-1:query:cached'),
         expect.any(Function),
         CacheTTL.SHORT,
       );
     });
 
-    it('should handle special characters in search query', async () => {
-      const mockQueryBuilder = {
-        where: jest.fn().mockReturnThis(),
-        andWhere: jest.fn().mockReturnThis(),
-        take: jest.fn().mockReturnThis(),
-        getMany: jest.fn().mockResolvedValue([]),
-      };
-      productRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
-      customerRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
-      orderRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
+    it('combines products, customers, suppliers, and both order types into legacy results', async () => {
+      productRepository.createQueryBuilder.mockReturnValue(createQueryBuilderMock([mockProduct]) as never);
+      customerRepository.createQueryBuilder.mockReturnValue(
+        createQueryBuilderMock([mockCustomer]) as never,
+      );
+      supplierRepository.createQueryBuilder.mockReturnValue(
+        createQueryBuilderMock([mockSupplier]) as never,
+      );
+      orderRepository.createQueryBuilder.mockReturnValue(createQueryBuilderMock([mockOrder]) as never);
+      purchaseOrderRepository.createQueryBuilder.mockReturnValue(
+        createQueryBuilderMock([mockPurchaseOrder]) as never,
+      );
 
-      cacheService.getOrSet.mockImplementation(async (_key, fn) => fn());
+      const result = await service.search(mockUser, 'test');
 
-      await service.search(mockUser, 'test@#$%');
-
-      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(expect.any(String), {
-        query: '%test@#$%%',
+      expect(result).toHaveLength(5);
+      expect(result.map((item) => item.type)).toEqual([
+        'product',
+        'customer',
+        'supplier',
+        'order',
+        'order',
+      ]);
+      expect(result[4]).toEqual({
+        type: 'order',
+        id: 'purchase-order-1',
+        title: 'Purchase Order PO-001',
+        description: 'Total: 900 - Status: confirmed',
+        metadata: {
+          orderNumber: 'PO-001',
+          total: 900,
+          status: 'confirmed',
+          orderType: 'purchase',
+        },
       });
+    });
+
+    it('returns an empty array for blank queries', async () => {
+      const result = await service.search(mockUser, '   ');
+
+      expect(result).toEqual([]);
+      expect(cacheService.getOrSet).not.toHaveBeenCalled();
+    });
+
+    it('uses the expected ILIKE query when searching products', async () => {
+      const builder = createQueryBuilderMock([mockProduct]);
+      productRepository.createQueryBuilder.mockReturnValue(builder as never);
+
+      await service.search(mockUser, 'laptop');
+
+      expect(builder.andWhere).toHaveBeenCalledWith(
+        '(product.name ILIKE :query OR product.sku ILIKE :query OR product.description ILIKE :query)',
+        { query: '%laptop%' },
+      );
+      expect(builder.take).toHaveBeenCalledWith(10);
     });
   });
 
   describe('searchByType', () => {
-    it('should return only products when type is product', async () => {
-      const allResults = [
-        { type: 'product', id: 'product-1', title: 'Product', description: '' },
-        { type: 'customer', id: 'customer-1', title: 'Customer', description: '' },
-        { type: 'order', id: 'order-1', title: 'Order', description: '' },
-      ];
+    it('returns only supplier results for supplier type', async () => {
+      supplierRepository.createQueryBuilder.mockReturnValue(
+        createQueryBuilderMock([mockSupplier]) as never,
+      );
 
-      cacheService.getOrSet.mockImplementation(async (key, fn) => {
-        if (key.includes('type:product')) {
-          return fn();
-        }
-        return allResults;
-      });
+      const result = await service.searchByType('tenant-1', 'supplier', 'acme');
 
-      jest.spyOn(service, 'search').mockResolvedValue(allResults);
-
-      const result = await service.searchByType('tenant-1', 'product', 'test');
-
-      expect(result).toHaveLength(1);
-      expect(result[0].type).toBe('product');
+      expect(result).toEqual([
+        {
+          type: 'supplier',
+          id: 'supplier-1',
+          title: 'ACME Supply',
+          description: 'Email: supply@example.com - Phone: 0987654321',
+          metadata: {
+            email: 'supply@example.com',
+            phone: '0987654321',
+            status: 'active',
+          },
+        },
+      ]);
     });
 
-    it('should return only customers when type is customer', async () => {
-      const allResults = [
-        { type: 'product', id: 'product-1', title: 'Product', description: '' },
-        { type: 'customer', id: 'customer-1', title: 'Customer', description: '' },
-      ];
+    it('returns both sales and purchase order results for order type', async () => {
+      orderRepository.createQueryBuilder.mockReturnValue(createQueryBuilderMock([mockOrder]) as never);
+      purchaseOrderRepository.createQueryBuilder.mockReturnValue(
+        createQueryBuilderMock([mockPurchaseOrder]) as never,
+      );
 
-      cacheService.getOrSet.mockImplementation(async (key, fn) => {
-        if (key.includes('type:customer')) {
-          return fn();
-        }
-        return allResults;
-      });
+      const result = await service.searchByType('tenant-1', 'order', 'SO');
 
-      jest.spyOn(service, 'search').mockResolvedValue(allResults);
-
-      const result = await service.searchByType('tenant-1', 'customer', 'test');
-
-      expect(result).toHaveLength(1);
-      expect(result[0].type).toBe('customer');
+      expect(result).toHaveLength(2);
+      expect(result[0].title).toBe('Sales Order SO-001');
+      expect(result[1].title).toBe('Purchase Order PO-001');
     });
 
-    it('should return only orders when type is order', async () => {
-      const allResults = [
-        { type: 'customer', id: 'customer-1', title: 'Customer', description: '' },
-        { type: 'order', id: 'order-1', title: 'Order', description: '' },
-      ];
-
-      cacheService.getOrSet.mockImplementation(async (key, fn) => {
-        if (key.includes('type:order')) {
-          return fn();
-        }
-        return allResults;
-      });
-
-      jest.spyOn(service, 'search').mockResolvedValue(allResults);
-
-      const result = await service.searchByType('tenant-1', 'order', 'test');
-
-      expect(result).toHaveLength(1);
-      expect(result[0].type).toBe('order');
-    });
-
-    it('should return empty array when no results match type', async () => {
-      const allResults = [{ type: 'product', id: 'product-1', title: 'Product', description: '' }];
-
-      cacheService.getOrSet.mockImplementation(async (key, fn) => {
-        if (key.includes('type:customer')) {
-          return fn();
-        }
-        return allResults;
-      });
-
-      jest.spyOn(service, 'search').mockResolvedValue(allResults);
-
-      const result = await service.searchByType('tenant-1', 'customer', 'test');
+    it('returns an empty array for unknown search types', async () => {
+      const result = await service.searchByType('tenant-1', 'unknown', 'test');
 
       expect(result).toEqual([]);
     });
+  });
 
-    it('should use correct cache key with type', async () => {
-      cacheService.getOrSet.mockImplementation(async (_key, fn) => fn());
-      jest.spyOn(service, 'search').mockResolvedValue([]);
-
-      await service.searchByType('tenant-1', 'product', 'test query');
-
-      expect(cacheService.getOrSet).toHaveBeenCalledWith(
-        expect.stringContaining('search:tenant-1:type:product:test query'),
-        expect.any(Function),
-        CacheTTL.SHORT,
+  describe('compatibility responses', () => {
+    it('returns Elasticsearch-like hits for global search', async () => {
+      productRepository.createQueryBuilder.mockReturnValue(createQueryBuilderMock([mockProduct]) as never);
+      customerRepository.createQueryBuilder.mockReturnValue(
+        createQueryBuilderMock([mockCustomer]) as never,
       );
+      orderRepository.createQueryBuilder.mockReturnValue(createQueryBuilderMock([mockOrder]) as never);
+      purchaseOrderRepository.createQueryBuilder.mockReturnValue(
+        createQueryBuilderMock([mockPurchaseOrder]) as never,
+      );
+
+      const result = await service.globalSearch(mockUser, 'order', 0, 10);
+
+      expect(result.hits.total.value).toBe(4);
+      expect(result.hits.hits[0]).toEqual({
+        _id: 'product-1',
+        _index: 'products',
+        _score: 1,
+        _source: {
+          name: 'Test Product',
+          sku: 'TEST-001',
+          price: 100,
+          salePrice: 100,
+          status: 'active',
+        },
+      });
+      expect(result.hits.hits[3]).toEqual({
+        _id: 'purchase-order-1',
+        _index: 'orders',
+        _score: 1,
+        _source: {
+          code: 'PO-001',
+          orderNumber: 'PO-001',
+          poNumber: 'PO-001',
+          totalAmount: 900,
+          orderDate: mockPurchaseOrder.orderDate,
+          status: 'confirmed',
+          type: 'purchase',
+        },
+      });
     });
 
-    it('should cache results with SHORT TTL', async () => {
-      cacheService.getOrSet.mockImplementation(async (_key, fn) => fn());
-      jest.spyOn(service, 'search').mockResolvedValue([]);
-
-      await service.searchByType('tenant-1', 'product', 'test');
-
-      expect(cacheService.getOrSet).toHaveBeenCalledWith(
-        expect.any(String),
-        expect.any(Function),
-        CacheTTL.SHORT,
+    it('returns supplier hits for supplier search', async () => {
+      supplierRepository.createQueryBuilder.mockReturnValue(
+        createQueryBuilderMock([mockSupplier]) as never,
       );
+
+      const result = await service.searchSuppliers('tenant-1', 'acme');
+
+      expect(result).toEqual({
+        hits: {
+          total: { value: 1 },
+          hits: [
+            {
+              _id: 'supplier-1',
+              _index: 'suppliers',
+              _score: 1,
+              _source: {
+                name: 'ACME Supply',
+                email: 'supply@example.com',
+                phone: '0987654321',
+                status: 'active',
+              },
+            },
+          ],
+        },
+      });
+    });
+
+    it('returns combined order hits with the route-friendly type discriminator', async () => {
+      orderRepository.createQueryBuilder.mockReturnValue(createQueryBuilderMock([mockOrder]) as never);
+      purchaseOrderRepository.createQueryBuilder.mockReturnValue(
+        createQueryBuilderMock([mockPurchaseOrder]) as never,
+      );
+
+      const result = await service.searchOrders('tenant-1', 'order');
+
+      expect(result.hits.total.value).toBe(2);
+      expect(result.hits.hits.map((hit) => hit._source.type)).toEqual(['sales', 'purchase']);
     });
   });
 });
