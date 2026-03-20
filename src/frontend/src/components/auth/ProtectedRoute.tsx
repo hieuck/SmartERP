@@ -7,7 +7,7 @@ import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
-import { useInactivityLogout } from '@/hooks/useInactivityLogout';
+import { useSessionTimeout } from '@/hooks/useSessionTimeout';
 
 export interface ProtectedRouteProps {
   children: ReactNode;
@@ -35,8 +35,7 @@ export interface ProtectedRouteProps {
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
 
-  // Enable auto-logout after 30 minutes of inactivity (Requirement 23.3)
-  useInactivityLogout();
+  useSessionTimeout({ enabled: isAuthenticated });
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;

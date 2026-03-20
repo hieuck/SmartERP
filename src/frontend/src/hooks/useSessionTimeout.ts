@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { authService } from '@/services/auth/authService';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
@@ -8,6 +8,8 @@ import { RootState } from '@/store';
 interface UseSessionTimeoutConfig {
   timeoutMs?: number; // Default: 30 minutes
   warningMs?: number; // Show warning before timeout (default: 5 minutes before)
+  enabled?: boolean;
+  onWarning?: () => void;
 }
 
 /**
@@ -21,69 +23,72 @@ interface UseSessionTimeoutConfig {
 export const useSessionTimeout = (config: UseSessionTimeoutConfig = {}) => {
   const timeoutMs = config.timeoutMs || 30 * 60 * 1000; // 30 minutes
   const warningMs = config.warningMs || 5 * 60 * 1000; // 5 minutes before timeout
+  const enabled = config.enabled ?? true;
+  const onWarning = config.onWarning;
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
 
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const warningTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const warningTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastActivityRef = useRef<number>(Date.now());
 
-  const resetTimeout = () => {
-    // Clear existing timeouts
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    if (warningTimeoutRef.current) clearTimeout(warningTimeoutRef.current);
+  const clearTimers = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    if (warningTimeoutRef.current) {
+      clearTimeout(warningTimeoutRef.current);
+    }
+  }, []);
+
+  const resetTimeout = useCallback(() => {
+    clearTimers();
 
     lastActivityRef.current = Date.now();
 
-    // Set warning timeout
-    warningTimeoutRef.current = setTimeout(() => {
-      console.warn('Session will expire soon due to inactivity');
-      // Could dispatch action to show warning modal here
-    }, timeoutMs - warningMs);
+    if (warningMs > 0 && warningMs < timeoutMs) {
+      warningTimeoutRef.current = setTimeout(() => {
+        onWarning?.();
+      }, timeoutMs - warningMs);
+    }
 
-    // Set logout timeout
     timeoutRef.current = setTimeout(() => {
-      // Session expired due to inactivity
-      void authService.logout();
+      void authService.logout().catch(() => undefined);
       dispatch(clearCredentials());
-      navigate('/login', { replace: true });
+      navigate('/login', {
+        replace: true,
+        state: { reason: 'session-expired' },
+      });
     }, timeoutMs);
-  };
+  }, [clearTimers, dispatch, navigate, onWarning, timeoutMs, warningMs]);
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      // Clear timeouts when user logs out
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      if (warningTimeoutRef.current) clearTimeout(warningTimeoutRef.current);
+    if (!enabled || !isAuthenticated) {
+      clearTimers();
       return;
     }
 
-    // Activity event listeners
     const activityEvents = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
 
     const handleActivity = () => {
       resetTimeout();
     };
 
-    // Add event listeners
     activityEvents.forEach((event) => {
       document.addEventListener(event, handleActivity);
     });
 
-    // Initialize timeout
     resetTimeout();
 
-    // Cleanup
     return () => {
       activityEvents.forEach((event) => {
         document.removeEventListener(event, handleActivity);
       });
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      if (warningTimeoutRef.current) clearTimeout(warningTimeoutRef.current);
+      clearTimers();
     };
-  }, [isAuthenticated, dispatch, navigate, timeoutMs, warningMs]);
+  }, [clearTimers, enabled, isAuthenticated, resetTimeout]);
 
   return {
     lastActivity: lastActivityRef.current,

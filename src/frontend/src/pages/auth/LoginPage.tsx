@@ -53,6 +53,7 @@ export default function LoginPage() {
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
   const [form] = Form.useForm<LoginRequest>();
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
+  const [sessionNotice, setSessionNotice] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
 
   // Rate limiting: 5 attempts per 60 seconds
@@ -72,6 +73,22 @@ export default function LoginPage() {
       navigate(from, { replace: true });
     }
   }, [isAuthenticated, navigate, location]);
+
+  useEffect(() => {
+    if (location.state?.reason === 'session-expired') {
+      setSessionNotice(t('common:messages.sessionExpired'));
+      navigate(
+        {
+          pathname: location.pathname,
+          search: location.search,
+        },
+        {
+          replace: true,
+          state: null,
+        },
+      );
+    }
+  }, [location.pathname, location.search, location.state, navigate, t]);
 
   // Load remembered email on mount
   useEffect(() => {
@@ -235,6 +252,19 @@ export default function LoginPage() {
               </div>
 
               {/* Error Alert */}
+              {sessionNotice && (
+                <Alert
+                  message={t('common:messages.sessionExpired')}
+                  description={sessionNotice}
+                  type="warning"
+                  showIcon
+                  closable
+                  onClose={() => setSessionNotice(null)}
+                  style={{ marginBottom: 16 }}
+                  role="alert"
+                />
+              )}
+
               {errorMessage && (
                 <Alert
                   message={t('auth:login.error')}

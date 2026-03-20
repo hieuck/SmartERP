@@ -1322,3 +1322,31 @@ Verification:
   - `/` now renders clean localized marketing copy
   - browser smoke shows no warnings, errors, or failed requests on the landing page
   - the landing E2E suite passes again on Chromium
+
+## 2026-03-20 Session Timeout UX Cleanup
+- Root cause:
+  - authenticated route protection was still wired to a legacy inactivity hook that used static `antd` message APIs, duplicated timeout logic, and redirected with `window.location.href`
+  - a newer [useSessionTimeout.ts](/e:/GitHub/smart-erp/src/frontend/src/hooks/useSessionTimeout.ts) already existed, but it was not the hook protecting live routes
+  - session expiry also redirected users back to `/login` without any explicit UI explanation on the page itself
+- Fixed in:
+  - [src/frontend/src/hooks/useSessionTimeout.ts](/e:/GitHub/smart-erp/src/frontend/src/hooks/useSessionTimeout.ts)
+  - [src/frontend/src/hooks/useSessionTimeout.test.tsx](/e:/GitHub/smart-erp/src/frontend/src/hooks/useSessionTimeout.test.tsx)
+  - [src/frontend/src/hooks/useInactivityLogout.ts](/e:/GitHub/smart-erp/src/frontend/src/hooks/useInactivityLogout.ts)
+  - [src/frontend/src/components/auth/ProtectedRoute.tsx](/e:/GitHub/smart-erp/src/frontend/src/components/auth/ProtectedRoute.tsx)
+  - [src/frontend/src/pages/auth/LoginPage.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/auth/LoginPage.tsx)
+  - [src/frontend/src/pages/auth/LoginPage.test.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/auth/LoginPage.test.tsx)
+  - [src/frontend/src/i18n/locales/vi/common.json](/e:/GitHub/smart-erp/src/frontend/src/i18n/locales/vi/common.json)
+- Implementation details:
+  - protected routes now use a single session-timeout hook instead of the legacy duplicate inactivity hook
+  - the timeout hook supports authenticated-only enablement and optional warning callbacks
+  - auto-logout no longer relies on static Ant Design message APIs or `window.location.href`
+  - timed-out users are redirected back to `/login` with a session-expired reason and the login page now renders a clear warning alert
+  - common Vietnamese language labels were normalized so the locale surface stays consistent with the cleaned auth/public UX
+- Verified with:
+  - `npx.cmd vitest run src/hooks/useSessionTimeout.test.tsx src/pages/auth/LoginPage.test.tsx` in `src/frontend`
+  - `npm.cmd run type-check` in `src/frontend`
+  - `npm.cmd run runtime:browser-smoke`
+- Current browser/runtime snapshot after the batch:
+  - public auth routes remain clean in browser smoke
+  - no new frontend warnings or failed requests were introduced by the timeout cleanup
+  - session expiry logic is now testable at hook level instead of living only in route side effects

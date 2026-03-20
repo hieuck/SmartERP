@@ -24,12 +24,20 @@ vi.mock('@/components/common/LanguageSwitcher', () => ({
 }));
 
 const mockNavigate = vi.fn();
+const { locationState } = vi.hoisted(() => ({
+  locationState: {
+    pathname: '/login',
+    search: '',
+    state: null as null | Record<string, unknown>,
+  },
+}));
+
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
   return {
     ...actual,
     useNavigate: () => mockNavigate,
-    useLocation: () => ({ state: null }),
+    useLocation: () => locationState,
   };
 });
 
@@ -67,6 +75,9 @@ describe('LoginPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
+    locationState.pathname = '/login';
+    locationState.search = '';
+    locationState.state = null;
   });
 
   it('should render login form', () => {
@@ -296,6 +307,26 @@ describe('LoginPage', () => {
     renderWithProviders(<LoginPage />, store);
 
     expect(mockNavigate).toHaveBeenCalledWith('/dashboard', { replace: true });
+  });
+
+  it('shows an inactivity warning when redirected after session timeout', async () => {
+    locationState.state = { reason: 'session-expired' };
+
+    renderWithProviders(<LoginPage />);
+
+    await waitFor(() => {
+      expect(screen.getAllByRole('alert')[0]).toHaveTextContent('common:messages.sessionExpired');
+    });
+    expect(mockNavigate).toHaveBeenCalledWith(
+      {
+        pathname: '/login',
+        search: '',
+      },
+      {
+        replace: true,
+        state: null,
+      },
+    );
   });
 
   it('should show demo credentials', () => {
