@@ -4,6 +4,17 @@ export class CreateProjectManagementTables1710850000000 implements MigrationInte
   name = 'CreateProjectManagementTables1710850000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
+    const projectTablesExist = await Promise.all([
+      queryRunner.hasTable('projects'),
+      queryRunner.hasTable('tasks'),
+      queryRunner.hasTable('task_dependencies'),
+      queryRunner.hasTable('time_entries'),
+    ]);
+
+    if (projectTablesExist.every(Boolean)) {
+      return;
+    }
+
     await queryRunner.query(`
       CREATE TYPE "public"."projects_status_enum" AS ENUM(
         'draft',

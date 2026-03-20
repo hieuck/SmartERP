@@ -6,6 +6,16 @@
 
 ## Latest Checkpoint (2026-03-20)
 
+- migration ledger catch-up is now recovered on the active local database:
+  - `npm run db:migrate` in `src/backend` now completes successfully against the existing `erp_production` schema
+  - the root cause was historical migration drift: the database already contained later tables, while the `migrations` ledger was missing several intermediate records
+  - the notification and legacy project-table migrations have been made safe to re-run by short-circuiting when their target tables already exist
+  - this removes a real operational trap: future local runtime recovery no longer depends on one-off manual SQL for already-provisioned schema state
+- database runtime status is now clearer:
+  - local table smoke confirms `41` tables currently exist, including `product_catalog`
+  - the ecommerce runtime recovery is now backed by both application code and reproducible migration history
+  - a smaller follow-up remains: the migration runner still emits a `pg` deprecation warning that should be traced separately, but it no longer blocks boot or schema updates
+
 - ecommerce product catalog runtime has now been recovered end-to-end:
   - frontend list and form pages now use the shared API client instead of bypassing auth with raw `axios`
   - backend product-catalog controller now uses the standard auth/tenant/roles guard stack
@@ -20,8 +30,8 @@
   - browser smoke now exercises both `/dashboard/ecommerce/products` and `/dashboard/ecommerce/products/new`
   - a real login browser flow now reaches the ecommerce catalog list without failed requests
 - there is one follow-up operational debt now clearly identified:
-  - `npm run db:migrate` still fails on this existing development database because historical migrations are not fully idempotent against partially provisioned schema state
-  - this no longer blocks ecommerce catalog runtime, but it should be handled as a separate migration-history cleanup batch rather than ignored
+  - the remaining migration concern is no longer failed schema catch-up, but the `pg` deprecation warning emitted during migration execution
+  - this no longer blocks ecommerce catalog runtime or local schema recovery, but it should still be handled as a separate tooling-cleanup batch rather than ignored
 
 - public registration flow is now aligned with the real backend contract:
   - the page no longer asks users to submit a custom `slug` that backend `POST /api/auth/register` ignores

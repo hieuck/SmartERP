@@ -4,6 +4,10 @@ export class CreateNotificationTable1710840000000 implements MigrationInterface 
   name = 'CreateNotificationTable1710840000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
+    if (await queryRunner.hasTable('notifications')) {
+      return;
+    }
+
     await queryRunner.query(`
       CREATE TYPE "public"."notifications_type_enum" AS ENUM('info', 'success', 'warning', 'error')
     `);

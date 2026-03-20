@@ -4,6 +4,17 @@ export class CreateProjectTables1710847200000 implements MigrationInterface {
   name = 'CreateProjectTables1710847200000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
+    const projectTablesExist = await Promise.all([
+      queryRunner.hasTable('projects'),
+      queryRunner.hasTable('tasks'),
+      queryRunner.hasTable('task_dependencies'),
+      queryRunner.hasTable('time_entries'),
+    ]);
+
+    if (projectTablesExist.every(Boolean)) {
+      return;
+    }
+
     await queryRunner.query(`
       CREATE TYPE "public"."projects_status_enum" AS ENUM('draft', 'active', 'on_hold', 'completed', 'cancelled')
     `);
