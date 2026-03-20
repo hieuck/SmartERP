@@ -1,5 +1,5 @@
 import { DownloadOutlined, RollbackOutlined } from '@ant-design/icons';
-import { Button, Modal, Space, Tag, Timeline } from 'antd';
+import { App, Button, Modal, Space, Tag, Timeline } from 'antd';
 import React, { useState } from 'react';
 
 interface Version {
@@ -21,6 +21,7 @@ export const VersionHistory: React.FC<VersionHistoryProps> = ({
   visible,
   onClose,
 }) => {
+  const { modal } = App.useApp();
   const [versions] = useState<Version[]>([
     {
       version: 2,
@@ -39,7 +40,7 @@ export const VersionHistory: React.FC<VersionHistoryProps> = ({
   ]);
 
   const handleRollback = (version: number) => {
-    Modal.confirm({
+    modal.confirm({
       title: 'Xác nhận khôi phục',
       content: `Bạn có chắc chắn muốn khôi phục về phiên bản ${version}?`,
       onOk: () => {

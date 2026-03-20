@@ -15,6 +15,13 @@ vi.mock('antd', () => {
   const TimelineItem = ({ children }: { children: React.ReactNode }) => <div>{children}</div>;
 
   return {
+    App: Object.assign(({ children }: { children?: React.ReactNode }) => <div>{children}</div>, {
+      useApp: () => ({
+        modal: {
+          confirm: confirmMock,
+        },
+      }),
+    }),
     Button: ({
       children,
       onClick,
@@ -42,7 +49,7 @@ vi.mock('antd', () => {
           </div>
         ) : null,
       {
-        confirm: confirmMock,
+        confirm: vi.fn(),
       },
     ),
     Space: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,

@@ -6,6 +6,9 @@
 
 ## Latest Checkpoint (2026-03-20)
 
+- document version history is no longer carrying broken encoding or legacy modal usage:
+  - [src/frontend/src/components/documents/VersionHistory.tsx](/e:/GitHub/smart-erp/src/frontend/src/components/documents/VersionHistory.tsx) was rewritten to remove mojibake Vietnamese copy and to use `App.useApp().modal.confirm` instead of static `Modal.confirm`
+  - its focused Vitest suite now asserts the corrected copy and the context-aware rollback confirmation flow
 - system settings shell has been brought closer to the current frontend standard:
   - [src/frontend/src/pages/settings/SystemSettingsPage.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/settings/SystemSettingsPage.tsx) now uses `App.useApp().message` and `Tabs.items` instead of legacy static `message` and `Tabs.TabPane`
   - the settings route remains healthy after the batch: frontend type-check passes and runtime smoke stayed green
