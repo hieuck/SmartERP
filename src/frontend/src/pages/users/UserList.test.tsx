@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import UserList from './UserList';
 
 const {
+  confirmMock,
   getAllMock,
   getQueueSizeMock,
   isSyncingMock,
@@ -10,11 +11,13 @@ const {
   navigateMock,
   standardListPageMock,
 } = vi.hoisted(() => ({
+  confirmMock: vi.fn(),
   getAllMock: vi.fn(),
   getQueueSizeMock: vi.fn(),
   isSyncingMock: vi.fn(),
   messageMock: {
     error: vi.fn(),
+    info: vi.fn(),
     success: vi.fn(),
     warning: vi.fn(),
   },
@@ -109,11 +112,6 @@ vi.mock('@ant-design/icons', () => ({
 }));
 
 vi.mock('antd', () => ({
-  App: Object.assign(({ children }: { children?: React.ReactNode }) => <div>{children}</div>, {
-    useApp: () => ({
-      message: messageMock,
-    }),
-  }),
   Badge: ({ children, text }: { children?: React.ReactNode; text?: React.ReactNode }) => (
     <div>
       {text}
@@ -123,22 +121,46 @@ vi.mock('antd', () => ({
   Button: ({
     children,
     disabled,
+    icon,
     onClick,
   }: {
     children?: React.ReactNode;
     disabled?: boolean;
+    icon?: React.ReactNode;
     onClick?: () => void;
   }) => (
     <button disabled={disabled} onClick={onClick}>
-      {children ?? 'button'}
+      {children ?? icon ?? 'button'}
     </button>
   ),
-  Dropdown: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
-  Modal: {
-    confirm: vi.fn(),
-  },
+  Dropdown: ({
+    children,
+    menu,
+  }: {
+    children?: React.ReactNode;
+    menu?: { items?: Array<{ key: string; label?: React.ReactNode; onClick?: () => void }> };
+  }) => (
+    <div>
+      {children}
+      {menu?.items?.map((item) =>
+        item ? (
+          <button key={item.key} onClick={item.onClick}>
+            {item.label}
+          </button>
+        ) : null,
+      )}
+    </div>
+  ),
   Space: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
   Tag: ({ children }: { children?: React.ReactNode }) => <span>{children}</span>,
+  App: Object.assign(({ children }: { children?: React.ReactNode }) => <div>{children}</div>, {
+    useApp: () => ({
+      message: messageMock,
+      modal: {
+        confirm: confirmMock,
+      },
+    }),
+  }),
 }));
 
 describe('UserList', () => {
@@ -214,5 +236,32 @@ describe('UserList', () => {
     fireEvent.click(screen.getByText('users:createButton'));
 
     expect(navigateMock).toHaveBeenCalledWith('/dashboard/users/new');
+  });
+
+  it('opens a context-aware reset password confirmation from the action menu', async () => {
+    render(<UserList />);
+
+    await waitFor(() => {
+      expect(screen.getByText('alice@example.com')).toBeInTheDocument();
+    });
+
+    const firstRenderProps = standardListPageMock.mock.calls[0][0] as {
+      columns: Array<{
+        key?: string;
+        render?: (value: string, record: { id: string; status: string }) => React.ReactNode;
+      }>;
+    };
+    const actionsColumn = firstRenderProps.columns.find((column) => column.key === 'action');
+
+    render(actionsColumn?.render?.('', { id: '1', status: 'active' }) ?? null);
+    fireEvent.click(screen.getByRole('button', { name: 'users:actions.resetPassword' }));
+
+    expect(confirmMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'users:messages.resetPasswordConfirm',
+        content: 'users:messages.resetPasswordDescription (#1)',
+        onOk: expect.any(Function),
+      }),
+    );
   });
 });

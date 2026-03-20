@@ -6,6 +6,9 @@
 
 ## Latest Checkpoint (2026-03-20)
 
+- user management now uses the same context-aware confirmation pattern as the rest of the modernized shell:
+  - [src/frontend/src/pages/users/UserList.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/users/UserList.tsx) now routes reset-password and delete confirmations through `App.useApp().modal.confirm`
+  - [src/frontend/src/pages/users/UserList.test.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/users/UserList.test.tsx) now covers the reset-password confirmation path directly instead of only create/search happy paths
 - marketplace module browser has been realigned with its intended UI contract:
   - [src/frontend/src/components/marketplace/ModuleBrowser.tsx](/e:/GitHub/smart-erp/src/frontend/src/components/marketplace/ModuleBrowser.tsx) now uses clean Vietnamese copy and `App.useApp().modal.confirm` instead of mojibake text plus static modal calls
   - the existing focused suite in [src/frontend/src/components/marketplace/ModuleBrowser.test.tsx](/e:/GitHub/smart-erp/src/frontend/src/components/marketplace/ModuleBrowser.test.tsx) now matches the modern app context contract rather than the deprecated static modal surface

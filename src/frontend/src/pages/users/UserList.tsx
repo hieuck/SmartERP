@@ -6,7 +6,7 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { App, Tag, Modal, Dropdown, Button, Space, Badge } from 'antd';
+import { App, Tag, Dropdown, Button, Space, Badge } from 'antd';
 import type { MenuProps } from 'antd/es/menu';
 import {
   UserOutlined,
@@ -43,7 +43,7 @@ const roleColors: Record<string, string> = {
 export default function UserList() {
   const navigate = useNavigate();
   const { t } = useTranslation(['users', 'commonUi', 'common']);
-  const { message } = App.useApp();
+  const { message, modal } = App.useApp();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -205,7 +205,7 @@ export default function UserList() {
   };
 
   const handleResetPassword = (id: string) => {
-    Modal.confirm({
+    modal.confirm({
       title: t('users:messages.resetPasswordConfirm'),
       content: `${t('users:messages.resetPasswordDescription')} (#${id})`,
       onOk: async () => {
@@ -244,7 +244,7 @@ export default function UserList() {
       label: t('users:actions.delete'),
       danger: true,
       onClick: () => {
-        Modal.confirm({
+        modal.confirm({
           title: t('users:messages.deleteConfirm'),
           content: t('users:messages.deleteDescription'),
           onOk: () => handleDelete(record),
