@@ -3,13 +3,14 @@ import manufacturingService, { WorkCenter } from '@/services/manufacturing/manuf
 import { DeleteOutlined, EditOutlined, MoreOutlined, SettingOutlined } from '@ant-design/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { MenuProps } from 'antd';
-import { Button, Dropdown, message, Modal, Space, Switch, Tag } from 'antd';
+import { App, Button, Dropdown, Modal, Space, Switch, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 export default function WorkCenterList() {
+  const { message } = App.useApp();
   const navigate = useNavigate();
   const { t } = useTranslation('production');
   const queryClient = useQueryClient();

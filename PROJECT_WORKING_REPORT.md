@@ -6,6 +6,10 @@
 
 ## Latest Checkpoint (2026-03-20)
 
+- production list feedback is now aligned with the modern frontend shell:
+  - [src/frontend/src/pages/production/WorkCenterList.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/production/WorkCenterList.tsx) and [src/frontend/src/pages/production/WorkOrderList.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/production/WorkOrderList.tsx) now use `App.useApp().message` instead of the legacy static `message` API
+  - their colocated Vitest suites were updated to mock the app context rather than the deprecated static surface
+  - focused verification now passes for both production list pages, and runtime smoke stayed green after the batch
 - migration ledger catch-up is now recovered on the active local database:
   - `npm run db:migrate` in `src/backend` now completes successfully against the existing `erp_production` schema
   - the root cause was historical migration drift: the database already contained later tables, while the `migrations` ledger was missing several intermediate records

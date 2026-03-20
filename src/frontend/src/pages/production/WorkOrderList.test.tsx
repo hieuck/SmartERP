@@ -101,6 +101,17 @@ vi.mock('@ant-design/icons', () => ({
 }));
 
 vi.mock('antd', () => ({
+  App: Object.assign(
+    ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+    {
+      useApp: () => ({
+        message: {
+          error: vi.fn(),
+          success: vi.fn(),
+        },
+      }),
+    },
+  ),
   Button: ({
     children,
     onClick,
@@ -109,10 +120,6 @@ vi.mock('antd', () => ({
     onClick?: () => void;
   }) => <button onClick={onClick}>{children ?? 'button'}</button>,
   Dropdown: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
-  message: {
-    error: vi.fn(),
-    success: vi.fn(),
-  },
   Modal: {
     confirm: vi.fn(),
   },
