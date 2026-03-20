@@ -6,7 +6,7 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Tag, Select, Space, Button, Badge, message } from 'antd';
+import { App, Tag, Select, Space, Button, Badge } from 'antd';
 import {
   InboxOutlined,
   WarningOutlined,
@@ -29,6 +29,7 @@ const { Option } = Select;
 export default function StockList() {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation(['inventory', 'commonUi', 'common']);
+  const { message } = App.useApp();
   const [search, setSearch] = useState('');
   const [warehouseFilter, setWarehouseFilter] = useState<string | undefined>();
   const [page, setPage] = useState(1);

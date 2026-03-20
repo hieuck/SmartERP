@@ -6,6 +6,13 @@
 
 ## Latest Checkpoint (2026-03-20)
 
+- the customer, stock, and payment list shells now use app-context feedback instead of legacy static message calls:
+  - [src/frontend/src/pages/customers/CustomerList.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/customers/CustomerList.tsx), [src/frontend/src/pages/inventory/StockList.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/inventory/StockList.tsx), and [src/frontend/src/pages/payments/PaymentList.tsx](/e:/GitHub/smart-erp/src/frontend/src/pages/payments/PaymentList.tsx) now pull `message` from `App.useApp()`
+  - this removes another cluster of theme/context debt from core business list pages without changing the user-facing workflows
+- focused browser verification for the list-shell batch is clean:
+  - a real login flow was used to open `/dashboard/customers`, `/dashboard/inventory`, and `/dashboard/payments`
+  - those three routes rendered with no console warnings, no console errors, and no failed requests after the modernization pass
+
 - local runtime bootstrap is now deterministic instead of depending on half-initialized state:
   - [tools/runtime-start.mjs](/e:/GitHub/smart-erp/tools/runtime-start.mjs) now brings up `postgres` and `redis`, runs `db:init`, and reseeds demo credentials before checking app liveness
   - [src/backend/scripts/seed-data.ts](/e:/GitHub/smart-erp/src/backend/scripts/seed-data.ts), [src/backend/src/utilities/seed/seed.service.ts](/e:/GitHub/smart-erp/src/backend/src/utilities/seed/seed.service.ts), and [src/backend/package.json](/e:/GitHub/smart-erp/src/backend/package.json) now keep demo credentials stable at `admin@demo.com / admin123`

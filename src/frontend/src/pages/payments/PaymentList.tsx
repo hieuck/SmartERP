@@ -6,12 +6,12 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
+  App,
   Button,
   Space,
   Tag,
   Select,
   DatePicker,
-  message,
   Popconfirm,
   Modal,
   Form,
@@ -54,6 +54,7 @@ const statusColors: Record<string, string> = {
 export default function PaymentList() {
   const navigate = useNavigate();
   const { t } = useTranslation(['payments', 'common']);
+  const { message } = App.useApp();
   const [form] = Form.useForm();
   const { isMobile } = useResponsive();
   const [refundModalVisible, setRefundModalVisible] = useState(false);

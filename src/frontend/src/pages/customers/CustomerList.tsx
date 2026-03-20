@@ -6,7 +6,7 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Space, Tag, message, Badge } from 'antd';
+import { App, Button, Space, Tag, Badge } from 'antd';
 import {
   UserOutlined,
   SyncOutlined,
@@ -26,6 +26,7 @@ import type { ColumnsType } from 'antd/es/table';
 export default function CustomerList() {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation(['customers', 'commonUi']);
+  const { message } = App.useApp();
   const { isMobile } = useResponsive();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
