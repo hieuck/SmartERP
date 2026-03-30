@@ -1,20 +1,40 @@
 {
+  "name": "@smarterp/workspace",
+  "private": true,
+  "packageManager": "npm@11.11.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
+    "dev:api": "turbo run dev --filter=@smarterp/api",
+    "dev:web": "turbo run dev --filter=@smarterp/web",
+    "build:next": "turbo run build",
+    "type-check:next": "turbo run type-check",
+    "lint:next": "turbo run lint",
     "test:e2e": "node run-playwright.cjs test",
     "test:e2e:headed": "node run-playwright.cjs test --headed --project=chromium",
     "test:e2e:ui": "node run-playwright.cjs test --ui",
     "runtime:browser-smoke": "node tools/browser-smoke.mjs",
     "runtime:start": "node tools/runtime-start.mjs",
     "runtime:stop": "node tools/runtime-stop.mjs",
-    "runtime:smoke": "node tools/runtime-smoke.mjs"
+    "runtime:smoke": "node tools/runtime-smoke.mjs",
+    "runtime:next:start": "node tools/runtime-next-start.mjs",
+    "runtime:next:browser-smoke": "node tools/runtime-next-browser-smoke.mjs",
+    "runtime:next:stop": "node tools/runtime-next-stop.mjs",
+    "runtime:next:smoke": "node tools/runtime-next-smoke.mjs"
   },
   "devDependencies": {
+    "@types/node": "^24.5.2",
     "@playwright/test": "^1.58.2",
     "@typescript-eslint/eslint-plugin": "^8.57.0",
     "@typescript-eslint/parser": "^8.57.0",
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
-    "prettier": "^3.8.1"
+    "prettier": "^3.8.1",
+    "tsx": "^4.20.6",
+    "turbo": "^2.5.6",
+    "typescript": "^5.9.3"
   }
 }
