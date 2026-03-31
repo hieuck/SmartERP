@@ -28,11 +28,14 @@ export function HeaderBar({ collapsed, onToggle }: HeaderBarProps): ReactElement
     dashboard: t("shell.dashboard"),
     tenants: t("shell.tenants"),
     customers: t("shell.customers"),
+    suppliers: t("shell.suppliers"),
     products: t("shell.products"),
+    "purchase-orders": t("shell.purchaseOrders"),
     orders: t("shell.orders"),
     inventory: t("shell.inventory"),
     invoices: t("shell.invoices"),
     reports: t("shell.reports"),
+    approvals: t("shell.approvals"),
   };
 
   const breadcrumbItems = location.pathname

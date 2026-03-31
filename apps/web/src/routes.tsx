@@ -17,8 +17,14 @@ const TenantsPage = lazy(() =>
 const CustomersPage = lazy(() =>
   import("./pages/CustomersPage").then((module) => ({ default: module.CustomersPage })),
 );
+const SuppliersPage = lazy(() =>
+  import("./pages/SuppliersPage").then((module) => ({ default: module.SuppliersPage })),
+);
 const ProductsPage = lazy(() =>
   import("./pages/ProductsPage").then((module) => ({ default: module.ProductsPage })),
+);
+const PurchaseOrdersPage = lazy(() =>
+  import("./pages/PurchaseOrdersPage").then((module) => ({ default: module.PurchaseOrdersPage })),
 );
 const OrdersPage = lazy(() =>
   import("./pages/OrdersPage").then((module) => ({ default: module.OrdersPage })),
@@ -31,6 +37,9 @@ const InvoicesPage = lazy(() =>
 );
 const ReportsPage = lazy(() =>
   import("./pages/ReportsPage").then((module) => ({ default: module.ReportsPage })),
+);
+const ApprovalsPage = lazy(() =>
+  import("./pages/ApprovalsPage").then((module) => ({ default: module.ApprovalsPage })),
 );
 
 function RouteFallback(): ReactElement {
@@ -64,12 +73,17 @@ function ProtectedShell(): ReactElement {
 }
 
 export function AppRoutes(): ReactElement {
-  const { error, clearError } = useWorkspace();
+  const { error, notice, clearError, clearNotice } = useWorkspace();
 
   return (
     <>
+      {notice ? (
+        <div className="global-alert global-alert-notice">
+          <Alert description={notice} type="info" closable onClose={clearNotice} showIcon />
+        </div>
+      ) : null}
       {error ? (
-        <div className="global-alert">
+        <div className="global-alert global-alert-error">
           <Alert description={error} type="error" closable onClose={clearError} showIcon />
         </div>
       ) : null}
@@ -81,11 +95,14 @@ export function AppRoutes(): ReactElement {
           <Route index element={withLazyBoundary(<DashboardPage />)} />
           <Route path="tenants" element={withLazyBoundary(<TenantsPage />)} />
           <Route path="customers" element={withLazyBoundary(<CustomersPage />)} />
+          <Route path="suppliers" element={withLazyBoundary(<SuppliersPage />)} />
           <Route path="products" element={withLazyBoundary(<ProductsPage />)} />
+          <Route path="purchase-orders" element={withLazyBoundary(<PurchaseOrdersPage />)} />
           <Route path="orders" element={withLazyBoundary(<OrdersPage />)} />
           <Route path="inventory" element={withLazyBoundary(<InventoryPage />)} />
           <Route path="invoices" element={withLazyBoundary(<InvoicesPage />)} />
           <Route path="reports" element={withLazyBoundary(<ReportsPage />)} />
+          <Route path="approvals" element={withLazyBoundary(<ApprovalsPage />)} />
         </Route>
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>

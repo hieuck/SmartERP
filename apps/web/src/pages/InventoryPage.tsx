@@ -13,7 +13,7 @@ const { Paragraph, Title } = Typography;
 type InventoryAdjustmentFormShape = Omit<CreateInventoryAdjustmentInput, "tenantId">;
 
 export function InventoryPage(): ReactElement {
-  const { t } = useLocale();
+  const { formatCurrency, localeCode, t } = useLocale();
   const {
     createInventoryAdjustmentRecord,
     inventories,
@@ -35,6 +35,16 @@ export function InventoryPage(): ReactElement {
       // Error state is already surfaced via workspace context.
     }
   };
+
+  function formatDate(value: string | null): string {
+    if (!value) {
+      return t("inventory.noReceiptYet");
+    }
+
+    return new Intl.DateTimeFormat(localeCode, {
+      dateStyle: "medium",
+    }).format(new Date(value));
+  }
 
   return (
     <div className="page-stack">
@@ -132,6 +142,15 @@ export function InventoryPage(): ReactElement {
                           </Tag>
                           <span>{item.quantityOnHand}</span>
                         </Space>
+                      </div>
+                      <div className="record-detail">
+                        {t("inventory.averageUnitCost")} {formatCurrency(item.averageUnitCost)}
+                      </div>
+                      <div className="record-detail">
+                        {t("inventory.inventoryValue")} {formatCurrency(item.inventoryValue)}
+                      </div>
+                      <div className="record-detail">
+                        {t("inventory.lastReceiptAt")} {formatDate(item.lastReceiptAt)}
                       </div>
                     </div>
                   </div>

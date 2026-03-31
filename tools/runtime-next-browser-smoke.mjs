@@ -19,14 +19,24 @@ const tenantName = `Smoke Tenant ${smokeId}`;
 const tenantSlug = `smoke-${smokeId}`;
 const customerName = `Smoke Buyer ${smokeId}`;
 const customerEmail = `smoke.${smokeId}@example.com`;
+const supplierName = `Smoke Supplier ${smokeId}`;
+const supplierEmail = `supply.${smokeId}@example.com`;
+const supplierCode = `SUP-${smokeId}`;
 const productName = `Smoke Bottle ${smokeId}`;
 const productSku = `SMK-${smokeId}`;
+const expectedReceiptDateInput = buildDateInputFromToday(7);
 const firstPaymentTermDays = 14;
 const secondPaymentTermDays = 10;
 const secondDaysPastDue = 35;
+const promisedPaymentDateInput = buildDateInputFromToday(3);
+const worklistActionDateInput = buildDateInputFromToday(0);
+const collectionNote = "Khach xac nhan se chuyen khoan vao cuoi tuan.";
+const escalatedCollectionNote = "Qua ngay hua thanh toan, can founder xu ly truc tiep.";
 const firstIssueDateInput = buildDateInputFromToday(0);
 const secondIssueDateInput = buildDateInputFromToday(-(secondDaysPastDue + secondPaymentTermDays));
 const unitPrice = 25000;
+const purchaseUnitCost = 18000;
+const purchaseQuantity = 24;
 const stockInQuantity = 12;
 const saleQuantity = 5;
 const secondSaleQuantity = 2;
@@ -45,15 +55,28 @@ const expectedOutstandingReceivablesAmount = secondInvoiceAmount;
 const expectedCurrentReceivablesAmount = 0;
 const expectedOverdue31To60Amount = secondInvoiceAmount;
 const expectedRemainingStock = stockInQuantity - saleQuantity - secondSaleQuantity;
+const expectedReceivedPurchaseValue = stockInQuantity * purchaseUnitCost;
+const expectedInventoryValueAmount = expectedRemainingStock * purchaseUnitCost;
+const expectedCashOnHandAmount = partialPaymentAmount;
+const expectedBankAmount = remainingPaymentAmount;
+const expectedReceivablesLedgerAmount = expectedOutstandingReceivablesAmount;
+const expectedPayablesAmount = expectedReceivedPurchaseValue;
+const expectedCogsAmount = (saleQuantity + secondSaleQuantity) * purchaseUnitCost;
+const expectedVatPayableAmount = firstInvoiceAmount + secondInvoiceAmount - expectedGrossSales;
+const expectedRevenueAmount = expectedGrossSales;
+const expectedPurchaseOrderAmount = purchaseUnitCost * purchaseQuantity;
 const sidebarIndexes = {
   dashboard: 0,
   tenants: 1,
   customers: 2,
-  products: 3,
-  orders: 4,
-  inventory: 5,
-  invoices: 6,
-  reports: 7,
+  suppliers: 3,
+  products: 4,
+  purchaseOrders: 5,
+  inventory: 6,
+  orders: 7,
+  invoices: 8,
+  reports: 9,
+  approvals: 10,
 };
 
 function assert(condition, message) {
@@ -91,15 +114,17 @@ function isExpectedNegativePath(response) {
         (response.request().method() === "GET" && response.url().endsWith("/api/tenants"))
       )
     ) ||
-    (
-      response.status() === 400 &&
-      response.request().method() === "POST" &&
       (
-        response.url().endsWith("/api/tenants") ||
-        response.url().endsWith("/api/products") ||
-        response.url().endsWith("/api/invoices/payments")
+        response.status() === 400 &&
+        response.request().method() === "POST" &&
+        (
+          response.url().endsWith("/api/tenants") ||
+          response.url().endsWith("/api/suppliers") ||
+          response.url().endsWith("/api/products") ||
+          response.url().endsWith("/api/purchase-orders/receipts") ||
+          response.url().endsWith("/api/invoices/payments")
+        )
       )
-    )
   );
 }
 
@@ -200,6 +225,35 @@ async function clickLanguageToggle(page, value) {
   await waitForStoredValue(page, languageStorageKey, value.toLowerCase());
 }
 
+async function findInvoiceNumberByOrderNumber(page, orderNumber) {
+  return page.evaluate(
+    async ({ targetOrderNumber, sessionKey, tenantKey }) => {
+      const rawSession = window.localStorage.getItem(sessionKey);
+      const tenantId = window.localStorage.getItem(tenantKey);
+      const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
+
+      if (!tenantId || !accessToken) {
+        return "";
+      }
+
+      const response = await fetch(`/api/invoices?tenantId=${encodeURIComponent(tenantId)}`, {
+        headers: {
+          authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      const payload = await response.json();
+      const targetInvoice = payload.items.find((item) => item.orderNumber === targetOrderNumber);
+      return targetInvoice?.invoiceNumber ?? "";
+    },
+    {
+      targetOrderNumber: orderNumber,
+      sessionKey: sessionStorageKey,
+      tenantKey: tenantStorageKey,
+    },
+  );
+}
+
 async function waitForTenantContext(page, expectedTenantName) {
   const toolbar = page.locator(".page-toolbar");
   await toolbar.waitFor({ timeout: 15000 });
@@ -211,6 +265,32 @@ async function waitForTenantContext(page, expectedTenantName) {
     { selector: ".page-toolbar", tenantName: expectedTenantName },
     { timeout: 15000 },
   );
+}
+
+async function dismissAlertIfVisible(page, selector) {
+  const alerts = page.locator(selector);
+  if ((await alerts.count()) === 0) {
+    return;
+  }
+
+  const alert = alerts.first();
+  const isVisible = await alert.isVisible().catch(() => false);
+  if (!isVisible) {
+    return;
+  }
+
+  const closeButton = alert.locator(".ant-alert-close-icon");
+  if ((await closeButton.count()) === 0) {
+    return;
+  }
+
+  await closeButton.first().click();
+  await alert.waitFor({ state: "hidden", timeout: 15000 });
+}
+
+async function dismissGlobalAlerts(page) {
+  await dismissAlertIfVisible(page, ".global-alert-notice .ant-alert");
+  await dismissAlertIfVisible(page, ".global-alert-error .ant-alert");
 }
 
 function getStatisticValue(page, title) {
@@ -264,14 +344,30 @@ async function main() {
   let invoiceNumber = "";
   let secondOrderNumber = "";
   let secondInvoiceNumber = "";
+  let purchaseOrderNumber = "";
   let invalidLoginVerified = false;
   let staleSessionRejectedVerified = false;
   let localeReloadVerified = false;
   let duplicateTenantRejectedVerified = false;
+  let duplicateSupplierRejectedVerified = false;
   let duplicateProductRejectedVerified = false;
+  let supplierAndPurchaseOrdersVerified = false;
+  let purchaseReceiptApprovalVerified = false;
+  let purchaseReceiptVerified = false;
+  let purchaseReceiptGuardVerified = false;
+  let inventoryAdjustmentRejectionVerified = false;
+  let inventoryValuationVerified = false;
+  let invoicePaymentApprovalVerified = false;
   let paymentGuardVerified = false;
   let partialSettlementVerified = false;
   let finalSettlementVerified = false;
+  let backdatedInvoiceApprovalVerified = false;
+  let collectionFollowUpVerified = false;
+  let collectionHistoryVerified = false;
+  let collectionWorklistVerified = false;
+  let collectionResolutionVerified = false;
+  let ledgerPostingVerified = false;
+  let auditTrailVerified = false;
   let unauthorizedApiBlockedVerified = false;
 
   try {
@@ -356,9 +452,7 @@ async function main() {
       ((await (await duplicateTenantResponse).json())?.error ?? "") === "A tenant with this slug already exists.",
       "Duplicate tenant slug did not return the expected validation message.",
     );
-    await page.locator(".global-alert .ant-alert").waitFor({ timeout: 15000 });
-    await page.locator(".global-alert .ant-alert-close-icon").click();
-    await page.locator(".global-alert .ant-alert").waitFor({ state: "hidden", timeout: 15000 });
+    await dismissGlobalAlerts(page);
     duplicateTenantRejectedVerified = true;
 
     await openDirectRoute(page, "/dashboard/customers");
@@ -373,6 +467,64 @@ async function main() {
     await getListCard(page).getByText(customerName, { exact: false }).waitFor({ timeout: 15000 });
     await waitForInputValue(customersFormCard.locator("#name"), "");
     await waitForInputValue(customersFormCard.locator("#email"), "");
+
+    await openSection(page, sidebarIndexes.suppliers, "/dashboard/suppliers");
+    await waitForTenantContext(page, tenantName);
+    const suppliersFormCard = getFormCard(page);
+    await waitForFormReady(suppliersFormCard);
+    await fillField(suppliersFormCard, "#supplierCode", supplierCode);
+    await fillField(suppliersFormCard, "#name", supplierName);
+    await fillField(suppliersFormCard, "#email", supplierEmail);
+    await fillField(suppliersFormCard, "#phone", "+84 27 4123 4567");
+    await fillField(suppliersFormCard, "#city", "Binh Duong");
+    await fillField(suppliersFormCard, "#leadTimeDays", 7);
+    await clickSubmit(suppliersFormCard);
+    await getListCard(page).getByText(supplierName, { exact: false }).waitFor({ timeout: 15000 });
+    await waitForInputValue(suppliersFormCard.locator("#supplierCode"), "");
+    await waitForInputValue(suppliersFormCard.locator("#name"), "");
+    const duplicateSupplierResponse = await page.evaluate(
+      async ({ duplicateCode, duplicateName, duplicateEmail, sessionKey, tenantKey }) => {
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const session = window.localStorage.getItem(sessionKey);
+        const accessToken = session ? JSON.parse(session).accessToken : "";
+
+        const response = await fetch("/api/suppliers", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            tenantId,
+            supplierCode: duplicateCode,
+            name: duplicateName,
+            email: duplicateEmail,
+            phone: "",
+            city: "",
+            leadTimeDays: 5,
+          }),
+        });
+
+        return {
+          status: response.status,
+          body: await response.json(),
+        };
+      },
+      {
+        duplicateCode: supplierCode,
+        duplicateName: `${supplierName} Duplicate`,
+        duplicateEmail: `duplicate.${smokeId}@example.com`,
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+      },
+    );
+    assert(
+      duplicateSupplierResponse.status === 400 &&
+        (duplicateSupplierResponse.body?.error ?? "") ===
+        "A supplier with this code already exists for the selected tenant.",
+      "Duplicate supplier code did not return the expected validation message.",
+    );
+    duplicateSupplierRejectedVerified = true;
 
     await openSection(page, sidebarIndexes.products, "/dashboard/products");
     await waitForTenantContext(page, tenantName);
@@ -401,21 +553,152 @@ async function main() {
         "A product with this SKU already exists for the selected tenant.",
       "Duplicate product SKU did not return the expected validation message.",
     );
-    await page.locator(".global-alert .ant-alert").waitFor({ timeout: 15000 });
-    await page.locator(".global-alert .ant-alert-close-icon").click();
-    await page.locator(".global-alert .ant-alert").waitFor({ state: "hidden", timeout: 15000 });
+    await dismissGlobalAlerts(page);
     duplicateProductRejectedVerified = true;
+
+    await openSection(page, sidebarIndexes.purchaseOrders, "/dashboard/purchase-orders");
+    await waitForTenantContext(page, tenantName);
+    const purchaseOrdersCreateCard = page.locator(".two-column > :first-child .ant-card").nth(0);
+    const purchaseOrdersReceiveCard = page.locator(".two-column > :first-child .ant-card").nth(1);
+    await waitForFormReady(purchaseOrdersCreateCard);
+    await selectOption(page, purchaseOrdersCreateCard.getByRole("combobox", { name: /Nhà cung cấp|Nha cung cap/ }), supplierName);
+    await selectOption(page, purchaseOrdersCreateCard.getByRole("combobox", { name: /Sản phẩm|San pham/ }), productName);
+    await fillField(purchaseOrdersCreateCard, "#quantityOrdered", purchaseQuantity);
+    await fillField(purchaseOrdersCreateCard, "#unitCost", purchaseUnitCost);
+    await fillField(purchaseOrdersCreateCard, "#expectedReceiptDate", expectedReceiptDateInput);
+    await clickSubmit(purchaseOrdersCreateCard);
+    const purchaseOrderRow = getListCard(page).locator(".record-row").filter({ hasText: supplierName }).first();
+    await purchaseOrderRow.waitFor({ timeout: 15000 });
+    await purchaseOrderRow.getByText(productName, { exact: false }).waitFor({ timeout: 15000 });
+    await purchaseOrderRow.getByText(buildAmountPattern(expectedPurchaseOrderAmount)).first().waitFor({ timeout: 15000 });
+    await purchaseOrderRow.getByText(/Đã lập|Da lap/).waitFor({ timeout: 15000 });
+    purchaseOrderNumber = (await purchaseOrderRow.locator("strong").first().textContent())?.trim() ?? "";
+    assert(purchaseOrderNumber.length > 0, "Purchase order number was not rendered after purchase order creation.");
+    supplierAndPurchaseOrdersVerified = true;
+
+    await waitForFormReady(purchaseOrdersReceiveCard);
+    await selectOption(page, purchaseOrdersReceiveCard.getByRole("combobox", { name: /Đơn mua|Don mua/ }), purchaseOrderNumber);
+    await fillField(purchaseOrdersReceiveCard, "#quantityReceived", stockInQuantity);
+    await fillField(purchaseOrdersReceiveCard, "#receivedDate", firstIssueDateInput);
+    await clickSubmit(purchaseOrdersReceiveCard);
+    await purchaseOrderRow.getByText(/Đã lập|Da lap/).waitFor({ timeout: 15000 });
+    await purchaseOrderRow.getByText(/Đã nhận: 0|Da nhan: 0/).waitFor({ timeout: 15000 });
+    await purchaseOrderRow.getByText(/Còn lại: 24|Con lai: 24/).waitFor({ timeout: 15000 });
+    await openSection(page, sidebarIndexes.approvals, "/dashboard/approvals");
+    await waitForTenantContext(page, tenantName);
+    const approvalsPendingCard = page.locator(".two-column .ant-card").first();
+    const approvalsHistoryCard = page.locator(".two-column .ant-card").last();
+    const purchaseReceiptApprovalRow = approvalsPendingCard
+      .locator(".activity-row")
+      .filter({ hasText: purchaseOrderNumber })
+      .first();
+    await purchaseReceiptApprovalRow.waitFor({ timeout: 15000 });
+    await purchaseReceiptApprovalRow
+      .getByText("Large inventory receipt requires founder approval.", { exact: false })
+      .waitFor({ timeout: 15000 });
+    await purchaseReceiptApprovalRow.getByRole("button", { name: "Duyệt" }).click();
+    await purchaseReceiptApprovalRow.waitFor({ state: "hidden", timeout: 15000 });
+    await approvalsHistoryCard.getByText(purchaseOrderNumber, { exact: false }).first().waitFor({ timeout: 15000 });
+    await approvalsHistoryCard.getByText("Đã duyệt", { exact: false }).first().waitFor({ timeout: 15000 });
+    purchaseReceiptApprovalVerified = true;
+    await dismissGlobalAlerts(page);
+    await openSection(page, sidebarIndexes.purchaseOrders, "/dashboard/purchase-orders");
+    await waitForTenantContext(page, tenantName);
+    await purchaseOrderRow.getByText(/Nhận một phần|Nhan mot phan/).waitFor({ timeout: 15000 });
+    await purchaseOrderRow.getByText(/Đã nhận: 12|Da nhan: 12/).waitFor({ timeout: 15000 });
+    await purchaseOrderRow.getByText(/Còn lại: 12|Con lai: 12/).waitFor({ timeout: 15000 });
+    purchaseReceiptVerified = true;
+
+    const excessiveReceiptResponse = await page.evaluate(
+      async ({ purchaseOrderNumberToOverReceive, quantity, sessionKey, tenantKey, receivedDate }) => {
+        const rawSession = window.localStorage.getItem(sessionKey);
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
+        const headers = {
+          "content-type": "application/json",
+          authorization: `Bearer ${accessToken}`,
+        };
+
+        const purchaseOrdersResponse = await fetch(
+          `/api/purchase-orders?tenantId=${encodeURIComponent(tenantId ?? "")}`,
+          { headers },
+        );
+        const purchaseOrdersPayload = await purchaseOrdersResponse.json();
+        const targetPurchaseOrder = purchaseOrdersPayload.items.find(
+          (item) => item.purchaseOrderNumber === purchaseOrderNumberToOverReceive,
+        );
+
+        if (!targetPurchaseOrder || !tenantId) {
+          return { status: 0, body: { error: "Purchase order lookup failed before receipt guard test." } };
+        }
+
+        const response = await fetch("/api/purchase-orders/receipts", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            tenantId,
+            purchaseOrderId: targetPurchaseOrder.id,
+            quantityReceived: quantity,
+            receivedDate,
+          }),
+        });
+
+        return {
+          status: response.status,
+          body: await response.json(),
+        };
+      },
+      {
+        purchaseOrderNumberToOverReceive: purchaseOrderNumber,
+        quantity: stockInQuantity + 1,
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+        receivedDate: firstIssueDateInput,
+      },
+    );
+    assert(
+      excessiveReceiptResponse.status === 400 &&
+        excessiveReceiptResponse.body?.error === "Received quantity cannot exceed the outstanding quantity.",
+      "Excessive receipt did not return the expected validation message.",
+    );
+    purchaseReceiptGuardVerified = true;
 
     await openSection(page, sidebarIndexes.inventory, "/dashboard/inventory");
     await waitForTenantContext(page, tenantName);
     const inventoryFormCard = getFormCard(page);
-    await waitForFormReady(inventoryFormCard);
-    await selectOption(page, inventoryFormCard.getByRole("combobox", { name: "* Sản phẩm" }), productName);
-    await fillNumberInput(inventoryFormCard.getByRole("spinbutton", { name: "* Số lượng" }), stockInQuantity);
-    await clickSubmit(inventoryFormCard);
     const inventoryRow = getListCard(page).locator(".record-row").filter({ hasText: productName }).first();
     await inventoryRow.waitFor({ timeout: 15000 });
     await inventoryRow.getByText(String(stockInQuantity), { exact: true }).waitFor({ timeout: 15000 });
+    await inventoryRow.getByText(buildAmountPattern(purchaseUnitCost)).first().waitFor({ timeout: 15000 });
+    await inventoryRow.getByText(buildAmountPattern(expectedReceivedPurchaseValue)).first().waitFor({ timeout: 15000 });
+    await waitForFormReady(inventoryFormCard);
+    await selectOption(page, inventoryFormCard.getByRole("combobox", { name: /Sản phẩm|San pham/ }), productName);
+    await selectOption(page, inventoryFormCard.getByRole("combobox", { name: /Loại điều chỉnh|Loai dieu chinh/ }), "Xuất kho");
+    await fillNumberInput(inventoryFormCard.getByRole("spinbutton", { name: /Số lượng|So luong/ }), 2);
+    await clickSubmit(inventoryFormCard);
+    await inventoryRow.getByText(String(stockInQuantity), { exact: true }).waitFor({ timeout: 15000 });
+    await inventoryRow.getByText(buildAmountPattern(expectedReceivedPurchaseValue)).first().waitFor({ timeout: 15000 });
+    await openSection(page, sidebarIndexes.approvals, "/dashboard/approvals");
+    await waitForTenantContext(page, tenantName);
+    const inventoryAdjustmentApprovalRow = approvalsPendingCard
+      .locator(".activity-row")
+      .filter({ hasText: productSku })
+      .first();
+    await inventoryAdjustmentApprovalRow.waitFor({ timeout: 15000 });
+    await inventoryAdjustmentApprovalRow
+      .getByText("Outbound inventory adjustments require founder approval.", { exact: false })
+      .waitFor({ timeout: 15000 });
+    await inventoryAdjustmentApprovalRow.getByRole("button", { name: "Từ chối" }).click();
+    await inventoryAdjustmentApprovalRow.waitFor({ state: "hidden", timeout: 15000 });
+    await approvalsHistoryCard.getByText(productSku, { exact: false }).first().waitFor({ timeout: 15000 });
+    await approvalsHistoryCard.getByText("Đã từ chối", { exact: false }).first().waitFor({ timeout: 15000 });
+    inventoryAdjustmentRejectionVerified = true;
+    await dismissGlobalAlerts(page);
+    await openSection(page, sidebarIndexes.inventory, "/dashboard/inventory");
+    await waitForTenantContext(page, tenantName);
+    await inventoryRow.getByText(String(stockInQuantity), { exact: true }).waitFor({ timeout: 15000 });
+    await inventoryRow.getByText(buildAmountPattern(expectedReceivedPurchaseValue)).first().waitFor({ timeout: 15000 });
+    inventoryValuationVerified = true;
 
     await openSection(page, sidebarIndexes.orders, "/dashboard/orders");
     await waitForTenantContext(page, tenantName);
@@ -441,7 +724,9 @@ async function main() {
     await waitForTenantContext(page, tenantName);
     const issueInvoiceCard = page.locator(".page-column-stack .ant-card").nth(0);
     const paymentCard = page.locator(".page-column-stack .ant-card").nth(1);
-    const collectionCard = page.locator(".page-column-stack .ant-card").nth(2);
+    const followUpCard = page.locator(".page-column-stack .ant-card").nth(2);
+    const worklistCard = page.locator(".page-column-stack .ant-card").nth(3);
+    const activityCard = page.locator(".page-column-stack .ant-card").nth(4);
     await waitForFormReady(issueInvoiceCard);
     await selectOption(page, issueInvoiceCard.getByRole("combobox", { name: /Đơn hàng/ }), orderNumber);
     await fillField(issueInvoiceCard, "#issueDate", firstIssueDateInput);
@@ -508,6 +793,26 @@ async function main() {
     await selectOption(page, paymentCard.getByRole("combobox", { name: /Phương thức/ }), "Tiền mặt");
     await fillNumberInput(paymentCard.getByRole("spinbutton", { name: /Số tiền/ }), partialPaymentAmount);
     await clickSubmit(paymentCard);
+    await invoiceRow.getByText("Đã phát hành", { exact: false }).waitFor({ timeout: 15000 });
+    await invoiceRow.getByText(buildAmountPattern(firstInvoiceAmount)).first().waitFor({ timeout: 15000 });
+    await openSection(page, sidebarIndexes.approvals, "/dashboard/approvals");
+    await waitForTenantContext(page, tenantName);
+    const paymentApprovalRow = approvalsPendingCard
+      .locator(".activity-row")
+      .filter({ hasText: invoiceNumber })
+      .first();
+    await paymentApprovalRow.waitFor({ timeout: 15000 });
+    await paymentApprovalRow
+      .getByText("Large cash receipt requires founder approval.", { exact: false })
+      .waitFor({ timeout: 15000 });
+    await paymentApprovalRow.getByRole("button", { name: "Duyệt" }).click();
+    await paymentApprovalRow.waitFor({ state: "hidden", timeout: 15000 });
+    await approvalsHistoryCard.getByText(invoiceNumber, { exact: false }).first().waitFor({ timeout: 15000 });
+    await approvalsHistoryCard.getByText("Đã duyệt", { exact: false }).first().waitFor({ timeout: 15000 });
+    invoicePaymentApprovalVerified = true;
+    await dismissGlobalAlerts(page);
+    await openSection(page, sidebarIndexes.invoices, "/dashboard/invoices");
+    await waitForTenantContext(page, tenantName);
     await invoiceRow.getByText("Thanh toán một phần", { exact: false }).waitFor({ timeout: 15000 });
     await invoiceRow.getByText(buildAmountPattern(partialPaymentAmount)).first().waitFor({ timeout: 15000 });
     await invoiceRow.getByText(buildAmountPattern(remainingPaymentAmount)).first().waitFor({ timeout: 15000 });
@@ -542,15 +847,79 @@ async function main() {
     await fillField(issueInvoiceCard, "#paymentTermDays", secondPaymentTermDays);
     await fillField(issueInvoiceCard, "#taxRatePercent", taxRate);
     await clickSubmit(issueInvoiceCard);
+    await openSection(page, sidebarIndexes.approvals, "/dashboard/approvals");
+    await waitForTenantContext(page, tenantName);
+    const backdatedInvoiceApprovalRow = approvalsPendingCard
+      .locator(".activity-row")
+      .filter({ hasText: secondOrderNumber })
+      .first();
+    await backdatedInvoiceApprovalRow.waitFor({ timeout: 15000 });
+    await backdatedInvoiceApprovalRow
+      .getByText("Backdated invoice issue requires founder approval.", { exact: false })
+      .waitFor({ timeout: 15000 });
+    await backdatedInvoiceApprovalRow.getByRole("button", { name: "Duyệt" }).click();
+    await backdatedInvoiceApprovalRow.waitFor({ state: "hidden", timeout: 15000 });
+    await approvalsHistoryCard.getByText(secondOrderNumber, { exact: false }).first().waitFor({ timeout: 15000 });
+    await approvalsHistoryCard.getByText("Đã duyệt", { exact: false }).first().waitFor({ timeout: 15000 });
+    backdatedInvoiceApprovalVerified = true;
+    await dismissGlobalAlerts(page);
+    await openSection(page, sidebarIndexes.invoices, "/dashboard/invoices");
+    await waitForTenantContext(page, tenantName);
     const secondInvoiceRow = getListCard(page).locator(".record-row").filter({ hasText: secondOrderNumber }).first();
     await secondInvoiceRow.waitFor({ timeout: 15000 });
-    secondInvoiceNumber = (await secondInvoiceRow.locator("strong").first().textContent())?.trim() ?? "";
+    secondInvoiceNumber = await findInvoiceNumberByOrderNumber(page, secondOrderNumber);
     assert(secondInvoiceNumber.length > 0, "Second invoice number was not rendered after invoice creation.");
     await secondInvoiceRow.getByText("Đã phát hành", { exact: false }).waitFor({ timeout: 15000 });
     await secondInvoiceRow.getByText(`Quá hạn ${secondDaysPastDue} ngày`, { exact: false }).waitFor({ timeout: 15000 });
     await secondInvoiceRow.getByText(buildAmountPattern(secondInvoiceAmount)).first().waitFor({ timeout: 15000 });
-    await collectionCard.getByText(secondInvoiceNumber, { exact: false }).waitFor({ timeout: 15000 });
-    await collectionCard.getByText(`Quá hạn ${secondDaysPastDue} ngày`, { exact: false }).waitFor({ timeout: 15000 });
+    await waitForFormReady(followUpCard);
+    await selectOption(page, followUpCard.getByRole("combobox").nth(0), secondInvoiceNumber);
+    await selectOption(page, followUpCard.getByRole("combobox").nth(1), "Hứa thanh toán");
+    await selectOption(page, followUpCard.getByRole("combobox").nth(2), "Xác nhận thanh toán");
+    await fillField(followUpCard, "#promisedPaymentDate", promisedPaymentDateInput);
+    await fillField(followUpCard, "#nextActionDate", promisedPaymentDateInput);
+    await followUpCard.locator("#collectionNote").fill(collectionNote);
+    await clickSubmit(followUpCard);
+    await secondInvoiceRow.getByText("Hứa thanh toán", { exact: false }).waitFor({ timeout: 15000 });
+    await secondInvoiceRow.getByText("Xác nhận thanh toán", { exact: false }).waitFor({ timeout: 15000 });
+    await secondInvoiceRow.getByText(collectionNote, { exact: false }).waitFor({ timeout: 15000 });
+    await secondInvoiceRow.getByText("Ngày hứa trả:", { exact: false }).waitFor({ timeout: 15000 });
+    collectionFollowUpVerified = true;
+    await activityCard.getByText(secondInvoiceNumber, { exact: false }).first().waitFor({ timeout: 15000 });
+    await activityCard.getByText("Hứa thanh toán", { exact: false }).first().waitFor({ timeout: 15000 });
+    await activityCard.getByText("Xác nhận thanh toán", { exact: false }).waitFor({ timeout: 15000 });
+    await activityCard.getByText(collectionNote, { exact: false }).waitFor({ timeout: 15000 });
+    await selectOption(page, followUpCard.getByRole("combobox").nth(0), secondInvoiceNumber);
+    await selectOption(page, followUpCard.getByRole("combobox").nth(1), "Cần escalated");
+    await selectOption(page, followUpCard.getByRole("combobox").nth(2), "Founder xử lý");
+    await fillField(followUpCard, "#promisedPaymentDate", "");
+    await fillField(followUpCard, "#nextActionDate", worklistActionDateInput);
+    await followUpCard.locator("#collectionNote").fill(escalatedCollectionNote);
+    await clickSubmit(followUpCard);
+    await secondInvoiceRow.getByText("Cần escalated", { exact: false }).waitFor({ timeout: 15000 });
+    await secondInvoiceRow.getByText("Founder xử lý", { exact: false }).waitFor({ timeout: 15000 });
+    await secondInvoiceRow.getByText("Khẩn cấp", { exact: false }).waitFor({ timeout: 15000 });
+    await secondInvoiceRow.getByText(escalatedCollectionNote, { exact: false }).waitFor({ timeout: 15000 });
+    await worklistCard.getByText(secondInvoiceNumber, { exact: false }).waitFor({ timeout: 15000 });
+    await worklistCard.getByText("Founder xử lý", { exact: false }).waitFor({ timeout: 15000 });
+    await worklistCard.getByText("Khẩn cấp", { exact: false }).waitFor({ timeout: 15000 });
+    await worklistCard.getByText(escalatedCollectionNote, { exact: false }).waitFor({ timeout: 15000 });
+    await activityCard.getByText(escalatedCollectionNote, { exact: false }).waitFor({ timeout: 15000 });
+    await activityCard.getByText(collectionNote, { exact: false }).waitFor({ timeout: 15000 });
+    await activityCard.getByText("Founder xử lý", { exact: false }).waitFor({ timeout: 15000 });
+    await activityCard.getByText("Khẩn cấp", { exact: false }).waitFor({ timeout: 15000 });
+    collectionHistoryVerified = true;
+    collectionWorklistVerified = true;
+    const worklistRow = worklistCard.locator(".collection-queue-row").filter({ hasText: secondInvoiceNumber }).first();
+    await worklistRow.getByRole("button", { name: "Hoàn tất việc này" }).click();
+    await worklistCard.getByText(secondInvoiceNumber, { exact: false }).waitFor({ state: "hidden", timeout: 15000 });
+    await worklistCard.getByText("Hiện chưa có việc thu hồi nào đang chờ xử lý.", { exact: false }).waitFor({ timeout: 15000 });
+    await secondInvoiceRow.getByText("Việc cần làm: Theo dõi", { exact: false }).waitFor({ timeout: 15000 });
+    const latestResolvedActivity = activityCard.locator(".activity-row").filter({ hasText: secondInvoiceNumber }).first();
+    await latestResolvedActivity.getByText("Đã xử lý", { exact: false }).waitFor({ timeout: 15000 });
+    await latestResolvedActivity.getByText("Việc cần làm: Theo dõi", { exact: false }).waitFor({ timeout: 15000 });
+    await latestResolvedActivity.getByText(escalatedCollectionNote, { exact: false }).waitFor({ timeout: 15000 });
+    collectionResolutionVerified = true;
 
     await openSection(page, sidebarIndexes.customers, "/dashboard/customers");
     await waitForTenantContext(page, tenantName);
@@ -585,11 +954,74 @@ async function main() {
     await getStatisticValue(page, "31-60 ngày").getByText(buildAmountPattern(expectedOverdue31To60Amount)).waitFor({ timeout: 15000 });
     await getStatisticValue(page, "61-90 ngày").getByText(buildAmountPattern(0)).waitFor({ timeout: 15000 });
     await getStatisticValue(page, "Trên 90 ngày").getByText(buildAmountPattern(0)).waitFor({ timeout: 15000 });
+    await getStatisticValue(page, /Giá trị tồn kho|Gia tri ton kho/).getByText(buildAmountPattern(expectedInventoryValueAmount)).waitFor({ timeout: 15000 });
     await getStatisticValue(page, "Hóa đơn đã thu đủ").getByText("1", { exact: true }).waitFor({ timeout: 15000 });
     await getStatisticValue(page, "Hóa đơn còn công nợ").getByText("1", { exact: true }).waitFor({ timeout: 15000 });
+    await page.getByText("156").first().waitFor({ timeout: 15000 });
+    await page.getByText("Hàng tồn kho", { exact: false }).first().waitFor({ timeout: 15000 });
+    await page.getByText(buildAmountPattern(expectedInventoryValueAmount)).first().waitFor({ timeout: 15000 });
+    await page.getByText("111").first().waitFor({ timeout: 15000 });
+    await page.getByText("Tiền mặt", { exact: false }).first().waitFor({ timeout: 15000 });
+    await page.getByText(buildAmountPattern(expectedCashOnHandAmount)).first().waitFor({ timeout: 15000 });
+    await page.getByText("112").first().waitFor({ timeout: 15000 });
+    await page.getByText("Tiền gửi ngân hàng", { exact: false }).first().waitFor({ timeout: 15000 });
+    await page.getByText(buildAmountPattern(expectedBankAmount)).first().waitFor({ timeout: 15000 });
+    await page.getByText("131").first().waitFor({ timeout: 15000 });
+    await page.getByText("Phải thu khách hàng", { exact: false }).first().waitFor({ timeout: 15000 });
+    await page.getByText(buildAmountPattern(expectedReceivablesLedgerAmount)).first().waitFor({ timeout: 15000 });
+    await page.getByText("331").first().waitFor({ timeout: 15000 });
+    await page.getByText("Phải trả nhà cung cấp", { exact: false }).first().waitFor({ timeout: 15000 });
+    await page.getByText(buildAmountPattern(expectedPayablesAmount)).first().waitFor({ timeout: 15000 });
+    await page.getByText("3331").first().waitFor({ timeout: 15000 });
+    await page.getByText("Thuế GTGT phải nộp", { exact: false }).first().waitFor({ timeout: 15000 });
+    await page.getByText(buildAmountPattern(expectedVatPayableAmount)).first().waitFor({ timeout: 15000 });
+    await page.getByText("511").first().waitFor({ timeout: 15000 });
+    await page.getByText("Doanh thu bán hàng", { exact: false }).first().waitFor({ timeout: 15000 });
+    await page.getByText(buildAmountPattern(expectedRevenueAmount)).first().waitFor({ timeout: 15000 });
+    await page.getByText("632").first().waitFor({ timeout: 15000 });
+    await page.getByText("Giá vốn hàng bán", { exact: false }).first().waitFor({ timeout: 15000 });
+    await page.getByText(buildAmountPattern(expectedCogsAmount)).first().waitFor({ timeout: 15000 });
+    await page.getByText(`Receive purchase order ${purchaseOrderNumber}`, { exact: false }).first().waitFor({ timeout: 15000 });
+    await page.getByText(`Issue stock for ${secondOrderNumber}`, { exact: false }).first().waitFor({ timeout: 15000 });
+    await page.getByText(`Issue invoice ${secondInvoiceNumber}`, { exact: false }).first().waitFor({ timeout: 15000 });
+    await page.getByText(`Receive payment for ${invoiceNumber}`, { exact: false }).first().waitFor({ timeout: 15000 });
+    ledgerPostingVerified = true;
+    const auditCard = page.locator(".ant-card").filter({ hasText: "Nhật ký kiểm soát tài chính" }).first();
+    await auditCard.waitFor({ timeout: 15000 });
+    await auditCard.getByText(/Nhận hàng từ đơn mua|Nhan hang tu don mua/).first().waitFor({ timeout: 15000 });
+    await auditCard.getByText("Phát hành hóa đơn", { exact: false }).first().waitFor({ timeout: 15000 });
+    await auditCard.getByText("Ghi nhận thanh toán", { exact: false }).first().waitFor({ timeout: 15000 });
+    await auditCard.getByText("Cập nhật thu hồi", { exact: false }).first().waitFor({ timeout: 15000 });
+    await auditCard.getByText("Hoàn tất thu hồi", { exact: false }).first().waitFor({ timeout: 15000 });
+    await auditCard.getByText("Yêu cầu phê duyệt", { exact: false }).first().waitFor({ timeout: 15000 });
+    await auditCard.getByText("Đã duyệt", { exact: false }).first().waitFor({ timeout: 15000 });
+    await auditCard.getByText("Đã từ chối", { exact: false }).first().waitFor({ timeout: 15000 });
+    await auditCard.getByText(purchaseOrderNumber, { exact: false }).first().waitFor({ timeout: 15000 });
+    await auditCard.getByText(productSku, { exact: false }).first().waitFor({ timeout: 15000 });
+    await auditCard.getByText(secondOrderNumber, { exact: false }).first().waitFor({ timeout: 15000 });
+    await auditCard.getByText(secondInvoiceNumber, { exact: false }).first().waitFor({ timeout: 15000 });
+    await auditCard.getByText(invoiceNumber, { exact: false }).first().waitFor({ timeout: 15000 });
+    await auditCard.getByText("SmartERP Founder", { exact: false }).first().waitFor({ timeout: 15000 });
+    await auditCard.getByText(collectionNote, { exact: false }).first().waitFor({ timeout: 15000 });
+    await auditCard.getByText(escalatedCollectionNote, { exact: false }).first().waitFor({ timeout: 15000 });
+    auditTrailVerified = true;
     await page.getByText(customerName, { exact: false }).first().waitFor({ timeout: 15000 });
     await page.getByText(productName, { exact: false }).first().waitFor({ timeout: 15000 });
     await page.getByText(String(expectedRemainingStock), { exact: true }).first().waitFor({ timeout: 15000 });
+
+    await openSection(page, sidebarIndexes.dashboard, "/dashboard");
+    await getStatisticValue(page, "Công nợ quá hạn").getByText(buildAmountPattern(expectedOverdue31To60Amount)).waitFor({ timeout: 15000 });
+    await getStatisticValue(page, "Hóa đơn còn công nợ").getByText("1", { exact: true }).waitFor({ timeout: 15000 });
+    await getStatisticValue(page, "Phê duyệt chờ xử lý").getByText("0", { exact: true }).waitFor({ timeout: 15000 });
+    await page.getByText(secondInvoiceNumber, { exact: false }).first().waitFor({ timeout: 15000 });
+    await page.getByText(customerName, { exact: false }).first().waitFor({ timeout: 15000 });
+    await page.getByText("Việc cần làm hôm nay", { exact: false }).waitFor({ timeout: 15000 });
+    await page.getByText("Hôm nay chưa có việc thu hồi nào đến hạn xử lý.", { exact: false }).waitFor({ timeout: 15000 });
+    await page.getByText("Nhật ký thu hồi gần đây", { exact: false }).waitFor({ timeout: 15000 });
+    await page.getByText(escalatedCollectionNote, { exact: false }).first().waitFor({ timeout: 15000 });
+    await page.getByText("Cần escalated", { exact: false }).first().waitFor({ timeout: 15000 });
+    await page.getByText("Đã xử lý", { exact: false }).first().waitFor({ timeout: 15000 });
+
     const storedWorkspaceStateBeforeLogout = await page.evaluate(
       ({ sessionKey, tenantKey }) => ({
         session: window.localStorage.getItem(sessionKey),
@@ -644,8 +1076,12 @@ async function main() {
       tenantName,
       customerName,
       customerEmail,
+      supplierName,
+      supplierEmail,
+      supplierCode,
       productName,
       productSku,
+      purchaseOrderNumber,
       orderNumber,
       invoiceNumber,
       secondOrderNumber,
@@ -655,21 +1091,46 @@ async function main() {
       loginReloadVerified: true,
       localeReloadVerified,
       duplicateTenantRejectedVerified,
+      duplicateSupplierRejectedVerified,
       duplicateProductRejectedVerified,
+      supplierAndPurchaseOrdersVerified,
+      purchaseReceiptApprovalVerified,
+      purchaseReceiptVerified,
+      purchaseReceiptGuardVerified,
+      inventoryAdjustmentRejectionVerified,
+      inventoryValuationVerified,
+      invoicePaymentApprovalVerified,
       paymentGuardVerified,
       partialSettlementVerified,
       finalSettlementVerified,
+      backdatedInvoiceApprovalVerified,
+      collectionFollowUpVerified,
+      collectionHistoryVerified,
+      collectionWorklistVerified,
+      collectionResolutionVerified,
+      ledgerPostingVerified,
+      auditTrailVerified,
       directRouteVerified: true,
       logoutClearsStorageVerified: true,
       logoutBlocksProtectedRouteVerified: true,
       unauthorizedApiBlockedVerified,
       expectedGrossSales,
+      expectedPurchaseOrderAmount,
       expectedInvoicedAmount,
       expectedCashCollectedAmount,
       expectedOutstandingReceivablesAmount,
       expectedCurrentReceivablesAmount,
       expectedOverdue31To60Amount,
       expectedRemainingStock,
+      expectedReceivedPurchaseValue,
+      expectedInventoryValueAmount,
+      expectedCashOnHandAmount,
+      expectedBankAmount,
+      expectedReceivablesLedgerAmount,
+      expectedPayablesAmount,
+      expectedCogsAmount,
+      expectedVatPayableAmount,
+      expectedRevenueAmount,
       consoleWarnings,
       consoleErrors,
       failedRequests,

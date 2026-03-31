@@ -1,21 +1,28 @@
-import { BankOutlined, FileTextOutlined, InboxOutlined, UserOutlined } from "@ant-design/icons";
+import { BankOutlined, CheckCircleOutlined, FileTextOutlined, InboxOutlined, PhoneOutlined, UserOutlined } from "@ant-design/icons";
 import type { ReactElement } from "react";
 import type { FormProps } from "antd";
 import { Button, Card, Empty, Form, Input, InputNumber, Select, Tag, Typography } from "antd";
 
 import type {
+  CollectionActionRequired,
+  CollectionActivityState,
+  CollectionFollowUpStatus,
+  CollectionPriority,
   CreateInvoiceInput,
   CreateInvoicePaymentInput,
   InvoiceRecord,
+  UpdateInvoiceCollectionInput,
 } from "@smarterp/contracts";
 
 import { useLocale } from "../locale/LocaleContext";
 import { useWorkspace } from "../state/WorkspaceContext";
 
 const { Paragraph, Title } = Typography;
+const { TextArea } = Input;
 
 type InvoiceFormShape = Omit<CreateInvoiceInput, "tenantId">;
 type InvoicePaymentFormShape = Omit<CreateInvoicePaymentInput, "tenantId">;
+type InvoiceCollectionFormShape = Omit<UpdateInvoiceCollectionInput, "tenantId">;
 
 function getTodayDateInputValue(): string {
   return new Date().toISOString().slice(0, 10);
@@ -80,11 +87,132 @@ function getCollectionStatusLabel(
   return t("invoices.collectionCurrent", { count: invoice.daysUntilDue });
 }
 
+function getFollowUpStatusColor(status: CollectionFollowUpStatus): string {
+  if (status === "escalated") {
+    return "red";
+  }
+
+  if (status === "promised") {
+    return "geekblue";
+  }
+
+  if (status === "contacted") {
+    return "cyan";
+  }
+
+  return "default";
+}
+
+function getFollowUpStatusLabel(
+  status: CollectionFollowUpStatus,
+  t: ReturnType<typeof useLocale>["t"],
+): string {
+  if (status === "contacted") {
+    return t("invoices.followUpStatusContacted");
+  }
+
+  if (status === "promised") {
+    return t("invoices.followUpStatusPromised");
+  }
+
+  if (status === "escalated") {
+    return t("invoices.followUpStatusEscalated");
+  }
+
+  return t("invoices.followUpStatusNew");
+}
+
+function getCollectionPriorityColor(priority: CollectionPriority): string {
+  if (priority === "critical") {
+    return "red";
+  }
+
+  if (priority === "high") {
+    return "volcano";
+  }
+
+  if (priority === "medium") {
+    return "gold";
+  }
+
+  return "default";
+}
+
+function getCollectionPriorityLabel(
+  priority: CollectionPriority,
+  t: ReturnType<typeof useLocale>["t"],
+): string {
+  if (priority === "critical") {
+    return t("invoices.priorityCritical");
+  }
+
+  if (priority === "high") {
+    return t("invoices.priorityHigh");
+  }
+
+  if (priority === "medium") {
+    return t("invoices.priorityMedium");
+  }
+
+  return t("invoices.priorityLow");
+}
+
+function getActionRequiredLabel(
+  actionRequired: CollectionActionRequired,
+  t: ReturnType<typeof useLocale>["t"],
+): string {
+  if (actionRequired === "call_customer") {
+    return t("invoices.actionCallCustomer");
+  }
+
+  if (actionRequired === "confirm_payment") {
+    return t("invoices.actionConfirmPayment");
+  }
+
+  if (actionRequired === "escalate_founder") {
+    return t("invoices.actionEscalateFounder");
+  }
+
+  return t("invoices.actionMonitor");
+}
+
+function getActivityStateColor(actionState: CollectionActivityState): string {
+  return actionState === "resolved" ? "green" : "blue";
+}
+
+function getActivityStateLabel(
+  actionState: CollectionActivityState,
+  t: ReturnType<typeof useLocale>["t"],
+): string {
+  return actionState === "resolved"
+    ? t("invoices.activityStateResolved")
+    : t("invoices.activityStateAssigned");
+}
+
+function getPriorityRank(priority: CollectionPriority): number {
+  if (priority === "critical") {
+    return 4;
+  }
+
+  if (priority === "high") {
+    return 3;
+  }
+
+  if (priority === "medium") {
+    return 2;
+  }
+
+  return 1;
+}
+
 export function InvoicesPage(): ReactElement {
   const { formatCurrency, localeCode, t } = useLocale();
   const {
+    collectionActivities,
     createInvoicePaymentRecord,
     createInvoiceRecord,
+    updateInvoiceCollectionRecord,
+    resolveInvoiceCollectionActionRecord,
     invoices,
     isBusy,
     orders,
@@ -95,13 +223,26 @@ export function InvoicesPage(): ReactElement {
 
   const [invoiceForm] = Form.useForm<InvoiceFormShape>();
   const [paymentForm] = Form.useForm<InvoicePaymentFormShape>();
+  const [collectionForm] = Form.useForm<InvoiceCollectionFormShape>();
   const selectedInvoiceId = Form.useWatch("invoiceId", paymentForm);
+  const selectedCollectionInvoiceId = Form.useWatch("invoiceId", collectionForm);
+  const selectedFollowUpStatus = Form.useWatch("followUpStatus", collectionForm);
+  const selectedActionRequired = Form.useWatch("actionRequired", collectionForm);
+  const todayDateInput = new Date().toISOString().slice(0, 10);
 
   const availableOrders = orders.filter(
     (order) => !invoices.some((invoice) => invoice.orderId === order.id),
   );
   const payableInvoices = invoices.filter((invoice) => invoice.outstandingAmount > 0);
   const collectionQueue = [...payableInvoices].sort((left, right) => {
+    if (getPriorityRank(left.collectionPriority) !== getPriorityRank(right.collectionPriority)) {
+      return getPriorityRank(right.collectionPriority) - getPriorityRank(left.collectionPriority);
+    }
+
+    if (left.nextActionDate !== right.nextActionDate) {
+      return (left.nextActionDate ?? "9999-12-31").localeCompare(right.nextActionDate ?? "9999-12-31");
+    }
+
     if (left.daysPastDue !== right.daysPastDue) {
       return right.daysPastDue - left.daysPastDue;
     }
@@ -112,7 +253,18 @@ export function InvoicesPage(): ReactElement {
 
     return left.issuedAt.localeCompare(right.issuedAt);
   });
+  const actionableWorklist = collectionQueue.filter(
+    (invoice) =>
+      invoice.actionRequired !== "monitor" &&
+      invoice.nextActionDate !== null &&
+      invoice.nextActionDate <= todayDateInput,
+  );
   const selectedInvoice = payableInvoices.find((invoice) => invoice.id === selectedInvoiceId) ?? null;
+  const selectedCollectionInvoice =
+    invoices.find((invoice) => invoice.id === selectedCollectionInvoiceId) ?? null;
+  const visibleCollectionActivities = selectedCollectionInvoiceId
+    ? collectionActivities.filter((activity) => activity.invoiceId === selectedCollectionInvoiceId)
+    : collectionActivities.slice(0, 8);
 
   const onCreateInvoice: FormProps<InvoiceFormShape>["onFinish"] = async (values) => {
     try {
@@ -138,6 +290,37 @@ export function InvoicesPage(): ReactElement {
     }
   };
 
+  const onSaveCollectionFollowUp: FormProps<InvoiceCollectionFormShape>["onFinish"] = async (values) => {
+    try {
+      await updateInvoiceCollectionRecord({
+        invoiceId: values.invoiceId,
+        followUpStatus: values.followUpStatus,
+        actionRequired: values.actionRequired,
+        promisedPaymentDate: values.promisedPaymentDate || null,
+        nextActionDate: values.nextActionDate || null,
+        collectionNote: values.collectionNote.trim(),
+      });
+      collectionForm.resetFields();
+      collectionForm.setFieldsValue({
+        followUpStatus: "new",
+        actionRequired: "monitor",
+        promisedPaymentDate: "",
+        nextActionDate: "",
+        collectionNote: "",
+      });
+    } catch {
+      // Error state is already surfaced via workspace context.
+    }
+  };
+
+  async function onResolveCollectionAction(invoiceId: string): Promise<void> {
+    try {
+      await resolveInvoiceCollectionActionRecord({ invoiceId });
+    } catch {
+      // Error state is already surfaced via workspace context.
+    }
+  }
+
   function formatTimestamp(value: string | null): string {
     if (!value) {
       return "-";
@@ -149,7 +332,11 @@ export function InvoicesPage(): ReactElement {
     }).format(new Date(value));
   }
 
-  function formatDate(value: string): string {
+  function formatDate(value: string | null): string {
+    if (!value) {
+      return "-";
+    }
+
     return new Intl.DateTimeFormat(localeCode, {
       dateStyle: "medium",
     }).format(new Date(value));
@@ -317,11 +504,114 @@ export function InvoicesPage(): ReactElement {
             ) : null}
           </Card>
 
-          <Card title={t("invoices.collectionTitle")}>
+          <Card title={t("invoices.followUpTitle")}>
+            <Form<InvoiceCollectionFormShape>
+              form={collectionForm}
+              layout="vertical"
+              onFinish={onSaveCollectionFollowUp}
+              initialValues={{
+                followUpStatus: "new",
+                actionRequired: "monitor",
+                promisedPaymentDate: "",
+                nextActionDate: "",
+                collectionNote: "",
+              }}
+            >
+              <Form.Item<InvoiceCollectionFormShape>
+                label={t("invoices.invoice")}
+                name="invoiceId"
+                rules={[{ required: true }]}
+              >
+                <Select
+                  placeholder={t("invoices.invoicePlaceholder")}
+                  options={collectionQueue.map((invoice) => ({
+                    label: `${invoice.invoiceNumber} - ${invoice.customerName} - ${formatCurrency(invoice.outstandingAmount)}`,
+                    value: invoice.id,
+                  }))}
+                />
+              </Form.Item>
+
+              <Form.Item<InvoiceCollectionFormShape>
+                label={t("invoices.followUpStatus")}
+                name="followUpStatus"
+                rules={[{ required: true }]}
+              >
+                <Select
+                  options={[
+                    { label: t("invoices.followUpStatusNew"), value: "new" },
+                    { label: t("invoices.followUpStatusContacted"), value: "contacted" },
+                    { label: t("invoices.followUpStatusPromised"), value: "promised" },
+                    { label: t("invoices.followUpStatusEscalated"), value: "escalated" },
+                  ]}
+                />
+              </Form.Item>
+
+              <Form.Item<InvoiceCollectionFormShape>
+                label={t("invoices.actionRequired")}
+                name="actionRequired"
+                rules={[{ required: true }]}
+              >
+                <Select
+                  options={[
+                    { label: t("invoices.actionMonitor"), value: "monitor" },
+                    { label: t("invoices.actionCallCustomer"), value: "call_customer" },
+                    { label: t("invoices.actionConfirmPayment"), value: "confirm_payment" },
+                    { label: t("invoices.actionEscalateFounder"), value: "escalate_founder" },
+                  ]}
+                />
+              </Form.Item>
+
+              <Form.Item<InvoiceCollectionFormShape>
+                label={t("invoices.promisedPaymentDate")}
+                name="promisedPaymentDate"
+                rules={selectedFollowUpStatus === "promised" ? [{ required: true }] : []}
+              >
+                <Input type="date" />
+              </Form.Item>
+
+              <Form.Item<InvoiceCollectionFormShape>
+                label={t("invoices.nextActionDate")}
+                name="nextActionDate"
+                rules={selectedActionRequired !== "monitor" ? [{ required: true }] : []}
+              >
+                <Input type="date" />
+              </Form.Item>
+
+              <Form.Item<InvoiceCollectionFormShape>
+                label={t("invoices.collectionNote")}
+                name="collectionNote"
+              >
+                <TextArea rows={3} maxLength={240} placeholder={t("invoices.collectionNotePlaceholder")} />
+              </Form.Item>
+
+              {selectedCollectionInvoice ? (
+                <Paragraph type="secondary" style={{ marginTop: 0 }}>
+                  {t("invoices.outstandingLabel")} {formatCurrency(selectedCollectionInvoice.outstandingAmount)}
+                </Paragraph>
+              ) : null}
+
+              <Button
+                type="primary"
+                htmlType="submit"
+                disabled={!selectedTenantId || collectionQueue.length === 0}
+                loading={isBusy}
+              >
+                {t("invoices.saveFollowUp")}
+              </Button>
+            </Form>
+
+            {selectedTenantId && collectionQueue.length === 0 ? (
+              <Paragraph type="secondary" style={{ marginTop: 16, marginBottom: 0 }}>
+                {t("invoices.collectionEmpty")}
+              </Paragraph>
+            ) : null}
+          </Card>
+
+          <Card title={t("invoices.worklistTitle")}>
             {selectedTenantId ? (
-              collectionQueue.length ? (
+              actionableWorklist.length ? (
                 <div className="collection-queue">
-                  {collectionQueue.map((invoice) => (
+                  {actionableWorklist.map((invoice) => (
                     <div className="collection-queue-row" key={invoice.id}>
                       <div className="collection-queue-main">
                         <strong>{invoice.invoiceNumber}</strong>
@@ -334,15 +624,110 @@ export function InvoicesPage(): ReactElement {
                         <div className="record-detail">
                           {t("invoices.outstandingLabel")} {formatCurrency(invoice.outstandingAmount)}
                         </div>
+                        <div className="record-detail">
+                          <PhoneOutlined /> {t("invoices.actionRequiredLabel")}{" "}
+                          {getActionRequiredLabel(invoice.actionRequired, t)}
+                        </div>
+                        {invoice.nextActionDate ? (
+                          <div className="record-detail">
+                            {t("invoices.nextActionDateLabel")} {formatDate(invoice.nextActionDate)}
+                          </div>
+                        ) : null}
+                        {invoice.promisedPaymentDate ? (
+                          <div className="record-detail">
+                            {t("invoices.promisedPaymentDateLabel")} {formatDate(invoice.promisedPaymentDate)}
+                          </div>
+                        ) : null}
+                        {invoice.collectionNote ? (
+                          <div className="record-detail">
+                            {t("invoices.collectionNoteLabel")} {invoice.collectionNote}
+                          </div>
+                        ) : null}
                       </div>
-                      <Tag color={getCollectionStatusColor(invoice.collectionStatus)}>
-                        {getCollectionStatusLabel(invoice, t)}
-                      </Tag>
+                      <div className="record-tag-stack">
+                        <Tag color={getCollectionPriorityColor(invoice.collectionPriority)}>
+                          {getCollectionPriorityLabel(invoice.collectionPriority, t)}
+                        </Tag>
+                        <Tag color={getCollectionStatusColor(invoice.collectionStatus)}>
+                          {getCollectionStatusLabel(invoice, t)}
+                        </Tag>
+                        <Tag color={getFollowUpStatusColor(invoice.followUpStatus)}>
+                          {getFollowUpStatusLabel(invoice.followUpStatus, t)}
+                        </Tag>
+                        <Button
+                          size="small"
+                          icon={<CheckCircleOutlined />}
+                          loading={isBusy}
+                          onClick={() => void onResolveCollectionAction(invoice.id)}
+                        >
+                          {t("invoices.resolveAction")}
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <Empty description={t("invoices.collectionEmpty")} />
+                <Empty description={t("invoices.worklistEmpty")} />
+              )
+            ) : (
+              <Empty description={t("invoices.emptyNoTenant")} />
+            )}
+          </Card>
+
+          <Card title={t("invoices.activityTitle")}>
+            {selectedTenantId ? (
+              visibleCollectionActivities.length ? (
+                <div className="activity-feed">
+                  {visibleCollectionActivities.map((activity) => (
+                    <div className="activity-row" key={activity.id}>
+                      <div className="activity-main">
+                        <strong>{activity.invoiceNumber}</strong>
+                        <div className="record-detail">
+                          <UserOutlined /> {activity.customerName}
+                        </div>
+                      <div className="record-detail">
+                        {t("invoices.activityOutstandingLabel")}{" "}
+                        {formatCurrency(activity.outstandingAmountSnapshot)}
+                      </div>
+                      <div className="record-detail">
+                        <PhoneOutlined /> {t("invoices.actionRequiredLabel")}{" "}
+                        {getActionRequiredLabel(activity.actionRequired, t)}
+                      </div>
+                      {activity.nextActionDate ? (
+                        <div className="record-detail">
+                          {t("invoices.nextActionDateLabel")} {formatDate(activity.nextActionDate)}
+                        </div>
+                      ) : null}
+                      {activity.promisedPaymentDate ? (
+                        <div className="record-detail">
+                          {t("invoices.promisedPaymentDateLabel")} {formatDate(activity.promisedPaymentDate)}
+                        </div>
+                      ) : null}
+                        {activity.collectionNote ? (
+                          <div className="record-detail">
+                            {t("invoices.collectionNoteLabel")} {activity.collectionNote}
+                          </div>
+                        ) : null}
+                      </div>
+                      <div className="activity-meta">
+                        <Tag color={getActivityStateColor(activity.actionState)}>
+                          {getActivityStateLabel(activity.actionState, t)}
+                        </Tag>
+                        <Tag color={getCollectionPriorityColor(activity.collectionPriority)}>
+                          {getCollectionPriorityLabel(activity.collectionPriority, t)}
+                        </Tag>
+                        <Tag color={getFollowUpStatusColor(activity.followUpStatus)}>
+                          {getFollowUpStatusLabel(activity.followUpStatus, t)}
+                        </Tag>
+                        <div className="record-detail">
+                          {t("invoices.activityRecordedAtLabel")} {formatTimestamp(activity.createdAt)}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <Empty description={t("invoices.activityEmpty")} />
               )
             ) : (
               <Empty description={t("invoices.emptyNoTenant")} />
@@ -374,6 +759,12 @@ export function InvoicesPage(): ReactElement {
                         <Tag color={getCollectionStatusColor(invoice.collectionStatus)}>
                           {getCollectionStatusLabel(invoice, t)}
                         </Tag>{" "}
+                        <Tag color={getFollowUpStatusColor(invoice.followUpStatus)}>
+                          {getFollowUpStatusLabel(invoice.followUpStatus, t)}
+                        </Tag>{" "}
+                        <Tag color={getCollectionPriorityColor(invoice.collectionPriority)}>
+                          {getCollectionPriorityLabel(invoice.collectionPriority, t)}
+                        </Tag>{" "}
                         {t("invoices.taxSummary", { rate: invoice.taxRatePercent })} {formatCurrency(invoice.taxAmount)}
                       </div>
                       <div className="record-detail">
@@ -382,6 +773,25 @@ export function InvoicesPage(): ReactElement {
                       <div className="record-detail">
                         {t("invoices.dueDateLabel")} {formatDate(invoice.dueDate)}
                       </div>
+                      {invoice.promisedPaymentDate ? (
+                        <div className="record-detail">
+                          {t("invoices.promisedPaymentDateLabel")} {formatDate(invoice.promisedPaymentDate)}
+                        </div>
+                      ) : null}
+                      {invoice.nextActionDate ? (
+                        <div className="record-detail">
+                          {t("invoices.nextActionDateLabel")} {formatDate(invoice.nextActionDate)}
+                        </div>
+                      ) : null}
+                      <div className="record-detail">
+                        <PhoneOutlined /> {t("invoices.actionRequiredLabel")}{" "}
+                        {getActionRequiredLabel(invoice.actionRequired, t)}
+                      </div>
+                      {invoice.collectionNote ? (
+                        <div className="record-detail">
+                          {t("invoices.collectionNoteLabel")} {invoice.collectionNote}
+                        </div>
+                      ) : null}
                       <div className="record-detail">
                         {t("invoices.paymentTermLabel")} {t("invoices.paymentTermValue", { count: invoice.paymentTermDays })}
                       </div>
@@ -400,6 +810,11 @@ export function InvoicesPage(): ReactElement {
                       <div className="record-detail">
                         {t("invoices.lastPaymentLabel")} {formatTimestamp(invoice.lastPaymentAt)}
                       </div>
+                      {invoice.lastCollectionUpdateAt ? (
+                        <div className="record-detail">
+                          {t("invoices.lastFollowUpLabel")} {formatTimestamp(invoice.lastCollectionUpdateAt)}
+                        </div>
+                      ) : null}
                     </div>
                   </div>
                 ))}

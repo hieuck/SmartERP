@@ -1,21 +1,113 @@
-import { BarChartOutlined, FileTextOutlined, InboxOutlined, WarningOutlined } from "@ant-design/icons";
+import { BarChartOutlined, ClockCircleOutlined, FileTextOutlined, InboxOutlined, WarningOutlined } from "@ant-design/icons";
 import type { ReactElement } from "react";
 import { useEffect, useState } from "react";
 import { Alert, Card, Col, Empty, Row, Select, Spin, Statistic, Tag, Typography } from "antd";
 
-import type { ReportSummary } from "@smarterp/contracts";
+import type {
+  AccountBalanceRecord,
+  AuditActionType,
+  AuditLogRecord,
+  JournalEntryRecord,
+  PaymentMethod,
+  ReportSummary,
+} from "@smarterp/contracts";
 
-import { getReportSummary } from "../api";
+import { getReportSummary, listAccountBalances, listAuditLogs, listJournalEntries } from "../api";
 import { useLocale } from "../locale/LocaleContext";
 import { localizeErrorMessage } from "../locale/errorMessages";
 import { useWorkspace } from "../state/WorkspaceContext";
 
 const { Paragraph, Title } = Typography;
 
+function getAuditActionColor(actionType: AuditActionType): string {
+  if (actionType === "purchase_order_received") {
+    return "cyan";
+  }
+
+  if (actionType === "approval_requested") {
+    return "gold";
+  }
+
+  if (actionType === "invoice_issued") {
+    return "blue";
+  }
+
+  if (actionType === "payment_recorded") {
+    return "green";
+  }
+
+  if (actionType === "approval_approved") {
+    return "green";
+  }
+
+  if (actionType === "approval_rejected") {
+    return "red";
+  }
+
+  if (actionType === "collection_action_resolved") {
+    return "purple";
+  }
+
+  return "gold";
+}
+
+function getAuditActionLabel(
+  actionType: AuditActionType,
+  t: ReturnType<typeof useLocale>["t"],
+): string {
+  if (actionType === "purchase_order_received") {
+    return t("reports.auditActionPurchaseOrderReceived");
+  }
+
+  if (actionType === "approval_requested") {
+    return t("reports.auditActionApprovalRequested");
+  }
+
+  if (actionType === "invoice_issued") {
+    return t("reports.auditActionInvoiceIssued");
+  }
+
+  if (actionType === "payment_recorded") {
+    return t("reports.auditActionPaymentRecorded");
+  }
+
+  if (actionType === "approval_approved") {
+    return t("reports.auditActionApprovalApproved");
+  }
+
+  if (actionType === "approval_rejected") {
+    return t("reports.auditActionApprovalRejected");
+  }
+
+  if (actionType === "collection_action_resolved") {
+    return t("reports.auditActionCollectionResolved");
+  }
+
+  return t("reports.auditActionCollectionUpdated");
+}
+
+function getPaymentMethodLabel(
+  method: PaymentMethod,
+  t: ReturnType<typeof useLocale>["t"],
+): string {
+  if (method === "cash") {
+    return t("invoices.methodCash");
+  }
+
+  if (method === "card") {
+    return t("invoices.methodCard");
+  }
+
+  return t("invoices.methodBankTransfer");
+}
+
 export function ReportsPage(): ReactElement {
-  const { formatCurrency, t } = useLocale();
+  const { formatCurrency, localeCode, t } = useLocale();
   const { selectedTenantId, setSelectedTenantId, tenants } = useWorkspace();
   const [summary, setSummary] = useState<ReportSummary | null>(null);
+  const [accountBalances, setAccountBalances] = useState<AccountBalanceRecord[]>([]);
+  const [journalEntries, setJournalEntries] = useState<JournalEntryRecord[]>([]);
+  const [auditLogs, setAuditLogs] = useState<AuditLogRecord[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const error = errorMessage ? localizeErrorMessage(errorMessage, t) : "";
@@ -23,6 +115,9 @@ export function ReportsPage(): ReactElement {
   useEffect(() => {
     if (!selectedTenantId) {
       setSummary(null);
+      setAccountBalances([]);
+      setJournalEntries([]);
+      setAuditLogs([]);
       setErrorMessage("");
       return;
     }
@@ -30,8 +125,18 @@ export function ReportsPage(): ReactElement {
     setIsLoading(true);
     setErrorMessage("");
 
-    getReportSummary(selectedTenantId)
-      .then(setSummary)
+    Promise.all([
+      getReportSummary(selectedTenantId),
+      listAccountBalances(selectedTenantId),
+      listJournalEntries(selectedTenantId),
+      listAuditLogs(selectedTenantId),
+    ])
+      .then(([nextSummary, nextAccountBalances, nextJournalEntries, nextAuditLogs]) => {
+        setSummary(nextSummary);
+        setAccountBalances(nextAccountBalances);
+        setJournalEntries(nextJournalEntries);
+        setAuditLogs(nextAuditLogs);
+      })
       .catch((caught: unknown) => {
         setErrorMessage(caught instanceof Error ? caught.message : "Failed to load report summary.");
       })
@@ -39,6 +144,19 @@ export function ReportsPage(): ReactElement {
         setIsLoading(false);
       });
   }, [selectedTenantId, t]);
+
+  function formatDateTime(value: string): string {
+    return new Intl.DateTimeFormat(localeCode, {
+      dateStyle: "medium",
+      timeStyle: "short",
+    }).format(new Date(value));
+  }
+
+  function formatDate(value: string): string {
+    return new Intl.DateTimeFormat(localeCode, {
+      dateStyle: "medium",
+    }).format(new Date(value));
+  }
 
   return (
     <div className="page-stack">
@@ -195,10 +313,15 @@ export function ReportsPage(): ReactElement {
             <Col xs={24} sm={12} xl={6}>
               <Card>
                 <Statistic
-                  title={t("reports.averageOrderValue")}
-                  value={summary.averageOrderValue}
+                  title={t("reports.inventoryValue")}
+                  value={summary.inventoryValueAmount}
                   formatter={(value) => formatCurrency(Number(value))}
                 />
+              </Card>
+            </Col>
+            <Col xs={24} sm={12} xl={6}>
+              <Card>
+                <Statistic title={t("reports.averageOrderValue")} value={summary.averageOrderValue} formatter={(value) => formatCurrency(Number(value))} />
               </Card>
             </Col>
             <Col xs={24} sm={12} xl={6}>
@@ -206,6 +329,9 @@ export function ReportsPage(): ReactElement {
                 <Statistic title={t("reports.outOfStockProducts")} value={summary.outOfStockProductCount} />
               </Card>
             </Col>
+          </Row>
+
+          <Row gutter={[16, 16]}>
             <Col xs={24} sm={12} xl={6}>
               <Card>
                 <Statistic title={t("reports.lowStockProducts")} value={summary.lowStockProductCount} />
@@ -267,6 +393,122 @@ export function ReportsPage(): ReactElement {
               </Card>
             </Col>
           </Row>
+
+          <Row gutter={[16, 16]}>
+            <Col xs={24} lg={10}>
+              <Card title={t("reports.ledgerTitle")}>
+                {accountBalances.length ? (
+                  <div className="record-stack">
+                    {accountBalances.map((account) => (
+                      <div className="report-signal-row" key={account.accountCode}>
+                        <div className="report-signal-main">
+                          <strong>{account.accountCode}</strong>
+                          <div className="record-detail">{account.accountName}</div>
+                        </div>
+                        <Tag className="report-signal-meta" color="blue">
+                          {formatCurrency(account.balanceAmount)}
+                        </Tag>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <Empty description={t("reports.ledgerEmpty")} />
+                )}
+              </Card>
+            </Col>
+            <Col xs={24} lg={14}>
+              <Card title={t("reports.journalTitle")}>
+                {journalEntries.length ? (
+                  <div className="record-stack">
+                    {journalEntries.map((entry) => (
+                      <div className="record-row" key={entry.id}>
+                        <div className="record-icon">
+                          <FileTextOutlined />
+                        </div>
+                        <div>
+                          <strong>{entry.referenceNumber}</strong>
+                          <div className="record-detail">{entry.description}</div>
+                          <div className="record-detail">
+                            {entry.accountCode} - {entry.accountName}
+                          </div>
+                          <div className="record-detail">
+                            {t("reports.journalDebit")} {formatCurrency(entry.debitAmount)}
+                          </div>
+                          <div className="record-detail">
+                            {t("reports.journalCredit")} {formatCurrency(entry.creditAmount)}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <Empty description={t("reports.journalEmpty")} />
+                )}
+              </Card>
+            </Col>
+          </Row>
+
+          <Card title={t("reports.auditTitle")}>
+            {auditLogs.length ? (
+              <div className="activity-feed">
+                {auditLogs.map((auditLog) => (
+                  <div className="activity-row" key={auditLog.id}>
+                    <div className="activity-main">
+                      <strong>{auditLog.entityNumber}</strong>
+                      <div className="record-detail">{auditLog.summary}</div>
+                      <div className="record-detail">
+                        {t("reports.auditActorLabel")} {auditLog.actorDisplayName} ({auditLog.actorEmail})
+                      </div>
+                      {typeof auditLog.metadata.amount === "number" ? (
+                        <div className="record-detail">
+                          {t("reports.auditAmountLabel")} {formatCurrency(auditLog.metadata.amount)}
+                        </div>
+                      ) : null}
+                      {typeof auditLog.metadata.outstandingAmount === "number" ? (
+                        <div className="record-detail">
+                          {t("reports.auditOutstandingLabel")}{" "}
+                          {formatCurrency(auditLog.metadata.outstandingAmount)}
+                        </div>
+                      ) : null}
+                      {auditLog.metadata.paymentMethod ? (
+                        <div className="record-detail">
+                          {t("reports.auditMethodLabel")}{" "}
+                          {getPaymentMethodLabel(auditLog.metadata.paymentMethod, t)}
+                        </div>
+                      ) : null}
+                      {auditLog.metadata.promisedPaymentDate ? (
+                        <div className="record-detail">
+                          {t("reports.auditPromisedDateLabel")}{" "}
+                          {formatDate(auditLog.metadata.promisedPaymentDate)}
+                        </div>
+                      ) : null}
+                      {auditLog.metadata.nextActionDate ? (
+                        <div className="record-detail">
+                          {t("reports.auditNextActionDateLabel")}{" "}
+                          {formatDate(auditLog.metadata.nextActionDate)}
+                        </div>
+                      ) : null}
+                      {auditLog.metadata.note ? (
+                        <div className="record-detail">
+                          {t("reports.auditNoteLabel")} {auditLog.metadata.note}
+                        </div>
+                      ) : null}
+                    </div>
+                    <div className="activity-meta">
+                      <Tag color={getAuditActionColor(auditLog.actionType)}>
+                        {getAuditActionLabel(auditLog.actionType, t)}
+                      </Tag>
+                      <div className="record-detail">
+                        <ClockCircleOutlined /> {formatDateTime(auditLog.createdAt)}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <Empty description={t("reports.auditEmpty")} />
+            )}
+          </Card>
         </>
       ) : (
         <Card>

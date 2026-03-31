@@ -34,6 +34,14 @@ body {
   width: min(420px, calc(100vw - 24px));
 }
 
+.global-alert-notice {
+  top: 12px;
+}
+
+.global-alert-error {
+  top: 84px;
+}
+
 .login-shell {
   min-height: 100vh;
   display: grid;
@@ -233,6 +241,46 @@ body {
   min-width: 0;
 }
 
+.record-tag-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.activity-feed {
+  display: grid;
+  gap: 12px;
+}
+
+.activity-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.activity-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.activity-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+  text-align: right;
+}
+
 @media (max-width: 992px) {
   .shell-content {
     padding: 16px;
@@ -253,6 +301,19 @@ body {
 
   .customer-statement-grid {
     grid-template-columns: 1fr;
+  }
+
+  .record-tag-stack {
+    align-items: flex-start;
+  }
+
+  .activity-row {
+    flex-direction: column;
+  }
+
+  .activity-meta {
+    align-items: flex-start;
+    text-align: left;
   }
 }
 

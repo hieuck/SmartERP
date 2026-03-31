@@ -1,22 +1,37 @@
 import type {
+  ApprovalAwareMutationResult,
+  ApprovalDecisionInput,
+  ApprovalRequestRecord,
+  AuditLogRecord,
+  AccountBalanceRecord,
   CreateCustomerInput,
   CreateInvoiceInput,
+  UpdateInvoiceCollectionInput,
+  ResolveInvoiceCollectionActionInput,
   CreateInvoicePaymentInput,
   CreateInventoryAdjustmentInput,
   CreateOrderInput,
+  CreatePurchaseOrderInput,
+  ReceivePurchaseOrderInput,
+  ReceivePurchaseOrderResult,
   CreateProductInput,
+  CreateSupplierInput,
   CreateTenantInput,
+  InvoiceCollectionActivityRecord,
   CustomerStatementRecord,
   CustomerRecord,
   FoundationSnapshot,
   InvoiceRecord,
   InventoryRecord,
+  JournalEntryRecord,
   LoginInput,
   LoginResult,
   OrderRecord,
+  PurchaseOrderRecord,
   ProductRecord,
   ReportSummary,
   Session,
+  SupplierRecord,
   TenantRecord,
 } from "@smarterp/contracts";
 
@@ -100,6 +115,21 @@ export async function createCustomer(input: CreateCustomerInput): Promise<Custom
   return payload.item;
 }
 
+export async function listSuppliers(tenantId: string): Promise<SupplierRecord[]> {
+  const payload = await request<{ items: SupplierRecord[] }>(
+    `/api/suppliers?tenantId=${encodeURIComponent(tenantId)}`,
+  );
+  return payload.items;
+}
+
+export async function createSupplier(input: CreateSupplierInput): Promise<SupplierRecord> {
+  const payload = await request<{ item: SupplierRecord }>("/api/suppliers", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  return payload.item;
+}
+
 export async function listCustomerStatements(tenantId: string): Promise<CustomerStatementRecord[]> {
   const payload = await request<{ items: CustomerStatementRecord[] }>(
     `/api/customers/statements?tenantId=${encodeURIComponent(tenantId)}`,
@@ -131,8 +161,8 @@ export async function listInventory(tenantId: string): Promise<InventoryRecord[]
 
 export async function createInventoryAdjustment(
   input: CreateInventoryAdjustmentInput,
-): Promise<InventoryRecord> {
-  const payload = await request<{ item: InventoryRecord }>("/api/inventory/adjustments", {
+): Promise<ApprovalAwareMutationResult<InventoryRecord>> {
+  const payload = await request<{ item: ApprovalAwareMutationResult<InventoryRecord> }>("/api/inventory/adjustments", {
     method: "POST",
     body: JSON.stringify(input),
   });
@@ -154,6 +184,31 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderRecord>
   return payload.item;
 }
 
+export async function listPurchaseOrders(tenantId: string): Promise<PurchaseOrderRecord[]> {
+  const payload = await request<{ items: PurchaseOrderRecord[] }>(
+    `/api/purchase-orders?tenantId=${encodeURIComponent(tenantId)}`,
+  );
+  return payload.items;
+}
+
+export async function createPurchaseOrder(input: CreatePurchaseOrderInput): Promise<PurchaseOrderRecord> {
+  const payload = await request<{ item: PurchaseOrderRecord }>("/api/purchase-orders", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  return payload.item;
+}
+
+export async function receivePurchaseOrder(
+  input: ReceivePurchaseOrderInput,
+): Promise<ApprovalAwareMutationResult<ReceivePurchaseOrderResult>> {
+  const payload = await request<{ item: ApprovalAwareMutationResult<ReceivePurchaseOrderResult> }>("/api/purchase-orders/receipts", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  return payload.item;
+}
+
 export async function listInvoices(tenantId: string): Promise<InvoiceRecord[]> {
   const payload = await request<{ items: InvoiceRecord[] }>(
     `/api/invoices?tenantId=${encodeURIComponent(tenantId)}`,
@@ -161,25 +216,92 @@ export async function listInvoices(tenantId: string): Promise<InvoiceRecord[]> {
   return payload.items;
 }
 
-export async function createInvoice(input: CreateInvoiceInput): Promise<InvoiceRecord> {
-  const payload = await request<{ item: InvoiceRecord }>("/api/invoices", {
+export async function createInvoice(
+  input: CreateInvoiceInput,
+): Promise<ApprovalAwareMutationResult<InvoiceRecord>> {
+  const payload = await request<{ item: ApprovalAwareMutationResult<InvoiceRecord> }>("/api/invoices", {
     method: "POST",
     body: JSON.stringify(input),
   });
   return payload.item;
 }
 
-export async function createInvoicePayment(input: CreateInvoicePaymentInput): Promise<InvoiceRecord> {
-  const payload = await request<{ item: InvoiceRecord }>("/api/invoices/payments", {
+export async function createInvoicePayment(
+  input: CreateInvoicePaymentInput,
+): Promise<ApprovalAwareMutationResult<InvoiceRecord>> {
+  const payload = await request<{ item: ApprovalAwareMutationResult<InvoiceRecord> }>("/api/invoices/payments", {
     method: "POST",
     body: JSON.stringify(input),
   });
   return payload.item;
+}
+
+export async function updateInvoiceCollection(input: UpdateInvoiceCollectionInput): Promise<InvoiceRecord> {
+  const payload = await request<{ item: InvoiceRecord }>("/api/invoices/collections", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  return payload.item;
+}
+
+export async function resolveInvoiceCollectionAction(
+  input: ResolveInvoiceCollectionActionInput,
+): Promise<InvoiceRecord> {
+  const payload = await request<{ item: InvoiceRecord }>("/api/invoices/collections/resolve", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  return payload.item;
+}
+
+export async function listInvoiceCollectionActivities(
+  tenantId: string,
+): Promise<InvoiceCollectionActivityRecord[]> {
+  const payload = await request<{ items: InvoiceCollectionActivityRecord[] }>(
+    `/api/invoices/collection-activities?tenantId=${encodeURIComponent(tenantId)}`,
+  );
+  return payload.items;
 }
 
 export async function getReportSummary(tenantId: string): Promise<ReportSummary> {
   const payload = await request<{ item: ReportSummary }>(
     `/api/reports/summary?tenantId=${encodeURIComponent(tenantId)}`,
   );
+  return payload.item;
+}
+
+export async function listAccountBalances(tenantId: string): Promise<AccountBalanceRecord[]> {
+  const payload = await request<{ items: AccountBalanceRecord[] }>(
+    `/api/accounts/balances?tenantId=${encodeURIComponent(tenantId)}`,
+  );
+  return payload.items;
+}
+
+export async function listJournalEntries(tenantId: string): Promise<JournalEntryRecord[]> {
+  const payload = await request<{ items: JournalEntryRecord[] }>(
+    `/api/journal-entries?tenantId=${encodeURIComponent(tenantId)}`,
+  );
+  return payload.items;
+}
+
+export async function listAuditLogs(tenantId: string): Promise<AuditLogRecord[]> {
+  const payload = await request<{ items: AuditLogRecord[] }>(
+    `/api/audit-logs?tenantId=${encodeURIComponent(tenantId)}`,
+  );
+  return payload.items;
+}
+
+export async function listApprovalRequests(tenantId: string): Promise<ApprovalRequestRecord[]> {
+  const payload = await request<{ items: ApprovalRequestRecord[] }>(
+    `/api/approval-requests?tenantId=${encodeURIComponent(tenantId)}`,
+  );
+  return payload.items;
+}
+
+export async function decideApprovalRequest(input: ApprovalDecisionInput): Promise<ApprovalRequestRecord> {
+  const payload = await request<{ item: ApprovalRequestRecord }>("/api/approval-requests/decision", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
   return payload.item;
 }

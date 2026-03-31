@@ -1,22 +1,52 @@
 import { randomUUID } from "node:crypto";
 
 import {
+  type ApprovalAwareMutationResult,
+  type ApprovalDecision,
+  type ApprovalDecisionInput,
+  type ApprovalRequestRecord,
+  type ApprovalRequestType,
+  type ApprovalRiskLevel,
+  type ApprovalStatus,
+  type AuditActionType,
+  type AuditEntityType,
+  type AuditLogMetadata,
+  type AuditLogRecord,
+  type AccountBalanceRecord,
+  type AccountType,
   createDemoSession,
   type CreateCustomerInput,
   type CreateInvoiceInput,
   type CreateInvoicePaymentInput,
+  type UpdateInvoiceCollectionInput,
+  type ResolveInvoiceCollectionActionInput,
+  type CollectionActionRequired,
+  type CollectionActivityState,
   type CreateInventoryAdjustmentInput,
   type CreateOrderInput,
+  type CreatePurchaseOrderInput,
+  type ReceivePurchaseOrderInput,
+  type ReceivePurchaseOrderResult,
   type CreateProductInput,
+  type CreateSupplierInput,
   type CreateTenantInput,
+  type CollectionFollowUpStatus,
+  type CollectionPriority,
+  type InvoiceCollectionActivityRecord,
   type CustomerStatementRecord,
+  type JournalEntryRecord,
+  type JournalReferenceType,
   type CustomerRecord,
   type InvoiceRecord,
   type InventoryRecord,
   type OrderRecord,
+  type PurchaseOrderReceiptRecord,
+  type PurchaseOrderRecord,
+  type PurchaseOrderStatus,
   type ProductRecord,
   type ReportSummary,
   type Session,
+  type SupplierRecord,
   type TenantRecord,
 } from "@smarterp/contracts";
 
@@ -40,6 +70,18 @@ type CustomerRow = {
   created_at: string;
 };
 
+type SupplierRow = {
+  id: string;
+  tenant_id: string;
+  supplier_code: string;
+  name: string;
+  email: string;
+  phone: string;
+  city: string;
+  lead_time_days: number;
+  created_at: string;
+};
+
 type ProductRow = {
   id: string;
   tenant_id: string;
@@ -56,6 +98,9 @@ type InventoryRow = {
   sku: string;
   product_name: string;
   quantity_on_hand: number;
+  average_unit_cost: number;
+  inventory_value: number;
+  last_receipt_at: string | null;
   updated_at: string;
 };
 
@@ -75,6 +120,61 @@ type OrderRow = {
   created_at: string;
 };
 
+type PurchaseOrderRow = {
+  id: string;
+  tenant_id: string;
+  purchase_order_number: string;
+  supplier_id: string;
+  supplier_code: string;
+  supplier_name: string;
+  product_id: string;
+  product_sku: string;
+  product_name: string;
+  quantity_ordered: number;
+  received_quantity: number;
+  unit_cost: number;
+  total_amount: number;
+  status: PurchaseOrderStatus;
+  expected_receipt_date: string;
+  created_at: string;
+};
+
+type PurchaseOrderReceiptRow = {
+  id: string;
+  tenant_id: string;
+  purchase_order_id: string;
+  purchase_order_number: string;
+  product_id: string;
+  product_sku: string;
+  product_name: string;
+  quantity_received: number;
+  unit_cost: number;
+  total_cost: number;
+  received_at: string;
+};
+
+type ApprovalRequestRow = {
+  id: string;
+  tenant_id: string;
+  request_type: ApprovalRequestType;
+  status: ApprovalStatus;
+  risk_level: ApprovalRiskLevel;
+  reference_id: string;
+  reference_number: string;
+  summary: string;
+  reason: string;
+  amount: number | null;
+  quantity: number | null;
+  requested_by_email: string;
+  requested_by_display_name: string;
+  decision_by_email: string | null;
+  decision_by_display_name: string | null;
+  decision_note: string | null;
+  payload_json: string;
+  requested_at: string;
+  decided_at: string | null;
+};
+
 type InvoiceRow = {
   id: string;
   tenant_id: string;
@@ -92,6 +192,30 @@ type InvoiceRow = {
   last_payment_at: string | null;
   issued_at: string;
   due_date: string;
+  follow_up_status: CollectionFollowUpStatus;
+  action_required: CollectionActionRequired;
+  promised_payment_date: string | null;
+  next_action_date: string | null;
+  collection_note: string;
+  last_collection_update_at: string | null;
+};
+
+type InvoiceCollectionActivityRow = {
+  id: string;
+  tenant_id: string;
+  invoice_id: string;
+  invoice_number: string;
+  customer_id: string;
+  customer_name: string;
+  follow_up_status: CollectionFollowUpStatus;
+  collection_priority: CollectionPriority;
+  action_required: CollectionActionRequired;
+  promised_payment_date: string | null;
+  next_action_date: string | null;
+  collection_note: string;
+  outstanding_amount_snapshot: number;
+  action_state: CollectionActivityState;
+  created_at: string;
 };
 
 type ReportCountsRow = {
@@ -109,6 +233,52 @@ type ReportCountsRow = {
   overdue_31_to_60_amount: number;
   overdue_61_to_90_amount: number;
   overdue_over_90_amount: number;
+};
+
+type AccountRow = {
+  tenant_id: string;
+  account_code: string;
+  account_name: string;
+  account_type: AccountType;
+  sort_order: number;
+};
+
+type AccountBalanceRow = {
+  tenant_id: string;
+  account_code: string;
+  account_name: string;
+  account_type: AccountType;
+  balance_amount: number;
+};
+
+type JournalEntryRow = {
+  id: string;
+  tenant_id: string;
+  entry_group_id: string;
+  reference_type: JournalReferenceType;
+  reference_id: string;
+  reference_number: string;
+  account_code: string;
+  account_name: string;
+  debit_amount: number;
+  credit_amount: number;
+  description: string;
+  created_at: string;
+};
+
+type AuditLogRow = {
+  id: string;
+  tenant_id: string;
+  domain: "finance";
+  entity_type: AuditEntityType;
+  entity_id: string;
+  entity_number: string;
+  action_type: AuditActionType;
+  summary: string;
+  actor_email: string;
+  actor_display_name: string;
+  metadata_json: string;
+  created_at: string;
 };
 
 type CustomerStatementRow = {
@@ -131,6 +301,7 @@ type CustomerStatementRow = {
 
 type InventorySummaryRow = {
   stock_units_on_hand: number;
+  inventory_value_amount: number;
   out_of_stock_product_count: number;
   low_stock_product_count: number;
 };
@@ -146,6 +317,22 @@ type TopProductRow = {
 };
 
 const session = createDemoSession();
+
+const defaultAccounts = [
+  { accountCode: "111", accountName: "Tiền mặt", accountType: "asset", sortOrder: 1 },
+  { accountCode: "112", accountName: "Tiền gửi ngân hàng", accountType: "asset", sortOrder: 2 },
+  { accountCode: "131", accountName: "Phải thu khách hàng", accountType: "asset", sortOrder: 3 },
+  { accountCode: "156", accountName: "Hàng tồn kho", accountType: "asset", sortOrder: 6 },
+  { accountCode: "331", accountName: "Phải trả nhà cung cấp", accountType: "liability", sortOrder: 7 },
+  { accountCode: "3331", accountName: "Thuế GTGT phải nộp", accountType: "liability", sortOrder: 8 },
+  { accountCode: "511", accountName: "Doanh thu bán hàng", accountType: "revenue", sortOrder: 9 },
+  { accountCode: "632", accountName: "Giá vốn hàng bán", accountType: "expense", sortOrder: 10 },
+] as const satisfies ReadonlyArray<{
+  accountCode: string;
+  accountName: string;
+  accountType: AccountType;
+  sortOrder: number;
+}>;
 
 const listTenantsStatement = db.prepare(`
   SELECT id, name, slug, industry, created_at
@@ -165,6 +352,216 @@ const hasTenantStatement = db.prepare(`
   LIMIT 1
 `);
 
+const createAccountStatement = db.prepare(`
+  INSERT OR IGNORE INTO accounts (
+    tenant_id,
+    account_code,
+    account_name,
+    account_type,
+    sort_order
+  )
+  VALUES (?, ?, ?, ?, ?)
+`);
+
+const listAccountBalancesStatement = db.prepare(`
+  SELECT
+    a.tenant_id AS tenant_id,
+    a.account_code AS account_code,
+    a.account_name AS account_name,
+    a.account_type AS account_type,
+    COALESCE(
+      CASE
+        WHEN a.account_type IN ('asset', 'expense')
+          THEN SUM(j.debit_amount - j.credit_amount)
+        ELSE SUM(j.credit_amount - j.debit_amount)
+      END,
+      0
+    ) AS balance_amount
+  FROM accounts a
+  LEFT JOIN journal_entries j
+    ON j.tenant_id = a.tenant_id
+    AND j.account_code = a.account_code
+  WHERE a.tenant_id = ?
+  GROUP BY
+    a.tenant_id,
+    a.account_code,
+    a.account_name,
+    a.account_type,
+    a.sort_order
+  ORDER BY a.sort_order ASC, a.account_code ASC
+`);
+
+const createJournalEntryStatement = db.prepare(`
+  INSERT INTO journal_entries (
+    id,
+    tenant_id,
+    entry_group_id,
+    reference_type,
+    reference_id,
+    reference_number,
+    account_code,
+    account_name,
+    debit_amount,
+    credit_amount,
+    description,
+    created_at
+  )
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+`);
+
+const listJournalEntriesStatement = db.prepare(`
+  SELECT
+    id,
+    tenant_id,
+    entry_group_id,
+    reference_type,
+    reference_id,
+    reference_number,
+    account_code,
+    account_name,
+    debit_amount,
+    credit_amount,
+    description,
+    created_at
+  FROM journal_entries
+  WHERE tenant_id = ?
+  ORDER BY datetime(created_at) DESC, rowid DESC
+  LIMIT 24
+`);
+
+const listApprovalRequestsStatement = db.prepare(`
+  SELECT
+    id,
+    tenant_id,
+    request_type,
+    status,
+    risk_level,
+    reference_id,
+    reference_number,
+    summary,
+    reason,
+    amount,
+    quantity,
+    requested_by_email,
+    requested_by_display_name,
+    decision_by_email,
+    decision_by_display_name,
+    decision_note,
+    payload_json,
+    requested_at,
+    decided_at
+  FROM approval_requests
+  WHERE tenant_id = ?
+  ORDER BY
+    CASE status
+      WHEN 'pending' THEN 0
+      WHEN 'approved' THEN 1
+      ELSE 2
+    END,
+    datetime(COALESCE(decided_at, requested_at)) DESC,
+    rowid DESC
+`);
+
+const getApprovalRequestByIdStatement = db.prepare(`
+  SELECT
+    id,
+    tenant_id,
+    request_type,
+    status,
+    risk_level,
+    reference_id,
+    reference_number,
+    summary,
+    reason,
+    amount,
+    quantity,
+    requested_by_email,
+    requested_by_display_name,
+    decision_by_email,
+    decision_by_display_name,
+    decision_note,
+    payload_json,
+    requested_at,
+    decided_at
+  FROM approval_requests
+  WHERE tenant_id = ? AND id = ?
+  LIMIT 1
+`);
+
+const createApprovalRequestStatement = db.prepare(`
+  INSERT INTO approval_requests (
+    id,
+    tenant_id,
+    request_type,
+    status,
+    risk_level,
+    reference_id,
+    reference_number,
+    summary,
+    reason,
+    amount,
+    quantity,
+    requested_by_email,
+    requested_by_display_name,
+    decision_by_email,
+    decision_by_display_name,
+    decision_note,
+    payload_json,
+    requested_at,
+    decided_at
+  )
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+`);
+
+const resolveApprovalRequestStatement = db.prepare(`
+  UPDATE approval_requests
+  SET
+    status = ?,
+    decision_by_email = ?,
+    decision_by_display_name = ?,
+    decision_note = ?,
+    decided_at = ?
+  WHERE tenant_id = ? AND id = ?
+`);
+
+const createAuditLogStatement = db.prepare(`
+  INSERT INTO audit_logs (
+    id,
+    tenant_id,
+    domain,
+    entity_type,
+    entity_id,
+    entity_number,
+    action_type,
+    summary,
+    actor_email,
+    actor_display_name,
+    metadata_json,
+    created_at
+  )
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+`);
+
+const listAuditLogsStatement = db.prepare(`
+  SELECT
+    id,
+    tenant_id,
+    domain,
+    entity_type,
+    entity_id,
+    entity_number,
+    action_type,
+    summary,
+    actor_email,
+    actor_display_name,
+    metadata_json,
+    created_at
+  FROM audit_logs
+  WHERE tenant_id = ?
+  ORDER BY datetime(created_at) DESC, rowid DESC
+  LIMIT 24
+`);
+
 const listCustomersStatement = db.prepare(`
   SELECT id, tenant_id, name, email, phone, city, created_at
   FROM customers
@@ -175,6 +572,35 @@ const listCustomersStatement = db.prepare(`
 const createCustomerStatement = db.prepare(`
   INSERT INTO customers (id, tenant_id, name, email, phone, city, created_at)
   VALUES (?, ?, ?, ?, ?, ?, ?)
+`);
+
+const listSuppliersStatement = db.prepare(`
+  SELECT id, tenant_id, supplier_code, name, email, phone, city, lead_time_days, created_at
+  FROM suppliers
+  WHERE tenant_id = ?
+  ORDER BY datetime(created_at) DESC, rowid DESC
+`);
+
+const createSupplierStatement = db.prepare(`
+  INSERT INTO suppliers (
+    id,
+    tenant_id,
+    supplier_code,
+    name,
+    email,
+    phone,
+    city,
+    lead_time_days,
+    created_at
+  )
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+`);
+
+const getSupplierByIdStatement = db.prepare(`
+  SELECT id, tenant_id, supplier_code, name, email, phone, city, lead_time_days, created_at
+  FROM suppliers
+  WHERE tenant_id = ? AND id = ?
+  LIMIT 1
 `);
 
 const getCustomerForOrderStatement = db.prepare(`
@@ -204,13 +630,26 @@ const getProductByIdStatement = db.prepare(`
 `);
 
 const ensureInventoryRowStatement = db.prepare(`
-  INSERT OR IGNORE INTO inventory (product_id, tenant_id, quantity_on_hand, updated_at)
-  VALUES (?, ?, 0, ?)
+  INSERT OR IGNORE INTO inventory (
+    product_id,
+    tenant_id,
+    quantity_on_hand,
+    average_unit_cost,
+    inventory_value,
+    last_receipt_at,
+    updated_at
+  )
+  VALUES (?, ?, 0, 0, 0, NULL, ?)
 `);
 
-const updateInventoryQuantityStatement = db.prepare(`
+const updateInventorySnapshotStatement = db.prepare(`
   UPDATE inventory
-  SET quantity_on_hand = ?, updated_at = ?
+  SET
+    quantity_on_hand = ?,
+    average_unit_cost = ?,
+    inventory_value = ?,
+    last_receipt_at = ?,
+    updated_at = ?
   WHERE product_id = ?
 `);
 
@@ -221,6 +660,9 @@ const getInventoryRowStatement = db.prepare(`
     p.sku AS sku,
     p.name AS product_name,
     COALESCE(i.quantity_on_hand, 0) AS quantity_on_hand,
+    COALESCE(i.average_unit_cost, 0) AS average_unit_cost,
+    COALESCE(i.inventory_value, 0) AS inventory_value,
+    i.last_receipt_at AS last_receipt_at,
     COALESCE(i.updated_at, p.created_at) AS updated_at
   FROM products p
   LEFT JOIN inventory i ON i.product_id = p.id
@@ -235,6 +677,9 @@ const listInventoryStatement = db.prepare(`
     p.sku AS sku,
     p.name AS product_name,
     COALESCE(i.quantity_on_hand, 0) AS quantity_on_hand,
+    COALESCE(i.average_unit_cost, 0) AS average_unit_cost,
+    COALESCE(i.inventory_value, 0) AS inventory_value,
+    i.last_receipt_at AS last_receipt_at,
     COALESCE(i.updated_at, p.created_at) AS updated_at
   FROM products p
   LEFT JOIN inventory i ON i.product_id = p.id
@@ -281,6 +726,97 @@ const createOrderStatement = db.prepare(`
   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `);
 
+const listPurchaseOrdersStatement = db.prepare(`
+  SELECT
+    id,
+    tenant_id,
+    purchase_order_number,
+    supplier_id,
+    supplier_code,
+    supplier_name,
+    product_id,
+    product_sku,
+    product_name,
+    quantity_ordered,
+    received_quantity,
+    unit_cost,
+    total_amount,
+    status,
+    expected_receipt_date,
+    created_at
+  FROM purchase_orders
+  WHERE tenant_id = ?
+  ORDER BY datetime(created_at) DESC, rowid DESC
+`);
+
+const createPurchaseOrderStatement = db.prepare(`
+  INSERT INTO purchase_orders (
+    id,
+    tenant_id,
+    purchase_order_number,
+    supplier_id,
+    supplier_code,
+    supplier_name,
+    product_id,
+    product_sku,
+    product_name,
+    quantity_ordered,
+    received_quantity,
+    unit_cost,
+    total_amount,
+    status,
+    expected_receipt_date,
+    created_at
+  )
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+`);
+
+const getPurchaseOrderByIdStatement = db.prepare(`
+  SELECT
+    id,
+    tenant_id,
+    purchase_order_number,
+    supplier_id,
+    supplier_code,
+    supplier_name,
+    product_id,
+    product_sku,
+    product_name,
+    quantity_ordered,
+    received_quantity,
+    unit_cost,
+    total_amount,
+    status,
+    expected_receipt_date,
+    created_at
+  FROM purchase_orders
+  WHERE tenant_id = ? AND id = ?
+  LIMIT 1
+`);
+
+const updatePurchaseOrderReceivingStatement = db.prepare(`
+  UPDATE purchase_orders
+  SET received_quantity = ?, status = ?
+  WHERE id = ?
+`);
+
+const createPurchaseOrderReceiptStatement = db.prepare(`
+  INSERT INTO purchase_order_receipts (
+    id,
+    tenant_id,
+    purchase_order_id,
+    purchase_order_number,
+    product_id,
+    product_sku,
+    product_name,
+    quantity_received,
+    unit_cost,
+    total_cost,
+    received_at
+  )
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+`);
+
 const getOrderByIdStatement = db.prepare(`
   SELECT
     id,
@@ -318,7 +854,13 @@ const listInvoicesStatement = db.prepare(`
     COUNT(p.id) AS payment_count,
     MAX(p.paid_at) AS last_payment_at,
     i.issued_at AS issued_at,
-    i.due_date AS due_date
+    i.due_date AS due_date,
+    i.follow_up_status AS follow_up_status,
+    i.action_required AS action_required,
+    i.promised_payment_date AS promised_payment_date,
+    i.next_action_date AS next_action_date,
+    i.collection_note AS collection_note,
+    i.last_collection_update_at AS last_collection_update_at
   FROM invoices i
   LEFT JOIN invoice_payments p ON p.invoice_id = i.id
   WHERE i.tenant_id = ?
@@ -335,7 +877,13 @@ const listInvoicesStatement = db.prepare(`
     i.tax_amount,
     i.total_amount,
     i.issued_at,
-    i.due_date
+    i.due_date,
+    i.follow_up_status,
+    i.action_required,
+    i.promised_payment_date,
+    i.next_action_date,
+    i.collection_note,
+    i.last_collection_update_at
   ORDER BY datetime(i.issued_at) DESC, i.rowid DESC
 `);
 
@@ -356,7 +904,13 @@ const getInvoiceByIdStatement = db.prepare(`
     COUNT(p.id) AS payment_count,
     MAX(p.paid_at) AS last_payment_at,
     i.issued_at AS issued_at,
-    i.due_date AS due_date
+    i.due_date AS due_date,
+    i.follow_up_status AS follow_up_status,
+    i.action_required AS action_required,
+    i.promised_payment_date AS promised_payment_date,
+    i.next_action_date AS next_action_date,
+    i.collection_note AS collection_note,
+    i.last_collection_update_at AS last_collection_update_at
   FROM invoices i
   LEFT JOIN invoice_payments p ON p.invoice_id = i.id
   WHERE i.tenant_id = ? AND i.id = ?
@@ -373,7 +927,13 @@ const getInvoiceByIdStatement = db.prepare(`
     i.tax_amount,
     i.total_amount,
     i.issued_at,
-    i.due_date
+    i.due_date,
+    i.follow_up_status,
+    i.action_required,
+    i.promised_payment_date,
+    i.next_action_date,
+    i.collection_note,
+    i.last_collection_update_at
   LIMIT 1
 `);
 
@@ -392,9 +952,70 @@ const createInvoiceStatement = db.prepare(`
     total_amount,
     status,
     issued_at,
-    due_date
+    due_date,
+    follow_up_status,
+    action_required,
+    promised_payment_date,
+    next_action_date,
+    collection_note,
+    last_collection_update_at
   )
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+`);
+
+const updateInvoiceCollectionStatement = db.prepare(`
+  UPDATE invoices
+  SET
+    follow_up_status = ?,
+    action_required = ?,
+    promised_payment_date = ?,
+    next_action_date = ?,
+    collection_note = ?,
+    last_collection_update_at = ?
+  WHERE tenant_id = ? AND id = ?
+`);
+
+const listInvoiceCollectionActivitiesStatement = db.prepare(`
+  SELECT
+    id,
+    tenant_id,
+    invoice_id,
+    invoice_number,
+    customer_id,
+    customer_name,
+    follow_up_status,
+    collection_priority,
+    action_required,
+    promised_payment_date,
+    next_action_date,
+    collection_note,
+    outstanding_amount_snapshot,
+    action_state,
+    created_at
+  FROM invoice_collection_activities
+  WHERE tenant_id = ?
+  ORDER BY datetime(created_at) DESC, rowid DESC
+`);
+
+const createInvoiceCollectionActivityStatement = db.prepare(`
+  INSERT INTO invoice_collection_activities (
+    id,
+    tenant_id,
+    invoice_id,
+    invoice_number,
+    customer_id,
+    customer_name,
+    follow_up_status,
+    collection_priority,
+    action_required,
+    promised_payment_date,
+    next_action_date,
+    collection_note,
+    outstanding_amount_snapshot,
+    action_state,
+    created_at
+  )
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `);
 
 const createInvoicePaymentStatement = db.prepare(`
@@ -637,6 +1258,7 @@ const getReportCountsStatement = db.prepare(`
 const getInventorySummaryStatement = db.prepare(`
   SELECT
     COALESCE(SUM(quantity_on_hand), 0) AS stock_units_on_hand,
+    COALESCE(SUM(inventory_value), 0) AS inventory_value_amount,
     COALESCE(SUM(CASE WHEN quantity_on_hand = 0 THEN 1 ELSE 0 END), 0) AS out_of_stock_product_count,
     COALESCE(SUM(CASE WHEN quantity_on_hand BETWEEN 1 AND 5 THEN 1 ELSE 0 END), 0) AS low_stock_product_count
   FROM inventory
@@ -666,6 +1288,18 @@ const getTopProductStatement = db.prepare(`
 `);
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
+const validFollowUpStatuses: CollectionFollowUpStatus[] = [
+  "new",
+  "contacted",
+  "promised",
+  "escalated",
+];
+const validActionRequireds: CollectionActionRequired[] = [
+  "monitor",
+  "call_customer",
+  "confirm_payment",
+  "escalate_founder",
+];
 
 function timestamp(): string {
   return new Date().toISOString();
@@ -706,6 +1340,14 @@ function getCalendarDayDifference(start: string | Date, end: string | Date): num
   return Math.round((getUtcDayValue(end) - getUtcDayValue(start)) / DAY_IN_MS);
 }
 
+function isValidFollowUpStatus(value: string): value is CollectionFollowUpStatus {
+  return validFollowUpStatuses.includes(value as CollectionFollowUpStatus);
+}
+
+function isValidActionRequired(value: string): value is CollectionActionRequired {
+  return validActionRequireds.includes(value as CollectionActionRequired);
+}
+
 function mapTenant(row: TenantRow): TenantRecord {
   return {
     id: row.id,
@@ -724,6 +1366,20 @@ function mapCustomer(row: CustomerRow): CustomerRecord {
     email: row.email,
     phone: row.phone,
     city: row.city,
+    createdAt: row.created_at,
+  };
+}
+
+function mapSupplier(row: SupplierRow): SupplierRecord {
+  return {
+    id: row.id,
+    tenantId: row.tenant_id,
+    supplierCode: row.supplier_code,
+    name: row.name,
+    email: row.email,
+    phone: row.phone,
+    city: row.city,
+    leadTimeDays: row.lead_time_days,
     createdAt: row.created_at,
   };
 }
@@ -767,6 +1423,9 @@ function mapInventory(row: InventoryRow): InventoryRecord {
     sku: row.sku,
     productName: row.product_name,
     quantityOnHand: row.quantity_on_hand,
+    averageUnitCost: row.average_unit_cost,
+    inventoryValue: row.inventory_value,
+    lastReceiptAt: row.last_receipt_at,
     updatedAt: row.updated_at,
   };
 }
@@ -786,6 +1445,67 @@ function mapOrder(row: OrderRow): OrderRecord {
     totalAmount: row.total_amount,
     status: row.status,
     createdAt: row.created_at,
+  };
+}
+
+function mapPurchaseOrder(row: PurchaseOrderRow): PurchaseOrderRecord {
+  return {
+    id: row.id,
+    tenantId: row.tenant_id,
+    purchaseOrderNumber: row.purchase_order_number,
+    supplierId: row.supplier_id,
+    supplierCode: row.supplier_code,
+    supplierName: row.supplier_name,
+    productId: row.product_id,
+    productSku: row.product_sku,
+    productName: row.product_name,
+    quantityOrdered: row.quantity_ordered,
+    receivedQuantity: row.received_quantity,
+    outstandingQuantity: Math.max(row.quantity_ordered - row.received_quantity, 0),
+    unitCost: row.unit_cost,
+    totalAmount: row.total_amount,
+    status: row.status,
+    expectedReceiptDate: row.expected_receipt_date,
+    createdAt: row.created_at,
+  };
+}
+
+function mapPurchaseOrderReceipt(row: PurchaseOrderReceiptRow): PurchaseOrderReceiptRecord {
+  return {
+    id: row.id,
+    tenantId: row.tenant_id,
+    purchaseOrderId: row.purchase_order_id,
+    purchaseOrderNumber: row.purchase_order_number,
+    productId: row.product_id,
+    productSku: row.product_sku,
+    productName: row.product_name,
+    quantityReceived: row.quantity_received,
+    unitCost: row.unit_cost,
+    totalCost: row.total_cost,
+    receivedAt: row.received_at,
+  };
+}
+
+function mapApprovalRequest(row: ApprovalRequestRow): ApprovalRequestRecord {
+  return {
+    id: row.id,
+    tenantId: row.tenant_id,
+    requestType: row.request_type,
+    referenceId: row.reference_id,
+    referenceNumber: row.reference_number,
+    summary: row.summary,
+    reason: row.reason,
+    status: row.status,
+    riskLevel: row.risk_level,
+    amount: row.amount,
+    quantity: row.quantity,
+    requestedByEmail: row.requested_by_email,
+    requestedByDisplayName: row.requested_by_display_name,
+    decisionByEmail: row.decision_by_email,
+    decisionByDisplayName: row.decision_by_display_name,
+    decisionNote: row.decision_note,
+    requestedAt: row.requested_at,
+    decidedAt: row.decided_at,
   };
 }
 
@@ -820,12 +1540,69 @@ function getCollectionStatus(
   return "current";
 }
 
+function getCollectionPriority(input: {
+  outstandingAmount: number;
+  daysPastDue: number;
+  followUpStatus: CollectionFollowUpStatus;
+  promisedPaymentDate: string | null;
+  nextActionDate: string | null;
+  actionRequired: CollectionActionRequired;
+}): CollectionPriority {
+  if (input.outstandingAmount === 0) {
+    return "low";
+  }
+
+  const today = new Date();
+  const promisedBroken =
+    input.promisedPaymentDate !== null &&
+    getCalendarDayDifference(input.promisedPaymentDate, today) > 0;
+  const nextActionLate =
+    input.nextActionDate !== null &&
+    getCalendarDayDifference(input.nextActionDate, today) > 0;
+
+  if (
+    input.followUpStatus === "escalated" ||
+    input.actionRequired === "escalate_founder" ||
+    input.daysPastDue > 60
+  ) {
+    return "critical";
+  }
+
+  if (
+    promisedBroken ||
+    nextActionLate ||
+    input.daysPastDue > 30 ||
+    input.outstandingAmount >= 100000
+  ) {
+    return "high";
+  }
+
+  if (
+    input.daysPastDue > 0 ||
+    input.actionRequired !== "monitor" ||
+    input.followUpStatus === "contacted" ||
+    input.followUpStatus === "promised"
+  ) {
+    return "medium";
+  }
+
+  return "low";
+}
+
 function mapInvoice(row: InvoiceRow): InvoiceRecord {
   const paidAmount = row.paid_amount;
   const outstandingAmount = Math.max(row.total_amount - paidAmount, 0);
   const paymentTermDays = getCalendarDayDifference(row.issued_at, row.due_date);
   const daysUntilDue = getCalendarDayDifference(new Date(), row.due_date);
   const daysPastDue = daysUntilDue < 0 ? Math.abs(daysUntilDue) : 0;
+  const collectionPriority = getCollectionPriority({
+    outstandingAmount,
+    daysPastDue,
+    followUpStatus: row.follow_up_status,
+    promisedPaymentDate: row.promised_payment_date,
+    nextActionDate: row.next_action_date,
+    actionRequired: row.action_required,
+  });
 
   return {
     id: row.id,
@@ -850,7 +1627,147 @@ function mapInvoice(row: InvoiceRow): InvoiceRecord {
     daysUntilDue,
     daysPastDue,
     collectionStatus: getCollectionStatus(outstandingAmount, daysUntilDue),
+    followUpStatus: row.follow_up_status,
+    collectionPriority,
+    actionRequired: row.action_required,
+    promisedPaymentDate: row.promised_payment_date,
+    nextActionDate: row.next_action_date,
+    collectionNote: row.collection_note,
+    lastCollectionUpdateAt: row.last_collection_update_at,
   };
+}
+
+function mapInvoiceCollectionActivity(
+  row: InvoiceCollectionActivityRow,
+): InvoiceCollectionActivityRecord {
+  return {
+    id: row.id,
+    tenantId: row.tenant_id,
+    invoiceId: row.invoice_id,
+    invoiceNumber: row.invoice_number,
+    customerId: row.customer_id,
+    customerName: row.customer_name,
+    followUpStatus: row.follow_up_status,
+    collectionPriority: row.collection_priority,
+    actionRequired: row.action_required,
+    promisedPaymentDate: row.promised_payment_date,
+    nextActionDate: row.next_action_date,
+    collectionNote: row.collection_note,
+    outstandingAmountSnapshot: row.outstanding_amount_snapshot,
+    actionState: row.action_state,
+    createdAt: row.created_at,
+  };
+}
+
+function mapAccountBalance(row: AccountBalanceRow): AccountBalanceRecord {
+  return {
+    tenantId: row.tenant_id,
+    accountCode: row.account_code,
+    accountName: row.account_name,
+    accountType: row.account_type,
+    balanceAmount: row.balance_amount,
+  };
+}
+
+function mapJournalEntry(row: JournalEntryRow): JournalEntryRecord {
+  return {
+    id: row.id,
+    tenantId: row.tenant_id,
+    entryGroupId: row.entry_group_id,
+    referenceType: row.reference_type,
+    referenceId: row.reference_id,
+    referenceNumber: row.reference_number,
+    accountCode: row.account_code,
+    accountName: row.account_name,
+    debitAmount: row.debit_amount,
+    creditAmount: row.credit_amount,
+    description: row.description,
+    createdAt: row.created_at,
+  };
+}
+
+function mapAuditLog(row: AuditLogRow): AuditLogRecord {
+  let metadata: AuditLogMetadata = {};
+
+  try {
+    const parsed = JSON.parse(row.metadata_json) as AuditLogMetadata;
+    metadata = parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    metadata = {};
+  }
+
+  return {
+    id: row.id,
+    tenantId: row.tenant_id,
+    domain: row.domain,
+    entityType: row.entity_type,
+    entityId: row.entity_id,
+    entityNumber: row.entity_number,
+    actionType: row.action_type,
+    summary: row.summary,
+    actorEmail: row.actor_email,
+    actorDisplayName: row.actor_display_name,
+    metadata,
+    createdAt: row.created_at,
+  };
+}
+
+function ensureDefaultAccounts(tenantId: string): void {
+  for (const account of defaultAccounts) {
+    createAccountStatement.run(
+      tenantId,
+      account.accountCode,
+      account.accountName,
+      account.accountType,
+      account.sortOrder,
+    );
+  }
+}
+
+function createJournalEntryLines(input: {
+  tenantId: string;
+  referenceType: JournalReferenceType;
+  referenceId: string;
+  referenceNumber: string;
+  description: string;
+  createdAt: string;
+  lines: Array<{
+    accountCode: string;
+    debitAmount: number;
+    creditAmount: number;
+  }>;
+}): void {
+  ensureDefaultAccounts(input.tenantId);
+  const accountByCode = new Map<string, (typeof defaultAccounts)[number]>(
+    defaultAccounts.map((account) => [account.accountCode, account]),
+  );
+  const entryGroupId = randomUUID();
+
+  for (const line of input.lines) {
+    if (line.debitAmount === 0 && line.creditAmount === 0) {
+      continue;
+    }
+
+    const account = accountByCode.get(line.accountCode);
+    if (!account) {
+      throw new Error(`Account ${line.accountCode} is not configured.`);
+    }
+
+    createJournalEntryStatement.run(
+      randomUUID(),
+      input.tenantId,
+      entryGroupId,
+      input.referenceType,
+      input.referenceId,
+      input.referenceNumber,
+      account.accountCode,
+      account.accountName,
+      line.debitAmount,
+      line.creditAmount,
+      input.description,
+      input.createdAt,
+    );
+  }
 }
 
 function createOrderNumber(): string {
@@ -865,8 +1782,205 @@ function createInvoiceNumber(): string {
   return `INV-${datePart}-${suffix}`;
 }
 
+function createPurchaseOrderNumber(): string {
+  const datePart = new Date().toISOString().slice(0, 10).replaceAll("-", "");
+  const suffix = randomUUID().slice(0, 6).toUpperCase();
+  return `PO-${datePart}-${suffix}`;
+}
+
 function ensureInventoryRow(tenantId: string, productId: string): void {
   ensureInventoryRowStatement.run(productId, tenantId, timestamp());
+}
+
+function calculateAverageUnitCost(quantityOnHand: number, inventoryValue: number): number {
+  if (quantityOnHand <= 0 || inventoryValue <= 0) {
+    return 0;
+  }
+
+  return Math.round(inventoryValue / quantityOnHand);
+}
+
+function getPurchaseOrderStatus(
+  quantityOrdered: number,
+  receivedQuantity: number,
+): PurchaseOrderStatus {
+  if (receivedQuantity >= quantityOrdered) {
+    return "received";
+  }
+
+  if (receivedQuantity > 0) {
+    return "partially_received";
+  }
+
+  return "issued";
+}
+
+function persistInventorySnapshot(input: {
+  productId: string;
+  quantityOnHand: number;
+  inventoryValue: number;
+  lastReceiptAt: string | null;
+  updatedAt: string;
+}): void {
+  updateInventorySnapshotStatement.run(
+    input.quantityOnHand,
+    calculateAverageUnitCost(input.quantityOnHand, input.inventoryValue),
+    input.inventoryValue,
+    input.lastReceiptAt,
+    input.updatedAt,
+    input.productId,
+  );
+}
+
+function getTodayDateInput(): string {
+  return timestamp().slice(0, 10);
+}
+
+function createApprovalRequestedResult<T>(
+  approvalRequest: ApprovalRequestRecord,
+): ApprovalAwareMutationResult<T> {
+  return {
+    kind: "approval_requested",
+    approvalRequest,
+  };
+}
+
+function createAppliedResult<T>(item: T): ApprovalAwareMutationResult<T> {
+  return {
+    kind: "applied",
+    item,
+  };
+}
+
+function createApprovalRequest(input: {
+  tenantId: string;
+  requestType: ApprovalRequestType;
+  riskLevel: ApprovalRiskLevel;
+  referenceId: string;
+  referenceNumber: string;
+  summary: string;
+  reason: string;
+  amount?: number;
+  quantity?: number;
+  payload: unknown;
+}): ApprovalRequestRecord {
+  const requestedAt = timestamp();
+  const row: ApprovalRequestRow = {
+    id: randomUUID(),
+    tenant_id: input.tenantId,
+    request_type: input.requestType,
+    status: "pending",
+    risk_level: input.riskLevel,
+    reference_id: input.referenceId,
+    reference_number: input.referenceNumber,
+    summary: input.summary,
+    reason: input.reason,
+    amount: input.amount ?? null,
+    quantity: input.quantity ?? null,
+    requested_by_email: session.email,
+    requested_by_display_name: session.displayName,
+    decision_by_email: null,
+    decision_by_display_name: null,
+    decision_note: null,
+    payload_json: JSON.stringify(input.payload),
+    requested_at: requestedAt,
+    decided_at: null,
+  };
+
+  createApprovalRequestStatement.run(
+    row.id,
+    row.tenant_id,
+    row.request_type,
+    row.status,
+    row.risk_level,
+    row.reference_id,
+    row.reference_number,
+    row.summary,
+    row.reason,
+    row.amount,
+    row.quantity,
+    row.requested_by_email,
+    row.requested_by_display_name,
+    row.decision_by_email,
+    row.decision_by_display_name,
+    row.decision_note,
+    row.payload_json,
+    row.requested_at,
+    row.decided_at,
+  );
+
+  recordAuditLog({
+    tenantId: input.tenantId,
+    entityType: "approval",
+    entityId: row.id,
+    entityNumber: input.referenceNumber,
+    actionType: "approval_requested",
+    summary: input.summary,
+    metadata: {
+      amount: row.amount ?? undefined,
+      quantity: row.quantity ?? undefined,
+      approvalRequestType: input.requestType,
+      approvalRiskLevel: input.riskLevel,
+      note: input.reason,
+    },
+    createdAt: requestedAt,
+  });
+
+  return mapApprovalRequest(row);
+}
+
+function shouldRequirePurchaseReceiptApproval(
+  purchaseOrder: PurchaseOrderRow,
+  input: ReceivePurchaseOrderInput,
+): { riskLevel: ApprovalRiskLevel; reason: string } | null {
+  const totalCost = input.quantityReceived * purchaseOrder.unit_cost;
+  if (totalCost >= 200000) {
+    return {
+      riskLevel: "high",
+      reason: "Large inventory receipt requires founder approval.",
+    };
+  }
+
+  return null;
+}
+
+function shouldRequireInvoiceIssueApproval(
+  input: CreateInvoiceInput,
+): { riskLevel: ApprovalRiskLevel; reason: string } | null {
+  if (input.issueDate < getTodayDateInput()) {
+    return {
+      riskLevel: "high",
+      reason: "Backdated invoice issue requires founder approval.",
+    };
+  }
+
+  return null;
+}
+
+function shouldRequireInvoicePaymentApproval(
+  input: CreateInvoicePaymentInput,
+): { riskLevel: ApprovalRiskLevel; reason: string } | null {
+  if (input.method === "cash" && input.amount >= 50000) {
+    return {
+      riskLevel: "high",
+      reason: "Large cash receipt requires founder approval.",
+    };
+  }
+
+  return null;
+}
+
+function shouldRequireInventoryAdjustmentApproval(
+  input: CreateInventoryAdjustmentInput,
+): { riskLevel: ApprovalRiskLevel; reason: string } | null {
+  if (input.direction === "out") {
+    return {
+      riskLevel: "critical",
+      reason: "Outbound inventory adjustments require founder approval.",
+    };
+  }
+
+  return null;
 }
 
 export function getSession(): Session {
@@ -894,6 +2008,8 @@ export function createTenant(input: CreateTenantInput): TenantRecord {
     tenant.createdAt,
   );
 
+  ensureDefaultAccounts(tenant.id);
+
   return tenant;
 }
 
@@ -903,6 +2019,10 @@ export function hasTenant(tenantId: string): boolean {
 
 export function listCustomers(tenantId: string): CustomerRecord[] {
   return (listCustomersStatement.all(tenantId) as CustomerRow[]).map(mapCustomer);
+}
+
+export function listSuppliers(tenantId: string): SupplierRecord[] {
+  return (listSuppliersStatement.all(tenantId) as SupplierRow[]).map(mapSupplier);
 }
 
 export function listCustomerStatements(tenantId: string): CustomerStatementRecord[] {
@@ -933,6 +2053,34 @@ export function createCustomer(input: CreateCustomerInput): CustomerRecord {
   );
 
   return customer;
+}
+
+export function createSupplier(input: CreateSupplierInput): SupplierRecord {
+  const supplier: SupplierRecord = {
+    id: randomUUID(),
+    tenantId: input.tenantId,
+    supplierCode: input.supplierCode.trim().toUpperCase(),
+    name: input.name.trim(),
+    email: input.email.trim(),
+    phone: input.phone.trim(),
+    city: input.city.trim(),
+    leadTimeDays: input.leadTimeDays,
+    createdAt: timestamp(),
+  };
+
+  createSupplierStatement.run(
+    supplier.id,
+    supplier.tenantId,
+    supplier.supplierCode,
+    supplier.name,
+    supplier.email,
+    supplier.phone,
+    supplier.city,
+    supplier.leadTimeDays,
+    supplier.createdAt,
+  );
+
+  return supplier;
 }
 
 export function listProducts(tenantId: string): ProductRecord[] {
@@ -969,7 +2117,7 @@ export function listInventory(tenantId: string): InventoryRecord[] {
   return (listInventoryStatement.all(tenantId) as InventoryRow[]).map(mapInventory);
 }
 
-export function createInventoryAdjustment(input: CreateInventoryAdjustmentInput): InventoryRecord {
+function createInventoryAdjustmentInternal(input: CreateInventoryAdjustmentInput): InventoryRecord {
   const product = getProductByIdStatement.get(input.tenantId, input.productId) as ProductRow | undefined;
   if (!product) {
     throw new Error("The selected product does not exist.");
@@ -993,21 +2141,223 @@ export function createInventoryAdjustment(input: CreateInventoryAdjustmentInput)
   }
 
   const updatedAt = timestamp();
-  updateInventoryQuantityStatement.run(nextQuantity, updatedAt, input.productId);
+  const nextInventoryValue = currentInventory.average_unit_cost * nextQuantity;
+
+  persistInventorySnapshot({
+    productId: input.productId,
+    quantityOnHand: nextQuantity,
+    inventoryValue: nextInventoryValue,
+    lastReceiptAt: currentInventory.last_receipt_at,
+    updatedAt,
+  });
 
   return {
     ...mapInventory(currentInventory),
     quantityOnHand: nextQuantity,
+    inventoryValue: nextInventoryValue,
+    averageUnitCost: calculateAverageUnitCost(nextQuantity, nextInventoryValue),
     updatedAt,
   };
+}
+
+export function createInventoryAdjustment(
+  input: CreateInventoryAdjustmentInput,
+): ApprovalAwareMutationResult<InventoryRecord> {
+  const product = getProductByIdStatement.get(input.tenantId, input.productId) as ProductRow | undefined;
+  if (!product) {
+    throw new Error("The selected product does not exist.");
+  }
+
+  const approvalRule = shouldRequireInventoryAdjustmentApproval(input);
+  if (approvalRule) {
+    return createApprovalRequestedResult(
+      createApprovalRequest({
+        tenantId: input.tenantId,
+        requestType: "inventory_adjustment",
+        riskLevel: approvalRule.riskLevel,
+        referenceId: product.id,
+        referenceNumber: product.sku,
+        summary: `Approval requested for stock adjustment on ${product.name}`,
+        reason: approvalRule.reason,
+        quantity: input.quantity,
+        payload: input,
+      }),
+    );
+  }
+
+  return createAppliedResult(createInventoryAdjustmentInternal(input));
 }
 
 export function listOrders(tenantId: string): OrderRecord[] {
   return (listOrdersStatement.all(tenantId) as OrderRow[]).map(mapOrder);
 }
 
+export function listPurchaseOrders(tenantId: string): PurchaseOrderRecord[] {
+  return (listPurchaseOrdersStatement.all(tenantId) as PurchaseOrderRow[]).map(mapPurchaseOrder);
+}
+
 export function listInvoices(tenantId: string): InvoiceRecord[] {
   return (listInvoicesStatement.all(tenantId) as InvoiceRow[]).map(mapInvoice);
+}
+
+export function listInvoiceCollectionActivities(
+  tenantId: string,
+): InvoiceCollectionActivityRecord[] {
+  return (
+    listInvoiceCollectionActivitiesStatement.all(tenantId) as InvoiceCollectionActivityRow[]
+  ).map(mapInvoiceCollectionActivity);
+}
+
+export function listAccountBalances(tenantId: string): AccountBalanceRecord[] {
+  ensureDefaultAccounts(tenantId);
+  return (listAccountBalancesStatement.all(tenantId) as AccountBalanceRow[]).map(mapAccountBalance);
+}
+
+export function listJournalEntries(tenantId: string): JournalEntryRecord[] {
+  ensureDefaultAccounts(tenantId);
+  return (listJournalEntriesStatement.all(tenantId) as JournalEntryRow[]).map(mapJournalEntry);
+}
+
+export function listAuditLogs(tenantId: string): AuditLogRecord[] {
+  return (listAuditLogsStatement.all(tenantId) as AuditLogRow[]).map(mapAuditLog);
+}
+
+export function listApprovalRequests(tenantId: string): ApprovalRequestRecord[] {
+  return (listApprovalRequestsStatement.all(tenantId) as ApprovalRequestRow[]).map(mapApprovalRequest);
+}
+
+export function resolveApprovalRequest(input: ApprovalDecisionInput): ApprovalRequestRecord {
+  const approvalRequest = getApprovalRequestByIdStatement.get(
+    input.tenantId,
+    input.approvalRequestId,
+  ) as ApprovalRequestRow | undefined;
+  if (!approvalRequest) {
+    throw new Error("The selected approval request does not exist.");
+  }
+
+  if (approvalRequest.status !== "pending") {
+    throw new Error("The selected approval request has already been resolved.");
+  }
+
+  const decisionNote = input.decisionNote?.trim() || null;
+
+  if (input.decision === "approved") {
+    const payload = JSON.parse(approvalRequest.payload_json) as
+      | CreateInventoryAdjustmentInput
+      | ReceivePurchaseOrderInput
+      | CreateInvoiceInput
+      | CreateInvoicePaymentInput;
+
+    switch (approvalRequest.request_type) {
+      case "inventory_adjustment":
+        createInventoryAdjustmentInternal(payload as CreateInventoryAdjustmentInput);
+        break;
+      case "purchase_order_receipt":
+        receivePurchaseOrderInternal(payload as ReceivePurchaseOrderInput);
+        break;
+      case "invoice_issue":
+        createInvoiceInternal(payload as CreateInvoiceInput);
+        break;
+      case "invoice_payment":
+        createInvoicePaymentInternal(payload as CreateInvoicePaymentInput);
+        break;
+      default:
+        throw new Error("The selected approval request type is not supported.");
+    }
+  }
+
+  const decidedAt = timestamp();
+  resolveApprovalRequestStatement.run(
+    input.decision,
+    session.email,
+    session.displayName,
+    decisionNote,
+    decidedAt,
+    input.tenantId,
+    input.approvalRequestId,
+  );
+
+  const resolved = getApprovalRequestByIdStatement.get(
+    input.tenantId,
+    input.approvalRequestId,
+  ) as ApprovalRequestRow | undefined;
+  if (!resolved) {
+    throw new Error("The selected approval request does not exist.");
+  }
+
+  recordAuditLog({
+    tenantId: input.tenantId,
+    entityType: "approval",
+    entityId: resolved.id,
+    entityNumber: resolved.reference_number,
+    actionType: input.decision === "approved" ? "approval_approved" : "approval_rejected",
+    summary:
+      input.decision === "approved"
+        ? `Approved ${resolved.request_type} for ${resolved.reference_number}`
+        : `Rejected ${resolved.request_type} for ${resolved.reference_number}`,
+    metadata: {
+      amount: resolved.amount ?? undefined,
+      quantity: resolved.quantity ?? undefined,
+      approvalRequestType: resolved.request_type,
+      approvalRiskLevel: resolved.risk_level,
+      decision: input.decision,
+      decisionNote: decisionNote ?? undefined,
+      note: resolved.reason,
+    },
+    createdAt: decidedAt,
+  });
+
+  return mapApprovalRequest(resolved);
+}
+
+function recordAuditLog(input: {
+  tenantId: string;
+  entityType: AuditEntityType;
+  entityId: string;
+  entityNumber: string;
+  actionType: AuditActionType;
+  summary: string;
+  metadata?: AuditLogMetadata;
+  createdAt: string;
+}): void {
+  createAuditLogStatement.run(
+    randomUUID(),
+    input.tenantId,
+    "finance",
+    input.entityType,
+    input.entityId,
+    input.entityNumber,
+    input.actionType,
+    input.summary,
+    session.email,
+    session.displayName,
+    JSON.stringify(input.metadata ?? {}),
+    input.createdAt,
+  );
+}
+
+function recordInvoiceCollectionActivity(
+  invoice: InvoiceRecord,
+  createdAt: string,
+  actionState: CollectionActivityState,
+): void {
+  createInvoiceCollectionActivityStatement.run(
+    randomUUID(),
+    invoice.tenantId,
+    invoice.id,
+    invoice.invoiceNumber,
+    invoice.customerId,
+    invoice.customerName,
+    invoice.followUpStatus,
+    invoice.collectionPriority,
+    invoice.actionRequired,
+    invoice.promisedPaymentDate,
+    invoice.nextActionDate,
+    invoice.collectionNote,
+    invoice.outstandingAmount,
+    actionState,
+    createdAt,
+  );
 }
 
 export function getReportSummary(tenantId: string): ReportSummary {
@@ -1049,6 +2399,7 @@ export function getReportSummary(tenantId: string): ReportSummary {
     overdueOver90Amount: counts.overdue_over_90_amount,
     averageOrderValue: counts.order_count > 0 ? Math.round(counts.gross_sales_amount / counts.order_count) : 0,
     stockUnitsOnHand: inventory?.stock_units_on_hand ?? 0,
+    inventoryValueAmount: inventory?.inventory_value_amount ?? 0,
     outOfStockProductCount: inventory?.out_of_stock_product_count ?? 0,
     lowStockProductCount: inventory?.low_stock_product_count ?? 0,
     topCustomerName: topCustomer?.customer_name ?? "",
@@ -1101,11 +2452,17 @@ export function createOrder(input: CreateOrderInput): OrderRecord {
     };
 
     const inventoryUpdatedAt = timestamp();
-    updateInventoryQuantityStatement.run(
-      inventory.quantity_on_hand - input.quantity,
-      inventoryUpdatedAt,
-      input.productId,
-    );
+    const nextQuantityOnHand = inventory.quantity_on_hand - input.quantity;
+    const inventoryIssueValue = inventory.average_unit_cost * input.quantity;
+    const nextInventoryValue = Math.max(inventory.inventory_value - inventoryIssueValue, 0);
+
+    persistInventorySnapshot({
+      productId: input.productId,
+      quantityOnHand: nextQuantityOnHand,
+      inventoryValue: nextInventoryValue,
+      lastReceiptAt: inventory.last_receipt_at,
+      updatedAt: inventoryUpdatedAt,
+    });
 
     createOrderStatement.run(
       order.id,
@@ -1123,6 +2480,19 @@ export function createOrder(input: CreateOrderInput): OrderRecord {
       order.createdAt,
     );
 
+    createJournalEntryLines({
+      tenantId: order.tenantId,
+      referenceType: "order",
+      referenceId: order.id,
+      referenceNumber: order.orderNumber,
+      description: `Issue stock for ${order.orderNumber}`,
+      createdAt: order.createdAt,
+      lines: [
+        { accountCode: "632", debitAmount: inventoryIssueValue, creditAmount: 0 },
+        { accountCode: "156", debitAmount: 0, creditAmount: inventoryIssueValue },
+      ],
+    });
+
     db.exec("COMMIT");
     return order;
   } catch (error) {
@@ -1131,7 +2501,249 @@ export function createOrder(input: CreateOrderInput): OrderRecord {
   }
 }
 
-export function createInvoice(input: CreateInvoiceInput): InvoiceRecord {
+export function createPurchaseOrder(input: CreatePurchaseOrderInput): PurchaseOrderRecord {
+  const supplier = getSupplierByIdStatement.get(input.tenantId, input.supplierId) as SupplierRow | undefined;
+  if (!supplier) {
+    throw new Error("The selected supplier does not exist.");
+  }
+
+  const product = getProductByIdStatement.get(input.tenantId, input.productId) as ProductRow | undefined;
+  if (!product) {
+    throw new Error("The selected product does not exist.");
+  }
+
+  if (!isValidBusinessDateInput(input.expectedReceiptDate)) {
+    throw new Error("Expected receipt date must be a valid YYYY-MM-DD value.");
+  }
+
+  const createdAt = timestamp();
+  const purchaseOrder: PurchaseOrderRecord = {
+    id: randomUUID(),
+    tenantId: input.tenantId,
+    purchaseOrderNumber: createPurchaseOrderNumber(),
+    supplierId: supplier.id,
+    supplierCode: supplier.supplier_code,
+    supplierName: supplier.name,
+    productId: product.id,
+    productSku: product.sku,
+    productName: product.name,
+    quantityOrdered: input.quantityOrdered,
+    receivedQuantity: 0,
+    outstandingQuantity: input.quantityOrdered,
+    unitCost: input.unitCost,
+    totalAmount: input.quantityOrdered * input.unitCost,
+    status: getPurchaseOrderStatus(input.quantityOrdered, 0),
+    expectedReceiptDate: createBusinessTimestamp(input.expectedReceiptDate),
+    createdAt,
+  };
+
+  createPurchaseOrderStatement.run(
+    purchaseOrder.id,
+    purchaseOrder.tenantId,
+    purchaseOrder.purchaseOrderNumber,
+    purchaseOrder.supplierId,
+    purchaseOrder.supplierCode,
+    purchaseOrder.supplierName,
+    purchaseOrder.productId,
+    purchaseOrder.productSku,
+    purchaseOrder.productName,
+    purchaseOrder.quantityOrdered,
+    purchaseOrder.receivedQuantity,
+    purchaseOrder.unitCost,
+    purchaseOrder.totalAmount,
+    purchaseOrder.status,
+    purchaseOrder.expectedReceiptDate,
+    purchaseOrder.createdAt,
+  );
+
+  return purchaseOrder;
+}
+
+function receivePurchaseOrderInternal(input: ReceivePurchaseOrderInput): ReceivePurchaseOrderResult {
+  const purchaseOrder = getPurchaseOrderByIdStatement.get(input.tenantId, input.purchaseOrderId) as
+    | PurchaseOrderRow
+    | undefined;
+  if (!purchaseOrder) {
+    throw new Error("The selected purchase order does not exist.");
+  }
+
+  if (!Number.isInteger(input.quantityReceived) || input.quantityReceived <= 0) {
+    throw new Error("Received quantity must be a positive integer.");
+  }
+
+  if (!isValidBusinessDateInput(input.receivedDate)) {
+    throw new Error("Received date must be a valid YYYY-MM-DD value.");
+  }
+
+  const outstandingQuantity = Math.max(purchaseOrder.quantity_ordered - purchaseOrder.received_quantity, 0);
+
+  if (outstandingQuantity === 0) {
+    throw new Error("The selected purchase order is already fully received.");
+  }
+
+  if (input.quantityReceived > outstandingQuantity) {
+    throw new Error("Received quantity cannot exceed the outstanding quantity.");
+  }
+
+  ensureInventoryRow(input.tenantId, purchaseOrder.product_id);
+
+  const inventory = getInventoryRowStatement.get(input.tenantId, purchaseOrder.product_id) as
+    | InventoryRow
+    | undefined;
+  if (!inventory) {
+    throw new Error("The selected product does not exist.");
+  }
+
+  const receiptRow: PurchaseOrderReceiptRow = {
+    id: randomUUID(),
+    tenant_id: input.tenantId,
+    purchase_order_id: purchaseOrder.id,
+    purchase_order_number: purchaseOrder.purchase_order_number,
+    product_id: purchaseOrder.product_id,
+    product_sku: purchaseOrder.product_sku,
+    product_name: purchaseOrder.product_name,
+    quantity_received: input.quantityReceived,
+    unit_cost: purchaseOrder.unit_cost,
+    total_cost: input.quantityReceived * purchaseOrder.unit_cost,
+    received_at: createBusinessTimestamp(input.receivedDate),
+  };
+
+  const nextReceivedQuantity = purchaseOrder.received_quantity + input.quantityReceived;
+  const nextStatus = getPurchaseOrderStatus(purchaseOrder.quantity_ordered, nextReceivedQuantity);
+  const nextInventoryQuantity = inventory.quantity_on_hand + input.quantityReceived;
+  const nextInventoryValue = inventory.inventory_value + receiptRow.total_cost;
+
+  db.exec("BEGIN");
+
+  try {
+    createPurchaseOrderReceiptStatement.run(
+      receiptRow.id,
+      receiptRow.tenant_id,
+      receiptRow.purchase_order_id,
+      receiptRow.purchase_order_number,
+      receiptRow.product_id,
+      receiptRow.product_sku,
+      receiptRow.product_name,
+      receiptRow.quantity_received,
+      receiptRow.unit_cost,
+      receiptRow.total_cost,
+      receiptRow.received_at,
+    );
+
+    updatePurchaseOrderReceivingStatement.run(nextReceivedQuantity, nextStatus, purchaseOrder.id);
+
+    persistInventorySnapshot({
+      productId: purchaseOrder.product_id,
+      quantityOnHand: nextInventoryQuantity,
+      inventoryValue: nextInventoryValue,
+      lastReceiptAt: receiptRow.received_at,
+      updatedAt: receiptRow.received_at,
+    });
+
+    createJournalEntryLines({
+      tenantId: input.tenantId,
+      referenceType: "purchase_receipt",
+      referenceId: purchaseOrder.id,
+      referenceNumber: purchaseOrder.purchase_order_number,
+      description: `Receive purchase order ${purchaseOrder.purchase_order_number}`,
+      createdAt: receiptRow.received_at,
+      lines: [
+        { accountCode: "156", debitAmount: receiptRow.total_cost, creditAmount: 0 },
+        { accountCode: "331", debitAmount: 0, creditAmount: receiptRow.total_cost },
+      ],
+    });
+
+    recordAuditLog({
+      tenantId: input.tenantId,
+      entityType: "purchase_order",
+      entityId: purchaseOrder.id,
+      entityNumber: purchaseOrder.purchase_order_number,
+      actionType: "purchase_order_received",
+      summary: `Received ${input.quantityReceived} units for ${purchaseOrder.purchase_order_number}`,
+      metadata: {
+        amount: receiptRow.total_cost,
+        quantity: input.quantityReceived,
+        unitCost: purchaseOrder.unit_cost,
+        note: `${purchaseOrder.product_name} from ${purchaseOrder.supplier_name}`,
+      },
+      createdAt: receiptRow.received_at,
+    });
+
+    db.exec("COMMIT");
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
+
+  return {
+    purchaseOrder: {
+      ...mapPurchaseOrder(purchaseOrder),
+      receivedQuantity: nextReceivedQuantity,
+      outstandingQuantity: Math.max(purchaseOrder.quantity_ordered - nextReceivedQuantity, 0),
+      status: nextStatus,
+    },
+    inventory: {
+      ...mapInventory(inventory),
+      quantityOnHand: nextInventoryQuantity,
+      averageUnitCost: calculateAverageUnitCost(nextInventoryQuantity, nextInventoryValue),
+      inventoryValue: nextInventoryValue,
+      lastReceiptAt: receiptRow.received_at,
+      updatedAt: receiptRow.received_at,
+    },
+    receipt: mapPurchaseOrderReceipt(receiptRow),
+  };
+}
+
+export function receivePurchaseOrder(
+  input: ReceivePurchaseOrderInput,
+): ApprovalAwareMutationResult<ReceivePurchaseOrderResult> {
+  const purchaseOrder = getPurchaseOrderByIdStatement.get(input.tenantId, input.purchaseOrderId) as
+    | PurchaseOrderRow
+    | undefined;
+  if (!purchaseOrder) {
+    throw new Error("The selected purchase order does not exist.");
+  }
+
+  if (!Number.isInteger(input.quantityReceived) || input.quantityReceived <= 0) {
+    throw new Error("Received quantity must be a positive integer.");
+  }
+
+  if (!isValidBusinessDateInput(input.receivedDate)) {
+    throw new Error("Received date must be a valid YYYY-MM-DD value.");
+  }
+
+  const outstandingQuantity = Math.max(purchaseOrder.quantity_ordered - purchaseOrder.received_quantity, 0);
+
+  if (outstandingQuantity === 0) {
+    throw new Error("The selected purchase order is already fully received.");
+  }
+
+  if (input.quantityReceived > outstandingQuantity) {
+    throw new Error("Received quantity cannot exceed the outstanding quantity.");
+  }
+
+  const approvalRule = shouldRequirePurchaseReceiptApproval(purchaseOrder, input);
+  if (approvalRule) {
+    return createApprovalRequestedResult(
+      createApprovalRequest({
+        tenantId: input.tenantId,
+        requestType: "purchase_order_receipt",
+        riskLevel: approvalRule.riskLevel,
+        referenceId: purchaseOrder.id,
+        referenceNumber: purchaseOrder.purchase_order_number,
+        summary: `Approval requested for receipt on ${purchaseOrder.purchase_order_number}`,
+        reason: approvalRule.reason,
+        amount: input.quantityReceived * purchaseOrder.unit_cost,
+        quantity: input.quantityReceived,
+        payload: input,
+      }),
+    );
+  }
+
+  return createAppliedResult(receivePurchaseOrderInternal(input));
+}
+
+function createInvoiceInternal(input: CreateInvoiceInput): InvoiceRecord {
   const order = getOrderByIdStatement.get(input.tenantId, input.orderId) as OrderRow | undefined;
   if (!order) {
     throw new Error("The selected order does not exist.");
@@ -1149,6 +2761,8 @@ export function createInvoice(input: CreateInvoiceInput): InvoiceRecord {
   const taxAmount = Math.round((subtotalAmount * input.taxRatePercent) / 100);
   const issuedAt = createBusinessTimestamp(input.issueDate);
   const dueDate = addBusinessDays(issuedAt, input.paymentTermDays);
+  const daysUntilDue = getCalendarDayDifference(new Date(), dueDate);
+  const outstandingAmount = subtotalAmount + taxAmount;
 
   const invoice: InvoiceRecord = {
     id: randomUUID(),
@@ -1161,41 +2775,129 @@ export function createInvoice(input: CreateInvoiceInput): InvoiceRecord {
     subtotalAmount,
     taxRatePercent: input.taxRatePercent,
     taxAmount,
-    totalAmount: subtotalAmount + taxAmount,
+    totalAmount: outstandingAmount,
     paidAmount: 0,
-    outstandingAmount: subtotalAmount + taxAmount,
+    outstandingAmount,
     paymentCount: 0,
     lastPaymentAt: null,
     status: "issued",
     issuedAt,
     dueDate,
     paymentTermDays: input.paymentTermDays,
-    daysUntilDue: getCalendarDayDifference(new Date(), dueDate),
+    daysUntilDue,
     daysPastDue: Math.max(getCalendarDayDifference(dueDate, new Date()), 0),
-    collectionStatus: getCollectionStatus(subtotalAmount + taxAmount, getCalendarDayDifference(new Date(), dueDate)),
+    collectionStatus: getCollectionStatus(outstandingAmount, daysUntilDue),
+    followUpStatus: "new",
+    collectionPriority: "low",
+    actionRequired: "monitor",
+    promisedPaymentDate: null,
+    nextActionDate: null,
+    collectionNote: "",
+    lastCollectionUpdateAt: null,
   };
 
-  createInvoiceStatement.run(
-    invoice.id,
-    invoice.tenantId,
-    invoice.invoiceNumber,
-    invoice.orderId,
-    invoice.orderNumber,
-    invoice.customerId,
-    invoice.customerName,
-    invoice.subtotalAmount,
-    invoice.taxRatePercent,
-    invoice.taxAmount,
-    invoice.totalAmount,
-    invoice.status,
-    invoice.issuedAt,
-    invoice.dueDate,
-  );
+  db.exec("BEGIN");
+
+  try {
+    createInvoiceStatement.run(
+      invoice.id,
+      invoice.tenantId,
+      invoice.invoiceNumber,
+      invoice.orderId,
+      invoice.orderNumber,
+      invoice.customerId,
+      invoice.customerName,
+      invoice.subtotalAmount,
+      invoice.taxRatePercent,
+      invoice.taxAmount,
+      invoice.totalAmount,
+      invoice.status,
+      invoice.issuedAt,
+      invoice.dueDate,
+      invoice.followUpStatus,
+      invoice.actionRequired,
+      invoice.promisedPaymentDate,
+      invoice.nextActionDate,
+      invoice.collectionNote,
+      invoice.lastCollectionUpdateAt,
+    );
+
+    createJournalEntryLines({
+      tenantId: invoice.tenantId,
+      referenceType: "invoice",
+      referenceId: invoice.id,
+      referenceNumber: invoice.invoiceNumber,
+      description: `Issue invoice ${invoice.invoiceNumber}`,
+      createdAt: invoice.issuedAt,
+      lines: [
+        { accountCode: "131", debitAmount: invoice.totalAmount, creditAmount: 0 },
+        { accountCode: "511", debitAmount: 0, creditAmount: invoice.subtotalAmount },
+        { accountCode: "3331", debitAmount: 0, creditAmount: invoice.taxAmount },
+      ],
+    });
+
+    recordAuditLog({
+      tenantId: invoice.tenantId,
+      entityType: "invoice",
+      entityId: invoice.id,
+      entityNumber: invoice.invoiceNumber,
+      actionType: "invoice_issued",
+      summary: `Issued ${invoice.invoiceNumber} for ${invoice.customerName}`,
+      metadata: {
+        amount: invoice.totalAmount,
+        outstandingAmount: invoice.outstandingAmount,
+        note: `Due ${invoice.dueDate}`,
+      },
+      createdAt: invoice.issuedAt,
+    });
+
+    db.exec("COMMIT");
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
 
   return invoice;
 }
 
-export function createInvoicePayment(input: CreateInvoicePaymentInput): InvoiceRecord {
+export function createInvoice(
+  input: CreateInvoiceInput,
+): ApprovalAwareMutationResult<InvoiceRecord> {
+  const order = getOrderByIdStatement.get(input.tenantId, input.orderId) as OrderRow | undefined;
+  if (!order) {
+    throw new Error("The selected order does not exist.");
+  }
+
+  if (!isValidBusinessDateInput(input.issueDate)) {
+    throw new Error("Issue date must be a valid YYYY-MM-DD value.");
+  }
+
+  if (!Number.isInteger(input.paymentTermDays) || input.paymentTermDays < 0 || input.paymentTermDays > 365) {
+    throw new Error("Payment term days must be an integer between 0 and 365.");
+  }
+
+  const approvalRule = shouldRequireInvoiceIssueApproval(input);
+  if (approvalRule) {
+    return createApprovalRequestedResult(
+      createApprovalRequest({
+        tenantId: input.tenantId,
+        requestType: "invoice_issue",
+        riskLevel: approvalRule.riskLevel,
+        referenceId: order.id,
+        referenceNumber: order.order_number,
+        summary: `Approval requested to issue invoice for ${order.order_number}`,
+        reason: approvalRule.reason,
+        amount: order.total_amount,
+        quantity: order.quantity,
+        payload: input,
+      }),
+    );
+  }
+
+  return createAppliedResult(createInvoiceInternal(input));
+}
+
+function createInvoicePaymentInternal(input: CreateInvoicePaymentInput): InvoiceRecord {
   const invoice = getInvoiceByIdStatement.get(input.tenantId, input.invoiceId) as InvoiceRow | undefined;
   if (!invoice) {
     throw new Error("The selected invoice does not exist.");
@@ -1211,20 +2913,260 @@ export function createInvoicePayment(input: CreateInvoicePaymentInput): InvoiceR
     throw new Error("Payment amount cannot exceed the outstanding balance.");
   }
 
-  createInvoicePaymentStatement.run(
-    randomUUID(),
-    input.tenantId,
-    invoice.id,
-    invoice.invoice_number,
-    input.amount,
-    input.method,
-    timestamp(),
-  );
+  const paidAt = timestamp();
 
-  const updatedInvoice = getInvoiceByIdStatement.get(input.tenantId, input.invoiceId) as InvoiceRow | undefined;
-  if (!updatedInvoice) {
+  db.exec("BEGIN");
+
+  try {
+    createInvoicePaymentStatement.run(
+      randomUUID(),
+      input.tenantId,
+      invoice.id,
+      invoice.invoice_number,
+      input.amount,
+      input.method,
+      paidAt,
+    );
+
+    createJournalEntryLines({
+      tenantId: input.tenantId,
+      referenceType: "payment",
+      referenceId: invoice.id,
+      referenceNumber: invoice.invoice_number,
+      description: `Receive payment for ${invoice.invoice_number}`,
+      createdAt: paidAt,
+      lines: [
+        {
+          accountCode: input.method === "cash" ? "111" : "112",
+          debitAmount: input.amount,
+          creditAmount: 0,
+        },
+        { accountCode: "131", debitAmount: 0, creditAmount: input.amount },
+      ],
+    });
+
+    const updatedInvoice = getInvoiceByIdStatement.get(input.tenantId, input.invoiceId) as InvoiceRow | undefined;
+    if (!updatedInvoice) {
+      throw new Error("The selected invoice does not exist.");
+    }
+
+    const mappedInvoice = mapInvoice(updatedInvoice);
+
+    recordAuditLog({
+      tenantId: input.tenantId,
+      entityType: "payment",
+      entityId: invoice.id,
+      entityNumber: invoice.invoice_number,
+      actionType: "payment_recorded",
+      summary: `Recorded ${input.method} payment for ${invoice.invoice_number}`,
+      metadata: {
+        amount: input.amount,
+        paymentMethod: input.method,
+        outstandingAmount: mappedInvoice.outstandingAmount,
+      },
+      createdAt: paidAt,
+    });
+
+    db.exec("COMMIT");
+    return mappedInvoice;
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
+}
+
+export function createInvoicePayment(
+  input: CreateInvoicePaymentInput,
+): ApprovalAwareMutationResult<InvoiceRecord> {
+  const invoice = getInvoiceByIdStatement.get(input.tenantId, input.invoiceId) as InvoiceRow | undefined;
+  if (!invoice) {
     throw new Error("The selected invoice does not exist.");
   }
 
-  return mapInvoice(updatedInvoice);
+  const outstandingAmount = Math.max(invoice.total_amount - invoice.paid_amount, 0);
+
+  if (outstandingAmount === 0) {
+    throw new Error("The selected invoice is already settled.");
+  }
+
+  if (input.amount > outstandingAmount) {
+    throw new Error("Payment amount cannot exceed the outstanding balance.");
+  }
+
+  const approvalRule = shouldRequireInvoicePaymentApproval(input);
+  if (approvalRule) {
+    return createApprovalRequestedResult(
+      createApprovalRequest({
+        tenantId: input.tenantId,
+        requestType: "invoice_payment",
+        riskLevel: approvalRule.riskLevel,
+        referenceId: invoice.id,
+        referenceNumber: invoice.invoice_number,
+        summary: `Approval requested to record payment for ${invoice.invoice_number}`,
+        reason: approvalRule.reason,
+        amount: input.amount,
+        payload: input,
+      }),
+    );
+  }
+
+  return createAppliedResult(createInvoicePaymentInternal(input));
+}
+
+export function updateInvoiceCollection(input: UpdateInvoiceCollectionInput): InvoiceRecord {
+  if (!isValidFollowUpStatus(input.followUpStatus)) {
+    throw new Error("Follow-up status is invalid.");
+  }
+
+  if (!isValidActionRequired(input.actionRequired)) {
+    throw new Error("Collection action is invalid.");
+  }
+
+  const promisedPaymentDate =
+    input.promisedPaymentDate && input.promisedPaymentDate.trim().length > 0
+      ? input.promisedPaymentDate.trim()
+      : null;
+  const nextActionDate =
+    input.nextActionDate && input.nextActionDate.trim().length > 0
+      ? input.nextActionDate.trim()
+      : null;
+
+  if (promisedPaymentDate && !isValidBusinessDateInput(promisedPaymentDate)) {
+    throw new Error("Promised payment date must be a valid YYYY-MM-DD value.");
+  }
+
+  if (nextActionDate && !isValidBusinessDateInput(nextActionDate)) {
+    throw new Error("Next action date must be a valid YYYY-MM-DD value.");
+  }
+
+  if (input.followUpStatus === "promised" && !promisedPaymentDate) {
+    throw new Error("Promised payment date is required when status is promised.");
+  }
+
+  if (input.actionRequired !== "monitor" && !nextActionDate) {
+    throw new Error("Next action date is required when an action is assigned.");
+  }
+
+  const collectionNote = input.collectionNote.trim();
+  if (collectionNote.length > 240) {
+    throw new Error("Collection note must be 240 characters or fewer.");
+  }
+
+  const invoice = getInvoiceByIdStatement.get(input.tenantId, input.invoiceId) as InvoiceRow | undefined;
+  if (!invoice) {
+    throw new Error("The selected invoice does not exist.");
+  }
+
+  const updateTimestamp = timestamp();
+
+  db.exec("BEGIN");
+
+  try {
+    updateInvoiceCollectionStatement.run(
+      input.followUpStatus,
+      input.actionRequired,
+      promisedPaymentDate,
+      nextActionDate,
+      collectionNote,
+      updateTimestamp,
+      input.tenantId,
+      input.invoiceId,
+    );
+
+    const updatedInvoice = getInvoiceByIdStatement.get(input.tenantId, input.invoiceId) as
+      | InvoiceRow
+      | undefined;
+    if (!updatedInvoice) {
+      throw new Error("The selected invoice does not exist.");
+    }
+
+    const mappedInvoice = mapInvoice(updatedInvoice);
+    recordInvoiceCollectionActivity(mappedInvoice, updateTimestamp, "assigned");
+    recordAuditLog({
+      tenantId: input.tenantId,
+      entityType: "collection",
+      entityId: mappedInvoice.id,
+      entityNumber: mappedInvoice.invoiceNumber,
+      actionType: "collection_follow_up_updated",
+      summary: `Updated collection follow-up for ${mappedInvoice.invoiceNumber}`,
+      metadata: {
+        outstandingAmount: mappedInvoice.outstandingAmount,
+        followUpStatus: mappedInvoice.followUpStatus,
+        actionRequired: mappedInvoice.actionRequired,
+        promisedPaymentDate: mappedInvoice.promisedPaymentDate,
+        nextActionDate: mappedInvoice.nextActionDate,
+        note: mappedInvoice.collectionNote,
+      },
+      createdAt: updateTimestamp,
+    });
+
+    db.exec("COMMIT");
+    return mappedInvoice;
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
+}
+
+export function resolveInvoiceCollectionAction(
+  input: ResolveInvoiceCollectionActionInput,
+): InvoiceRecord {
+  const invoice = getInvoiceByIdStatement.get(input.tenantId, input.invoiceId) as InvoiceRow | undefined;
+  if (!invoice) {
+    throw new Error("The selected invoice does not exist.");
+  }
+
+  if (invoice.action_required === "monitor" && !invoice.next_action_date) {
+    throw new Error("There is no assigned collection action to resolve.");
+  }
+
+  const updateTimestamp = timestamp();
+
+  db.exec("BEGIN");
+
+  try {
+    updateInvoiceCollectionStatement.run(
+      invoice.follow_up_status,
+      "monitor",
+      invoice.promised_payment_date,
+      null,
+      invoice.collection_note,
+      updateTimestamp,
+      input.tenantId,
+      input.invoiceId,
+    );
+
+    const updatedInvoice = getInvoiceByIdStatement.get(input.tenantId, input.invoiceId) as
+      | InvoiceRow
+      | undefined;
+    if (!updatedInvoice) {
+      throw new Error("The selected invoice does not exist.");
+    }
+
+    const mappedInvoice = mapInvoice(updatedInvoice);
+    recordInvoiceCollectionActivity(mappedInvoice, updateTimestamp, "resolved");
+    recordAuditLog({
+      tenantId: input.tenantId,
+      entityType: "collection",
+      entityId: mappedInvoice.id,
+      entityNumber: mappedInvoice.invoiceNumber,
+      actionType: "collection_action_resolved",
+      summary: `Resolved collection action for ${mappedInvoice.invoiceNumber}`,
+      metadata: {
+        outstandingAmount: mappedInvoice.outstandingAmount,
+        followUpStatus: mappedInvoice.followUpStatus,
+        actionRequired: mappedInvoice.actionRequired,
+        promisedPaymentDate: mappedInvoice.promisedPaymentDate,
+        nextActionDate: mappedInvoice.nextActionDate,
+        note: mappedInvoice.collectionNote,
+      },
+      createdAt: updateTimestamp,
+    });
+
+    db.exec("COMMIT");
+    return mappedInvoice;
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
 }
