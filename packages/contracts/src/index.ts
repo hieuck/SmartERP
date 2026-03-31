@@ -197,6 +197,25 @@ export type ImportOnboardingResult = {
   errors: OnboardingImportError[];
 };
 
+export type RestoreTenantSnapshotInput = {
+  snapshot: TenantExportBundle;
+  targetTenant: {
+    name: string;
+    slug: string;
+    industry: string;
+  };
+};
+
+export type RestoreTenantSnapshotResult = {
+  tenant: TenantRecord;
+  restoredCustomers: number;
+  restoredSuppliers: number;
+  restoredProducts: number;
+  restoredInventoryLines: number;
+  restoredScopes: string[];
+  pendingScopes: string[];
+};
+
 export type CustomerRecord = {
   id: string;
   tenantId: string;

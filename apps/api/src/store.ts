@@ -34,6 +34,8 @@ import {
   type ImportOnboardingResult,
   type OnboardingDataset,
   type OnboardingImportError,
+  type RestoreTenantSnapshotInput,
+  type RestoreTenantSnapshotResult,
   type CollectionFollowUpStatus,
   type CollectionPriority,
   type InvoiceCollectionActivityRecord,
@@ -2312,6 +2314,98 @@ export function exportTenantSnapshot(tenantId: string): TenantExportBundle {
     auditLogs: listAuditLogs(tenantId),
     accountBalances: listAccountBalances(tenantId),
     journalEntries: listJournalEntries(tenantId),
+  };
+}
+
+export function restoreTenantSnapshot(input: RestoreTenantSnapshotInput): RestoreTenantSnapshotResult {
+  const targetName = input.targetTenant.name.trim();
+  const targetSlug = input.targetTenant.slug.trim().toLowerCase();
+  const targetIndustry = input.targetTenant.industry.trim();
+
+  if (!targetName || !targetSlug || !targetIndustry) {
+    throw new Error("Target tenant name, slug, and industry are required.");
+  }
+
+  if (!input.snapshot?.tenant?.name) {
+    throw new Error("Snapshot payload is invalid.");
+  }
+
+  const restoredTenant = createTenant({
+    name: targetName,
+    slug: targetSlug,
+    industry: targetIndustry,
+  });
+
+  let restoredCustomers = 0;
+  let restoredSuppliers = 0;
+  let restoredProducts = 0;
+  let restoredInventoryLines = 0;
+  const productIdMap = new Map<string, string>();
+
+  for (const customer of input.snapshot.customers ?? []) {
+    createCustomer({
+      tenantId: restoredTenant.id,
+      name: customer.name,
+      email: customer.email,
+      phone: customer.phone,
+      city: customer.city,
+    });
+    restoredCustomers += 1;
+  }
+
+  for (const supplier of input.snapshot.suppliers ?? []) {
+    createSupplier({
+      tenantId: restoredTenant.id,
+      supplierCode: supplier.supplierCode,
+      name: supplier.name,
+      email: supplier.email,
+      phone: supplier.phone,
+      city: supplier.city,
+      leadTimeDays: supplier.leadTimeDays,
+    });
+    restoredSuppliers += 1;
+  }
+
+  for (const product of input.snapshot.products ?? []) {
+    const restoredProduct = createProduct({
+      tenantId: restoredTenant.id,
+      sku: product.sku,
+      name: product.name,
+      unitPrice: product.unitPrice,
+    });
+    productIdMap.set(product.id, restoredProduct.id);
+    restoredProducts += 1;
+  }
+
+  for (const inventory of input.snapshot.inventories ?? []) {
+    const restoredProductId = productIdMap.get(inventory.productId);
+    if (!restoredProductId) {
+      continue;
+    }
+
+    const inventoryValue =
+      inventory.inventoryValue > 0
+        ? inventory.inventoryValue
+        : inventory.quantityOnHand * inventory.averageUnitCost;
+
+    persistInventorySnapshot({
+      productId: restoredProductId,
+      quantityOnHand: inventory.quantityOnHand,
+      inventoryValue,
+      lastReceiptAt: inventory.lastReceiptAt,
+      updatedAt: inventory.updatedAt || timestamp(),
+    });
+    restoredInventoryLines += 1;
+  }
+
+  return {
+    tenant: restoredTenant,
+    restoredCustomers,
+    restoredSuppliers,
+    restoredProducts,
+    restoredInventoryLines,
+    restoredScopes: ["tenant", "customers", "suppliers", "products", "inventory"],
+    pendingScopes: ["orders", "purchaseOrders", "invoices", "collections", "approvals", "audit", "ledger"],
   };
 }
 

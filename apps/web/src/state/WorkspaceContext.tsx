@@ -20,6 +20,8 @@ import type {
   CreateTenantInput,
   ImportOnboardingInput,
   ImportOnboardingResult,
+  RestoreTenantSnapshotInput,
+  RestoreTenantSnapshotResult,
   InvoiceCollectionActivityRecord,
   CustomerStatementRecord,
   CustomerRecord,
@@ -70,6 +72,7 @@ import {
   listSuppliers,
   listTenants,
   login,
+  restoreTenantSnapshot,
   setApiSession,
   setUnauthorizedHandler,
 } from "../api";
@@ -115,6 +118,9 @@ type WorkspaceContextValue = {
     input: Omit<ImportOnboardingInput, "tenantId">,
   ) => Promise<ImportOnboardingResult>;
   exportTenantSnapshotRecord: () => Promise<TenantExportBundle>;
+  restoreTenantSnapshotRecord: (
+    input: RestoreTenantSnapshotInput,
+  ) => Promise<RestoreTenantSnapshotResult>;
   createCustomerRecord: (input: Omit<CreateCustomerInput, "tenantId">) => Promise<void>;
   createSupplierRecord: (input: Omit<CreateSupplierInput, "tenantId">) => Promise<void>;
   createProductRecord: (input: Omit<CreateProductInput, "tenantId">) => Promise<void>;
@@ -392,6 +398,34 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
       return snapshot;
     } catch (caught) {
       setErrorMessage(caught instanceof Error ? caught.message : "Tenant export failed.");
+      throw caught;
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
+  async function restoreTenantSnapshotRecord(
+    input: RestoreTenantSnapshotInput,
+  ): Promise<RestoreTenantSnapshotResult> {
+    setIsBusy(true);
+    setErrorMessage("");
+
+    try {
+      const result = await restoreTenantSnapshot(input);
+      const nextTenants = await listTenants();
+      setTenants(nextTenants);
+      setSelectedTenantId(result.tenant.id);
+      await refreshTenantWorkspace(result.tenant.id);
+      setNoticeMessage(
+        t("tenants.restoreNotice", {
+          tenantName: result.tenant.name,
+          restoredProducts: result.restoredProducts,
+          restoredCustomers: result.restoredCustomers,
+        }),
+      );
+      return result;
+    } catch (caught) {
+      setErrorMessage(caught instanceof Error ? caught.message : "Tenant restore failed.");
       throw caught;
     } finally {
       setIsBusy(false);
@@ -770,6 +804,7 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
         createTenantRecord,
         importOnboardingDatasetRecord,
         exportTenantSnapshotRecord,
+        restoreTenantSnapshotRecord,
         createCustomerRecord,
         createSupplierRecord,
         createProductRecord,

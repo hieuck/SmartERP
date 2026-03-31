@@ -31,6 +31,9 @@ const supplierCity = "Binh Duong";
 const supplierCode = `SUP-${smokeId}`;
 const productName = `Smoke Bottle ${smokeId}`;
 const productSku = `SMK-${smokeId}`;
+const restoredTenantName = `Restored Tenant ${smokeId}`;
+const restoredTenantSlug = `restored-${smokeId}`;
+const restoredTenantIndustry = "Restored Smoke QA";
 const customerImportCsv = `name,email,phone,city\n${customerName},${customerEmail},${customerPhone},${customerCity}`;
 const supplierImportCsv = `supplierCode,name,email,phone,city,leadTimeDays\n${supplierCode},${supplierName},${supplierEmail},${supplierPhone},${supplierCity},7`;
 const expectedReceiptDateInput = buildDateInputFromToday(7);
@@ -134,7 +137,8 @@ function isExpectedNegativePath(response) {
         (
           response.url().endsWith("/api/invoices") ||
           response.url().endsWith("/api/purchase-orders") ||
-          response.url().endsWith("/api/onboarding/import")
+          response.url().endsWith("/api/onboarding/import") ||
+          response.url().endsWith("/api/onboarding/restore")
         )
       ) ||
       (
@@ -338,14 +342,12 @@ async function findInvoiceNumberByOrderNumber(page, orderNumber) {
 }
 
 async function waitForTenantContext(page, expectedTenantName) {
-  const toolbar = page.locator(".page-toolbar");
-  await toolbar.waitFor({ timeout: 15000 });
+  await page.locator(".page-stack").waitFor({ timeout: 15000 });
   await page.waitForFunction(
-    ({ selector, tenantName }) => {
-      const element = document.querySelector(selector);
-      return Boolean(element && element.textContent && element.textContent.includes(tenantName));
+    ({ tenantName }) => {
+      return Boolean(document.body?.textContent?.includes(tenantName));
     },
-    { selector: ".page-toolbar", tenantName: expectedTenantName },
+    { tenantName: expectedTenantName },
     { timeout: 15000 },
   );
 }
@@ -438,6 +440,7 @@ async function main() {
   let duplicateTenantRejectedVerified = false;
   let onboardingImportVerified = false;
   let onboardingExportVerified = false;
+  let baselineRestoreVerified = false;
   let duplicateSupplierRejectedVerified = false;
   let duplicateProductRejectedVerified = false;
   let supplierAndPurchaseOrdersVerified = false;
@@ -551,11 +554,12 @@ async function main() {
 
     await openSection(page, sidebarIndexes.tenants, "/dashboard/tenants");
     const tenantsFormCard = getFormCard(page);
+    const tenantsListCard = page.locator(".two-column").first().locator(".ant-card").last();
     await fillField(tenantsFormCard, "#name", tenantName);
     await fillField(tenantsFormCard, "#slug", tenantSlug);
     await fillField(tenantsFormCard, "#industry", "Smoke QA");
     await clickSubmit(tenantsFormCard);
-    await getListCard(page).getByText(tenantName, { exact: false }).waitFor({ timeout: 15000 });
+    await tenantsListCard.getByText(tenantName, { exact: false }).waitFor({ timeout: 15000 });
     await waitForInputValue(tenantsFormCard.locator("#name"), "");
     await waitForInputValue(tenantsFormCard.locator("#slug"), "");
     await fillField(tenantsFormCard, "#name", `${tenantName} Duplicate`);
@@ -1198,50 +1202,90 @@ async function main() {
         tenantKey: tenantStorageKey,
       },
     );
+    const exportedSnapshot = exportSnapshotResponse.body?.item;
     assert(exportSnapshotResponse.status === 200, "Tenant export snapshot did not return HTTP 200.");
     assert(
-      exportSnapshotResponse.body?.item?.tenant?.name === tenantName,
+      exportedSnapshot?.tenant?.name === tenantName,
       "Tenant export snapshot did not include the expected tenant.",
     );
     assert(
-      exportSnapshotResponse.body?.item?.customers?.some((item) => item.name === customerName),
+      exportedSnapshot?.customers?.some((item) => item.name === customerName),
       "Tenant export snapshot did not include the imported customer.",
     );
     assert(
-      exportSnapshotResponse.body?.item?.suppliers?.some((item) => item.supplierCode === supplierCode),
+      exportedSnapshot?.suppliers?.some((item) => item.supplierCode === supplierCode),
       "Tenant export snapshot did not include the imported supplier.",
     );
     assert(
-      exportSnapshotResponse.body?.item?.products?.some((item) => item.sku === productSku),
+      exportedSnapshot?.products?.some((item) => item.sku === productSku),
       "Tenant export snapshot did not include the imported product.",
     );
     assert(
-      exportSnapshotResponse.body?.item?.orders?.some((item) => item.orderNumber === orderNumber) &&
-        exportSnapshotResponse.body?.item?.orders?.some((item) => item.orderNumber === secondOrderNumber),
+      exportedSnapshot?.orders?.some((item) => item.orderNumber === orderNumber) &&
+        exportedSnapshot?.orders?.some((item) => item.orderNumber === secondOrderNumber),
       "Tenant export snapshot did not include the created sales orders.",
     );
     assert(
-      exportSnapshotResponse.body?.item?.purchaseOrders?.some(
-        (item) => item.purchaseOrderNumber === purchaseOrderNumber,
-      ),
+      exportedSnapshot?.purchaseOrders?.some((item) => item.purchaseOrderNumber === purchaseOrderNumber),
       "Tenant export snapshot did not include the purchase order.",
     );
     assert(
-      exportSnapshotResponse.body?.item?.invoices?.some((item) => item.invoiceNumber === invoiceNumber) &&
-        exportSnapshotResponse.body?.item?.invoices?.some((item) => item.invoiceNumber === secondInvoiceNumber),
+      exportedSnapshot?.invoices?.some((item) => item.invoiceNumber === invoiceNumber) &&
+        exportedSnapshot?.invoices?.some((item) => item.invoiceNumber === secondInvoiceNumber),
       "Tenant export snapshot did not include the created invoices.",
     );
     assert(
-      exportSnapshotResponse.body?.item?.auditLogs?.length > 0 &&
-        exportSnapshotResponse.body?.item?.journalEntries?.length > 0,
+      exportedSnapshot?.auditLogs?.length > 0 &&
+        exportedSnapshot?.journalEntries?.length > 0,
       "Tenant export snapshot did not include audit or ledger data.",
     );
     onboardingExportVerified = true;
-    await page.getByText(customerName, { exact: false }).first().waitFor({ timeout: 15000 });
-    await page.getByText(productName, { exact: false }).first().waitFor({ timeout: 15000 });
-    await page.getByText(String(expectedRemainingStock), { exact: true }).first().waitFor({ timeout: 15000 });
-
-    await openSection(page, sidebarIndexes.dashboard, "/dashboard");
+    const originalTenantId = await page.evaluate((key) => window.localStorage.getItem(key), tenantStorageKey);
+    await openSection(page, sidebarIndexes.tenants, "/dashboard/tenants");
+    await waitForTenantContext(page, tenantName);
+    const restoreCard = page.locator(".two-column").nth(2).locator(".ant-card").first();
+    await waitForFormReady(restoreCard);
+    await fillField(restoreCard, "#targetName", restoredTenantName);
+    await fillField(restoreCard, "#targetSlug", restoredTenantSlug);
+    await fillField(restoreCard, "#targetIndustry", restoredTenantIndustry);
+    await fillField(restoreCard, "#snapshotJson", JSON.stringify(exportedSnapshot, null, 2));
+    const restoreResponse = page.waitForResponse(
+      (response) =>
+        response.url().endsWith("/api/onboarding/restore") &&
+        response.request().method() === "POST" &&
+        response.status() === 201,
+      { timeout: 15000 },
+    );
+    await clickSubmit(restoreCard);
+    await restoreResponse;
+    await restoreCard.getByText(restoredTenantName, { exact: false }).waitFor({ timeout: 15000 });
+    await waitForTenantContext(page, restoredTenantName);
+    await openSection(page, sidebarIndexes.customers, "/dashboard/customers");
+    await waitForTenantContext(page, restoredTenantName);
+    await getListCard(page).getByText(customerName, { exact: false }).waitFor({ timeout: 15000 });
+    await openSection(page, sidebarIndexes.suppliers, "/dashboard/suppliers");
+    await waitForTenantContext(page, restoredTenantName);
+    await getListCard(page).getByText(supplierName, { exact: false }).waitFor({ timeout: 15000 });
+    await openSection(page, sidebarIndexes.products, "/dashboard/products");
+    await waitForTenantContext(page, restoredTenantName);
+    await getListCard(page).getByText(productName, { exact: false }).waitFor({ timeout: 15000 });
+    await openSection(page, sidebarIndexes.inventory, "/dashboard/inventory");
+    await waitForTenantContext(page, restoredTenantName);
+    const restoredInventoryRow = getListCard(page).locator(".record-row").filter({ hasText: productName }).first();
+    await restoredInventoryRow.waitFor({ timeout: 15000 });
+    await restoredInventoryRow.getByText(String(expectedRemainingStock), { exact: true }).waitFor({ timeout: 15000 });
+    await restoredInventoryRow.getByText(buildAmountPattern(expectedInventoryValueAmount)).first().waitFor({ timeout: 15000 });
+    baselineRestoreVerified = true;
+    await page.evaluate(
+      ({ key, tenantId }) => {
+        if (tenantId) {
+          window.localStorage.setItem(key, tenantId);
+        }
+      },
+      { key: tenantStorageKey, tenantId: originalTenantId },
+    );
+    await openApp(page);
+    await waitForTenantContext(page, tenantName);
     await getStatisticValue(page, "Công nợ quá hạn").getByText(buildAmountPattern(expectedOverdue31To60Amount)).waitFor({ timeout: 15000 });
     await getStatisticValue(page, "Hóa đơn còn công nợ").getByText("1", { exact: true }).waitFor({ timeout: 15000 });
     await getStatisticValue(page, "Phê duyệt chờ xử lý").getByText("0", { exact: true }).waitFor({ timeout: 15000 });
@@ -1268,6 +1312,10 @@ async function main() {
 
     await loginAs(page, salesEmail, demoPassword);
     await page.locator(".shell-header").getByText("Kinh doanh", { exact: false }).waitFor({ timeout: 15000 });
+    await page.evaluate(
+      ({ key, tenantId }) => window.localStorage.setItem(key, tenantId),
+      { key: tenantStorageKey, tenantId: originalTenantId },
+    );
     assert(
       (await page.locator(".ant-layout-sider .ant-menu-item").getByText("Khách hàng", { exact: false }).count()) > 0,
       "Sales role did not receive customer navigation.",
@@ -1354,11 +1402,51 @@ async function main() {
         salesForbiddenImportResponse.body?.error === "Forbidden.",
       "Sales role did not receive a backend 403 for onboarding import.",
     );
+    const salesForbiddenRestoreResponse = await page.evaluate(
+      async ({ sessionKey, snapshot }) => {
+        const rawSession = window.localStorage.getItem(sessionKey);
+        const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
+
+        const response = await fetch("/api/onboarding/restore", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            snapshot,
+            targetTenant: {
+              name: `${snapshot.tenant.name} Sales Blocked`,
+              slug: `${snapshot.tenant.slug}-sales-blocked`,
+              industry: snapshot.tenant.industry,
+            },
+          }),
+        });
+
+        return {
+          status: response.status,
+          body: await response.json(),
+        };
+      },
+      {
+        sessionKey: sessionStorageKey,
+        snapshot: exportedSnapshot,
+      },
+    );
+    assert(
+      salesForbiddenRestoreResponse.status === 403 &&
+        salesForbiddenRestoreResponse.body?.error === "Forbidden.",
+      "Sales role did not receive a backend 403 for snapshot restore.",
+    );
     rbacSalesBlockedRouteVerified = true;
     await logout(page);
 
     await loginAs(page, warehouseEmail, demoPassword);
     await page.locator(".shell-header").getByText("Kho vận", { exact: false }).waitFor({ timeout: 15000 });
+    await page.evaluate(
+      ({ key, tenantId }) => window.localStorage.setItem(key, tenantId),
+      { key: tenantStorageKey, tenantId: originalTenantId },
+    );
     await openDirectRoute(page, "/dashboard/purchase-orders");
     await waitForTenantContext(page, tenantName);
     await page
@@ -1410,6 +1498,10 @@ async function main() {
 
     await loginAs(page, collectorEmail, demoPassword);
     await page.locator(".shell-header").getByText("Thu hồi công nợ", { exact: false }).waitFor({ timeout: 15000 });
+    await page.evaluate(
+      ({ key, tenantId }) => window.localStorage.setItem(key, tenantId),
+      { key: tenantStorageKey, tenantId: originalTenantId },
+    );
     await openDirectRoute(page, "/dashboard/invoices");
     await waitForTenantContext(page, tenantName);
     await page
@@ -1490,6 +1582,7 @@ async function main() {
       duplicateTenantRejectedVerified,
       onboardingImportVerified,
       onboardingExportVerified,
+      baselineRestoreVerified,
       duplicateSupplierRejectedVerified,
       duplicateProductRejectedVerified,
       supplierAndPurchaseOrdersVerified,

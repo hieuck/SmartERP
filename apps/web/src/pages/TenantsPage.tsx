@@ -8,6 +8,8 @@ import type {
   CreateTenantInput,
   ImportOnboardingResult,
   OnboardingDataset,
+  RestoreTenantSnapshotResult,
+  TenantExportBundle,
 } from "@smarterp/contracts";
 import { onboardingCsvTemplates } from "@smarterp/contracts";
 
@@ -19,6 +21,13 @@ const { Paragraph, Title } = Typography;
 type OnboardingFormShape = {
   dataset: OnboardingDataset;
   csvText: string;
+};
+
+type RestoreFormShape = {
+  targetName: string;
+  targetSlug: string;
+  targetIndustry: string;
+  snapshotJson: string;
 };
 
 function downloadJsonFile(filename: string, payload: unknown): void {
@@ -42,6 +51,7 @@ export function TenantsPage(): ReactElement {
     exportTenantSnapshotRecord,
     importOnboardingDatasetRecord,
     isBusy,
+    restoreTenantSnapshotRecord,
     selectedTenant,
     selectedTenantId,
     setSelectedTenantId,
@@ -49,7 +59,9 @@ export function TenantsPage(): ReactElement {
   } = useWorkspace();
   const [form] = Form.useForm<CreateTenantInput>();
   const [onboardingForm] = Form.useForm<OnboardingFormShape>();
+  const [restoreForm] = Form.useForm<RestoreFormShape>();
   const [importResult, setImportResult] = useState<ImportOnboardingResult | null>(null);
+  const [restoreResult, setRestoreResult] = useState<RestoreTenantSnapshotResult | null>(null);
   const watchedDataset = (Form.useWatch("dataset", onboardingForm) as OnboardingDataset | undefined) ?? "customers";
 
   const onFinish: FormProps<CreateTenantInput>["onFinish"] = async (values) => {
@@ -82,6 +94,47 @@ export function TenantsPage(): ReactElement {
     try {
       const snapshot = await exportTenantSnapshotRecord();
       downloadJsonFile(`${snapshot.tenant.slug}-snapshot.json`, snapshot);
+    } catch {
+      // Error state is already surfaced via workspace context.
+    }
+  };
+
+  const onRestoreFinish: FormProps<RestoreFormShape>["onFinish"] = async (values) => {
+    let snapshot: TenantExportBundle;
+
+    try {
+      snapshot = JSON.parse(values.snapshotJson) as TenantExportBundle;
+    } catch {
+      restoreForm.setFields([
+        {
+          name: "snapshotJson",
+          errors: [t("tenants.restoreInvalidJson")],
+        },
+      ]);
+      return;
+    }
+
+    if (!snapshot?.tenant?.name || !Array.isArray(snapshot.products) || !Array.isArray(snapshot.inventories)) {
+      restoreForm.setFields([
+        {
+          name: "snapshotJson",
+          errors: [t("tenants.restoreInvalidJson")],
+        },
+      ]);
+      return;
+    }
+
+    try {
+      const result = await restoreTenantSnapshotRecord({
+        snapshot,
+        targetTenant: {
+          name: values.targetName,
+          slug: values.targetSlug,
+          industry: values.targetIndustry,
+        },
+      });
+      setRestoreResult(result);
+      restoreForm.resetFields(["snapshotJson"]);
     } catch {
       // Error state is already surfaced via workspace context.
     }
@@ -239,6 +292,86 @@ export function TenantsPage(): ReactElement {
           <Button type="primary" onClick={handleExportSnapshot} disabled={!selectedTenantId} loading={isBusy}>
             {t("tenants.exportAction")}
           </Button>
+        </Card>
+      </div>
+
+      <div className="two-column">
+        <Card title={t("tenants.restoreTitle")}>
+          <Paragraph type="secondary">{t("tenants.restoreHint")}</Paragraph>
+          <Form<RestoreFormShape> form={restoreForm} layout="vertical" onFinish={onRestoreFinish}>
+            <Form.Item<RestoreFormShape>
+              label={t("tenants.restoreTargetName")}
+              name="targetName"
+              rules={[{ required: true }]}
+            >
+              <Input placeholder={t("tenants.restoreTargetNamePlaceholder")} />
+            </Form.Item>
+            <Form.Item<RestoreFormShape>
+              label={t("tenants.restoreTargetSlug")}
+              name="targetSlug"
+              rules={[{ required: true }]}
+            >
+              <Input placeholder={t("tenants.restoreTargetSlugPlaceholder")} />
+            </Form.Item>
+            <Form.Item<RestoreFormShape>
+              label={t("tenants.restoreTargetIndustry")}
+              name="targetIndustry"
+              rules={[{ required: true }]}
+            >
+              <Input placeholder={t("tenants.restoreTargetIndustryPlaceholder")} />
+            </Form.Item>
+            <Form.Item<RestoreFormShape>
+              label={t("tenants.restoreSnapshotJson")}
+              name="snapshotJson"
+              rules={[{ required: true }]}
+            >
+              <Input.TextArea
+                autoSize={{ minRows: 8, maxRows: 16 }}
+                placeholder={t("tenants.restoreSnapshotPlaceholder")}
+              />
+            </Form.Item>
+            <Button type="primary" htmlType="submit" loading={isBusy}>
+              {t("tenants.restoreAction")}
+            </Button>
+          </Form>
+
+          {restoreResult ? (
+            <div className="page-inline-stack">
+              <Alert
+                type="success"
+                title={t("tenants.restoreSummary", {
+                  tenantName: restoreResult.tenant.name,
+                  restoredProducts: restoreResult.restoredProducts,
+                  restoredCustomers: restoreResult.restoredCustomers,
+                  restoredInventoryLines: restoreResult.restoredInventoryLines,
+                })}
+                showIcon
+              />
+              <div className="record-stack">
+                <div className="compact-record-row">
+                  <strong>{t("tenants.restoreRestoredScopes")}</strong>
+                  <span>{restoreResult.restoredScopes.join(", ")}</span>
+                </div>
+                <div className="compact-record-row">
+                  <strong>{t("tenants.restorePendingScopes")}</strong>
+                  <span>{restoreResult.pendingScopes.join(", ")}</span>
+                </div>
+              </div>
+            </div>
+          ) : null}
+        </Card>
+
+        <Card title={t("tenants.restoreScopeTitle")}>
+          <div className="record-stack">
+            <div className="compact-record-row">
+              <strong>{t("tenants.restoreNowLabel")}</strong>
+              <span>{t("tenants.restoreNowValue")}</span>
+            </div>
+            <div className="compact-record-row">
+              <strong>{t("tenants.restoreLaterLabel")}</strong>
+              <span>{t("tenants.restoreLaterValue")}</span>
+            </div>
+          </div>
         </Card>
       </div>
     </div>
