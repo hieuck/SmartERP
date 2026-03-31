@@ -28,6 +28,7 @@ import type {
   JournalEntryRecord,
   LoginInput,
   LoginResult,
+  OperationsStatusPayload,
   OrderRecord,
   PurchaseOrderRecord,
   ProductRecord,
@@ -84,6 +85,11 @@ export function setUnauthorizedHandler(handler: ((message: string) => void) | nu
 
 export function getFoundation(): Promise<FoundationSnapshot> {
   return request<FoundationSnapshot>("/api/foundation");
+}
+
+export async function getOperationsStatus(): Promise<OperationsStatusPayload> {
+  const payload = await request<{ item: OperationsStatusPayload }>("/api/operations/status");
+  return payload.item;
 }
 
 export function login(input: LoginInput): Promise<LoginResult> {

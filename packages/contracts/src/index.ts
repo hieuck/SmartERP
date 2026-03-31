@@ -10,6 +10,7 @@ export const foundationModules = [
   "invoices",
   "reporting",
   "approvals",
+  "operations",
 ] as const;
 
 export const userRoles = [
@@ -35,6 +36,7 @@ export const permissionKeys = [
   "manage_collections",
   "view_reports",
   "decide_approvals",
+  "view_operations",
 ] as const;
 
 export const onboardingDatasets = [
@@ -700,6 +702,67 @@ export type HealthPayload = {
   service: "smarterp-api";
   status: "ok";
   foundation: string;
+};
+
+export type OperationsDatabaseStatus = {
+  path: string;
+  exists: boolean;
+  sizeBytes: number;
+  updatedAt: string | null;
+};
+
+export type OperationsSmokeStatus = {
+  checkedAt: string;
+  passed: boolean;
+  tenantName: string | null;
+  verifiedCheckCount: number;
+  consoleWarningCount: number;
+  consoleErrorCount: number;
+  failedRequestCount: number;
+  screenshotPath: string | null;
+  summaryPath: string;
+};
+
+export type OperationsTotals = {
+  tenantCount: number;
+  customerCount: number;
+  supplierCount: number;
+  productCount: number;
+  purchaseOrderCount: number;
+  openPurchaseOrderCount: number;
+  inventoryLineCount: number;
+  orderCount: number;
+  invoiceCount: number;
+  openInvoiceCount: number;
+  pendingApprovalCount: number;
+  overdueReceivablesAmount: number;
+  todayCollectionActionCount: number;
+};
+
+export type OperationsTenantStatusRecord = {
+  tenantId: string;
+  tenantName: string;
+  tenantSlug: string;
+  industry: string;
+  customerCount: number;
+  supplierCount: number;
+  productCount: number;
+  openInvoiceCount: number;
+  pendingApprovalCount: number;
+  overdueReceivablesAmount: number;
+  inventoryValueAmount: number;
+  lastActivityAt: string | null;
+};
+
+export type OperationsStatusPayload = {
+  service: "smarterp-api";
+  status: "ok";
+  foundation: string;
+  generatedAt: string;
+  database: OperationsDatabaseStatus;
+  smoke: OperationsSmokeStatus | null;
+  totals: OperationsTotals;
+  tenants: OperationsTenantStatusRecord[];
 };
 
 export function getRoleModules(role: UserRole): readonly FoundationModule[] {

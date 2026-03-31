@@ -52,6 +52,8 @@ import {
   type PurchaseOrderStatus,
   type ProductRecord,
   type ReportSummary,
+  type OperationsTenantStatusRecord,
+  type OperationsTotals,
   type Session,
   type SupplierRecord,
   type TenantRecord,
@@ -241,6 +243,37 @@ type ReportCountsRow = {
   overdue_31_to_60_amount: number;
   overdue_61_to_90_amount: number;
   overdue_over_90_amount: number;
+};
+
+type OperationsTotalsRow = {
+  tenant_count: number;
+  customer_count: number;
+  supplier_count: number;
+  product_count: number;
+  purchase_order_count: number;
+  open_purchase_order_count: number;
+  inventory_line_count: number;
+  order_count: number;
+  invoice_count: number;
+  open_invoice_count: number;
+  pending_approval_count: number;
+  overdue_receivables_amount: number;
+  today_collection_action_count: number;
+};
+
+type OperationsTenantStatusRow = {
+  tenant_id: string;
+  tenant_name: string;
+  tenant_slug: string;
+  industry: string;
+  customer_count: number;
+  supplier_count: number;
+  product_count: number;
+  open_invoice_count: number;
+  pending_approval_count: number;
+  overdue_receivables_amount: number;
+  inventory_value_amount: number;
+  last_activity_at: string | null;
 };
 
 type AccountRow = {
@@ -1309,6 +1342,134 @@ const getTopProductStatement = db.prepare(`
   LIMIT 1
 `);
 
+const getOperationsTotalsStatement = db.prepare(`
+  SELECT
+    (SELECT COUNT(*) FROM tenants) AS tenant_count,
+    (SELECT COUNT(*) FROM customers) AS customer_count,
+    (SELECT COUNT(*) FROM suppliers) AS supplier_count,
+    (SELECT COUNT(*) FROM products) AS product_count,
+    (SELECT COUNT(*) FROM purchase_orders) AS purchase_order_count,
+    (SELECT COUNT(*) FROM purchase_orders WHERE status <> 'received') AS open_purchase_order_count,
+    (SELECT COUNT(*) FROM inventory) AS inventory_line_count,
+    (SELECT COUNT(*) FROM orders) AS order_count,
+    (SELECT COUNT(*) FROM invoices) AS invoice_count,
+    (
+      SELECT COUNT(*)
+      FROM (
+        SELECT
+          i.id,
+          i.total_amount - COALESCE(SUM(p.amount), 0) AS outstanding_amount
+        FROM invoices i
+        LEFT JOIN invoice_payments p ON p.invoice_id = i.id
+        GROUP BY i.id, i.total_amount
+      ) invoice_totals
+      WHERE outstanding_amount > 0
+    ) AS open_invoice_count,
+    (
+      SELECT COUNT(*)
+      FROM approval_requests
+      WHERE status = 'pending'
+    ) AS pending_approval_count,
+    (
+      SELECT COALESCE(SUM(outstanding_amount), 0)
+      FROM (
+        SELECT
+          i.id,
+          i.total_amount - COALESCE(SUM(p.amount), 0) AS outstanding_amount
+        FROM invoices i
+        LEFT JOIN invoice_payments p ON p.invoice_id = i.id
+        WHERE date(i.due_date) < date('now')
+        GROUP BY i.id, i.total_amount, i.due_date
+      ) overdue_invoices
+      WHERE outstanding_amount > 0
+    ) AS overdue_receivables_amount,
+    (
+      SELECT COUNT(*)
+      FROM (
+        SELECT
+          i.id,
+          i.next_action_date,
+          i.total_amount - COALESCE(SUM(p.amount), 0) AS outstanding_amount
+        FROM invoices i
+        LEFT JOIN invoice_payments p ON p.invoice_id = i.id
+        WHERE i.next_action_date IS NOT NULL
+        GROUP BY i.id, i.next_action_date, i.total_amount
+      ) actionable_invoices
+      WHERE outstanding_amount > 0 AND date(next_action_date) <= date('now')
+    ) AS today_collection_action_count
+`);
+
+const listOperationsTenantStatusStatement = db.prepare(`
+  SELECT
+    t.id AS tenant_id,
+    t.name AS tenant_name,
+    t.slug AS tenant_slug,
+    t.industry AS industry,
+    (SELECT COUNT(*) FROM customers c WHERE c.tenant_id = t.id) AS customer_count,
+    (SELECT COUNT(*) FROM suppliers s WHERE s.tenant_id = t.id) AS supplier_count,
+    (SELECT COUNT(*) FROM products p WHERE p.tenant_id = t.id) AS product_count,
+    (
+      SELECT COUNT(*)
+      FROM (
+        SELECT
+          i.id,
+          i.total_amount - COALESCE(SUM(p.amount), 0) AS outstanding_amount
+        FROM invoices i
+        LEFT JOIN invoice_payments p ON p.invoice_id = i.id
+        WHERE i.tenant_id = t.id
+        GROUP BY i.id, i.total_amount
+      ) invoice_totals
+      WHERE outstanding_amount > 0
+    ) AS open_invoice_count,
+    (
+      SELECT COUNT(*)
+      FROM approval_requests ar
+      WHERE ar.tenant_id = t.id AND ar.status = 'pending'
+    ) AS pending_approval_count,
+    (
+      SELECT COALESCE(SUM(outstanding_amount), 0)
+      FROM (
+        SELECT
+          i.id,
+          i.total_amount - COALESCE(SUM(p.amount), 0) AS outstanding_amount
+        FROM invoices i
+        LEFT JOIN invoice_payments p ON p.invoice_id = i.id
+        WHERE i.tenant_id = t.id AND date(i.due_date) < date('now')
+        GROUP BY i.id, i.total_amount, i.due_date
+      ) overdue_invoices
+      WHERE outstanding_amount > 0
+    ) AS overdue_receivables_amount,
+    (
+      SELECT COALESCE(SUM(inv.inventory_value), 0)
+      FROM inventory inv
+      WHERE inv.tenant_id = t.id
+    ) AS inventory_value_amount,
+    (
+      SELECT MAX(event_time)
+      FROM (
+        SELECT MAX(created_at) AS event_time FROM customers c WHERE c.tenant_id = t.id
+        UNION ALL
+        SELECT MAX(created_at) AS event_time FROM suppliers s WHERE s.tenant_id = t.id
+        UNION ALL
+        SELECT MAX(created_at) AS event_time FROM products p WHERE p.tenant_id = t.id
+        UNION ALL
+        SELECT MAX(created_at) AS event_time FROM orders o WHERE o.tenant_id = t.id
+        UNION ALL
+        SELECT MAX(created_at) AS event_time FROM purchase_orders po WHERE po.tenant_id = t.id
+        UNION ALL
+        SELECT MAX(received_at) AS event_time FROM purchase_order_receipts pr WHERE pr.tenant_id = t.id
+        UNION ALL
+        SELECT MAX(issued_at) AS event_time FROM invoices i WHERE i.tenant_id = t.id
+        UNION ALL
+        SELECT MAX(paid_at) AS event_time FROM invoice_payments ip WHERE ip.tenant_id = t.id
+        UNION ALL
+        SELECT MAX(requested_at) AS event_time FROM approval_requests ar WHERE ar.tenant_id = t.id
+      )
+    ) AS last_activity_at
+  FROM tenants t
+  ORDER BY overdue_receivables_amount DESC, pending_approval_count DESC, tenant_name COLLATE NOCASE ASC
+`);
+
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 const validFollowUpStatuses: CollectionFollowUpStatus[] = [
   "new",
@@ -1377,6 +1538,23 @@ function mapTenant(row: TenantRow): TenantRecord {
     slug: row.slug,
     industry: row.industry,
     createdAt: row.created_at,
+  };
+}
+
+function mapOperationsTenantStatus(row: OperationsTenantStatusRow): OperationsTenantStatusRecord {
+  return {
+    tenantId: row.tenant_id,
+    tenantName: row.tenant_name,
+    tenantSlug: row.tenant_slug,
+    industry: row.industry,
+    customerCount: row.customer_count,
+    supplierCount: row.supplier_count,
+    productCount: row.product_count,
+    openInvoiceCount: row.open_invoice_count,
+    pendingApprovalCount: row.pending_approval_count,
+    overdueReceivablesAmount: row.overdue_receivables_amount,
+    inventoryValueAmount: row.inventory_value_amount,
+    lastActivityAt: row.last_activity_at,
   };
 }
 
@@ -2867,6 +3045,32 @@ export function getReportSummary(tenantId: string): ReportSummary {
     topProductName: topProduct?.product_name ?? "",
     topProductUnits: topProduct?.total_units ?? 0,
   };
+}
+
+export function getOperationsTotals(): OperationsTotals {
+  const totals = getOperationsTotalsStatement.get() as OperationsTotalsRow;
+
+  return {
+    tenantCount: totals.tenant_count,
+    customerCount: totals.customer_count,
+    supplierCount: totals.supplier_count,
+    productCount: totals.product_count,
+    purchaseOrderCount: totals.purchase_order_count,
+    openPurchaseOrderCount: totals.open_purchase_order_count,
+    inventoryLineCount: totals.inventory_line_count,
+    orderCount: totals.order_count,
+    invoiceCount: totals.invoice_count,
+    openInvoiceCount: totals.open_invoice_count,
+    pendingApprovalCount: totals.pending_approval_count,
+    overdueReceivablesAmount: totals.overdue_receivables_amount,
+    todayCollectionActionCount: totals.today_collection_action_count,
+  };
+}
+
+export function listOperationsTenantStatuses(): OperationsTenantStatusRecord[] {
+  return (listOperationsTenantStatusStatement.all() as OperationsTenantStatusRow[]).map(
+    mapOperationsTenantStatus,
+  );
 }
 
 export function createOrder(input: CreateOrderInput): OrderRecord {

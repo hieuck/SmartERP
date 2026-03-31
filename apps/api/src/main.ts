@@ -1,5 +1,7 @@
+import fs from "node:fs/promises";
 import { createServer } from "node:http";
 import type { IncomingMessage, ServerResponse } from "node:http";
+import path from "node:path";
 import { URL } from "node:url";
 
 import {
@@ -28,6 +30,8 @@ import {
   type CreateTenantInput,
   type ImportOnboardingInput,
   type LoginInput,
+  type OperationsSmokeStatus,
+  type OperationsStatusPayload,
   type Permission,
   type RestoreTenantSnapshotInput,
   type RestoreTenantSnapshotPreview,
@@ -50,9 +54,11 @@ import {
   createSupplier,
   createTenant,
   exportTenantSnapshot,
+  getOperationsTotals,
   getReportSummary,
   hasTenant,
   importOnboardingDataset,
+  listOperationsTenantStatuses,
   previewRestoreTenantSnapshot,
   restoreTenantSnapshot,
   listAccountBalances,
@@ -91,6 +97,81 @@ function forbidden(response: ServerResponse): void {
 
 function internalServerError(response: ServerResponse): void {
   sendJson(response, 500, { error: "Internal server error." });
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function countVerifiedChecks(summary: Record<string, unknown>): number {
+  return Object.entries(summary).filter(([key, value]) => key.endsWith("Verified") && value === true).length;
+}
+
+function didSmokePass(summary: Record<string, unknown>): boolean {
+  const verifiedKeys = Object.keys(summary).filter((key) => key.endsWith("Verified"));
+  const consoleWarnings = Array.isArray(summary.consoleWarnings) ? summary.consoleWarnings : [];
+  const consoleErrors = Array.isArray(summary.consoleErrors) ? summary.consoleErrors : [];
+  const failedRequests = Array.isArray(summary.failedRequests) ? summary.failedRequests : [];
+
+  return (
+    verifiedKeys.length > 0 &&
+    verifiedKeys.every((key) => summary[key] === true) &&
+    consoleWarnings.length === 0 &&
+    consoleErrors.length === 0 &&
+    failedRequests.length === 0
+  );
+}
+
+async function getOperationsDatabaseStatus(): Promise<OperationsStatusPayload["database"]> {
+  const databasePath = getDatabasePath();
+
+  try {
+    const stats = await fs.stat(databasePath);
+    return {
+      path: databasePath,
+      exists: true,
+      sizeBytes: stats.size,
+      updatedAt: stats.mtime.toISOString(),
+    };
+  } catch {
+    return {
+      path: databasePath,
+      exists: false,
+      sizeBytes: 0,
+      updatedAt: null,
+    };
+  }
+}
+
+async function readOperationsSmokeStatus(): Promise<OperationsSmokeStatus | null> {
+  const summaryPath = path.join(path.dirname(getDatabasePath()), "..", "output", "playwright", "runtime-next-smoke-summary.json");
+
+  try {
+    const raw = await fs.readFile(summaryPath, "utf8");
+    const parsed = JSON.parse(raw) as unknown;
+
+    if (!isRecord(parsed) || typeof parsed.checkedAt !== "string") {
+      return null;
+    }
+
+    const consoleWarnings = Array.isArray(parsed.consoleWarnings) ? parsed.consoleWarnings : [];
+    const consoleErrors = Array.isArray(parsed.consoleErrors) ? parsed.consoleErrors : [];
+    const failedRequests = Array.isArray(parsed.failedRequests) ? parsed.failedRequests : [];
+
+    return {
+      checkedAt: parsed.checkedAt,
+      passed: didSmokePass(parsed),
+      tenantName: typeof parsed.tenantName === "string" ? parsed.tenantName : null,
+      verifiedCheckCount: countVerifiedChecks(parsed),
+      consoleWarningCount: consoleWarnings.length,
+      consoleErrorCount: consoleErrors.length,
+      failedRequestCount: failedRequests.length,
+      screenshotPath: typeof parsed.screenshotPath === "string" ? parsed.screenshotPath : null,
+      summaryPath,
+    };
+  } catch {
+    return null;
+  }
 }
 
 function isSqliteConstraintError(error: unknown): error is Error & { code?: string } {
@@ -196,6 +277,26 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
           role,
         })),
       });
+      return;
+    }
+
+    if (request.method === "GET" && pathname === "/api/operations/status") {
+      if (!ensurePermission(response, requestSession, "view_operations")) {
+        return;
+      }
+
+      const item: OperationsStatusPayload = {
+        service: "smarterp-api",
+        status: "ok",
+        foundation: describeApiFoundation(),
+        generatedAt: new Date().toISOString(),
+        database: await getOperationsDatabaseStatus(),
+        smoke: await readOperationsSmokeStatus(),
+        totals: getOperationsTotals(),
+        tenants: listOperationsTenantStatuses(),
+      };
+
+      sendJson(response, 200, { item });
       return;
     }
 

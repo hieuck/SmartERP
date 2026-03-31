@@ -1,6 +1,7 @@
 import {
   ApartmentOutlined,
   BarChartOutlined,
+  ControlOutlined,
   DatabaseOutlined,
   DashboardOutlined,
   FileTextOutlined,
@@ -64,6 +65,9 @@ export function Sidebar({ collapsed }: SidebarProps): ReactElement {
     canAccessModule("approvals")
       ? { key: "/dashboard/approvals", icon: <SafetyCertificateOutlined />, label: t("shell.approvals") }
       : null,
+    canAccessModule("operations")
+      ? { key: "/dashboard/operations", icon: <ControlOutlined />, label: t("shell.operations") }
+      : null,
   ].filter(Boolean) as MenuItem[];
 
   function getSelectedKey(): string {
@@ -78,6 +82,7 @@ export function Sidebar({ collapsed }: SidebarProps): ReactElement {
     if (path.startsWith("/dashboard/invoices")) return "/dashboard/invoices";
     if (path.startsWith("/dashboard/reports")) return "/dashboard/reports";
     if (path.startsWith("/dashboard/approvals")) return "/dashboard/approvals";
+    if (path.startsWith("/dashboard/operations")) return "/dashboard/operations";
     return "/dashboard";
   }
 

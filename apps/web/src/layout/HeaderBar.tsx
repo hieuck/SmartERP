@@ -44,6 +44,7 @@ export function HeaderBar({ collapsed, onToggle }: HeaderBarProps): ReactElement
     invoices: t("shell.invoices"),
     reports: t("shell.reports"),
     approvals: t("shell.approvals"),
+    operations: t("shell.operations"),
   };
 
   const breadcrumbItems = location.pathname

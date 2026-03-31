@@ -44,6 +44,9 @@ const ReportsPage = lazy(() =>
 const ApprovalsPage = lazy(() =>
   import("./pages/ApprovalsPage").then((module) => ({ default: module.ApprovalsPage })),
 );
+const OperationsPage = lazy(() =>
+  import("./pages/OperationsPage").then((module) => ({ default: module.OperationsPage })),
+);
 
 function RouteFallback(): ReactElement {
   return (
@@ -151,6 +154,10 @@ export function AppRoutes(): ReactElement {
           <Route
             path="approvals"
             element={<ProtectedModuleRoute module="approvals" element={withLazyBoundary(<ApprovalsPage />)} />}
+          />
+          <Route
+            path="operations"
+            element={<ProtectedModuleRoute module="operations" element={withLazyBoundary(<OperationsPage />)} />}
           />
         </Route>
         <Route path="*" element={<Navigate to="/dashboard" replace />} />

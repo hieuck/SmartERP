@@ -25,6 +25,7 @@ export function AccessDeniedPage({ module }: AccessDeniedPageProps): ReactElemen
     invoices: "shell.invoices",
     reporting: "shell.reports",
     approvals: "shell.approvals",
+    operations: "shell.operations",
   };
 
   return (

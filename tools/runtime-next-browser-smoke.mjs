@@ -90,6 +90,7 @@ const sidebarIndexes = {
   invoices: 8,
   reports: 9,
   approvals: 10,
+  operations: 11,
 };
 
 function assert(condition, message) {
@@ -462,6 +463,7 @@ async function main() {
   let collectionResolutionVerified = false;
   let ledgerPostingVerified = false;
   let auditTrailVerified = false;
+  let operationsStatusVerified = false;
   let unauthorizedApiBlockedVerified = false;
   let rbacSalesVisibilityVerified = false;
   let rbacSalesBlockedRouteVerified = false;
@@ -510,6 +512,7 @@ async function main() {
             "invoices",
             "reporting",
             "approvals",
+            "operations",
           ],
           permissions: [
             "manage_tenants",
@@ -525,6 +528,7 @@ async function main() {
             "manage_collections",
             "view_reports",
             "decide_approvals",
+            "view_operations",
           ],
         },
       },
@@ -1183,6 +1187,43 @@ async function main() {
     await auditCard.getByText(collectionNote, { exact: false }).first().waitFor({ timeout: 15000 });
     await auditCard.getByText(escalatedCollectionNote, { exact: false }).first().waitFor({ timeout: 15000 });
     auditTrailVerified = true;
+    await openSection(page, sidebarIndexes.operations, "/dashboard/operations");
+    await page.getByRole("heading", { name: "Vận hành" }).waitFor({ timeout: 15000 });
+    await page.getByText("Smoke gate gần nhất", { exact: false }).waitFor({ timeout: 15000 });
+    await page.getByText(tenantName, { exact: false }).first().waitFor({ timeout: 15000 });
+    const operationsSnapshot = await page.evaluate(async ({ sessionKey }) => {
+      const rawSession = window.localStorage.getItem(sessionKey);
+      const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
+      const response = await fetch("/api/operations/status", {
+        headers: {
+          authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      return {
+        status: response.status,
+        body: await response.json(),
+      };
+    }, { sessionKey: sessionStorageKey });
+    assert(operationsSnapshot.status === 200, "Operations status endpoint did not return 200 for founder.");
+    assert(
+      Array.isArray(operationsSnapshot.body?.item?.tenants) &&
+        operationsSnapshot.body.item.tenants.some((tenant) => tenant.tenantName === tenantName),
+      "Operations status did not include the current smoke tenant.",
+    );
+    assert(
+      operationsSnapshot.body?.item?.database?.path?.includes("smarterp-next.db"),
+      "Operations status did not expose the runtime database path.",
+    );
+    assert(
+      operationsSnapshot.body?.item?.smoke === null ||
+        (
+          typeof operationsSnapshot.body.item.smoke?.verifiedCheckCount === "number" &&
+          operationsSnapshot.body.item.smoke.verifiedCheckCount >= 0
+        ),
+      "Operations status returned an invalid smoke summary payload.",
+    );
+    operationsStatusVerified = true;
     const exportSnapshotResponse = await page.evaluate(
       async ({ sessionKey, tenantKey }) => {
         const rawSession = window.localStorage.getItem(sessionKey);
@@ -1347,7 +1388,13 @@ async function main() {
       (await page.locator(".ant-layout-sider .ant-menu-item").getByText("Phê duyệt", { exact: false }).count()) === 0,
       "Sales role should not see approvals navigation.",
     );
+    assert(
+      (await page.locator(".ant-layout-sider .ant-menu-item").getByText("Vận hành", { exact: false }).count()) === 0,
+      "Sales role should not see operations navigation.",
+    );
     rbacSalesVisibilityVerified = true;
+    await openDirectRoute(page, "/dashboard/operations");
+    await page.getByText("Không có quyền truy cập", { exact: false }).waitFor({ timeout: 15000 });
     await openDirectRoute(page, "/dashboard/reports");
     await page.getByText("Không có quyền truy cập", { exact: false }).waitFor({ timeout: 15000 });
     const salesForbiddenInvoiceResponse = await page.evaluate(
@@ -1659,6 +1706,7 @@ async function main() {
       collectionResolutionVerified,
       ledgerPostingVerified,
       auditTrailVerified,
+      operationsStatusVerified,
       rbacSalesVisibilityVerified,
       rbacSalesBlockedRouteVerified,
       rbacSalesBlockedRestorePreviewVerified,
