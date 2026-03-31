@@ -18,6 +18,8 @@ import type {
   CreateProductInput,
   CreateSupplierInput,
   CreateTenantInput,
+  ImportOnboardingInput,
+  ImportOnboardingResult,
   InvoiceCollectionActivityRecord,
   CustomerStatementRecord,
   CustomerRecord,
@@ -32,6 +34,7 @@ import type {
   Session,
   SupplierRecord,
   TenantRecord,
+  TenantExportBundle,
 } from "@smarterp/contracts";
 import {
   canAccessModule as sessionCanAccessModule,
@@ -52,7 +55,9 @@ import {
   createProduct,
   createSupplier,
   createTenant,
+  exportTenantSnapshot,
   getFoundation,
+  importOnboardingDataset,
   listApprovalRequests,
   listInvoiceCollectionActivities,
   listCustomers,
@@ -106,6 +111,10 @@ type WorkspaceContextValue = {
   logoutFromWorkspace: () => void;
   setSelectedTenantId: (tenantId: string) => void;
   createTenantRecord: (input: CreateTenantInput) => Promise<void>;
+  importOnboardingDatasetRecord: (
+    input: Omit<ImportOnboardingInput, "tenantId">,
+  ) => Promise<ImportOnboardingResult>;
+  exportTenantSnapshotRecord: () => Promise<TenantExportBundle>;
   createCustomerRecord: (input: Omit<CreateCustomerInput, "tenantId">) => Promise<void>;
   createSupplierRecord: (input: Omit<CreateSupplierInput, "tenantId">) => Promise<void>;
   createProductRecord: (input: Omit<CreateProductInput, "tenantId">) => Promise<void>;
@@ -327,6 +336,62 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
       setSelectedTenantId(created.id);
     } catch (caught) {
       setErrorMessage(caught instanceof Error ? caught.message : "Tenant creation failed.");
+      throw caught;
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
+  async function importOnboardingDatasetRecord(
+    input: Omit<ImportOnboardingInput, "tenantId">,
+  ): Promise<ImportOnboardingResult> {
+    if (!selectedTenantId) {
+      setErrorMessage("Select a tenant first.");
+      throw new Error("Select a tenant first.");
+    }
+
+    setIsBusy(true);
+    setErrorMessage("");
+    setNoticeMessage("");
+
+    try {
+      const result = await importOnboardingDataset({ ...input, tenantId: selectedTenantId });
+      await refreshTenantWorkspace(selectedTenantId);
+      setNoticeMessage(
+        t("tenants.importNotice", {
+          dataset: t(`tenants.datasets.${result.dataset}`),
+          createdCount: result.createdCount,
+          skippedCount: result.skippedCount,
+        }),
+      );
+      return result;
+    } catch (caught) {
+      setErrorMessage(caught instanceof Error ? caught.message : "Onboarding import failed.");
+      throw caught;
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
+  async function exportTenantSnapshotRecord(): Promise<TenantExportBundle> {
+    if (!selectedTenantId) {
+      setErrorMessage("Select a tenant first.");
+      throw new Error("Select a tenant first.");
+    }
+
+    setIsBusy(true);
+    setErrorMessage("");
+
+    try {
+      const snapshot = await exportTenantSnapshot(selectedTenantId);
+      setNoticeMessage(
+        t("tenants.exportNotice", {
+          tenantName: snapshot.tenant.name,
+        }),
+      );
+      return snapshot;
+    } catch (caught) {
+      setErrorMessage(caught instanceof Error ? caught.message : "Tenant export failed.");
       throw caught;
     } finally {
       setIsBusy(false);
@@ -703,6 +768,8 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
         logoutFromWorkspace,
         setSelectedTenantId,
         createTenantRecord,
+        importOnboardingDatasetRecord,
+        exportTenantSnapshotRecord,
         createCustomerRecord,
         createSupplierRecord,
         createProductRecord,

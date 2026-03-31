@@ -516,4 +516,29 @@ const vi = {
   },
 } as const;
 
+Object.assign(vi.tenants, {
+  onboardingTitle: "Khởi tạo pilot",
+  importDataset: "Bộ dữ liệu",
+  importHint: "Dán CSV với dòng tiêu đề để nạp nhanh master data cho tenant mới ngay trong rewrite shell.",
+  csvData: "Dữ liệu CSV",
+  csvPlaceholder: "Dán CSV có dòng tiêu đề vào đây.",
+  importAction: "Nhập dữ liệu",
+  importSummary: "{{dataset}} đã import xong: tạo {{createdCount}}, bỏ qua {{skippedCount}}.",
+  importErrorLine: "Dòng {{lineNumber}}",
+  importNotice:
+    "{{dataset}} đã import xong với {{createdCount}} bản ghi tạo mới và {{skippedCount}} bản ghi bị bỏ qua.",
+  exportTitle: "Xuất snapshot tenant",
+  exportHint: "Tải JSON snapshot để bàn giao pilot, sao lưu và diễn tập khôi phục.",
+  exportAction: "Tải snapshot JSON",
+  exportSelectedTenant: "Tenant đang chọn",
+  exportIncludes: "Dữ liệu bao gồm",
+  exportIncludesValue: "Master data, tồn kho, đơn hàng, hóa đơn, thu hồi, phê duyệt, audit và số dư sổ cái.",
+  exportNotice: "Snapshot tenant đã sẵn sàng cho {{tenantName}}.",
+  datasets: {
+    customers: "Khách hàng",
+    suppliers: "Nhà cung cấp",
+    products: "Sản phẩm",
+  },
+});
+
 export default vi;

@@ -26,6 +26,7 @@ import {
   type CreateProductInput,
   type CreateSupplierInput,
   type CreateTenantInput,
+  type ImportOnboardingInput,
   type LoginInput,
   type Permission,
   type Session,
@@ -46,8 +47,10 @@ import {
   createProduct,
   createSupplier,
   createTenant,
+  exportTenantSnapshot,
   getReportSummary,
   hasTenant,
+  importOnboardingDataset,
   listAccountBalances,
   listApprovalRequests,
   listAuditLogs,
@@ -234,6 +237,69 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
         throw error;
       }
 
+      return;
+    }
+
+    if (request.method === "POST" && pathname === "/api/onboarding/import") {
+      if (!ensurePermission(response, requestSession, "manage_tenants")) {
+        return;
+      }
+
+      const input = await readJson<ImportOnboardingInput>(request);
+
+      if (!input.tenantId?.trim()) {
+        badRequest(response, "tenantId is required.");
+        return;
+      }
+
+      if (!hasTenant(input.tenantId)) {
+        badRequest(response, "The selected tenant does not exist.");
+        return;
+      }
+
+      if (!input.dataset) {
+        badRequest(response, "dataset is required.");
+        return;
+      }
+
+      if (!input.csvText?.trim()) {
+        badRequest(response, "CSV data is required.");
+        return;
+      }
+
+      try {
+        const result = runWithSession(requestSession, () => importOnboardingDataset(input));
+        sendJson(response, 200, { item: result });
+      } catch (error) {
+        if (error instanceof Error) {
+          badRequest(response, error.message);
+          return;
+        }
+
+        throw error;
+      }
+
+      return;
+    }
+
+    if (request.method === "GET" && pathname === "/api/onboarding/export") {
+      if (!ensurePermission(response, requestSession, "manage_tenants")) {
+        return;
+      }
+
+      const tenantId = url.searchParams.get("tenantId");
+
+      if (!tenantId) {
+        badRequest(response, "tenantId is required.");
+        return;
+      }
+
+      if (!hasTenant(tenantId)) {
+        badRequest(response, "The selected tenant does not exist.");
+        return;
+      }
+
+      sendJson(response, 200, { item: exportTenantSnapshot(tenantId) });
       return;
     }
 

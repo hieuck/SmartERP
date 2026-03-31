@@ -17,6 +17,8 @@ import type {
   CreateProductInput,
   CreateSupplierInput,
   CreateTenantInput,
+  ImportOnboardingInput,
+  ImportOnboardingResult,
   InvoiceCollectionActivityRecord,
   CustomerStatementRecord,
   CustomerRecord,
@@ -33,6 +35,7 @@ import type {
   Session,
   SupplierRecord,
   TenantRecord,
+  TenantExportBundle,
 } from "@smarterp/contracts";
 
 type RequestOptions = {
@@ -97,6 +100,21 @@ export async function createTenant(input: CreateTenantInput): Promise<TenantReco
     method: "POST",
     body: JSON.stringify(input),
   });
+  return payload.item;
+}
+
+export async function importOnboardingDataset(input: ImportOnboardingInput): Promise<ImportOnboardingResult> {
+  const payload = await request<{ item: ImportOnboardingResult }>("/api/onboarding/import", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  return payload.item;
+}
+
+export async function exportTenantSnapshot(tenantId: string): Promise<TenantExportBundle> {
+  const payload = await request<{ item: TenantExportBundle }>(
+    `/api/onboarding/export?tenantId=${encodeURIComponent(tenantId)}`,
+  );
   return payload.item;
 }
 

@@ -30,6 +30,10 @@ import {
   type CreateProductInput,
   type CreateSupplierInput,
   type CreateTenantInput,
+  type ImportOnboardingInput,
+  type ImportOnboardingResult,
+  type OnboardingDataset,
+  type OnboardingImportError,
   type CollectionFollowUpStatus,
   type CollectionPriority,
   type InvoiceCollectionActivityRecord,
@@ -48,6 +52,7 @@ import {
   type Session,
   type SupplierRecord,
   type TenantRecord,
+  type TenantExportBundle,
 } from "@smarterp/contracts";
 
 import { db } from "./database.js";
@@ -347,6 +352,13 @@ const createTenantStatement = db.prepare(`
 
 const hasTenantStatement = db.prepare(`
   SELECT id
+  FROM tenants
+  WHERE id = ?
+  LIMIT 1
+`);
+
+const getTenantByIdStatement = db.prepare(`
+  SELECT id, name, slug, industry, created_at
   FROM tenants
   WHERE id = ?
   LIMIT 1
@@ -2030,6 +2042,277 @@ export function createTenant(input: CreateTenantInput): TenantRecord {
 
 export function hasTenant(tenantId: string): boolean {
   return Boolean(hasTenantStatement.get(tenantId));
+}
+
+function normalizeCsvHeader(value: string): string {
+  return value.trim().replace(/^\uFEFF/, "").replace(/[\s_-]+/g, "").toLowerCase();
+}
+
+function parseCsvLine(line: string): string[] {
+  const values: string[] = [];
+  let current = "";
+  let insideQuotes = false;
+
+  for (let index = 0; index < line.length; index += 1) {
+    const character = line[index];
+
+    if (character === "\"") {
+      if (insideQuotes && line[index + 1] === "\"") {
+        current += "\"";
+        index += 1;
+        continue;
+      }
+
+      insideQuotes = !insideQuotes;
+      continue;
+    }
+
+    if (character === "," && !insideQuotes) {
+      values.push(current);
+      current = "";
+      continue;
+    }
+
+    current += character;
+  }
+
+  values.push(current);
+  return values.map((value) => value.trim());
+}
+
+function parseCsvDocument(csvText: string): { headers: string[]; rows: string[][] } {
+  const normalized = csvText.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  const lines = normalized
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+
+  if (lines.length === 0) {
+    throw new Error("CSV data is required.");
+  }
+
+  const [headerLine, ...dataLines] = lines;
+  const headers = parseCsvLine(headerLine).map(normalizeCsvHeader);
+
+  return {
+    headers,
+    rows: dataLines.map(parseCsvLine),
+  };
+}
+
+function buildHeaderIndex(headers: string[], requiredHeaders: string[]): Record<string, number> {
+  const headerIndex = headers.reduce<Record<string, number>>((result, header, index) => {
+    result[header] = index;
+    return result;
+  }, {});
+
+  const missingHeaders = requiredHeaders.filter((header) => !(header in headerIndex));
+  if (missingHeaders.length > 0) {
+    throw new Error(`CSV is missing required columns: ${missingHeaders.join(", ")}.`);
+  }
+
+  return headerIndex;
+}
+
+function readCsvValue(row: string[], headerIndex: Record<string, number>, header: string): string {
+  return (row[headerIndex[header]] ?? "").trim();
+}
+
+function normalizeImportError(dataset: OnboardingDataset, error: unknown): string {
+  if (!(error instanceof Error)) {
+    return "Unexpected import error.";
+  }
+
+  if (dataset === "suppliers" && error.message.includes("suppliers.tenant_id, suppliers.supplier_code")) {
+    return "A supplier with this code already exists for the selected tenant.";
+  }
+
+  if (dataset === "products" && error.message.includes("products.tenant_id, products.sku")) {
+    return "A product with this SKU already exists for the selected tenant.";
+  }
+
+  return error.message;
+}
+
+function recordImportError(errors: OnboardingImportError[], lineNumber: number, message: string): void {
+  errors.push({ lineNumber, message });
+}
+
+function importCustomersCsv(tenantId: string, csvText: string): ImportOnboardingResult {
+  const { headers, rows } = parseCsvDocument(csvText);
+  const headerIndex = buildHeaderIndex(headers, ["name", "email"]);
+  const errors: OnboardingImportError[] = [];
+  let createdCount = 0;
+
+  rows.forEach((row, rowIndex) => {
+    const lineNumber = rowIndex + 2;
+    const name = readCsvValue(row, headerIndex, "name");
+    const email = readCsvValue(row, headerIndex, "email");
+    const phone = headerIndex.phone !== undefined ? readCsvValue(row, headerIndex, "phone") : "";
+    const city = headerIndex.city !== undefined ? readCsvValue(row, headerIndex, "city") : "";
+
+    if (!name || !email) {
+      recordImportError(errors, lineNumber, "Customer name and email are required.");
+      return;
+    }
+
+    try {
+      createCustomer({
+        tenantId,
+        name,
+        email,
+        phone,
+        city,
+      });
+      createdCount += 1;
+    } catch (error) {
+      recordImportError(errors, lineNumber, normalizeImportError("customers", error));
+    }
+  });
+
+  return {
+    dataset: "customers",
+    createdCount,
+    skippedCount: errors.length,
+    errors,
+  };
+}
+
+function importSuppliersCsv(tenantId: string, csvText: string): ImportOnboardingResult {
+  const { headers, rows } = parseCsvDocument(csvText);
+  const headerIndex = buildHeaderIndex(headers, ["suppliercode", "name", "email"]);
+  const errors: OnboardingImportError[] = [];
+  let createdCount = 0;
+
+  rows.forEach((row, rowIndex) => {
+    const lineNumber = rowIndex + 2;
+    const supplierCode = readCsvValue(row, headerIndex, "suppliercode");
+    const name = readCsvValue(row, headerIndex, "name");
+    const email = readCsvValue(row, headerIndex, "email");
+    const phone = headerIndex.phone !== undefined ? readCsvValue(row, headerIndex, "phone") : "";
+    const city = headerIndex.city !== undefined ? readCsvValue(row, headerIndex, "city") : "";
+    const leadTimeRaw =
+      headerIndex.leadtimedays !== undefined ? readCsvValue(row, headerIndex, "leadtimedays") : "";
+    const leadTimeDays = leadTimeRaw ? Number(leadTimeRaw) : 7;
+
+    if (!supplierCode || !name || !email) {
+      recordImportError(errors, lineNumber, "Supplier code, name, and email are required.");
+      return;
+    }
+
+    if (!Number.isFinite(leadTimeDays) || leadTimeDays < 0) {
+      recordImportError(errors, lineNumber, "Lead time must be a non-negative number.");
+      return;
+    }
+
+    try {
+      createSupplier({
+        tenantId,
+        supplierCode,
+        name,
+        email,
+        phone,
+        city,
+        leadTimeDays,
+      });
+      createdCount += 1;
+    } catch (error) {
+      recordImportError(errors, lineNumber, normalizeImportError("suppliers", error));
+    }
+  });
+
+  return {
+    dataset: "suppliers",
+    createdCount,
+    skippedCount: errors.length,
+    errors,
+  };
+}
+
+function importProductsCsv(tenantId: string, csvText: string): ImportOnboardingResult {
+  const { headers, rows } = parseCsvDocument(csvText);
+  const headerIndex = buildHeaderIndex(headers, ["sku", "name", "unitprice"]);
+  const errors: OnboardingImportError[] = [];
+  let createdCount = 0;
+
+  rows.forEach((row, rowIndex) => {
+    const lineNumber = rowIndex + 2;
+    const sku = readCsvValue(row, headerIndex, "sku");
+    const name = readCsvValue(row, headerIndex, "name");
+    const unitPriceRaw = readCsvValue(row, headerIndex, "unitprice");
+    const unitPrice = Number(unitPriceRaw);
+
+    if (!sku || !name || !unitPriceRaw) {
+      recordImportError(errors, lineNumber, "Product SKU, name, and unit price are required.");
+      return;
+    }
+
+    if (!Number.isFinite(unitPrice) || unitPrice < 0) {
+      recordImportError(errors, lineNumber, "Unit price must be a non-negative number.");
+      return;
+    }
+
+    try {
+      createProduct({
+        tenantId,
+        sku,
+        name,
+        unitPrice,
+      });
+      createdCount += 1;
+    } catch (error) {
+      recordImportError(errors, lineNumber, normalizeImportError("products", error));
+    }
+  });
+
+  return {
+    dataset: "products",
+    createdCount,
+    skippedCount: errors.length,
+    errors,
+  };
+}
+
+export function importOnboardingDataset(input: ImportOnboardingInput): ImportOnboardingResult {
+  if (!input.csvText.trim()) {
+    throw new Error("CSV data is required.");
+  }
+
+  switch (input.dataset) {
+    case "customers":
+      return importCustomersCsv(input.tenantId, input.csvText);
+    case "suppliers":
+      return importSuppliersCsv(input.tenantId, input.csvText);
+    case "products":
+      return importProductsCsv(input.tenantId, input.csvText);
+    default:
+      throw new Error("Unsupported onboarding dataset.");
+  }
+}
+
+export function exportTenantSnapshot(tenantId: string): TenantExportBundle {
+  const tenantRow = getTenantByIdStatement.get(tenantId) as TenantRow | undefined;
+  if (!tenantRow) {
+    throw new Error("The selected tenant does not exist.");
+  }
+
+  return {
+    tenant: mapTenant(tenantRow),
+    exportedAt: timestamp(),
+    customers: listCustomers(tenantId),
+    suppliers: listSuppliers(tenantId),
+    products: listProducts(tenantId),
+    inventories: listInventory(tenantId),
+    orders: listOrders(tenantId),
+    purchaseOrders: listPurchaseOrders(tenantId),
+    invoices: listInvoices(tenantId),
+    customerStatements: listCustomerStatements(tenantId),
+    collectionActivities: listInvoiceCollectionActivities(tenantId),
+    approvalRequests: listApprovalRequests(tenantId),
+    auditLogs: listAuditLogs(tenantId),
+    accountBalances: listAccountBalances(tenantId),
+    journalEntries: listJournalEntries(tenantId),
+  };
 }
 
 export function listCustomers(tenantId: string): CustomerRecord[] {

@@ -37,12 +37,25 @@ export const permissionKeys = [
   "decide_approvals",
 ] as const;
 
+export const onboardingDatasets = [
+  "customers",
+  "suppliers",
+  "products",
+] as const;
+
+export const onboardingCsvTemplates: Record<OnboardingDataset, string> = {
+  customers: "name,email,phone,city\nTran Minh Trading,buyer@tranminh.vn,+84 90 123 4567,Ho Chi Minh City",
+  suppliers: "supplierCode,name,email,phone,city,leadTimeDays\nSUP-ALPHA,Alpha Packaging,ops@alphapack.example,+84 28 5555 0000,Binh Duong,7",
+  products: "sku,name,unitPrice\nNW-PET-001,PET Bottle 1L,25000",
+};
+
 export const rewriteMessage =
   "New development now targets a clean workspace with explicit contracts, shared UI primitives, and capability-by-capability migration from the legacy tree.";
 
 export type FoundationModule = (typeof foundationModules)[number];
 export type UserRole = (typeof userRoles)[number];
 export type Permission = (typeof permissionKeys)[number];
+export type OnboardingDataset = (typeof onboardingDatasets)[number];
 
 export type DemoAccount = {
   userId: string;
@@ -164,6 +177,24 @@ export type CreateTenantInput = {
   name: string;
   slug: string;
   industry: string;
+};
+
+export type ImportOnboardingInput = {
+  tenantId: string;
+  dataset: OnboardingDataset;
+  csvText: string;
+};
+
+export type OnboardingImportError = {
+  lineNumber: number;
+  message: string;
+};
+
+export type ImportOnboardingResult = {
+  dataset: OnboardingDataset;
+  createdCount: number;
+  skippedCount: number;
+  errors: OnboardingImportError[];
 };
 
 export type CustomerRecord = {
@@ -592,6 +623,24 @@ export type ReportSummary = {
   topCustomerAmount: number;
   topProductName: string;
   topProductUnits: number;
+};
+
+export type TenantExportBundle = {
+  tenant: TenantRecord;
+  exportedAt: string;
+  customers: CustomerRecord[];
+  suppliers: SupplierRecord[];
+  products: ProductRecord[];
+  inventories: InventoryRecord[];
+  orders: OrderRecord[];
+  purchaseOrders: PurchaseOrderRecord[];
+  invoices: InvoiceRecord[];
+  customerStatements: CustomerStatementRecord[];
+  collectionActivities: InvoiceCollectionActivityRecord[];
+  approvalRequests: ApprovalRequestRecord[];
+  auditLogs: AuditLogRecord[];
+  accountBalances: AccountBalanceRecord[];
+  journalEntries: JournalEntryRecord[];
 };
 
 export type FoundationSnapshot = {

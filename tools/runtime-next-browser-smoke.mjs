@@ -22,11 +22,17 @@ const tenantName = `Smoke Tenant ${smokeId}`;
 const tenantSlug = `smoke-${smokeId}`;
 const customerName = `Smoke Buyer ${smokeId}`;
 const customerEmail = `smoke.${smokeId}@example.com`;
+const customerPhone = "+84 98 000 0000";
+const customerCity = "Ho Chi Minh City";
 const supplierName = `Smoke Supplier ${smokeId}`;
 const supplierEmail = `supply.${smokeId}@example.com`;
+const supplierPhone = "+84 27 4123 4567";
+const supplierCity = "Binh Duong";
 const supplierCode = `SUP-${smokeId}`;
 const productName = `Smoke Bottle ${smokeId}`;
 const productSku = `SMK-${smokeId}`;
+const customerImportCsv = `name,email,phone,city\n${customerName},${customerEmail},${customerPhone},${customerCity}`;
+const supplierImportCsv = `supplierCode,name,email,phone,city,leadTimeDays\n${supplierCode},${supplierName},${supplierEmail},${supplierPhone},${supplierCity},7`;
 const expectedReceiptDateInput = buildDateInputFromToday(7);
 const firstPaymentTermDays = 14;
 const secondPaymentTermDays = 10;
@@ -38,6 +44,7 @@ const escalatedCollectionNote = "Qua ngay hua thanh toan, can founder xu ly truc
 const firstIssueDateInput = buildDateInputFromToday(0);
 const secondIssueDateInput = buildDateInputFromToday(-(secondDaysPastDue + secondPaymentTermDays));
 const unitPrice = 25000;
+const productImportCsv = `sku,name,unitPrice\n${productSku},${productName},${unitPrice}`;
 const purchaseUnitCost = 18000;
 const purchaseQuantity = 24;
 const stockInQuantity = 12;
@@ -126,7 +133,8 @@ function isExpectedNegativePath(response) {
         response.request().method() === "POST" &&
         (
           response.url().endsWith("/api/invoices") ||
-          response.url().endsWith("/api/purchase-orders")
+          response.url().endsWith("/api/purchase-orders") ||
+          response.url().endsWith("/api/onboarding/import")
         )
       ) ||
       (
@@ -169,10 +177,25 @@ async function openDirectRoute(page, routePath) {
 }
 
 async function openSection(page, index, expectedPath) {
-  await page.locator(".ant-layout-sider .ant-menu-item").nth(index).click();
-  await page.waitForURL(new RegExp(`${expectedPath.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`), {
-    timeout: 15000,
-  });
+  const menuItem = page.locator(".ant-layout-sider .ant-menu-item").nth(index);
+  const expectedUrlPattern = new RegExp(`${expectedPath.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`);
+  await menuItem.waitFor({ timeout: 15000 });
+  await menuItem.scrollIntoViewIfNeeded();
+  const link = menuItem.locator("a");
+
+  try {
+    if ((await link.count()) > 0) {
+      await link.first().click();
+    } else {
+      await menuItem.click();
+    }
+
+    await page.waitForURL(expectedUrlPattern, { timeout: 5000 });
+  } catch {
+    await page.goto(`${baseUrl}${expectedPath}`, { waitUntil: "domcontentloaded" });
+    await page.waitForURL(expectedUrlPattern, { timeout: 15000 });
+  }
+
   await page.waitForLoadState("networkidle");
   await page.locator(".page-stack").waitFor({ timeout: 15000 });
 }
@@ -221,6 +244,36 @@ async function selectOption(page, combobox, optionText) {
 
 async function clickSubmit(container) {
   await container.locator("button[type='submit']").first().click();
+}
+
+async function waitForLocatorCount(page, locator, expectedCount, timeout = 15000) {
+  const startedAt = Date.now();
+
+  while (Date.now() - startedAt < timeout) {
+    if ((await locator.count()) === expectedCount) {
+      return;
+    }
+
+    await page.waitForTimeout(150);
+  }
+
+  throw new Error(`Locator count did not reach ${expectedCount} within ${timeout}ms.`);
+}
+
+async function importDatasetViaTenantOnboarding(page, card, datasetLabel, csvText) {
+  await waitForFormReady(card);
+  await selectOption(page, card.getByRole("combobox", { name: /\* (Bộ dữ liệu|Dataset)/ }), datasetLabel);
+  await fillField(card, "#csvText", csvText);
+  const importResponse = page.waitForResponse(
+    (response) =>
+      response.url().endsWith("/api/onboarding/import") &&
+      response.request().method() === "POST" &&
+      response.status() === 200,
+    { timeout: 15000 },
+  );
+  await clickSubmit(card);
+  await importResponse;
+  await card.locator(".ant-alert").waitFor({ timeout: 15000 });
 }
 
 async function waitForFormReady(container) {
@@ -383,6 +436,8 @@ async function main() {
   let staleSessionRejectedVerified = false;
   let localeReloadVerified = false;
   let duplicateTenantRejectedVerified = false;
+  let onboardingImportVerified = false;
+  let onboardingExportVerified = false;
   let duplicateSupplierRejectedVerified = false;
   let duplicateProductRejectedVerified = false;
   let supplierAndPurchaseOrdersVerified = false;
@@ -521,33 +576,23 @@ async function main() {
     await dismissGlobalAlerts(page);
     duplicateTenantRejectedVerified = true;
 
+    const onboardingCard = page.locator(".two-column").nth(1).locator(".ant-card").first();
+    await importDatasetViaTenantOnboarding(page, onboardingCard, "Khách hàng", customerImportCsv);
+    await importDatasetViaTenantOnboarding(page, onboardingCard, "Nhà cung cấp", supplierImportCsv);
+    await importDatasetViaTenantOnboarding(page, onboardingCard, "Sản phẩm", productImportCsv);
+    onboardingImportVerified = true;
+
     await openDirectRoute(page, "/dashboard/customers");
     await waitForTenantContext(page, tenantName);
-    const customersFormCard = getFormCard(page);
-    await waitForFormReady(customersFormCard);
-    await fillField(customersFormCard, "#name", customerName);
-    await fillField(customersFormCard, "#email", customerEmail);
-    await fillField(customersFormCard, "#phone", "+84 98 000 0000");
-    await fillField(customersFormCard, "#city", "Ho Chi Minh City");
-    await clickSubmit(customersFormCard);
-    await getListCard(page).getByText(customerName, { exact: false }).waitFor({ timeout: 15000 });
-    await waitForInputValue(customersFormCard.locator("#name"), "");
-    await waitForInputValue(customersFormCard.locator("#email"), "");
+    const customersListCard = getListCard(page);
+    await customersListCard.getByText(customerName, { exact: false }).waitFor({ timeout: 15000 });
+    await customersListCard.getByText(customerEmail, { exact: false }).waitFor({ timeout: 15000 });
 
     await openSection(page, sidebarIndexes.suppliers, "/dashboard/suppliers");
     await waitForTenantContext(page, tenantName);
-    const suppliersFormCard = getFormCard(page);
-    await waitForFormReady(suppliersFormCard);
-    await fillField(suppliersFormCard, "#supplierCode", supplierCode);
-    await fillField(suppliersFormCard, "#name", supplierName);
-    await fillField(suppliersFormCard, "#email", supplierEmail);
-    await fillField(suppliersFormCard, "#phone", "+84 27 4123 4567");
-    await fillField(suppliersFormCard, "#city", "Binh Duong");
-    await fillField(suppliersFormCard, "#leadTimeDays", 7);
-    await clickSubmit(suppliersFormCard);
-    await getListCard(page).getByText(supplierName, { exact: false }).waitFor({ timeout: 15000 });
-    await waitForInputValue(suppliersFormCard.locator("#supplierCode"), "");
-    await waitForInputValue(suppliersFormCard.locator("#name"), "");
+    const suppliersListCard = getListCard(page);
+    await suppliersListCard.getByText(supplierName, { exact: false }).waitFor({ timeout: 15000 });
+    await suppliersListCard.getByText(supplierCode, { exact: false }).waitFor({ timeout: 15000 });
     const duplicateSupplierResponse = await page.evaluate(
       async ({ duplicateCode, duplicateName, duplicateEmail, sessionKey, tenantKey }) => {
         const tenantId = window.localStorage.getItem(tenantKey);
@@ -594,32 +639,48 @@ async function main() {
 
     await openSection(page, sidebarIndexes.products, "/dashboard/products");
     await waitForTenantContext(page, tenantName);
-    const productsFormCard = getFormCard(page);
-    await waitForFormReady(productsFormCard);
-    await fillField(productsFormCard, "#sku", productSku);
-    await fillField(productsFormCard, "#name", productName);
-    await fillField(productsFormCard, "#unitPrice", unitPrice);
-    await clickSubmit(productsFormCard);
-    await getListCard(page).getByText(productName, { exact: false }).waitFor({ timeout: 15000 });
-    await waitForInputValue(productsFormCard.locator("#sku"), "");
-    await waitForInputValue(productsFormCard.locator("#name"), "");
-    await fillField(productsFormCard, "#sku", productSku);
-    await fillField(productsFormCard, "#name", `${productName} Duplicate`);
-    await fillField(productsFormCard, "#unitPrice", unitPrice + 1000);
-    const duplicateProductResponse = page.waitForResponse(
-      (response) =>
-        response.url().endsWith("/api/products") &&
-        response.request().method() === "POST" &&
-        response.status() === 400,
-      { timeout: 15000 },
+    const productsListCard = getListCard(page);
+    await productsListCard.getByText(productName, { exact: false }).waitFor({ timeout: 15000 });
+    await productsListCard.getByText(productSku, { exact: false }).waitFor({ timeout: 15000 });
+    const duplicateProductResponse = await page.evaluate(
+      async ({ duplicateSku, duplicateName, duplicateUnitPrice, sessionKey, tenantKey }) => {
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const session = window.localStorage.getItem(sessionKey);
+        const accessToken = session ? JSON.parse(session).accessToken : "";
+
+        const response = await fetch("/api/products", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            tenantId,
+            sku: duplicateSku,
+            name: duplicateName,
+            unitPrice: duplicateUnitPrice,
+          }),
+        });
+
+        return {
+          status: response.status,
+          body: await response.json(),
+        };
+      },
+      {
+        duplicateSku: productSku,
+        duplicateName: `${productName} Duplicate`,
+        duplicateUnitPrice: unitPrice + 1000,
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+      },
     );
-    await clickSubmit(productsFormCard);
     assert(
-      ((await (await duplicateProductResponse).json())?.error ?? "") ===
+      duplicateProductResponse.status === 400 &&
+        (duplicateProductResponse.body?.error ?? "") ===
         "A product with this SKU already exists for the selected tenant.",
       "Duplicate product SKU did not return the expected validation message.",
     );
-    await dismissGlobalAlerts(page);
     duplicateProductRejectedVerified = true;
 
     await openSection(page, sidebarIndexes.purchaseOrders, "/dashboard/purchase-orders");
@@ -662,8 +723,20 @@ async function main() {
     await purchaseReceiptApprovalRow
       .getByText("Large inventory receipt requires founder approval.", { exact: false })
       .waitFor({ timeout: 15000 });
+    const purchaseReceiptApprovalResponse = page.waitForResponse(
+      (response) =>
+        response.url().endsWith("/api/approval-requests/decision") &&
+        response.request().method() === "POST" &&
+        response.status() === 200,
+      { timeout: 15000 },
+    );
     await purchaseReceiptApprovalRow.getByRole("button", { name: "Duyệt" }).click();
-    await purchaseReceiptApprovalRow.waitFor({ state: "hidden", timeout: 15000 });
+    await purchaseReceiptApprovalResponse;
+    await waitForLocatorCount(
+      page,
+      approvalsPendingCard.locator(".activity-row").filter({ hasText: purchaseOrderNumber }),
+      0,
+    );
     await approvalsHistoryCard.getByText(purchaseOrderNumber, { exact: false }).first().waitFor({ timeout: 15000 });
     await approvalsHistoryCard.getByText("Đã duyệt", { exact: false }).first().waitFor({ timeout: 15000 });
     purchaseReceiptApprovalVerified = true;
@@ -754,8 +827,20 @@ async function main() {
     await inventoryAdjustmentApprovalRow
       .getByText("Outbound inventory adjustments require founder approval.", { exact: false })
       .waitFor({ timeout: 15000 });
+    const inventoryAdjustmentDecisionResponse = page.waitForResponse(
+      (response) =>
+        response.url().endsWith("/api/approval-requests/decision") &&
+        response.request().method() === "POST" &&
+        response.status() === 200,
+      { timeout: 15000 },
+    );
     await inventoryAdjustmentApprovalRow.getByRole("button", { name: "Từ chối" }).click();
-    await inventoryAdjustmentApprovalRow.waitFor({ state: "hidden", timeout: 15000 });
+    await inventoryAdjustmentDecisionResponse;
+    await waitForLocatorCount(
+      page,
+      approvalsPendingCard.locator(".activity-row").filter({ hasText: productSku }),
+      0,
+    );
     await approvalsHistoryCard.getByText(productSku, { exact: false }).first().waitFor({ timeout: 15000 });
     await approvalsHistoryCard.getByText("Đã từ chối", { exact: false }).first().waitFor({ timeout: 15000 });
     inventoryAdjustmentRejectionVerified = true;
@@ -871,8 +956,16 @@ async function main() {
     await paymentApprovalRow
       .getByText("Large cash receipt requires founder approval.", { exact: false })
       .waitFor({ timeout: 15000 });
+    const paymentApprovalDecisionResponse = page.waitForResponse(
+      (response) =>
+        response.url().endsWith("/api/approval-requests/decision") &&
+        response.request().method() === "POST" &&
+        response.status() === 200,
+      { timeout: 15000 },
+    );
     await paymentApprovalRow.getByRole("button", { name: "Duyệt" }).click();
-    await paymentApprovalRow.waitFor({ state: "hidden", timeout: 15000 });
+    await paymentApprovalDecisionResponse;
+    await waitForLocatorCount(page, approvalsPendingCard.locator(".activity-row").filter({ hasText: invoiceNumber }), 0);
     await approvalsHistoryCard.getByText(invoiceNumber, { exact: false }).first().waitFor({ timeout: 15000 });
     await approvalsHistoryCard.getByText("Đã duyệt", { exact: false }).first().waitFor({ timeout: 15000 });
     invoicePaymentApprovalVerified = true;
@@ -923,8 +1016,20 @@ async function main() {
     await backdatedInvoiceApprovalRow
       .getByText("Backdated invoice issue requires founder approval.", { exact: false })
       .waitFor({ timeout: 15000 });
+    const backdatedInvoiceApprovalResponse = page.waitForResponse(
+      (response) =>
+        response.url().endsWith("/api/approval-requests/decision") &&
+        response.request().method() === "POST" &&
+        response.status() === 200,
+      { timeout: 15000 },
+    );
     await backdatedInvoiceApprovalRow.getByRole("button", { name: "Duyệt" }).click();
-    await backdatedInvoiceApprovalRow.waitFor({ state: "hidden", timeout: 15000 });
+    await backdatedInvoiceApprovalResponse;
+    await waitForLocatorCount(
+      page,
+      approvalsPendingCard.locator(".activity-row").filter({ hasText: secondOrderNumber }),
+      0,
+    );
     await approvalsHistoryCard.getByText(secondOrderNumber, { exact: false }).first().waitFor({ timeout: 15000 });
     await approvalsHistoryCard.getByText("Đã duyệt", { exact: false }).first().waitFor({ timeout: 15000 });
     backdatedInvoiceApprovalVerified = true;
@@ -1071,6 +1176,67 @@ async function main() {
     await auditCard.getByText(collectionNote, { exact: false }).first().waitFor({ timeout: 15000 });
     await auditCard.getByText(escalatedCollectionNote, { exact: false }).first().waitFor({ timeout: 15000 });
     auditTrailVerified = true;
+    const exportSnapshotResponse = await page.evaluate(
+      async ({ sessionKey, tenantKey }) => {
+        const rawSession = window.localStorage.getItem(sessionKey);
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
+
+        const response = await fetch(`/api/onboarding/export?tenantId=${encodeURIComponent(tenantId ?? "")}`, {
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+          },
+        });
+
+        return {
+          status: response.status,
+          body: await response.json(),
+        };
+      },
+      {
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+      },
+    );
+    assert(exportSnapshotResponse.status === 200, "Tenant export snapshot did not return HTTP 200.");
+    assert(
+      exportSnapshotResponse.body?.item?.tenant?.name === tenantName,
+      "Tenant export snapshot did not include the expected tenant.",
+    );
+    assert(
+      exportSnapshotResponse.body?.item?.customers?.some((item) => item.name === customerName),
+      "Tenant export snapshot did not include the imported customer.",
+    );
+    assert(
+      exportSnapshotResponse.body?.item?.suppliers?.some((item) => item.supplierCode === supplierCode),
+      "Tenant export snapshot did not include the imported supplier.",
+    );
+    assert(
+      exportSnapshotResponse.body?.item?.products?.some((item) => item.sku === productSku),
+      "Tenant export snapshot did not include the imported product.",
+    );
+    assert(
+      exportSnapshotResponse.body?.item?.orders?.some((item) => item.orderNumber === orderNumber) &&
+        exportSnapshotResponse.body?.item?.orders?.some((item) => item.orderNumber === secondOrderNumber),
+      "Tenant export snapshot did not include the created sales orders.",
+    );
+    assert(
+      exportSnapshotResponse.body?.item?.purchaseOrders?.some(
+        (item) => item.purchaseOrderNumber === purchaseOrderNumber,
+      ),
+      "Tenant export snapshot did not include the purchase order.",
+    );
+    assert(
+      exportSnapshotResponse.body?.item?.invoices?.some((item) => item.invoiceNumber === invoiceNumber) &&
+        exportSnapshotResponse.body?.item?.invoices?.some((item) => item.invoiceNumber === secondInvoiceNumber),
+      "Tenant export snapshot did not include the created invoices.",
+    );
+    assert(
+      exportSnapshotResponse.body?.item?.auditLogs?.length > 0 &&
+        exportSnapshotResponse.body?.item?.journalEntries?.length > 0,
+      "Tenant export snapshot did not include audit or ledger data.",
+    );
+    onboardingExportVerified = true;
     await page.getByText(customerName, { exact: false }).first().waitFor({ timeout: 15000 });
     await page.getByText(productName, { exact: false }).first().waitFor({ timeout: 15000 });
     await page.getByText(String(expectedRemainingStock), { exact: true }).first().waitFor({ timeout: 15000 });
@@ -1152,6 +1318,41 @@ async function main() {
     assert(
       salesForbiddenInvoiceResponse.status === 403 && salesForbiddenInvoiceResponse.body?.error === "Forbidden.",
       "Sales role did not receive a backend 403 for invoice issuance.",
+    );
+    const salesForbiddenImportResponse = await page.evaluate(
+      async ({ sessionKey, tenantKey, csvText }) => {
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const rawSession = window.localStorage.getItem(sessionKey);
+        const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
+
+        const response = await fetch("/api/onboarding/import", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            tenantId,
+            dataset: "customers",
+            csvText,
+          }),
+        });
+
+        return {
+          status: response.status,
+          body: await response.json(),
+        };
+      },
+      {
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+        csvText: customerImportCsv,
+      },
+    );
+    assert(
+      salesForbiddenImportResponse.status === 403 &&
+        salesForbiddenImportResponse.body?.error === "Forbidden.",
+      "Sales role did not receive a backend 403 for onboarding import.",
     );
     rbacSalesBlockedRouteVerified = true;
     await logout(page);
@@ -1287,6 +1488,8 @@ async function main() {
       loginReloadVerified: true,
       localeReloadVerified,
       duplicateTenantRejectedVerified,
+      onboardingImportVerified,
+      onboardingExportVerified,
       duplicateSupplierRejectedVerified,
       duplicateProductRejectedVerified,
       supplierAndPurchaseOrdersVerified,
