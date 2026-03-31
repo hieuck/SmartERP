@@ -8,6 +8,7 @@ import type {
   CreateTenantInput,
   ImportOnboardingResult,
   OnboardingDataset,
+  RestoreTenantSnapshotPreview,
   RestoreTenantSnapshotResult,
   TenantExportBundle,
 } from "@smarterp/contracts";
@@ -44,6 +45,33 @@ function downloadJsonFile(filename: string, payload: unknown): void {
   }, 0);
 }
 
+function parseRestoreSnapshot(snapshotJson: string): TenantExportBundle | null {
+  try {
+    const snapshot = JSON.parse(snapshotJson) as TenantExportBundle;
+    if (
+      !snapshot?.tenant?.name ||
+      !Array.isArray(snapshot.customers) ||
+      !Array.isArray(snapshot.suppliers) ||
+      !Array.isArray(snapshot.products) ||
+      !Array.isArray(snapshot.inventories) ||
+      !Array.isArray(snapshot.orders) ||
+      !Array.isArray(snapshot.purchaseOrders) ||
+      !Array.isArray(snapshot.invoices) ||
+      !Array.isArray(snapshot.collectionActivities) ||
+      !Array.isArray(snapshot.approvalRequests) ||
+      !Array.isArray(snapshot.auditLogs) ||
+      !Array.isArray(snapshot.accountBalances) ||
+      !Array.isArray(snapshot.journalEntries)
+    ) {
+      return null;
+    }
+
+    return snapshot;
+  } catch {
+    return null;
+  }
+}
+
 export function TenantsPage(): ReactElement {
   const { t } = useLocale();
   const {
@@ -51,6 +79,7 @@ export function TenantsPage(): ReactElement {
     exportTenantSnapshotRecord,
     importOnboardingDatasetRecord,
     isBusy,
+    previewTenantSnapshotRestoreRecord,
     restoreTenantSnapshotRecord,
     selectedTenant,
     selectedTenantId,
@@ -61,6 +90,7 @@ export function TenantsPage(): ReactElement {
   const [onboardingForm] = Form.useForm<OnboardingFormShape>();
   const [restoreForm] = Form.useForm<RestoreFormShape>();
   const [importResult, setImportResult] = useState<ImportOnboardingResult | null>(null);
+  const [restorePreview, setRestorePreview] = useState<RestoreTenantSnapshotPreview | null>(null);
   const [restoreResult, setRestoreResult] = useState<RestoreTenantSnapshotResult | null>(null);
   const watchedDataset = (Form.useWatch("dataset", onboardingForm) as OnboardingDataset | undefined) ?? "customers";
 
@@ -99,41 +129,67 @@ export function TenantsPage(): ReactElement {
     }
   };
 
-  const onRestoreFinish: FormProps<RestoreFormShape>["onFinish"] = async (values) => {
-    let snapshot: TenantExportBundle;
+  const buildRestoreInput = (values: RestoreFormShape) => {
+    const snapshot = parseRestoreSnapshot(values.snapshotJson);
 
+    if (!snapshot) {
+      restoreForm.setFields([
+        {
+          name: "snapshotJson",
+          errors: [t("tenants.restoreInvalidJson")],
+        },
+      ]);
+      return null;
+    }
+
+    restoreForm.setFields([
+      {
+        name: "snapshotJson",
+        errors: [],
+      },
+    ]);
+
+    return {
+      snapshot,
+      targetTenant: {
+        name: values.targetName,
+        slug: values.targetSlug,
+        industry: values.targetIndustry,
+      },
+    };
+  };
+
+  const handleRestorePreview = async () => {
     try {
-      snapshot = JSON.parse(values.snapshotJson) as TenantExportBundle;
+      const values = await restoreForm.validateFields();
+      const input = buildRestoreInput(values);
+      if (!input) {
+        return;
+      }
+
+      const preview = await previewTenantSnapshotRestoreRecord(input);
+      setRestorePreview(preview);
+      setRestoreResult(null);
     } catch {
-      restoreForm.setFields([
-        {
-          name: "snapshotJson",
-          errors: [t("tenants.restoreInvalidJson")],
-        },
-      ]);
+      // Error state is already surfaced via workspace context.
+    }
+  };
+
+  const onRestoreFinish: FormProps<RestoreFormShape>["onFinish"] = async (values) => {
+    const input = buildRestoreInput(values);
+    if (!input) {
       return;
     }
 
-    if (!snapshot?.tenant?.name || !Array.isArray(snapshot.products) || !Array.isArray(snapshot.inventories)) {
-      restoreForm.setFields([
-        {
-          name: "snapshotJson",
-          errors: [t("tenants.restoreInvalidJson")],
-        },
-      ]);
+    if (!restorePreview) {
+      await handleRestorePreview();
       return;
     }
 
     try {
-      const result = await restoreTenantSnapshotRecord({
-        snapshot,
-        targetTenant: {
-          name: values.targetName,
-          slug: values.targetSlug,
-          industry: values.targetIndustry,
-        },
-      });
+      const result = await restoreTenantSnapshotRecord(input);
       setRestoreResult(result);
+      setRestorePreview(null);
       restoreForm.resetFields(["snapshotJson"]);
     } catch {
       // Error state is already surfaced via workspace context.
@@ -298,7 +354,19 @@ export function TenantsPage(): ReactElement {
       <div className="two-column">
         <Card title={t("tenants.restoreTitle")}>
           <Paragraph type="secondary">{t("tenants.restoreHint")}</Paragraph>
-          <Form<RestoreFormShape> form={restoreForm} layout="vertical" onFinish={onRestoreFinish}>
+          <Form<RestoreFormShape>
+            form={restoreForm}
+            layout="vertical"
+            onFinish={onRestoreFinish}
+            onValuesChange={() => {
+              if (restorePreview) {
+                setRestorePreview(null);
+              }
+              if (restoreResult) {
+                setRestoreResult(null);
+              }
+            }}
+          >
             <Form.Item<RestoreFormShape>
               label={t("tenants.restoreTargetName")}
               name="targetName"
@@ -330,10 +398,88 @@ export function TenantsPage(): ReactElement {
                 placeholder={t("tenants.restoreSnapshotPlaceholder")}
               />
             </Form.Item>
-            <Button type="primary" htmlType="submit" loading={isBusy}>
-              {t("tenants.restoreAction")}
-            </Button>
+            <div className="page-inline-stack">
+              <Button onClick={handleRestorePreview} loading={isBusy}>
+                {t("tenants.restorePreviewAction")}
+              </Button>
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={isBusy}
+                disabled={!restorePreview || !restorePreview.slugAvailable}
+              >
+                {t("tenants.restoreAction")}
+              </Button>
+            </div>
           </Form>
+
+          {restorePreview ? (
+            <div className="page-inline-stack">
+              <Alert
+                type={restorePreview.slugAvailable ? "info" : "error"}
+                title={
+                  restorePreview.slugAvailable
+                    ? t("tenants.restorePreviewReady", {
+                        tenantName: restorePreview.targetTenant.name,
+                      })
+                    : t("tenants.restorePreviewBlocked", {
+                        conflictingTenantName:
+                          restorePreview.conflictingTenantName ?? restorePreview.targetTenant.slug,
+                      })
+                }
+                showIcon
+              />
+              <div className="record-stack">
+                <div className="compact-record-row">
+                  <strong>{t("tenants.restorePreviewSource")}</strong>
+                  <span>
+                    {restorePreview.sourceTenantName} ({restorePreview.sourceTenantSlug})
+                  </span>
+                </div>
+                <div className="compact-record-row">
+                  <strong>{t("tenants.restorePreviewExportedAt")}</strong>
+                  <span>{new Date(restorePreview.exportedAt).toLocaleString()}</span>
+                </div>
+                <div className="compact-record-row">
+                  <strong>{t("tenants.restorePreviewSlugStatus")}</strong>
+                  <span>
+                    {restorePreview.slugAvailable
+                      ? t("tenants.restorePreviewSlugAvailable")
+                      : t("tenants.restorePreviewSlugBlocked", {
+                          conflictingTenantName:
+                            restorePreview.conflictingTenantName ?? restorePreview.targetTenant.slug,
+                        })}
+                  </span>
+                </div>
+                <div className="compact-record-row">
+                  <strong>{t("tenants.restorePreviewCountsNowLabel")}</strong>
+                  <span>
+                    {t("tenants.restorePreviewCountsNowValue", {
+                      customerCount: restorePreview.customerCount,
+                      supplierCount: restorePreview.supplierCount,
+                      productCount: restorePreview.productCount,
+                      inventoryLineCount: restorePreview.inventoryLineCount,
+                    })}
+                  </span>
+                </div>
+                <div className="compact-record-row">
+                  <strong>{t("tenants.restorePreviewCountsLaterLabel")}</strong>
+                  <span>
+                    {t("tenants.restorePreviewCountsLaterValue", {
+                      orderCount: restorePreview.orderCount,
+                      purchaseOrderCount: restorePreview.purchaseOrderCount,
+                      invoiceCount: restorePreview.invoiceCount,
+                      collectionActivityCount: restorePreview.collectionActivityCount,
+                      approvalCount: restorePreview.approvalCount,
+                      auditLogCount: restorePreview.auditLogCount,
+                      journalEntryCount: restorePreview.journalEntryCount,
+                      accountBalanceCount: restorePreview.accountBalanceCount,
+                    })}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ) : null}
 
           {restoreResult ? (
             <div className="page-inline-stack">

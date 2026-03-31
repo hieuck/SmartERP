@@ -21,6 +21,7 @@ import type {
   ImportOnboardingInput,
   ImportOnboardingResult,
   RestoreTenantSnapshotInput,
+  RestoreTenantSnapshotPreview,
   RestoreTenantSnapshotResult,
   InvoiceCollectionActivityRecord,
   CustomerStatementRecord,
@@ -72,6 +73,7 @@ import {
   listSuppliers,
   listTenants,
   login,
+  previewRestoreTenantSnapshot,
   restoreTenantSnapshot,
   setApiSession,
   setUnauthorizedHandler,
@@ -118,6 +120,9 @@ type WorkspaceContextValue = {
     input: Omit<ImportOnboardingInput, "tenantId">,
   ) => Promise<ImportOnboardingResult>;
   exportTenantSnapshotRecord: () => Promise<TenantExportBundle>;
+  previewTenantSnapshotRestoreRecord: (
+    input: RestoreTenantSnapshotInput,
+  ) => Promise<RestoreTenantSnapshotPreview>;
   restoreTenantSnapshotRecord: (
     input: RestoreTenantSnapshotInput,
   ) => Promise<RestoreTenantSnapshotResult>;
@@ -398,6 +403,28 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
       return snapshot;
     } catch (caught) {
       setErrorMessage(caught instanceof Error ? caught.message : "Tenant export failed.");
+      throw caught;
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
+  async function previewTenantSnapshotRestoreRecord(
+    input: RestoreTenantSnapshotInput,
+  ): Promise<RestoreTenantSnapshotPreview> {
+    setIsBusy(true);
+    setErrorMessage("");
+
+    try {
+      const result = await previewRestoreTenantSnapshot(input);
+      setNoticeMessage(
+        t("tenants.restorePreviewNotice", {
+          tenantName: result.targetTenant.name,
+        }),
+      );
+      return result;
+    } catch (caught) {
+      setErrorMessage(caught instanceof Error ? caught.message : "Tenant restore preview failed.");
       throw caught;
     } finally {
       setIsBusy(false);
@@ -804,6 +831,7 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
         createTenantRecord,
         importOnboardingDatasetRecord,
         exportTenantSnapshotRecord,
+        previewTenantSnapshotRestoreRecord,
         restoreTenantSnapshotRecord,
         createCustomerRecord,
         createSupplierRecord,

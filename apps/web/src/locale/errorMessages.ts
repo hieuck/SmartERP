@@ -40,6 +40,7 @@ const errorKeyByMessage: Record<string, string> = {
   "Select a tenant first.": "errors.selectTenantFirst",
   "Tenant name, slug, and industry are required.": "errors.tenantFieldsRequired",
   "A tenant with this slug already exists.": "errors.duplicateTenantSlug",
+  "Target tenant slug already exists.": "errors.duplicateTenantSlug",
   "tenantId is required.": "errors.tenantIdRequired",
   "supplierId is required.": "errors.supplierIdRequired",
   "purchaseOrderId is required.": "errors.purchaseOrderIdRequired",

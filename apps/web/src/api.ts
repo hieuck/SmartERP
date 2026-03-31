@@ -37,6 +37,7 @@ import type {
   TenantRecord,
   TenantExportBundle,
   RestoreTenantSnapshotInput,
+  RestoreTenantSnapshotPreview,
   RestoreTenantSnapshotResult,
 } from "@smarterp/contracts";
 
@@ -117,6 +118,16 @@ export async function exportTenantSnapshot(tenantId: string): Promise<TenantExpo
   const payload = await request<{ item: TenantExportBundle }>(
     `/api/onboarding/export?tenantId=${encodeURIComponent(tenantId)}`,
   );
+  return payload.item;
+}
+
+export async function previewRestoreTenantSnapshot(
+  input: RestoreTenantSnapshotInput,
+): Promise<RestoreTenantSnapshotPreview> {
+  const payload = await request<{ item: RestoreTenantSnapshotPreview }>("/api/onboarding/restore/preview", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
   return payload.item;
 }
 

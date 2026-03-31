@@ -138,6 +138,7 @@ function isExpectedNegativePath(response) {
           response.url().endsWith("/api/invoices") ||
           response.url().endsWith("/api/purchase-orders") ||
           response.url().endsWith("/api/onboarding/import") ||
+          response.url().endsWith("/api/onboarding/restore/preview") ||
           response.url().endsWith("/api/onboarding/restore")
         )
       ) ||
@@ -440,6 +441,7 @@ async function main() {
   let duplicateTenantRejectedVerified = false;
   let onboardingImportVerified = false;
   let onboardingExportVerified = false;
+  let baselineRestorePreviewVerified = false;
   let baselineRestoreVerified = false;
   let duplicateSupplierRejectedVerified = false;
   let duplicateProductRejectedVerified = false;
@@ -463,6 +465,7 @@ async function main() {
   let unauthorizedApiBlockedVerified = false;
   let rbacSalesVisibilityVerified = false;
   let rbacSalesBlockedRouteVerified = false;
+  let rbacSalesBlockedRestorePreviewVerified = false;
   let rbacWarehouseBlockedMutationVerified = false;
   let rbacCollectorActionSplitVerified = false;
 
@@ -1244,11 +1247,27 @@ async function main() {
     await openSection(page, sidebarIndexes.tenants, "/dashboard/tenants");
     await waitForTenantContext(page, tenantName);
     const restoreCard = page.locator(".two-column").nth(2).locator(".ant-card").first();
-    await waitForFormReady(restoreCard);
+    await restoreCard.locator("#targetName").waitFor({ timeout: 15000 });
     await fillField(restoreCard, "#targetName", restoredTenantName);
     await fillField(restoreCard, "#targetSlug", restoredTenantSlug);
     await fillField(restoreCard, "#targetIndustry", restoredTenantIndustry);
     await fillField(restoreCard, "#snapshotJson", JSON.stringify(exportedSnapshot, null, 2));
+    const previewResponse = page.waitForResponse(
+      (response) =>
+        response.url().endsWith("/api/onboarding/restore/preview") &&
+        response.request().method() === "POST" &&
+        response.status() === 200,
+      { timeout: 15000 },
+    );
+    await restoreCard.getByRole("button", { name: "Xem trước khôi phục" }).click();
+    await previewResponse;
+    await restoreCard.getByText(restoredTenantName, { exact: false }).waitFor({ timeout: 15000 });
+    await restoreCard
+      .getByText("Slug đích đang sẵn sàng", { exact: false })
+      .waitFor({ timeout: 15000 });
+    const restoreButton = restoreCard.getByRole("button", { name: "Khôi phục baseline" });
+    assert(!(await restoreButton.isDisabled()), "Restore button stayed disabled after preview.");
+    baselineRestorePreviewVerified = true;
     const restoreResponse = page.waitForResponse(
       (response) =>
         response.url().endsWith("/api/onboarding/restore") &&
@@ -1256,7 +1275,7 @@ async function main() {
         response.status() === 201,
       { timeout: 15000 },
     );
-    await clickSubmit(restoreCard);
+    await restoreButton.click();
     await restoreResponse;
     await restoreCard.getByText(restoredTenantName, { exact: false }).waitFor({ timeout: 15000 });
     await waitForTenantContext(page, restoredTenantName);
@@ -1402,6 +1421,43 @@ async function main() {
         salesForbiddenImportResponse.body?.error === "Forbidden.",
       "Sales role did not receive a backend 403 for onboarding import.",
     );
+    const salesForbiddenRestorePreviewResponse = await page.evaluate(
+      async ({ sessionKey, snapshot }) => {
+        const rawSession = window.localStorage.getItem(sessionKey);
+        const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
+
+        const response = await fetch("/api/onboarding/restore/preview", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            snapshot,
+            targetTenant: {
+              name: `${snapshot.tenant.name} Sales Preview Blocked`,
+              slug: `${snapshot.tenant.slug}-sales-preview-blocked`,
+              industry: snapshot.tenant.industry,
+            },
+          }),
+        });
+
+        return {
+          status: response.status,
+          body: await response.json(),
+        };
+      },
+      {
+        sessionKey: sessionStorageKey,
+        snapshot: exportedSnapshot,
+      },
+    );
+    assert(
+      salesForbiddenRestorePreviewResponse.status === 403 &&
+        salesForbiddenRestorePreviewResponse.body?.error === "Forbidden.",
+      "Sales role did not receive a backend 403 for snapshot restore preview.",
+    );
+    rbacSalesBlockedRestorePreviewVerified = true;
     const salesForbiddenRestoreResponse = await page.evaluate(
       async ({ sessionKey, snapshot }) => {
         const rawSession = window.localStorage.getItem(sessionKey);
@@ -1582,6 +1638,7 @@ async function main() {
       duplicateTenantRejectedVerified,
       onboardingImportVerified,
       onboardingExportVerified,
+      baselineRestorePreviewVerified,
       baselineRestoreVerified,
       duplicateSupplierRejectedVerified,
       duplicateProductRejectedVerified,
@@ -1604,6 +1661,7 @@ async function main() {
       auditTrailVerified,
       rbacSalesVisibilityVerified,
       rbacSalesBlockedRouteVerified,
+      rbacSalesBlockedRestorePreviewVerified,
       rbacWarehouseBlockedMutationVerified,
       rbacCollectorActionSplitVerified,
       directRouteVerified: true,

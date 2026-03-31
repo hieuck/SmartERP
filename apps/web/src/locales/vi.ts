@@ -545,6 +545,21 @@ Object.assign(vi.tenants, {
   restoreTargetIndustryPlaceholder: "Gia công nhựa",
   restoreSnapshotJson: "Snapshot JSON",
   restoreSnapshotPlaceholder: "Dán snapshot JSON đã export vào đây.",
+  restorePreviewAction: "Xem trước khôi phục",
+  restorePreviewReady: "Bản xem trước đã sẵn sàng cho {{tenantName}}.",
+  restorePreviewBlocked: "Không thể khôi phục vì slug đang được tenant {{conflictingTenantName}} sử dụng.",
+  restorePreviewNotice: "Đã chuẩn bị bản xem trước khôi phục cho {{tenantName}}.",
+  restorePreviewSource: "Nguồn snapshot",
+  restorePreviewExportedAt: "Thời điểm export",
+  restorePreviewSlugStatus: "Trạng thái slug đích",
+  restorePreviewSlugAvailable: "Slug đích đang sẵn sàng để khôi phục tenant mới.",
+  restorePreviewSlugBlocked: "Slug này đang thuộc tenant {{conflictingTenantName}}.",
+  restorePreviewCountsNowLabel: "Khôi phục ngay trong baseline",
+  restorePreviewCountsNowValue:
+    "{{customerCount}} khách hàng, {{supplierCount}} nhà cung cấp, {{productCount}} sản phẩm và {{inventoryLineCount}} dòng tồn kho.",
+  restorePreviewCountsLaterLabel: "Dữ liệu để replay giai đoạn sau",
+  restorePreviewCountsLaterValue:
+    "{{orderCount}} đơn hàng, {{purchaseOrderCount}} đơn mua, {{invoiceCount}} hóa đơn, {{collectionActivityCount}} bước thu hồi, {{approvalCount}} phê duyệt, {{auditLogCount}} audit log, {{journalEntryCount}} bút toán và {{accountBalanceCount}} số dư sổ cái.",
   restoreAction: "Khôi phục baseline",
   restoreSummary:
     "Baseline đã được khôi phục cho {{tenantName}} với {{restoredCustomers}} khách hàng, {{restoredProducts}} sản phẩm và {{restoredInventoryLines}} dòng tồn kho.",

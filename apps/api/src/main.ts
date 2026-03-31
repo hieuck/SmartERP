@@ -30,6 +30,7 @@ import {
   type LoginInput,
   type Permission,
   type RestoreTenantSnapshotInput,
+  type RestoreTenantSnapshotPreview,
   type Session,
 } from "@smarterp/contracts";
 
@@ -52,6 +53,7 @@ import {
   getReportSummary,
   hasTenant,
   importOnboardingDataset,
+  previewRestoreTenantSnapshot,
   restoreTenantSnapshot,
   listAccountBalances,
   listApprovalRequests,
@@ -302,6 +304,50 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
       }
 
       sendJson(response, 200, { item: exportTenantSnapshot(tenantId) });
+      return;
+    }
+
+    if (request.method === "POST" && pathname === "/api/onboarding/restore/preview") {
+      if (!ensurePermission(response, requestSession, "manage_tenants")) {
+        return;
+      }
+
+      const input = await readJson<RestoreTenantSnapshotInput>(request);
+
+      if (!input?.snapshot?.tenant?.name) {
+        badRequest(response, "Snapshot payload is invalid.");
+        return;
+      }
+
+      if (!input.targetTenant?.name?.trim()) {
+        badRequest(response, "Target tenant name is required.");
+        return;
+      }
+
+      if (!input.targetTenant?.slug?.trim()) {
+        badRequest(response, "Target tenant slug is required.");
+        return;
+      }
+
+      if (!input.targetTenant?.industry?.trim()) {
+        badRequest(response, "Target tenant industry is required.");
+        return;
+      }
+
+      try {
+        const result: RestoreTenantSnapshotPreview = runWithSession(requestSession, () =>
+          previewRestoreTenantSnapshot(input),
+        );
+        sendJson(response, 200, { item: result });
+      } catch (error) {
+        if (error instanceof Error) {
+          badRequest(response, error.message);
+          return;
+        }
+
+        throw error;
+      }
+
       return;
     }
 

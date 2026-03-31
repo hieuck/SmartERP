@@ -206,6 +206,33 @@ export type RestoreTenantSnapshotInput = {
   };
 };
 
+export type RestoreTenantSnapshotPreview = {
+  sourceTenantName: string;
+  sourceTenantSlug: string;
+  exportedAt: string;
+  targetTenant: {
+    name: string;
+    slug: string;
+    industry: string;
+  };
+  customerCount: number;
+  supplierCount: number;
+  productCount: number;
+  inventoryLineCount: number;
+  orderCount: number;
+  purchaseOrderCount: number;
+  invoiceCount: number;
+  collectionActivityCount: number;
+  approvalCount: number;
+  auditLogCount: number;
+  journalEntryCount: number;
+  accountBalanceCount: number;
+  restoredScopes: string[];
+  pendingScopes: string[];
+  slugAvailable: boolean;
+  conflictingTenantName: string | null;
+};
+
 export type RestoreTenantSnapshotResult = {
   tenant: TenantRecord;
   restoredCustomers: number;

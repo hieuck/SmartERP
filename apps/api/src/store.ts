@@ -35,6 +35,7 @@ import {
   type OnboardingDataset,
   type OnboardingImportError,
   type RestoreTenantSnapshotInput,
+  type RestoreTenantSnapshotPreview,
   type RestoreTenantSnapshotResult,
   type CollectionFollowUpStatus,
   type CollectionPriority,
@@ -363,6 +364,13 @@ const getTenantByIdStatement = db.prepare(`
   SELECT id, name, slug, industry, created_at
   FROM tenants
   WHERE id = ?
+  LIMIT 1
+`);
+
+const getTenantBySlugStatement = db.prepare(`
+  SELECT id, name, slug, industry, created_at
+  FROM tenants
+  WHERE slug = ?
   LIMIT 1
 `);
 
@@ -2292,6 +2300,39 @@ export function importOnboardingDataset(input: ImportOnboardingInput): ImportOnb
   }
 }
 
+const restoreImmediateScopes = ["tenant", "customers", "suppliers", "products", "inventory"] as const;
+const restoreDeferredScopes = ["orders", "purchaseOrders", "invoices", "collections", "approvals", "audit", "ledger"] as const;
+
+function normalizeRestoreTarget(input: RestoreTenantSnapshotInput): {
+  targetName: string;
+  targetSlug: string;
+  targetIndustry: string;
+} {
+  const targetName = input.targetTenant.name.trim();
+  const targetSlug = input.targetTenant.slug.trim().toLowerCase();
+  const targetIndustry = input.targetTenant.industry.trim();
+
+  if (!targetName || !targetSlug || !targetIndustry) {
+    throw new Error("Target tenant name, slug, and industry are required.");
+  }
+
+  if (
+    !input.snapshot?.tenant?.name ||
+    !Array.isArray(input.snapshot.customers) ||
+    !Array.isArray(input.snapshot.suppliers) ||
+    !Array.isArray(input.snapshot.products) ||
+    !Array.isArray(input.snapshot.inventories)
+  ) {
+    throw new Error("Snapshot payload is invalid.");
+  }
+
+  return {
+    targetName,
+    targetSlug,
+    targetIndustry,
+  };
+}
+
 export function exportTenantSnapshot(tenantId: string): TenantExportBundle {
   const tenantRow = getTenantByIdStatement.get(tenantId) as TenantRow | undefined;
   if (!tenantRow) {
@@ -2317,17 +2358,44 @@ export function exportTenantSnapshot(tenantId: string): TenantExportBundle {
   };
 }
 
+export function previewRestoreTenantSnapshot(input: RestoreTenantSnapshotInput): RestoreTenantSnapshotPreview {
+  const { targetName, targetSlug, targetIndustry } = normalizeRestoreTarget(input);
+  const conflictingTenant = getTenantBySlugStatement.get(targetSlug) as TenantRow | undefined;
+
+  return {
+    sourceTenantName: input.snapshot.tenant.name,
+    sourceTenantSlug: input.snapshot.tenant.slug,
+    exportedAt: input.snapshot.exportedAt,
+    targetTenant: {
+      name: targetName,
+      slug: targetSlug,
+      industry: targetIndustry,
+    },
+    customerCount: input.snapshot.customers.length,
+    supplierCount: input.snapshot.suppliers.length,
+    productCount: input.snapshot.products.length,
+    inventoryLineCount: input.snapshot.inventories.length,
+    orderCount: input.snapshot.orders.length,
+    purchaseOrderCount: input.snapshot.purchaseOrders.length,
+    invoiceCount: input.snapshot.invoices.length,
+    collectionActivityCount: input.snapshot.collectionActivities.length,
+    approvalCount: input.snapshot.approvalRequests.length,
+    auditLogCount: input.snapshot.auditLogs.length,
+    journalEntryCount: input.snapshot.journalEntries.length,
+    accountBalanceCount: input.snapshot.accountBalances.length,
+    restoredScopes: [...restoreImmediateScopes],
+    pendingScopes: [...restoreDeferredScopes],
+    slugAvailable: !conflictingTenant,
+    conflictingTenantName: conflictingTenant?.name ?? null,
+  };
+}
+
 export function restoreTenantSnapshot(input: RestoreTenantSnapshotInput): RestoreTenantSnapshotResult {
-  const targetName = input.targetTenant.name.trim();
-  const targetSlug = input.targetTenant.slug.trim().toLowerCase();
-  const targetIndustry = input.targetTenant.industry.trim();
+  const { targetName, targetSlug, targetIndustry } = normalizeRestoreTarget(input);
+  const conflictingTenant = getTenantBySlugStatement.get(targetSlug) as TenantRow | undefined;
 
-  if (!targetName || !targetSlug || !targetIndustry) {
-    throw new Error("Target tenant name, slug, and industry are required.");
-  }
-
-  if (!input.snapshot?.tenant?.name) {
-    throw new Error("Snapshot payload is invalid.");
+  if (conflictingTenant) {
+    throw new Error("Target tenant slug already exists.");
   }
 
   const restoredTenant = createTenant({
@@ -2404,8 +2472,8 @@ export function restoreTenantSnapshot(input: RestoreTenantSnapshotInput): Restor
     restoredSuppliers,
     restoredProducts,
     restoredInventoryLines,
-    restoredScopes: ["tenant", "customers", "suppliers", "products", "inventory"],
-    pendingScopes: ["orders", "purchaseOrders", "invoices", "collections", "approvals", "audit", "ledger"],
+    restoredScopes: [...restoreImmediateScopes],
+    pendingScopes: [...restoreDeferredScopes],
   };
 }
 

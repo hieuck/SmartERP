@@ -111,6 +111,21 @@ const en = {
     restoreTargetIndustryPlaceholder: "Plastic manufacturing",
     restoreSnapshotJson: "Snapshot JSON",
     restoreSnapshotPlaceholder: "Paste the exported tenant snapshot JSON here.",
+    restorePreviewAction: "Preview Restore",
+    restorePreviewReady: "Restore preview ready for {{tenantName}}.",
+    restorePreviewBlocked: "Restore preview blocked because the slug is already used by {{conflictingTenantName}}.",
+    restorePreviewNotice: "Restore preview prepared for {{tenantName}}.",
+    restorePreviewSource: "Snapshot source",
+    restorePreviewExportedAt: "Exported at",
+    restorePreviewSlugStatus: "Target slug status",
+    restorePreviewSlugAvailable: "Slug is available for the restored tenant.",
+    restorePreviewSlugBlocked: "Slug already belongs to {{conflictingTenantName}}.",
+    restorePreviewCountsNowLabel: "Restored in this baseline",
+    restorePreviewCountsNowValue:
+      "{{customerCount}} customers, {{supplierCount}} suppliers, {{productCount}} products, and {{inventoryLineCount}} inventory lines.",
+    restorePreviewCountsLaterLabel: "Deferred for later replay",
+    restorePreviewCountsLaterValue:
+      "{{orderCount}} orders, {{purchaseOrderCount}} purchase orders, {{invoiceCount}} invoices, {{collectionActivityCount}} collection activities, {{approvalCount}} approvals, {{auditLogCount}} audit logs, {{journalEntryCount}} journal entries, and {{accountBalanceCount}} ledger balances.",
     restoreAction: "Restore Baseline",
     restoreSummary:
       "Baseline restored for {{tenantName}} with {{restoredCustomers}} customers, {{restoredProducts}} products, and {{restoredInventoryLines}} inventory lines.",
