@@ -281,6 +281,10 @@ body {
   text-align: right;
 }
 
+.compact-record-row {
+  padding: 10px 12px;
+}
+
 @media (max-width: 992px) {
   .shell-content {
     padding: 16px;

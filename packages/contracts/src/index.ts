@@ -9,30 +9,138 @@ export const foundationModules = [
   "inventory",
   "invoices",
   "reporting",
+  "approvals",
+] as const;
+
+export const userRoles = [
+  "founder",
+  "finance",
+  "sales",
+  "warehouse",
+  "purchasing",
+  "collector",
+] as const;
+
+export const permissionKeys = [
+  "manage_tenants",
+  "manage_customers",
+  "manage_suppliers",
+  "manage_products",
+  "manage_purchase_orders",
+  "receive_purchase_orders",
+  "manage_inventory",
+  "manage_orders",
+  "issue_invoices",
+  "record_invoice_payments",
+  "manage_collections",
+  "view_reports",
+  "decide_approvals",
 ] as const;
 
 export const rewriteMessage =
   "New development now targets a clean workspace with explicit contracts, shared UI primitives, and capability-by-capability migration from the legacy tree.";
 
+export type FoundationModule = (typeof foundationModules)[number];
+export type UserRole = (typeof userRoles)[number];
+export type Permission = (typeof permissionKeys)[number];
+
+export type DemoAccount = {
+  userId: string;
+  email: string;
+  password: string;
+  displayName: string;
+  role: UserRole;
+  accessToken: string;
+};
+
+const roleModules: Record<UserRole, readonly FoundationModule[]> = {
+  founder: [...foundationModules],
+  finance: ["identity", "invoices", "reporting"],
+  sales: ["identity", "customers", "products", "orders"],
+  warehouse: ["identity", "products", "purchasing", "inventory"],
+  purchasing: ["identity", "suppliers", "products", "purchasing"],
+  collector: ["identity", "invoices", "reporting"],
+};
+
+const rolePermissions: Record<UserRole, readonly Permission[]> = {
+  founder: [...permissionKeys],
+  finance: ["issue_invoices", "record_invoice_payments", "view_reports"],
+  sales: ["manage_customers", "manage_products", "manage_orders"],
+  warehouse: ["manage_products", "receive_purchase_orders", "manage_inventory"],
+  purchasing: ["manage_suppliers", "manage_products", "manage_purchase_orders"],
+  collector: ["manage_collections", "view_reports"],
+};
+
+export const demoAccounts: readonly DemoAccount[] = [
+  {
+    userId: "founder-1",
+    email: "founder@smarterp.vn",
+    password: "smarterp-next",
+    displayName: "SmartERP Founder",
+    role: "founder",
+    accessToken: "smarterp-next-founder-token",
+  },
+  {
+    userId: "finance-1",
+    email: "finance@smarterp.vn",
+    password: "smarterp-next",
+    displayName: "Finance Controller",
+    role: "finance",
+    accessToken: "smarterp-next-finance-token",
+  },
+  {
+    userId: "sales-1",
+    email: "sales@smarterp.vn",
+    password: "smarterp-next",
+    displayName: "Sales Lead",
+    role: "sales",
+    accessToken: "smarterp-next-sales-token",
+  },
+  {
+    userId: "warehouse-1",
+    email: "warehouse@smarterp.vn",
+    password: "smarterp-next",
+    displayName: "Warehouse Supervisor",
+    role: "warehouse",
+    accessToken: "smarterp-next-warehouse-token",
+  },
+  {
+    userId: "purchasing-1",
+    email: "purchasing@smarterp.vn",
+    password: "smarterp-next",
+    displayName: "Purchasing Officer",
+    role: "purchasing",
+    accessToken: "smarterp-next-purchasing-token",
+  },
+  {
+    userId: "collector-1",
+    email: "collector@smarterp.vn",
+    password: "smarterp-next",
+    displayName: "Collection Specialist",
+    role: "collector",
+    accessToken: "smarterp-next-collector-token",
+  },
+] as const;
+
 export const demoCredentials = {
-  email: "founder@smarterp.vn",
-  password: "smarterp-next",
+  email: demoAccounts[0].email,
+  password: demoAccounts[0].password,
 } as const;
 
-export const demoAccessToken = "smarterp-next-demo-token" as const;
+export const demoAccessToken = demoAccounts[0].accessToken;
 
 export function describeApiFoundation(): string {
   return "Modular API foundation active";
 }
 
-export type FoundationModule = (typeof foundationModules)[number];
-
 export type Session = {
   userId: string;
   email: string;
   displayName: string;
-  role: "founder";
+  role: UserRole;
   accessToken: string;
+  modules: readonly FoundationModule[];
+  permissions: readonly Permission[];
 };
 
 export type LoginInput = {
@@ -490,6 +598,7 @@ export type FoundationSnapshot = {
   modules: readonly FoundationModule[];
   message: string;
   demoCredentials: typeof demoCredentials;
+  demoAccounts: ReadonlyArray<Pick<DemoAccount, "email" | "password" | "displayName" | "role">>;
 };
 
 export type HealthPayload = {
@@ -498,12 +607,59 @@ export type HealthPayload = {
   foundation: string;
 };
 
-export function createDemoSession(): Session {
+export function getRoleModules(role: UserRole): readonly FoundationModule[] {
+  return roleModules[role];
+}
+
+export function getRolePermissions(role: UserRole): readonly Permission[] {
+  return rolePermissions[role];
+}
+
+export function canAccessModule(
+  sessionOrRole: Pick<Session, "modules"> | UserRole,
+  module: FoundationModule,
+): boolean {
+  const modules = typeof sessionOrRole === "string" ? getRoleModules(sessionOrRole) : sessionOrRole.modules;
+  return modules.includes(module);
+}
+
+export function hasPermission(
+  sessionOrRole: Pick<Session, "permissions"> | UserRole,
+  permission: Permission,
+): boolean {
+  const permissions =
+    typeof sessionOrRole === "string" ? getRolePermissions(sessionOrRole) : sessionOrRole.permissions;
+  return permissions.includes(permission);
+}
+
+function buildSession(account: DemoAccount): Session {
   return {
-    userId: "founder-1",
-    email: demoCredentials.email,
-    displayName: "SmartERP Founder",
-    role: "founder",
-    accessToken: demoAccessToken,
+    userId: account.userId,
+    email: account.email,
+    displayName: account.displayName,
+    role: account.role,
+    accessToken: account.accessToken,
+    modules: getRoleModules(account.role),
+    permissions: getRolePermissions(account.role),
   };
+}
+
+export function createDemoSession(accountSelector: UserRole | string = "founder"): Session {
+  const account =
+    demoAccounts.find((candidate) => candidate.email === accountSelector) ??
+    demoAccounts.find((candidate) => candidate.role === accountSelector) ??
+    demoAccounts[0];
+  return buildSession(account);
+}
+
+export function getDemoSessionByAccessToken(accessToken: string): Session | null {
+  const account = demoAccounts.find((candidate) => candidate.accessToken === accessToken);
+  return account ? buildSession(account) : null;
+}
+
+export function getDemoSessionByCredentials(input: LoginInput): Session | null {
+  const account = demoAccounts.find(
+    (candidate) => candidate.email === input.email && candidate.password === input.password,
+  );
+  return account ? buildSession(account) : null;
 }

@@ -24,6 +24,14 @@ export function HeaderBar({ collapsed, onToggle }: HeaderBarProps): ReactElement
   const navigate = useNavigate();
   const { language, setLanguage, t } = useLocale();
   const { session, selectedTenant, logoutFromWorkspace } = useWorkspace();
+  const roleLabelKeyByRole = {
+    founder: "roles.founder",
+    finance: "roles.finance",
+    sales: "roles.sales",
+    warehouse: "roles.warehouse",
+    purchasing: "roles.purchasing",
+    collector: "roles.collector",
+  } as const;
   const labels: Record<string, string> = {
     dashboard: t("shell.dashboard"),
     tenants: t("shell.tenants"),
@@ -83,6 +91,7 @@ export function HeaderBar({ collapsed, onToggle }: HeaderBarProps): ReactElement
             onChange={(value) => setLanguage(value as "vi" | "en")}
           />
         </Space>
+        {session ? <Tag color="purple">{t(roleLabelKeyByRole[session.role])}</Tag> : null}
         {selectedTenant ? <Tag color="blue">{selectedTenant.name}</Tag> : null}
         <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
           <Space className="header-user">

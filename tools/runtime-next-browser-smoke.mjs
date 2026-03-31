@@ -11,6 +11,9 @@ const screenshotPath = path.join(outputDir, "runtime-next-smoke.png");
 const summaryPath = path.join(outputDir, "runtime-next-smoke-summary.json");
 const demoEmail = process.env.SMARTERP_NEXT_DEMO_EMAIL ?? "founder@smarterp.vn";
 const demoPassword = process.env.SMARTERP_NEXT_DEMO_PASSWORD ?? "smarterp-next";
+const salesEmail = "sales@smarterp.vn";
+const warehouseEmail = "warehouse@smarterp.vn";
+const collectorEmail = "collector@smarterp.vn";
 const sessionStorageKey = "smarterp.next.session";
 const tenantStorageKey = "smarterp.next.selectedTenantId";
 const languageStorageKey = "smarterp-next-language";
@@ -101,6 +104,10 @@ function isExpectedBadRequestConsoleMessage(message) {
   return message.includes("status of 400") && message.includes("Bad Request");
 }
 
+function isExpectedForbiddenConsoleMessage(message) {
+  return message.includes("status of 403") && message.includes("Forbidden");
+}
+
 function isIgnorableRequest(url) {
   return url.endsWith("/favicon.ico");
 }
@@ -114,6 +121,14 @@ function isExpectedNegativePath(response) {
         (response.request().method() === "GET" && response.url().endsWith("/api/tenants"))
       )
     ) ||
+      (
+        response.status() === 403 &&
+        response.request().method() === "POST" &&
+        (
+          response.url().endsWith("/api/invoices") ||
+          response.url().endsWith("/api/purchase-orders")
+        )
+      ) ||
       (
         response.status() === 400 &&
         response.request().method() === "POST" &&
@@ -220,6 +235,21 @@ async function waitForStoredValue(page, key, value) {
   );
 }
 
+async function loginAs(page, email, password) {
+  await page.locator('input[autocomplete="email"]').fill(email);
+  await page.locator('input[autocomplete="current-password"]').fill(password);
+  await page.locator('.login-card button[type="submit"]').click();
+  await page.waitForURL(/\/dashboard$/, { timeout: 15000 });
+  await page.locator(".page-stack").waitFor({ timeout: 15000 });
+}
+
+async function logout(page) {
+  await page.locator(".header-user").click();
+  await page.locator(".ant-dropdown [role='menuitem']").first().click();
+  await page.waitForURL(/\/login$/, { timeout: 15000 });
+  await page.locator(".login-card").waitFor({ timeout: 15000 });
+}
+
 async function clickLanguageToggle(page, value) {
   await page.locator(".header-language").getByText(value, { exact: true }).click();
   await waitForStoredValue(page, languageStorageKey, value.toLowerCase());
@@ -317,7 +347,11 @@ async function main() {
       return;
     }
 
-    if (isExpectedUnauthorizedConsoleMessage(text) || isExpectedBadRequestConsoleMessage(text)) {
+    if (
+      isExpectedUnauthorizedConsoleMessage(text) ||
+      isExpectedBadRequestConsoleMessage(text) ||
+      isExpectedForbiddenConsoleMessage(text)
+    ) {
       return;
     }
 
@@ -369,6 +403,10 @@ async function main() {
   let ledgerPostingVerified = false;
   let auditTrailVerified = false;
   let unauthorizedApiBlockedVerified = false;
+  let rbacSalesVisibilityVerified = false;
+  let rbacSalesBlockedRouteVerified = false;
+  let rbacWarehouseBlockedMutationVerified = false;
+  let rbacCollectorActionSplitVerified = false;
 
   try {
     await openApp(page);
@@ -399,6 +437,34 @@ async function main() {
           displayName: "SmartERP Founder",
           role: "founder",
           accessToken: "stale-token",
+          modules: [
+            "identity",
+            "tenant",
+            "customers",
+            "suppliers",
+            "products",
+            "purchasing",
+            "orders",
+            "inventory",
+            "invoices",
+            "reporting",
+            "approvals",
+          ],
+          permissions: [
+            "manage_tenants",
+            "manage_customers",
+            "manage_suppliers",
+            "manage_products",
+            "manage_purchase_orders",
+            "receive_purchase_orders",
+            "manage_inventory",
+            "manage_orders",
+            "issue_invoices",
+            "record_invoice_payments",
+            "manage_collections",
+            "view_reports",
+            "decide_approvals",
+          ],
         },
       },
     );
@@ -1032,10 +1098,140 @@ async function main() {
     assert(Boolean(storedWorkspaceStateBeforeLogout.session), "Session was not persisted before logout.");
     assert(Boolean(storedWorkspaceStateBeforeLogout.tenantId), "Selected tenant was not persisted before logout.");
 
-    await page.locator(".header-user").click();
-    await page.locator(".ant-dropdown [role='menuitem']").first().click();
-    await page.waitForURL(/\/login$/, { timeout: 15000 });
-    await page.locator(".login-card").waitFor({ timeout: 15000 });
+    await logout(page);
+
+    await loginAs(page, salesEmail, demoPassword);
+    await page.locator(".shell-header").getByText("Kinh doanh", { exact: false }).waitFor({ timeout: 15000 });
+    assert(
+      (await page.locator(".ant-layout-sider .ant-menu-item").getByText("Khách hàng", { exact: false }).count()) > 0,
+      "Sales role did not receive customer navigation.",
+    );
+    assert(
+      (await page.locator(".ant-layout-sider .ant-menu-item").getByText("Báo cáo", { exact: false }).count()) === 0,
+      "Sales role should not see reports navigation.",
+    );
+    assert(
+      (await page.locator(".ant-layout-sider .ant-menu-item").getByText("Phê duyệt", { exact: false }).count()) === 0,
+      "Sales role should not see approvals navigation.",
+    );
+    rbacSalesVisibilityVerified = true;
+    await openDirectRoute(page, "/dashboard/reports");
+    await page.getByText("Không có quyền truy cập", { exact: false }).waitFor({ timeout: 15000 });
+    const salesForbiddenInvoiceResponse = await page.evaluate(
+      async ({ sessionKey, tenantKey, issueDate }) => {
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const rawSession = window.localStorage.getItem(sessionKey);
+        const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
+
+        const response = await fetch("/api/invoices", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            tenantId,
+            orderId: "forbidden-order",
+            taxRatePercent: 10,
+            issueDate,
+            paymentTermDays: 30,
+          }),
+        });
+
+        return {
+          status: response.status,
+          body: await response.json(),
+        };
+      },
+      {
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+        issueDate: firstIssueDateInput,
+      },
+    );
+    assert(
+      salesForbiddenInvoiceResponse.status === 403 && salesForbiddenInvoiceResponse.body?.error === "Forbidden.",
+      "Sales role did not receive a backend 403 for invoice issuance.",
+    );
+    rbacSalesBlockedRouteVerified = true;
+    await logout(page);
+
+    await loginAs(page, warehouseEmail, demoPassword);
+    await page.locator(".shell-header").getByText("Kho vận", { exact: false }).waitFor({ timeout: 15000 });
+    await openDirectRoute(page, "/dashboard/purchase-orders");
+    await waitForTenantContext(page, tenantName);
+    await page
+      .locator(".page-column-stack .ant-card")
+      .nth(0)
+      .getByText("Vai trò hiện tại chỉ được xem dữ liệu trong phân hệ này", { exact: false })
+      .waitFor({ timeout: 15000 });
+    const warehouseForbiddenPurchaseOrderResponse = await page.evaluate(
+      async ({ sessionKey, tenantKey, expectedReceiptDate }) => {
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const rawSession = window.localStorage.getItem(sessionKey);
+        const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
+        const headers = {
+          "content-type": "application/json",
+          authorization: `Bearer ${accessToken}`,
+        };
+
+        const response = await fetch("/api/purchase-orders", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            tenantId,
+            supplierId: "forbidden-supplier",
+            productId: "forbidden-product",
+            quantityOrdered: 3,
+            unitCost: 19000,
+            expectedReceiptDate,
+          }),
+        });
+
+        return {
+          status: response.status,
+          body: await response.json(),
+        };
+      },
+      {
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+        expectedReceiptDate: expectedReceiptDateInput,
+      },
+    );
+    assert(
+      warehouseForbiddenPurchaseOrderResponse.status === 403 &&
+        warehouseForbiddenPurchaseOrderResponse.body?.error === "Forbidden.",
+      "Warehouse role did not receive a backend 403 for purchase-order creation.",
+    );
+    rbacWarehouseBlockedMutationVerified = true;
+    await logout(page);
+
+    await loginAs(page, collectorEmail, demoPassword);
+    await page.locator(".shell-header").getByText("Thu hồi công nợ", { exact: false }).waitFor({ timeout: 15000 });
+    await openDirectRoute(page, "/dashboard/invoices");
+    await waitForTenantContext(page, tenantName);
+    await page
+      .locator(".page-column-stack .ant-card")
+      .nth(0)
+      .getByText("Vai trò hiện tại chỉ được xem dữ liệu trong phân hệ này", { exact: false })
+      .waitFor({ timeout: 15000 });
+    await page
+      .locator(".page-column-stack .ant-card")
+      .nth(1)
+      .getByText("Vai trò hiện tại chỉ được xem dữ liệu trong phân hệ này", { exact: false })
+      .waitFor({ timeout: 15000 });
+    await page
+      .locator(".page-column-stack .ant-card")
+      .nth(2)
+      .locator("button[type='submit']")
+      .waitFor({ timeout: 15000 });
+    assert(
+      (await page.locator(".ant-layout-sider .ant-menu-item").getByText("Báo cáo", { exact: false }).count()) > 0,
+      "Collector role did not receive reports navigation.",
+    );
+    rbacCollectorActionSplitVerified = true;
+    await logout(page);
 
     const storedWorkspaceStateAfterLogout = await page.evaluate(
       ({ sessionKey, tenantKey }) => ({
@@ -1110,6 +1306,10 @@ async function main() {
       collectionResolutionVerified,
       ledgerPostingVerified,
       auditTrailVerified,
+      rbacSalesVisibilityVerified,
+      rbacSalesBlockedRouteVerified,
+      rbacWarehouseBlockedMutationVerified,
+      rbacCollectorActionSplitVerified,
       directRouteVerified: true,
       logoutClearsStorageVerified: true,
       logoutBlocksProtectedRouteVerified: true,

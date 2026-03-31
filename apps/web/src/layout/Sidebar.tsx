@@ -17,6 +17,7 @@ import type { MenuProps } from "antd";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import { useLocale } from "../locale/LocaleContext";
+import { useWorkspace } from "../state/WorkspaceContext";
 
 const { Sider } = Layout;
 
@@ -30,19 +31,40 @@ export function Sidebar({ collapsed }: SidebarProps): ReactElement {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useLocale();
+  const { canAccessModule } = useWorkspace();
   const items: MenuItem[] = [
     { key: "/dashboard", icon: <DashboardOutlined />, label: t("shell.dashboard") },
-    { key: "/dashboard/tenants", icon: <ApartmentOutlined />, label: t("shell.tenants") },
-    { key: "/dashboard/customers", icon: <UserOutlined />, label: t("shell.customers") },
-    { key: "/dashboard/suppliers", icon: <TeamOutlined />, label: t("shell.suppliers") },
-    { key: "/dashboard/products", icon: <ShoppingOutlined />, label: t("shell.products") },
-    { key: "/dashboard/purchase-orders", icon: <ShoppingCartOutlined />, label: t("shell.purchaseOrders") },
-    { key: "/dashboard/inventory", icon: <DatabaseOutlined />, label: t("shell.inventory") },
-    { key: "/dashboard/orders", icon: <InboxOutlined />, label: t("shell.orders") },
-    { key: "/dashboard/invoices", icon: <FileTextOutlined />, label: t("shell.invoices") },
-    { key: "/dashboard/reports", icon: <BarChartOutlined />, label: t("shell.reports") },
-    { key: "/dashboard/approvals", icon: <SafetyCertificateOutlined />, label: t("shell.approvals") },
-  ];
+    canAccessModule("tenant")
+      ? { key: "/dashboard/tenants", icon: <ApartmentOutlined />, label: t("shell.tenants") }
+      : null,
+    canAccessModule("customers")
+      ? { key: "/dashboard/customers", icon: <UserOutlined />, label: t("shell.customers") }
+      : null,
+    canAccessModule("suppliers")
+      ? { key: "/dashboard/suppliers", icon: <TeamOutlined />, label: t("shell.suppliers") }
+      : null,
+    canAccessModule("products")
+      ? { key: "/dashboard/products", icon: <ShoppingOutlined />, label: t("shell.products") }
+      : null,
+    canAccessModule("purchasing")
+      ? { key: "/dashboard/purchase-orders", icon: <ShoppingCartOutlined />, label: t("shell.purchaseOrders") }
+      : null,
+    canAccessModule("inventory")
+      ? { key: "/dashboard/inventory", icon: <DatabaseOutlined />, label: t("shell.inventory") }
+      : null,
+    canAccessModule("orders")
+      ? { key: "/dashboard/orders", icon: <InboxOutlined />, label: t("shell.orders") }
+      : null,
+    canAccessModule("invoices")
+      ? { key: "/dashboard/invoices", icon: <FileTextOutlined />, label: t("shell.invoices") }
+      : null,
+    canAccessModule("reporting")
+      ? { key: "/dashboard/reports", icon: <BarChartOutlined />, label: t("shell.reports") }
+      : null,
+    canAccessModule("approvals")
+      ? { key: "/dashboard/approvals", icon: <SafetyCertificateOutlined />, label: t("shell.approvals") }
+      : null,
+  ].filter(Boolean) as MenuItem[];
 
   function getSelectedKey(): string {
     const path = location.pathname;

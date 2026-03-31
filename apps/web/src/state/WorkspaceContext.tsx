@@ -5,6 +5,7 @@ import type {
   ApprovalDecisionInput,
   ApprovalDecision,
   ApprovalRequestRecord,
+  FoundationModule,
   CreateCustomerInput,
   CreateInvoiceInput,
   UpdateInvoiceCollectionInput,
@@ -25,11 +26,16 @@ import type {
   InventoryRecord,
   LoginInput,
   OrderRecord,
+  Permission,
   PurchaseOrderRecord,
   ProductRecord,
   Session,
   SupplierRecord,
   TenantRecord,
+} from "@smarterp/contracts";
+import {
+  canAccessModule as sessionCanAccessModule,
+  hasPermission as sessionHasPermission,
 } from "@smarterp/contracts";
 
 import {
@@ -81,6 +87,8 @@ type WorkspaceContextValue = {
   clearError: () => void;
   clearNotice: () => void;
   session: Session | null;
+  canAccessModule: (module: FoundationModule) => boolean;
+  can: (permission: Permission) => boolean;
   tenants: TenantRecord[];
   selectedTenantId: string;
   selectedTenant: TenantRecord | null;
@@ -142,6 +150,9 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
   const [invoices, setInvoices] = useState<InvoiceRecord[]>([]);
   const error = errorMessage ? localizeErrorMessage(errorMessage, t) : "";
   const notice = noticeMessage;
+  const canAccessModule = (module: FoundationModule): boolean =>
+    session ? sessionCanAccessModule(session, module) : false;
+  const can = (permission: Permission): boolean => (session ? sessionHasPermission(session, permission) : false);
 
   useEffect(() => {
     setApiSession(session);
@@ -193,16 +204,16 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
       nextPurchaseOrders,
       nextInvoices,
     ] = await Promise.all([
-      listApprovalRequests(tenantId),
-      listCustomers(tenantId),
-      listSuppliers(tenantId),
-      listCustomerStatements(tenantId),
-      listInvoiceCollectionActivities(tenantId),
-      listProducts(tenantId),
-      listInventory(tenantId),
-      listOrders(tenantId),
-      listPurchaseOrders(tenantId),
-      listInvoices(tenantId),
+      canAccessModule("approvals") ? listApprovalRequests(tenantId) : Promise.resolve([]),
+      canAccessModule("customers") ? listCustomers(tenantId) : Promise.resolve([]),
+      canAccessModule("suppliers") ? listSuppliers(tenantId) : Promise.resolve([]),
+      canAccessModule("customers") ? listCustomerStatements(tenantId) : Promise.resolve([]),
+      canAccessModule("invoices") ? listInvoiceCollectionActivities(tenantId) : Promise.resolve([]),
+      canAccessModule("products") ? listProducts(tenantId) : Promise.resolve([]),
+      canAccessModule("inventory") ? listInventory(tenantId) : Promise.resolve([]),
+      canAccessModule("orders") ? listOrders(tenantId) : Promise.resolve([]),
+      canAccessModule("purchasing") ? listPurchaseOrders(tenantId) : Promise.resolve([]),
+      canAccessModule("invoices") ? listInvoices(tenantId) : Promise.resolve([]),
     ]);
 
     setApprovalRequests(nextApprovalRequests);
@@ -673,6 +684,8 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
         clearError,
         clearNotice,
         session,
+        canAccessModule,
+        can,
         tenants,
         selectedTenantId,
         selectedTenant,

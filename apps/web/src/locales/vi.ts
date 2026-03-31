@@ -11,6 +11,20 @@ const vi = {
     noneSelected: "Chưa chọn",
     workspace: "Workspace",
   },
+  roles: {
+    founder: "Founder",
+    finance: "Tài chính",
+    sales: "Kinh doanh",
+    warehouse: "Kho vận",
+    purchasing: "Mua hàng",
+    collector: "Thu hồi công nợ",
+  },
+  accessDenied: {
+    title: "Không có quyền truy cập",
+    description: "Vai trò hiện tại của bạn không được mở phân hệ {{module}}.",
+    actionRestricted: "Vai trò hiện tại chỉ được xem dữ liệu trong phân hệ này, không được thực hiện thao tác đó.",
+    backToDashboard: "Quay về bảng điều khiển",
+  },
   shell: {
     brand: "SmartERP",
     signOut: "Đăng xuất",
@@ -35,6 +49,7 @@ const vi = {
     fallbackMessage:
       "Đang khởi động nền rewrite để app shell mới thay thế điểm vào cũ của hệ thống.",
     demoAccount: "Tài khoản demo",
+    roleAccounts: "Tài khoản demo theo vai trò",
     email: "Email",
     password: "Mật khẩu",
     enterWorkspace: "Vào hệ thống",
@@ -398,6 +413,7 @@ const vi = {
     inventory: "Tồn kho",
     invoices: "Hóa đơn",
     reporting: "Báo cáo",
+    approvals: "Phê duyệt",
   },
   errors: {
     unknown: "Lỗi không xác định.",
@@ -405,6 +421,7 @@ const vi = {
     invalidRequest: "Yêu cầu không hợp lệ.",
     invalidCredentials: "Thông tin đăng nhập không hợp lệ.",
     authenticationRequired: "Phiên đăng nhập không còn hiệu lực. Hãy đăng nhập lại.",
+    forbidden: "Bạn không có quyền thực hiện thao tác này.",
     internalServerError: "Lỗi máy chủ nội bộ.",
     loadFoundationFailed: "Không tải được nền rewrite.",
     loadTenantsFailed: "Không tải được danh sách tenant.",
@@ -415,7 +432,7 @@ const vi = {
     loadProductsFailed: "Không tải được danh sách sản phẩm.",
     loadInventoryFailed: "Không tải được dữ liệu tồn kho.",
     loadOrdersFailed: "Không tải được danh sách đơn hàng.",
-    loadPurchaseOrdersFailed: "Không tải được danh sach don mua.",
+    loadPurchaseOrdersFailed: "Không tải được danh sách đơn mua.",
     loadInvoicesFailed: "Không tải được danh sách hóa đơn.",
     loadApprovalRequestsFailed: "Không tải được danh sách phê duyệt.",
     loadReportSummaryFailed: "Không tải được báo cáo tổng hợp.",

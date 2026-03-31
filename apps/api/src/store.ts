@@ -316,7 +316,7 @@ type TopProductRow = {
   total_units: number;
 };
 
-const session = createDemoSession();
+let currentSession = createDemoSession();
 
 const defaultAccounts = [
   { accountCode: "111", accountName: "Tiền mặt", accountType: "asset", sortOrder: 1 },
@@ -1877,8 +1877,8 @@ function createApprovalRequest(input: {
     reason: input.reason,
     amount: input.amount ?? null,
     quantity: input.quantity ?? null,
-    requested_by_email: session.email,
-    requested_by_display_name: session.displayName,
+    requested_by_email: currentSession.email,
+    requested_by_display_name: currentSession.displayName,
     decision_by_email: null,
     decision_by_display_name: null,
     decision_note: null,
@@ -1984,7 +1984,22 @@ function shouldRequireInventoryAdjustmentApproval(
 }
 
 export function getSession(): Session {
-  return session;
+  return currentSession;
+}
+
+export function runWithSession<T>(session: Session | null, execute: () => T): T {
+  if (!session) {
+    throw new Error("Authentication required.");
+  }
+
+  const previousSession = currentSession;
+  currentSession = session;
+
+  try {
+    return execute();
+  } finally {
+    currentSession = previousSession;
+  }
 }
 
 export function listTenants(): TenantRecord[] {
@@ -2269,8 +2284,8 @@ export function resolveApprovalRequest(input: ApprovalDecisionInput): ApprovalRe
   const decidedAt = timestamp();
   resolveApprovalRequestStatement.run(
     input.decision,
-    session.email,
-    session.displayName,
+    currentSession.email,
+    currentSession.displayName,
     decisionNote,
     decidedAt,
     input.tenantId,
@@ -2329,8 +2344,8 @@ function recordAuditLog(input: {
     input.entityNumber,
     input.actionType,
     input.summary,
-    session.email,
-    session.displayName,
+    currentSession.email,
+    currentSession.displayName,
     JSON.stringify(input.metadata ?? {}),
     input.createdAt,
   );

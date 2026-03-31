@@ -15,6 +15,7 @@ type InventoryAdjustmentFormShape = Omit<CreateInventoryAdjustmentInput, "tenant
 export function InventoryPage(): ReactElement {
   const { formatCurrency, localeCode, t } = useLocale();
   const {
+    can,
     createInventoryAdjustmentRecord,
     inventories,
     isBusy,
@@ -23,6 +24,7 @@ export function InventoryPage(): ReactElement {
     setSelectedTenantId,
     tenants,
   } = useWorkspace();
+  const canAdjustInventory = can("manage_inventory");
 
   const [form] = Form.useForm<InventoryAdjustmentFormShape>();
 
@@ -71,56 +73,62 @@ export function InventoryPage(): ReactElement {
 
       <div className="two-column">
         <Card title={t("inventory.adjustTitle")}>
-          <Form<InventoryAdjustmentFormShape>
-            form={form}
-            layout="vertical"
-            onFinish={onFinish}
-            initialValues={{ direction: "in", quantity: 1 }}
-          >
-            <Form.Item<InventoryAdjustmentFormShape>
-              label={t("inventory.product")}
-              name="productId"
-              rules={[{ required: true }]}
+          {canAdjustInventory ? (
+            <Form<InventoryAdjustmentFormShape>
+              form={form}
+              layout="vertical"
+              onFinish={onFinish}
+              initialValues={{ direction: "in", quantity: 1 }}
             >
-              <Select
-                placeholder={t("inventory.productPlaceholder")}
-                options={products.map((product) => ({
-                  label: `${product.name} (${product.sku})`,
-                  value: product.id,
-                }))}
-              />
-            </Form.Item>
+              <Form.Item<InventoryAdjustmentFormShape>
+                label={t("inventory.product")}
+                name="productId"
+                rules={[{ required: true }]}
+              >
+                <Select
+                  placeholder={t("inventory.productPlaceholder")}
+                  options={products.map((product) => ({
+                    label: `${product.name} (${product.sku})`,
+                    value: product.id,
+                  }))}
+                />
+              </Form.Item>
 
-            <Form.Item<InventoryAdjustmentFormShape>
-              label={t("inventory.direction")}
-              name="direction"
-              rules={[{ required: true }]}
-            >
-              <Select
-                options={[
-                  { label: t("inventory.directionIn"), value: "in" },
-                  { label: t("inventory.directionOut"), value: "out" },
-                ]}
-              />
-            </Form.Item>
+              <Form.Item<InventoryAdjustmentFormShape>
+                label={t("inventory.direction")}
+                name="direction"
+                rules={[{ required: true }]}
+              >
+                <Select
+                  options={[
+                    { label: t("inventory.directionIn"), value: "in" },
+                    { label: t("inventory.directionOut"), value: "out" },
+                  ]}
+                />
+              </Form.Item>
 
-            <Form.Item<InventoryAdjustmentFormShape>
-              label={t("inventory.quantity")}
-              name="quantity"
-              rules={[{ required: true }]}
-            >
-              <InputNumber min={1} precision={0} style={{ width: "100%" }} />
-            </Form.Item>
+              <Form.Item<InventoryAdjustmentFormShape>
+                label={t("inventory.quantity")}
+                name="quantity"
+                rules={[{ required: true }]}
+              >
+                <InputNumber min={1} precision={0} style={{ width: "100%" }} />
+              </Form.Item>
 
-            <Button
-              type="primary"
-              htmlType="submit"
-              disabled={!selectedTenantId || products.length === 0}
-              loading={isBusy}
-            >
-              {t("inventory.adjust")}
-            </Button>
-          </Form>
+              <Button
+                type="primary"
+                htmlType="submit"
+                disabled={!selectedTenantId || products.length === 0}
+                loading={isBusy}
+              >
+                {t("inventory.adjust")}
+              </Button>
+            </Form>
+          ) : (
+            <Paragraph type="secondary" style={{ marginBottom: 0 }}>
+              {t("accessDenied.actionRestricted")}
+            </Paragraph>
+          )}
         </Card>
 
         <Card title={t("inventory.listTitle")}>

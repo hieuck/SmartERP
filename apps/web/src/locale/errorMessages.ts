@@ -6,6 +6,7 @@ const errorKeyByMessage: Record<string, string> = {
   "Invalid request.": "errors.invalidRequest",
   "Invalid credentials.": "errors.invalidCredentials",
   "Authentication required.": "errors.authenticationRequired",
+  "Forbidden.": "errors.forbidden",
   "Internal server error.": "errors.internalServerError",
   "Failed to load foundation.": "errors.loadFoundationFailed",
   "Failed to load tenants.": "errors.loadTenantsFailed",

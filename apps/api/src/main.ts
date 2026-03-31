@@ -3,12 +3,17 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { URL } from "node:url";
 
 import {
-  demoAccessToken,
+  canAccessModule,
   demoCredentials,
+  demoAccounts,
   describeApiFoundation,
   foundationModules,
+  getDemoSessionByAccessToken,
+  getDemoSessionByCredentials,
+  hasPermission,
   rewriteMessage,
   type ApprovalDecisionInput,
+  type FoundationModule,
   type CreateCustomerInput,
   type CreateInvoiceInput,
   type UpdateInvoiceCollectionInput,
@@ -22,6 +27,8 @@ import {
   type CreateSupplierInput,
   type CreateTenantInput,
   type LoginInput,
+  type Permission,
+  type Session,
 } from "@smarterp/contracts";
 
 import { readJson, sendEmpty, sendJson } from "./http.js";
@@ -40,7 +47,6 @@ import {
   createSupplier,
   createTenant,
   getReportSummary,
-  getSession,
   hasTenant,
   listAccountBalances,
   listApprovalRequests,
@@ -57,6 +63,7 @@ import {
   listSuppliers,
   listTenants,
   resolveApprovalRequest,
+  runWithSession,
 } from "./store.js";
 
 function badRequest(response: ServerResponse, message: string): void {
@@ -69,6 +76,10 @@ function unauthorized(response: ServerResponse): void {
 
 function authenticationRequired(response: ServerResponse): void {
   sendJson(response, 401, { error: "Authentication required." });
+}
+
+function forbidden(response: ServerResponse): void {
+  sendJson(response, 403, { error: "Forbidden." });
 }
 
 function internalServerError(response: ServerResponse): void {
@@ -91,8 +102,49 @@ function isPublicRoute(method: string, pathname: string): boolean {
   );
 }
 
-function hasAuthorizedSession(request: IncomingMessage): boolean {
-  return request.headers.authorization === `Bearer ${demoAccessToken}`;
+function getRequestSession(request: IncomingMessage): Session | null {
+  const authorization = request.headers.authorization;
+  if (!authorization?.startsWith("Bearer ")) {
+    return null;
+  }
+
+  return getDemoSessionByAccessToken(authorization.slice("Bearer ".length).trim());
+}
+
+function ensureModuleAccess(
+  response: ServerResponse,
+  session: Session | null,
+  module: FoundationModule,
+): boolean {
+  if (!session) {
+    authenticationRequired(response);
+    return false;
+  }
+
+  if (canAccessModule(session, module)) {
+    return true;
+  }
+
+  forbidden(response);
+  return false;
+}
+
+function ensurePermission(
+  response: ServerResponse,
+  session: Session | null,
+  permission: Permission,
+): boolean {
+  if (!session) {
+    authenticationRequired(response);
+    return false;
+  }
+
+  if (hasPermission(session, permission)) {
+    return true;
+  }
+
+  forbidden(response);
+  return false;
 }
 
 const server = createServer(async (request: IncomingMessage, response: ServerResponse) => {
@@ -109,8 +161,9 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
 
     const url = new URL(request.url, "http://localhost:4000");
     const pathname = url.pathname;
+    const requestSession = getRequestSession(request);
 
-    if (!isPublicRoute(request.method, pathname) && !hasAuthorizedSession(request)) {
+    if (!isPublicRoute(request.method, pathname) && !requestSession) {
       authenticationRequired(response);
       return;
     }
@@ -129,19 +182,26 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
         modules: foundationModules,
         message: rewriteMessage,
         demoCredentials,
+        demoAccounts: demoAccounts.map(({ email, password, displayName, role }) => ({
+          email,
+          password,
+          displayName,
+          role,
+        })),
       });
       return;
     }
 
     if (request.method === "POST" && pathname === "/api/auth/login") {
       const input = await readJson<LoginInput>(request);
+      const session = getDemoSessionByCredentials(input);
 
-      if (input.email !== demoCredentials.email || input.password !== demoCredentials.password) {
+      if (!session) {
         unauthorized(response);
         return;
       }
 
-      sendJson(response, 200, { session: getSession() });
+      sendJson(response, 200, { session });
       return;
     }
 
@@ -151,6 +211,10 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
     }
 
     if (request.method === "POST" && pathname === "/api/tenants") {
+      if (!ensurePermission(response, requestSession, "manage_tenants")) {
+        return;
+      }
+
       const input = await readJson<CreateTenantInput>(request);
 
       if (!input.name?.trim() || !input.slug?.trim() || !input.industry?.trim()) {
@@ -159,7 +223,7 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
       }
 
       try {
-        const tenant = createTenant(input);
+        const tenant = runWithSession(requestSession, () => createTenant(input));
         sendJson(response, 201, { item: tenant });
       } catch (error) {
         if (isSqliteConstraintError(error) && error.message.includes("tenants.slug")) {
@@ -174,6 +238,10 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
     }
 
     if (request.method === "GET" && pathname === "/api/customers") {
+      if (!ensureModuleAccess(response, requestSession, "customers")) {
+        return;
+      }
+
       const tenantId = url.searchParams.get("tenantId");
 
       if (!tenantId) {
@@ -186,6 +254,10 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
     }
 
     if (request.method === "GET" && pathname === "/api/customers/statements") {
+      if (!ensureModuleAccess(response, requestSession, "customers")) {
+        return;
+      }
+
       const tenantId = url.searchParams.get("tenantId");
 
       if (!tenantId) {
@@ -198,6 +270,10 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
     }
 
     if (request.method === "POST" && pathname === "/api/customers") {
+      if (!ensurePermission(response, requestSession, "manage_customers")) {
+        return;
+      }
+
       const input = await readJson<CreateCustomerInput>(request);
 
       if (!input.tenantId?.trim()) {
@@ -215,12 +291,16 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
         return;
       }
 
-      const customer = createCustomer(input);
+      const customer = runWithSession(requestSession, () => createCustomer(input));
       sendJson(response, 201, { item: customer });
       return;
     }
 
     if (request.method === "GET" && pathname === "/api/suppliers") {
+      if (!ensureModuleAccess(response, requestSession, "suppliers")) {
+        return;
+      }
+
       const tenantId = url.searchParams.get("tenantId");
 
       if (!tenantId) {
@@ -233,6 +313,10 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
     }
 
     if (request.method === "POST" && pathname === "/api/suppliers") {
+      if (!ensurePermission(response, requestSession, "manage_suppliers")) {
+        return;
+      }
+
       const input = await readJson<CreateSupplierInput>(request);
 
       if (!input.tenantId?.trim()) {
@@ -256,7 +340,7 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
       }
 
       try {
-        const supplier = createSupplier(input);
+        const supplier = runWithSession(requestSession, () => createSupplier(input));
         sendJson(response, 201, { item: supplier });
       } catch (error) {
         if (
@@ -274,6 +358,10 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
     }
 
     if (request.method === "GET" && pathname === "/api/products") {
+      if (!ensureModuleAccess(response, requestSession, "products")) {
+        return;
+      }
+
       const tenantId = url.searchParams.get("tenantId");
 
       if (!tenantId) {
@@ -286,6 +374,10 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
     }
 
     if (request.method === "POST" && pathname === "/api/products") {
+      if (!ensurePermission(response, requestSession, "manage_products")) {
+        return;
+      }
+
       const input = await readJson<CreateProductInput>(request);
 
       if (!input.tenantId?.trim()) {
@@ -309,7 +401,7 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
       }
 
       try {
-        const product = createProduct(input);
+        const product = runWithSession(requestSession, () => createProduct(input));
         sendJson(response, 201, { item: product });
       } catch (error) {
         if (isSqliteConstraintError(error) && error.message.includes("products.tenant_id, products.sku")) {
@@ -324,6 +416,10 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
     }
 
     if (request.method === "GET" && pathname === "/api/inventory") {
+      if (!ensureModuleAccess(response, requestSession, "inventory")) {
+        return;
+      }
+
       const tenantId = url.searchParams.get("tenantId");
 
       if (!tenantId) {
@@ -336,6 +432,10 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
     }
 
     if (request.method === "POST" && pathname === "/api/inventory/adjustments") {
+      if (!ensurePermission(response, requestSession, "manage_inventory")) {
+        return;
+      }
+
       const input = await readJson<CreateInventoryAdjustmentInput>(request);
 
       if (!input.tenantId?.trim()) {
@@ -364,7 +464,7 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
       }
 
       try {
-        const result = createInventoryAdjustment(input);
+        const result = runWithSession(requestSession, () => createInventoryAdjustment(input));
         sendJson(response, result.kind === "approval_requested" ? 202 : 201, { item: result });
       } catch (error) {
         if (error instanceof Error) {
@@ -386,6 +486,10 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
     }
 
     if (request.method === "GET" && pathname === "/api/orders") {
+      if (!ensureModuleAccess(response, requestSession, "orders")) {
+        return;
+      }
+
       const tenantId = url.searchParams.get("tenantId");
 
       if (!tenantId) {
@@ -398,6 +502,10 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
     }
 
     if (request.method === "GET" && pathname === "/api/purchase-orders") {
+      if (!ensureModuleAccess(response, requestSession, "purchasing")) {
+        return;
+      }
+
       const tenantId = url.searchParams.get("tenantId");
 
       if (!tenantId) {
@@ -410,6 +518,10 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
     }
 
     if (request.method === "GET" && pathname === "/api/invoices") {
+      if (!ensureModuleAccess(response, requestSession, "invoices")) {
+        return;
+      }
+
       const tenantId = url.searchParams.get("tenantId");
 
       if (!tenantId) {
@@ -422,6 +534,10 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
     }
 
     if (request.method === "GET" && pathname === "/api/invoices/collection-activities") {
+      if (!ensureModuleAccess(response, requestSession, "invoices")) {
+        return;
+      }
+
       const tenantId = url.searchParams.get("tenantId");
 
       if (!tenantId) {
@@ -434,6 +550,10 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
     }
 
     if (request.method === "GET" && pathname === "/api/approval-requests") {
+      if (!ensureModuleAccess(response, requestSession, "approvals")) {
+        return;
+      }
+
       const tenantId = url.searchParams.get("tenantId");
 
       if (!tenantId) {
@@ -451,6 +571,10 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
     }
 
     if (request.method === "GET" && pathname === "/api/reports/summary") {
+      if (!ensurePermission(response, requestSession, "view_reports")) {
+        return;
+      }
+
       const tenantId = url.searchParams.get("tenantId");
 
       if (!tenantId) {
@@ -468,6 +592,10 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
     }
 
     if (request.method === "GET" && pathname === "/api/accounts/balances") {
+      if (!ensurePermission(response, requestSession, "view_reports")) {
+        return;
+      }
+
       const tenantId = url.searchParams.get("tenantId");
 
       if (!tenantId) {
@@ -485,6 +613,10 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
     }
 
     if (request.method === "GET" && pathname === "/api/journal-entries") {
+      if (!ensurePermission(response, requestSession, "view_reports")) {
+        return;
+      }
+
       const tenantId = url.searchParams.get("tenantId");
 
       if (!tenantId) {
@@ -502,6 +634,10 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
     }
 
     if (request.method === "GET" && pathname === "/api/audit-logs") {
+      if (!ensurePermission(response, requestSession, "view_reports")) {
+        return;
+      }
+
       const tenantId = url.searchParams.get("tenantId");
 
       if (!tenantId) {
@@ -519,6 +655,10 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
     }
 
     if (request.method === "POST" && pathname === "/api/orders") {
+      if (!ensurePermission(response, requestSession, "manage_orders")) {
+        return;
+      }
+
       const input = await readJson<CreateOrderInput>(request);
 
       if (!input.tenantId?.trim()) {
@@ -547,7 +687,7 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
       }
 
       try {
-        const order = createOrder(input);
+        const order = runWithSession(requestSession, () => createOrder(input));
         sendJson(response, 201, { item: order });
       } catch (error) {
         if (error instanceof Error) {
@@ -579,6 +719,10 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
     }
 
     if (request.method === "POST" && pathname === "/api/purchase-orders") {
+      if (!ensurePermission(response, requestSession, "manage_purchase_orders")) {
+        return;
+      }
+
       const input = await readJson<CreatePurchaseOrderInput>(request);
 
       if (!input.tenantId?.trim()) {
@@ -617,7 +761,7 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
       }
 
       try {
-        const purchaseOrder = createPurchaseOrder(input);
+        const purchaseOrder = runWithSession(requestSession, () => createPurchaseOrder(input));
         sendJson(response, 201, { item: purchaseOrder });
       } catch (error) {
         if (
@@ -644,6 +788,10 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
     }
 
     if (request.method === "POST" && pathname === "/api/invoices") {
+      if (!ensurePermission(response, requestSession, "issue_invoices")) {
+        return;
+      }
+
       const input = await readJson<CreateInvoiceInput>(request);
 
       if (!input.tenantId?.trim()) {
@@ -677,7 +825,7 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
       }
 
       try {
-        const result = createInvoice(input);
+        const result = runWithSession(requestSession, () => createInvoice(input));
         sendJson(response, result.kind === "approval_requested" ? 202 : 201, { item: result });
       } catch (error) {
         if (error instanceof Error) {
@@ -716,6 +864,10 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
     }
 
     if (request.method === "POST" && pathname === "/api/purchase-orders/receipts") {
+      if (!ensurePermission(response, requestSession, "receive_purchase_orders")) {
+        return;
+      }
+
       const input = await readJson<ReceivePurchaseOrderInput>(request);
 
       if (!input.tenantId?.trim()) {
@@ -744,7 +896,7 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
       }
 
       try {
-        const result = receivePurchaseOrder(input);
+        const result = runWithSession(requestSession, () => receivePurchaseOrder(input));
         sendJson(response, result.kind === "approval_requested" ? 202 : 201, { item: result });
       } catch (error) {
         if (error instanceof Error) {
@@ -768,6 +920,10 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
     }
 
     if (request.method === "POST" && pathname === "/api/invoices/payments") {
+      if (!ensurePermission(response, requestSession, "record_invoice_payments")) {
+        return;
+      }
+
       const input = await readJson<CreateInvoicePaymentInput>(request);
 
       if (!input.tenantId?.trim()) {
@@ -796,7 +952,7 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
       }
 
       try {
-        const result = createInvoicePayment(input);
+        const result = runWithSession(requestSession, () => createInvoicePayment(input));
         sendJson(response, result.kind === "approval_requested" ? 202 : 201, { item: result });
       } catch (error) {
         if (
@@ -818,6 +974,10 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
     }
 
     if (request.method === "POST" && pathname === "/api/invoices/collections") {
+      if (!ensurePermission(response, requestSession, "manage_collections")) {
+        return;
+      }
+
       const input = await readJson<UpdateInvoiceCollectionInput>(request);
 
       if (!input.tenantId?.trim()) {
@@ -846,7 +1006,7 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
       }
 
       try {
-        const invoice = updateInvoiceCollection(input);
+        const invoice = runWithSession(requestSession, () => updateInvoiceCollection(input));
         sendJson(response, 200, { item: invoice });
       } catch (error) {
         if (
@@ -873,6 +1033,10 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
     }
 
     if (request.method === "POST" && pathname === "/api/invoices/collections/resolve") {
+      if (!ensurePermission(response, requestSession, "manage_collections")) {
+        return;
+      }
+
       const input = await readJson<ResolveInvoiceCollectionActionInput>(request);
 
       if (!input.tenantId?.trim()) {
@@ -891,7 +1055,7 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
       }
 
       try {
-        const invoice = resolveInvoiceCollectionAction(input);
+        const invoice = runWithSession(requestSession, () => resolveInvoiceCollectionAction(input));
         sendJson(response, 200, { item: invoice });
       } catch (error) {
         if (
@@ -912,6 +1076,10 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
     }
 
     if (request.method === "POST" && pathname === "/api/approval-requests/decision") {
+      if (!ensurePermission(response, requestSession, "decide_approvals")) {
+        return;
+      }
+
       const input = await readJson<ApprovalDecisionInput>(request);
 
       if (!input.tenantId?.trim()) {
@@ -935,7 +1103,7 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
       }
 
       try {
-        const approvalRequest = resolveApprovalRequest(input);
+        const approvalRequest = runWithSession(requestSession, () => resolveApprovalRequest(input));
         sendJson(response, 200, { item: approvalRequest });
       } catch (error) {
         if (

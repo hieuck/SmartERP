@@ -2,7 +2,10 @@ import { Suspense, lazy, type ReactElement } from "react";
 import { Alert, Spin } from "antd";
 import { Navigate, Route, Routes } from "react-router-dom";
 
+import type { FoundationModule } from "@smarterp/contracts";
+
 import { MainLayout } from "./layout/MainLayout";
+import { AccessDeniedPage } from "./pages/AccessDeniedPage";
 import { useWorkspace } from "./state/WorkspaceContext";
 
 const LoginPage = lazy(() =>
@@ -72,6 +75,22 @@ function ProtectedShell(): ReactElement {
   return <MainLayout />;
 }
 
+function ProtectedModuleRoute({
+  module,
+  element,
+}: {
+  module: FoundationModule;
+  element: ReactElement;
+}): ReactElement {
+  const { canAccessModule } = useWorkspace();
+
+  if (!canAccessModule(module)) {
+    return <AccessDeniedPage module={module} />;
+  }
+
+  return element;
+}
+
 export function AppRoutes(): ReactElement {
   const { error, notice, clearError, clearNotice } = useWorkspace();
 
@@ -93,16 +112,46 @@ export function AppRoutes(): ReactElement {
         <Route path="/login" element={withLazyBoundary(<LoginPage />)} />
         <Route path="/dashboard" element={<ProtectedShell />}>
           <Route index element={withLazyBoundary(<DashboardPage />)} />
-          <Route path="tenants" element={withLazyBoundary(<TenantsPage />)} />
-          <Route path="customers" element={withLazyBoundary(<CustomersPage />)} />
-          <Route path="suppliers" element={withLazyBoundary(<SuppliersPage />)} />
-          <Route path="products" element={withLazyBoundary(<ProductsPage />)} />
-          <Route path="purchase-orders" element={withLazyBoundary(<PurchaseOrdersPage />)} />
-          <Route path="orders" element={withLazyBoundary(<OrdersPage />)} />
-          <Route path="inventory" element={withLazyBoundary(<InventoryPage />)} />
-          <Route path="invoices" element={withLazyBoundary(<InvoicesPage />)} />
-          <Route path="reports" element={withLazyBoundary(<ReportsPage />)} />
-          <Route path="approvals" element={withLazyBoundary(<ApprovalsPage />)} />
+          <Route
+            path="tenants"
+            element={<ProtectedModuleRoute module="tenant" element={withLazyBoundary(<TenantsPage />)} />}
+          />
+          <Route
+            path="customers"
+            element={<ProtectedModuleRoute module="customers" element={withLazyBoundary(<CustomersPage />)} />}
+          />
+          <Route
+            path="suppliers"
+            element={<ProtectedModuleRoute module="suppliers" element={withLazyBoundary(<SuppliersPage />)} />}
+          />
+          <Route
+            path="products"
+            element={<ProtectedModuleRoute module="products" element={withLazyBoundary(<ProductsPage />)} />}
+          />
+          <Route
+            path="purchase-orders"
+            element={<ProtectedModuleRoute module="purchasing" element={withLazyBoundary(<PurchaseOrdersPage />)} />}
+          />
+          <Route
+            path="orders"
+            element={<ProtectedModuleRoute module="orders" element={withLazyBoundary(<OrdersPage />)} />}
+          />
+          <Route
+            path="inventory"
+            element={<ProtectedModuleRoute module="inventory" element={withLazyBoundary(<InventoryPage />)} />}
+          />
+          <Route
+            path="invoices"
+            element={<ProtectedModuleRoute module="invoices" element={withLazyBoundary(<InvoicesPage />)} />}
+          />
+          <Route
+            path="reports"
+            element={<ProtectedModuleRoute module="reporting" element={withLazyBoundary(<ReportsPage />)} />}
+          />
+          <Route
+            path="approvals"
+            element={<ProtectedModuleRoute module="approvals" element={withLazyBoundary(<ApprovalsPage />)} />}
+          />
         </Route>
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>

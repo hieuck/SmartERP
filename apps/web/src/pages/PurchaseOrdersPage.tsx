@@ -53,6 +53,7 @@ function getPurchaseOrderStatusLabel(
 export function PurchaseOrdersPage(): ReactElement {
   const { formatCurrency, localeCode, t } = useLocale();
   const {
+    can,
     createPurchaseOrderRecord,
     receivePurchaseOrderRecord,
     isBusy,
@@ -63,6 +64,8 @@ export function PurchaseOrdersPage(): ReactElement {
     suppliers,
     tenants,
   } = useWorkspace();
+  const canCreatePurchaseOrders = can("manage_purchase_orders");
+  const canReceivePurchaseOrders = can("receive_purchase_orders");
   const [createForm] = Form.useForm<PurchaseOrderFormShape>();
   const [receiptForm] = Form.useForm<PurchaseOrderReceiptFormShape>();
   const selectedProductId = Form.useWatch("productId", createForm);
@@ -131,153 +134,169 @@ export function PurchaseOrdersPage(): ReactElement {
       <div className="two-column">
         <div className="page-column-stack">
           <Card title={t("purchaseOrders.createTitle")}>
-            <Form<PurchaseOrderFormShape>
-              form={createForm}
-              layout="vertical"
-              onFinish={onCreateFinish}
-              initialValues={{
-                quantityOrdered: 1,
-                unitCost: 0,
-                expectedReceiptDate: getTodayPlusDays(7),
-              }}
-            >
-              <Form.Item<PurchaseOrderFormShape>
-                label={t("purchaseOrders.supplier")}
-                name="supplierId"
-                rules={[{ required: true }]}
-              >
-                <Select
-                  placeholder={t("purchaseOrders.supplierPlaceholder")}
-                  options={suppliers.map((supplier) => ({
-                    label: `${supplier.name} (${supplier.supplierCode})`,
-                    value: supplier.id,
-                  }))}
-                />
-              </Form.Item>
+            {canCreatePurchaseOrders ? (
+              <>
+                <Form<PurchaseOrderFormShape>
+                  form={createForm}
+                  layout="vertical"
+                  onFinish={onCreateFinish}
+                  initialValues={{
+                    quantityOrdered: 1,
+                    unitCost: 0,
+                    expectedReceiptDate: getTodayPlusDays(7),
+                  }}
+                >
+                  <Form.Item<PurchaseOrderFormShape>
+                    label={t("purchaseOrders.supplier")}
+                    name="supplierId"
+                    rules={[{ required: true }]}
+                  >
+                    <Select
+                      placeholder={t("purchaseOrders.supplierPlaceholder")}
+                      options={suppliers.map((supplier) => ({
+                        label: `${supplier.name} (${supplier.supplierCode})`,
+                        value: supplier.id,
+                      }))}
+                    />
+                  </Form.Item>
 
-              <Form.Item<PurchaseOrderFormShape>
-                label={t("purchaseOrders.product")}
-                name="productId"
-                rules={[{ required: true }]}
-              >
-                <Select
-                  placeholder={t("purchaseOrders.productPlaceholder")}
-                  options={products.map((product) => ({
-                    label: `${product.name} (${product.sku})`,
-                    value: product.id,
-                  }))}
-                />
-              </Form.Item>
+                  <Form.Item<PurchaseOrderFormShape>
+                    label={t("purchaseOrders.product")}
+                    name="productId"
+                    rules={[{ required: true }]}
+                  >
+                    <Select
+                      placeholder={t("purchaseOrders.productPlaceholder")}
+                      options={products.map((product) => ({
+                        label: `${product.name} (${product.sku})`,
+                        value: product.id,
+                      }))}
+                    />
+                  </Form.Item>
 
-              <Form.Item<PurchaseOrderFormShape>
-                label={t("purchaseOrders.quantityOrdered")}
-                name="quantityOrdered"
-                rules={[{ required: true }]}
-              >
-                <InputNumber min={1} precision={0} style={{ width: "100%" }} />
-              </Form.Item>
+                  <Form.Item<PurchaseOrderFormShape>
+                    label={t("purchaseOrders.quantityOrdered")}
+                    name="quantityOrdered"
+                    rules={[{ required: true }]}
+                  >
+                    <InputNumber min={1} precision={0} style={{ width: "100%" }} />
+                  </Form.Item>
 
-              <Form.Item<PurchaseOrderFormShape>
-                label={t("purchaseOrders.unitCost")}
-                name="unitCost"
-                extra={
-                  selectedProduct
-                    ? t("purchaseOrders.catalogHint", { amount: formatCurrency(selectedProduct.unitPrice) })
-                    : undefined
-                }
-                rules={[{ required: true }]}
-              >
-                <InputNumber min={0} precision={0} style={{ width: "100%" }} />
-              </Form.Item>
+                  <Form.Item<PurchaseOrderFormShape>
+                    label={t("purchaseOrders.unitCost")}
+                    name="unitCost"
+                    extra={
+                      selectedProduct
+                        ? t("purchaseOrders.catalogHint", { amount: formatCurrency(selectedProduct.unitPrice) })
+                        : undefined
+                    }
+                    rules={[{ required: true }]}
+                  >
+                    <InputNumber min={0} precision={0} style={{ width: "100%" }} />
+                  </Form.Item>
 
-              <Form.Item<PurchaseOrderFormShape>
-                label={t("purchaseOrders.expectedReceiptDate")}
-                name="expectedReceiptDate"
-                rules={[{ required: true }]}
-              >
-                <Input type="date" />
-              </Form.Item>
+                  <Form.Item<PurchaseOrderFormShape>
+                    label={t("purchaseOrders.expectedReceiptDate")}
+                    name="expectedReceiptDate"
+                    rules={[{ required: true }]}
+                  >
+                    <Input type="date" />
+                  </Form.Item>
 
-              <Button
-                type="primary"
-                htmlType="submit"
-                disabled={!selectedTenantId || suppliers.length === 0 || products.length === 0}
-                loading={isBusy}
-              >
-                {t("purchaseOrders.create")}
-              </Button>
-            </Form>
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    disabled={!selectedTenantId || suppliers.length === 0 || products.length === 0}
+                    loading={isBusy}
+                  >
+                    {t("purchaseOrders.create")}
+                  </Button>
+                </Form>
 
-            {selectedTenantId && (suppliers.length === 0 || products.length === 0) ? (
-              <Paragraph type="secondary" style={{ marginTop: 16, marginBottom: 0 }}>
-                {t("purchaseOrders.prerequisiteHint")}
+                {selectedTenantId && (suppliers.length === 0 || products.length === 0) ? (
+                  <Paragraph type="secondary" style={{ marginTop: 16, marginBottom: 0 }}>
+                    {t("purchaseOrders.prerequisiteHint")}
+                  </Paragraph>
+                ) : null}
+              </>
+            ) : (
+              <Paragraph type="secondary" style={{ marginBottom: 0 }}>
+                {t("accessDenied.actionRestricted")}
               </Paragraph>
-            ) : null}
+            )}
           </Card>
 
           <Card title={t("purchaseOrders.receiveTitle")}>
-            <Form<PurchaseOrderReceiptFormShape>
-              form={receiptForm}
-              layout="vertical"
-              onFinish={onReceiveFinish}
-              initialValues={{
-                quantityReceived: 1,
-                receivedDate: getTodayPlusDays(0),
-              }}
-            >
-              <Form.Item<PurchaseOrderReceiptFormShape>
-                label={t("purchaseOrders.purchaseOrder")}
-                name="purchaseOrderId"
-                rules={[{ required: true }]}
-              >
-                <Select
-                  placeholder={t("purchaseOrders.purchaseOrderPlaceholder")}
-                  options={receivablePurchaseOrders.map((purchaseOrder) => ({
-                    label: `${purchaseOrder.purchaseOrderNumber} | ${purchaseOrder.productName} (${purchaseOrder.outstandingQuantity})`,
-                    value: purchaseOrder.id,
-                  }))}
-                />
-              </Form.Item>
+            {canReceivePurchaseOrders ? (
+              <>
+                <Form<PurchaseOrderReceiptFormShape>
+                  form={receiptForm}
+                  layout="vertical"
+                  onFinish={onReceiveFinish}
+                  initialValues={{
+                    quantityReceived: 1,
+                    receivedDate: getTodayPlusDays(0),
+                  }}
+                >
+                  <Form.Item<PurchaseOrderReceiptFormShape>
+                    label={t("purchaseOrders.purchaseOrder")}
+                    name="purchaseOrderId"
+                    rules={[{ required: true }]}
+                  >
+                    <Select
+                      placeholder={t("purchaseOrders.purchaseOrderPlaceholder")}
+                      options={receivablePurchaseOrders.map((purchaseOrder) => ({
+                        label: `${purchaseOrder.purchaseOrderNumber} | ${purchaseOrder.productName} (${purchaseOrder.outstandingQuantity})`,
+                        value: purchaseOrder.id,
+                      }))}
+                    />
+                  </Form.Item>
 
-              <Form.Item<PurchaseOrderReceiptFormShape>
-                label={t("purchaseOrders.quantityReceived")}
-                name="quantityReceived"
-                extra={
-                  selectedReceiptOrder
-                    ? t("purchaseOrders.receiveHint", {
-                        count: selectedReceiptOrder.outstandingQuantity,
-                        amount: formatCurrency(selectedReceiptOrder.unitCost),
-                      })
-                    : undefined
-                }
-                rules={[{ required: true }]}
-              >
-                <InputNumber min={1} precision={0} style={{ width: "100%" }} />
-              </Form.Item>
+                  <Form.Item<PurchaseOrderReceiptFormShape>
+                    label={t("purchaseOrders.quantityReceived")}
+                    name="quantityReceived"
+                    extra={
+                      selectedReceiptOrder
+                        ? t("purchaseOrders.receiveHint", {
+                            count: selectedReceiptOrder.outstandingQuantity,
+                            amount: formatCurrency(selectedReceiptOrder.unitCost),
+                          })
+                        : undefined
+                    }
+                    rules={[{ required: true }]}
+                  >
+                    <InputNumber min={1} precision={0} style={{ width: "100%" }} />
+                  </Form.Item>
 
-              <Form.Item<PurchaseOrderReceiptFormShape>
-                label={t("purchaseOrders.receivedDate")}
-                name="receivedDate"
-                rules={[{ required: true }]}
-              >
-                <Input type="date" />
-              </Form.Item>
+                  <Form.Item<PurchaseOrderReceiptFormShape>
+                    label={t("purchaseOrders.receivedDate")}
+                    name="receivedDate"
+                    rules={[{ required: true }]}
+                  >
+                    <Input type="date" />
+                  </Form.Item>
 
-              <Button
-                type="primary"
-                htmlType="submit"
-                disabled={!selectedTenantId || receivablePurchaseOrders.length === 0}
-                loading={isBusy}
-              >
-                {t("purchaseOrders.receive")}
-              </Button>
-            </Form>
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    disabled={!selectedTenantId || receivablePurchaseOrders.length === 0}
+                    loading={isBusy}
+                  >
+                    {t("purchaseOrders.receive")}
+                  </Button>
+                </Form>
 
-            {selectedTenantId && receivablePurchaseOrders.length === 0 ? (
-              <Paragraph type="secondary" style={{ marginTop: 16, marginBottom: 0 }}>
-                {t("purchaseOrders.receiveEmpty")}
+                {selectedTenantId && receivablePurchaseOrders.length === 0 ? (
+                  <Paragraph type="secondary" style={{ marginTop: 16, marginBottom: 0 }}>
+                    {t("purchaseOrders.receiveEmpty")}
+                  </Paragraph>
+                ) : null}
+              </>
+            ) : (
+              <Paragraph type="secondary" style={{ marginBottom: 0 }}>
+                {t("accessDenied.actionRestricted")}
               </Paragraph>
-            ) : null}
+            )}
           </Card>
         </div>
 

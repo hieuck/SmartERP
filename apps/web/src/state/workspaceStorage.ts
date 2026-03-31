@@ -17,7 +17,9 @@ function isStoredSession(value: unknown): value is Session {
     typeof (value as Session).email === "string" &&
     typeof (value as Session).displayName === "string" &&
     typeof (value as Session).accessToken === "string" &&
-    ((value as Session).role === "founder")
+    typeof (value as Session).role === "string" &&
+    Array.isArray((value as Session).modules) &&
+    Array.isArray((value as Session).permissions)
   );
 }
 

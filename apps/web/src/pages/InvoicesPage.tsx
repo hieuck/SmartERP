@@ -208,6 +208,7 @@ function getPriorityRank(priority: CollectionPriority): number {
 export function InvoicesPage(): ReactElement {
   const { formatCurrency, localeCode, t } = useLocale();
   const {
+    can,
     collectionActivities,
     createInvoicePaymentRecord,
     createInvoiceRecord,
@@ -220,6 +221,9 @@ export function InvoicesPage(): ReactElement {
     setSelectedTenantId,
     tenants,
   } = useWorkspace();
+  const canIssueInvoices = can("issue_invoices");
+  const canRecordPayments = can("record_invoice_payments");
+  const canManageCollections = can("manage_collections");
 
   const [invoiceForm] = Form.useForm<InvoiceFormShape>();
   const [paymentForm] = Form.useForm<InvoicePaymentFormShape>();
@@ -368,155 +372,172 @@ export function InvoicesPage(): ReactElement {
       <div className="two-column">
         <div className="page-column-stack">
           <Card title={t("invoices.createTitle")}>
-            <Form<InvoiceFormShape>
-              form={invoiceForm}
-              layout="vertical"
-              onFinish={onCreateInvoice}
-              initialValues={{
-                taxRatePercent: 10,
-                issueDate: getTodayDateInputValue(),
-                paymentTermDays: 30,
-              }}
-            >
-              <Form.Item<InvoiceFormShape>
-                label={t("invoices.order")}
-                name="orderId"
-                rules={[{ required: true }]}
-              >
-                <Select
-                  placeholder={t("invoices.orderPlaceholder")}
-                  options={availableOrders.map((order) => ({
-                    label: `${order.orderNumber} - ${order.customerName} - ${formatCurrency(order.totalAmount)}`,
-                    value: order.id,
-                  }))}
-                />
-              </Form.Item>
+            {canIssueInvoices ? (
+              <>
+                <Form<InvoiceFormShape>
+                  form={invoiceForm}
+                  layout="vertical"
+                  onFinish={onCreateInvoice}
+                  initialValues={{
+                    taxRatePercent: 10,
+                    issueDate: getTodayDateInputValue(),
+                    paymentTermDays: 30,
+                  }}
+                >
+                  <Form.Item<InvoiceFormShape>
+                    label={t("invoices.order")}
+                    name="orderId"
+                    rules={[{ required: true }]}
+                  >
+                    <Select
+                      placeholder={t("invoices.orderPlaceholder")}
+                      options={availableOrders.map((order) => ({
+                        label: `${order.orderNumber} - ${order.customerName} - ${formatCurrency(order.totalAmount)}`,
+                        value: order.id,
+                      }))}
+                    />
+                  </Form.Item>
 
-              <Form.Item<InvoiceFormShape>
-                label={t("invoices.issueDate")}
-                name="issueDate"
-                rules={[{ required: true }]}
-              >
-                <Input type="date" />
-              </Form.Item>
+                  <Form.Item<InvoiceFormShape>
+                    label={t("invoices.issueDate")}
+                    name="issueDate"
+                    rules={[{ required: true }]}
+                  >
+                    <Input type="date" />
+                  </Form.Item>
 
-              <Form.Item<InvoiceFormShape>
-                label={t("invoices.paymentTermDays")}
-                name="paymentTermDays"
-                rules={[{ required: true }]}
-              >
-                <InputNumber min={0} max={365} precision={0} style={{ width: "100%" }} />
-              </Form.Item>
+                  <Form.Item<InvoiceFormShape>
+                    label={t("invoices.paymentTermDays")}
+                    name="paymentTermDays"
+                    rules={[{ required: true }]}
+                  >
+                    <InputNumber min={0} max={365} precision={0} style={{ width: "100%" }} />
+                  </Form.Item>
 
-              <Form.Item<InvoiceFormShape>
-                label={t("invoices.taxRate")}
-                name="taxRatePercent"
-                rules={[{ required: true }]}
-              >
-                <InputNumber min={0} max={100} precision={0} style={{ width: "100%" }} />
-              </Form.Item>
+                  <Form.Item<InvoiceFormShape>
+                    label={t("invoices.taxRate")}
+                    name="taxRatePercent"
+                    rules={[{ required: true }]}
+                  >
+                    <InputNumber min={0} max={100} precision={0} style={{ width: "100%" }} />
+                  </Form.Item>
 
-              <Button
-                type="primary"
-                htmlType="submit"
-                disabled={!selectedTenantId || availableOrders.length === 0}
-                loading={isBusy}
-              >
-                {t("invoices.create")}
-              </Button>
-            </Form>
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    disabled={!selectedTenantId || availableOrders.length === 0}
+                    loading={isBusy}
+                  >
+                    {t("invoices.create")}
+                  </Button>
+                </Form>
 
-            {selectedTenantId && availableOrders.length === 0 ? (
-              <Paragraph type="secondary" style={{ marginTop: 16, marginBottom: 0 }}>
-                {t("invoices.noOrdersReady")}
+                {selectedTenantId && availableOrders.length === 0 ? (
+                  <Paragraph type="secondary" style={{ marginTop: 16, marginBottom: 0 }}>
+                    {t("invoices.noOrdersReady")}
+                  </Paragraph>
+                ) : null}
+              </>
+            ) : (
+              <Paragraph type="secondary" style={{ marginBottom: 0 }}>
+                {t("accessDenied.actionRestricted")}
               </Paragraph>
-            ) : null}
+            )}
           </Card>
 
           <Card title={t("invoices.settlementTitle")}>
-            <Form<InvoicePaymentFormShape>
-              form={paymentForm}
-              layout="vertical"
-              onFinish={onCreatePayment}
-              initialValues={{ method: "bank_transfer" }}
-            >
-              <Form.Item<InvoicePaymentFormShape>
-                label={t("invoices.invoice")}
-                name="invoiceId"
-                rules={[{ required: true }]}
-              >
-                <Select
-                  placeholder={t("invoices.invoicePlaceholder")}
-                  options={payableInvoices.map((invoice) => ({
-                    label: `${invoice.invoiceNumber} - ${invoice.customerName} - ${formatCurrency(invoice.outstandingAmount)}`,
-                    value: invoice.id,
-                  }))}
-                />
-              </Form.Item>
+            {canRecordPayments ? (
+              <>
+                <Form<InvoicePaymentFormShape>
+                  form={paymentForm}
+                  layout="vertical"
+                  onFinish={onCreatePayment}
+                  initialValues={{ method: "bank_transfer" }}
+                >
+                  <Form.Item<InvoicePaymentFormShape>
+                    label={t("invoices.invoice")}
+                    name="invoiceId"
+                    rules={[{ required: true }]}
+                  >
+                    <Select
+                      placeholder={t("invoices.invoicePlaceholder")}
+                      options={payableInvoices.map((invoice) => ({
+                        label: `${invoice.invoiceNumber} - ${invoice.customerName} - ${formatCurrency(invoice.outstandingAmount)}`,
+                        value: invoice.id,
+                      }))}
+                    />
+                  </Form.Item>
 
-              <Form.Item<InvoicePaymentFormShape>
-                label={t("invoices.method")}
-                name="method"
-                rules={[{ required: true }]}
-              >
-                <Select
-                  options={[
-                    { label: t("invoices.methodBankTransfer"), value: "bank_transfer" },
-                    { label: t("invoices.methodCash"), value: "cash" },
-                    { label: t("invoices.methodCard"), value: "card" },
-                  ]}
-                />
-              </Form.Item>
+                  <Form.Item<InvoicePaymentFormShape>
+                    label={t("invoices.method")}
+                    name="method"
+                    rules={[{ required: true }]}
+                  >
+                    <Select
+                      options={[
+                        { label: t("invoices.methodBankTransfer"), value: "bank_transfer" },
+                        { label: t("invoices.methodCash"), value: "cash" },
+                        { label: t("invoices.methodCard"), value: "card" },
+                      ]}
+                    />
+                  </Form.Item>
 
-              <Form.Item<InvoicePaymentFormShape>
-                label={t("invoices.amount")}
-                name="amount"
-                rules={[{ required: true }]}
-              >
-                <InputNumber
-                  min={1}
-                  max={selectedInvoice?.outstandingAmount}
-                  precision={0}
-                  style={{ width: "100%" }}
-                />
-              </Form.Item>
+                  <Form.Item<InvoicePaymentFormShape>
+                    label={t("invoices.amount")}
+                    name="amount"
+                    rules={[{ required: true }]}
+                  >
+                    <InputNumber
+                      min={1}
+                      max={selectedInvoice?.outstandingAmount}
+                      precision={0}
+                      style={{ width: "100%" }}
+                    />
+                  </Form.Item>
 
-              {selectedInvoice ? (
-                <Paragraph type="secondary" style={{ marginTop: 0 }}>
-                  {t("invoices.outstandingLabel")} {formatCurrency(selectedInvoice.outstandingAmount)}
-                </Paragraph>
-              ) : null}
+                  {selectedInvoice ? (
+                    <Paragraph type="secondary" style={{ marginTop: 0 }}>
+                      {t("invoices.outstandingLabel")} {formatCurrency(selectedInvoice.outstandingAmount)}
+                    </Paragraph>
+                  ) : null}
 
-              <Button
-                type="primary"
-                htmlType="submit"
-                disabled={!selectedTenantId || payableInvoices.length === 0}
-                loading={isBusy}
-              >
-                {t("invoices.settle")}
-              </Button>
-            </Form>
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    disabled={!selectedTenantId || payableInvoices.length === 0}
+                    loading={isBusy}
+                  >
+                    {t("invoices.settle")}
+                  </Button>
+                </Form>
 
-            {selectedTenantId && payableInvoices.length === 0 ? (
-              <Paragraph type="secondary" style={{ marginTop: 16, marginBottom: 0 }}>
-                {t("invoices.noInvoicesDue")}
+                {selectedTenantId && payableInvoices.length === 0 ? (
+                  <Paragraph type="secondary" style={{ marginTop: 16, marginBottom: 0 }}>
+                    {t("invoices.noInvoicesDue")}
+                  </Paragraph>
+                ) : null}
+              </>
+            ) : (
+              <Paragraph type="secondary" style={{ marginBottom: 0 }}>
+                {t("accessDenied.actionRestricted")}
               </Paragraph>
-            ) : null}
+            )}
           </Card>
 
           <Card title={t("invoices.followUpTitle")}>
-            <Form<InvoiceCollectionFormShape>
-              form={collectionForm}
-              layout="vertical"
-              onFinish={onSaveCollectionFollowUp}
-              initialValues={{
-                followUpStatus: "new",
-                actionRequired: "monitor",
-                promisedPaymentDate: "",
-                nextActionDate: "",
-                collectionNote: "",
-              }}
-            >
+            {canManageCollections ? (
+              <Form<InvoiceCollectionFormShape>
+                form={collectionForm}
+                layout="vertical"
+                onFinish={onSaveCollectionFollowUp}
+                initialValues={{
+                  followUpStatus: "new",
+                  actionRequired: "monitor",
+                  promisedPaymentDate: "",
+                  nextActionDate: "",
+                  collectionNote: "",
+                }}
+              >
               <Form.Item<InvoiceCollectionFormShape>
                 label={t("invoices.invoice")}
                 name="invoiceId"
@@ -590,15 +611,20 @@ export function InvoicesPage(): ReactElement {
                 </Paragraph>
               ) : null}
 
-              <Button
-                type="primary"
-                htmlType="submit"
-                disabled={!selectedTenantId || collectionQueue.length === 0}
-                loading={isBusy}
-              >
-                {t("invoices.saveFollowUp")}
-              </Button>
-            </Form>
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  disabled={!selectedTenantId || collectionQueue.length === 0}
+                  loading={isBusy}
+                >
+                  {t("invoices.saveFollowUp")}
+                </Button>
+              </Form>
+            ) : (
+              <Paragraph type="secondary" style={{ marginBottom: 0 }}>
+                {t("accessDenied.actionRestricted")}
+              </Paragraph>
+            )}
 
             {selectedTenantId && collectionQueue.length === 0 ? (
               <Paragraph type="secondary" style={{ marginTop: 16, marginBottom: 0 }}>
@@ -654,14 +680,16 @@ export function InvoicesPage(): ReactElement {
                         <Tag color={getFollowUpStatusColor(invoice.followUpStatus)}>
                           {getFollowUpStatusLabel(invoice.followUpStatus, t)}
                         </Tag>
-                        <Button
-                          size="small"
-                          icon={<CheckCircleOutlined />}
-                          loading={isBusy}
-                          onClick={() => void onResolveCollectionAction(invoice.id)}
-                        >
-                          {t("invoices.resolveAction")}
-                        </Button>
+                        {canManageCollections ? (
+                          <Button
+                            size="small"
+                            icon={<CheckCircleOutlined />}
+                            loading={isBusy}
+                            onClick={() => void onResolveCollectionAction(invoice.id)}
+                          >
+                            {t("invoices.resolveAction")}
+                          </Button>
+                        ) : null}
                       </div>
                     </div>
                   ))}

@@ -11,6 +11,20 @@ const en = {
     noneSelected: "None selected",
     workspace: "Workspace",
   },
+  roles: {
+    founder: "Founder",
+    finance: "Finance",
+    sales: "Sales",
+    warehouse: "Warehouse",
+    purchasing: "Purchasing",
+    collector: "Collections",
+  },
+  accessDenied: {
+    title: "Access denied",
+    description: "Your current role cannot open the {{module}} module.",
+    actionRestricted: "Your current role can view this workspace but cannot perform this action.",
+    backToDashboard: "Back to dashboard",
+  },
   shell: {
     brand: "SmartERP",
     signOut: "Sign out",
@@ -35,6 +49,7 @@ const en = {
     fallbackMessage:
       "Booting the rewrite foundation so the new shell can replace the legacy entry point.",
     demoAccount: "Demo account",
+    roleAccounts: "Role-based demo accounts",
     email: "Email",
     password: "Password",
     enterWorkspace: "Enter workspace",
@@ -398,6 +413,7 @@ const en = {
     inventory: "Inventory",
     invoices: "Invoices",
     reporting: "Reporting",
+    approvals: "Approvals",
   },
   errors: {
     unknown: "Unknown error.",
@@ -405,6 +421,7 @@ const en = {
     invalidRequest: "Invalid request.",
     invalidCredentials: "Invalid credentials.",
     authenticationRequired: "Authentication required.",
+    forbidden: "You do not have permission to perform this action.",
     internalServerError: "Internal server error.",
     loadFoundationFailed: "Failed to load foundation.",
     loadTenantsFailed: "Failed to load tenants.",

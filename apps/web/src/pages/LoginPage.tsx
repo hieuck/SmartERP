@@ -1,6 +1,6 @@
 import type { ReactElement } from "react";
 import type { FormProps } from "antd";
-import { Alert, Button, Card, Form, Input, Space, Typography } from "antd";
+import { Alert, Button, Card, Divider, Form, Input, Space, Typography } from "antd";
 import { Navigate } from "react-router-dom";
 
 import type { LoginInput } from "@smarterp/contracts";
@@ -41,6 +41,27 @@ export function LoginPage(): ReactElement {
             {t("login.demoAccount")}: <Text strong>{foundation?.demoCredentials.email ?? "..."}</Text> /{" "}
             <Text strong>{foundation?.demoCredentials.password ?? "..."}</Text>
           </Paragraph>
+          {foundation?.demoAccounts?.length ? (
+            <>
+              <Divider style={{ margin: "8px 0" }} />
+              <Space orientation="vertical" size={8} style={{ width: "100%" }}>
+                <Text strong>{t("login.roleAccounts")}</Text>
+                {foundation.demoAccounts.map((account) => (
+                  <div className="record-row compact-record-row" key={account.email}>
+                    <div>
+                      <strong>{account.displayName}</strong>
+                      <div className="record-detail">
+                        {t(`roles.${account.role}`)} · {account.email}
+                      </div>
+                      <div className="record-detail">
+                        {t("login.password")}: {account.password}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </Space>
+            </>
+          ) : null}
           {error ? <Alert description={error} type="error" showIcon /> : null}
           <Form<LoginInput> layout="vertical" onFinish={onFinish} initialValues={{ email: "", password: "" }}>
             <Form.Item<LoginInput> label={t("login.email")} name="email" rules={[{ required: true }]}>
