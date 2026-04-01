@@ -30,6 +30,11 @@ import {
   type CreateTenantInput,
   type ImportOnboardingInput,
   type LoginInput,
+  type OperationsArtifactStatus,
+  type OperationsReadinessCheck,
+  type OperationsReadinessStatus,
+  type OperationsRuntimeServiceKey,
+  type OperationsRuntimeServiceStatus,
   type OperationsSmokeStatus,
   type OperationsStatusPayload,
   type Permission,
@@ -122,6 +127,61 @@ function didSmokePass(summary: Record<string, unknown>): boolean {
   );
 }
 
+function getOperationsOutputDir(): string {
+  return path.resolve(path.dirname(getDatabasePath()), "..", "output", "playwright");
+}
+
+async function readOptionalFileStats(
+  filePath: string,
+): Promise<{ exists: boolean; sizeBytes: number; updatedAt: string | null }> {
+  try {
+    const stats = await fs.stat(filePath);
+    return {
+      exists: true,
+      sizeBytes: stats.size,
+      updatedAt: stats.mtime.toISOString(),
+    };
+  } catch {
+    return {
+      exists: false,
+      sizeBytes: 0,
+      updatedAt: null,
+    };
+  }
+}
+
+async function readPidFile(pidFilePath: string): Promise<number | null> {
+  try {
+    const raw = await fs.readFile(pidFilePath, "utf8");
+    const pid = Number.parseInt(raw.trim(), 10);
+    return Number.isInteger(pid) && pid > 0 ? pid : null;
+  } catch {
+    return null;
+  }
+}
+
+function isProcessAlive(pid: number | null): boolean {
+  if (!pid) {
+    return false;
+  }
+
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function isUrlHealthy(url: string): Promise<boolean> {
+  try {
+    const response = await fetch(url);
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
 async function getOperationsDatabaseStatus(): Promise<OperationsStatusPayload["database"]> {
   const databasePath = getDatabasePath();
 
@@ -144,7 +204,7 @@ async function getOperationsDatabaseStatus(): Promise<OperationsStatusPayload["d
 }
 
 async function readOperationsSmokeStatus(): Promise<OperationsSmokeStatus | null> {
-  const summaryPath = path.join(path.dirname(getDatabasePath()), "..", "output", "playwright", "runtime-next-smoke-summary.json");
+  const summaryPath = path.join(getOperationsOutputDir(), "runtime-next-smoke-summary.json");
 
   try {
     const raw = await fs.readFile(summaryPath, "utf8");
@@ -172,6 +232,143 @@ async function readOperationsSmokeStatus(): Promise<OperationsSmokeStatus | null
   } catch {
     return null;
   }
+}
+
+async function getOperationsRuntimeServiceStatus(
+  key: OperationsRuntimeServiceKey,
+  label: string,
+  url: string,
+): Promise<OperationsRuntimeServiceStatus> {
+  const outputDir = getOperationsOutputDir();
+  const pidFilePath = path.join(outputDir, `runtime-next-${key}.pid`);
+  const stdoutPath = path.join(outputDir, `runtime-next-${key}.out.log`);
+  const stderrPath = path.join(outputDir, `runtime-next-${key}.err.log`);
+  const pid = await readPidFile(pidFilePath);
+  const [stdoutStats, stderrStats, healthy] = await Promise.all([
+    readOptionalFileStats(stdoutPath),
+    readOptionalFileStats(stderrPath),
+    isUrlHealthy(url),
+  ]);
+  const lastLogUpdateAt =
+    [stdoutStats.updatedAt, stderrStats.updatedAt].filter((value): value is string => Boolean(value)).sort().at(-1) ??
+    null;
+
+  return {
+    key,
+    label,
+    url,
+    healthy,
+    pid: isProcessAlive(pid) ? pid : null,
+    pidFilePath,
+    stdoutPath,
+    stderrPath,
+    stdoutExists: stdoutStats.exists,
+    stderrExists: stderrStats.exists,
+    lastLogUpdateAt,
+  };
+}
+
+async function getOperationsArtifacts(
+  database: OperationsStatusPayload["database"],
+  smoke: OperationsSmokeStatus | null,
+): Promise<OperationsArtifactStatus[]> {
+  const outputDir = getOperationsOutputDir();
+  const smokeSummaryPath = smoke?.summaryPath ?? path.join(outputDir, "runtime-next-smoke-summary.json");
+  const smokeScreenshotPath = smoke?.screenshotPath ?? path.join(outputDir, "runtime-next-smoke.png");
+  const [summaryStats, screenshotStats] = await Promise.all([
+    readOptionalFileStats(smokeSummaryPath),
+    readOptionalFileStats(smokeScreenshotPath),
+  ]);
+
+  return [
+    {
+      key: "database",
+      label: "SQLite database",
+      path: database.path,
+      exists: database.exists,
+      sizeBytes: database.sizeBytes,
+      updatedAt: database.updatedAt,
+    },
+    {
+      key: "smoke-summary",
+      label: "Smoke summary",
+      path: smokeSummaryPath,
+      exists: summaryStats.exists,
+      sizeBytes: summaryStats.sizeBytes,
+      updatedAt: summaryStats.updatedAt,
+    },
+    {
+      key: "smoke-screenshot",
+      label: "Smoke screenshot",
+      path: smokeScreenshotPath,
+      exists: screenshotStats.exists,
+      sizeBytes: screenshotStats.sizeBytes,
+      updatedAt: screenshotStats.updatedAt,
+    },
+  ];
+}
+
+function buildOperationsReadinessStatus(
+  runtimeServices: OperationsRuntimeServiceStatus[],
+  database: OperationsStatusPayload["database"],
+  smoke: OperationsSmokeStatus | null,
+): OperationsReadinessStatus {
+  const apiService = runtimeServices.find((service) => service.key === "api") ?? null;
+  const webService = runtimeServices.find((service) => service.key === "web") ?? null;
+  const checks: OperationsReadinessCheck[] = [
+    {
+      key: "api-health",
+      label: "API health",
+      passed: Boolean(apiService?.healthy),
+      severity: "critical",
+      detail: apiService?.url ?? "http://127.0.0.1:4000/api/health",
+    },
+    {
+      key: "web-health",
+      label: "Web shell",
+      passed: Boolean(webService?.healthy),
+      severity: "critical",
+      detail: webService?.url ?? "http://127.0.0.1:3000",
+    },
+    {
+      key: "database-file",
+      label: "Database file",
+      passed: database.exists,
+      severity: "critical",
+      detail: database.path,
+    },
+    {
+      key: "smoke-gate",
+      label: "Latest smoke gate",
+      passed: Boolean(smoke?.passed),
+      severity: "warning",
+      detail: smoke?.summaryPath ?? "No smoke summary captured yet.",
+    },
+    {
+      key: "api-logs",
+      label: "API runtime logs",
+      passed: Boolean(apiService?.stdoutExists && apiService.stderrExists),
+      severity: "warning",
+      detail: apiService ? `${apiService.stdoutPath} | ${apiService.stderrPath}` : "Runtime log paths unavailable.",
+    },
+    {
+      key: "web-logs",
+      label: "Web runtime logs",
+      passed: Boolean(webService?.stdoutExists && webService.stderrExists),
+      severity: "warning",
+      detail: webService ? `${webService.stdoutPath} | ${webService.stderrPath}` : "Runtime log paths unavailable.",
+    },
+  ];
+  const failedChecks = checks.filter((check) => !check.passed);
+  const hasCriticalFailure = failedChecks.some((check) => check.severity === "critical");
+
+  return {
+    level: hasCriticalFailure ? "blocked" : failedChecks.length > 0 ? "warning" : "ready",
+    passedCheckCount: checks.filter((check) => check.passed).length,
+    warningCheckCount: failedChecks.filter((check) => check.severity === "warning").length,
+    failedCheckCount: failedChecks.length,
+    checks,
+  };
 }
 
 function isSqliteConstraintError(error: unknown): error is Error & { code?: string } {
@@ -285,13 +482,24 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
         return;
       }
 
+      const database = await getOperationsDatabaseStatus();
+      const smoke = await readOperationsSmokeStatus();
+      const runtimeServices = await Promise.all([
+        getOperationsRuntimeServiceStatus("api", "API", "http://127.0.0.1:4000/api/health"),
+        getOperationsRuntimeServiceStatus("web", "Web", "http://127.0.0.1:3000"),
+      ]);
+      const artifacts = await getOperationsArtifacts(database, smoke);
+
       const item: OperationsStatusPayload = {
         service: "smarterp-api",
         status: "ok",
         foundation: describeApiFoundation(),
         generatedAt: new Date().toISOString(),
-        database: await getOperationsDatabaseStatus(),
-        smoke: await readOperationsSmokeStatus(),
+        database,
+        runtimeServices,
+        artifacts,
+        readiness: buildOperationsReadinessStatus(runtimeServices, database, smoke),
+        smoke,
         totals: getOperationsTotals(),
         tenants: listOperationsTenantStatuses(),
       };

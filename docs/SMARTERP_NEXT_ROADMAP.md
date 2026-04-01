@@ -6,7 +6,7 @@ Status: Active
 
 ## Current Checkpoint
 
-SmartERP Next is currently at `CP3-`.
+SmartERP Next is currently at `CP3+`.
 
 Meaning:
 
@@ -30,6 +30,7 @@ Current verified flow:
 - collection worklist
 - ledger posting
 - financial audit trail
+- founder operations monitoring
 
 Verification baseline:
 
@@ -162,16 +163,22 @@ Deliverables:
 - backup and restore path
 - deployment and monitoring baseline
 
+Progress update:
+
+- import/export for pilot onboarding completed on 2026-03-31
+- backup and restore baseline completed on 2026-03-31
+- deployment and monitoring baseline completed on 2026-04-01 via the founder-only `Operations` module, runtime health checks, and operational artifact visibility
+
 Checkpoint effect:
 
 - turns a strong rewrite into a pilotable product
 
 ## Immediate Execution Queue
 
-1. stock receiving and baseline stock valuation
-2. RBAC beyond founder-only access
-3. import/export for pilot onboarding
-4. pilot setup and recovery path
+1. seed/setup flows for first-time pilot operators
+2. tenant-scoped deployment packaging and handoff runbook
+3. tighter role-specific onboarding for non-founder users
+4. polish pilot recovery drills on top of restore baseline
 
 ## Non-Goals Right Now
 

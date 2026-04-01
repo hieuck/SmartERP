@@ -711,6 +711,51 @@ export type OperationsDatabaseStatus = {
   updatedAt: string | null;
 };
 
+export type OperationsRuntimeServiceKey = "api" | "web";
+
+export type OperationsRuntimeServiceStatus = {
+  key: OperationsRuntimeServiceKey;
+  label: string;
+  url: string;
+  healthy: boolean;
+  pid: number | null;
+  pidFilePath: string;
+  stdoutPath: string;
+  stderrPath: string;
+  stdoutExists: boolean;
+  stderrExists: boolean;
+  lastLogUpdateAt: string | null;
+};
+
+export type OperationsArtifactStatus = {
+  key: "database" | "smoke-summary" | "smoke-screenshot";
+  label: string;
+  path: string;
+  exists: boolean;
+  sizeBytes: number;
+  updatedAt: string | null;
+};
+
+export type OperationsReadinessSeverity = "critical" | "warning";
+
+export type OperationsReadinessCheck = {
+  key: string;
+  label: string;
+  passed: boolean;
+  severity: OperationsReadinessSeverity;
+  detail: string;
+};
+
+export type OperationsReadinessLevel = "ready" | "warning" | "blocked";
+
+export type OperationsReadinessStatus = {
+  level: OperationsReadinessLevel;
+  passedCheckCount: number;
+  warningCheckCount: number;
+  failedCheckCount: number;
+  checks: OperationsReadinessCheck[];
+};
+
 export type OperationsSmokeStatus = {
   checkedAt: string;
   passed: boolean;
@@ -760,6 +805,9 @@ export type OperationsStatusPayload = {
   foundation: string;
   generatedAt: string;
   database: OperationsDatabaseStatus;
+  runtimeServices: OperationsRuntimeServiceStatus[];
+  artifacts: OperationsArtifactStatus[];
+  readiness: OperationsReadinessStatus;
   smoke: OperationsSmokeStatus | null;
   totals: OperationsTotals;
   tenants: OperationsTenantStatusRecord[];

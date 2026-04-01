@@ -464,6 +464,7 @@ async function main() {
   let ledgerPostingVerified = false;
   let auditTrailVerified = false;
   let operationsStatusVerified = false;
+  let operationsReadinessVerified = false;
   let unauthorizedApiBlockedVerified = false;
   let rbacSalesVisibilityVerified = false;
   let rbacSalesBlockedRouteVerified = false;
@@ -1189,6 +1190,7 @@ async function main() {
     auditTrailVerified = true;
     await openSection(page, sidebarIndexes.operations, "/dashboard/operations");
     await page.getByRole("heading", { name: "Vận hành" }).waitFor({ timeout: 15000 });
+    await page.getByText("Mức sẵn sàng pilot", { exact: false }).waitFor({ timeout: 15000 });
     await page.getByText("Smoke gate gần nhất", { exact: false }).waitFor({ timeout: 15000 });
     await page.getByText(tenantName, { exact: false }).first().waitFor({ timeout: 15000 });
     const operationsSnapshot = await page.evaluate(async ({ sessionKey }) => {
@@ -1216,6 +1218,22 @@ async function main() {
       "Operations status did not expose the runtime database path.",
     );
     assert(
+      Array.isArray(operationsSnapshot.body?.item?.runtimeServices) &&
+        operationsSnapshot.body.item.runtimeServices.length >= 2,
+      "Operations status did not expose runtime service health.",
+    );
+    assert(
+      Array.isArray(operationsSnapshot.body?.item?.artifacts) &&
+        operationsSnapshot.body.item.artifacts.some((artifact) => artifact.key === "database" && artifact.exists === true),
+      "Operations status did not expose operational artifacts.",
+    );
+    assert(
+      Array.isArray(operationsSnapshot.body?.item?.readiness?.checks) &&
+        operationsSnapshot.body.item.readiness.checks.some((check) => check.key === "api-health" && check.passed === true) &&
+        operationsSnapshot.body.item.readiness.checks.some((check) => check.key === "web-health" && check.passed === true),
+      "Operations status did not expose healthy pilot readiness checks.",
+    );
+    assert(
       operationsSnapshot.body?.item?.smoke === null ||
         (
           typeof operationsSnapshot.body.item.smoke?.verifiedCheckCount === "number" &&
@@ -1224,6 +1242,11 @@ async function main() {
       "Operations status returned an invalid smoke summary payload.",
     );
     operationsStatusVerified = true;
+    await page.getByText("Dịch vụ runtime", { exact: false }).waitFor({ timeout: 15000 });
+    await page.getByText("Artifact vận hành", { exact: false }).waitFor({ timeout: 15000 });
+    await page.getByText("API health", { exact: false }).waitFor({ timeout: 15000 });
+    await page.getByText("Web shell", { exact: false }).waitFor({ timeout: 15000 });
+    operationsReadinessVerified = true;
     const exportSnapshotResponse = await page.evaluate(
       async ({ sessionKey, tenantKey }) => {
         const rawSession = window.localStorage.getItem(sessionKey);
@@ -1707,6 +1730,7 @@ async function main() {
       ledgerPostingVerified,
       auditTrailVerified,
       operationsStatusVerified,
+      operationsReadinessVerified,
       rbacSalesVisibilityVerified,
       rbacSalesBlockedRouteVerified,
       rbacSalesBlockedRestorePreviewVerified,

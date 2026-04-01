@@ -42,6 +42,18 @@ function getTenantPressureColor(record: OperationsTenantStatusRecord): string {
   return "green";
 }
 
+function getReadinessLevelColor(level: OperationsStatusPayload["readiness"]["level"]): string {
+  if (level === "ready") {
+    return "green";
+  }
+
+  if (level === "warning") {
+    return "gold";
+  }
+
+  return "red";
+}
+
 export function OperationsPage(): ReactElement {
   const { formatCurrency, localeCode, t } = useLocale();
   const [status, setStatus] = useState<OperationsStatusPayload | null>(null);
@@ -87,6 +99,18 @@ export function OperationsPage(): ReactElement {
     }
 
     return `${(value / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  function getReadinessLabel(level: OperationsStatusPayload["readiness"]["level"]): string {
+    if (level === "ready") {
+      return t("operations.readinessReady");
+    }
+
+    if (level === "warning") {
+      return t("operations.readinessWarning");
+    }
+
+    return t("operations.readinessBlocked");
   }
 
   return (
@@ -196,6 +220,51 @@ export function OperationsPage(): ReactElement {
             </Col>
           </Row>
 
+          <Card title={t("operations.readinessTitle")}>
+            <div className="record-stack">
+              <div className="compact-record-row">
+                <strong>{t("operations.readinessState")}</strong>
+                <span>
+                  <Tag color={getReadinessLevelColor(status.readiness.level)}>
+                    {getReadinessLabel(status.readiness.level)}
+                  </Tag>
+                </span>
+              </div>
+              <div className="compact-record-row">
+                <strong>{t("operations.readinessPassed")}</strong>
+                <span>{status.readiness.passedCheckCount}</span>
+              </div>
+              <div className="compact-record-row">
+                <strong>{t("operations.readinessWarnings")}</strong>
+                <span>{status.readiness.warningCheckCount}</span>
+              </div>
+              <div className="compact-record-row">
+                <strong>{t("operations.readinessFailed")}</strong>
+                <span>{status.readiness.failedCheckCount}</span>
+              </div>
+            </div>
+
+            <div className="activity-feed" data-testid="operations-readiness-checks">
+              {status.readiness.checks.map((check) => (
+                <div className="activity-row" key={check.key}>
+                  <div className="activity-main">
+                    <Space wrap>
+                      <strong>{check.label}</strong>
+                      <Tag color={check.passed ? "green" : check.severity === "critical" ? "red" : "gold"}>
+                        {check.passed
+                          ? t("operations.checkPassed")
+                          : check.severity === "critical"
+                            ? t("operations.checkCritical")
+                            : t("operations.checkWarning")}
+                      </Tag>
+                    </Space>
+                    <div className="record-detail">{check.detail}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+
           <div className="two-column">
             <Card title={t("operations.databaseTitle")}>
               <div className="record-stack">
@@ -220,6 +289,64 @@ export function OperationsPage(): ReactElement {
                 <div className="compact-record-row">
                   <strong>{t("operations.databaseUpdatedAt")}</strong>
                   <span>{formatDateTime(status.database.updatedAt)}</span>
+                </div>
+              </div>
+
+              <div className="record-stack">
+                <strong>{t("operations.runtimeServicesTitle")}</strong>
+                <div className="activity-feed">
+                  {status.runtimeServices.map((service) => (
+                    <div className="activity-row" key={service.key}>
+                      <div className="activity-main">
+                        <Space wrap>
+                          <strong>{service.label}</strong>
+                          <Tag color={service.healthy ? "green" : "red"}>
+                            {service.healthy ? t("operations.runtimeHealthy") : t("operations.runtimeDown")}
+                          </Tag>
+                          <Tag color={service.pid ? "blue" : "default"}>
+                            {service.pid ? `${t("operations.runtimePid")} ${service.pid}` : t("operations.runtimePidMissing")}
+                          </Tag>
+                        </Space>
+                        <div className="record-detail">{service.url}</div>
+                        <div className="record-detail">
+                          {t("operations.runtimeLogUpdated")} {formatDateTime(service.lastLogUpdateAt)}
+                        </div>
+                        <div className="record-detail">
+                          {t("operations.runtimeStdout")} <Text code>{service.stdoutPath}</Text>
+                        </div>
+                        <div className="record-detail">
+                          {t("operations.runtimeStderr")} <Text code>{service.stderrPath}</Text>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="record-stack">
+                <strong>{t("operations.artifactsTitle")}</strong>
+                <div className="activity-feed">
+                  {status.artifacts.map((artifact) => (
+                    <div className="activity-row" key={artifact.key}>
+                      <div className="activity-main">
+                        <Space wrap>
+                          <strong>{artifact.label}</strong>
+                          <Tag color={artifact.exists ? "green" : "red"}>
+                            {artifact.exists ? t("operations.artifactReady") : t("operations.artifactMissing")}
+                          </Tag>
+                        </Space>
+                        <div className="record-detail">
+                          {t("operations.artifactUpdated")} {formatDateTime(artifact.updatedAt)}
+                        </div>
+                        <div className="record-detail">
+                          {t("operations.artifactSize")} {formatBytes(artifact.sizeBytes)}
+                        </div>
+                        <div className="record-detail">
+                          <Text code>{artifact.path}</Text>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </Card>
