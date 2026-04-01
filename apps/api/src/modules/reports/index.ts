@@ -4,3 +4,4 @@ export {
   handleListAuditLogs,
   handleListJournalEntries,
 } from "./http.js";
+export { reportApiRoutes } from "./routes.js";

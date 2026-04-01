@@ -6,3 +6,4 @@ export {
   handleResolveInvoiceCollectionAction,
   handleUpdateInvoiceCollection,
 } from "./http.js";
+export { invoiceApiRoutes } from "./routes.js";

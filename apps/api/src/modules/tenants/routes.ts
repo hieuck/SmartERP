@@ -1,3 +1,6 @@
+import type { ApiRoute } from "../route-dispatch/http.js";
+import { getRequiredTenantId } from "../route-dispatch/http.js";
+import { withPermission } from "../route-dispatch/helpers.js";
 import {
   handleCreateTenant,
   handleExportTenantSnapshot,
@@ -5,10 +8,7 @@ import {
   handleListTenants,
   handlePreviewRestoreTenantSnapshot,
   handleRestoreTenantSnapshot,
-} from "../tenants/index.js";
-import type { ApiRoute } from "./http.js";
-import { getRequiredTenantId } from "./http.js";
-import { withPermission } from "./helpers.js";
+} from "./http.js";
 
 export const tenantApiRoutes: ApiRoute[] = [
   {

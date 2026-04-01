@@ -4,3 +4,4 @@ export {
   handleLogin,
   isPublicRoute,
 } from "./http.js";
+export { authApiRoutes } from "./routes.js";

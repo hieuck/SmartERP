@@ -1,14 +1,30 @@
 import type { ApiRoute } from "./http.js";
-import { controlApiRoutes } from "./control-routes.js";
-import { fulfillmentApiRoutes } from "./fulfillment-routes.js";
-import { masterDataApiRoutes } from "./master-data-routes.js";
-import { publicApiRoutes } from "./public-routes.js";
-import { tenantApiRoutes } from "./tenant-routes.js";
+import { approvalApiRoutes } from "../approvals/index.js";
+import { authApiRoutes } from "../auth/index.js";
+import { customerApiRoutes } from "../customers/index.js";
+import { foundationApiRoutes } from "../foundation/index.js";
+import { inventoryApiRoutes } from "../inventory/index.js";
+import { invoiceApiRoutes } from "../invoices/index.js";
+import { operationsApiRoutes } from "../operations/index.js";
+import { orderApiRoutes } from "../orders/index.js";
+import { productApiRoutes } from "../products/index.js";
+import { purchaseOrderApiRoutes } from "../purchase-orders/index.js";
+import { reportApiRoutes } from "../reports/index.js";
+import { supplierApiRoutes } from "../suppliers/index.js";
+import { tenantApiRoutes } from "../tenants/index.js";
 
 export const apiRoutes: ApiRoute[] = [
-  ...publicApiRoutes,
+  ...foundationApiRoutes,
+  ...authApiRoutes,
   ...tenantApiRoutes,
-  ...masterDataApiRoutes,
-  ...fulfillmentApiRoutes,
-  ...controlApiRoutes,
+  ...customerApiRoutes,
+  ...supplierApiRoutes,
+  ...productApiRoutes,
+  ...inventoryApiRoutes,
+  ...orderApiRoutes,
+  ...purchaseOrderApiRoutes,
+  ...invoiceApiRoutes,
+  ...approvalApiRoutes,
+  ...reportApiRoutes,
+  ...operationsApiRoutes,
 ];

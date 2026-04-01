@@ -6,3 +6,4 @@ export {
   handlePreviewRestoreTenantSnapshot,
   handleRestoreTenantSnapshot,
 } from "./http.js";
+export { tenantApiRoutes } from "./routes.js";
