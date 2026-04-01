@@ -54,21 +54,23 @@ import {
   handleListProducts,
 } from "./modules/products/index.js";
 import {
+  handleGetReportSummary,
+  handleListAccountBalances,
+  handleListAuditLogs,
+  handleListJournalEntries,
+} from "./modules/reports/index.js";
+import {
   handleCreateSupplier,
   handleListSuppliers,
 } from "./modules/suppliers/index.js";
 import {
   createTenant,
   exportTenantSnapshot,
-  getReportSummary,
   hasTenant,
   importOnboardingDataset,
   previewRestoreTenantSnapshot,
   restoreTenantSnapshot,
-  listAccountBalances,
   listApprovalRequests,
-  listAuditLogs,
-  listJournalEntries,
   listTenants,
   resolveApprovalRequest,
   runWithSession,
@@ -615,12 +617,7 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
         return;
       }
 
-      if (!hasTenant(tenantId)) {
-        badRequest(response, "The selected tenant does not exist.");
-        return;
-      }
-
-      sendJson(response, 200, { item: getReportSummary(tenantId) });
+      handleGetReportSummary(response, tenantId);
       return;
     }
 
@@ -636,12 +633,7 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
         return;
       }
 
-      if (!hasTenant(tenantId)) {
-        badRequest(response, "The selected tenant does not exist.");
-        return;
-      }
-
-      sendJson(response, 200, { items: listAccountBalances(tenantId) });
+      handleListAccountBalances(response, tenantId);
       return;
     }
 
@@ -657,12 +649,7 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
         return;
       }
 
-      if (!hasTenant(tenantId)) {
-        badRequest(response, "The selected tenant does not exist.");
-        return;
-      }
-
-      sendJson(response, 200, { items: listJournalEntries(tenantId) });
+      handleListJournalEntries(response, tenantId);
       return;
     }
 
@@ -678,12 +665,7 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
         return;
       }
 
-      if (!hasTenant(tenantId)) {
-        badRequest(response, "The selected tenant does not exist.");
-        return;
-      }
-
-      sendJson(response, 200, { items: listAuditLogs(tenantId) });
+      handleListAuditLogs(response, tenantId);
       return;
     }
 

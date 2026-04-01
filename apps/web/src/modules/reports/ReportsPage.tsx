@@ -12,10 +12,15 @@ import type {
   ReportSummary,
 } from "@smarterp/contracts";
 
-import { getReportSummary, listAccountBalances, listAuditLogs, listJournalEntries } from "../api";
-import { useLocale } from "../locale/LocaleContext";
-import { localizeErrorMessage } from "../locale/errorMessages";
-import { useWorkspace } from "../state/WorkspaceContext";
+import {
+  loadAccountBalances,
+  loadAuditLogs,
+  loadJournalEntries,
+  loadReportSummary,
+} from "./api";
+import { useLocale } from "../../locale/LocaleContext";
+import { localizeErrorMessage } from "../../locale/errorMessages";
+import { useWorkspace } from "../../state/WorkspaceContext";
 
 const { Paragraph, Title } = Typography;
 
@@ -126,10 +131,10 @@ export function ReportsPage(): ReactElement {
     setErrorMessage("");
 
     Promise.all([
-      getReportSummary(selectedTenantId),
-      listAccountBalances(selectedTenantId),
-      listJournalEntries(selectedTenantId),
-      listAuditLogs(selectedTenantId),
+      loadReportSummary(selectedTenantId),
+      loadAccountBalances(selectedTenantId),
+      loadJournalEntries(selectedTenantId),
+      loadAuditLogs(selectedTenantId),
     ])
       .then(([nextSummary, nextAccountBalances, nextJournalEntries, nextAuditLogs]) => {
         setSummary(nextSummary);

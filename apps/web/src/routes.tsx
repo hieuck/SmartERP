@@ -39,7 +39,7 @@ const InvoicesPage = lazy(() =>
   import("./modules/invoices").then((module) => ({ default: module.InvoicesPage })),
 );
 const ReportsPage = lazy(() =>
-  import("./pages/ReportsPage").then((module) => ({ default: module.ReportsPage })),
+  import("./modules/reports").then((module) => ({ default: module.ReportsPage })),
 );
 const ApprovalsPage = lazy(() =>
   import("./pages/ApprovalsPage").then((module) => ({ default: module.ApprovalsPage })),
