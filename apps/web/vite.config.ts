@@ -21,6 +21,14 @@ export default defineConfig({
           }
 
           if (
+            normalizedId.includes("/react/") ||
+            normalizedId.includes("/react-dom/") ||
+            normalizedId.includes("/scheduler/")
+          ) {
+            return "react-vendor";
+          }
+
+          if (
             normalizedId.includes("/antd/") ||
             normalizedId.includes("/@ant-design/") ||
             normalizedId.includes("/rc-")
