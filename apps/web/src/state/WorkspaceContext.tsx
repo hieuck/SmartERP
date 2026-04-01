@@ -47,10 +47,6 @@ import {
 import {
   decideApprovalRequest,
   createCustomer,
-  createInvoice,
-  updateInvoiceCollection,
-  resolveInvoiceCollectionAction,
-  createInvoicePayment,
   createInventoryAdjustment,
   createOrder,
   createPurchaseOrder,
@@ -62,11 +58,9 @@ import {
   getFoundation,
   importOnboardingDataset,
   listApprovalRequests,
-  listInvoiceCollectionActivities,
   listCustomers,
   listCustomerStatements,
   listInventory,
-  listInvoices,
   listOrders,
   listPurchaseOrders,
   listProducts,
@@ -78,6 +72,14 @@ import {
   setApiSession,
   setUnauthorizedHandler,
 } from "../api";
+import {
+  loadInvoiceCollectionActivities,
+  loadInvoices,
+  submitInvoiceCollectionResolution,
+  submitInvoiceCollectionUpdate,
+  submitInvoiceIssue,
+  submitInvoicePayment,
+} from "../modules/invoices/api";
 import { localizeErrorMessage } from "../locale/errorMessages";
 import { useLocale } from "../locale/LocaleContext";
 import {
@@ -228,12 +230,12 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
       canAccessModule("customers") ? listCustomers(tenantId) : Promise.resolve([]),
       canAccessModule("suppliers") ? listSuppliers(tenantId) : Promise.resolve([]),
       canAccessModule("customers") ? listCustomerStatements(tenantId) : Promise.resolve([]),
-      canAccessModule("invoices") ? listInvoiceCollectionActivities(tenantId) : Promise.resolve([]),
+      canAccessModule("invoices") ? loadInvoiceCollectionActivities(tenantId) : Promise.resolve([]),
       canAccessModule("products") ? listProducts(tenantId) : Promise.resolve([]),
       canAccessModule("inventory") ? listInventory(tenantId) : Promise.resolve([]),
       canAccessModule("orders") ? listOrders(tenantId) : Promise.resolve([]),
       canAccessModule("purchasing") ? listPurchaseOrders(tenantId) : Promise.resolve([]),
-      canAccessModule("invoices") ? listInvoices(tenantId) : Promise.resolve([]),
+      canAccessModule("invoices") ? loadInvoices(tenantId) : Promise.resolve([]),
     ]);
 
     setApprovalRequests(nextApprovalRequests);
@@ -657,7 +659,7 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
     setNoticeMessage("");
 
     try {
-      const result = await createInvoice({ ...input, tenantId: selectedTenantId });
+      const result = await submitInvoiceIssue({ ...input, tenantId: selectedTenantId });
       if (result.kind === "approval_requested") {
         setApprovalRequests((current) => [result.approvalRequest, ...current]);
         setNoticeMessage(buildApprovalNotice(result.approvalRequest));
@@ -689,7 +691,7 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
     setNoticeMessage("");
 
     try {
-      const result = await createInvoicePayment({ ...input, tenantId: selectedTenantId });
+      const result = await submitInvoicePayment({ ...input, tenantId: selectedTenantId });
       if (result.kind === "approval_requested") {
         setApprovalRequests((current) => [result.approvalRequest, ...current]);
         setNoticeMessage(buildApprovalNotice(result.approvalRequest));
@@ -746,11 +748,11 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
     setErrorMessage("");
 
     try {
-      const updatedInvoice = await updateInvoiceCollection({ ...input, tenantId: selectedTenantId });
+      const updatedInvoice = await submitInvoiceCollectionUpdate({ ...input, tenantId: selectedTenantId });
       setInvoices((current) =>
         current.map((invoice) => (invoice.id === updatedInvoice.id ? updatedInvoice : invoice)),
       );
-      const nextCollectionActivities = await listInvoiceCollectionActivities(selectedTenantId);
+      const nextCollectionActivities = await loadInvoiceCollectionActivities(selectedTenantId);
       setCollectionActivities(nextCollectionActivities);
     } catch (caught) {
       setErrorMessage(caught instanceof Error ? caught.message : "Invoice collection update failed.");
@@ -772,14 +774,14 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
     setErrorMessage("");
 
     try {
-      const updatedInvoice = await resolveInvoiceCollectionAction({
+      const updatedInvoice = await submitInvoiceCollectionResolution({
         ...input,
         tenantId: selectedTenantId,
       });
       setInvoices((current) =>
         current.map((invoice) => (invoice.id === updatedInvoice.id ? updatedInvoice : invoice)),
       );
-      const nextCollectionActivities = await listInvoiceCollectionActivities(selectedTenantId);
+      const nextCollectionActivities = await loadInvoiceCollectionActivities(selectedTenantId);
       setCollectionActivities(nextCollectionActivities);
     } catch (caught) {
       setErrorMessage(caught instanceof Error ? caught.message : "Invoice collection update failed.");
