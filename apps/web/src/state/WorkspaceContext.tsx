@@ -50,32 +50,10 @@ import {
   setApiSession,
   setUnauthorizedHandler,
 } from "../api";
-import { submitApprovalDecision } from "../modules/approvals/api";
-import { submitCustomer } from "../modules/customers/api";
-import { submitInventoryAdjustment } from "../modules/inventory/api";
-import { submitOrder } from "../modules/orders/api";
-import {
-  submitPurchaseOrder,
-  submitPurchaseOrderReceipt,
-} from "../modules/purchase-orders/api";
-import { submitProduct } from "../modules/products/api";
-import { submitSupplier } from "../modules/suppliers/api";
-import {
-  exportTenantSnapshotBundle,
-  loadTenants,
-  previewTenantSnapshotRestore,
-  restoreTenantSnapshotBundle,
-  submitOnboardingImport,
-  submitTenant,
-} from "../modules/tenants/api";
-import {
-  submitInvoiceCollectionResolution,
-  submitInvoiceCollectionUpdate,
-  submitInvoiceIssue,
-  submitInvoicePayment,
-} from "../modules/invoices/api";
+import { loadTenants } from "../modules/tenants/api";
 import { localizeErrorMessage } from "../locale/errorMessages";
 import { useLocale } from "../locale/LocaleContext";
+import { createWorkspaceCommands } from "./workspaceCommands";
 import {
   clearStoredWorkspaceState,
   readStoredSession,
@@ -292,6 +270,36 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
     });
   }, [selectedTenantId]);
 
+  const {
+    createTenantRecord,
+    importOnboardingDatasetRecord,
+    exportTenantSnapshotRecord,
+    previewTenantSnapshotRestoreRecord,
+    restoreTenantSnapshotRecord,
+    createCustomerRecord,
+    createSupplierRecord,
+    createProductRecord,
+    createInventoryAdjustmentRecord,
+    createOrderRecord,
+    createPurchaseOrderRecord,
+    receivePurchaseOrderRecord,
+    createInvoiceRecord,
+    createInvoicePaymentRecord,
+    decideApprovalRequestRecord,
+    updateInvoiceCollectionRecord,
+    resolveInvoiceCollectionActionRecord,
+  } = createWorkspaceCommands({
+    t,
+    setIsBusy,
+    setErrorMessage,
+    setNoticeMessage,
+    setTenants,
+    setSelectedTenantId,
+    refreshTenantWorkspace,
+    buildApprovalNotice,
+    getSelectedTenantIdOrThrow,
+  });
+
   async function loginToWorkspace(input: LoginInput): Promise<void> {
     setIsBusy(true);
     setErrorMessage("");
@@ -314,376 +322,6 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
     setErrorMessage("");
     setNoticeMessage("");
     resetTenantWorkspaceData();
-  }
-
-  async function createTenantRecord(input: CreateTenantInput): Promise<void> {
-    setIsBusy(true);
-    setErrorMessage("");
-
-    try {
-      const created = await submitTenant(input);
-      setTenants((current) => [created, ...current]);
-      setSelectedTenantId(created.id);
-    } catch (caught) {
-      setErrorMessage(caught instanceof Error ? caught.message : "Tenant creation failed.");
-      throw caught;
-    } finally {
-      setIsBusy(false);
-    }
-  }
-
-  async function importOnboardingDatasetRecord(
-    input: Omit<ImportOnboardingInput, "tenantId">,
-  ): Promise<ImportOnboardingResult> {
-    const tenantId = getSelectedTenantIdOrThrow();
-
-    setIsBusy(true);
-    setErrorMessage("");
-    setNoticeMessage("");
-
-    try {
-      const result = await submitOnboardingImport({ ...input, tenantId });
-      await refreshTenantWorkspace(tenantId);
-      setNoticeMessage(
-        t("tenants.importNotice", {
-          dataset: t(`tenants.datasets.${result.dataset}`),
-          createdCount: result.createdCount,
-          skippedCount: result.skippedCount,
-        }),
-      );
-      return result;
-    } catch (caught) {
-      setErrorMessage(caught instanceof Error ? caught.message : "Onboarding import failed.");
-      throw caught;
-    } finally {
-      setIsBusy(false);
-    }
-  }
-
-  async function exportTenantSnapshotRecord(): Promise<TenantExportBundle> {
-    const tenantId = getSelectedTenantIdOrThrow();
-
-    setIsBusy(true);
-    setErrorMessage("");
-
-    try {
-      const snapshot = await exportTenantSnapshotBundle(tenantId);
-      setNoticeMessage(
-        t("tenants.exportNotice", {
-          tenantName: snapshot.tenant.name,
-        }),
-      );
-      return snapshot;
-    } catch (caught) {
-      setErrorMessage(caught instanceof Error ? caught.message : "Tenant export failed.");
-      throw caught;
-    } finally {
-      setIsBusy(false);
-    }
-  }
-
-  async function previewTenantSnapshotRestoreRecord(
-    input: RestoreTenantSnapshotInput,
-  ): Promise<RestoreTenantSnapshotPreview> {
-    setIsBusy(true);
-    setErrorMessage("");
-
-    try {
-      const result = await previewTenantSnapshotRestore(input);
-      setNoticeMessage(
-        t("tenants.restorePreviewNotice", {
-          tenantName: result.targetTenant.name,
-        }),
-      );
-      return result;
-    } catch (caught) {
-      setErrorMessage(caught instanceof Error ? caught.message : "Tenant restore preview failed.");
-      throw caught;
-    } finally {
-      setIsBusy(false);
-    }
-  }
-
-  async function restoreTenantSnapshotRecord(
-    input: RestoreTenantSnapshotInput,
-  ): Promise<RestoreTenantSnapshotResult> {
-    setIsBusy(true);
-    setErrorMessage("");
-
-    try {
-      const result = await restoreTenantSnapshotBundle(input);
-      const nextTenants = await loadTenants();
-      setTenants(nextTenants);
-      setSelectedTenantId(result.tenant.id);
-      await refreshTenantWorkspace(result.tenant.id);
-      setNoticeMessage(
-        t("tenants.restoreNotice", {
-          tenantName: result.tenant.name,
-          restoredProducts: result.restoredProducts,
-          restoredCustomers: result.restoredCustomers,
-        }),
-      );
-      return result;
-    } catch (caught) {
-      setErrorMessage(caught instanceof Error ? caught.message : "Tenant restore failed.");
-      throw caught;
-    } finally {
-      setIsBusy(false);
-    }
-  }
-
-  async function createCustomerRecord(
-    input: Omit<CreateCustomerInput, "tenantId">,
-  ): Promise<void> {
-    const tenantId = getSelectedTenantIdOrThrow();
-
-    setIsBusy(true);
-    setErrorMessage("");
-
-    try {
-      await submitCustomer({ ...input, tenantId });
-      await refreshTenantWorkspace(tenantId);
-    } catch (caught) {
-      setErrorMessage(caught instanceof Error ? caught.message : "Customer creation failed.");
-      throw caught;
-    } finally {
-      setIsBusy(false);
-    }
-  }
-
-  async function createSupplierRecord(
-    input: Omit<CreateSupplierInput, "tenantId">,
-  ): Promise<void> {
-    const tenantId = getSelectedTenantIdOrThrow();
-
-    setIsBusy(true);
-    setErrorMessage("");
-
-    try {
-      await submitSupplier({ ...input, tenantId });
-      await refreshTenantWorkspace(tenantId);
-    } catch (caught) {
-      setErrorMessage(caught instanceof Error ? caught.message : "Supplier creation failed.");
-      throw caught;
-    } finally {
-      setIsBusy(false);
-    }
-  }
-
-  async function createProductRecord(
-    input: Omit<CreateProductInput, "tenantId">,
-  ): Promise<void> {
-    const tenantId = getSelectedTenantIdOrThrow();
-
-    setIsBusy(true);
-    setErrorMessage("");
-
-    try {
-      await submitProduct({ ...input, tenantId });
-      await refreshTenantWorkspace(tenantId);
-    } catch (caught) {
-      setErrorMessage(caught instanceof Error ? caught.message : "Product creation failed.");
-      throw caught;
-    } finally {
-      setIsBusy(false);
-    }
-  }
-
-  async function createInventoryAdjustmentRecord(
-    input: Omit<CreateInventoryAdjustmentInput, "tenantId">,
-  ): Promise<void> {
-    const tenantId = getSelectedTenantIdOrThrow();
-
-    setIsBusy(true);
-    setErrorMessage("");
-    setNoticeMessage("");
-
-    try {
-      const result = await submitInventoryAdjustment({ ...input, tenantId });
-      if (result.kind === "approval_requested") {
-        await refreshTenantWorkspace(tenantId);
-        setNoticeMessage(buildApprovalNotice(result.approvalRequest));
-        return;
-      }
-
-      await refreshTenantWorkspace(tenantId);
-    } catch (caught) {
-      setErrorMessage(caught instanceof Error ? caught.message : "Inventory adjustment failed.");
-      throw caught;
-    } finally {
-      setIsBusy(false);
-    }
-  }
-
-  async function createOrderRecord(input: Omit<CreateOrderInput, "tenantId">): Promise<void> {
-    const tenantId = getSelectedTenantIdOrThrow();
-
-    setIsBusy(true);
-    setErrorMessage("");
-
-    try {
-      await submitOrder({ ...input, tenantId });
-      await refreshTenantWorkspace(tenantId);
-    } catch (caught) {
-      setErrorMessage(caught instanceof Error ? caught.message : "Order creation failed.");
-      throw caught;
-    } finally {
-      setIsBusy(false);
-    }
-  }
-
-  async function createPurchaseOrderRecord(
-    input: Omit<CreatePurchaseOrderInput, "tenantId">,
-  ): Promise<void> {
-    const tenantId = getSelectedTenantIdOrThrow();
-
-    setIsBusy(true);
-    setErrorMessage("");
-
-    try {
-      await submitPurchaseOrder({ ...input, tenantId });
-      await refreshTenantWorkspace(tenantId);
-    } catch (caught) {
-      setErrorMessage(caught instanceof Error ? caught.message : "Purchase order creation failed.");
-      throw caught;
-    } finally {
-      setIsBusy(false);
-    }
-  }
-
-  async function receivePurchaseOrderRecord(
-    input: Omit<ReceivePurchaseOrderInput, "tenantId">,
-  ): Promise<void> {
-    const tenantId = getSelectedTenantIdOrThrow();
-
-    setIsBusy(true);
-    setErrorMessage("");
-    setNoticeMessage("");
-
-    try {
-      const result = await submitPurchaseOrderReceipt({ ...input, tenantId });
-      if (result.kind === "approval_requested") {
-        await refreshTenantWorkspace(tenantId);
-        setNoticeMessage(buildApprovalNotice(result.approvalRequest));
-        return;
-      }
-
-      await refreshTenantWorkspace(tenantId);
-    } catch (caught) {
-      setErrorMessage(caught instanceof Error ? caught.message : "Purchase order receiving failed.");
-      throw caught;
-    } finally {
-      setIsBusy(false);
-    }
-  }
-
-  async function createInvoiceRecord(input: Omit<CreateInvoiceInput, "tenantId">): Promise<void> {
-    const tenantId = getSelectedTenantIdOrThrow();
-
-    setIsBusy(true);
-    setErrorMessage("");
-    setNoticeMessage("");
-
-    try {
-      const result = await submitInvoiceIssue({ ...input, tenantId });
-      if (result.kind === "approval_requested") {
-        await refreshTenantWorkspace(tenantId);
-        setNoticeMessage(buildApprovalNotice(result.approvalRequest));
-        return;
-      }
-
-      await refreshTenantWorkspace(tenantId);
-    } catch (caught) {
-      setErrorMessage(caught instanceof Error ? caught.message : "Invoice creation failed.");
-      throw caught;
-    } finally {
-      setIsBusy(false);
-    }
-  }
-
-  async function createInvoicePaymentRecord(
-    input: Omit<CreateInvoicePaymentInput, "tenantId">,
-  ): Promise<void> {
-    const tenantId = getSelectedTenantIdOrThrow();
-
-    setIsBusy(true);
-    setErrorMessage("");
-    setNoticeMessage("");
-
-    try {
-      const result = await submitInvoicePayment({ ...input, tenantId });
-      if (result.kind === "approval_requested") {
-        await refreshTenantWorkspace(tenantId);
-        setNoticeMessage(buildApprovalNotice(result.approvalRequest));
-        return;
-      }
-
-      await refreshTenantWorkspace(tenantId);
-    } catch (caught) {
-      setErrorMessage(caught instanceof Error ? caught.message : "Invoice payment failed.");
-      throw caught;
-    } finally {
-      setIsBusy(false);
-    }
-  }
-
-  async function decideApprovalRequestRecord(
-    input: Omit<ApprovalDecisionInput, "tenantId">,
-  ): Promise<void> {
-    const tenantId = getSelectedTenantIdOrThrow();
-
-    setIsBusy(true);
-    setErrorMessage("");
-    setNoticeMessage("");
-
-    try {
-      const approvalRequest = await submitApprovalDecision({ ...input, tenantId });
-      await refreshTenantWorkspace(tenantId);
-      setNoticeMessage(buildApprovalNotice(approvalRequest, input.decision));
-    } catch (caught) {
-      setErrorMessage(caught instanceof Error ? caught.message : "Approval decision failed.");
-      throw caught;
-    } finally {
-      setIsBusy(false);
-    }
-  }
-
-  async function updateInvoiceCollectionRecord(
-    input: Omit<UpdateInvoiceCollectionInput, "tenantId">,
-  ): Promise<void> {
-    const tenantId = getSelectedTenantIdOrThrow();
-
-    setIsBusy(true);
-    setErrorMessage("");
-
-    try {
-      await submitInvoiceCollectionUpdate({ ...input, tenantId });
-      await refreshTenantWorkspace(tenantId);
-    } catch (caught) {
-      setErrorMessage(caught instanceof Error ? caught.message : "Invoice collection update failed.");
-      throw caught;
-    } finally {
-      setIsBusy(false);
-    }
-  }
-
-  async function resolveInvoiceCollectionActionRecord(
-    input: Omit<ResolveInvoiceCollectionActionInput, "tenantId">,
-  ): Promise<void> {
-    const tenantId = getSelectedTenantIdOrThrow();
-
-    setIsBusy(true);
-    setErrorMessage("");
-
-    try {
-      await submitInvoiceCollectionResolution({ ...input, tenantId });
-      await refreshTenantWorkspace(tenantId);
-    } catch (caught) {
-      setErrorMessage(caught instanceof Error ? caught.message : "Invoice collection update failed.");
-      throw caught;
-    } finally {
-      setIsBusy(false);
-    }
   }
 
   function clearError(): void {

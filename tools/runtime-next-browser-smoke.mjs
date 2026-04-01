@@ -1004,9 +1004,13 @@ async function main() {
     await selectOption(page, ordersFormCard.getByRole("combobox", { name: "* Sản phẩm" }), productName);
     await fillNumberInput(ordersFormCard.getByRole("spinbutton", { name: "* Số lượng" }), secondSaleQuantity);
     await clickSubmit(ordersFormCard);
-    const secondOrderRow = getListCard(page).locator(".record-row").first();
+    const secondOrderRow = getListCard(page)
+      .locator(".record-row")
+      .filter({ hasText: `${productName} x ${secondSaleQuantity}` })
+      .first();
     await secondOrderRow.waitFor({ timeout: 15000 });
     await secondOrderRow.getByText(customerName, { exact: false }).waitFor({ timeout: 15000 });
+    await secondOrderRow.getByText(buildAmountPattern(secondOrderGrossAmount)).first().waitFor({ timeout: 15000 });
     secondOrderNumber = (await secondOrderRow.locator("strong").first().textContent())?.trim() ?? "";
     assert(secondOrderNumber.length > 0, "Second order number was not rendered after order creation.");
 
