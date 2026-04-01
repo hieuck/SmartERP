@@ -18,7 +18,7 @@ const TenantsPage = lazy(() =>
   import("./pages/TenantsPage").then((module) => ({ default: module.TenantsPage })),
 );
 const CustomersPage = lazy(() =>
-  import("./pages/CustomersPage").then((module) => ({ default: module.CustomersPage })),
+  import("./modules/customers").then((module) => ({ default: module.CustomersPage })),
 );
 const SuppliersPage = lazy(() =>
   import("./pages/SuppliersPage").then((module) => ({ default: module.SuppliersPage })),

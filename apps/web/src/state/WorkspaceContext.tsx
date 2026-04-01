@@ -46,7 +46,6 @@ import {
 
 import {
   decideApprovalRequest,
-  createCustomer,
   createPurchaseOrder,
   receivePurchaseOrder,
   createProduct,
@@ -56,8 +55,6 @@ import {
   getFoundation,
   importOnboardingDataset,
   listApprovalRequests,
-  listCustomers,
-  listCustomerStatements,
   listPurchaseOrders,
   listProducts,
   listSuppliers,
@@ -68,6 +65,11 @@ import {
   setApiSession,
   setUnauthorizedHandler,
 } from "../api";
+import {
+  loadCustomers,
+  loadCustomerStatements,
+  submitCustomer,
+} from "../modules/customers/api";
 import { loadInventory, submitInventoryAdjustment } from "../modules/inventory/api";
 import { loadOrders, submitOrder } from "../modules/orders/api";
 import {
@@ -225,9 +227,9 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
       nextInvoices,
     ] = await Promise.all([
       canAccessModule("approvals") ? listApprovalRequests(tenantId) : Promise.resolve([]),
-      canAccessModule("customers") ? listCustomers(tenantId) : Promise.resolve([]),
+      canAccessModule("customers") ? loadCustomers(tenantId) : Promise.resolve([]),
       canAccessModule("suppliers") ? listSuppliers(tenantId) : Promise.resolve([]),
-      canAccessModule("customers") ? listCustomerStatements(tenantId) : Promise.resolve([]),
+      canAccessModule("customers") ? loadCustomerStatements(tenantId) : Promise.resolve([]),
       canAccessModule("invoices") ? loadInvoiceCollectionActivities(tenantId) : Promise.resolve([]),
       canAccessModule("products") ? listProducts(tenantId) : Promise.resolve([]),
       canAccessModule("inventory") ? loadInventory(tenantId) : Promise.resolve([]),
@@ -471,9 +473,9 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
     setErrorMessage("");
 
     try {
-      const created = await createCustomer({ ...input, tenantId: selectedTenantId });
+      const created = await submitCustomer({ ...input, tenantId: selectedTenantId });
       setCustomers((current) => [created, ...current]);
-      const nextCustomerStatements = await listCustomerStatements(selectedTenantId);
+      const nextCustomerStatements = await loadCustomerStatements(selectedTenantId);
       setCustomerStatements(nextCustomerStatements);
     } catch (caught) {
       setErrorMessage(caught instanceof Error ? caught.message : "Customer creation failed.");
@@ -666,7 +668,7 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
 
       const created = result.item;
       setInvoices((current) => [created, ...current]);
-      const nextCustomerStatements = await listCustomerStatements(selectedTenantId);
+      const nextCustomerStatements = await loadCustomerStatements(selectedTenantId);
       setCustomerStatements(nextCustomerStatements);
     } catch (caught) {
       setErrorMessage(caught instanceof Error ? caught.message : "Invoice creation failed.");
@@ -700,7 +702,7 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
       setInvoices((current) =>
         current.map((invoice) => (invoice.id === updatedInvoice.id ? updatedInvoice : invoice)),
       );
-      const nextCustomerStatements = await listCustomerStatements(selectedTenantId);
+      const nextCustomerStatements = await loadCustomerStatements(selectedTenantId);
       setCustomerStatements(nextCustomerStatements);
     } catch (caught) {
       setErrorMessage(caught instanceof Error ? caught.message : "Invoice payment failed.");

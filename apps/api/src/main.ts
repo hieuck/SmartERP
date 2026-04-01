@@ -14,7 +14,6 @@ import {
   rewriteMessage,
   type ApprovalDecisionInput,
   type FoundationModule,
-  type CreateCustomerInput,
   type CreatePurchaseOrderInput,
   type ReceivePurchaseOrderInput,
   type CreateProductInput,
@@ -31,6 +30,11 @@ import {
 import { readJson, sendEmpty, sendJson } from "./http.js";
 import { getDatabasePath } from "./database.js";
 import {
+  handleCreateCustomer,
+  handleListCustomers,
+  handleListCustomerStatements,
+} from "./modules/customers/index.js";
+import {
   handleCreateInvoice,
   handleCreateInvoicePayment,
   handleListInvoiceCollectionActivities,
@@ -45,7 +49,6 @@ import {
 import { handleCreateOrder, handleListOrders } from "./modules/orders/index.js";
 import { handleGetOperationsStatus } from "./modules/operations/index.js";
 import {
-  createCustomer,
   createPurchaseOrder,
   receivePurchaseOrder,
   createProduct,
@@ -61,8 +64,6 @@ import {
   listApprovalRequests,
   listAuditLogs,
   listJournalEntries,
-  listCustomerStatements,
-  listCustomers,
   listPurchaseOrders,
   listProducts,
   listSuppliers,
@@ -411,7 +412,7 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
         return;
       }
 
-      sendJson(response, 200, { items: listCustomers(tenantId) });
+      handleListCustomers(response, tenantId);
       return;
     }
 
@@ -427,7 +428,7 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
         return;
       }
 
-      sendJson(response, 200, { items: listCustomerStatements(tenantId) });
+      handleListCustomerStatements(response, tenantId);
       return;
     }
 
@@ -436,25 +437,7 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
         return;
       }
 
-      const input = await readJson<CreateCustomerInput>(request);
-
-      if (!input.tenantId?.trim()) {
-        badRequest(response, "tenantId is required.");
-        return;
-      }
-
-      if (!hasTenant(input.tenantId)) {
-        badRequest(response, "The selected tenant does not exist.");
-        return;
-      }
-
-      if (!input.name?.trim() || !input.email?.trim()) {
-        badRequest(response, "Customer name and email are required.");
-        return;
-      }
-
-      const customer = runWithSession(requestSession, () => createCustomer(input));
-      sendJson(response, 201, { item: customer });
+      await handleCreateCustomer(request, response, requestSession);
       return;
     }
 

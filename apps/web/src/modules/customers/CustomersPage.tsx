@@ -5,8 +5,8 @@ import { Button, Card, Empty, Form, Input, Select, Typography } from "antd";
 
 import type { CreateCustomerInput } from "@smarterp/contracts";
 
-import { useLocale } from "../locale/LocaleContext";
-import { useWorkspace } from "../state/WorkspaceContext";
+import { useLocale } from "../../locale/LocaleContext";
+import { useWorkspace } from "../../state/WorkspaceContext";
 
 const { Paragraph, Title } = Typography;
 
