@@ -42,7 +42,7 @@ const ReportsPage = lazy(() =>
   import("./modules/reports").then((module) => ({ default: module.ReportsPage })),
 );
 const ApprovalsPage = lazy(() =>
-  import("./pages/ApprovalsPage").then((module) => ({ default: module.ApprovalsPage })),
+  import("./modules/approvals").then((module) => ({ default: module.ApprovalsPage })),
 );
 const OperationsPage = lazy(() =>
   import("./modules/operations").then((module) => ({ default: module.OperationsPage })),

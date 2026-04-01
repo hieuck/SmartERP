@@ -26,6 +26,10 @@ import {
 import { readJson, sendEmpty, sendJson } from "./http.js";
 import { getDatabasePath } from "./database.js";
 import {
+  handleDecideApprovalRequest,
+  handleListApprovalRequests,
+} from "./modules/approvals/index.js";
+import {
   handleCreateCustomer,
   handleListCustomers,
   handleListCustomerStatements,
@@ -70,9 +74,7 @@ import {
   importOnboardingDataset,
   previewRestoreTenantSnapshot,
   restoreTenantSnapshot,
-  listApprovalRequests,
   listTenants,
-  resolveApprovalRequest,
   runWithSession,
 } from "./store.js";
 
@@ -596,12 +598,7 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
         return;
       }
 
-      if (!hasTenant(tenantId)) {
-        badRequest(response, "The selected tenant does not exist.");
-        return;
-      }
-
-      sendJson(response, 200, { items: listApprovalRequests(tenantId) });
+      handleListApprovalRequests(response, tenantId);
       return;
     }
 
@@ -737,47 +734,7 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
         return;
       }
 
-      const input = await readJson<ApprovalDecisionInput>(request);
-
-      if (!input.tenantId?.trim()) {
-        badRequest(response, "tenantId is required.");
-        return;
-      }
-
-      if (!hasTenant(input.tenantId)) {
-        badRequest(response, "The selected tenant does not exist.");
-        return;
-      }
-
-      if (!input.approvalRequestId?.trim()) {
-        badRequest(response, "approvalRequestId is required.");
-        return;
-      }
-
-      if (input.decision !== "approved" && input.decision !== "rejected") {
-        badRequest(response, "approval decision is invalid.");
-        return;
-      }
-
-      try {
-        const approvalRequest = runWithSession(requestSession, () => resolveApprovalRequest(input));
-        sendJson(response, 200, { item: approvalRequest });
-      } catch (error) {
-        if (
-          error instanceof Error &&
-          [
-            "The selected approval request does not exist.",
-            "The selected approval request has already been resolved.",
-            "The selected approval request type is not supported.",
-          ].includes(error.message)
-        ) {
-          badRequest(response, error.message);
-          return;
-        }
-
-        throw error;
-      }
-
+      await handleDecideApprovalRequest(request, response, requestSession);
       return;
     }
 

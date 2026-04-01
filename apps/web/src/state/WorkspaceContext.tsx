@@ -45,12 +45,10 @@ import {
 } from "@smarterp/contracts";
 
 import {
-  decideApprovalRequest,
   createTenant,
   exportTenantSnapshot,
   getFoundation,
   importOnboardingDataset,
-  listApprovalRequests,
   listTenants,
   login,
   previewRestoreTenantSnapshot,
@@ -58,6 +56,10 @@ import {
   setApiSession,
   setUnauthorizedHandler,
 } from "../api";
+import {
+  loadApprovalRequests,
+  submitApprovalDecision,
+} from "../modules/approvals/api";
 import {
   loadCustomers,
   loadCustomerStatements,
@@ -226,7 +228,7 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
       nextPurchaseOrders,
       nextInvoices,
     ] = await Promise.all([
-      canAccessModule("approvals") ? listApprovalRequests(tenantId) : Promise.resolve([]),
+      canAccessModule("approvals") ? loadApprovalRequests(tenantId) : Promise.resolve([]),
       canAccessModule("customers") ? loadCustomers(tenantId) : Promise.resolve([]),
       canAccessModule("suppliers") ? loadSuppliers(tenantId) : Promise.resolve([]),
       canAccessModule("customers") ? loadCustomerStatements(tenantId) : Promise.resolve([]),
@@ -725,7 +727,7 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
     setNoticeMessage("");
 
     try {
-      const approvalRequest = await decideApprovalRequest({ ...input, tenantId: selectedTenantId });
+      const approvalRequest = await submitApprovalDecision({ ...input, tenantId: selectedTenantId });
       await refreshTenantWorkspace(selectedTenantId);
       setNoticeMessage(buildApprovalNotice(approvalRequest, input.decision));
     } catch (caught) {

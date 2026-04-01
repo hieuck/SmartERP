@@ -4,8 +4,8 @@ import { Button, Card, Empty, Select, Tag, Typography } from "antd";
 
 import type { ApprovalRequestRecord } from "@smarterp/contracts";
 
-import { useLocale } from "../locale/LocaleContext";
-import { useWorkspace } from "../state/WorkspaceContext";
+import { useLocale } from "../../locale/LocaleContext";
+import { useWorkspace } from "../../state/WorkspaceContext";
 
 const { Paragraph, Title } = Typography;
 
