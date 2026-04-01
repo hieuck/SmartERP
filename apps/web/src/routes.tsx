@@ -1,12 +1,10 @@
-import { Suspense, lazy, type ReactElement } from "react";
-import { Alert, Spin } from "antd";
+import { lazy, type ReactElement } from "react";
+import { Alert } from "antd";
 import { Navigate, Route, Routes } from "react-router-dom";
 
-import type { FoundationModule } from "@smarterp/contracts";
-
-import { MainLayout } from "./layout/MainLayout";
-import { AccessDeniedPage } from "./modules/access-control";
+import { ProtectedModuleRoute } from "./modules/access-control";
 import { useWorkspace } from "./state/WorkspaceContext";
+import { AuthenticatedShell, RouteBoundary } from "./modules/shell";
 
 const LoginPage = lazy(() =>
   import("./modules/auth").then((module) => ({ default: module.LoginPage })),
@@ -48,52 +46,6 @@ const OperationsPage = lazy(() =>
   import("./modules/operations").then((module) => ({ default: module.OperationsPage })),
 );
 
-function RouteFallback(): ReactElement {
-  return (
-    <div className="boot-screen">
-      <Spin size="large" />
-    </div>
-  );
-}
-
-function withLazyBoundary(element: ReactElement): ReactElement {
-  return <Suspense fallback={<RouteFallback />}>{element}</Suspense>;
-}
-
-function ProtectedShell(): ReactElement {
-  const { session, isBooting } = useWorkspace();
-
-  if (isBooting) {
-    return (
-      <div className="boot-screen">
-        <Spin size="large" />
-      </div>
-    );
-  }
-
-  if (!session) {
-    return <Navigate to="/login" replace />;
-  }
-
-  return <MainLayout />;
-}
-
-function ProtectedModuleRoute({
-  module,
-  element,
-}: {
-  module: FoundationModule;
-  element: ReactElement;
-}): ReactElement {
-  const { canAccessModule } = useWorkspace();
-
-  if (!canAccessModule(module)) {
-    return <AccessDeniedPage module={module} />;
-  }
-
-  return element;
-}
-
 export function AppRoutes(): ReactElement {
   const { error, notice, clearError, clearNotice } = useWorkspace();
 
@@ -112,52 +64,73 @@ export function AppRoutes(): ReactElement {
 
       <Routes>
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/login" element={withLazyBoundary(<LoginPage />)} />
-        <Route path="/dashboard" element={<ProtectedShell />}>
-          <Route index element={withLazyBoundary(<DashboardPage />)} />
+        <Route path="/login" element={<RouteBoundary><LoginPage /></RouteBoundary>} />
+        <Route path="/dashboard" element={<AuthenticatedShell />}>
+          <Route index element={<RouteBoundary><DashboardPage /></RouteBoundary>} />
           <Route
             path="tenants"
-            element={<ProtectedModuleRoute module="tenant" element={withLazyBoundary(<TenantsPage />)} />}
+            element={<ProtectedModuleRoute module="tenant" element={<RouteBoundary><TenantsPage /></RouteBoundary>} />}
           />
           <Route
             path="customers"
-            element={<ProtectedModuleRoute module="customers" element={withLazyBoundary(<CustomersPage />)} />}
+            element={
+              <ProtectedModuleRoute module="customers" element={<RouteBoundary><CustomersPage /></RouteBoundary>} />
+            }
           />
           <Route
             path="suppliers"
-            element={<ProtectedModuleRoute module="suppliers" element={withLazyBoundary(<SuppliersPage />)} />}
+            element={
+              <ProtectedModuleRoute module="suppliers" element={<RouteBoundary><SuppliersPage /></RouteBoundary>} />
+            }
           />
           <Route
             path="products"
-            element={<ProtectedModuleRoute module="products" element={withLazyBoundary(<ProductsPage />)} />}
+            element={
+              <ProtectedModuleRoute module="products" element={<RouteBoundary><ProductsPage /></RouteBoundary>} />
+            }
           />
           <Route
             path="purchase-orders"
-            element={<ProtectedModuleRoute module="purchasing" element={withLazyBoundary(<PurchaseOrdersPage />)} />}
+            element={
+              <ProtectedModuleRoute
+                module="purchasing"
+                element={<RouteBoundary><PurchaseOrdersPage /></RouteBoundary>}
+              />
+            }
           />
           <Route
             path="orders"
-            element={<ProtectedModuleRoute module="orders" element={withLazyBoundary(<OrdersPage />)} />}
+            element={<ProtectedModuleRoute module="orders" element={<RouteBoundary><OrdersPage /></RouteBoundary>} />}
           />
           <Route
             path="inventory"
-            element={<ProtectedModuleRoute module="inventory" element={withLazyBoundary(<InventoryPage />)} />}
+            element={
+              <ProtectedModuleRoute module="inventory" element={<RouteBoundary><InventoryPage /></RouteBoundary>} />
+            }
           />
           <Route
             path="invoices"
-            element={<ProtectedModuleRoute module="invoices" element={withLazyBoundary(<InvoicesPage />)} />}
+            element={
+              <ProtectedModuleRoute module="invoices" element={<RouteBoundary><InvoicesPage /></RouteBoundary>} />
+            }
           />
           <Route
             path="reports"
-            element={<ProtectedModuleRoute module="reporting" element={withLazyBoundary(<ReportsPage />)} />}
+            element={
+              <ProtectedModuleRoute module="reporting" element={<RouteBoundary><ReportsPage /></RouteBoundary>} />
+            }
           />
           <Route
             path="approvals"
-            element={<ProtectedModuleRoute module="approvals" element={withLazyBoundary(<ApprovalsPage />)} />}
+            element={
+              <ProtectedModuleRoute module="approvals" element={<RouteBoundary><ApprovalsPage /></RouteBoundary>} />
+            }
           />
           <Route
             path="operations"
-            element={<ProtectedModuleRoute module="operations" element={withLazyBoundary(<OperationsPage />)} />}
+            element={
+              <ProtectedModuleRoute module="operations" element={<RouteBoundary><OperationsPage /></RouteBoundary>} />
+            }
           />
         </Route>
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
