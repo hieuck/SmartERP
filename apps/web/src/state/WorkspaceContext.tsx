@@ -1,5 +1,5 @@
 import type { PropsWithChildren, ReactElement } from "react";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useState } from "react";
 
 import type {
   ApprovalDecisionInput,
@@ -44,23 +44,11 @@ import {
   hasPermission as sessionHasPermission,
 } from "@smarterp/contracts";
 
-import {
-  getFoundation,
-  login,
-  setApiSession,
-  setUnauthorizedHandler,
-} from "../api";
-import { loadTenants } from "../modules/tenants/api";
 import { localizeErrorMessage } from "../locale/errorMessages";
 import { useLocale } from "../locale/LocaleContext";
 import { createWorkspaceCommands } from "./workspaceCommands";
-import {
-  clearStoredWorkspaceState,
-  readStoredSession,
-  readStoredTenantId,
-  writeStoredSession,
-  writeStoredTenantId,
-} from "./workspaceStorage";
+import { createWorkspaceSessionCommands, useWorkspaceSessionEffects } from "./workspaceSession";
+import { readStoredSession, readStoredTenantId } from "./workspaceStorage";
 import {
   createEmptyTenantWorkspaceData,
   loadTenantWorkspaceData,
@@ -181,43 +169,6 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
     }
   }
 
-  useEffect(() => {
-    setApiSession(session);
-  }, [session]);
-
-  useEffect(() => {
-    setUnauthorizedHandler((message) => {
-      clearStoredWorkspaceState();
-      setSession(null);
-      setSelectedTenantId("");
-      setNoticeMessage("");
-      setErrorMessage(message);
-    });
-
-    return () => {
-      setUnauthorizedHandler(null);
-    };
-  }, []);
-
-  useEffect(() => {
-    getFoundation()
-      .then(setFoundation)
-      .catch((caught: unknown) => {
-        setErrorMessage(caught instanceof Error ? caught.message : "Failed to load foundation.");
-      })
-      .finally(() => {
-        setIsBooting(false);
-      });
-  }, []);
-
-  useEffect(() => {
-    writeStoredSession(session);
-  }, [session]);
-
-  useEffect(() => {
-    writeStoredTenantId(selectedTenantId);
-  }, [selectedTenantId]);
-
   async function refreshTenantWorkspace(tenantId: string): Promise<void> {
     const nextWorkspace = await loadTenantWorkspaceData(tenantId, canAccessModule);
     applyTenantWorkspaceData(nextWorkspace);
@@ -238,37 +189,19 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
     return t("approvals.noticeRequested", { referenceNumber: approvalRequest.referenceNumber });
   }
 
-  useEffect(() => {
-    if (!session) {
-      setTenants([]);
-      setSelectedTenantId("");
-      resetTenantWorkspaceData();
-      setNoticeMessage("");
-      return;
-    }
-
-    loadTenants()
-      .then((items) => {
-        setTenants(items);
-        setSelectedTenantId((current) =>
-          items.some((tenant) => tenant.id === current) ? current : (items[0]?.id ?? ""),
-        );
-      })
-      .catch((caught: unknown) => {
-        setErrorMessage(caught instanceof Error ? caught.message : "Failed to load tenants.");
-      });
-  }, [session]);
-
-  useEffect(() => {
-    if (!selectedTenantId) {
-      resetTenantWorkspaceData();
-      return;
-    }
-
-    refreshTenantWorkspace(selectedTenantId).catch((caught: unknown) => {
-      setErrorMessage(caught instanceof Error ? caught.message : "Failed to load workspace.");
-    });
-  }, [selectedTenantId]);
+  useWorkspaceSessionEffects({
+    session,
+    selectedTenantId,
+    setSession,
+    setFoundation,
+    setIsBooting,
+    setTenants,
+    setSelectedTenantId,
+    setNoticeMessage,
+    setErrorMessage,
+    resetTenantWorkspaceData,
+    refreshTenantWorkspace,
+  });
 
   const {
     createTenantRecord,
@@ -299,30 +232,14 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
     buildApprovalNotice,
     getSelectedTenantIdOrThrow,
   });
-
-  async function loginToWorkspace(input: LoginInput): Promise<void> {
-    setIsBusy(true);
-    setErrorMessage("");
-
-    try {
-      const result = await login(input);
-      setSession(result.session);
-    } catch (caught) {
-      setErrorMessage(caught instanceof Error ? caught.message : "Login failed.");
-      throw caught;
-    } finally {
-      setIsBusy(false);
-    }
-  }
-
-  function logoutFromWorkspace(): void {
-    clearStoredWorkspaceState();
-    setSession(null);
-    setSelectedTenantId("");
-    setErrorMessage("");
-    setNoticeMessage("");
-    resetTenantWorkspaceData();
-  }
+  const { loginToWorkspace, logoutFromWorkspace } = createWorkspaceSessionCommands({
+    setIsBusy,
+    setErrorMessage,
+    setNoticeMessage,
+    setSession,
+    setSelectedTenantId,
+    resetTenantWorkspaceData,
+  });
 
   function clearError(): void {
     setErrorMessage("");
