@@ -21,7 +21,7 @@ const CustomersPage = lazy(() =>
   import("./modules/customers").then((module) => ({ default: module.CustomersPage })),
 );
 const SuppliersPage = lazy(() =>
-  import("./pages/SuppliersPage").then((module) => ({ default: module.SuppliersPage })),
+  import("./modules/suppliers").then((module) => ({ default: module.SuppliersPage })),
 );
 const ProductsPage = lazy(() =>
   import("./modules/products").then((module) => ({ default: module.ProductsPage })),

@@ -48,14 +48,12 @@ import {
   decideApprovalRequest,
   createPurchaseOrder,
   receivePurchaseOrder,
-  createSupplier,
   createTenant,
   exportTenantSnapshot,
   getFoundation,
   importOnboardingDataset,
   listApprovalRequests,
   listPurchaseOrders,
-  listSuppliers,
   listTenants,
   login,
   previewRestoreTenantSnapshot,
@@ -71,6 +69,7 @@ import {
 import { loadInventory, submitInventoryAdjustment } from "../modules/inventory/api";
 import { loadOrders, submitOrder } from "../modules/orders/api";
 import { loadProducts, submitProduct } from "../modules/products/api";
+import { loadSuppliers, submitSupplier } from "../modules/suppliers/api";
 import {
   loadInvoiceCollectionActivities,
   loadInvoices,
@@ -227,7 +226,7 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
     ] = await Promise.all([
       canAccessModule("approvals") ? listApprovalRequests(tenantId) : Promise.resolve([]),
       canAccessModule("customers") ? loadCustomers(tenantId) : Promise.resolve([]),
-      canAccessModule("suppliers") ? listSuppliers(tenantId) : Promise.resolve([]),
+      canAccessModule("suppliers") ? loadSuppliers(tenantId) : Promise.resolve([]),
       canAccessModule("customers") ? loadCustomerStatements(tenantId) : Promise.resolve([]),
       canAccessModule("invoices") ? loadInvoiceCollectionActivities(tenantId) : Promise.resolve([]),
       canAccessModule("products") ? loadProducts(tenantId) : Promise.resolve([]),
@@ -496,7 +495,7 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
     setErrorMessage("");
 
     try {
-      const created = await createSupplier({ ...input, tenantId: selectedTenantId });
+      const created = await submitSupplier({ ...input, tenantId: selectedTenantId });
       setSuppliers((current) => [created, ...current]);
     } catch (caught) {
       setErrorMessage(caught instanceof Error ? caught.message : "Supplier creation failed.");

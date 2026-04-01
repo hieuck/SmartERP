@@ -16,7 +16,6 @@ import {
   type FoundationModule,
   type CreatePurchaseOrderInput,
   type ReceivePurchaseOrderInput,
-  type CreateSupplierInput,
   type CreateTenantInput,
   type ImportOnboardingInput,
   type LoginInput,
@@ -52,9 +51,12 @@ import {
   handleListProducts,
 } from "./modules/products/index.js";
 import {
+  handleCreateSupplier,
+  handleListSuppliers,
+} from "./modules/suppliers/index.js";
+import {
   createPurchaseOrder,
   receivePurchaseOrder,
-  createSupplier,
   createTenant,
   exportTenantSnapshot,
   getReportSummary,
@@ -67,7 +69,6 @@ import {
   listAuditLogs,
   listJournalEntries,
   listPurchaseOrders,
-  listSuppliers,
   listTenants,
   resolveApprovalRequest,
   runWithSession,
@@ -454,7 +455,7 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
         return;
       }
 
-      sendJson(response, 200, { items: listSuppliers(tenantId) });
+      handleListSuppliers(response, tenantId);
       return;
     }
 
@@ -463,43 +464,7 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
         return;
       }
 
-      const input = await readJson<CreateSupplierInput>(request);
-
-      if (!input.tenantId?.trim()) {
-        badRequest(response, "tenantId is required.");
-        return;
-      }
-
-      if (!hasTenant(input.tenantId)) {
-        badRequest(response, "The selected tenant does not exist.");
-        return;
-      }
-
-      if (!input.supplierCode?.trim() || !input.name?.trim() || !input.email?.trim()) {
-        badRequest(response, "Supplier code, name, and email are required.");
-        return;
-      }
-
-      if (!Number.isInteger(input.leadTimeDays) || input.leadTimeDays < 0 || input.leadTimeDays > 180) {
-        badRequest(response, "Lead time days must be an integer between 0 and 180.");
-        return;
-      }
-
-      try {
-        const supplier = runWithSession(requestSession, () => createSupplier(input));
-        sendJson(response, 201, { item: supplier });
-      } catch (error) {
-        if (
-          isSqliteConstraintError(error) &&
-          error.message.includes("suppliers.tenant_id, suppliers.supplier_code")
-        ) {
-          badRequest(response, "A supplier with this code already exists for the selected tenant.");
-          return;
-        }
-
-        throw error;
-      }
-
+      await handleCreateSupplier(request, response, requestSession);
       return;
     }
 
