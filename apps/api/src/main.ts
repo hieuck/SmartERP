@@ -15,7 +15,6 @@ import {
   type ApprovalDecisionInput,
   type FoundationModule,
   type CreateCustomerInput,
-  type CreateInventoryAdjustmentInput,
   type CreatePurchaseOrderInput,
   type ReceivePurchaseOrderInput,
   type CreateProductInput,
@@ -39,11 +38,14 @@ import {
   handleResolveInvoiceCollectionAction,
   handleUpdateInvoiceCollection,
 } from "./modules/invoices/index.js";
+import {
+  handleCreateInventoryAdjustment,
+  handleListInventory,
+} from "./modules/inventory/index.js";
 import { handleCreateOrder, handleListOrders } from "./modules/orders/index.js";
 import { handleGetOperationsStatus } from "./modules/operations/index.js";
 import {
   createCustomer,
-  createInventoryAdjustment,
   createPurchaseOrder,
   receivePurchaseOrder,
   createProduct,
@@ -61,7 +63,6 @@ import {
   listJournalEntries,
   listCustomerStatements,
   listCustomers,
-  listInventory,
   listPurchaseOrders,
   listProducts,
   listSuppliers,
@@ -588,7 +589,7 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
         return;
       }
 
-      sendJson(response, 200, { items: listInventory(tenantId) });
+      handleListInventory(response, tenantId);
       return;
     }
 
@@ -597,52 +598,7 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
         return;
       }
 
-      const input = await readJson<CreateInventoryAdjustmentInput>(request);
-
-      if (!input.tenantId?.trim()) {
-        badRequest(response, "tenantId is required.");
-        return;
-      }
-
-      if (!hasTenant(input.tenantId)) {
-        badRequest(response, "The selected tenant does not exist.");
-        return;
-      }
-
-      if (!input.productId?.trim()) {
-        badRequest(response, "productId is required.");
-        return;
-      }
-
-      if (input.direction !== "in" && input.direction !== "out") {
-        badRequest(response, "direction must be either 'in' or 'out'.");
-        return;
-      }
-
-      if (!Number.isInteger(input.quantity) || input.quantity <= 0) {
-        badRequest(response, "quantity must be a positive integer.");
-        return;
-      }
-
-      try {
-        const result = runWithSession(requestSession, () => createInventoryAdjustment(input));
-        sendJson(response, result.kind === "approval_requested" ? 202 : 201, { item: result });
-      } catch (error) {
-        if (error instanceof Error) {
-          if (error.message === "The selected product does not exist.") {
-            badRequest(response, error.message);
-            return;
-          }
-
-          if (error.message === "Insufficient stock for the selected product.") {
-            badRequest(response, error.message);
-            return;
-          }
-        }
-
-        throw error;
-      }
-
+      await handleCreateInventoryAdjustment(request, response, requestSession);
       return;
     }
 

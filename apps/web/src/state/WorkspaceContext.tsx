@@ -47,7 +47,6 @@ import {
 import {
   decideApprovalRequest,
   createCustomer,
-  createInventoryAdjustment,
   createPurchaseOrder,
   receivePurchaseOrder,
   createProduct,
@@ -59,7 +58,6 @@ import {
   listApprovalRequests,
   listCustomers,
   listCustomerStatements,
-  listInventory,
   listPurchaseOrders,
   listProducts,
   listSuppliers,
@@ -70,6 +68,7 @@ import {
   setApiSession,
   setUnauthorizedHandler,
 } from "../api";
+import { loadInventory, submitInventoryAdjustment } from "../modules/inventory/api";
 import { loadOrders, submitOrder } from "../modules/orders/api";
 import {
   loadInvoiceCollectionActivities,
@@ -231,7 +230,7 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
       canAccessModule("customers") ? listCustomerStatements(tenantId) : Promise.resolve([]),
       canAccessModule("invoices") ? loadInvoiceCollectionActivities(tenantId) : Promise.resolve([]),
       canAccessModule("products") ? listProducts(tenantId) : Promise.resolve([]),
-      canAccessModule("inventory") ? listInventory(tenantId) : Promise.resolve([]),
+      canAccessModule("inventory") ? loadInventory(tenantId) : Promise.resolve([]),
       canAccessModule("orders") ? loadOrders(tenantId) : Promise.resolve([]),
       canAccessModule("purchasing") ? listPurchaseOrders(tenantId) : Promise.resolve([]),
       canAccessModule("invoices") ? loadInvoices(tenantId) : Promise.resolve([]),
@@ -520,7 +519,7 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
     try {
       const created = await createProduct({ ...input, tenantId: selectedTenantId });
       setProducts((current) => [created, ...current]);
-      const nextInventory = await listInventory(selectedTenantId);
+      const nextInventory = await loadInventory(selectedTenantId);
       setInventories(nextInventory);
     } catch (caught) {
       setErrorMessage(caught instanceof Error ? caught.message : "Product creation failed.");
@@ -543,7 +542,7 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
     setNoticeMessage("");
 
     try {
-      const result = await createInventoryAdjustment({ ...input, tenantId: selectedTenantId });
+      const result = await submitInventoryAdjustment({ ...input, tenantId: selectedTenantId });
       if (result.kind === "approval_requested") {
         setApprovalRequests((current) => [result.approvalRequest, ...current]);
         setNoticeMessage(buildApprovalNotice(result.approvalRequest));
@@ -575,7 +574,7 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
     try {
       const created = await submitOrder({ ...input, tenantId: selectedTenantId });
       setOrders((current) => [created, ...current]);
-      const nextInventory = await listInventory(selectedTenantId);
+      const nextInventory = await loadInventory(selectedTenantId);
       setInventories(nextInventory);
     } catch (caught) {
       setErrorMessage(caught instanceof Error ? caught.message : "Order creation failed.");
