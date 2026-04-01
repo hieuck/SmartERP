@@ -16,7 +16,6 @@ import {
   type FoundationModule,
   type CreateCustomerInput,
   type CreateInventoryAdjustmentInput,
-  type CreateOrderInput,
   type CreatePurchaseOrderInput,
   type ReceivePurchaseOrderInput,
   type CreateProductInput,
@@ -40,11 +39,11 @@ import {
   handleResolveInvoiceCollectionAction,
   handleUpdateInvoiceCollection,
 } from "./modules/invoices/index.js";
+import { handleCreateOrder, handleListOrders } from "./modules/orders/index.js";
 import { handleGetOperationsStatus } from "./modules/operations/index.js";
 import {
   createCustomer,
   createInventoryAdjustment,
-  createOrder,
   createPurchaseOrder,
   receivePurchaseOrder,
   createProduct,
@@ -63,7 +62,6 @@ import {
   listCustomerStatements,
   listCustomers,
   listInventory,
-  listOrders,
   listPurchaseOrders,
   listProducts,
   listSuppliers,
@@ -660,7 +658,7 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
         return;
       }
 
-      sendJson(response, 200, { items: listOrders(tenantId) });
+      handleListOrders(response, tenantId);
       return;
     }
 
@@ -822,62 +820,7 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
         return;
       }
 
-      const input = await readJson<CreateOrderInput>(request);
-
-      if (!input.tenantId?.trim()) {
-        badRequest(response, "tenantId is required.");
-        return;
-      }
-
-      if (!hasTenant(input.tenantId)) {
-        badRequest(response, "The selected tenant does not exist.");
-        return;
-      }
-
-      if (!input.customerId?.trim()) {
-        badRequest(response, "customerId is required.");
-        return;
-      }
-
-      if (!input.productId?.trim()) {
-        badRequest(response, "productId is required.");
-        return;
-      }
-
-      if (!Number.isInteger(input.quantity) || input.quantity <= 0) {
-        badRequest(response, "quantity must be a positive integer.");
-        return;
-      }
-
-      try {
-        const order = runWithSession(requestSession, () => createOrder(input));
-        sendJson(response, 201, { item: order });
-      } catch (error) {
-        if (error instanceof Error) {
-          if (error.message === "The selected customer does not exist.") {
-            badRequest(response, error.message);
-            return;
-          }
-
-          if (error.message === "The selected product does not exist.") {
-            badRequest(response, error.message);
-            return;
-          }
-
-          if (error.message === "Insufficient stock for the selected product.") {
-            badRequest(response, error.message);
-            return;
-          }
-        }
-
-        if (isSqliteConstraintError(error) && error.message.includes("orders.order_number")) {
-          badRequest(response, "Order number conflict. Please try again.");
-          return;
-        }
-
-        throw error;
-      }
-
+      await handleCreateOrder(request, response, requestSession);
       return;
     }
 

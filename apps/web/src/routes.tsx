@@ -30,7 +30,7 @@ const PurchaseOrdersPage = lazy(() =>
   import("./pages/PurchaseOrdersPage").then((module) => ({ default: module.PurchaseOrdersPage })),
 );
 const OrdersPage = lazy(() =>
-  import("./pages/OrdersPage").then((module) => ({ default: module.OrdersPage })),
+  import("./modules/orders").then((module) => ({ default: module.OrdersPage })),
 );
 const InventoryPage = lazy(() =>
   import("./pages/InventoryPage").then((module) => ({ default: module.InventoryPage })),

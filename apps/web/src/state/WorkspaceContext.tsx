@@ -48,7 +48,6 @@ import {
   decideApprovalRequest,
   createCustomer,
   createInventoryAdjustment,
-  createOrder,
   createPurchaseOrder,
   receivePurchaseOrder,
   createProduct,
@@ -61,7 +60,6 @@ import {
   listCustomers,
   listCustomerStatements,
   listInventory,
-  listOrders,
   listPurchaseOrders,
   listProducts,
   listSuppliers,
@@ -72,6 +70,7 @@ import {
   setApiSession,
   setUnauthorizedHandler,
 } from "../api";
+import { loadOrders, submitOrder } from "../modules/orders/api";
 import {
   loadInvoiceCollectionActivities,
   loadInvoices,
@@ -233,7 +232,7 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
       canAccessModule("invoices") ? loadInvoiceCollectionActivities(tenantId) : Promise.resolve([]),
       canAccessModule("products") ? listProducts(tenantId) : Promise.resolve([]),
       canAccessModule("inventory") ? listInventory(tenantId) : Promise.resolve([]),
-      canAccessModule("orders") ? listOrders(tenantId) : Promise.resolve([]),
+      canAccessModule("orders") ? loadOrders(tenantId) : Promise.resolve([]),
       canAccessModule("purchasing") ? listPurchaseOrders(tenantId) : Promise.resolve([]),
       canAccessModule("invoices") ? loadInvoices(tenantId) : Promise.resolve([]),
     ]);
@@ -574,7 +573,7 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
     setErrorMessage("");
 
     try {
-      const created = await createOrder({ ...input, tenantId: selectedTenantId });
+      const created = await submitOrder({ ...input, tenantId: selectedTenantId });
       setOrders((current) => [created, ...current]);
       const nextInventory = await listInventory(selectedTenantId);
       setInventories(nextInventory);
