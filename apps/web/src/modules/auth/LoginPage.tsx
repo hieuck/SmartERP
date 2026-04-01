@@ -5,8 +5,8 @@ import { Navigate } from "react-router-dom";
 
 import type { LoginInput } from "@smarterp/contracts";
 
-import { useLocale } from "../locale/LocaleContext";
-import { useWorkspace } from "../state/WorkspaceContext";
+import { useLocale } from "../../locale/LocaleContext";
+import { useWorkspace } from "../../state/WorkspaceContext";
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -51,7 +51,7 @@ export function LoginPage(): ReactElement {
                     <div>
                       <strong>{account.displayName}</strong>
                       <div className="record-detail">
-                        {t(`roles.${account.role}`)} · {account.email}
+                        {t(`roles.${account.role}`)} Â· {account.email}
                       </div>
                       <div className="record-detail">
                         {t("login.password")}: {account.password}

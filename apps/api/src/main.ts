@@ -4,19 +4,11 @@ import { URL } from "node:url";
 
 import {
   canAccessModule,
-  demoCredentials,
-  demoAccounts,
-  describeApiFoundation,
-  foundationModules,
-  getDemoSessionByAccessToken,
-  getDemoSessionByCredentials,
   hasPermission,
-  rewriteMessage,
   type ApprovalDecisionInput,
   type FoundationModule,
   type CreateTenantInput,
   type ImportOnboardingInput,
-  type LoginInput,
   type Permission,
   type RestoreTenantSnapshotInput,
   type RestoreTenantSnapshotPreview,
@@ -30,10 +22,20 @@ import {
   handleListApprovalRequests,
 } from "./modules/approvals/index.js";
 import {
+  authenticationRequired,
+  getRequestSession,
+  handleLogin,
+  isPublicRoute,
+} from "./modules/auth/index.js";
+import {
   handleCreateCustomer,
   handleListCustomers,
   handleListCustomerStatements,
 } from "./modules/customers/index.js";
+import {
+  handleGetFoundation,
+  handleGetHealth,
+} from "./modules/foundation/index.js";
 import {
   handleCreateInvoice,
   handleCreateInvoicePayment,
@@ -68,9 +70,6 @@ import {
   handleListSuppliers,
 } from "./modules/suppliers/index.js";
 import {
-  hasTenant,
-} from "./store.js";
-import {
   handleCreateTenant,
   handleExportTenantSnapshot,
   handleImportOnboardingDataset,
@@ -83,45 +82,12 @@ function badRequest(response: ServerResponse, message: string): void {
   sendJson(response, 400, { error: message });
 }
 
-function unauthorized(response: ServerResponse): void {
-  sendJson(response, 401, { error: "Invalid credentials." });
-}
-
-function authenticationRequired(response: ServerResponse): void {
-  sendJson(response, 401, { error: "Authentication required." });
-}
-
 function forbidden(response: ServerResponse): void {
   sendJson(response, 403, { error: "Forbidden." });
 }
 
 function internalServerError(response: ServerResponse): void {
   sendJson(response, 500, { error: "Internal server error." });
-}
-
-function isSqliteConstraintError(error: unknown): error is Error & { code?: string } {
-  return (
-    error instanceof Error &&
-    "code" in error &&
-    (error as { code?: string }).code === "ERR_SQLITE_ERROR"
-  );
-}
-
-function isPublicRoute(method: string, pathname: string): boolean {
-  return (
-    (method === "GET" && pathname === "/api/health") ||
-    (method === "GET" && pathname === "/api/foundation") ||
-    (method === "POST" && pathname === "/api/auth/login")
-  );
-}
-
-function getRequestSession(request: IncomingMessage): Session | null {
-  const authorization = request.headers.authorization;
-  if (!authorization?.startsWith("Bearer ")) {
-    return null;
-  }
-
-  return getDemoSessionByAccessToken(authorization.slice("Bearer ".length).trim());
 }
 
 function ensureModuleAccess(
@@ -182,26 +148,12 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
     }
 
     if (request.method === "GET" && pathname === "/api/health") {
-      sendJson(response, 200, {
-        service: "smarterp-api",
-        status: "ok",
-        foundation: describeApiFoundation(),
-      });
+      handleGetHealth(response);
       return;
     }
 
     if (request.method === "GET" && pathname === "/api/foundation") {
-      sendJson(response, 200, {
-        modules: foundationModules,
-        message: rewriteMessage,
-        demoCredentials,
-        demoAccounts: demoAccounts.map(({ email, password, displayName, role }) => ({
-          email,
-          password,
-          displayName,
-          role,
-        })),
-      });
+      handleGetFoundation(response);
       return;
     }
 
@@ -214,15 +166,7 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
     }
 
     if (request.method === "POST" && pathname === "/api/auth/login") {
-      const input = await readJson<LoginInput>(request);
-      const session = getDemoSessionByCredentials(input);
-
-      if (!session) {
-        unauthorized(response);
-        return;
-      }
-
-      sendJson(response, 200, { session });
+      await handleLogin(request, response);
       return;
     }
 

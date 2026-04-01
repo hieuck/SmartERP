@@ -9,7 +9,7 @@ import { AccessDeniedPage } from "./pages/AccessDeniedPage";
 import { useWorkspace } from "./state/WorkspaceContext";
 
 const LoginPage = lazy(() =>
-  import("./pages/LoginPage").then((module) => ({ default: module.LoginPage })),
+  import("./modules/auth").then((module) => ({ default: module.LoginPage })),
 );
 const DashboardPage = lazy(() =>
   import("./modules/dashboard").then((module) => ({ default: module.DashboardPage })),
