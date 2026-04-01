@@ -46,16 +46,127 @@ body {
   min-height: 100vh;
   display: grid;
   place-items: center;
-  padding: 24px;
+  padding: 32px;
   background:
-    radial-gradient(circle at top right, rgba(22, 119, 255, 0.12), transparent 22%),
+    radial-gradient(circle at top right, rgba(22, 119, 255, 0.16), transparent 24%),
+    radial-gradient(circle at bottom left, rgba(14, 165, 233, 0.09), transparent 26%),
     linear-gradient(180deg, #f7f9fc 0%, #eef2f7 100%);
 }
 
 .login-card {
-  width: min(560px, 100%);
-  border-radius: 24px;
-  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.08);
+  width: min(1120px, 100%);
+  border-radius: 28px;
+  box-shadow: 0 24px 56px rgba(15, 23, 42, 0.1);
+}
+
+.login-card .ant-card-body {
+  padding: clamp(24px, 3vw, 32px);
+}
+
+.login-frame {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.9fr);
+  gap: 28px;
+  align-items: start;
+}
+
+.login-story {
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+}
+
+.login-story-header {
+  display: grid;
+  gap: 12px;
+}
+
+.login-title {
+  margin: 0;
+}
+
+.login-copy {
+  max-width: 62ch;
+  margin-bottom: 0;
+}
+
+.login-demo-banner {
+  display: grid;
+  gap: 8px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(22, 119, 255, 0.08), rgba(14, 165, 233, 0.08));
+  border: 1px solid rgba(22, 119, 255, 0.12);
+}
+
+.login-demo-credentials {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 0;
+}
+
+.login-role-section {
+  display: grid;
+  gap: 16px;
+}
+
+.login-role-section-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.login-role-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.login-role-card {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.login-role-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.login-role-card-route {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.login-role-card-hint {
+  color: rgba(15, 23, 42, 0.72);
+  font-size: 0.92rem;
+}
+
+.login-form-panel {
+  display: grid;
+  gap: 18px;
+  padding: 22px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.login-form-panel-header {
+  display: grid;
+  gap: 4px;
 }
 
 .login-kicker {
@@ -146,10 +257,16 @@ body {
   gap: 12px;
   padding: 12px 0;
   border-bottom: 1px solid #f0f0f0;
+  align-items: start;
 }
 
 .record-row:last-child {
   border-bottom: none;
+}
+
+.record-row > :only-child {
+  grid-column: 1 / -1;
+  min-width: 0;
 }
 
 .record-icon {
@@ -326,7 +443,28 @@ body {
 }
 
 .compact-record-row {
-  padding: 10px 12px;
+  display: grid;
+  grid-template-columns: minmax(140px, 220px) minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  padding: 12px 14px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 12px;
+  background: rgba(248, 250, 252, 0.9);
+}
+
+.compact-record-row > :only-child {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+.compact-record-row > :last-child {
+  min-width: 0;
+}
+
+.compact-record-row code,
+.compact-record-row .ant-typography {
+  word-break: break-word;
 }
 
 .page-inline-stack {
@@ -354,6 +492,14 @@ body {
 
   .page-header {
     flex-direction: column;
+  }
+
+  .login-frame {
+    grid-template-columns: 1fr;
+  }
+
+  .login-role-grid {
+    grid-template-columns: 1fr;
   }
 
   .two-column {
@@ -393,9 +539,25 @@ body {
     align-items: flex-start;
     text-align: left;
   }
+
+  .compact-record-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 768px) {
+  .login-shell {
+    padding: 16px;
+  }
+
+  .login-card .ant-card-body {
+    padding: 18px;
+  }
+
+  .login-form-panel {
+    padding: 18px;
+  }
+
   .shell-header {
     padding: 0 12px;
   }

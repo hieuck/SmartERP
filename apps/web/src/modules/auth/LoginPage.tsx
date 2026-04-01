@@ -30,76 +30,103 @@ export function LoginPage(): ReactElement {
   return (
     <div className="login-shell">
       <Card className="login-card" variant="borderless">
-        <Space orientation="vertical" size={12} style={{ width: "100%" }}>
-          <Text className="login-kicker">{t("login.kicker")}</Text>
-          <Title level={1} style={{ margin: 0 }}>
-            {t("login.title")}
-          </Title>
-          <Paragraph type="secondary" style={{ marginBottom: 0 }}>
-            {t("login.fallbackMessage")}
-          </Paragraph>
-          <Paragraph style={{ marginBottom: 0 }}>
-            {t("login.demoAccount")}: <Text strong>{foundation?.demoCredentials.email ?? "..."}</Text> /{" "}
-            <Text strong>{foundation?.demoCredentials.password ?? "..."}</Text>
-          </Paragraph>
-          {foundation?.demoAccounts?.length ? (
-            <>
-              <Divider style={{ margin: "8px 0" }} />
-              <Space orientation="vertical" size={8} style={{ width: "100%" }}>
-                <Text strong>{t("login.roleAccounts")}</Text>
-                {foundation.demoAccounts.map((account) => {
-                  const playbook = getRoleOnboardingPlaybook(account.role, {
-                    hasSelectedTenant: false,
-                    customersCount: 0,
-                    suppliersCount: 0,
-                    productsCount: 0,
-                    inventoriesCount: 0,
-                    ordersCount: 0,
-                    purchaseOrdersCount: 0,
-                    openInvoicesCount: 0,
-                    overdueInvoicesCount: 0,
-                    todayCollectionsCount: 0,
-                  });
+        <div className="login-frame">
+          <div className="login-story">
+            <div className="login-story-header">
+              <Text className="login-kicker">{t("login.kicker")}</Text>
+              <Title level={1} className="login-title">
+                {t("login.title")}
+              </Title>
+              <Paragraph type="secondary" className="login-copy">
+                {t("login.fallbackMessage")}
+              </Paragraph>
+            </div>
 
-                  return (
-                    <div
-                      className="record-row compact-record-row"
-                      data-testid={`login-role-card-${account.role}`}
-                      key={account.email}
-                    >
-                      <div>
-                        <Space wrap size={[8, 8]}>
+            <div className="login-demo-banner">
+              <Text strong>{t("login.demoAccount")}</Text>
+              <Paragraph className="login-demo-credentials">
+                <Text strong>{foundation?.demoCredentials.email ?? "..."}</Text>
+                <span>/</span>
+                <Text strong>{foundation?.demoCredentials.password ?? "..."}</Text>
+              </Paragraph>
+            </div>
+
+            {foundation?.demoAccounts?.length ? (
+              <div className="login-role-section">
+                <Divider style={{ margin: 0 }} />
+                <div className="login-role-section-header">
+                  <Text strong>{t("login.roleAccounts")}</Text>
+                  <Text type="secondary">{foundation.demoAccounts.length}</Text>
+                </div>
+                <div className="login-role-grid">
+                  {foundation.demoAccounts.map((account) => {
+                    const playbook = getRoleOnboardingPlaybook(account.role, {
+                      hasSelectedTenant: false,
+                      customersCount: 0,
+                      suppliersCount: 0,
+                      productsCount: 0,
+                      inventoriesCount: 0,
+                      ordersCount: 0,
+                      purchaseOrdersCount: 0,
+                      openInvoicesCount: 0,
+                      overdueInvoicesCount: 0,
+                      todayCollectionsCount: 0,
+                    });
+
+                    return (
+                      <div
+                        className="login-role-card"
+                        data-testid={`login-role-card-${account.role}`}
+                        key={account.email}
+                      >
+                        <div className="login-role-card-header">
                           <strong>{account.displayName}</strong>
                           <Tag color="blue">{t(`roles.${account.role}`)}</Tag>
-                          <Tag color="default">
-                            {t("roleOnboarding.firstStop")}: {t(`modules.${playbook.primaryModule}`)}
-                          </Tag>
-                        </Space>
+                        </div>
+                        <div className="login-role-card-route">
+                          <Text type="secondary">{t("roleOnboarding.firstStop")}</Text>
+                          <Tag color="default">{t(`modules.${playbook.primaryModule}`)}</Tag>
+                        </div>
                         <div className="record-detail">{account.email}</div>
                         <div className="record-detail">
                           {t("login.password")}: {account.password}
                         </div>
-                        <div className="record-detail">{t(`roleOnboarding.roles.${account.role}.loginHint`)}</div>
+                        <div className="login-role-card-hint">
+                          {t(`roleOnboarding.roles.${account.role}.loginHint`)}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </Space>
-            </>
-          ) : null}
-          {error ? <Alert description={error} type="error" showIcon /> : null}
-          <Form<LoginInput> layout="vertical" onFinish={onFinish} initialValues={{ email: "", password: "" }}>
-            <Form.Item<LoginInput> label={t("login.email")} name="email" rules={[{ required: true }]}>
-              <Input autoComplete="email" />
-            </Form.Item>
-            <Form.Item<LoginInput> label={t("login.password")} name="password" rules={[{ required: true }]}>
-              <Input.Password autoComplete="current-password" />
-            </Form.Item>
-            <Button type="primary" htmlType="submit" loading={isBusy} block size="large">
-              {t("login.enterWorkspace")}
-            </Button>
-          </Form>
-        </Space>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="login-form-panel">
+            <div className="login-form-panel-header">
+              <Title level={3} style={{ marginBottom: 8 }}>
+                {t("login.enterWorkspace")}
+              </Title>
+              <Paragraph type="secondary" style={{ marginBottom: 0 }}>
+                {t("common.workspace")}
+              </Paragraph>
+            </div>
+
+            {error ? <Alert description={error} type="error" showIcon /> : null}
+
+            <Form<LoginInput> layout="vertical" onFinish={onFinish} initialValues={{ email: "", password: "" }}>
+              <Form.Item<LoginInput> label={t("login.email")} name="email" rules={[{ required: true }]}>
+                <Input autoComplete="email" size="large" />
+              </Form.Item>
+              <Form.Item<LoginInput> label={t("login.password")} name="password" rules={[{ required: true }]}>
+                <Input.Password autoComplete="current-password" size="large" />
+              </Form.Item>
+              <Button type="primary" htmlType="submit" loading={isBusy} block size="large">
+                {t("login.enterWorkspace")}
+              </Button>
+            </Form>
+          </div>
+        </div>
       </Card>
     </div>
   );
