@@ -49,11 +49,10 @@ import { useLocale } from "../locale/LocaleContext";
 import { createWorkspaceCommands } from "./workspaceCommands";
 import { createWorkspaceSessionCommands, useWorkspaceSessionEffects } from "./workspaceSession";
 import { readStoredSession, readStoredTenantId } from "./workspaceStorage";
+import { useWorkspaceTenantState } from "./workspaceTenantState";
 import {
-  createEmptyTenantWorkspaceData,
   loadTenantWorkspaceData,
   requireSelectedTenantId,
-  type TenantWorkspaceData,
 } from "./workspaceTenantData";
 
 type WorkspaceContextValue = {
@@ -126,38 +125,25 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
   const [session, setSession] = useState<Session | null>(() => readStoredSession());
   const [tenants, setTenants] = useState<TenantRecord[]>([]);
   const [selectedTenantId, setSelectedTenantId] = useState(() => readStoredTenantId());
-  const [approvalRequests, setApprovalRequests] = useState<ApprovalRequestRecord[]>([]);
-  const [customers, setCustomers] = useState<CustomerRecord[]>([]);
-  const [suppliers, setSuppliers] = useState<SupplierRecord[]>([]);
-  const [customerStatements, setCustomerStatements] = useState<CustomerStatementRecord[]>([]);
-  const [collectionActivities, setCollectionActivities] = useState<InvoiceCollectionActivityRecord[]>([]);
-  const [products, setProducts] = useState<ProductRecord[]>([]);
-  const [inventories, setInventories] = useState<InventoryRecord[]>([]);
-  const [orders, setOrders] = useState<OrderRecord[]>([]);
-  const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrderRecord[]>([]);
-  const [invoices, setInvoices] = useState<InvoiceRecord[]>([]);
+  const {
+    approvalRequests,
+    customers,
+    suppliers,
+    customerStatements,
+    collectionActivities,
+    products,
+    inventories,
+    orders,
+    purchaseOrders,
+    invoices,
+    applyTenantWorkspaceData,
+    resetTenantWorkspaceData,
+  } = useWorkspaceTenantState();
   const error = errorMessage ? localizeErrorMessage(errorMessage, t) : "";
   const notice = noticeMessage;
   const canAccessModule = (module: FoundationModule): boolean =>
     session ? sessionCanAccessModule(session, module) : false;
   const can = (permission: Permission): boolean => (session ? sessionHasPermission(session, permission) : false);
-
-  function applyTenantWorkspaceData(data: TenantWorkspaceData): void {
-    setApprovalRequests(data.approvalRequests);
-    setCustomers(data.customers);
-    setSuppliers(data.suppliers);
-    setCustomerStatements(data.customerStatements);
-    setCollectionActivities(data.collectionActivities);
-    setProducts(data.products);
-    setInventories(data.inventories);
-    setOrders(data.orders);
-    setPurchaseOrders(data.purchaseOrders);
-    setInvoices(data.invoices);
-  }
-
-  function resetTenantWorkspaceData(): void {
-    applyTenantWorkspaceData(createEmptyTenantWorkspaceData());
-  }
 
   function getSelectedTenantIdOrThrow(): string {
     try {
