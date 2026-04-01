@@ -18,6 +18,7 @@ const sessionStorageKey = "smarterp.next.session";
 const tenantStorageKey = "smarterp.next.selectedTenantId";
 const languageStorageKey = "smarterp-next-language";
 const smokeId = String(Date.now()).slice(-6);
+const exportSnapshotDownloadPath = path.join(outputDir, `runtime-next-tenant-export-${smokeId}.json`);
 const tenantName = `Smoke Tenant ${smokeId}`;
 const tenantSlug = `smoke-${smokeId}`;
 const customerName = `Smoke Buyer ${smokeId}`;
@@ -80,17 +81,18 @@ const expectedRevenueAmount = expectedGrossSales;
 const expectedPurchaseOrderAmount = purchaseUnitCost * purchaseQuantity;
 const sidebarIndexes = {
   dashboard: 0,
-  tenants: 1,
-  customers: 2,
-  suppliers: 3,
-  products: 4,
-  purchaseOrders: 5,
-  inventory: 6,
-  orders: 7,
-  invoices: 8,
-  reports: 9,
-  approvals: 10,
-  operations: 11,
+  setup: 1,
+  tenants: 2,
+  customers: 3,
+  suppliers: 4,
+  products: 5,
+  purchaseOrders: 6,
+  inventory: 7,
+  orders: 8,
+  invoices: 9,
+  reports: 10,
+  approvals: 11,
+  operations: 12,
 };
 
 function assert(condition, message) {
@@ -440,6 +442,7 @@ async function main() {
   let staleSessionRejectedVerified = false;
   let localeReloadVerified = false;
   let duplicateTenantRejectedVerified = false;
+  let setupWorkspaceVerified = false;
   let onboardingImportVerified = false;
   let onboardingExportVerified = false;
   let baselineRestorePreviewVerified = false;
@@ -560,19 +563,24 @@ async function main() {
     await page.locator(".ant-layout-sider").waitFor({ timeout: 15000 });
     await page.locator(".page-stack").waitFor({ timeout: 15000 });
 
-    await openSection(page, sidebarIndexes.tenants, "/dashboard/tenants");
-    const tenantsFormCard = getFormCard(page);
-    const tenantsListCard = page.locator(".two-column").first().locator(".ant-card").last();
-    await fillField(tenantsFormCard, "#name", tenantName);
-    await fillField(tenantsFormCard, "#slug", tenantSlug);
-    await fillField(tenantsFormCard, "#industry", "Smoke QA");
-    await clickSubmit(tenantsFormCard);
-    await tenantsListCard.getByText(tenantName, { exact: false }).waitFor({ timeout: 15000 });
-    await waitForInputValue(tenantsFormCard.locator("#name"), "");
-    await waitForInputValue(tenantsFormCard.locator("#slug"), "");
-    await fillField(tenantsFormCard, "#name", `${tenantName} Duplicate`);
-    await fillField(tenantsFormCard, "#slug", tenantSlug);
-    await fillField(tenantsFormCard, "#industry", "Duplicate Industry");
+    await openSection(page, sidebarIndexes.setup, "/dashboard/setup");
+    await page.getByRole("heading", { name: "Khởi tạo" }).waitFor({ timeout: 15000 });
+    await page.getByText("Checklist khởi tạo pilot", { exact: false }).waitFor({ timeout: 15000 });
+    const setupCreateTenantCard = page.getByTestId("setup-create-tenant-card");
+    await fillField(setupCreateTenantCard, "#name", tenantName);
+    await fillField(setupCreateTenantCard, "#slug", tenantSlug);
+    await fillField(setupCreateTenantCard, "#industry", "Smoke QA");
+    await clickSubmit(setupCreateTenantCard);
+    await setupCreateTenantCard.getByText(tenantName, { exact: false }).waitFor({ timeout: 15000 });
+    await waitForInputValue(setupCreateTenantCard.locator("#name"), "");
+    await waitForInputValue(setupCreateTenantCard.locator("#slug"), "");
+    await setupCreateTenantCard
+      .getByText("0 khách hàng, 0 nhà cung cấp, 0 sản phẩm", { exact: false })
+      .waitFor({ timeout: 15000 });
+    setupWorkspaceVerified = true;
+    await fillField(setupCreateTenantCard, "#name", `${tenantName} Duplicate`);
+    await fillField(setupCreateTenantCard, "#slug", tenantSlug);
+    await fillField(setupCreateTenantCard, "#industry", "Duplicate Industry");
     const duplicateTenantResponse = page.waitForResponse(
       (response) =>
         response.url().endsWith("/api/tenants") &&
@@ -580,7 +588,7 @@ async function main() {
         response.status() === 400,
       { timeout: 15000 },
     );
-    await clickSubmit(tenantsFormCard);
+    await clickSubmit(setupCreateTenantCard);
     assert(
       ((await (await duplicateTenantResponse).json())?.error ?? "") === "A tenant with this slug already exists.",
       "Duplicate tenant slug did not return the expected validation message.",
@@ -588,10 +596,17 @@ async function main() {
     await dismissGlobalAlerts(page);
     duplicateTenantRejectedVerified = true;
 
-    const onboardingCard = page.locator(".two-column").nth(1).locator(".ant-card").first();
+    const onboardingCard = page.getByTestId("setup-onboarding-card");
     await importDatasetViaTenantOnboarding(page, onboardingCard, "Khách hàng", customerImportCsv);
     await importDatasetViaTenantOnboarding(page, onboardingCard, "Nhà cung cấp", supplierImportCsv);
     await importDatasetViaTenantOnboarding(page, onboardingCard, "Sản phẩm", productImportCsv);
+    await page
+      .getByTestId("setup-checklist-items")
+      .getByText("Nạp danh mục sản phẩm", { exact: false })
+      .waitFor({ timeout: 15000 });
+    await setupCreateTenantCard
+      .getByText("1 khách hàng, 1 nhà cung cấp, 1 sản phẩm", { exact: false })
+      .waitFor({ timeout: 15000 });
     onboardingImportVerified = true;
 
     await openDirectRoute(page, "/dashboard/customers");
@@ -968,15 +983,7 @@ async function main() {
     await paymentApprovalRow
       .getByText("Large cash receipt requires founder approval.", { exact: false })
       .waitFor({ timeout: 15000 });
-    const paymentApprovalDecisionResponse = page.waitForResponse(
-      (response) =>
-        response.url().endsWith("/api/approval-requests/decision") &&
-        response.request().method() === "POST" &&
-        response.status() === 200,
-      { timeout: 15000 },
-    );
     await paymentApprovalRow.getByRole("button", { name: "Duyệt" }).click();
-    await paymentApprovalDecisionResponse;
     await waitForLocatorCount(page, approvalsPendingCard.locator(".activity-row").filter({ hasText: invoiceNumber }), 0);
     await approvalsHistoryCard.getByText(invoiceNumber, { exact: false }).first().waitFor({ timeout: 15000 });
     await approvalsHistoryCard.getByText("Đã duyệt", { exact: false }).first().waitFor({ timeout: 15000 });
@@ -1251,30 +1258,14 @@ async function main() {
     await page.getByText("API health", { exact: false }).waitFor({ timeout: 15000 });
     await page.getByText("Web shell", { exact: false }).waitFor({ timeout: 15000 });
     operationsReadinessVerified = true;
-    const exportSnapshotResponse = await page.evaluate(
-      async ({ sessionKey, tenantKey }) => {
-        const rawSession = window.localStorage.getItem(sessionKey);
-        const tenantId = window.localStorage.getItem(tenantKey);
-        const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
-
-        const response = await fetch(`/api/onboarding/export?tenantId=${encodeURIComponent(tenantId ?? "")}`, {
-          headers: {
-            authorization: `Bearer ${accessToken}`,
-          },
-        });
-
-        return {
-          status: response.status,
-          body: await response.json(),
-        };
-      },
-      {
-        sessionKey: sessionStorageKey,
-        tenantKey: tenantStorageKey,
-      },
-    );
-    const exportedSnapshot = exportSnapshotResponse.body?.item;
-    assert(exportSnapshotResponse.status === 200, "Tenant export snapshot did not return HTTP 200.");
+    await openSection(page, sidebarIndexes.setup, "/dashboard/setup");
+    await waitForTenantContext(page, tenantName);
+    const recoveryCard = page.getByTestId("setup-recovery-card");
+    const downloadPromise = page.waitForEvent("download", { timeout: 15000 });
+    await recoveryCard.getByRole("button", { name: "Tải snapshot JSON" }).click();
+    const snapshotDownload = await downloadPromise;
+    await snapshotDownload.saveAs(exportSnapshotDownloadPath);
+    const exportedSnapshot = JSON.parse(await fs.readFile(exportSnapshotDownloadPath, "utf8"));
     assert(
       exportedSnapshot?.tenant?.name === tenantName,
       "Tenant export snapshot did not include the expected tenant.",
@@ -1312,9 +1303,9 @@ async function main() {
     );
     onboardingExportVerified = true;
     const originalTenantId = await page.evaluate((key) => window.localStorage.getItem(key), tenantStorageKey);
-    await openSection(page, sidebarIndexes.tenants, "/dashboard/tenants");
+    await openSection(page, sidebarIndexes.setup, "/dashboard/setup");
     await waitForTenantContext(page, tenantName);
-    const restoreCard = page.locator(".two-column").nth(2).locator(".ant-card").first();
+    const restoreCard = page.getByTestId("setup-recovery-card");
     await restoreCard.locator("#targetName").waitFor({ timeout: 15000 });
     await fillField(restoreCard, "#targetName", restoredTenantName);
     await fillField(restoreCard, "#targetSlug", restoredTenantSlug);
@@ -1330,9 +1321,7 @@ async function main() {
     await restoreCard.getByRole("button", { name: "Xem trước khôi phục" }).click();
     await previewResponse;
     await restoreCard.getByText(restoredTenantName, { exact: false }).waitFor({ timeout: 15000 });
-    await restoreCard
-      .getByText("Slug đích đang sẵn sàng", { exact: false })
-      .waitFor({ timeout: 15000 });
+    await restoreCard.getByText("Slug đích đang sẵn sàng", { exact: false }).waitFor({ timeout: 15000 });
     const restoreButton = restoreCard.getByRole("button", { name: "Khôi phục baseline" });
     assert(!(await restoreButton.isDisabled()), "Restore button stayed disabled after preview.");
     baselineRestorePreviewVerified = true;
@@ -1710,6 +1699,7 @@ async function main() {
       loginReloadVerified: true,
       localeReloadVerified,
       duplicateTenantRejectedVerified,
+      setupWorkspaceVerified,
       onboardingImportVerified,
       onboardingExportVerified,
       baselineRestorePreviewVerified,

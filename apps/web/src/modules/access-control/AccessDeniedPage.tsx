@@ -15,6 +15,7 @@ export function AccessDeniedPage({ module }: AccessDeniedPageProps): ReactElemen
   const { t } = useLocale();
   const moduleLabelKeyByModule: Record<FoundationModule, string> = {
     identity: "common.workspace",
+    setup: "shell.setup",
     tenant: "shell.tenants",
     customers: "shell.customers",
     suppliers: "shell.suppliers",

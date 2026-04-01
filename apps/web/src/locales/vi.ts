@@ -649,4 +649,51 @@ Object.assign(vi.tenants, {
   },
 });
 
+Object.assign(vi.shell, {
+  setup: "Khởi tạo",
+});
+
+Object.assign(vi.modules, {
+  setup: "Khởi tạo",
+});
+
+Object.assign(vi, {
+  setup: {
+    title: "Khởi tạo",
+    subtitle:
+      "Workspace dành cho founder để tạo tenant pilot, nạp master data và diễn tập sao lưu, khôi phục mà không phải lục từng màn quản trị rời rạc.",
+    openTenantControl: "Mở điều khiển tenant",
+    openReports: "Mở báo cáo",
+    checklistTitle: "Checklist khởi tạo pilot",
+    checklistProgress: "Hoàn tất {{completed}} / {{total}} bước khởi tạo.",
+    statusDone: "Đã xong",
+    statusPending: "Chờ xử lý",
+    createTenantTitle: "Tạo hoặc chọn tenant pilot",
+    createTenantHint: "Bắt đầu tại đây khi operator mới cần một tenant sạch và một ngữ cảnh làm việc rõ ràng ngay từ đầu.",
+    selectedTenantLabel: "Tenant đang khởi tạo",
+    seedStatusLabel: "Mức độ phủ master data",
+    seedStatusValue: "{{customers}} khách hàng, {{suppliers}} nhà cung cấp, {{products}} sản phẩm",
+    noTenantSelected: "Hãy tạo hoặc chọn tenant để bắt đầu khởi tạo pilot.",
+    seedTitle: "Nạp master data",
+    seedHint: "Dán CSV mẫu tại đây để dựng nhanh khách hàng, nhà cung cấp và sản phẩm trước khi đội vận hành nhập giao dịch thật.",
+    seedResultTitle: "Kết quả nạp dữ liệu",
+    recoveryTitle: "Diễn tập sao lưu và khôi phục",
+    recoveryHint: "Xuất snapshot tenant đang chạy, rồi xem trước hoặc khôi phục baseline để operator diễn tập recovery trước khi go-live.",
+    openOperations: "Mở vận hành",
+    restoreResultTitle: "Kết quả khôi phục",
+    checklistTenantCreated: "Tạo tenant pilot",
+    checklistTenantCreatedDescription: "Một pilot thật phải có tenant riêng với slug và ngữ cảnh ngành nghề rõ ràng.",
+    checklistTenantSelected: "Khóa tenant đang làm việc",
+    checklistTenantSelectedDescription: "Toàn bộ thao tác nạp dữ liệu, setup và recovery phải bám vào một tenant được chọn rõ ràng.",
+    checklistCustomers: "Nạp master data khách hàng",
+    checklistCustomersDescription: "Import ít nhất một khách hàng để luồng đơn hàng và hóa đơn không bị chặn.",
+    checklistSuppliers: "Nạp master data nhà cung cấp",
+    checklistSuppliersDescription: "Import ít nhất một nhà cung cấp để mua hàng và nhập kho bắt đầu sạch.",
+    checklistProducts: "Nạp danh mục sản phẩm",
+    checklistProductsDescription: "Import sản phẩm sớm để giá bán, tồn kho, mua hàng và bán hàng dùng chung một bộ SKU.",
+    checklistRecovery: "Diễn tập recovery baseline",
+    checklistRecoveryDescription: "Chụp hoặc khôi phục snapshot baseline trước khi pilot users phụ thuộc vào môi trường này.",
+  },
+});
+
 export default vi;

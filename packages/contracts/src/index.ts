@@ -1,5 +1,6 @@
 export const foundationModules = [
   "identity",
+  "setup",
   "tenant",
   "customers",
   "suppliers",

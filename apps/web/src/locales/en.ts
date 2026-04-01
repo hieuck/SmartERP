@@ -644,4 +644,51 @@ const en = {
   },
 } as const;
 
+Object.assign(en.shell, {
+  setup: "Setup",
+});
+
+Object.assign(en.modules, {
+  setup: "Setup",
+});
+
+Object.assign(en, {
+  setup: {
+    title: "Setup",
+    subtitle:
+      "Founder-first pilot setup workspace for creating a tenant, seeding master data, and rehearsing backup and restore without digging through admin screens.",
+    openTenantControl: "Open Tenant Controls",
+    openReports: "Open Reports",
+    checklistTitle: "Pilot Setup Checklist",
+    checklistProgress: "{{completed}} / {{total}} setup steps complete.",
+    statusDone: "Done",
+    statusPending: "Pending",
+    createTenantTitle: "Create or Select Pilot Tenant",
+    createTenantHint: "Start here when a new pilot operator needs a clean tenant and immediate ownership of the working context.",
+    selectedTenantLabel: "Current setup tenant",
+    seedStatusLabel: "Master-data coverage",
+    seedStatusValue: "{{customers}} customers, {{suppliers}} suppliers, {{products}} products",
+    noTenantSelected: "Create or select a tenant to start pilot setup.",
+    seedTitle: "Seed Master Data",
+    seedHint: "Paste CSV templates here to bootstrap customers, suppliers, and products before the team enters live transactions.",
+    seedResultTitle: "Seed result",
+    recoveryTitle: "Backup and Recovery Drill",
+    recoveryHint: "Export the live tenant snapshot, then preview or restore a baseline so pilot operators rehearse recovery before go-live.",
+    openOperations: "Open Operations",
+    restoreResultTitle: "Restore result",
+    checklistTenantCreated: "Create the pilot tenant",
+    checklistTenantCreatedDescription: "A live pilot needs a dedicated tenant with its own slug and industry context.",
+    checklistTenantSelected: "Lock the working tenant",
+    checklistTenantSelectedDescription: "All seeding, setup, and recovery actions should run against one explicit tenant context.",
+    checklistCustomers: "Seed customer master data",
+    checklistCustomersDescription: "Import at least one customer so order entry and invoicing are unblocked.",
+    checklistSuppliers: "Seed supplier master data",
+    checklistSuppliersDescription: "Import at least one supplier so purchasing and receipts can start cleanly.",
+    checklistProducts: "Seed product catalog",
+    checklistProductsDescription: "Import products early so pricing, inventory, purchasing, and order flows share the same SKUs.",
+    checklistRecovery: "Rehearse baseline recovery",
+    checklistRecoveryDescription: "Capture or restore a snapshot baseline before pilot users depend on the environment.",
+  },
+});
+
 export default en;

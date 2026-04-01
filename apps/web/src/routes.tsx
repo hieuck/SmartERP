@@ -12,6 +12,9 @@ const LoginPage = lazy(() =>
 const DashboardPage = lazy(() =>
   import("./modules/dashboard").then((module) => ({ default: module.DashboardPage })),
 );
+const SetupPage = lazy(() =>
+  import("./modules/setup").then((module) => ({ default: module.SetupPage })),
+);
 const TenantsPage = lazy(() =>
   import("./modules/tenants").then((module) => ({ default: module.TenantsPage })),
 );
@@ -67,6 +70,10 @@ export function AppRoutes(): ReactElement {
         <Route path="/login" element={<RouteBoundary><LoginPage /></RouteBoundary>} />
         <Route path="/dashboard" element={<AuthenticatedShell />}>
           <Route index element={<RouteBoundary><DashboardPage /></RouteBoundary>} />
+          <Route
+            path="setup"
+            element={<ProtectedModuleRoute module="setup" element={<RouteBoundary><SetupPage /></RouteBoundary>} />}
+          />
           <Route
             path="tenants"
             element={<ProtectedModuleRoute module="tenant" element={<RouteBoundary><TenantsPage /></RouteBoundary>} />}

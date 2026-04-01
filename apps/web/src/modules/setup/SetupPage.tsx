@@ -1,8 +1,15 @@
 import type { ReactElement } from "react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { FormProps } from "antd";
-import { ApartmentOutlined } from "@ant-design/icons";
-import { Alert, Button, Card, Empty, Form, Input, Select, Typography } from "antd";
+import {
+  CheckCircleOutlined,
+  ClockCircleOutlined,
+  DownloadOutlined,
+  PlayCircleOutlined,
+  UploadOutlined,
+} from "@ant-design/icons";
+import { Alert, Button, Card, Empty, Form, Input, Progress, Select, Space, Tag, Typography } from "antd";
+import { useNavigate } from "react-router-dom";
 
 import type {
   CreateTenantInput,
@@ -15,9 +22,9 @@ import { onboardingCsvTemplates } from "@smarterp/contracts";
 
 import { useLocale } from "../../locale/LocaleContext";
 import { useWorkspace } from "../../state/WorkspaceContext";
-import { downloadJsonFile, parseRestoreSnapshot } from "./setup-utils";
+import { downloadJsonFile, parseRestoreSnapshot } from "../tenants/setup-utils";
 
-const { Paragraph, Title } = Typography;
+const { Paragraph, Text, Title } = Typography;
 
 type OnboardingFormShape = {
   dataset: OnboardingDataset;
@@ -31,21 +38,34 @@ type RestoreFormShape = {
   snapshotJson: string;
 };
 
-export function TenantsPage(): ReactElement {
+type SetupChecklistItem = {
+  key: string;
+  title: string;
+  description: string;
+  done: boolean;
+};
+
+export function SetupPage(): ReactElement {
+  const navigate = useNavigate();
   const { t } = useLocale();
   const {
     createTenantRecord,
+    customers,
     exportTenantSnapshotRecord,
     importOnboardingDatasetRecord,
+    inventories,
     isBusy,
+    products,
     previewTenantSnapshotRestoreRecord,
+    purchaseOrders,
     restoreTenantSnapshotRecord,
     selectedTenant,
     selectedTenantId,
     setSelectedTenantId,
+    suppliers,
     tenants,
   } = useWorkspace();
-  const [form] = Form.useForm<CreateTenantInput>();
+  const [createForm] = Form.useForm<CreateTenantInput>();
   const [onboardingForm] = Form.useForm<OnboardingFormShape>();
   const [restoreForm] = Form.useForm<RestoreFormShape>();
   const [importResult, setImportResult] = useState<ImportOnboardingResult | null>(null);
@@ -53,10 +73,64 @@ export function TenantsPage(): ReactElement {
   const [restoreResult, setRestoreResult] = useState<RestoreTenantSnapshotResult | null>(null);
   const watchedDataset = (Form.useWatch("dataset", onboardingForm) as OnboardingDataset | undefined) ?? "customers";
 
-  const onFinish: FormProps<CreateTenantInput>["onFinish"] = async (values) => {
+  const checklistItems = useMemo<SetupChecklistItem[]>(
+    () => [
+      {
+        key: "tenant-created",
+        title: t("setup.checklistTenantCreated"),
+        description: t("setup.checklistTenantCreatedDescription"),
+        done: tenants.length > 0,
+      },
+      {
+        key: "tenant-selected",
+        title: t("setup.checklistTenantSelected"),
+        description: t("setup.checklistTenantSelectedDescription"),
+        done: Boolean(selectedTenantId && selectedTenant),
+      },
+      {
+        key: "customers-seeded",
+        title: t("setup.checklistCustomers"),
+        description: t("setup.checklistCustomersDescription"),
+        done: customers.length > 0,
+      },
+      {
+        key: "suppliers-seeded",
+        title: t("setup.checklistSuppliers"),
+        description: t("setup.checklistSuppliersDescription"),
+        done: suppliers.length > 0,
+      },
+      {
+        key: "products-seeded",
+        title: t("setup.checklistProducts"),
+        description: t("setup.checklistProductsDescription"),
+        done: products.length > 0,
+      },
+      {
+        key: "baseline-exported",
+        title: t("setup.checklistRecovery"),
+        description: t("setup.checklistRecoveryDescription"),
+        done: Boolean(restoreResult || inventories.length > 0 || purchaseOrders.length > 0),
+      },
+    ],
+    [
+      customers.length,
+      inventories.length,
+      products.length,
+      purchaseOrders.length,
+      restoreResult,
+      selectedTenant,
+      selectedTenantId,
+      suppliers.length,
+      t,
+      tenants.length,
+    ],
+  );
+  const completedChecklistItems = checklistItems.filter((item) => item.done).length;
+
+  const onCreateTenantFinish: FormProps<CreateTenantInput>["onFinish"] = async (values) => {
     try {
       await createTenantRecord(values);
-      form.resetFields();
+      createForm.resetFields();
     } catch {
       // Error state is already surfaced via workspace context.
     }
@@ -156,14 +230,18 @@ export function TenantsPage(): ReactElement {
   };
 
   return (
-    <div className="page-stack">
+    <div className="page-stack" data-testid="setup-page">
       <div className="page-header">
         <div>
-          <Title level={2}>{t("tenants.title")}</Title>
-          <Paragraph type="secondary">
-            {t("tenants.subtitle")}
-          </Paragraph>
+          <Title level={2}>{t("setup.title")}</Title>
+          <Paragraph type="secondary">{t("setup.subtitle")}</Paragraph>
         </div>
+        <Space wrap>
+          <Button onClick={() => navigate("/dashboard/tenants")}>{t("setup.openTenantControl")}</Button>
+          <Button type="primary" onClick={() => navigate("/dashboard/reports")} disabled={!selectedTenantId}>
+            {t("setup.openReports")}
+          </Button>
+        </Space>
       </div>
 
       <div className="page-toolbar">
@@ -171,7 +249,7 @@ export function TenantsPage(): ReactElement {
         <Select
           value={selectedTenantId || undefined}
           placeholder={t("common.selectTenant")}
-          style={{ minWidth: 260 }}
+          style={{ minWidth: 280 }}
           options={tenants.map((tenant) => ({
             label: `${tenant.name} (${tenant.slug})`,
             value: tenant.id,
@@ -181,8 +259,44 @@ export function TenantsPage(): ReactElement {
       </div>
 
       <div className="two-column">
-        <Card title={t("tenants.createTitle")}>
-          <Form<CreateTenantInput> form={form} layout="vertical" onFinish={onFinish}>
+        <Card data-testid="setup-checklist-card" title={t("setup.checklistTitle")}>
+          <div className="page-inline-stack">
+            <Progress
+              percent={Math.round((completedChecklistItems / checklistItems.length) * 100)}
+              showInfo={false}
+              status={completedChecklistItems === checklistItems.length ? "success" : "active"}
+            />
+            <Text type="secondary">
+              {t("setup.checklistProgress", {
+                completed: completedChecklistItems,
+                total: checklistItems.length,
+              })}
+            </Text>
+          </div>
+
+          <div className="activity-feed" data-testid="setup-checklist-items">
+            {checklistItems.map((item) => (
+              <div className="activity-row" key={item.key}>
+                <div className="activity-main">
+                  <Space wrap>
+                    <strong>{item.title}</strong>
+                    <Tag color={item.done ? "green" : "gold"}>
+                      {item.done ? t("setup.statusDone") : t("setup.statusPending")}
+                    </Tag>
+                  </Space>
+                  <div className="record-detail">{item.description}</div>
+                </div>
+                <div className="record-tag-stack">
+                  {item.done ? <CheckCircleOutlined /> : <ClockCircleOutlined />}
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        <Card data-testid="setup-create-tenant-card" title={t("setup.createTenantTitle")}>
+          <Paragraph type="secondary">{t("setup.createTenantHint")}</Paragraph>
+          <Form<CreateTenantInput> form={createForm} layout="vertical" onFinish={onCreateTenantFinish}>
             <Form.Item<CreateTenantInput> label={t("tenants.name")} name="name" rules={[{ required: true }]}>
               <Input placeholder={t("tenants.placeholderName")} />
             </Form.Item>
@@ -196,33 +310,35 @@ export function TenantsPage(): ReactElement {
               {t("tenants.create")}
             </Button>
           </Form>
-        </Card>
 
-        <Card title={t("tenants.listTitle")}>
-          {tenants.length ? (
-            <div className="record-stack">
-              {tenants.map((tenant) => (
-                <div className="record-row" key={tenant.id}>
-                  <div className="record-icon">
-                    <ApartmentOutlined />
-                  </div>
-                  <div>
-                    <strong>{tenant.name}</strong>
-                    <div className="record-detail">
-                      {tenant.slug} - {tenant.industry}
-                    </div>
-                  </div>
-                </div>
-              ))}
+          {selectedTenant ? (
+            <div className="record-stack" data-testid="setup-selected-tenant">
+              <div className="compact-record-row">
+                <strong>{t("setup.selectedTenantLabel")}</strong>
+                <span>
+                  {selectedTenant.name} ({selectedTenant.slug})
+                </span>
+              </div>
+              <div className="compact-record-row">
+                <strong>{t("setup.seedStatusLabel")}</strong>
+                <span>
+                  {t("setup.seedStatusValue", {
+                    customers: customers.length,
+                    suppliers: suppliers.length,
+                    products: products.length,
+                  })}
+                </span>
+              </div>
             </div>
           ) : (
-            <Empty description={t("tenants.empty")} />
+            <Empty description={t("setup.noTenantSelected")} />
           )}
         </Card>
       </div>
 
       <div className="two-column">
-        <Card title={t("tenants.onboardingTitle")}>
+        <Card data-testid="setup-onboarding-card" title={t("setup.seedTitle")}>
+          <Paragraph type="secondary">{t("setup.seedHint")}</Paragraph>
           <Form<OnboardingFormShape>
             form={onboardingForm}
             layout="vertical"
@@ -246,10 +362,7 @@ export function TenantsPage(): ReactElement {
                 onChange={(value) => handleDatasetChange(value as OnboardingDataset)}
               />
             </Form.Item>
-            <Paragraph type="secondary">{t("tenants.importHint")}</Paragraph>
-            <pre className="code-sample">
-              {onboardingCsvTemplates[watchedDataset]}
-            </pre>
+            <pre className="code-sample">{onboardingCsvTemplates[watchedDataset]}</pre>
             <Form.Item<OnboardingFormShape>
               label={t("tenants.csvData")}
               name="csvText"
@@ -260,7 +373,13 @@ export function TenantsPage(): ReactElement {
                 placeholder={t("tenants.csvPlaceholder")}
               />
             </Form.Item>
-            <Button type="primary" htmlType="submit" disabled={!selectedTenantId} loading={isBusy}>
+            <Button
+              icon={<UploadOutlined />}
+              type="primary"
+              htmlType="submit"
+              disabled={!selectedTenantId}
+              loading={isBusy}
+            >
               {t("tenants.importAction")}
             </Button>
           </Form>
@@ -269,50 +388,35 @@ export function TenantsPage(): ReactElement {
             <div className="page-inline-stack">
               <Alert
                 type={importResult.errors.length ? "warning" : "success"}
-                title={t("tenants.importSummary", {
+                title={t("setup.seedResultTitle")}
+                description={t("tenants.importSummary", {
                   dataset: t(`tenants.datasets.${importResult.dataset}`),
                   createdCount: importResult.createdCount,
                   skippedCount: importResult.skippedCount,
                 })}
                 showIcon
               />
-              {importResult.errors.length ? (
-                <div className="record-stack">
-                  {importResult.errors.slice(0, 5).map((error) => (
-                    <div className="compact-record-row" key={`${error.lineNumber}-${error.message}`}>
-                      <strong>{t("tenants.importErrorLine", { lineNumber: error.lineNumber })}</strong>
-                      <span>{error.message}</span>
-                    </div>
-                  ))}
-                </div>
-              ) : null}
             </div>
           ) : null}
         </Card>
 
-        <Card title={t("tenants.exportTitle")}>
-          <Paragraph type="secondary">{t("tenants.exportHint")}</Paragraph>
-          <div className="record-stack">
-            <div className="compact-record-row">
-              <strong>{t("tenants.exportSelectedTenant")}</strong>
-              <span>
-                {selectedTenant ? `${selectedTenant.name} (${selectedTenant.slug})` : t("common.noneSelected")}
-              </span>
-            </div>
-            <div className="compact-record-row">
-              <strong>{t("tenants.exportIncludes")}</strong>
-              <span>{t("tenants.exportIncludesValue")}</span>
-            </div>
+        <Card data-testid="setup-recovery-card" title={t("setup.recoveryTitle")}>
+          <Paragraph type="secondary">{t("setup.recoveryHint")}</Paragraph>
+          <div className="page-inline-stack">
+            <Button
+              icon={<DownloadOutlined />}
+              type="primary"
+              onClick={handleExportSnapshot}
+              disabled={!selectedTenantId}
+              loading={isBusy}
+            >
+              {t("tenants.exportAction")}
+            </Button>
+            <Button icon={<PlayCircleOutlined />} onClick={() => navigate("/dashboard/operations")}>
+              {t("setup.openOperations")}
+            </Button>
           </div>
-          <Button type="primary" onClick={handleExportSnapshot} disabled={!selectedTenantId} loading={isBusy}>
-            {t("tenants.exportAction")}
-          </Button>
-        </Card>
-      </div>
 
-      <div className="two-column">
-        <Card title={t("tenants.restoreTitle")}>
-          <Paragraph type="secondary">{t("tenants.restoreHint")}</Paragraph>
           <Form<RestoreFormShape>
             form={restoreForm}
             layout="vertical"
@@ -353,11 +457,11 @@ export function TenantsPage(): ReactElement {
               rules={[{ required: true }]}
             >
               <Input.TextArea
-                autoSize={{ minRows: 8, maxRows: 16 }}
+                autoSize={{ minRows: 6, maxRows: 12 }}
                 placeholder={t("tenants.restoreSnapshotPlaceholder")}
               />
             </Form.Item>
-            <div className="page-inline-stack">
+            <Space wrap>
               <Button onClick={handleRestorePreview} loading={isBusy}>
                 {t("tenants.restorePreviewAction")}
               </Button>
@@ -369,11 +473,11 @@ export function TenantsPage(): ReactElement {
               >
                 {t("tenants.restoreAction")}
               </Button>
-            </div>
+            </Space>
           </Form>
 
           {restorePreview ? (
-            <div className="page-inline-stack">
+            <div className="page-inline-stack" data-testid="setup-restore-preview">
               <Alert
                 type={restorePreview.slugAvailable ? "info" : "error"}
                 title={
@@ -394,10 +498,6 @@ export function TenantsPage(): ReactElement {
                   <span>
                     {restorePreview.sourceTenantName} ({restorePreview.sourceTenantSlug})
                   </span>
-                </div>
-                <div className="compact-record-row">
-                  <strong>{t("tenants.restorePreviewExportedAt")}</strong>
-                  <span>{new Date(restorePreview.exportedAt).toLocaleString()}</span>
                 </div>
                 <div className="compact-record-row">
                   <strong>{t("tenants.restorePreviewSlugStatus")}</strong>
@@ -421,62 +521,23 @@ export function TenantsPage(): ReactElement {
                     })}
                   </span>
                 </div>
-                <div className="compact-record-row">
-                  <strong>{t("tenants.restorePreviewCountsLaterLabel")}</strong>
-                  <span>
-                    {t("tenants.restorePreviewCountsLaterValue", {
-                      orderCount: restorePreview.orderCount,
-                      purchaseOrderCount: restorePreview.purchaseOrderCount,
-                      invoiceCount: restorePreview.invoiceCount,
-                      collectionActivityCount: restorePreview.collectionActivityCount,
-                      approvalCount: restorePreview.approvalCount,
-                      auditLogCount: restorePreview.auditLogCount,
-                      journalEntryCount: restorePreview.journalEntryCount,
-                      accountBalanceCount: restorePreview.accountBalanceCount,
-                    })}
-                  </span>
-                </div>
               </div>
             </div>
           ) : null}
 
           {restoreResult ? (
-            <div className="page-inline-stack">
-              <Alert
-                type="success"
-                title={t("tenants.restoreSummary", {
-                  tenantName: restoreResult.tenant.name,
-                  restoredProducts: restoreResult.restoredProducts,
-                  restoredCustomers: restoreResult.restoredCustomers,
-                  restoredInventoryLines: restoreResult.restoredInventoryLines,
-                })}
-                showIcon
-              />
-              <div className="record-stack">
-                <div className="compact-record-row">
-                  <strong>{t("tenants.restoreRestoredScopes")}</strong>
-                  <span>{restoreResult.restoredScopes.join(", ")}</span>
-                </div>
-                <div className="compact-record-row">
-                  <strong>{t("tenants.restorePendingScopes")}</strong>
-                  <span>{restoreResult.pendingScopes.join(", ")}</span>
-                </div>
-              </div>
-            </div>
+            <Alert
+              type="success"
+              title={t("setup.restoreResultTitle")}
+              description={t("tenants.restoreSummary", {
+                tenantName: restoreResult.tenant.name,
+                restoredCustomers: restoreResult.restoredCustomers,
+                restoredProducts: restoreResult.restoredProducts,
+                restoredInventoryLines: restoreResult.restoredInventoryLines,
+              })}
+              showIcon
+            />
           ) : null}
-        </Card>
-
-        <Card title={t("tenants.restoreScopeTitle")}>
-          <div className="record-stack">
-            <div className="compact-record-row">
-              <strong>{t("tenants.restoreNowLabel")}</strong>
-              <span>{t("tenants.restoreNowValue")}</span>
-            </div>
-            <div className="compact-record-row">
-              <strong>{t("tenants.restoreLaterLabel")}</strong>
-              <span>{t("tenants.restoreLaterValue")}</span>
-            </div>
-          </div>
         </Card>
       </div>
     </div>

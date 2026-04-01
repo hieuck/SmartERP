@@ -5,6 +5,7 @@ import {
   DatabaseOutlined,
   DashboardOutlined,
   FileTextOutlined,
+  FlagOutlined,
   InboxOutlined,
   SafetyCertificateOutlined,
   ShoppingCartOutlined,
@@ -35,6 +36,9 @@ export function Sidebar({ collapsed }: SidebarProps): ReactElement {
   const { canAccessModule } = useWorkspace();
   const items: MenuItem[] = [
     { key: "/dashboard", icon: <DashboardOutlined />, label: t("shell.dashboard") },
+    canAccessModule("setup")
+      ? { key: "/dashboard/setup", icon: <FlagOutlined />, label: t("shell.setup") }
+      : null,
     canAccessModule("tenant")
       ? { key: "/dashboard/tenants", icon: <ApartmentOutlined />, label: t("shell.tenants") }
       : null,
@@ -72,6 +76,7 @@ export function Sidebar({ collapsed }: SidebarProps): ReactElement {
 
   function getSelectedKey(): string {
     const path = location.pathname;
+    if (path.startsWith("/dashboard/setup")) return "/dashboard/setup";
     if (path.startsWith("/dashboard/tenants")) return "/dashboard/tenants";
     if (path.startsWith("/dashboard/customers")) return "/dashboard/customers";
     if (path.startsWith("/dashboard/suppliers")) return "/dashboard/suppliers";
