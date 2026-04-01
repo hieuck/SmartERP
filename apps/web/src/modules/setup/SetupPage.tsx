@@ -15,6 +15,7 @@ import type {
   CreateTenantInput,
   ImportOnboardingResult,
   OnboardingDataset,
+  PilotHandoffPackage,
   RestoreTenantSnapshotPreview,
   RestoreTenantSnapshotResult,
 } from "@smarterp/contracts";
@@ -22,6 +23,8 @@ import { onboardingCsvTemplates } from "@smarterp/contracts";
 
 import { useLocale } from "../../locale/LocaleContext";
 import { useWorkspace } from "../../state/WorkspaceContext";
+import { loadOperationsStatus } from "../operations/api";
+import { buildPilotHandoffPackage } from "./handoff";
 import { downloadJsonFile, parseRestoreSnapshot } from "../tenants/setup-utils";
 
 const { Paragraph, Text, Title } = Typography;
@@ -52,6 +55,7 @@ export function SetupPage(): ReactElement {
     createTenantRecord,
     customers,
     exportTenantSnapshotRecord,
+    foundation,
     importOnboardingDatasetRecord,
     inventories,
     isBusy,
@@ -59,6 +63,7 @@ export function SetupPage(): ReactElement {
     previewTenantSnapshotRestoreRecord,
     purchaseOrders,
     restoreTenantSnapshotRecord,
+    session,
     selectedTenant,
     selectedTenantId,
     setSelectedTenantId,
@@ -69,6 +74,8 @@ export function SetupPage(): ReactElement {
   const [onboardingForm] = Form.useForm<OnboardingFormShape>();
   const [restoreForm] = Form.useForm<RestoreFormShape>();
   const [importResult, setImportResult] = useState<ImportOnboardingResult | null>(null);
+  const [handoffPackage, setHandoffPackage] = useState<PilotHandoffPackage | null>(null);
+  const [isPackagingHandoff, setIsPackagingHandoff] = useState(false);
   const [restorePreview, setRestorePreview] = useState<RestoreTenantSnapshotPreview | null>(null);
   const [restoreResult, setRestoreResult] = useState<RestoreTenantSnapshotResult | null>(null);
   const watchedDataset = (Form.useWatch("dataset", onboardingForm) as OnboardingDataset | undefined) ?? "customers";
@@ -159,6 +166,34 @@ export function SetupPage(): ReactElement {
       downloadJsonFile(`${snapshot.tenant.slug}-snapshot.json`, snapshot);
     } catch {
       // Error state is already surfaced via workspace context.
+    }
+  };
+
+  const handleDownloadHandoffPackage = async () => {
+    if (!session) {
+      return;
+    }
+
+    setIsPackagingHandoff(true);
+
+    try {
+      const [tenantSnapshot, operationsStatus] = await Promise.all([
+        exportTenantSnapshotRecord(),
+        loadOperationsStatus(),
+      ]);
+      const nextHandoffPackage = buildPilotHandoffPackage({
+        foundation,
+        operationsStatus,
+        session,
+        tenantSnapshot,
+        workspaceOrigin: window.location.origin,
+      });
+      setHandoffPackage(nextHandoffPackage);
+      downloadJsonFile(`${tenantSnapshot.tenant.slug}-pilot-handoff.json`, nextHandoffPackage);
+    } catch {
+      // Error state is already surfaced via workspace context or operations request.
+    } finally {
+      setIsPackagingHandoff(false);
     }
   };
 
@@ -540,6 +575,66 @@ export function SetupPage(): ReactElement {
           ) : null}
         </Card>
       </div>
+
+      <Card data-testid="setup-handoff-card" title={t("setup.handoffTitle")}>
+        <Paragraph type="secondary">{t("setup.handoffHint")}</Paragraph>
+        <div className="page-inline-stack">
+          <Button
+            icon={<DownloadOutlined />}
+            type="primary"
+            onClick={() => void handleDownloadHandoffPackage()}
+            disabled={!selectedTenantId || !session}
+            loading={isPackagingHandoff}
+          >
+            {t("setup.downloadHandoffPackage")}
+          </Button>
+          <Button onClick={() => navigate("/login")}>{t("setup.openLoginReference")}</Button>
+        </div>
+
+        <div className="record-stack" data-testid="setup-handoff-runbook">
+          {[
+            t("setup.handoffStepFounder"),
+            t("setup.handoffStepOperations"),
+            t("setup.handoffStepRoles"),
+            t("setup.handoffStepBaseline"),
+            t("setup.handoffStepReports"),
+          ].map((item) => (
+            <div className="compact-record-row" key={item}>
+              <strong>{item}</strong>
+            </div>
+          ))}
+        </div>
+
+        {handoffPackage ? (
+          <div className="record-stack" data-testid="setup-handoff-summary">
+            <div className="compact-record-row">
+              <strong>{t("setup.handoffGeneratedFor")}</strong>
+              <span>
+                {handoffPackage.tenant.name} ({handoffPackage.tenant.slug})
+              </span>
+            </div>
+            <div className="compact-record-row">
+              <strong>{t("setup.handoffAccountsLabel")}</strong>
+              <span>{handoffPackage.roleAccounts.length}</span>
+            </div>
+            <div className="compact-record-row">
+              <strong>{t("setup.handoffReadinessLabel")}</strong>
+              <span>{handoffPackage.operations.readinessLevel}</span>
+            </div>
+            <div className="compact-record-row">
+              <strong>{t("setup.handoffSnapshotLabel")}</strong>
+              <span>
+                {t("setup.handoffSnapshotValue", {
+                  customers: handoffPackage.snapshotSummary.customerCount,
+                  suppliers: handoffPackage.snapshotSummary.supplierCount,
+                  products: handoffPackage.snapshotSummary.productCount,
+                  invoices: handoffPackage.snapshotSummary.invoiceCount,
+                })}
+              </span>
+            </div>
+          </div>
+        ) : null}
+      </Card>
     </div>
   );
 }

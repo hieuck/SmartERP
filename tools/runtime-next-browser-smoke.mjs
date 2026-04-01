@@ -19,6 +19,7 @@ const tenantStorageKey = "smarterp.next.selectedTenantId";
 const languageStorageKey = "smarterp-next-language";
 const smokeId = String(Date.now()).slice(-6);
 const exportSnapshotDownloadPath = path.join(outputDir, `runtime-next-tenant-export-${smokeId}.json`);
+const handoffPackageDownloadPath = path.join(outputDir, `runtime-next-handoff-${smokeId}.json`);
 const tenantName = `Smoke Tenant ${smokeId}`;
 const tenantSlug = `smoke-${smokeId}`;
 const customerName = `Smoke Buyer ${smokeId}`;
@@ -443,6 +444,7 @@ async function main() {
   let localeReloadVerified = false;
   let duplicateTenantRejectedVerified = false;
   let setupWorkspaceVerified = false;
+  let pilotHandoffPackageVerified = false;
   let onboardingImportVerified = false;
   let onboardingExportVerified = false;
   let baselineRestorePreviewVerified = false;
@@ -1260,6 +1262,44 @@ async function main() {
     operationsReadinessVerified = true;
     await openSection(page, sidebarIndexes.setup, "/dashboard/setup");
     await waitForTenantContext(page, tenantName);
+    const handoffCard = page.getByTestId("setup-handoff-card");
+    const handoffDownloadPromise = page.waitForEvent("download", { timeout: 15000 });
+    await handoffCard.getByRole("button", { name: "Tải gói bàn giao" }).click();
+    const handoffDownload = await handoffDownloadPromise;
+    await handoffDownload.saveAs(handoffPackageDownloadPath);
+    const handoffPackage = JSON.parse(await fs.readFile(handoffPackageDownloadPath, "utf8"));
+    assert(
+      handoffPackage.version === "smarterp-next-pilot-handoff-v1",
+      "Pilot handoff package did not expose the expected version.",
+    );
+    assert(
+      handoffPackage.tenant?.name === tenantName && handoffPackage.tenant?.slug === tenantSlug,
+      "Pilot handoff package did not include the selected tenant.",
+    );
+    assert(
+      Array.isArray(handoffPackage.roleAccounts) &&
+        handoffPackage.roleAccounts.some((item) => item.email === demoEmail) &&
+        handoffPackage.roleAccounts.some((item) => item.email === salesEmail),
+      "Pilot handoff package did not include the expected role accounts.",
+    );
+    assert(
+      Array.isArray(handoffPackage.runbook) && handoffPackage.runbook.length >= 5,
+      "Pilot handoff package did not include the expected runbook steps.",
+    );
+    assert(
+      handoffPackage.tenantSnapshot?.orders?.some((item) => item.orderNumber === orderNumber) &&
+        handoffPackage.tenantSnapshot?.invoices?.some((item) => item.invoiceNumber === secondInvoiceNumber),
+      "Pilot handoff package did not embed the expected tenant snapshot.",
+    );
+    assert(
+      handoffPackage.operations?.readinessLevel &&
+        typeof handoffPackage.operations.smokePassed === "boolean",
+      "Pilot handoff package did not include operations readiness context.",
+    );
+    await handoffCard.getByText(tenantName, { exact: false }).waitFor({ timeout: 15000 });
+    pilotHandoffPackageVerified = true;
+    await openSection(page, sidebarIndexes.setup, "/dashboard/setup");
+    await waitForTenantContext(page, tenantName);
     const recoveryCard = page.getByTestId("setup-recovery-card");
     const downloadPromise = page.waitForEvent("download", { timeout: 15000 });
     await recoveryCard.getByRole("button", { name: "Tải snapshot JSON" }).click();
@@ -1700,6 +1740,7 @@ async function main() {
       localeReloadVerified,
       duplicateTenantRejectedVerified,
       setupWorkspaceVerified,
+      pilotHandoffPackageVerified,
       onboardingImportVerified,
       onboardingExportVerified,
       baselineRestorePreviewVerified,

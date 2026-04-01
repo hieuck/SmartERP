@@ -692,6 +692,52 @@ export type TenantExportBundle = {
   journalEntries: JournalEntryRecord[];
 };
 
+export type PilotHandoffRunbookStep = {
+  key: string;
+  title: string;
+  description: string;
+  url: string | null;
+};
+
+export type PilotHandoffPackage = {
+  version: "smarterp-next-pilot-handoff-v1";
+  generatedAt: string;
+  workspaceOrigin: string;
+  generatedBy: {
+    displayName: string;
+    email: string;
+    role: UserRole;
+  };
+  tenant: TenantRecord;
+  roleAccounts: ReadonlyArray<Pick<DemoAccount, "displayName" | "email" | "password" | "role">>;
+  enabledModules: readonly FoundationModule[];
+  snapshotSummary: {
+    customerCount: number;
+    supplierCount: number;
+    productCount: number;
+    inventoryLineCount: number;
+    orderCount: number;
+    purchaseOrderCount: number;
+    invoiceCount: number;
+    collectionActivityCount: number;
+    approvalCount: number;
+    auditLogCount: number;
+    journalEntryCount: number;
+    accountBalanceCount: number;
+  };
+  operations: {
+    readinessLevel: OperationsReadinessLevel;
+    smokePassed: boolean;
+    smokeCheckedAt: string | null;
+    runtimeServices: OperationsRuntimeServiceStatus[];
+    artifacts: OperationsArtifactStatus[];
+    totals: OperationsTotals;
+    tenantStatus: OperationsTenantStatusRecord | null;
+  };
+  runbook: PilotHandoffRunbookStep[];
+  tenantSnapshot: TenantExportBundle;
+};
+
 export type FoundationSnapshot = {
   modules: readonly FoundationModule[];
   message: string;
