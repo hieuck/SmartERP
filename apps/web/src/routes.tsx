@@ -15,7 +15,7 @@ const DashboardPage = lazy(() =>
   import("./modules/dashboard").then((module) => ({ default: module.DashboardPage })),
 );
 const TenantsPage = lazy(() =>
-  import("./pages/TenantsPage").then((module) => ({ default: module.TenantsPage })),
+  import("./modules/tenants").then((module) => ({ default: module.TenantsPage })),
 );
 const CustomersPage = lazy(() =>
   import("./modules/customers").then((module) => ({ default: module.CustomersPage })),

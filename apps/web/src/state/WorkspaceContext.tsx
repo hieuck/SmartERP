@@ -45,14 +45,8 @@ import {
 } from "@smarterp/contracts";
 
 import {
-  createTenant,
-  exportTenantSnapshot,
   getFoundation,
-  importOnboardingDataset,
-  listTenants,
   login,
-  previewRestoreTenantSnapshot,
-  restoreTenantSnapshot,
   setApiSession,
   setUnauthorizedHandler,
 } from "../api";
@@ -74,6 +68,14 @@ import {
 } from "../modules/purchase-orders/api";
 import { loadProducts, submitProduct } from "../modules/products/api";
 import { loadSuppliers, submitSupplier } from "../modules/suppliers/api";
+import {
+  exportTenantSnapshotBundle,
+  loadTenants,
+  previewTenantSnapshotRestore,
+  restoreTenantSnapshotBundle,
+  submitOnboardingImport,
+  submitTenant,
+} from "../modules/tenants/api";
 import {
   loadInvoiceCollectionActivities,
   loadInvoices,
@@ -285,7 +287,7 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
       return;
     }
 
-    listTenants()
+    loadTenants()
       .then((items) => {
         setTenants(items);
         setSelectedTenantId((current) =>
@@ -346,7 +348,7 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
     setErrorMessage("");
 
     try {
-      const created = await createTenant(input);
+      const created = await submitTenant(input);
       setTenants((current) => [created, ...current]);
       setSelectedTenantId(created.id);
     } catch (caught) {
@@ -370,7 +372,7 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
     setNoticeMessage("");
 
     try {
-      const result = await importOnboardingDataset({ ...input, tenantId: selectedTenantId });
+      const result = await submitOnboardingImport({ ...input, tenantId: selectedTenantId });
       await refreshTenantWorkspace(selectedTenantId);
       setNoticeMessage(
         t("tenants.importNotice", {
@@ -398,7 +400,7 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
     setErrorMessage("");
 
     try {
-      const snapshot = await exportTenantSnapshot(selectedTenantId);
+      const snapshot = await exportTenantSnapshotBundle(selectedTenantId);
       setNoticeMessage(
         t("tenants.exportNotice", {
           tenantName: snapshot.tenant.name,
@@ -420,7 +422,7 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
     setErrorMessage("");
 
     try {
-      const result = await previewRestoreTenantSnapshot(input);
+      const result = await previewTenantSnapshotRestore(input);
       setNoticeMessage(
         t("tenants.restorePreviewNotice", {
           tenantName: result.targetTenant.name,
@@ -442,8 +444,8 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
     setErrorMessage("");
 
     try {
-      const result = await restoreTenantSnapshot(input);
-      const nextTenants = await listTenants();
+      const result = await restoreTenantSnapshotBundle(input);
+      const nextTenants = await loadTenants();
       setTenants(nextTenants);
       setSelectedTenantId(result.tenant.id);
       await refreshTenantWorkspace(result.tenant.id);

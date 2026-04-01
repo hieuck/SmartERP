@@ -68,15 +68,16 @@ import {
   handleListSuppliers,
 } from "./modules/suppliers/index.js";
 import {
-  createTenant,
-  exportTenantSnapshot,
   hasTenant,
-  importOnboardingDataset,
-  previewRestoreTenantSnapshot,
-  restoreTenantSnapshot,
-  listTenants,
-  runWithSession,
 } from "./store.js";
+import {
+  handleCreateTenant,
+  handleExportTenantSnapshot,
+  handleImportOnboardingDataset,
+  handleListTenants,
+  handlePreviewRestoreTenantSnapshot,
+  handleRestoreTenantSnapshot,
+} from "./modules/tenants/index.js";
 
 function badRequest(response: ServerResponse, message: string): void {
   sendJson(response, 400, { error: message });
@@ -226,7 +227,7 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
     }
 
     if (request.method === "GET" && pathname === "/api/tenants") {
-      sendJson(response, 200, { items: listTenants() });
+      handleListTenants(response);
       return;
     }
 
@@ -235,25 +236,7 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
         return;
       }
 
-      const input = await readJson<CreateTenantInput>(request);
-
-      if (!input.name?.trim() || !input.slug?.trim() || !input.industry?.trim()) {
-        badRequest(response, "Tenant name, slug, and industry are required.");
-        return;
-      }
-
-      try {
-        const tenant = runWithSession(requestSession, () => createTenant(input));
-        sendJson(response, 201, { item: tenant });
-      } catch (error) {
-        if (isSqliteConstraintError(error) && error.message.includes("tenants.slug")) {
-          badRequest(response, "A tenant with this slug already exists.");
-          return;
-        }
-
-        throw error;
-      }
-
+      await handleCreateTenant(request, response, requestSession);
       return;
     }
 
@@ -262,40 +245,7 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
         return;
       }
 
-      const input = await readJson<ImportOnboardingInput>(request);
-
-      if (!input.tenantId?.trim()) {
-        badRequest(response, "tenantId is required.");
-        return;
-      }
-
-      if (!hasTenant(input.tenantId)) {
-        badRequest(response, "The selected tenant does not exist.");
-        return;
-      }
-
-      if (!input.dataset) {
-        badRequest(response, "dataset is required.");
-        return;
-      }
-
-      if (!input.csvText?.trim()) {
-        badRequest(response, "CSV data is required.");
-        return;
-      }
-
-      try {
-        const result = runWithSession(requestSession, () => importOnboardingDataset(input));
-        sendJson(response, 200, { item: result });
-      } catch (error) {
-        if (error instanceof Error) {
-          badRequest(response, error.message);
-          return;
-        }
-
-        throw error;
-      }
-
+      await handleImportOnboardingDataset(request, response, requestSession);
       return;
     }
 
@@ -311,12 +261,7 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
         return;
       }
 
-      if (!hasTenant(tenantId)) {
-        badRequest(response, "The selected tenant does not exist.");
-        return;
-      }
-
-      sendJson(response, 200, { item: exportTenantSnapshot(tenantId) });
+      handleExportTenantSnapshot(response, tenantId);
       return;
     }
 
@@ -325,42 +270,7 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
         return;
       }
 
-      const input = await readJson<RestoreTenantSnapshotInput>(request);
-
-      if (!input?.snapshot?.tenant?.name) {
-        badRequest(response, "Snapshot payload is invalid.");
-        return;
-      }
-
-      if (!input.targetTenant?.name?.trim()) {
-        badRequest(response, "Target tenant name is required.");
-        return;
-      }
-
-      if (!input.targetTenant?.slug?.trim()) {
-        badRequest(response, "Target tenant slug is required.");
-        return;
-      }
-
-      if (!input.targetTenant?.industry?.trim()) {
-        badRequest(response, "Target tenant industry is required.");
-        return;
-      }
-
-      try {
-        const result: RestoreTenantSnapshotPreview = runWithSession(requestSession, () =>
-          previewRestoreTenantSnapshot(input),
-        );
-        sendJson(response, 200, { item: result });
-      } catch (error) {
-        if (error instanceof Error) {
-          badRequest(response, error.message);
-          return;
-        }
-
-        throw error;
-      }
-
+      await handlePreviewRestoreTenantSnapshot(request, response, requestSession);
       return;
     }
 
@@ -369,40 +279,7 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
         return;
       }
 
-      const input = await readJson<RestoreTenantSnapshotInput>(request);
-
-      if (!input?.snapshot?.tenant?.name) {
-        badRequest(response, "Snapshot payload is invalid.");
-        return;
-      }
-
-      if (!input.targetTenant?.name?.trim()) {
-        badRequest(response, "Target tenant name is required.");
-        return;
-      }
-
-      if (!input.targetTenant?.slug?.trim()) {
-        badRequest(response, "Target tenant slug is required.");
-        return;
-      }
-
-      if (!input.targetTenant?.industry?.trim()) {
-        badRequest(response, "Target tenant industry is required.");
-        return;
-      }
-
-      try {
-        const result = runWithSession(requestSession, () => restoreTenantSnapshot(input));
-        sendJson(response, 201, { item: result });
-      } catch (error) {
-        if (error instanceof Error) {
-          badRequest(response, error.message);
-          return;
-        }
-
-        throw error;
-      }
-
+      await handleRestoreTenantSnapshot(request, response, requestSession);
       return;
     }
 
