@@ -12,7 +12,7 @@ const LoginPage = lazy(() =>
   import("./pages/LoginPage").then((module) => ({ default: module.LoginPage })),
 );
 const DashboardPage = lazy(() =>
-  import("./pages/DashboardPage").then((module) => ({ default: module.DashboardPage })),
+  import("./modules/dashboard").then((module) => ({ default: module.DashboardPage })),
 );
 const TenantsPage = lazy(() =>
   import("./pages/TenantsPage").then((module) => ({ default: module.TenantsPage })),

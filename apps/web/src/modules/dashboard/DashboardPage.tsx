@@ -18,8 +18,8 @@ import type {
   InvoiceRecord,
 } from "@smarterp/contracts";
 
-import { useLocale } from "../locale/LocaleContext";
-import { useWorkspace } from "../state/WorkspaceContext";
+import { useLocale } from "../../locale/LocaleContext";
+import { useWorkspace } from "../../state/WorkspaceContext";
 
 const { Paragraph, Title } = Typography;
 
