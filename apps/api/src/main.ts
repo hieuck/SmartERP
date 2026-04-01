@@ -16,7 +16,6 @@ import {
   type FoundationModule,
   type CreatePurchaseOrderInput,
   type ReceivePurchaseOrderInput,
-  type CreateProductInput,
   type CreateSupplierInput,
   type CreateTenantInput,
   type ImportOnboardingInput,
@@ -49,9 +48,12 @@ import {
 import { handleCreateOrder, handleListOrders } from "./modules/orders/index.js";
 import { handleGetOperationsStatus } from "./modules/operations/index.js";
 import {
+  handleCreateProduct,
+  handleListProducts,
+} from "./modules/products/index.js";
+import {
   createPurchaseOrder,
   receivePurchaseOrder,
-  createProduct,
   createSupplier,
   createTenant,
   exportTenantSnapshot,
@@ -65,7 +67,6 @@ import {
   listAuditLogs,
   listJournalEntries,
   listPurchaseOrders,
-  listProducts,
   listSuppliers,
   listTenants,
   resolveApprovalRequest,
@@ -514,7 +515,7 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
         return;
       }
 
-      sendJson(response, 200, { items: listProducts(tenantId) });
+      handleListProducts(response, tenantId);
       return;
     }
 
@@ -523,40 +524,7 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
         return;
       }
 
-      const input = await readJson<CreateProductInput>(request);
-
-      if (!input.tenantId?.trim()) {
-        badRequest(response, "tenantId is required.");
-        return;
-      }
-
-      if (!hasTenant(input.tenantId)) {
-        badRequest(response, "The selected tenant does not exist.");
-        return;
-      }
-
-      if (!input.sku?.trim() || !input.name?.trim()) {
-        badRequest(response, "Product SKU and name are required.");
-        return;
-      }
-
-      if (!Number.isFinite(input.unitPrice) || input.unitPrice < 0) {
-        badRequest(response, "unitPrice must be a valid non-negative number.");
-        return;
-      }
-
-      try {
-        const product = runWithSession(requestSession, () => createProduct(input));
-        sendJson(response, 201, { item: product });
-      } catch (error) {
-        if (isSqliteConstraintError(error) && error.message.includes("products.tenant_id, products.sku")) {
-          badRequest(response, "A product with this SKU already exists for the selected tenant.");
-          return;
-        }
-
-        throw error;
-      }
-
+      await handleCreateProduct(request, response, requestSession);
       return;
     }
 
