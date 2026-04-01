@@ -1,43 +1,14 @@
 import type { PropsWithChildren, ReactElement } from "react";
-import { createContext, useContext, useState } from "react";
+import { useState } from "react";
 
 import type {
-  ApprovalDecisionInput,
   ApprovalDecision,
   ApprovalRequestRecord,
   FoundationModule,
-  CreateCustomerInput,
-  CreateInvoiceInput,
-  UpdateInvoiceCollectionInput,
-  ResolveInvoiceCollectionActionInput,
-  CreateInvoicePaymentInput,
-  CreateInventoryAdjustmentInput,
-  CreateOrderInput,
-  CreatePurchaseOrderInput,
-  ReceivePurchaseOrderInput,
-  CreateProductInput,
-  CreateSupplierInput,
-  CreateTenantInput,
-  ImportOnboardingInput,
-  ImportOnboardingResult,
-  RestoreTenantSnapshotInput,
-  RestoreTenantSnapshotPreview,
-  RestoreTenantSnapshotResult,
-  InvoiceCollectionActivityRecord,
-  CustomerStatementRecord,
-  CustomerRecord,
   FoundationSnapshot,
-  InvoiceRecord,
-  InventoryRecord,
-  LoginInput,
-  OrderRecord,
   Permission,
-  PurchaseOrderRecord,
-  ProductRecord,
   Session,
-  SupplierRecord,
   TenantRecord,
-  TenantExportBundle,
 } from "@smarterp/contracts";
 import {
   canAccessModule as sessionCanAccessModule,
@@ -47,6 +18,10 @@ import {
 import { localizeErrorMessage } from "../locale/errorMessages";
 import { useLocale } from "../locale/LocaleContext";
 import { createWorkspaceCommands } from "./workspaceCommands";
+import {
+  createWorkspaceContextValue,
+  WorkspaceContext,
+} from "./workspaceContextDefinition";
 import { createWorkspaceSessionCommands, useWorkspaceSessionEffects } from "./workspaceSession";
 import { readStoredSession, readStoredTenantId } from "./workspaceStorage";
 import { useWorkspaceTenantState } from "./workspaceTenantState";
@@ -55,65 +30,7 @@ import {
   requireSelectedTenantId,
 } from "./workspaceTenantData";
 
-type WorkspaceContextValue = {
-  foundation: FoundationSnapshot | null;
-  isBooting: boolean;
-  isBusy: boolean;
-  error: string;
-  notice: string;
-  clearError: () => void;
-  clearNotice: () => void;
-  session: Session | null;
-  canAccessModule: (module: FoundationModule) => boolean;
-  can: (permission: Permission) => boolean;
-  tenants: TenantRecord[];
-  selectedTenantId: string;
-  selectedTenant: TenantRecord | null;
-  approvalRequests: ApprovalRequestRecord[];
-  customers: CustomerRecord[];
-  suppliers: SupplierRecord[];
-  customerStatements: CustomerStatementRecord[];
-  collectionActivities: InvoiceCollectionActivityRecord[];
-  products: ProductRecord[];
-  inventories: InventoryRecord[];
-  orders: OrderRecord[];
-  purchaseOrders: PurchaseOrderRecord[];
-  invoices: InvoiceRecord[];
-  loginToWorkspace: (input: LoginInput) => Promise<void>;
-  logoutFromWorkspace: () => void;
-  setSelectedTenantId: (tenantId: string) => void;
-  createTenantRecord: (input: CreateTenantInput) => Promise<void>;
-  importOnboardingDatasetRecord: (
-    input: Omit<ImportOnboardingInput, "tenantId">,
-  ) => Promise<ImportOnboardingResult>;
-  exportTenantSnapshotRecord: () => Promise<TenantExportBundle>;
-  previewTenantSnapshotRestoreRecord: (
-    input: RestoreTenantSnapshotInput,
-  ) => Promise<RestoreTenantSnapshotPreview>;
-  restoreTenantSnapshotRecord: (
-    input: RestoreTenantSnapshotInput,
-  ) => Promise<RestoreTenantSnapshotResult>;
-  createCustomerRecord: (input: Omit<CreateCustomerInput, "tenantId">) => Promise<void>;
-  createSupplierRecord: (input: Omit<CreateSupplierInput, "tenantId">) => Promise<void>;
-  createProductRecord: (input: Omit<CreateProductInput, "tenantId">) => Promise<void>;
-  createInventoryAdjustmentRecord: (
-    input: Omit<CreateInventoryAdjustmentInput, "tenantId">,
-  ) => Promise<void>;
-  createOrderRecord: (input: Omit<CreateOrderInput, "tenantId">) => Promise<void>;
-  createPurchaseOrderRecord: (input: Omit<CreatePurchaseOrderInput, "tenantId">) => Promise<void>;
-  receivePurchaseOrderRecord: (input: Omit<ReceivePurchaseOrderInput, "tenantId">) => Promise<void>;
-  createInvoiceRecord: (input: Omit<CreateInvoiceInput, "tenantId">) => Promise<void>;
-  createInvoicePaymentRecord: (input: Omit<CreateInvoicePaymentInput, "tenantId">) => Promise<void>;
-  updateInvoiceCollectionRecord: (input: Omit<UpdateInvoiceCollectionInput, "tenantId">) => Promise<void>;
-  resolveInvoiceCollectionActionRecord: (
-    input: Omit<ResolveInvoiceCollectionActionInput, "tenantId">,
-  ) => Promise<void>;
-  decideApprovalRequestRecord: (
-    input: Omit<ApprovalDecisionInput, "tenantId">,
-  ) => Promise<void>;
-};
-
-const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
+export { useWorkspace } from "./workspaceContextDefinition";
 
 export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement {
   const { t } = useLocale();
@@ -239,7 +156,7 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
 
   return (
     <WorkspaceContext.Provider
-      value={{
+      value={createWorkspaceContextValue({
         foundation,
         isBooting,
         isBusy,
@@ -283,19 +200,9 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
         updateInvoiceCollectionRecord,
         resolveInvoiceCollectionActionRecord,
         decideApprovalRequestRecord,
-      }}
+      })}
     >
       {children}
     </WorkspaceContext.Provider>
   );
-}
-
-export function useWorkspace(): WorkspaceContextValue {
-  const context = useContext(WorkspaceContext);
-
-  if (!context) {
-    throw new Error("useWorkspace must be used inside WorkspaceProvider.");
-  }
-
-  return context;
 }
