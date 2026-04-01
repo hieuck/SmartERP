@@ -49,6 +49,7 @@ export function buildPilotHandoffPackage(input: BuildPilotHandoffPackageInput): 
       readinessLevel: operationsStatus.readiness.level,
       smokePassed: operationsStatus.smoke?.passed ?? false,
       smokeCheckedAt: operationsStatus.smoke?.checkedAt ?? null,
+      build: operationsStatus.build,
       runtimeServices: operationsStatus.runtimeServices,
       artifacts: operationsStatus.artifacts,
       totals: operationsStatus.totals,

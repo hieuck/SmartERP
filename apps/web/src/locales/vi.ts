@@ -804,3 +804,20 @@ Object.assign(vi, {
 });
 
 export default vi;
+
+Object.assign(vi.operations, {
+  buildTitle: "Tóm tắt build",
+  buildState: "Sức khỏe build",
+  buildHealthy: "Trong budget",
+  buildWarning: "Cần tối ưu thêm",
+  buildCheckedAt: "Build được ghi nhận",
+  buildLargestJs: "Asset JS lớn nhất",
+  buildTotalJs: "Tổng JS",
+  buildTotalCss: "Tổng CSS",
+  buildAssetCount: "Số lượng asset",
+  buildSummaryPath: "Đường dẫn build summary",
+  buildDistPath: "Đường dẫn dist",
+  buildVendorAsset: "Vendor asset",
+  buildFeatureAsset: "Feature asset",
+  buildEmpty: "Chưa có build summary nào được ghi nhận.",
+});

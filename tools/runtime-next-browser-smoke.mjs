@@ -483,6 +483,7 @@ async function main() {
   let auditTrailVerified = false;
   let operationsStatusVerified = false;
   let operationsReadinessVerified = false;
+  let operationsBuildVerified = false;
   let loginRoleHintsVerified = false;
   let financeRoleOnboardingVerified = false;
   let unauthorizedApiBlockedVerified = false;
@@ -1263,9 +1264,25 @@ async function main() {
       "Operations status did not expose operational artifacts.",
     );
     assert(
+      Array.isArray(operationsSnapshot.body?.item?.artifacts) &&
+        operationsSnapshot.body.item.artifacts.some(
+          (artifact) => artifact.key === "build-summary" && artifact.exists === true,
+        ),
+      "Operations status did not expose the build summary artifact.",
+    );
+    assert(
+      operationsSnapshot.body?.item?.build &&
+        typeof operationsSnapshot.body.item.build.summaryPath === "string" &&
+        operationsSnapshot.body.item.build.totalAssetCount > 0 &&
+        operationsSnapshot.body.item.build.totalJavaScriptBytes > 0 &&
+        operationsSnapshot.body.item.build.budget?.passed === true,
+      "Operations status did not expose a healthy build summary payload.",
+    );
+    assert(
       Array.isArray(operationsSnapshot.body?.item?.readiness?.checks) &&
         operationsSnapshot.body.item.readiness.checks.some((check) => check.key === "api-health" && check.passed === true) &&
-        operationsSnapshot.body.item.readiness.checks.some((check) => check.key === "web-health" && check.passed === true),
+        operationsSnapshot.body.item.readiness.checks.some((check) => check.key === "web-health" && check.passed === true) &&
+        operationsSnapshot.body.item.readiness.checks.some((check) => check.key === "build-budget" && check.passed === true),
       "Operations status did not expose healthy pilot readiness checks.",
     );
     assert(
@@ -1282,6 +1299,10 @@ async function main() {
     await page.getByText("API health", { exact: false }).waitFor({ timeout: 15000 });
     await page.getByText("Web shell", { exact: false }).waitFor({ timeout: 15000 });
     operationsReadinessVerified = true;
+    await page.getByTestId("operations-build-summary").waitFor({ timeout: 15000 });
+    await page.getByText("Tóm tắt build", { exact: false }).waitFor({ timeout: 15000 });
+    await page.getByText("antd-vendor", { exact: false }).first().waitFor({ timeout: 15000 });
+    operationsBuildVerified = true;
     await openSection(page, sidebarIndexes.setup, "/dashboard/setup");
     await waitForTenantContext(page, tenantName);
     const handoffCard = page.getByTestId("setup-handoff-card");
@@ -1838,6 +1859,7 @@ async function main() {
       auditTrailVerified,
       operationsStatusVerified,
       operationsReadinessVerified,
+      operationsBuildVerified,
       loginRoleHintsVerified,
       financeRoleOnboardingVerified,
       rbacSalesVisibilityVerified,

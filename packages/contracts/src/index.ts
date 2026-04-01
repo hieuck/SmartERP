@@ -729,6 +729,7 @@ export type PilotHandoffPackage = {
     readinessLevel: OperationsReadinessLevel;
     smokePassed: boolean;
     smokeCheckedAt: string | null;
+    build: OperationsBuildStatus | null;
     runtimeServices: OperationsRuntimeServiceStatus[];
     artifacts: OperationsArtifactStatus[];
     totals: OperationsTotals;
@@ -775,12 +776,46 @@ export type OperationsRuntimeServiceStatus = {
 };
 
 export type OperationsArtifactStatus = {
-  key: "database" | "smoke-summary" | "smoke-screenshot";
+  key: "database" | "smoke-summary" | "smoke-screenshot" | "build-summary";
   label: string;
   path: string;
   exists: boolean;
   sizeBytes: number;
   updatedAt: string | null;
+};
+
+export type OperationsBuildAssetType = "script" | "style" | "static";
+
+export type OperationsBuildAssetStatus = {
+  fileName: string;
+  relativePath: string;
+  assetType: OperationsBuildAssetType;
+  sizeBytes: number;
+  vendor: boolean;
+};
+
+export type OperationsBuildBudgetStatus = {
+  largestJavaScriptAssetLimitBytes: number;
+  totalJavaScriptLimitBytes: number;
+  totalCssLimitBytes: number;
+  largestJavaScriptAssetPass: boolean;
+  totalJavaScriptPass: boolean;
+  totalCssPass: boolean;
+  passed: boolean;
+};
+
+export type OperationsBuildStatus = {
+  checkedAt: string;
+  summaryPath: string;
+  distPath: string;
+  totalAssetCount: number;
+  totalAssetBytes: number;
+  totalJavaScriptBytes: number;
+  totalCssBytes: number;
+  largestJavaScriptAsset: OperationsBuildAssetStatus | null;
+  vendorAssets: OperationsBuildAssetStatus[];
+  featureAssets: OperationsBuildAssetStatus[];
+  budget: OperationsBuildBudgetStatus;
 };
 
 export type OperationsReadinessSeverity = "critical" | "warning";
@@ -852,6 +887,7 @@ export type OperationsStatusPayload = {
   foundation: string;
   generatedAt: string;
   database: OperationsDatabaseStatus;
+  build: OperationsBuildStatus | null;
   runtimeServices: OperationsRuntimeServiceStatus[];
   artifacts: OperationsArtifactStatus[];
   readiness: OperationsReadinessStatus;

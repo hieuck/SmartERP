@@ -799,3 +799,20 @@ Object.assign(en, {
 });
 
 export default en;
+
+Object.assign(en.operations, {
+  buildTitle: "Build Summary",
+  buildState: "Build health",
+  buildHealthy: "Within budget",
+  buildWarning: "Needs tuning",
+  buildCheckedAt: "Build captured",
+  buildLargestJs: "Largest JS asset",
+  buildTotalJs: "Total JS",
+  buildTotalCss: "Total CSS",
+  buildAssetCount: "Asset count",
+  buildSummaryPath: "Build summary path",
+  buildDistPath: "Dist path",
+  buildVendorAsset: "Vendor asset",
+  buildFeatureAsset: "Feature asset",
+  buildEmpty: "No build summary has been captured yet.",
+});

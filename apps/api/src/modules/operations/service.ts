@@ -4,6 +4,7 @@ import path from "node:path";
 import {
   describeApiFoundation,
   type OperationsArtifactStatus,
+  type OperationsBuildStatus,
   type OperationsReadinessCheck,
   type OperationsReadinessStatus,
   type OperationsRuntimeServiceKey,
@@ -40,6 +41,14 @@ function didSmokePass(summary: Record<string, unknown>): boolean {
 
 function getOperationsOutputDir(): string {
   return path.resolve(path.dirname(getDatabasePath()), "..", "output", "playwright");
+}
+
+function getOperationsRootDir(): string {
+  return path.resolve(path.dirname(getDatabasePath()), "..");
+}
+
+function getOperationsBuildSummaryPath(): string {
+  return path.join(getOperationsRootDir(), "apps", "web", "build", "build-summary.json");
 }
 
 async function readOptionalFileStats(
@@ -114,6 +123,33 @@ async function getOperationsDatabaseStatus(): Promise<OperationsStatusPayload["d
   }
 }
 
+async function readOperationsBuildStatus(): Promise<OperationsBuildStatus | null> {
+  const summaryPath = getOperationsBuildSummaryPath();
+
+  try {
+    const raw = await fs.readFile(summaryPath, "utf8");
+    const parsed = JSON.parse(raw) as unknown;
+
+    if (
+      !isRecord(parsed) ||
+      typeof parsed.checkedAt !== "string" ||
+      typeof parsed.summaryPath !== "string" ||
+      typeof parsed.distPath !== "string" ||
+      typeof parsed.totalAssetCount !== "number" ||
+      typeof parsed.totalAssetBytes !== "number" ||
+      typeof parsed.totalJavaScriptBytes !== "number" ||
+      typeof parsed.totalCssBytes !== "number" ||
+      !isRecord(parsed.budget)
+    ) {
+      return null;
+    }
+
+    return parsed as OperationsBuildStatus;
+  } catch {
+    return null;
+  }
+}
+
 async function readOperationsSmokeStatus(): Promise<OperationsSmokeStatus | null> {
   const summaryPath = path.join(getOperationsOutputDir(), "runtime-next-smoke-summary.json");
 
@@ -181,14 +217,17 @@ async function getOperationsRuntimeServiceStatus(
 
 async function getOperationsArtifacts(
   database: OperationsStatusPayload["database"],
+  build: OperationsBuildStatus | null,
   smoke: OperationsSmokeStatus | null,
 ): Promise<OperationsArtifactStatus[]> {
   const outputDir = getOperationsOutputDir();
   const smokeSummaryPath = smoke?.summaryPath ?? path.join(outputDir, "runtime-next-smoke-summary.json");
   const smokeScreenshotPath = smoke?.screenshotPath ?? path.join(outputDir, "runtime-next-smoke.png");
-  const [summaryStats, screenshotStats] = await Promise.all([
+  const buildSummaryPath = build?.summaryPath ?? getOperationsBuildSummaryPath();
+  const [summaryStats, screenshotStats, buildSummaryStats] = await Promise.all([
     readOptionalFileStats(smokeSummaryPath),
     readOptionalFileStats(smokeScreenshotPath),
+    readOptionalFileStats(buildSummaryPath),
   ]);
 
   return [
@@ -216,12 +255,21 @@ async function getOperationsArtifacts(
       sizeBytes: screenshotStats.sizeBytes,
       updatedAt: screenshotStats.updatedAt,
     },
+    {
+      key: "build-summary",
+      label: "Web build summary",
+      path: buildSummaryPath,
+      exists: buildSummaryStats.exists,
+      sizeBytes: buildSummaryStats.sizeBytes,
+      updatedAt: buildSummaryStats.updatedAt,
+    },
   ];
 }
 
 function buildOperationsReadinessStatus(
   runtimeServices: OperationsRuntimeServiceStatus[],
   database: OperationsStatusPayload["database"],
+  build: OperationsBuildStatus | null,
   smoke: OperationsSmokeStatus | null,
 ): OperationsReadinessStatus {
   const apiService = runtimeServices.find((service) => service.key === "api") ?? null;
@@ -247,6 +295,22 @@ function buildOperationsReadinessStatus(
       passed: database.exists,
       severity: "critical",
       detail: database.path,
+    },
+    {
+      key: "build-summary",
+      label: "Build summary",
+      passed: Boolean(build),
+      severity: "warning",
+      detail: build?.summaryPath ?? "No build summary captured yet.",
+    },
+    {
+      key: "build-budget",
+      label: "Build budget",
+      passed: build?.budget.passed ?? false,
+      severity: "warning",
+      detail: build?.largestJavaScriptAsset
+        ? `${build.largestJavaScriptAsset.fileName} | ${build.largestJavaScriptAsset.sizeBytes} B`
+        : "No JavaScript assets were captured.",
     },
     {
       key: "smoke-gate",
@@ -284,12 +348,13 @@ function buildOperationsReadinessStatus(
 
 export async function buildOperationsStatusPayload(): Promise<OperationsStatusPayload> {
   const database = await getOperationsDatabaseStatus();
+  const build = await readOperationsBuildStatus();
   const smoke = await readOperationsSmokeStatus();
   const runtimeServices = await Promise.all([
     getOperationsRuntimeServiceStatus("api", "API", "http://127.0.0.1:4000/api/health"),
     getOperationsRuntimeServiceStatus("web", "Web", "http://127.0.0.1:3000"),
   ]);
-  const artifacts = await getOperationsArtifacts(database, smoke);
+  const artifacts = await getOperationsArtifacts(database, build, smoke);
 
   return {
     service: "smarterp-api",
@@ -297,9 +362,10 @@ export async function buildOperationsStatusPayload(): Promise<OperationsStatusPa
     foundation: describeApiFoundation(),
     generatedAt: new Date().toISOString(),
     database,
+    build,
     runtimeServices,
     artifacts,
-    readiness: buildOperationsReadinessStatus(runtimeServices, database, smoke),
+    readiness: buildOperationsReadinessStatus(runtimeServices, database, build, smoke),
     smoke,
     totals: getOperationsTotals(),
     tenants: listOperationsTenantStatuses(),

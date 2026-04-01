@@ -54,6 +54,10 @@ function getReadinessLevelColor(level: OperationsStatusPayload["readiness"]["lev
   return "red";
 }
 
+function getBuildBudgetColor(passed: boolean): string {
+  return passed ? "green" : "gold";
+}
+
 export function OperationsPage(): ReactElement {
   const { formatCurrency, localeCode, t } = useLocale();
   const [status, setStatus] = useState<OperationsStatusPayload | null>(null);
@@ -348,6 +352,74 @@ export function OperationsPage(): ReactElement {
                     </div>
                   ))}
                 </div>
+              </div>
+
+              <div className="record-stack" data-testid="operations-build-summary">
+                <strong>{t("operations.buildTitle")}</strong>
+                {status.build ? (
+                  <>
+                    <div className="compact-record-row">
+                      <strong>{t("operations.buildState")}</strong>
+                      <span>
+                        <Tag color={getBuildBudgetColor(status.build.budget.passed)}>
+                          {status.build.budget.passed ? t("operations.buildHealthy") : t("operations.buildWarning")}
+                        </Tag>
+                      </span>
+                    </div>
+                    <div className="compact-record-row">
+                      <strong>{t("operations.buildCheckedAt")}</strong>
+                      <span>{formatDateTime(status.build.checkedAt)}</span>
+                    </div>
+                    <div className="compact-record-row">
+                      <strong>{t("operations.buildLargestJs")}</strong>
+                      <span>
+                        {status.build.largestJavaScriptAsset
+                          ? `${status.build.largestJavaScriptAsset.fileName} (${formatBytes(status.build.largestJavaScriptAsset.sizeBytes)})`
+                          : t("operations.none")}
+                      </span>
+                    </div>
+                    <div className="compact-record-row">
+                      <strong>{t("operations.buildTotalJs")}</strong>
+                      <span>{formatBytes(status.build.totalJavaScriptBytes)}</span>
+                    </div>
+                    <div className="compact-record-row">
+                      <strong>{t("operations.buildTotalCss")}</strong>
+                      <span>{formatBytes(status.build.totalCssBytes)}</span>
+                    </div>
+                    <div className="compact-record-row">
+                      <strong>{t("operations.buildAssetCount")}</strong>
+                      <span>{status.build.totalAssetCount}</span>
+                    </div>
+                    <div className="compact-record-row">
+                      <strong>{t("operations.buildSummaryPath")}</strong>
+                      <Text code>{status.build.summaryPath}</Text>
+                    </div>
+                    <div className="compact-record-row">
+                      <strong>{t("operations.buildDistPath")}</strong>
+                      <Text code>{status.build.distPath}</Text>
+                    </div>
+                    <div className="activity-feed">
+                      {status.build.vendorAssets.map((asset) => (
+                        <div className="activity-row" key={asset.relativePath}>
+                          <div className="activity-main">
+                            <Space wrap>
+                              <strong>{asset.fileName}</strong>
+                              <Tag color={asset.vendor ? "blue" : "default"}>
+                                {asset.vendor ? t("operations.buildVendorAsset") : t("operations.buildFeatureAsset")}
+                              </Tag>
+                            </Space>
+                            <div className="record-detail">{formatBytes(asset.sizeBytes)}</div>
+                            <div className="record-detail">
+                              <Text code>{asset.relativePath}</Text>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <Empty description={t("operations.buildEmpty")} />
+                )}
               </div>
             </Card>
 
