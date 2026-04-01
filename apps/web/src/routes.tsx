@@ -45,7 +45,7 @@ const ApprovalsPage = lazy(() =>
   import("./pages/ApprovalsPage").then((module) => ({ default: module.ApprovalsPage })),
 );
 const OperationsPage = lazy(() =>
-  import("./pages/OperationsPage").then((module) => ({ default: module.OperationsPage })),
+  import("./modules/operations").then((module) => ({ default: module.OperationsPage })),
 );
 
 function RouteFallback(): ReactElement {

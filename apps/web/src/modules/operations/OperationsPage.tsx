@@ -24,9 +24,9 @@ import {
 
 import type { OperationsStatusPayload, OperationsTenantStatusRecord } from "@smarterp/contracts";
 
-import { getOperationsStatus } from "../api";
-import { useLocale } from "../locale/LocaleContext";
-import { localizeErrorMessage } from "../locale/errorMessages";
+import { useLocale } from "../../locale/LocaleContext";
+import { localizeErrorMessage } from "../../locale/errorMessages";
+import { loadOperationsStatus } from "./api";
 
 const { Paragraph, Text, Title } = Typography;
 
@@ -66,7 +66,7 @@ export function OperationsPage(): ReactElement {
     setErrorMessage("");
 
     try {
-      setStatus(await getOperationsStatus());
+      setStatus(await loadOperationsStatus());
     } catch (caught) {
       setErrorMessage(caught instanceof Error ? caught.message : "Failed to load operations status.");
     } finally {
