@@ -50,24 +50,16 @@ import {
   setApiSession,
   setUnauthorizedHandler,
 } from "../api";
+import { submitApprovalDecision } from "../modules/approvals/api";
+import { submitCustomer } from "../modules/customers/api";
+import { submitInventoryAdjustment } from "../modules/inventory/api";
+import { submitOrder } from "../modules/orders/api";
 import {
-  loadApprovalRequests,
-  submitApprovalDecision,
-} from "../modules/approvals/api";
-import {
-  loadCustomers,
-  loadCustomerStatements,
-  submitCustomer,
-} from "../modules/customers/api";
-import { loadInventory, submitInventoryAdjustment } from "../modules/inventory/api";
-import { loadOrders, submitOrder } from "../modules/orders/api";
-import {
-  loadPurchaseOrders,
   submitPurchaseOrder,
   submitPurchaseOrderReceipt,
 } from "../modules/purchase-orders/api";
-import { loadProducts, submitProduct } from "../modules/products/api";
-import { loadSuppliers, submitSupplier } from "../modules/suppliers/api";
+import { submitProduct } from "../modules/products/api";
+import { submitSupplier } from "../modules/suppliers/api";
 import {
   exportTenantSnapshotBundle,
   loadTenants,
@@ -77,8 +69,6 @@ import {
   submitTenant,
 } from "../modules/tenants/api";
 import {
-  loadInvoiceCollectionActivities,
-  loadInvoices,
   submitInvoiceCollectionResolution,
   submitInvoiceCollectionUpdate,
   submitInvoiceIssue,
@@ -93,6 +83,12 @@ import {
   writeStoredSession,
   writeStoredTenantId,
 } from "./workspaceStorage";
+import {
+  createEmptyTenantWorkspaceData,
+  loadTenantWorkspaceData,
+  requireSelectedTenantId,
+  type TenantWorkspaceData,
+} from "./workspaceTenantData";
 
 type WorkspaceContextValue = {
   foundation: FoundationSnapshot | null;
@@ -180,6 +176,33 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
     session ? sessionCanAccessModule(session, module) : false;
   const can = (permission: Permission): boolean => (session ? sessionHasPermission(session, permission) : false);
 
+  function applyTenantWorkspaceData(data: TenantWorkspaceData): void {
+    setApprovalRequests(data.approvalRequests);
+    setCustomers(data.customers);
+    setSuppliers(data.suppliers);
+    setCustomerStatements(data.customerStatements);
+    setCollectionActivities(data.collectionActivities);
+    setProducts(data.products);
+    setInventories(data.inventories);
+    setOrders(data.orders);
+    setPurchaseOrders(data.purchaseOrders);
+    setInvoices(data.invoices);
+  }
+
+  function resetTenantWorkspaceData(): void {
+    applyTenantWorkspaceData(createEmptyTenantWorkspaceData());
+  }
+
+  function getSelectedTenantIdOrThrow(): string {
+    try {
+      return requireSelectedTenantId(selectedTenantId);
+    } catch (caught) {
+      const message = caught instanceof Error ? caught.message : "Select a tenant first.";
+      setErrorMessage(message);
+      throw caught;
+    }
+  }
+
   useEffect(() => {
     setApiSession(session);
   }, [session]);
@@ -218,40 +241,8 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
   }, [selectedTenantId]);
 
   async function refreshTenantWorkspace(tenantId: string): Promise<void> {
-    const [
-      nextApprovalRequests,
-      nextCustomers,
-      nextSuppliers,
-      nextCustomerStatements,
-      nextCollectionActivities,
-      nextProducts,
-      nextInventory,
-      nextOrders,
-      nextPurchaseOrders,
-      nextInvoices,
-    ] = await Promise.all([
-      canAccessModule("approvals") ? loadApprovalRequests(tenantId) : Promise.resolve([]),
-      canAccessModule("customers") ? loadCustomers(tenantId) : Promise.resolve([]),
-      canAccessModule("suppliers") ? loadSuppliers(tenantId) : Promise.resolve([]),
-      canAccessModule("customers") ? loadCustomerStatements(tenantId) : Promise.resolve([]),
-      canAccessModule("invoices") ? loadInvoiceCollectionActivities(tenantId) : Promise.resolve([]),
-      canAccessModule("products") ? loadProducts(tenantId) : Promise.resolve([]),
-      canAccessModule("inventory") ? loadInventory(tenantId) : Promise.resolve([]),
-      canAccessModule("orders") ? loadOrders(tenantId) : Promise.resolve([]),
-      canAccessModule("purchasing") ? loadPurchaseOrders(tenantId) : Promise.resolve([]),
-      canAccessModule("invoices") ? loadInvoices(tenantId) : Promise.resolve([]),
-    ]);
-
-    setApprovalRequests(nextApprovalRequests);
-    setCustomers(nextCustomers);
-    setSuppliers(nextSuppliers);
-    setCustomerStatements(nextCustomerStatements);
-    setCollectionActivities(nextCollectionActivities);
-    setProducts(nextProducts);
-    setInventories(nextInventory);
-    setOrders(nextOrders);
-    setPurchaseOrders(nextPurchaseOrders);
-    setInvoices(nextInvoices);
+    const nextWorkspace = await loadTenantWorkspaceData(tenantId, canAccessModule);
+    applyTenantWorkspaceData(nextWorkspace);
   }
 
   function buildApprovalNotice(
@@ -273,16 +264,7 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
     if (!session) {
       setTenants([]);
       setSelectedTenantId("");
-      setApprovalRequests([]);
-      setCustomers([]);
-      setSuppliers([]);
-      setCustomerStatements([]);
-      setCollectionActivities([]);
-      setProducts([]);
-      setInventories([]);
-      setOrders([]);
-      setPurchaseOrders([]);
-      setInvoices([]);
+      resetTenantWorkspaceData();
       setNoticeMessage("");
       return;
     }
@@ -301,16 +283,7 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
 
   useEffect(() => {
     if (!selectedTenantId) {
-      setApprovalRequests([]);
-      setCustomers([]);
-      setSuppliers([]);
-      setCustomerStatements([]);
-      setCollectionActivities([]);
-      setProducts([]);
-      setInventories([]);
-      setOrders([]);
-      setPurchaseOrders([]);
-      setInvoices([]);
+      resetTenantWorkspaceData();
       return;
     }
 
@@ -340,7 +313,7 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
     setSelectedTenantId("");
     setErrorMessage("");
     setNoticeMessage("");
-    setApprovalRequests([]);
+    resetTenantWorkspaceData();
   }
 
   async function createTenantRecord(input: CreateTenantInput): Promise<void> {
@@ -362,18 +335,15 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
   async function importOnboardingDatasetRecord(
     input: Omit<ImportOnboardingInput, "tenantId">,
   ): Promise<ImportOnboardingResult> {
-    if (!selectedTenantId) {
-      setErrorMessage("Select a tenant first.");
-      throw new Error("Select a tenant first.");
-    }
+    const tenantId = getSelectedTenantIdOrThrow();
 
     setIsBusy(true);
     setErrorMessage("");
     setNoticeMessage("");
 
     try {
-      const result = await submitOnboardingImport({ ...input, tenantId: selectedTenantId });
-      await refreshTenantWorkspace(selectedTenantId);
+      const result = await submitOnboardingImport({ ...input, tenantId });
+      await refreshTenantWorkspace(tenantId);
       setNoticeMessage(
         t("tenants.importNotice", {
           dataset: t(`tenants.datasets.${result.dataset}`),
@@ -391,16 +361,13 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
   }
 
   async function exportTenantSnapshotRecord(): Promise<TenantExportBundle> {
-    if (!selectedTenantId) {
-      setErrorMessage("Select a tenant first.");
-      throw new Error("Select a tenant first.");
-    }
+    const tenantId = getSelectedTenantIdOrThrow();
 
     setIsBusy(true);
     setErrorMessage("");
 
     try {
-      const snapshot = await exportTenantSnapshotBundle(selectedTenantId);
+      const snapshot = await exportTenantSnapshotBundle(tenantId);
       setNoticeMessage(
         t("tenants.exportNotice", {
           tenantName: snapshot.tenant.name,
@@ -468,19 +435,14 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
   async function createCustomerRecord(
     input: Omit<CreateCustomerInput, "tenantId">,
   ): Promise<void> {
-    if (!selectedTenantId) {
-      setErrorMessage("Select a tenant first.");
-      return;
-    }
+    const tenantId = getSelectedTenantIdOrThrow();
 
     setIsBusy(true);
     setErrorMessage("");
 
     try {
-      const created = await submitCustomer({ ...input, tenantId: selectedTenantId });
-      setCustomers((current) => [created, ...current]);
-      const nextCustomerStatements = await loadCustomerStatements(selectedTenantId);
-      setCustomerStatements(nextCustomerStatements);
+      await submitCustomer({ ...input, tenantId });
+      await refreshTenantWorkspace(tenantId);
     } catch (caught) {
       setErrorMessage(caught instanceof Error ? caught.message : "Customer creation failed.");
       throw caught;
@@ -492,17 +454,14 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
   async function createSupplierRecord(
     input: Omit<CreateSupplierInput, "tenantId">,
   ): Promise<void> {
-    if (!selectedTenantId) {
-      setErrorMessage("Select a tenant first.");
-      return;
-    }
+    const tenantId = getSelectedTenantIdOrThrow();
 
     setIsBusy(true);
     setErrorMessage("");
 
     try {
-      const created = await submitSupplier({ ...input, tenantId: selectedTenantId });
-      setSuppliers((current) => [created, ...current]);
+      await submitSupplier({ ...input, tenantId });
+      await refreshTenantWorkspace(tenantId);
     } catch (caught) {
       setErrorMessage(caught instanceof Error ? caught.message : "Supplier creation failed.");
       throw caught;
@@ -514,19 +473,14 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
   async function createProductRecord(
     input: Omit<CreateProductInput, "tenantId">,
   ): Promise<void> {
-    if (!selectedTenantId) {
-      setErrorMessage("Select a tenant first.");
-      return;
-    }
+    const tenantId = getSelectedTenantIdOrThrow();
 
     setIsBusy(true);
     setErrorMessage("");
 
     try {
-      const created = await submitProduct({ ...input, tenantId: selectedTenantId });
-      setProducts((current) => [created, ...current]);
-      const nextInventory = await loadInventory(selectedTenantId);
-      setInventories(nextInventory);
+      await submitProduct({ ...input, tenantId });
+      await refreshTenantWorkspace(tenantId);
     } catch (caught) {
       setErrorMessage(caught instanceof Error ? caught.message : "Product creation failed.");
       throw caught;
@@ -538,28 +492,21 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
   async function createInventoryAdjustmentRecord(
     input: Omit<CreateInventoryAdjustmentInput, "tenantId">,
   ): Promise<void> {
-    if (!selectedTenantId) {
-      setErrorMessage("Select a tenant first.");
-      return;
-    }
+    const tenantId = getSelectedTenantIdOrThrow();
 
     setIsBusy(true);
     setErrorMessage("");
     setNoticeMessage("");
 
     try {
-      const result = await submitInventoryAdjustment({ ...input, tenantId: selectedTenantId });
+      const result = await submitInventoryAdjustment({ ...input, tenantId });
       if (result.kind === "approval_requested") {
-        setApprovalRequests((current) => [result.approvalRequest, ...current]);
+        await refreshTenantWorkspace(tenantId);
         setNoticeMessage(buildApprovalNotice(result.approvalRequest));
         return;
       }
 
-      const updated = result.item;
-      setInventories((current) => {
-        const next = current.filter((item) => item.productId !== updated.productId);
-        return [...next, updated].sort((left, right) => left.productName.localeCompare(right.productName));
-      });
+      await refreshTenantWorkspace(tenantId);
     } catch (caught) {
       setErrorMessage(caught instanceof Error ? caught.message : "Inventory adjustment failed.");
       throw caught;
@@ -569,19 +516,14 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
   }
 
   async function createOrderRecord(input: Omit<CreateOrderInput, "tenantId">): Promise<void> {
-    if (!selectedTenantId) {
-      setErrorMessage("Select a tenant first.");
-      return;
-    }
+    const tenantId = getSelectedTenantIdOrThrow();
 
     setIsBusy(true);
     setErrorMessage("");
 
     try {
-      const created = await submitOrder({ ...input, tenantId: selectedTenantId });
-      setOrders((current) => [created, ...current]);
-      const nextInventory = await loadInventory(selectedTenantId);
-      setInventories(nextInventory);
+      await submitOrder({ ...input, tenantId });
+      await refreshTenantWorkspace(tenantId);
     } catch (caught) {
       setErrorMessage(caught instanceof Error ? caught.message : "Order creation failed.");
       throw caught;
@@ -593,17 +535,14 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
   async function createPurchaseOrderRecord(
     input: Omit<CreatePurchaseOrderInput, "tenantId">,
   ): Promise<void> {
-    if (!selectedTenantId) {
-      setErrorMessage("Select a tenant first.");
-      return;
-    }
+    const tenantId = getSelectedTenantIdOrThrow();
 
     setIsBusy(true);
     setErrorMessage("");
 
     try {
-      const created = await submitPurchaseOrder({ ...input, tenantId: selectedTenantId });
-      setPurchaseOrders((current) => [created, ...current]);
+      await submitPurchaseOrder({ ...input, tenantId });
+      await refreshTenantWorkspace(tenantId);
     } catch (caught) {
       setErrorMessage(caught instanceof Error ? caught.message : "Purchase order creation failed.");
       throw caught;
@@ -615,35 +554,21 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
   async function receivePurchaseOrderRecord(
     input: Omit<ReceivePurchaseOrderInput, "tenantId">,
   ): Promise<void> {
-    if (!selectedTenantId) {
-      setErrorMessage("Select a tenant first.");
-      return;
-    }
+    const tenantId = getSelectedTenantIdOrThrow();
 
     setIsBusy(true);
     setErrorMessage("");
     setNoticeMessage("");
 
     try {
-      const result = await submitPurchaseOrderReceipt({ ...input, tenantId: selectedTenantId });
+      const result = await submitPurchaseOrderReceipt({ ...input, tenantId });
       if (result.kind === "approval_requested") {
-        setApprovalRequests((current) => [result.approvalRequest, ...current]);
+        await refreshTenantWorkspace(tenantId);
         setNoticeMessage(buildApprovalNotice(result.approvalRequest));
         return;
       }
 
-      const applied = result.item;
-      setPurchaseOrders((current) =>
-        current.map((purchaseOrder) =>
-          purchaseOrder.id === applied.purchaseOrder.id ? applied.purchaseOrder : purchaseOrder,
-        ),
-      );
-      setInventories((current) => {
-        const next = current.filter((item) => item.productId !== applied.inventory.productId);
-        return [...next, applied.inventory].sort((left, right) =>
-          left.productName.localeCompare(right.productName),
-        );
-      });
+      await refreshTenantWorkspace(tenantId);
     } catch (caught) {
       setErrorMessage(caught instanceof Error ? caught.message : "Purchase order receiving failed.");
       throw caught;
@@ -653,27 +578,21 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
   }
 
   async function createInvoiceRecord(input: Omit<CreateInvoiceInput, "tenantId">): Promise<void> {
-    if (!selectedTenantId) {
-      setErrorMessage("Select a tenant first.");
-      return;
-    }
+    const tenantId = getSelectedTenantIdOrThrow();
 
     setIsBusy(true);
     setErrorMessage("");
     setNoticeMessage("");
 
     try {
-      const result = await submitInvoiceIssue({ ...input, tenantId: selectedTenantId });
+      const result = await submitInvoiceIssue({ ...input, tenantId });
       if (result.kind === "approval_requested") {
-        setApprovalRequests((current) => [result.approvalRequest, ...current]);
+        await refreshTenantWorkspace(tenantId);
         setNoticeMessage(buildApprovalNotice(result.approvalRequest));
         return;
       }
 
-      const created = result.item;
-      setInvoices((current) => [created, ...current]);
-      const nextCustomerStatements = await loadCustomerStatements(selectedTenantId);
-      setCustomerStatements(nextCustomerStatements);
+      await refreshTenantWorkspace(tenantId);
     } catch (caught) {
       setErrorMessage(caught instanceof Error ? caught.message : "Invoice creation failed.");
       throw caught;
@@ -685,29 +604,21 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
   async function createInvoicePaymentRecord(
     input: Omit<CreateInvoicePaymentInput, "tenantId">,
   ): Promise<void> {
-    if (!selectedTenantId) {
-      setErrorMessage("Select a tenant first.");
-      return;
-    }
+    const tenantId = getSelectedTenantIdOrThrow();
 
     setIsBusy(true);
     setErrorMessage("");
     setNoticeMessage("");
 
     try {
-      const result = await submitInvoicePayment({ ...input, tenantId: selectedTenantId });
+      const result = await submitInvoicePayment({ ...input, tenantId });
       if (result.kind === "approval_requested") {
-        setApprovalRequests((current) => [result.approvalRequest, ...current]);
+        await refreshTenantWorkspace(tenantId);
         setNoticeMessage(buildApprovalNotice(result.approvalRequest));
         return;
       }
 
-      const updatedInvoice = result.item;
-      setInvoices((current) =>
-        current.map((invoice) => (invoice.id === updatedInvoice.id ? updatedInvoice : invoice)),
-      );
-      const nextCustomerStatements = await loadCustomerStatements(selectedTenantId);
-      setCustomerStatements(nextCustomerStatements);
+      await refreshTenantWorkspace(tenantId);
     } catch (caught) {
       setErrorMessage(caught instanceof Error ? caught.message : "Invoice payment failed.");
       throw caught;
@@ -719,18 +630,15 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
   async function decideApprovalRequestRecord(
     input: Omit<ApprovalDecisionInput, "tenantId">,
   ): Promise<void> {
-    if (!selectedTenantId) {
-      setErrorMessage("Select a tenant first.");
-      return;
-    }
+    const tenantId = getSelectedTenantIdOrThrow();
 
     setIsBusy(true);
     setErrorMessage("");
     setNoticeMessage("");
 
     try {
-      const approvalRequest = await submitApprovalDecision({ ...input, tenantId: selectedTenantId });
-      await refreshTenantWorkspace(selectedTenantId);
+      const approvalRequest = await submitApprovalDecision({ ...input, tenantId });
+      await refreshTenantWorkspace(tenantId);
       setNoticeMessage(buildApprovalNotice(approvalRequest, input.decision));
     } catch (caught) {
       setErrorMessage(caught instanceof Error ? caught.message : "Approval decision failed.");
@@ -743,21 +651,14 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
   async function updateInvoiceCollectionRecord(
     input: Omit<UpdateInvoiceCollectionInput, "tenantId">,
   ): Promise<void> {
-    if (!selectedTenantId) {
-      setErrorMessage("Select a tenant first.");
-      return;
-    }
+    const tenantId = getSelectedTenantIdOrThrow();
 
     setIsBusy(true);
     setErrorMessage("");
 
     try {
-      const updatedInvoice = await submitInvoiceCollectionUpdate({ ...input, tenantId: selectedTenantId });
-      setInvoices((current) =>
-        current.map((invoice) => (invoice.id === updatedInvoice.id ? updatedInvoice : invoice)),
-      );
-      const nextCollectionActivities = await loadInvoiceCollectionActivities(selectedTenantId);
-      setCollectionActivities(nextCollectionActivities);
+      await submitInvoiceCollectionUpdate({ ...input, tenantId });
+      await refreshTenantWorkspace(tenantId);
     } catch (caught) {
       setErrorMessage(caught instanceof Error ? caught.message : "Invoice collection update failed.");
       throw caught;
@@ -769,24 +670,14 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
   async function resolveInvoiceCollectionActionRecord(
     input: Omit<ResolveInvoiceCollectionActionInput, "tenantId">,
   ): Promise<void> {
-    if (!selectedTenantId) {
-      setErrorMessage("Select a tenant first.");
-      return;
-    }
+    const tenantId = getSelectedTenantIdOrThrow();
 
     setIsBusy(true);
     setErrorMessage("");
 
     try {
-      const updatedInvoice = await submitInvoiceCollectionResolution({
-        ...input,
-        tenantId: selectedTenantId,
-      });
-      setInvoices((current) =>
-        current.map((invoice) => (invoice.id === updatedInvoice.id ? updatedInvoice : invoice)),
-      );
-      const nextCollectionActivities = await loadInvoiceCollectionActivities(selectedTenantId);
-      setCollectionActivities(nextCollectionActivities);
+      await submitInvoiceCollectionResolution({ ...input, tenantId });
+      await refreshTenantWorkspace(tenantId);
     } catch (caught) {
       setErrorMessage(caught instanceof Error ? caught.message : "Invoice collection update failed.");
       throw caught;
