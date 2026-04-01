@@ -21,6 +21,7 @@ const languageStorageKey = "smarterp-next-language";
 const smokeId = String(Date.now()).slice(-6);
 const exportSnapshotDownloadPath = path.join(outputDir, `runtime-next-tenant-export-${smokeId}.json`);
 const handoffPackageDownloadPath = path.join(outputDir, `runtime-next-handoff-${smokeId}.json`);
+const recoveryDrillDownloadPath = path.join(outputDir, `runtime-next-recovery-drill-${smokeId}.json`);
 const tenantName = `Smoke Tenant ${smokeId}`;
 const tenantSlug = `smoke-${smokeId}`;
 const customerName = `Smoke Buyer ${smokeId}`;
@@ -460,6 +461,7 @@ async function main() {
   let onboardingExportVerified = false;
   let baselineRestorePreviewVerified = false;
   let baselineRestoreVerified = false;
+  let recoveryDrillVerified = false;
   let duplicateSupplierRejectedVerified = false;
   let duplicateProductRejectedVerified = false;
   let supplierAndPurchaseOrdersVerified = false;
@@ -1412,6 +1414,31 @@ async function main() {
     await restoredInventoryRow.getByText(String(expectedRemainingStock), { exact: true }).waitFor({ timeout: 15000 });
     await restoredInventoryRow.getByText(buildAmountPattern(expectedInventoryValueAmount)).first().waitFor({ timeout: 15000 });
     baselineRestoreVerified = true;
+    await openSection(page, sidebarIndexes.setup, "/dashboard/setup");
+    await waitForTenantContext(page, restoredTenantName);
+    const recoveryDrillCard = page.getByTestId("setup-recovery-drill-card");
+    await recoveryDrillCard.waitFor({ timeout: 15000 });
+    await recoveryDrillCard.getByText("6 / 6", { exact: false }).waitFor({ timeout: 15000 });
+    const recoveryDrillDownloadPromise = page.waitForEvent("download", { timeout: 15000 });
+    await page.getByTestId("setup-recovery-drill-download").click();
+    const recoveryDrillDownload = await recoveryDrillDownloadPromise;
+    await recoveryDrillDownload.saveAs(recoveryDrillDownloadPath);
+    const recoveryDrillReport = JSON.parse(await fs.readFile(recoveryDrillDownloadPath, "utf8"));
+    assert(
+      recoveryDrillReport.version === "smarterp-next-recovery-drill-v1",
+      "Recovery drill report did not expose the expected version.",
+    );
+    assert(
+      recoveryDrillReport.restoredTenant?.name === restoredTenantName,
+      "Recovery drill report did not include the restored tenant.",
+    );
+    assert(
+      recoveryDrillReport.passCount === recoveryDrillReport.totalCount &&
+        Array.isArray(recoveryDrillReport.checks) &&
+        recoveryDrillReport.checks.every((check) => check.passed === true),
+      "Recovery drill report did not pass every recovery check.",
+    );
+    recoveryDrillVerified = true;
     await page.evaluate(
       ({ key, tenantId }) => {
         if (tenantId) {
@@ -1789,6 +1816,7 @@ async function main() {
       onboardingExportVerified,
       baselineRestorePreviewVerified,
       baselineRestoreVerified,
+      recoveryDrillVerified,
       duplicateSupplierRejectedVerified,
       duplicateProductRejectedVerified,
       supplierAndPurchaseOrdersVerified,

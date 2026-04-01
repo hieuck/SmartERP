@@ -178,7 +178,8 @@ Checkpoint effect:
 1. completed: seed/setup flows for first-time pilot operators
 2. completed: tenant-scoped deployment packaging and handoff runbook
 3. completed: tighter role-specific onboarding for non-founder users
-4. next: polish pilot recovery drills on top of restore baseline
+4. completed: polish pilot recovery drills on top of restore baseline
+5. next: reduce build/runtime friction for pilot environments, starting with the oversized web vendor bundle
 
 ## Non-Goals Right Now
 

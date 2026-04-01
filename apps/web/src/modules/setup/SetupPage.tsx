@@ -25,6 +25,12 @@ import { useLocale } from "../../locale/LocaleContext";
 import { useWorkspace } from "../../state/WorkspaceContext";
 import { loadOperationsStatus } from "../operations/api";
 import { buildPilotHandoffPackage } from "./handoff";
+import {
+  buildRecoveryDrillReport,
+  loadRecoveryDrillReport,
+  saveRecoveryDrillReport,
+  type RecoveryDrillReport,
+} from "./recoveryDrill";
 import { downloadJsonFile, parseRestoreSnapshot } from "../tenants/setup-utils";
 
 const { Paragraph, Text, Title } = Typography;
@@ -78,6 +84,9 @@ export function SetupPage(): ReactElement {
   const [isPackagingHandoff, setIsPackagingHandoff] = useState(false);
   const [restorePreview, setRestorePreview] = useState<RestoreTenantSnapshotPreview | null>(null);
   const [restoreResult, setRestoreResult] = useState<RestoreTenantSnapshotResult | null>(null);
+  const [recoveryDrillReport, setRecoveryDrillReport] = useState<RecoveryDrillReport | null>(() =>
+    loadRecoveryDrillReport(),
+  );
   const watchedDataset = (Form.useWatch("dataset", onboardingForm) as OnboardingDataset | undefined) ?? "customers";
 
   const checklistItems = useMemo<SetupChecklistItem[]>(
@@ -256,12 +265,45 @@ export function SetupPage(): ReactElement {
 
     try {
       const result = await restoreTenantSnapshotRecord(input);
+      const nextRecoveryDrillReport = restorePreview
+        ? buildRecoveryDrillReport({
+            snapshot: input.snapshot,
+            preview: restorePreview,
+            result,
+          })
+        : null;
       setRestoreResult(result);
+      setRecoveryDrillReport(nextRecoveryDrillReport);
+      if (nextRecoveryDrillReport) {
+        saveRecoveryDrillReport(nextRecoveryDrillReport);
+      }
       setRestorePreview(null);
       restoreForm.resetFields(["snapshotJson"]);
     } catch {
       // Error state is already surfaced via workspace context.
     }
+  };
+
+  const handleDownloadRecoveryDrill = () => {
+    if (!recoveryDrillReport) {
+      return;
+    }
+
+    downloadJsonFile(`${recoveryDrillReport.restoredTenant.slug}-recovery-drill.json`, recoveryDrillReport);
+  };
+
+  const handleOpenRestoredTenantInventory = () => {
+    const restoredTenant =
+      restoreResult?.tenant ??
+      tenants.find((tenant) => tenant.slug === recoveryDrillReport?.restoredTenant.slug) ??
+      null;
+
+    if (!restoredTenant) {
+      return;
+    }
+
+    setSelectedTenantId(restoredTenant.id);
+    navigate("/dashboard/inventory");
   };
 
   return (
@@ -561,17 +603,110 @@ export function SetupPage(): ReactElement {
           ) : null}
 
           {restoreResult ? (
-            <Alert
-              type="success"
-              title={t("setup.restoreResultTitle")}
-              description={t("tenants.restoreSummary", {
-                tenantName: restoreResult.tenant.name,
-                restoredCustomers: restoreResult.restoredCustomers,
-                restoredProducts: restoreResult.restoredProducts,
-                restoredInventoryLines: restoreResult.restoredInventoryLines,
-              })}
-              showIcon
-            />
+            <div className="page-inline-stack">
+              <Alert
+                type="success"
+                title={t("setup.restoreResultTitle")}
+                description={t("tenants.restoreSummary", {
+                  tenantName: restoreResult.tenant.name,
+                  restoredCustomers: restoreResult.restoredCustomers,
+                  restoredProducts: restoreResult.restoredProducts,
+                  restoredInventoryLines: restoreResult.restoredInventoryLines,
+                })}
+                showIcon
+              />
+              <Space wrap>
+                <Button data-testid="setup-recovery-open-restored" onClick={handleOpenRestoredTenantInventory}>
+                  {t("setup.recoveryDrillOpenRestoredTenant")}
+                </Button>
+              </Space>
+            </div>
+          ) : null}
+
+          {recoveryDrillReport ? (
+            <Card
+              data-testid="setup-recovery-drill-card"
+              title={t("setup.recoveryDrillTitle")}
+              size="small"
+              style={{ marginTop: 16 }}
+            >
+              <Paragraph type="secondary">{t("setup.recoveryDrillHint")}</Paragraph>
+              <div className="page-inline-stack">
+                <Space wrap>
+                  <Tag color={recoveryDrillReport.passCount === recoveryDrillReport.totalCount ? "green" : "gold"}>
+                    {recoveryDrillReport.passCount === recoveryDrillReport.totalCount
+                      ? t("setup.recoveryDrillPassed")
+                      : t("setup.recoveryDrillNeedsAttention")}
+                  </Tag>
+                  <Tag color="blue">
+                    {t("setup.recoveryDrillPassCount", {
+                      passed: recoveryDrillReport.passCount,
+                      total: recoveryDrillReport.totalCount,
+                    })}
+                  </Tag>
+                </Space>
+                <div className="record-stack">
+                  <div className="compact-record-row">
+                    <strong>{t("setup.recoveryDrillSourceTenant")}</strong>
+                    <span>
+                      {recoveryDrillReport.sourceTenant.name} ({recoveryDrillReport.sourceTenant.slug})
+                    </span>
+                  </div>
+                  <div className="compact-record-row">
+                    <strong>{t("setup.recoveryDrillRestoredTenant")}</strong>
+                    <span>
+                      {recoveryDrillReport.restoredTenant.name} ({recoveryDrillReport.restoredTenant.slug})
+                    </span>
+                  </div>
+                  <div className="compact-record-row">
+                    <strong>{t("setup.recoveryDrillPendingScopes")}</strong>
+                    <span>
+                      {recoveryDrillReport.pendingScopes.length
+                        ? recoveryDrillReport.pendingScopes.join(", ")
+                        : t("setup.recoveryDrillNoPendingScopes")}
+                    </span>
+                  </div>
+                  <div className="compact-record-row">
+                    <strong>{t("setup.recoveryDrillBaselineCounts")}</strong>
+                    <span>
+                      {t("setup.recoveryDrillBaselineCountsValue", {
+                        customers: recoveryDrillReport.baselineCounts.customers,
+                        suppliers: recoveryDrillReport.baselineCounts.suppliers,
+                        products: recoveryDrillReport.baselineCounts.products,
+                        inventoryLines: recoveryDrillReport.baselineCounts.inventoryLines,
+                      })}
+                    </span>
+                  </div>
+                </div>
+                <div className="activity-feed" data-testid="setup-recovery-drill-checks">
+                  {recoveryDrillReport.checks.map((check) => (
+                    <div className="activity-row" key={check.key}>
+                      <div className="activity-main">
+                        <strong>{t(`setup.recoveryChecks.${check.key}`)}</strong>
+                        <div className="record-detail">{check.detail}</div>
+                      </div>
+                      <div className="record-tag-stack">
+                        <Tag color={check.passed ? "green" : "gold"}>
+                          {check.passed ? t("setup.statusDone") : t("setup.statusPending")}
+                        </Tag>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <Space wrap>
+                  <Button
+                    data-testid="setup-recovery-drill-download"
+                    icon={<DownloadOutlined />}
+                    onClick={handleDownloadRecoveryDrill}
+                  >
+                    {t("setup.recoveryDrillDownload")}
+                  </Button>
+                  <Button onClick={handleOpenRestoredTenantInventory}>
+                    {t("setup.recoveryDrillOpenRestoredTenant")}
+                  </Button>
+                </Space>
+              </div>
+            </Card>
           ) : null}
         </Card>
       </div>
