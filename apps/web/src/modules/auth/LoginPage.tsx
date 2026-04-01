@@ -1,12 +1,13 @@
 import type { ReactElement } from "react";
 import type { FormProps } from "antd";
-import { Alert, Button, Card, Divider, Form, Input, Space, Typography } from "antd";
+import { Alert, Button, Card, Divider, Form, Input, Space, Tag, Typography } from "antd";
 import { Navigate } from "react-router-dom";
 
 import type { LoginInput } from "@smarterp/contracts";
 
 import { useLocale } from "../../locale/LocaleContext";
 import { useWorkspace } from "../../state/WorkspaceContext";
+import { getRoleOnboardingPlaybook } from "../onboarding/rolePlaybook";
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -46,19 +47,43 @@ export function LoginPage(): ReactElement {
               <Divider style={{ margin: "8px 0" }} />
               <Space orientation="vertical" size={8} style={{ width: "100%" }}>
                 <Text strong>{t("login.roleAccounts")}</Text>
-                {foundation.demoAccounts.map((account) => (
-                  <div className="record-row compact-record-row" key={account.email}>
-                    <div>
-                      <strong>{account.displayName}</strong>
-                      <div className="record-detail">
-                        {t(`roles.${account.role}`)} Â· {account.email}
-                      </div>
-                      <div className="record-detail">
-                        {t("login.password")}: {account.password}
+                {foundation.demoAccounts.map((account) => {
+                  const playbook = getRoleOnboardingPlaybook(account.role, {
+                    hasSelectedTenant: false,
+                    customersCount: 0,
+                    suppliersCount: 0,
+                    productsCount: 0,
+                    inventoriesCount: 0,
+                    ordersCount: 0,
+                    purchaseOrdersCount: 0,
+                    openInvoicesCount: 0,
+                    overdueInvoicesCount: 0,
+                    todayCollectionsCount: 0,
+                  });
+
+                  return (
+                    <div
+                      className="record-row compact-record-row"
+                      data-testid={`login-role-card-${account.role}`}
+                      key={account.email}
+                    >
+                      <div>
+                        <Space wrap size={[8, 8]}>
+                          <strong>{account.displayName}</strong>
+                          <Tag color="blue">{t(`roles.${account.role}`)}</Tag>
+                          <Tag color="default">
+                            {t("roleOnboarding.firstStop")}: {t(`modules.${playbook.primaryModule}`)}
+                          </Tag>
+                        </Space>
+                        <div className="record-detail">{account.email}</div>
+                        <div className="record-detail">
+                          {t("login.password")}: {account.password}
+                        </div>
+                        <div className="record-detail">{t(`roleOnboarding.roles.${account.role}.loginHint`)}</div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </Space>
             </>
           ) : null}

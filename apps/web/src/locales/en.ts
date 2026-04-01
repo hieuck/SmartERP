@@ -652,8 +652,8 @@ Object.assign(en.modules, {
   setup: "Setup",
 });
 
-Object.assign(en, {
-  setup: {
+  Object.assign(en, {
+    setup: {
     title: "Setup",
     subtitle:
       "Founder-first pilot setup workspace for creating a tenant, seeding master data, and rehearsing backup and restore without digging through admin screens.",
@@ -702,7 +702,76 @@ Object.assign(en, {
     checklistProducts: "Seed product catalog",
     checklistProductsDescription: "Import products early so pricing, inventory, purchasing, and order flows share the same SKUs.",
     checklistRecovery: "Rehearse baseline recovery",
-    checklistRecoveryDescription: "Capture or restore a snapshot baseline before pilot users depend on the environment.",
+      checklistRecoveryDescription: "Capture or restore a snapshot baseline before pilot users depend on the environment.",
+    },
+  });
+
+Object.assign(en, {
+  roleOnboarding: {
+    title: "Role Launchpad",
+    firstStop: "First stop",
+    statusReady: "Ready",
+    statusNeedsAttention: "Needs setup",
+    openPrimary: "Open {{module}}",
+    openSecondary: "Then open {{module}}",
+    openModule: "Open {{module}}",
+    noTenantSelected: "Select a tenant first so each role lands in one clear operating lane.",
+    roles: {
+      founder: {
+        title: "Founder control lane",
+        summary:
+          "Lock the pilot tenant, keep approvals moving, and watch readiness before the wider team touches live data.",
+        loginHint: "Start in Setup, then verify readiness and handoff state in Operations.",
+        step1: "Confirm the pilot tenant and keep every onboarding action scoped to that single workspace.",
+        step2: "Review approvals so high-risk finance and inventory changes do not drift without founder sign-off.",
+        step3: "Open Operations and confirm smoke, readiness, and artifact health before handoff.",
+      },
+      finance: {
+        title: "Finance control lane",
+        summary:
+          "Own invoice issuance, settlement, and revenue signal review without guessing where to start.",
+        loginHint: "Start in Invoices to issue or settle documents, then verify the numbers in Reports.",
+        step1: "Issue or review invoices for the active tenant before downstream cash tracking starts drifting.",
+        step2: "Post receipts and settlements so open balances stay accurate for the pilot team.",
+        step3: "Validate reporting signals after every material finance movement.",
+      },
+      sales: {
+        title: "Sales execution lane",
+        summary:
+          "Build the commercial pipeline from customer setup through order capture inside one tenant context.",
+        loginHint: "Start in Customers, then move into Orders once products and buyers are ready.",
+        step1: "Confirm the current tenant and clean customer master data before taking new orders.",
+        step2: "Check that the product catalog is usable before quoting or creating an order.",
+        step3: "Create and review orders only after both customer and product prerequisites are clean.",
+      },
+      warehouse: {
+        title: "Warehouse control lane",
+        summary:
+          "Receive stock, protect inventory accuracy, and keep warehouse actions aligned with approved purchasing flow.",
+        loginHint: "Start in Inventory, then review the purchasing queue before touching stock.",
+        step1: "Make sure the product catalog is usable before any stock movement is recorded.",
+        step2: "Review inbound purchasing work so receipts follow the right order context.",
+        step3: "Use Inventory to confirm the live stock position after each receipt or adjustment.",
+      },
+      purchasing: {
+        title: "Purchasing execution lane",
+        summary:
+          "Keep suppliers, catalog readiness, and purchase-order creation aligned before the warehouse receives goods.",
+        loginHint: "Start in Suppliers, then issue Purchase Orders once vendor and catalog data are clean.",
+        step1: "Maintain supplier data first so purchasing does not depend on ad-hoc vendor records.",
+        step2: "Confirm the product catalog is ready before creating purchase orders.",
+        step3: "Issue and track purchase orders only after both supplier and product prerequisites are in place.",
+      },
+      collector: {
+        title: "Collections worklist lane",
+        summary:
+          "Work the collection queue, follow promises, and verify receivable pressure without touching unrelated modules.",
+        loginHint: "Start in Invoices for the collection worklist, then use Reports to confirm receivable pressure.",
+        step1: "Work every collection action that is due today before it turns into founder escalation.",
+        step2: "Review open invoices so no receivable falls out of the active follow-up queue.",
+        step3: "Use Reports to confirm overdue pressure and collection impact after each update.",
+      },
+    },
   },
 });
 

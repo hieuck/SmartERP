@@ -11,6 +11,7 @@ const screenshotPath = path.join(outputDir, "runtime-next-smoke.png");
 const summaryPath = path.join(outputDir, "runtime-next-smoke-summary.json");
 const demoEmail = process.env.SMARTERP_NEXT_DEMO_EMAIL ?? "founder@smarterp.vn";
 const demoPassword = process.env.SMARTERP_NEXT_DEMO_PASSWORD ?? "smarterp-next";
+const financeEmail = "finance@smarterp.vn";
 const salesEmail = "sales@smarterp.vn";
 const warehouseEmail = "warehouse@smarterp.vn";
 const collectorEmail = "collector@smarterp.vn";
@@ -357,6 +358,16 @@ async function waitForTenantContext(page, expectedTenantName) {
   );
 }
 
+async function verifyRoleOnboardingCard(page, role, expectedTexts) {
+  const card = page.getByTestId("role-onboarding-card");
+  await card.waitFor({ timeout: 15000 });
+  await page.getByTestId(`role-onboarding-${role}`).waitFor({ timeout: 15000 });
+
+  for (const text of expectedTexts) {
+    await card.getByText(text, { exact: false }).first().waitFor({ timeout: 15000 });
+  }
+}
+
 async function dismissAlertIfVisible(page, selector) {
   const alerts = page.locator(selector);
   if ((await alerts.count()) === 0) {
@@ -470,16 +481,25 @@ async function main() {
   let auditTrailVerified = false;
   let operationsStatusVerified = false;
   let operationsReadinessVerified = false;
+  let loginRoleHintsVerified = false;
+  let financeRoleOnboardingVerified = false;
   let unauthorizedApiBlockedVerified = false;
   let rbacSalesVisibilityVerified = false;
+  let salesRoleOnboardingVerified = false;
   let rbacSalesBlockedRouteVerified = false;
   let rbacSalesBlockedRestorePreviewVerified = false;
   let rbacWarehouseBlockedMutationVerified = false;
+  let warehouseRoleOnboardingVerified = false;
   let rbacCollectorActionSplitVerified = false;
+  let collectorRoleOnboardingVerified = false;
 
   try {
     await openApp(page);
     await page.waitForURL(/\/login$/, { timeout: 15000 });
+    await page.getByTestId("login-role-card-finance").getByText("Hóa đơn", { exact: false }).first().waitFor({ timeout: 15000 });
+    await page.getByTestId("login-role-card-sales").getByText("Khách hàng", { exact: false }).first().waitFor({ timeout: 15000 });
+    await page.getByTestId("login-role-card-collector").getByText("Báo cáo", { exact: false }).first().waitFor({ timeout: 15000 });
+    loginRoleHintsVerified = true;
     await page.locator('input[autocomplete="email"]').fill(demoEmail);
     await page.locator('input[autocomplete="current-password"]').fill(`${demoPassword}-invalid`);
     const invalidLoginResponse = page.waitForResponse(
@@ -1422,20 +1442,36 @@ async function main() {
       { sessionKey: sessionStorageKey, tenantKey: tenantStorageKey },
     );
     assert(Boolean(storedWorkspaceStateBeforeLogout.session), "Session was not persisted before logout.");
-    assert(Boolean(storedWorkspaceStateBeforeLogout.tenantId), "Selected tenant was not persisted before logout.");
+      assert(Boolean(storedWorkspaceStateBeforeLogout.tenantId), "Selected tenant was not persisted before logout.");
 
-    await logout(page);
+      await logout(page);
 
-    await loginAs(page, salesEmail, demoPassword);
-    await page.locator(".shell-header").getByText("Kinh doanh", { exact: false }).waitFor({ timeout: 15000 });
+    await loginAs(page, financeEmail, demoPassword);
+    await page.locator(".shell-header").getByText("Tài chính", { exact: false }).waitFor({ timeout: 15000 });
     await page.evaluate(
       ({ key, tenantId }) => window.localStorage.setItem(key, tenantId),
       { key: tenantStorageKey, tenantId: originalTenantId },
     );
-    assert(
-      (await page.locator(".ant-layout-sider .ant-menu-item").getByText("Khách hàng", { exact: false }).count()) > 0,
-      "Sales role did not receive customer navigation.",
-    );
+    await openDirectRoute(page, "/dashboard");
+    await waitForTenantContext(page, tenantName);
+    await verifyRoleOnboardingCard(page, "finance", ["Làn kiểm soát tài chính", "Hóa đơn", "Báo cáo"]);
+    financeRoleOnboardingVerified = true;
+    await logout(page);
+
+    await loginAs(page, salesEmail, demoPassword);
+      await page.locator(".shell-header").getByText("Kinh doanh", { exact: false }).waitFor({ timeout: 15000 });
+      await page.evaluate(
+        ({ key, tenantId }) => window.localStorage.setItem(key, tenantId),
+        { key: tenantStorageKey, tenantId: originalTenantId },
+      );
+      await openDirectRoute(page, "/dashboard");
+      await waitForTenantContext(page, tenantName);
+      await verifyRoleOnboardingCard(page, "sales", ["Làn thực thi kinh doanh", "Khách hàng", "Đơn hàng"]);
+      salesRoleOnboardingVerified = true;
+      assert(
+        (await page.locator(".ant-layout-sider .ant-menu-item").getByText("Khách hàng", { exact: false }).count()) > 0,
+        "Sales role did not receive customer navigation.",
+      );
     assert(
       (await page.locator(".ant-layout-sider .ant-menu-item").getByText("Báo cáo", { exact: false }).count()) === 0,
       "Sales role should not see reports navigation.",
@@ -1606,6 +1642,10 @@ async function main() {
       ({ key, tenantId }) => window.localStorage.setItem(key, tenantId),
       { key: tenantStorageKey, tenantId: originalTenantId },
     );
+    await openDirectRoute(page, "/dashboard");
+    await waitForTenantContext(page, tenantName);
+    await verifyRoleOnboardingCard(page, "warehouse", ["Làn kiểm soát kho vận", "Tồn kho", "Đơn mua"]);
+    warehouseRoleOnboardingVerified = true;
     await openDirectRoute(page, "/dashboard/purchase-orders");
     await waitForTenantContext(page, tenantName);
     await page
@@ -1661,6 +1701,10 @@ async function main() {
       ({ key, tenantId }) => window.localStorage.setItem(key, tenantId),
       { key: tenantStorageKey, tenantId: originalTenantId },
     );
+    await openDirectRoute(page, "/dashboard");
+    await waitForTenantContext(page, tenantName);
+    await verifyRoleOnboardingCard(page, "collector", ["Làn worklist thu hồi công nợ", "Hóa đơn", "Báo cáo"]);
+    collectorRoleOnboardingVerified = true;
     await openDirectRoute(page, "/dashboard/invoices");
     await waitForTenantContext(page, tenantName);
     await page
@@ -1766,11 +1810,16 @@ async function main() {
       auditTrailVerified,
       operationsStatusVerified,
       operationsReadinessVerified,
+      loginRoleHintsVerified,
+      financeRoleOnboardingVerified,
       rbacSalesVisibilityVerified,
+      salesRoleOnboardingVerified,
       rbacSalesBlockedRouteVerified,
       rbacSalesBlockedRestorePreviewVerified,
       rbacWarehouseBlockedMutationVerified,
+      warehouseRoleOnboardingVerified,
       rbacCollectorActionSplitVerified,
+      collectorRoleOnboardingVerified,
       directRouteVerified: true,
       logoutClearsStorageVerified: true,
       logoutBlocksProtectedRouteVerified: true,

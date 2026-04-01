@@ -657,8 +657,8 @@ Object.assign(vi.modules, {
   setup: "Khởi tạo",
 });
 
-Object.assign(vi, {
-  setup: {
+  Object.assign(vi, {
+    setup: {
     title: "Khởi tạo",
     subtitle:
       "Workspace dành cho founder để tạo tenant pilot, nạp master data và diễn tập sao lưu, khôi phục mà không phải lục từng màn quản trị rời rạc.",
@@ -707,7 +707,76 @@ Object.assign(vi, {
     checklistProducts: "Nạp danh mục sản phẩm",
     checklistProductsDescription: "Import sản phẩm sớm để giá bán, tồn kho, mua hàng và bán hàng dùng chung một bộ SKU.",
     checklistRecovery: "Diễn tập recovery baseline",
-    checklistRecoveryDescription: "Chụp hoặc khôi phục snapshot baseline trước khi pilot users phụ thuộc vào môi trường này.",
+      checklistRecoveryDescription: "Chụp hoặc khôi phục snapshot baseline trước khi pilot users phụ thuộc vào môi trường này.",
+    },
+  });
+
+Object.assign(vi, {
+  roleOnboarding: {
+    title: "Làn khởi động theo vai trò",
+    firstStop: "Điểm vào đầu tiên",
+    statusReady: "Sẵn sàng",
+    statusNeedsAttention: "Cần chuẩn bị thêm",
+    openPrimary: "Mở {{module}}",
+    openSecondary: "Tiếp theo mở {{module}}",
+    openModule: "Mở {{module}}",
+    noTenantSelected: "Hãy chọn tenant trước để mỗi vai trò đi vào đúng một làn vận hành rõ ràng.",
+    roles: {
+      founder: {
+        title: "Làn điều phối của founder",
+        summary:
+          "Khóa đúng tenant pilot, giữ phê duyệt chạy đều, và kiểm tra readiness trước khi đội rộng hơn chạm vào dữ liệu sống.",
+        loginHint: "Vào Khởi tạo trước, rồi kiểm tra readiness và trạng thái bàn giao trong Vận hành.",
+        step1: "Xác nhận đúng tenant pilot và giữ mọi thao tác onboarding bám vào đúng một workspace này.",
+        step2: "Duyệt các thay đổi nhạy cảm để tài chính và tồn kho không trôi mà thiếu sign-off của founder.",
+        step3: "Mở Vận hành và xác nhận smoke, readiness, cùng artifact trước khi bàn giao.",
+      },
+      finance: {
+        title: "Làn kiểm soát tài chính",
+        summary:
+          "Chịu trách nhiệm phát hành hóa đơn, ghi nhận thanh toán, và đọc tín hiệu doanh thu mà không phải đoán xem nên bắt đầu ở đâu.",
+        loginHint: "Vào Hóa đơn trước để phát hành hoặc ghi nhận thanh toán, rồi đối chiếu số liệu ở Báo cáo.",
+        step1: "Phát hành hoặc rà soát hóa đơn của tenant đang chọn trước khi luồng tiền bắt đầu lệch.",
+        step2: "Ghi nhận thu tiền và settlement để số dư phải thu luôn khớp với thực tế pilot.",
+        step3: "Mỗi khi có biến động tài chính đáng kể, hãy kiểm tra lại tín hiệu trong Báo cáo.",
+      },
+      sales: {
+        title: "Làn thực thi kinh doanh",
+        summary:
+          "Dựng pipeline thương mại từ khách hàng tới đơn hàng trong đúng một ngữ cảnh tenant rõ ràng.",
+        loginHint: "Vào Khách hàng trước, rồi chuyển sang Đơn hàng khi sản phẩm và người mua đã sẵn sàng.",
+        step1: "Xác nhận tenant hiện tại và dọn dữ liệu khách hàng trước khi nhận đơn mới.",
+        step2: "Kiểm tra catalog sản phẩm đã dùng được trước khi báo giá hoặc tạo đơn hàng.",
+        step3: "Chỉ tạo và theo dõi đơn hàng khi cả khách hàng lẫn sản phẩm đã sẵn sàng.",
+      },
+      warehouse: {
+        title: "Làn kiểm soát kho vận",
+        summary:
+          "Nhận hàng, giữ độ chính xác tồn kho, và bảo đảm thao tác kho luôn bám đúng luồng mua hàng đã duyệt.",
+        loginHint: "Vào Tồn kho trước, rồi nhìn sang hàng đợi mua hàng trước khi chạm vào stock.",
+        step1: "Bảo đảm catalog sản phẩm dùng được trước khi ghi nhận bất kỳ chuyển động tồn kho nào.",
+        step2: "Rà soát công việc mua hàng đầu vào để mỗi lần nhận hàng bám đúng đơn mua.",
+        step3: "Dùng Tồn kho để xác nhận vị thế stock sống sau mỗi lần nhận hoặc điều chỉnh.",
+      },
+      purchasing: {
+        title: "Làn thực thi mua hàng",
+        summary:
+          "Giữ dữ liệu nhà cung cấp, độ sẵn sàng catalog, và phát hành đơn mua đi cùng nhau trước khi kho nhận hàng.",
+        loginHint: "Vào Nhà cung cấp trước, rồi phát hành Đơn mua khi vendor và catalog đã sạch.",
+        step1: "Quản lý dữ liệu nhà cung cấp trước để mua hàng không phải dựa vào record ad-hoc.",
+        step2: "Xác nhận catalog sản phẩm đã sẵn sàng trước khi lập đơn mua.",
+        step3: "Chỉ phát hành và theo dõi đơn mua khi cả supplier lẫn product đã đủ điều kiện.",
+      },
+      collector: {
+        title: "Làn worklist thu hồi công nợ",
+        summary:
+          "Xử lý hàng việc thu hồi, bám các cam kết thanh toán, và kiểm tra áp lực công nợ mà không phải chạm sang module không liên quan.",
+        loginHint: "Vào Hóa đơn trước để xử lý worklist thu hồi, rồi dùng Báo cáo để kiểm tra áp lực công nợ.",
+        step1: "Làm hết các việc thu hồi đến hạn trong ngày trước khi chúng biến thành escalated cho founder.",
+        step2: "Rà soát các hóa đơn còn mở để không khoản phải thu nào rơi khỏi hàng đợi follow-up.",
+        step3: "Dùng Báo cáo để xác nhận áp lực công nợ quá hạn sau mỗi lần cập nhật thu hồi.",
+      },
+    },
   },
 });
 

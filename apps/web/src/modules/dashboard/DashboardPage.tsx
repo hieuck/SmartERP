@@ -1,5 +1,6 @@
 import {
   ApartmentOutlined,
+  ArrowRightOutlined,
   PhoneOutlined,
   ClockCircleOutlined,
   SafetyCertificateOutlined,
@@ -8,7 +9,8 @@ import {
   WarningOutlined,
 } from "@ant-design/icons";
 import type { ReactElement } from "react";
-import { Card, Col, Empty, Row, Space, Statistic, Tag, Typography } from "antd";
+import { Button, Card, Col, Empty, Row, Space, Statistic, Tag, Typography } from "antd";
+import { useNavigate } from "react-router-dom";
 
 import type {
   CollectionActionRequired,
@@ -20,6 +22,7 @@ import type {
 
 import { useLocale } from "../../locale/LocaleContext";
 import { useWorkspace } from "../../state/WorkspaceContext";
+import { getRoleOnboardingPlaybook } from "../onboarding/rolePlaybook";
 
 const { Paragraph, Title } = Typography;
 
@@ -177,6 +180,7 @@ function getPriorityRank(priority: CollectionPriority): number {
 }
 
 export function DashboardPage(): ReactElement {
+  const navigate = useNavigate();
   const { formatCurrency, localeCode, t } = useLocale();
   const {
     foundation,
@@ -184,11 +188,15 @@ export function DashboardPage(): ReactElement {
     tenants,
     approvalRequests,
     customers,
+    suppliers,
     products,
     selectedTenant,
     invoices,
     customerStatements,
     collectionActivities,
+    inventories,
+    orders,
+    purchaseOrders,
   } = useWorkspace();
 
   const openInvoices = invoices.filter((invoice) => invoice.outstandingAmount > 0);
@@ -228,6 +236,20 @@ export function DashboardPage(): ReactElement {
   const topReceivableCustomer =
     [...customerStatements].sort((left, right) => right.outstandingAmount - left.outstandingAmount)[0] ?? null;
   const pendingApprovals = approvalRequests.filter((request) => request.status === "pending");
+  const rolePlaybook = session
+    ? getRoleOnboardingPlaybook(session.role, {
+        hasSelectedTenant: Boolean(selectedTenant),
+        customersCount: customers.length,
+        suppliersCount: suppliers.length,
+        productsCount: products.length,
+        inventoriesCount: inventories.length,
+        ordersCount: orders.length,
+        purchaseOrdersCount: purchaseOrders.length,
+        openInvoicesCount: openInvoices.length,
+        overdueInvoicesCount: overdueInvoices.length,
+        todayCollectionsCount: todayWorklist.length,
+      })
+    : null;
 
   function formatTimestamp(value: string): string {
     return new Intl.DateTimeFormat(localeCode, {
@@ -263,6 +285,64 @@ export function DashboardPage(): ReactElement {
           </Card>
         </Col>
       </Row>
+
+      {session && rolePlaybook ? (
+        <Card data-testid="role-onboarding-card" title={t("roleOnboarding.title")}>
+          <div className="role-onboarding-shell">
+            <div className="role-onboarding-summary">
+              <Space wrap size={[8, 8]}>
+                <Tag color="blue">{t(`roles.${session.role}`)}</Tag>
+                <Tag color={rolePlaybook.ready ? "green" : "gold"}>
+                  {rolePlaybook.ready ? t("roleOnboarding.statusReady") : t("roleOnboarding.statusNeedsAttention")}
+                </Tag>
+                <Tag color="default">
+                  {t("roleOnboarding.firstStop")}: {t(`modules.${rolePlaybook.primaryModule}`)}
+                </Tag>
+              </Space>
+              <Title level={4} style={{ marginBottom: 8 }}>
+                {t(`roleOnboarding.roles.${session.role}.title`)}
+              </Title>
+              <Paragraph type="secondary" style={{ marginBottom: 0 }}>
+                {selectedTenant
+                  ? t(`roleOnboarding.roles.${session.role}.summary`)
+                  : t("roleOnboarding.noTenantSelected")}
+              </Paragraph>
+            </div>
+
+            <div className="role-onboarding-actions">
+              <Button
+                type="primary"
+                icon={<ArrowRightOutlined />}
+                onClick={() => navigate(rolePlaybook.primaryRoute)}
+              >
+                {t("roleOnboarding.openPrimary", { module: t(`modules.${rolePlaybook.primaryModule}`) })}
+              </Button>
+              <Button onClick={() => navigate(rolePlaybook.secondaryRoute)}>
+                {t("roleOnboarding.openSecondary", { module: t(`modules.${rolePlaybook.secondaryModule}`) })}
+              </Button>
+            </div>
+          </div>
+
+          <div className="role-onboarding-steps" data-testid={`role-onboarding-${session.role}`}>
+            {rolePlaybook.steps.map((step) => (
+              <div className="role-onboarding-step" key={step.key}>
+                <div className="role-onboarding-step-main">
+                  <Space wrap size={[8, 8]}>
+                    <strong>{t(`modules.${step.module}`)}</strong>
+                    <Tag color={step.ready ? "green" : "gold"}>
+                      {step.ready ? t("roleOnboarding.statusReady") : t("roleOnboarding.statusNeedsAttention")}
+                    </Tag>
+                  </Space>
+                  <div className="record-detail">{t(`roleOnboarding.roles.${session.role}.${step.key}`)}</div>
+                </div>
+                <Button type="link" onClick={() => navigate(step.route)}>
+                  {t("roleOnboarding.openModule", { module: t(`modules.${step.module}`) })}
+                </Button>
+              </div>
+            ))}
+          </div>
+        </Card>
+      ) : null}
 
       {selectedTenant ? (
         <>

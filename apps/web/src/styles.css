@@ -223,6 +223,50 @@ body {
   gap: 12px;
 }
 
+.role-onboarding-shell {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.role-onboarding-summary {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.role-onboarding-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.role-onboarding-steps {
+  display: grid;
+  gap: 12px;
+}
+
+.role-onboarding-step {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 12px;
+  background: rgba(248, 250, 252, 0.9);
+}
+
+.role-onboarding-step-main {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
 .collection-queue-row {
   display: flex;
   align-items: flex-start;
@@ -321,6 +365,14 @@ body {
     align-items: flex-start;
   }
 
+  .role-onboarding-shell {
+    flex-direction: column;
+  }
+
+  .role-onboarding-actions {
+    justify-content: flex-start;
+  }
+
   .customer-statement-grid {
     grid-template-columns: 1fr;
   }
@@ -330,6 +382,10 @@ body {
   }
 
   .activity-row {
+    flex-direction: column;
+  }
+
+  .role-onboarding-step {
     flex-direction: column;
   }
 

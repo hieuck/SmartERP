@@ -175,10 +175,10 @@ Checkpoint effect:
 
 ## Immediate Execution Queue
 
-1. seed/setup flows for first-time pilot operators
-2. tenant-scoped deployment packaging and handoff runbook
-3. tighter role-specific onboarding for non-founder users
-4. polish pilot recovery drills on top of restore baseline
+1. completed: seed/setup flows for first-time pilot operators
+2. completed: tenant-scoped deployment packaging and handoff runbook
+3. completed: tighter role-specific onboarding for non-founder users
+4. next: polish pilot recovery drills on top of restore baseline
 
 ## Non-Goals Right Now
 
