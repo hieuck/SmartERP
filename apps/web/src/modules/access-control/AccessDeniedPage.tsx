@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 import type { FoundationModule } from "@smarterp/contracts";
 
-import { useLocale } from "../locale/LocaleContext";
+import { useLocale } from "../../locale/LocaleContext";
 
 type AccessDeniedPageProps = {
   module: FoundationModule;

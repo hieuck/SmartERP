@@ -5,7 +5,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import type { FoundationModule } from "@smarterp/contracts";
 
 import { MainLayout } from "./layout/MainLayout";
-import { AccessDeniedPage } from "./pages/AccessDeniedPage";
+import { AccessDeniedPage } from "./modules/access-control";
 import { useWorkspace } from "./state/WorkspaceContext";
 
 const LoginPage = lazy(() =>
