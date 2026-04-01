@@ -27,7 +27,7 @@ const ProductsPage = lazy(() =>
   import("./modules/products").then((module) => ({ default: module.ProductsPage })),
 );
 const PurchaseOrdersPage = lazy(() =>
-  import("./pages/PurchaseOrdersPage").then((module) => ({ default: module.PurchaseOrdersPage })),
+  import("./modules/purchase-orders").then((module) => ({ default: module.PurchaseOrdersPage })),
 );
 const OrdersPage = lazy(() =>
   import("./modules/orders").then((module) => ({ default: module.OrdersPage })),

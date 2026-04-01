@@ -46,14 +46,11 @@ import {
 
 import {
   decideApprovalRequest,
-  createPurchaseOrder,
-  receivePurchaseOrder,
   createTenant,
   exportTenantSnapshot,
   getFoundation,
   importOnboardingDataset,
   listApprovalRequests,
-  listPurchaseOrders,
   listTenants,
   login,
   previewRestoreTenantSnapshot,
@@ -68,6 +65,11 @@ import {
 } from "../modules/customers/api";
 import { loadInventory, submitInventoryAdjustment } from "../modules/inventory/api";
 import { loadOrders, submitOrder } from "../modules/orders/api";
+import {
+  loadPurchaseOrders,
+  submitPurchaseOrder,
+  submitPurchaseOrderReceipt,
+} from "../modules/purchase-orders/api";
 import { loadProducts, submitProduct } from "../modules/products/api";
 import { loadSuppliers, submitSupplier } from "../modules/suppliers/api";
 import {
@@ -232,7 +234,7 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
       canAccessModule("products") ? loadProducts(tenantId) : Promise.resolve([]),
       canAccessModule("inventory") ? loadInventory(tenantId) : Promise.resolve([]),
       canAccessModule("orders") ? loadOrders(tenantId) : Promise.resolve([]),
-      canAccessModule("purchasing") ? listPurchaseOrders(tenantId) : Promise.resolve([]),
+      canAccessModule("purchasing") ? loadPurchaseOrders(tenantId) : Promise.resolve([]),
       canAccessModule("invoices") ? loadInvoices(tenantId) : Promise.resolve([]),
     ]);
 
@@ -596,7 +598,7 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
     setErrorMessage("");
 
     try {
-      const created = await createPurchaseOrder({ ...input, tenantId: selectedTenantId });
+      const created = await submitPurchaseOrder({ ...input, tenantId: selectedTenantId });
       setPurchaseOrders((current) => [created, ...current]);
     } catch (caught) {
       setErrorMessage(caught instanceof Error ? caught.message : "Purchase order creation failed.");
@@ -619,7 +621,7 @@ export function WorkspaceProvider({ children }: PropsWithChildren): ReactElement
     setNoticeMessage("");
 
     try {
-      const result = await receivePurchaseOrder({ ...input, tenantId: selectedTenantId });
+      const result = await submitPurchaseOrderReceipt({ ...input, tenantId: selectedTenantId });
       if (result.kind === "approval_requested") {
         setApprovalRequests((current) => [result.approvalRequest, ...current]);
         setNoticeMessage(buildApprovalNotice(result.approvalRequest));

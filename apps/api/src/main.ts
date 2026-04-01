@@ -14,8 +14,6 @@ import {
   rewriteMessage,
   type ApprovalDecisionInput,
   type FoundationModule,
-  type CreatePurchaseOrderInput,
-  type ReceivePurchaseOrderInput,
   type CreateTenantInput,
   type ImportOnboardingInput,
   type LoginInput,
@@ -47,6 +45,11 @@ import {
 import { handleCreateOrder, handleListOrders } from "./modules/orders/index.js";
 import { handleGetOperationsStatus } from "./modules/operations/index.js";
 import {
+  handleCreatePurchaseOrder,
+  handleListPurchaseOrders,
+  handleReceivePurchaseOrder,
+} from "./modules/purchase-orders/index.js";
+import {
   handleCreateProduct,
   handleListProducts,
 } from "./modules/products/index.js";
@@ -55,8 +58,6 @@ import {
   handleListSuppliers,
 } from "./modules/suppliers/index.js";
 import {
-  createPurchaseOrder,
-  receivePurchaseOrder,
   createTenant,
   exportTenantSnapshot,
   getReportSummary,
@@ -68,7 +69,6 @@ import {
   listApprovalRequests,
   listAuditLogs,
   listJournalEntries,
-  listPurchaseOrders,
   listTenants,
   resolveApprovalRequest,
   runWithSession,
@@ -546,7 +546,7 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
         return;
       }
 
-      sendJson(response, 200, { items: listPurchaseOrders(tenantId) });
+      handleListPurchaseOrders(response, tenantId);
       return;
     }
 
@@ -701,67 +701,7 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
         return;
       }
 
-      const input = await readJson<CreatePurchaseOrderInput>(request);
-
-      if (!input.tenantId?.trim()) {
-        badRequest(response, "tenantId is required.");
-        return;
-      }
-
-      if (!hasTenant(input.tenantId)) {
-        badRequest(response, "The selected tenant does not exist.");
-        return;
-      }
-
-      if (!input.supplierId?.trim()) {
-        badRequest(response, "supplierId is required.");
-        return;
-      }
-
-      if (!input.productId?.trim()) {
-        badRequest(response, "productId is required.");
-        return;
-      }
-
-      if (!Number.isInteger(input.quantityOrdered) || input.quantityOrdered <= 0) {
-        badRequest(response, "Quantity ordered must be a positive integer.");
-        return;
-      }
-
-      if (!Number.isInteger(input.unitCost) || input.unitCost < 0) {
-        badRequest(response, "Unit cost must be a valid non-negative integer.");
-        return;
-      }
-
-      if (!input.expectedReceiptDate?.trim()) {
-        badRequest(response, "Expected receipt date is required.");
-        return;
-      }
-
-      try {
-        const purchaseOrder = runWithSession(requestSession, () => createPurchaseOrder(input));
-        sendJson(response, 201, { item: purchaseOrder });
-      } catch (error) {
-        if (
-          error instanceof Error &&
-          [
-            "The selected supplier does not exist.",
-            "The selected product does not exist.",
-            "Expected receipt date must be a valid YYYY-MM-DD value.",
-          ].includes(error.message)
-        ) {
-          badRequest(response, error.message);
-          return;
-        }
-
-        if (isSqliteConstraintError(error) && error.message.includes("purchase_orders.purchase_order_number")) {
-          badRequest(response, "Purchase order number conflict. Please try again.");
-          return;
-        }
-
-        throw error;
-      }
-
+      await handleCreatePurchaseOrder(request, response, requestSession);
       return;
     }
 
@@ -779,54 +719,7 @@ const server = createServer(async (request: IncomingMessage, response: ServerRes
         return;
       }
 
-      const input = await readJson<ReceivePurchaseOrderInput>(request);
-
-      if (!input.tenantId?.trim()) {
-        badRequest(response, "tenantId is required.");
-        return;
-      }
-
-      if (!hasTenant(input.tenantId)) {
-        badRequest(response, "The selected tenant does not exist.");
-        return;
-      }
-
-      if (!input.purchaseOrderId?.trim()) {
-        badRequest(response, "purchaseOrderId is required.");
-        return;
-      }
-
-      if (!Number.isInteger(input.quantityReceived) || input.quantityReceived <= 0) {
-        badRequest(response, "Received quantity must be a positive integer.");
-        return;
-      }
-
-      if (!input.receivedDate?.trim()) {
-        badRequest(response, "Received date is required.");
-        return;
-      }
-
-      try {
-        const result = runWithSession(requestSession, () => receivePurchaseOrder(input));
-        sendJson(response, result.kind === "approval_requested" ? 202 : 201, { item: result });
-      } catch (error) {
-        if (error instanceof Error) {
-          if (
-            error.message === "The selected purchase order does not exist." ||
-            error.message === "The selected product does not exist." ||
-            error.message === "Received quantity must be a positive integer." ||
-            error.message === "Received date must be a valid YYYY-MM-DD value." ||
-            error.message === "The selected purchase order is already fully received." ||
-            error.message === "Received quantity cannot exceed the outstanding quantity."
-          ) {
-            badRequest(response, error.message);
-            return;
-          }
-        }
-
-        throw error;
-      }
-
+      await handleReceivePurchaseOrder(request, response, requestSession);
       return;
     }
 
