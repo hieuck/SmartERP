@@ -28,6 +28,10 @@ export default defineConfig({
             return "react-vendor";
           }
 
+          if (normalizedId.includes("/@ant-design/icons-svg/")) {
+            return "icons-vendor";
+          }
+
           if (
             normalizedId.includes("/antd/") ||
             normalizedId.includes("/@ant-design/") ||
