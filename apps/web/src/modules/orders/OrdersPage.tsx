@@ -1,15 +1,28 @@
 import {
   CheckCircleOutlined,
+  EditOutlined,
   InboxOutlined,
   ShoppingOutlined,
   StopOutlined,
   UserOutlined,
 } from "@ant-design/icons";
 import type { ReactElement } from "react";
+import { useEffect, useState } from "react";
 import type { FormProps } from "antd";
-import { Button, Card, Empty, Form, InputNumber, Popconfirm, Select, Tag, Typography } from "antd";
+import {
+  Button,
+  Card,
+  Empty,
+  Form,
+  InputNumber,
+  Popconfirm,
+  Select,
+  Space,
+  Tag,
+  Typography,
+} from "antd";
 
-import type { CreateOrderInput } from "@smarterp/contracts";
+import type { CreateOrderInput, OrderRecord } from "@smarterp/contracts";
 
 import { useLocale } from "../../locale/LocaleContext";
 import { useWorkspace } from "../../state/WorkspaceContext";
@@ -69,21 +82,66 @@ export function OrdersPage(): ReactElement {
     selectedTenantId,
     setSelectedTenantId,
     tenants,
+    updateOrderRecord,
   } = useWorkspace();
   const canManageOrders = can("manage_orders");
 
   const [form] = Form.useForm<OrderFormShape>();
+  const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
   const selectedProductId = Form.useWatch("productId", form);
+  const editingOrder = orders.find((item) => item.id === editingOrderId) ?? null;
   const selectedInventory = inventories.find((item) => item.productId === selectedProductId) ?? null;
+  const effectiveAvailableStock =
+    (selectedInventory?.quantityOnHand ?? 0) +
+    (editingOrder && editingOrder.productId === selectedProductId ? editingOrder.quantity : 0);
+
+  function resetForm(): void {
+    setEditingOrderId(null);
+    form.resetFields();
+  }
 
   const onFinish: FormProps<OrderFormShape>["onFinish"] = async (values) => {
     try {
-      await createOrderRecord(values);
-      form.resetFields();
+      if (editingOrderId) {
+        await updateOrderRecord({
+          orderId: editingOrderId,
+          ...values,
+        });
+      } else {
+        await createOrderRecord(values);
+      }
+
+      resetForm();
     } catch {
       // Error state is already surfaced via workspace context.
     }
   };
+
+  useEffect(() => {
+    resetForm();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTenantId]);
+
+  useEffect(() => {
+    if (editingOrderId && !orders.some((order) => order.id === editingOrderId)) {
+      resetForm();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orders, editingOrderId]);
+
+  function startEditing(orderId: string): void {
+    const order = orders.find((item) => item.id === orderId);
+    if (!order) {
+      return;
+    }
+
+    setEditingOrderId(order.id);
+    form.setFieldsValue({
+      customerId: order.customerId,
+      productId: order.productId,
+      quantity: order.quantity,
+    });
+  }
 
   async function cancelOrderAction(orderId: string): Promise<void> {
     try {
@@ -99,6 +157,10 @@ export function OrdersPage(): ReactElement {
     } catch {
       // Error state is already surfaced via workspace context.
     }
+  }
+
+  function hasActiveInvoice(order: OrderRecord): boolean {
+    return invoices.some((invoice) => invoice.orderId === order.id && invoice.status !== "void");
   }
 
   return (
@@ -125,7 +187,10 @@ export function OrdersPage(): ReactElement {
       </div>
 
       <div className="two-column">
-        <Card className="workspace-panel-card" title={t("orders.createTitle")}>
+        <Card
+          className="workspace-panel-card"
+          title={editingOrderId ? t("orders.editTitle") : t("orders.createTitle")}
+        >
           {canManageOrders ? (
             <Form<OrderFormShape> form={form} layout="vertical" onFinish={onFinish}>
               <Form.Item<OrderFormShape>
@@ -163,7 +228,7 @@ export function OrdersPage(): ReactElement {
                 dependencies={["productId"]}
                 extra={
                   selectedInventory
-                    ? t("orders.availableStock", { count: selectedInventory.quantityOnHand })
+                    ? t("orders.availableStock", { count: effectiveAvailableStock })
                     : undefined
                 }
                 rules={[
@@ -173,7 +238,7 @@ export function OrdersPage(): ReactElement {
                       if (
                         !selectedInventory ||
                         typeof value !== "number" ||
-                        value <= selectedInventory.quantityOnHand
+                        value <= effectiveAvailableStock
                       ) {
                         return;
                       }
@@ -186,14 +251,22 @@ export function OrdersPage(): ReactElement {
                 <InputNumber min={1} precision={0} style={{ width: "100%" }} />
               </Form.Item>
 
-              <Button
-                type="primary"
-                htmlType="submit"
-                disabled={!selectedTenantId || customers.length === 0 || products.length === 0}
-                loading={isBusy}
-              >
-                {t("orders.create")}
-              </Button>
+              <Space wrap>
+                <Button
+                  data-testid="order-submit-button"
+                  type="primary"
+                  htmlType="submit"
+                  disabled={!selectedTenantId || customers.length === 0 || products.length === 0}
+                  loading={isBusy}
+                >
+                  {editingOrderId ? t("common.saveChanges") : t("orders.create")}
+                </Button>
+                {editingOrderId ? (
+                  <Button data-testid="order-cancel-edit-button" htmlType="button" onClick={resetForm}>
+                    {t("common.cancel")}
+                  </Button>
+                ) : null}
+              </Space>
             </Form>
           ) : (
             <Paragraph type="secondary" style={{ marginBottom: 0 }}>
@@ -208,7 +281,10 @@ export function OrdersPage(): ReactElement {
               <div className="record-stack">
                 {orders.map((order) => (
                   // Keep order actions deterministic: cancel before invoicing, close after full settlement.
-                  <div className="record-row" key={order.id}>
+                  <div
+                    className={`record-row${editingOrderId === order.id ? " is-editing" : ""}`}
+                    key={order.id}
+                  >
                     <div className="record-icon">
                       <InboxOutlined />
                     </div>
@@ -228,6 +304,16 @@ export function OrdersPage(): ReactElement {
                       </div>
                       {canManageOrders && order.status === "confirmed" ? (
                         <div className="record-actions">
+                          {!hasActiveInvoice(order) ? (
+                            <Button
+                              data-testid="order-edit-button"
+                              icon={<EditOutlined />}
+                              size="small"
+                              onClick={() => startEditing(order.id)}
+                            >
+                              {t("common.edit")}
+                            </Button>
+                          ) : null}
                           {invoices.some((invoice) => invoice.orderId === order.id && invoice.status === "paid") ? (
                             <Popconfirm
                               title={t("orders.closeConfirm", { number: order.orderNumber })}
@@ -245,9 +331,7 @@ export function OrdersPage(): ReactElement {
                                 {t("orders.closeAction")}
                               </Button>
                             </Popconfirm>
-                          ) : !invoices.some(
-                              (invoice) => invoice.orderId === order.id && invoice.status !== "void",
-                            ) ? (
+                          ) : !hasActiveInvoice(order) ? (
                             <Popconfirm
                               title={t("orders.cancelConfirm", { number: order.orderNumber })}
                               okText={t("orders.cancelAction")}

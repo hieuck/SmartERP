@@ -1,9 +1,23 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 
-import type { CancelOrderInput, CloseOrderInput, CreateOrderInput, Session } from "@smarterp/contracts";
+import type {
+  CancelOrderInput,
+  CloseOrderInput,
+  CreateOrderInput,
+  Session,
+  UpdateOrderInput,
+} from "@smarterp/contracts";
 
 import { readJson, sendJson } from "../../http.js";
-import { cancelOrder, closeOrder, createOrder, hasTenant, listOrders, runWithSession } from "../../store.js";
+import {
+  cancelOrder,
+  closeOrder,
+  createOrder,
+  hasTenant,
+  listOrders,
+  runWithSession,
+  updateOrder,
+} from "../../store.js";
 
 function badRequest(response: ServerResponse, message: string): void {
   sendJson(response, 400, { error: message });
@@ -119,6 +133,68 @@ export async function handleCancelOrder(
         "The selected order has already been closed.",
         "The selected order cannot be canceled because an invoice already references it.",
         "The selected product does not exist.",
+      ].includes(error.message)
+    ) {
+      badRequest(response, error.message);
+      return;
+    }
+
+    throw error;
+  }
+}
+
+export async function handleUpdateOrder(
+  request: IncomingMessage,
+  response: ServerResponse,
+  requestSession: Session | null,
+): Promise<void> {
+  const input = await readJson<UpdateOrderInput>(request);
+
+  if (!input.tenantId?.trim()) {
+    badRequest(response, "tenantId is required.");
+    return;
+  }
+
+  if (!hasTenant(input.tenantId)) {
+    badRequest(response, "The selected tenant does not exist.");
+    return;
+  }
+
+  if (!input.orderId?.trim()) {
+    badRequest(response, "orderId is required.");
+    return;
+  }
+
+  if (!input.customerId?.trim()) {
+    badRequest(response, "customerId is required.");
+    return;
+  }
+
+  if (!input.productId?.trim()) {
+    badRequest(response, "productId is required.");
+    return;
+  }
+
+  if (!Number.isInteger(input.quantity) || input.quantity <= 0) {
+    badRequest(response, "quantity must be a positive integer.");
+    return;
+  }
+
+  try {
+    const order = runWithSession(requestSession, () => updateOrder(input));
+    sendJson(response, 200, { item: order });
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      [
+        "The selected order does not exist.",
+        "The selected order has already been canceled.",
+        "The selected order has already been closed.",
+        "The selected order can only be edited while it is still confirmed.",
+        "The selected order cannot be edited because an invoice already references it.",
+        "The selected customer does not exist.",
+        "The selected product does not exist.",
+        "Insufficient stock for the selected product.",
       ].includes(error.message)
     ) {
       badRequest(response, error.message);

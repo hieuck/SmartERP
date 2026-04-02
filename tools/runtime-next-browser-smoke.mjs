@@ -65,6 +65,7 @@ const editedProductSku = `EDIT2-${smokeId}`;
 const editedProductName = `Edited Product ${smokeId}`;
 const editedProductUnitPrice = 33000;
 const expectedReceiptDateInput = buildDateInputFromToday(7);
+const editedExpectedReceiptDateInput = buildDateInputFromToday(10);
 const firstPaymentTermDays = 14;
 const secondPaymentTermDays = 10;
 const secondDaysPastDue = 35;
@@ -78,16 +79,18 @@ const unitPrice = 25000;
 const productImportCsv = `sku,name,unitPrice\n${productSku},${productName},${unitPrice}`;
 const purchaseUnitCost = 18000;
 const purchaseQuantity = 24;
+const editedPurchaseQuantity = 26;
 const cancelablePurchaseQuantity = 4;
 const stockInQuantity = 12;
 const saleQuantity = 5;
+const editedSaleQuantity = 4;
 const secondSaleQuantity = 2;
 const cancelableOrderQuantity = 1;
 const voidableOrderQuantity = 3;
 const invalidQuantity = 20;
 const taxRate = 10;
 const partialPaymentAmount = 50000;
-const firstOrderGrossAmount = unitPrice * saleQuantity;
+const firstOrderGrossAmount = unitPrice * editedSaleQuantity;
 const secondOrderGrossAmount = unitPrice * secondSaleQuantity;
 const voidableOrderGrossAmount = unitPrice * voidableOrderQuantity;
 const firstInvoiceAmount = Math.round(firstOrderGrossAmount * (1 + taxRate / 100));
@@ -100,17 +103,18 @@ const expectedCashCollectedAmount = firstInvoiceAmount;
 const expectedOutstandingReceivablesAmount = secondInvoiceAmount;
 const expectedCurrentReceivablesAmount = 0;
 const expectedOverdue31To60Amount = secondInvoiceAmount;
-const expectedRemainingStock = stockInQuantity - saleQuantity - secondSaleQuantity;
+const expectedRemainingStock = stockInQuantity - editedSaleQuantity - secondSaleQuantity;
 const expectedReceivedPurchaseValue = stockInQuantity * purchaseUnitCost;
 const expectedInventoryValueAmount = expectedRemainingStock * purchaseUnitCost;
 const expectedCashOnHandAmount = partialPaymentAmount;
 const expectedBankAmount = remainingPaymentAmount;
 const expectedReceivablesLedgerAmount = expectedOutstandingReceivablesAmount;
 const expectedPayablesAmount = expectedReceivedPurchaseValue;
-const expectedCogsAmount = (saleQuantity + secondSaleQuantity) * purchaseUnitCost;
+const expectedCogsAmount = (editedSaleQuantity + secondSaleQuantity) * purchaseUnitCost;
 const expectedVatPayableAmount = firstInvoiceAmount + secondInvoiceAmount - expectedGrossSales;
 const expectedRevenueAmount = expectedGrossSales;
-const expectedPurchaseOrderAmount = purchaseUnitCost * purchaseQuantity;
+const initialPurchaseOrderAmount = purchaseUnitCost * purchaseQuantity;
+const expectedPurchaseOrderAmount = purchaseUnitCost * editedPurchaseQuantity;
 const sidebarIndexes = {
   dashboard: 0,
   setup: 1,
@@ -185,11 +189,13 @@ function isExpectedNegativePath(response) {
           response.url().endsWith("/api/suppliers") ||
           response.url().endsWith("/api/products") ||
           response.url().endsWith("/api/orders/cancel") ||
+          response.url().endsWith("/api/orders/update") ||
           response.url().endsWith("/api/orders/close") ||
           response.url().endsWith("/api/customers/delete") ||
           response.url().endsWith("/api/suppliers/delete") ||
           response.url().endsWith("/api/products/delete") ||
           response.url().endsWith("/api/purchase-orders/cancel") ||
+          response.url().endsWith("/api/purchase-orders/update") ||
           response.url().endsWith("/api/purchase-orders/close") ||
           response.url().endsWith("/api/purchase-orders/receipts") ||
           response.url().endsWith("/api/invoices") ||
@@ -512,10 +518,14 @@ async function main() {
   let productDeleteGuardVerified = false;
   let duplicateSupplierRejectedVerified = false;
   let duplicateProductRejectedVerified = false;
+  let orderEditVerified = false;
+  let orderEditGuardVerified = false;
   let orderCancellationVerified = false;
   let orderCancelGuardVerified = false;
   let canceledOrderInvoiceGuardVerified = false;
   let supplierAndPurchaseOrdersVerified = false;
+  let purchaseOrderEditVerified = false;
+  let purchaseOrderEditGuardVerified = false;
   let purchaseOrderCancellationVerified = false;
   let purchaseOrderCancelGuardVerified = false;
   let purchaseOrderCloseVerified = false;
@@ -967,11 +977,18 @@ async function main() {
     const purchaseOrderRow = getListCard(page).locator(".record-row").filter({ hasText: supplierName }).first();
     await purchaseOrderRow.waitFor({ timeout: 15000 });
     await purchaseOrderRow.getByText(productName, { exact: false }).waitFor({ timeout: 15000 });
-    await purchaseOrderRow.getByText(buildAmountPattern(expectedPurchaseOrderAmount)).first().waitFor({ timeout: 15000 });
+    await purchaseOrderRow.getByText(buildAmountPattern(initialPurchaseOrderAmount)).first().waitFor({ timeout: 15000 });
     await purchaseOrderRow.getByText(/Đã lập|Da lap/).waitFor({ timeout: 15000 });
     purchaseOrderNumber = (await purchaseOrderRow.locator("strong").first().textContent())?.trim() ?? "";
     assert(purchaseOrderNumber.length > 0, "Purchase order number was not rendered after purchase order creation.");
     supplierAndPurchaseOrdersVerified = true;
+    await purchaseOrderRow.locator('[data-testid="purchase-order-edit-button"]').click();
+    await fillField(purchaseOrdersCreateCard, "#quantityOrdered", editedPurchaseQuantity);
+    await fillField(purchaseOrdersCreateCard, "#expectedReceiptDate", editedExpectedReceiptDateInput);
+    await clickSubmit(purchaseOrdersCreateCard);
+    await purchaseOrderRow.getByText(/Đã đặt: 26|Da dat: 26/).waitFor({ timeout: 15000 });
+    await purchaseOrderRow.getByText(/Còn lại: 26|Con lai: 26/).waitFor({ timeout: 15000 });
+    purchaseOrderEditVerified = true;
 
     await waitForFormReady(purchaseOrdersReceiveCard);
     await selectOption(page, purchaseOrdersReceiveCard.getByRole("combobox", { name: /Đơn mua|Don mua/ }), purchaseOrderNumber);
@@ -980,7 +997,7 @@ async function main() {
     await clickSubmit(purchaseOrdersReceiveCard);
     await purchaseOrderRow.getByText(/Đã lập|Da lap/).waitFor({ timeout: 15000 });
     await purchaseOrderRow.getByText(/Đã nhận: 0|Da nhan: 0/).waitFor({ timeout: 15000 });
-    await purchaseOrderRow.getByText(/Còn lại: 24|Con lai: 24/).waitFor({ timeout: 15000 });
+    await purchaseOrderRow.getByText(/Còn lại: 26|Con lai: 26/).waitFor({ timeout: 15000 });
     await openSection(page, sidebarIndexes.approvals, "/dashboard/approvals");
     await waitForTenantContext(page, tenantName);
     const approvalsPendingCard = page.locator(".two-column .ant-card").first();
@@ -1015,7 +1032,7 @@ async function main() {
     await waitForTenantContext(page, tenantName);
     await purchaseOrderRow.getByText(/Nhận một phần|Nhan mot phan/).waitFor({ timeout: 15000 });
     await purchaseOrderRow.getByText(/Đã nhận: 12|Da nhan: 12/).waitFor({ timeout: 15000 });
-    await purchaseOrderRow.getByText(/Còn lại: 12|Con lai: 12/).waitFor({ timeout: 15000 });
+    await purchaseOrderRow.getByText(/Còn lại: 14|Con lai: 14/).waitFor({ timeout: 15000 });
     purchaseReceiptVerified = true;
 
     const excessiveReceiptResponse = await page.evaluate(
@@ -1059,7 +1076,7 @@ async function main() {
       },
       {
         purchaseOrderNumberToOverReceive: purchaseOrderNumber,
-        quantity: stockInQuantity + 1,
+        quantity: editedPurchaseQuantity - stockInQuantity + 1,
         sessionKey: sessionStorageKey,
         tenantKey: tenantStorageKey,
         receivedDate: firstIssueDateInput,
@@ -1121,6 +1138,63 @@ async function main() {
       "Received purchase order did not reject cancellation.",
     );
     purchaseOrderCancelGuardVerified = true;
+    const receivedPurchaseOrderUpdateResponse = await page.evaluate(
+      async ({ purchaseOrderNumberToUpdate, quantityOrdered, sessionKey, tenantKey, expectedReceiptDate }) => {
+        const rawSession = window.localStorage.getItem(sessionKey);
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
+        const headers = {
+          "content-type": "application/json",
+          authorization: `Bearer ${accessToken}`,
+        };
+
+        const purchaseOrdersResponse = await fetch(
+          `/api/purchase-orders?tenantId=${encodeURIComponent(tenantId ?? "")}`,
+          { headers },
+        );
+        const purchaseOrdersPayload = await purchaseOrdersResponse.json();
+        const targetPurchaseOrder = purchaseOrdersPayload.items.find(
+          (item) => item.purchaseOrderNumber === purchaseOrderNumberToUpdate,
+        );
+
+        if (!targetPurchaseOrder || !tenantId) {
+          return { status: 0, body: { error: "Received purchase order lookup failed before update guard test." } };
+        }
+
+        const response = await fetch("/api/purchase-orders/update", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            tenantId,
+            purchaseOrderId: targetPurchaseOrder.id,
+            supplierId: targetPurchaseOrder.supplierId,
+            productId: targetPurchaseOrder.productId,
+            quantityOrdered,
+            unitCost: targetPurchaseOrder.unitCost,
+            expectedReceiptDate,
+          }),
+        });
+
+        return {
+          status: response.status,
+          body: await response.json(),
+        };
+      },
+      {
+        purchaseOrderNumberToUpdate: purchaseOrderNumber,
+        quantityOrdered: editedPurchaseQuantity + 1,
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+        expectedReceiptDate: editedExpectedReceiptDateInput,
+      },
+    );
+    assert(
+      receivedPurchaseOrderUpdateResponse.status === 400 &&
+        receivedPurchaseOrderUpdateResponse.body?.error ===
+          "The selected purchase order can only be edited while it is still issued.",
+      "Received purchase order did not reject editing after receipt.",
+    );
+    purchaseOrderEditGuardVerified = true;
     await openSection(page, sidebarIndexes.purchaseOrders, "/dashboard/purchase-orders");
     await waitForTenantContext(page, tenantName);
     const purchaseOrderCloseResponse = page.waitForResponse(
@@ -1357,14 +1431,51 @@ async function main() {
     await selectOption(page, ordersFormCard.getByRole("combobox", { name: "* Sản phẩm" }), productName);
     await fillNumberInput(ordersFormCard.getByRole("spinbutton", { name: "* Số lượng" }), saleQuantity);
     await clickSubmit(ordersFormCard);
-    const orderRow = getListCard(page)
+    const initialOrderRow = getListCard(page)
       .locator(".record-row")
       .filter({ hasText: `${productName} x ${saleQuantity}` })
       .first();
-    await orderRow.waitFor({ timeout: 15000 });
-    await orderRow.getByText(customerName, { exact: false }).waitFor({ timeout: 15000 });
-    orderNumber = (await orderRow.locator("strong").first().textContent())?.trim() ?? "";
+    await initialOrderRow.waitFor({ timeout: 15000 });
+    await initialOrderRow.getByText(customerName, { exact: false }).waitFor({ timeout: 15000 });
+    orderNumber = (await initialOrderRow.locator("strong").first().textContent())?.trim() ?? "";
     assert(orderNumber.length > 0, "Order number was not rendered after order creation.");
+    const orderRow = getListCard(page).locator(".record-row").filter({ hasText: orderNumber }).first();
+    await orderRow.locator('[data-testid="order-edit-button"]').click();
+    await fillNumberInput(ordersFormCard.getByRole("spinbutton", { name: "* Số lượng" }), editedSaleQuantity);
+    await clickSubmit(ordersFormCard);
+    await orderRow.getByText(`${productName} x ${editedSaleQuantity}`, { exact: false }).waitFor({ timeout: 15000 });
+    const editedOrderInventoryResponse = await page.evaluate(
+      async ({ productSkuToCheck, sessionKey, tenantKey }) => {
+        const rawSession = window.localStorage.getItem(sessionKey);
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
+        const headers = {
+          authorization: `Bearer ${accessToken}`,
+        };
+
+        const response = await fetch(`/api/inventory?tenantId=${encodeURIComponent(tenantId ?? "")}`, {
+          headers,
+        });
+        const payload = await response.json();
+        const inventoryItem = payload.items.find((item) => item.sku === productSkuToCheck);
+
+        return {
+          status: response.status,
+          item: inventoryItem ?? null,
+        };
+      },
+      {
+        productSkuToCheck: productSku,
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+      },
+    );
+    assert(
+      editedOrderInventoryResponse.status === 200 &&
+        editedOrderInventoryResponse.item?.quantityOnHand === stockInQuantity - editedSaleQuantity,
+      "Editing the order did not rebalance stock to the expected quantity.",
+    );
+    orderEditVerified = true;
 
     await selectOption(page, ordersFormCard.getByRole("combobox", { name: "* Khách hàng" }), customerName);
     await selectOption(page, ordersFormCard.getByRole("combobox", { name: "* Sản phẩm" }), productName);
@@ -1391,6 +1502,57 @@ async function main() {
     invoiceNumber = (await invoiceRow.locator("strong").first().textContent())?.trim() ?? "";
     assert(invoiceNumber.length > 0, "Invoice number was not rendered after invoice creation.");
     await invoiceRow.getByText(buildAmountPattern(firstInvoiceAmount)).first().waitFor({ timeout: 15000 });
+    const invoicedOrderUpdateResponse = await page.evaluate(
+      async ({ targetOrderNumber, quantity, sessionKey, tenantKey }) => {
+        const rawSession = window.localStorage.getItem(sessionKey);
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
+        const headers = {
+          "content-type": "application/json",
+          authorization: `Bearer ${accessToken}`,
+        };
+
+        const ordersResponse = await fetch(`/api/orders?tenantId=${encodeURIComponent(tenantId ?? "")}`, {
+          headers,
+        });
+        const ordersPayload = await ordersResponse.json();
+        const targetOrder = ordersPayload.items.find((item) => item.orderNumber === targetOrderNumber);
+
+        if (!targetOrder || !tenantId) {
+          return { status: 0, body: { error: "Invoiced order lookup failed before update guard test." } };
+        }
+
+        const response = await fetch("/api/orders/update", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            tenantId,
+            orderId: targetOrder.id,
+            customerId: targetOrder.customerId,
+            productId: targetOrder.productId,
+            quantity,
+          }),
+        });
+
+        return {
+          status: response.status,
+          body: await response.json(),
+        };
+      },
+      {
+        targetOrderNumber: orderNumber,
+        quantity: editedSaleQuantity + 1,
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+      },
+    );
+    assert(
+      invoicedOrderUpdateResponse.status === 400 &&
+        invoicedOrderUpdateResponse.body?.error ===
+          "The selected order cannot be edited because an invoice already references it.",
+      "Invoiced order did not reject editing after invoice issuance.",
+    );
+    orderEditGuardVerified = true;
     const invoicedOrderCancelResponse = await page.evaluate(
       async ({ targetOrderNumber, sessionKey, tenantKey }) => {
         const rawSession = window.localStorage.getItem(sessionKey);
@@ -2125,6 +2287,31 @@ async function main() {
     ledgerPostingVerified = true;
     const auditCard = page.locator(".ant-card").filter({ hasText: "Nhật ký kiểm soát tài chính" }).first();
     await auditCard.waitFor({ timeout: 15000 });
+    const auditSnapshot = await page.evaluate(async ({ sessionKey, tenantKey }) => {
+      const tenantId = window.localStorage.getItem(tenantKey);
+      const session = window.localStorage.getItem(sessionKey);
+      const accessToken = session ? JSON.parse(session).accessToken : "";
+      const response = await fetch(`/api/audit-logs?tenantId=${encodeURIComponent(tenantId ?? "")}`, {
+        headers: {
+          authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      return {
+        status: response.status,
+        body: await response.json(),
+      };
+    }, {
+      sessionKey: sessionStorageKey,
+      tenantKey: tenantStorageKey,
+    });
+    assert(auditSnapshot.status === 200, "Audit log endpoint did not return 200.");
+    assert(
+      auditSnapshot.body?.items?.some(
+        (item) => item.actionType === "order_updated" && item.entityNumber === orderNumber,
+      ),
+      "Order update audit entry was not recorded.",
+    );
     await auditCard.getByText(/Nhận hàng từ đơn mua|Nhan hang tu don mua/).first().waitFor({ timeout: 15000 });
     await auditCard.getByText("Phát hành hóa đơn", { exact: false }).first().waitFor({ timeout: 15000 });
     await auditCard.getByText("Phát hành lại hóa đơn", { exact: false }).first().waitFor({ timeout: 15000 });
@@ -2776,10 +2963,14 @@ async function main() {
       productDeleteGuardVerified,
       duplicateSupplierRejectedVerified,
       duplicateProductRejectedVerified,
+      orderEditVerified,
+      orderEditGuardVerified,
       orderCancellationVerified,
       orderCancelGuardVerified,
       canceledOrderInvoiceGuardVerified,
       supplierAndPurchaseOrdersVerified,
+      purchaseOrderEditVerified,
+      purchaseOrderEditGuardVerified,
       purchaseOrderCancellationVerified,
       purchaseOrderCancelGuardVerified,
       purchaseOrderCloseVerified,

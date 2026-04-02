@@ -19,6 +19,8 @@ import type {
   CreateSupplierInput,
   CreateTenantInput,
   UpdateCustomerInput,
+  UpdateOrderInput,
+  UpdatePurchaseOrderInput,
   UpdateProductInput,
   UpdateSupplierInput,
   ImportOnboardingInput,
@@ -47,12 +49,18 @@ import {
   submitInvoicePayment,
   submitInvoiceVoid,
 } from "../modules/invoices/api";
-import { submitOrder, submitOrderCancel, submitOrderClose } from "../modules/orders/api";
+import {
+  submitOrder,
+  submitOrderCancel,
+  submitOrderClose,
+  submitOrderUpdate,
+} from "../modules/orders/api";
 import {
   submitPurchaseOrder,
   submitPurchaseOrderCancel,
   submitPurchaseOrderClose,
   submitPurchaseOrderReceipt,
+  submitPurchaseOrderUpdate,
 } from "../modules/purchase-orders/api";
 import {
   submitProduct,
@@ -378,6 +386,19 @@ export function createWorkspaceCommands(dependencies: WorkspaceCommandsDependenc
       );
     },
 
+    async updateOrderRecord(input: Omit<UpdateOrderInput, "tenantId">): Promise<void> {
+      const tenantId = getSelectedTenantIdOrThrow();
+
+      await runBusyAction(
+        { setErrorMessage, setIsBusy, setNoticeMessage },
+        "Order update failed.",
+        async () => {
+          await submitOrderUpdate({ ...input, tenantId });
+          await refreshTenantWorkspace(tenantId);
+        },
+      );
+    },
+
     async cancelOrderRecord(input: Omit<CancelOrderInput, "tenantId">): Promise<void> {
       const tenantId = getSelectedTenantIdOrThrow();
 
@@ -414,6 +435,21 @@ export function createWorkspaceCommands(dependencies: WorkspaceCommandsDependenc
         "Purchase order creation failed.",
         async () => {
           await submitPurchaseOrder({ ...input, tenantId });
+          await refreshTenantWorkspace(tenantId);
+        },
+      );
+    },
+
+    async updatePurchaseOrderRecord(
+      input: Omit<UpdatePurchaseOrderInput, "tenantId">,
+    ): Promise<void> {
+      const tenantId = getSelectedTenantIdOrThrow();
+
+      await runBusyAction(
+        { setErrorMessage, setIsBusy, setNoticeMessage },
+        "Purchase order update failed.",
+        async () => {
+          await submitPurchaseOrderUpdate({ ...input, tenantId });
           await refreshTenantWorkspace(tenantId);
         },
       );

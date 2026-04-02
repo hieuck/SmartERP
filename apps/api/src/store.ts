@@ -68,6 +68,8 @@ import {
   type TenantRecord,
   type TenantExportBundle,
   type UpdateCustomerInput,
+  type UpdateOrderInput,
+  type UpdatePurchaseOrderInput,
   type UpdateProductInput,
   type UpdateSupplierInput,
 } from "@smarterp/contracts";
@@ -890,6 +892,20 @@ const createOrderStatement = db.prepare(`
   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `);
 
+const updateOrderStatement = db.prepare(`
+  UPDATE orders
+  SET
+    customer_id = ?,
+    customer_name = ?,
+    product_id = ?,
+    product_name = ?,
+    product_sku = ?,
+    quantity = ?,
+    unit_price = ?,
+    total_amount = ?
+  WHERE tenant_id = ? AND id = ?
+`);
+
 const updateOrderStatusStatement = db.prepare(`
   UPDATE orders
   SET status = ?
@@ -939,6 +955,23 @@ const createPurchaseOrderStatement = db.prepare(`
     created_at
   )
   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+`);
+
+const updatePurchaseOrderStatement = db.prepare(`
+  UPDATE purchase_orders
+  SET
+    supplier_id = ?,
+    supplier_code = ?,
+    supplier_name = ?,
+    product_id = ?,
+    product_sku = ?,
+    product_name = ?,
+    quantity_ordered = ?,
+    unit_cost = ?,
+    total_amount = ?,
+    status = ?,
+    expected_receipt_date = ?
+  WHERE tenant_id = ? AND id = ?
 `);
 
 const getPurchaseOrderByIdStatement = db.prepare(`
@@ -3560,6 +3593,157 @@ export function createOrder(input: CreateOrderInput): OrderRecord {
   }
 }
 
+export function updateOrder(input: UpdateOrderInput): OrderRecord {
+  const existing = getOrderByIdStatement.get(input.tenantId, input.orderId) as OrderRow | undefined;
+  if (!existing) {
+    throw new Error("The selected order does not exist.");
+  }
+
+  if (existing.status === "closed") {
+    throw new Error("The selected order has already been closed.");
+  }
+
+  if (existing.status === "canceled") {
+    throw new Error("The selected order has already been canceled.");
+  }
+
+  if (existing.status !== "confirmed") {
+    throw new Error("The selected order can only be edited while it is still confirmed.");
+  }
+
+  const invoiceCount = Number(
+    (countInvoicesForOrderStatement.get(input.tenantId, input.orderId) as { count?: number } | undefined)?.count ??
+      0,
+  );
+  if (invoiceCount > 0) {
+    throw new Error("The selected order cannot be edited because an invoice already references it.");
+  }
+
+  const customer = getCustomerForOrderStatement.get(input.tenantId, input.customerId) as
+    | CustomerRow
+    | undefined;
+  if (!customer) {
+    throw new Error("The selected customer does not exist.");
+  }
+
+  const product = getProductByIdStatement.get(input.tenantId, input.productId) as ProductRow | undefined;
+  if (!product) {
+    throw new Error("The selected product does not exist.");
+  }
+
+  const issuedInventoryValue = Number(
+    (getOrderIssuedInventoryValueStatement.get(
+      input.tenantId,
+      input.orderId,
+    ) as { amount?: number } | undefined)?.amount ?? 0,
+  );
+
+  db.exec("BEGIN");
+
+  try {
+    ensureInventoryRow(input.tenantId, existing.product_id);
+
+    const previousInventory = getInventoryRowStatement.get(input.tenantId, existing.product_id) as
+      | InventoryRow
+      | undefined;
+    if (!previousInventory) {
+      throw new Error("The selected product does not exist.");
+    }
+
+    const updatedAt = timestamp();
+    persistInventorySnapshot({
+      productId: existing.product_id,
+      quantityOnHand: previousInventory.quantity_on_hand + existing.quantity,
+      inventoryValue: previousInventory.inventory_value + issuedInventoryValue,
+      lastReceiptAt: previousInventory.last_receipt_at,
+      updatedAt,
+    });
+
+    ensureInventoryRow(input.tenantId, input.productId);
+
+    const nextInventory = getInventoryRowStatement.get(input.tenantId, input.productId) as
+      | InventoryRow
+      | undefined;
+    if (!nextInventory || nextInventory.quantity_on_hand < input.quantity) {
+      throw new Error("Insufficient stock for the selected product.");
+    }
+
+    const nextIssuedInventoryValue = nextInventory.average_unit_cost * input.quantity;
+    persistInventorySnapshot({
+      productId: input.productId,
+      quantityOnHand: nextInventory.quantity_on_hand - input.quantity,
+      inventoryValue: Math.max(nextInventory.inventory_value - nextIssuedInventoryValue, 0),
+      lastReceiptAt: nextInventory.last_receipt_at,
+      updatedAt,
+    });
+
+    const order: OrderRecord = {
+      id: existing.id,
+      tenantId: existing.tenant_id,
+      orderNumber: existing.order_number,
+      customerId: customer.id,
+      customerName: customer.name,
+      productId: product.id,
+      productName: product.name,
+      productSku: product.sku,
+      quantity: input.quantity,
+      unitPrice: product.unit_price,
+      totalAmount: product.unit_price * input.quantity,
+      status: existing.status,
+      createdAt: existing.created_at,
+    };
+
+    updateOrderStatement.run(
+      order.customerId,
+      order.customerName,
+      order.productId,
+      order.productName,
+      order.productSku,
+      order.quantity,
+      order.unitPrice,
+      order.totalAmount,
+      order.tenantId,
+      order.id,
+    );
+
+    createJournalEntryLines({
+      tenantId: input.tenantId,
+      referenceType: "order",
+      referenceId: existing.id,
+      referenceNumber: existing.order_number,
+      description: `Update order ${existing.order_number}`,
+      createdAt: updatedAt,
+      lines: [
+        { accountCode: "156", debitAmount: issuedInventoryValue, creditAmount: 0 },
+        { accountCode: "632", debitAmount: 0, creditAmount: issuedInventoryValue },
+        { accountCode: "632", debitAmount: nextIssuedInventoryValue, creditAmount: 0 },
+        { accountCode: "156", debitAmount: 0, creditAmount: nextIssuedInventoryValue },
+      ],
+    });
+
+    recordAuditLog({
+      tenantId: input.tenantId,
+      entityType: "order",
+      entityId: existing.id,
+      entityNumber: existing.order_number,
+      actionType: "order_updated",
+      summary: `Updated ${existing.order_number}`,
+      metadata: {
+        amount: order.totalAmount,
+        quantity: order.quantity,
+        note: `Customer ${existing.customer_name} -> ${order.customerName}; product ${existing.product_name} -> ${order.productName}`,
+      },
+      createdAt: updatedAt,
+    });
+
+    db.exec("COMMIT");
+    return order;
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
+}
+
 export function cancelOrder(input: CancelOrderInput): OrderRecord {
   const existing = getOrderByIdStatement.get(input.tenantId, input.orderId) as OrderRow | undefined;
   if (!existing) {
@@ -3758,6 +3942,114 @@ export function createPurchaseOrder(input: CreatePurchaseOrderInput): PurchaseOr
   );
 
   return purchaseOrder;
+}
+
+export function updatePurchaseOrder(input: UpdatePurchaseOrderInput): PurchaseOrderRecord {
+  const existing = getPurchaseOrderByIdStatement.get(input.tenantId, input.purchaseOrderId) as
+    | PurchaseOrderRow
+    | undefined;
+  if (!existing) {
+    throw new Error("The selected purchase order does not exist.");
+  }
+
+  if (existing.status === "closed") {
+    throw new Error("The selected purchase order has already been closed.");
+  }
+
+  if (existing.status === "canceled") {
+    throw new Error("The selected purchase order has already been canceled.");
+  }
+
+  if (existing.status !== "issued") {
+    throw new Error("The selected purchase order can only be edited while it is still issued.");
+  }
+
+  const receiptCount = Number(
+    (countPurchaseOrderReceiptsStatement.get(
+      input.tenantId,
+      input.purchaseOrderId,
+    ) as { count?: number } | undefined)?.count ?? 0,
+  );
+  if (existing.received_quantity > 0 || receiptCount > 0) {
+    throw new Error("The selected purchase order cannot be edited because receipts already exist.");
+  }
+
+  const supplier = getSupplierByIdStatement.get(input.tenantId, input.supplierId) as SupplierRow | undefined;
+  if (!supplier) {
+    throw new Error("The selected supplier does not exist.");
+  }
+
+  const product = getProductByIdStatement.get(input.tenantId, input.productId) as ProductRow | undefined;
+  if (!product) {
+    throw new Error("The selected product does not exist.");
+  }
+
+  if (!isValidBusinessDateInput(input.expectedReceiptDate)) {
+    throw new Error("Expected receipt date must be a valid YYYY-MM-DD value.");
+  }
+
+  const updatedAt = timestamp();
+  const purchaseOrder: PurchaseOrderRecord = {
+    id: existing.id,
+    tenantId: existing.tenant_id,
+    purchaseOrderNumber: existing.purchase_order_number,
+    supplierId: supplier.id,
+    supplierCode: supplier.supplier_code,
+    supplierName: supplier.name,
+    productId: product.id,
+    productSku: product.sku,
+    productName: product.name,
+    quantityOrdered: input.quantityOrdered,
+    receivedQuantity: existing.received_quantity,
+    outstandingQuantity: input.quantityOrdered - existing.received_quantity,
+    unitCost: input.unitCost,
+    totalAmount: input.quantityOrdered * input.unitCost,
+    status: existing.status,
+    expectedReceiptDate: createBusinessTimestamp(input.expectedReceiptDate),
+    createdAt: existing.created_at,
+  };
+
+  db.exec("BEGIN");
+
+  try {
+    updatePurchaseOrderStatement.run(
+      purchaseOrder.supplierId,
+      purchaseOrder.supplierCode,
+      purchaseOrder.supplierName,
+      purchaseOrder.productId,
+      purchaseOrder.productSku,
+      purchaseOrder.productName,
+      purchaseOrder.quantityOrdered,
+      purchaseOrder.unitCost,
+      purchaseOrder.totalAmount,
+      purchaseOrder.status,
+      purchaseOrder.expectedReceiptDate,
+      purchaseOrder.tenantId,
+      purchaseOrder.id,
+    );
+
+    recordAuditLog({
+      tenantId: input.tenantId,
+      entityType: "purchase_order",
+      entityId: existing.id,
+      entityNumber: existing.purchase_order_number,
+      actionType: "purchase_order_updated",
+      summary: `Updated ${existing.purchase_order_number}`,
+      metadata: {
+        amount: purchaseOrder.totalAmount,
+        quantity: purchaseOrder.quantityOrdered,
+        unitCost: purchaseOrder.unitCost,
+        note: `Supplier ${existing.supplier_name} -> ${purchaseOrder.supplierName}; product ${existing.product_name} -> ${purchaseOrder.productName}`,
+      },
+      createdAt: updatedAt,
+    });
+
+    db.exec("COMMIT");
+    return purchaseOrder;
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
 }
 
 export function cancelPurchaseOrder(input: CancelPurchaseOrderInput): PurchaseOrderRecord {

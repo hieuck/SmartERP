@@ -395,6 +395,16 @@ export type CreatePurchaseOrderInput = {
   expectedReceiptDate: string;
 };
 
+export type UpdatePurchaseOrderInput = {
+  tenantId: string;
+  purchaseOrderId: string;
+  supplierId: string;
+  productId: string;
+  quantityOrdered: number;
+  unitCost: number;
+  expectedReceiptDate: string;
+};
+
 export type CancelPurchaseOrderInput = {
   tenantId: string;
   purchaseOrderId: string;
@@ -507,6 +517,14 @@ export type CreateOrderInput = {
   quantity: number;
 };
 
+export type UpdateOrderInput = {
+  tenantId: string;
+  orderId: string;
+  customerId: string;
+  productId: string;
+  quantity: number;
+};
+
 export type CancelOrderInput = {
   tenantId: string;
   orderId: string;
@@ -595,8 +613,10 @@ export type AuditActionType =
   | "invoice_issued"
   | "invoice_reissued"
   | "invoice_voided"
+  | "order_updated"
   | "order_canceled"
   | "order_closed"
+  | "purchase_order_updated"
   | "purchase_order_canceled"
   | "purchase_order_closed"
   | "purchase_order_received"

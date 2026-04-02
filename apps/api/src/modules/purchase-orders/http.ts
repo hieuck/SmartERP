@@ -6,6 +6,7 @@ import type {
   CreatePurchaseOrderInput,
   ReceivePurchaseOrderInput,
   Session,
+  UpdatePurchaseOrderInput,
 } from "@smarterp/contracts";
 
 import { readJson, sendJson } from "../../http.js";
@@ -17,6 +18,7 @@ import {
   listPurchaseOrders,
   receivePurchaseOrder,
   runWithSession,
+  updatePurchaseOrder,
 } from "../../store.js";
 
 function badRequest(response: ServerResponse, message: string): void {
@@ -140,6 +142,78 @@ export async function handleCancelPurchaseOrder(
         "The selected purchase order has already been canceled.",
         "The selected purchase order has already been closed.",
         "The selected purchase order cannot be canceled because receipts already exist.",
+      ].includes(error.message)
+    ) {
+      badRequest(response, error.message);
+      return;
+    }
+
+    throw error;
+  }
+}
+
+export async function handleUpdatePurchaseOrder(
+  request: IncomingMessage,
+  response: ServerResponse,
+  requestSession: Session | null,
+): Promise<void> {
+  const input = await readJson<UpdatePurchaseOrderInput>(request);
+
+  if (!input.tenantId?.trim()) {
+    badRequest(response, "tenantId is required.");
+    return;
+  }
+
+  if (!hasTenant(input.tenantId)) {
+    badRequest(response, "The selected tenant does not exist.");
+    return;
+  }
+
+  if (!input.purchaseOrderId?.trim()) {
+    badRequest(response, "purchaseOrderId is required.");
+    return;
+  }
+
+  if (!input.supplierId?.trim()) {
+    badRequest(response, "supplierId is required.");
+    return;
+  }
+
+  if (!input.productId?.trim()) {
+    badRequest(response, "productId is required.");
+    return;
+  }
+
+  if (!Number.isInteger(input.quantityOrdered) || input.quantityOrdered <= 0) {
+    badRequest(response, "Quantity ordered must be a positive integer.");
+    return;
+  }
+
+  if (!Number.isInteger(input.unitCost) || input.unitCost < 0) {
+    badRequest(response, "Unit cost must be a valid non-negative integer.");
+    return;
+  }
+
+  if (!input.expectedReceiptDate?.trim()) {
+    badRequest(response, "Expected receipt date is required.");
+    return;
+  }
+
+  try {
+    const purchaseOrder = runWithSession(requestSession, () => updatePurchaseOrder(input));
+    sendJson(response, 200, { item: purchaseOrder });
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      [
+        "The selected purchase order does not exist.",
+        "The selected purchase order has already been canceled.",
+        "The selected purchase order has already been closed.",
+        "The selected purchase order can only be edited while it is still issued.",
+        "The selected purchase order cannot be edited because receipts already exist.",
+        "The selected supplier does not exist.",
+        "The selected product does not exist.",
+        "Expected receipt date must be a valid YYYY-MM-DD value.",
       ].includes(error.message)
     ) {
       badRequest(response, error.message);

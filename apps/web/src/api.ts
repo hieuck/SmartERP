@@ -49,6 +49,8 @@ import type {
   RestoreTenantSnapshotPreview,
   RestoreTenantSnapshotResult,
   UpdateCustomerInput,
+  UpdateOrderInput,
+  UpdatePurchaseOrderInput,
   UpdateProductInput,
   UpdateSupplierInput,
 } from "@smarterp/contracts";
@@ -288,6 +290,14 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderRecord>
   return payload.item;
 }
 
+export async function updateOrder(input: UpdateOrderInput): Promise<OrderRecord> {
+  const payload = await request<{ item: OrderRecord }>("/api/orders/update", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  return payload.item;
+}
+
 export async function cancelOrder(input: CancelOrderInput): Promise<OrderRecord> {
   const payload = await request<{ item: OrderRecord }>("/api/orders/cancel", {
     method: "POST",
@@ -313,6 +323,14 @@ export async function listPurchaseOrders(tenantId: string): Promise<PurchaseOrde
 
 export async function createPurchaseOrder(input: CreatePurchaseOrderInput): Promise<PurchaseOrderRecord> {
   const payload = await request<{ item: PurchaseOrderRecord }>("/api/purchase-orders", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  return payload.item;
+}
+
+export async function updatePurchaseOrder(input: UpdatePurchaseOrderInput): Promise<PurchaseOrderRecord> {
+  const payload = await request<{ item: PurchaseOrderRecord }>("/api/purchase-orders/update", {
     method: "POST",
     body: JSON.stringify(input),
   });

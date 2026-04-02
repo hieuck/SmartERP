@@ -33,6 +33,10 @@ function getAuditActionColor(actionType: AuditActionType): string {
     return "default";
   }
 
+  if (actionType === "order_updated" || actionType === "purchase_order_updated") {
+    return "processing";
+  }
+
   if (actionType === "purchase_order_received") {
     return "cyan";
   }
@@ -84,6 +88,10 @@ function getAuditActionLabel(
     return t("reports.auditActionInvoiceReissued");
   }
 
+  if (actionType === "order_updated") {
+    return t("reports.auditActionOrderUpdated");
+  }
+
   if (actionType === "purchase_order_received") {
     return t("reports.auditActionPurchaseOrderReceived");
   }
@@ -94,6 +102,10 @@ function getAuditActionLabel(
 
   if (actionType === "order_closed") {
     return t("reports.auditActionOrderClosed");
+  }
+
+  if (actionType === "purchase_order_updated") {
+    return t("reports.auditActionPurchaseOrderUpdated");
   }
 
   if (actionType === "purchase_order_canceled") {

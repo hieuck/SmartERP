@@ -6,6 +6,7 @@ import {
   handleCreatePurchaseOrder,
   handleListPurchaseOrders,
   handleReceivePurchaseOrder,
+  handleUpdatePurchaseOrder,
 } from "./http.js";
 
 export const purchaseOrderApiRoutes: ApiRoute[] = [
@@ -29,6 +30,13 @@ export const purchaseOrderApiRoutes: ApiRoute[] = [
     path: "/api/purchase-orders/cancel",
     handle: withPermission("manage_purchase_orders", ({ request, response, session }) =>
       handleCancelPurchaseOrder(request, response, session),
+    ),
+  },
+  {
+    method: "POST",
+    path: "/api/purchase-orders/update",
+    handle: withPermission("manage_purchase_orders", ({ request, response, session }) =>
+      handleUpdatePurchaseOrder(request, response, session),
     ),
   },
   {

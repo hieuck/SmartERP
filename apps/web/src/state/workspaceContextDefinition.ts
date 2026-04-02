@@ -42,6 +42,8 @@ import type {
   CustomerRecord,
   CustomerStatementRecord,
   UpdateCustomerInput,
+  UpdateOrderInput,
+  UpdatePurchaseOrderInput,
   UpdateProductInput,
   UpdateSupplierInput,
 } from "@smarterp/contracts";
@@ -97,9 +99,11 @@ export type WorkspaceContextValue = {
     input: Omit<CreateInventoryAdjustmentInput, "tenantId">,
   ) => Promise<void>;
   createOrderRecord: (input: Omit<CreateOrderInput, "tenantId">) => Promise<void>;
+  updateOrderRecord: (input: Omit<UpdateOrderInput, "tenantId">) => Promise<void>;
   cancelOrderRecord: (input: Omit<CancelOrderInput, "tenantId">) => Promise<void>;
   closeOrderRecord: (input: Omit<CloseOrderInput, "tenantId">) => Promise<void>;
   createPurchaseOrderRecord: (input: Omit<CreatePurchaseOrderInput, "tenantId">) => Promise<void>;
+  updatePurchaseOrderRecord: (input: Omit<UpdatePurchaseOrderInput, "tenantId">) => Promise<void>;
   cancelPurchaseOrderRecord: (input: Omit<CancelPurchaseOrderInput, "tenantId">) => Promise<void>;
   closePurchaseOrderRecord: (input: Omit<ClosePurchaseOrderInput, "tenantId">) => Promise<void>;
   receivePurchaseOrderRecord: (input: Omit<ReceivePurchaseOrderInput, "tenantId">) => Promise<void>;

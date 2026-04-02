@@ -1,11 +1,13 @@
 import {
   CalendarOutlined,
   CheckCircleOutlined,
+  EditOutlined,
   ShoppingCartOutlined,
   StopOutlined,
   TeamOutlined,
 } from "@ant-design/icons";
 import type { ReactElement } from "react";
+import { useEffect, useState } from "react";
 import type { FormProps } from "antd";
 import {
   Button,
@@ -16,6 +18,7 @@ import {
   InputNumber,
   Popconfirm,
   Select,
+  Space,
   Tag,
   Typography,
 } from "antd";
@@ -98,11 +101,13 @@ export function PurchaseOrdersPage(): ReactElement {
     setSelectedTenantId,
     suppliers,
     tenants,
+    updatePurchaseOrderRecord,
   } = useWorkspace();
   const canCreatePurchaseOrders = can("manage_purchase_orders");
   const canReceivePurchaseOrders = can("receive_purchase_orders");
   const [createForm] = Form.useForm<PurchaseOrderFormShape>();
   const [receiptForm] = Form.useForm<PurchaseOrderReceiptFormShape>();
+  const [editingPurchaseOrderId, setEditingPurchaseOrderId] = useState<string | null>(null);
   const selectedProductId = Form.useWatch("productId", createForm);
   const selectedReceiptOrderId = Form.useWatch("purchaseOrderId", receiptForm);
   const selectedProduct = products.find((product) => product.id === selectedProductId) ?? null;
@@ -115,15 +120,28 @@ export function PurchaseOrdersPage(): ReactElement {
       purchaseOrder.status !== "closed",
   );
 
+  function resetCreateForm(): void {
+    setEditingPurchaseOrderId(null);
+    createForm.resetFields();
+    createForm.setFieldsValue({
+      quantityOrdered: 1,
+      unitCost: selectedProduct?.unitPrice ?? 0,
+      expectedReceiptDate: getTodayPlusDays(7),
+    });
+  }
+
   const onCreateFinish: FormProps<PurchaseOrderFormShape>["onFinish"] = async (values) => {
     try {
-      await createPurchaseOrderRecord(values);
-      createForm.resetFields();
-      createForm.setFieldsValue({
-        quantityOrdered: 1,
-        unitCost: selectedProduct?.unitPrice ?? 0,
-        expectedReceiptDate: getTodayPlusDays(7),
-      });
+      if (editingPurchaseOrderId) {
+        await updatePurchaseOrderRecord({
+          purchaseOrderId: editingPurchaseOrderId,
+          ...values,
+        });
+      } else {
+        await createPurchaseOrderRecord(values);
+      }
+
+      resetCreateForm();
     } catch {
       // Error state is already surfaced via workspace context.
     }
@@ -158,6 +176,37 @@ export function PurchaseOrdersPage(): ReactElement {
     }
   }
 
+  useEffect(() => {
+    resetCreateForm();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTenantId]);
+
+  useEffect(() => {
+    if (
+      editingPurchaseOrderId &&
+      !purchaseOrders.some((purchaseOrder) => purchaseOrder.id === editingPurchaseOrderId)
+    ) {
+      resetCreateForm();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [purchaseOrders, editingPurchaseOrderId]);
+
+  function startEditing(purchaseOrderId: string): void {
+    const purchaseOrder = purchaseOrders.find((item) => item.id === purchaseOrderId);
+    if (!purchaseOrder) {
+      return;
+    }
+
+    setEditingPurchaseOrderId(purchaseOrder.id);
+    createForm.setFieldsValue({
+      supplierId: purchaseOrder.supplierId,
+      productId: purchaseOrder.productId,
+      quantityOrdered: purchaseOrder.quantityOrdered,
+      unitCost: purchaseOrder.unitCost,
+      expectedReceiptDate: purchaseOrder.expectedReceiptDate.slice(0, 10),
+    });
+  }
+
   function formatDate(value: string): string {
     return new Intl.DateTimeFormat(localeCode, {
       dateStyle: "medium",
@@ -189,7 +238,10 @@ export function PurchaseOrdersPage(): ReactElement {
 
       <div className="two-column">
         <div className="page-column-stack">
-          <Card className="workspace-panel-card" title={t("purchaseOrders.createTitle")}>
+          <Card
+            className="workspace-panel-card"
+            title={editingPurchaseOrderId ? t("purchaseOrders.editTitle") : t("purchaseOrders.createTitle")}
+          >
             {canCreatePurchaseOrders ? (
               <>
                 <Form<PurchaseOrderFormShape>
@@ -259,14 +311,26 @@ export function PurchaseOrdersPage(): ReactElement {
                     <Input type="date" />
                   </Form.Item>
 
-                  <Button
-                    type="primary"
-                    htmlType="submit"
-                    disabled={!selectedTenantId || suppliers.length === 0 || products.length === 0}
-                    loading={isBusy}
-                  >
-                    {t("purchaseOrders.create")}
-                  </Button>
+                  <Space wrap>
+                    <Button
+                      data-testid="purchase-order-submit-button"
+                      type="primary"
+                      htmlType="submit"
+                      disabled={!selectedTenantId || suppliers.length === 0 || products.length === 0}
+                      loading={isBusy}
+                    >
+                      {editingPurchaseOrderId ? t("common.saveChanges") : t("purchaseOrders.create")}
+                    </Button>
+                    {editingPurchaseOrderId ? (
+                      <Button
+                        data-testid="purchase-order-cancel-edit-button"
+                        htmlType="button"
+                        onClick={resetCreateForm}
+                      >
+                        {t("common.cancel")}
+                      </Button>
+                    ) : null}
+                  </Space>
                 </Form>
 
                 {selectedTenantId && (suppliers.length === 0 || products.length === 0) ? (
@@ -365,7 +429,7 @@ export function PurchaseOrdersPage(): ReactElement {
                     <div className="record-icon">
                       <ShoppingCartOutlined />
                     </div>
-                    <div className="record-content">
+                  <div className="record-content">
                       <strong>{purchaseOrder.purchaseOrderNumber}</strong>
                       <div className="record-detail">
                         <TeamOutlined /> {purchaseOrder.supplierName} ({purchaseOrder.supplierCode})
@@ -397,23 +461,33 @@ export function PurchaseOrdersPage(): ReactElement {
                         purchaseOrder.status === "received") ? (
                         <div className="record-actions">
                           {purchaseOrder.status === "issued" ? (
-                            <Popconfirm
-                              title={t("purchaseOrders.cancelConfirm", {
-                                number: purchaseOrder.purchaseOrderNumber,
-                              })}
-                              okText={t("purchaseOrders.cancelAction")}
-                              cancelText={t("common.cancel")}
-                              onConfirm={() => void cancelPurchaseOrderAction(purchaseOrder.id)}
-                            >
+                            <>
                               <Button
-                                data-testid="purchase-order-cancel-button"
-                                danger
-                                icon={<StopOutlined />}
+                                data-testid="purchase-order-edit-button"
+                                icon={<EditOutlined />}
                                 size="small"
+                                onClick={() => startEditing(purchaseOrder.id)}
                               >
-                                {t("purchaseOrders.cancelAction")}
+                                {t("common.edit")}
                               </Button>
-                            </Popconfirm>
+                              <Popconfirm
+                                title={t("purchaseOrders.cancelConfirm", {
+                                  number: purchaseOrder.purchaseOrderNumber,
+                                })}
+                                okText={t("purchaseOrders.cancelAction")}
+                                cancelText={t("common.cancel")}
+                                onConfirm={() => void cancelPurchaseOrderAction(purchaseOrder.id)}
+                              >
+                                <Button
+                                  data-testid="purchase-order-cancel-button"
+                                  danger
+                                  icon={<StopOutlined />}
+                                  size="small"
+                                >
+                                  {t("purchaseOrders.cancelAction")}
+                                </Button>
+                              </Popconfirm>
+                            </>
                           ) : (
                             <Popconfirm
                               title={t("purchaseOrders.closeConfirm", {
