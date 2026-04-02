@@ -2,6 +2,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 
 import type {
   CancelPurchaseOrderInput,
+  ClosePurchaseOrderInput,
   CreatePurchaseOrderInput,
   ReceivePurchaseOrderInput,
   Session,
@@ -10,6 +11,7 @@ import type {
 import { readJson, sendJson } from "../../http.js";
 import {
   cancelPurchaseOrder,
+  closePurchaseOrder,
   createPurchaseOrder,
   hasTenant,
   listPurchaseOrders,
@@ -136,7 +138,51 @@ export async function handleCancelPurchaseOrder(
       [
         "The selected purchase order does not exist.",
         "The selected purchase order has already been canceled.",
+        "The selected purchase order has already been closed.",
         "The selected purchase order cannot be canceled because receipts already exist.",
+      ].includes(error.message)
+    ) {
+      badRequest(response, error.message);
+      return;
+    }
+
+    throw error;
+  }
+}
+
+export async function handleClosePurchaseOrder(
+  request: IncomingMessage,
+  response: ServerResponse,
+  requestSession: Session | null,
+): Promise<void> {
+  const input = await readJson<ClosePurchaseOrderInput>(request);
+
+  if (!input.tenantId?.trim()) {
+    badRequest(response, "tenantId is required.");
+    return;
+  }
+
+  if (!hasTenant(input.tenantId)) {
+    badRequest(response, "The selected tenant does not exist.");
+    return;
+  }
+
+  if (!input.purchaseOrderId?.trim()) {
+    badRequest(response, "purchaseOrderId is required.");
+    return;
+  }
+
+  try {
+    const purchaseOrder = runWithSession(requestSession, () => closePurchaseOrder(input));
+    sendJson(response, 200, { item: purchaseOrder });
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      [
+        "The selected purchase order does not exist.",
+        "The selected purchase order has already been canceled.",
+        "The selected purchase order has already been closed.",
+        "The selected purchase order can only be closed after at least one receipt has been posted.",
       ].includes(error.message)
     ) {
       badRequest(response, error.message);
@@ -187,6 +233,7 @@ export async function handleReceivePurchaseOrder(
       if (
         error.message === "The selected purchase order does not exist." ||
         error.message === "The selected purchase order has been canceled." ||
+        error.message === "The selected purchase order has been closed." ||
         error.message === "The selected product does not exist." ||
         error.message === "Received quantity must be a positive integer." ||
         error.message === "Received date must be a valid YYYY-MM-DD value." ||

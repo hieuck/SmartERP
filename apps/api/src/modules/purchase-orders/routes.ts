@@ -2,6 +2,7 @@ import type { ApiRoute } from "../route-dispatch/http.js";
 import { withModuleAccess, withPermission, withTenantQuery } from "../route-dispatch/helpers.js";
 import {
   handleCancelPurchaseOrder,
+  handleClosePurchaseOrder,
   handleCreatePurchaseOrder,
   handleListPurchaseOrders,
   handleReceivePurchaseOrder,
@@ -28,6 +29,13 @@ export const purchaseOrderApiRoutes: ApiRoute[] = [
     path: "/api/purchase-orders/cancel",
     handle: withPermission("manage_purchase_orders", ({ request, response, session }) =>
       handleCancelPurchaseOrder(request, response, session),
+    ),
+  },
+  {
+    method: "POST",
+    path: "/api/purchase-orders/close",
+    handle: withPermission("manage_purchase_orders", ({ request, response, session }) =>
+      handleClosePurchaseOrder(request, response, session),
     ),
   },
   {

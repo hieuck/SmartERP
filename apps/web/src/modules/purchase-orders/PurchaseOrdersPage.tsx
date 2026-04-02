@@ -1,5 +1,6 @@
 import {
   CalendarOutlined,
+  CheckCircleOutlined,
   ShoppingCartOutlined,
   StopOutlined,
   TeamOutlined,
@@ -44,6 +45,10 @@ function getPurchaseOrderStatusColor(status: PurchaseOrderRecord["status"]): str
     return "red";
   }
 
+  if (status === "closed") {
+    return "blue";
+  }
+
   if (status === "received") {
     return "green";
   }
@@ -63,6 +68,10 @@ function getPurchaseOrderStatusLabel(
     return t("purchaseOrders.statusCanceled");
   }
 
+  if (status === "closed") {
+    return t("purchaseOrders.statusClosed");
+  }
+
   if (status === "received") {
     return t("purchaseOrders.statusReceived");
   }
@@ -79,6 +88,7 @@ export function PurchaseOrdersPage(): ReactElement {
   const {
     can,
     cancelPurchaseOrderRecord,
+    closePurchaseOrderRecord,
     createPurchaseOrderRecord,
     receivePurchaseOrderRecord,
     isBusy,
@@ -98,7 +108,12 @@ export function PurchaseOrdersPage(): ReactElement {
   const selectedProduct = products.find((product) => product.id === selectedProductId) ?? null;
   const selectedReceiptOrder =
     purchaseOrders.find((purchaseOrder) => purchaseOrder.id === selectedReceiptOrderId) ?? null;
-  const receivablePurchaseOrders = purchaseOrders.filter((purchaseOrder) => purchaseOrder.outstandingQuantity > 0);
+  const receivablePurchaseOrders = purchaseOrders.filter(
+    (purchaseOrder) =>
+      purchaseOrder.outstandingQuantity > 0 &&
+      purchaseOrder.status !== "canceled" &&
+      purchaseOrder.status !== "closed",
+  );
 
   const onCreateFinish: FormProps<PurchaseOrderFormShape>["onFinish"] = async (values) => {
     try {
@@ -130,6 +145,14 @@ export function PurchaseOrdersPage(): ReactElement {
   async function cancelPurchaseOrderAction(purchaseOrderId: string): Promise<void> {
     try {
       await cancelPurchaseOrderRecord({ purchaseOrderId });
+    } catch {
+      // Error state is already surfaced via workspace context.
+    }
+  }
+
+  async function closePurchaseOrderAction(purchaseOrderId: string): Promise<void> {
+    try {
+      await closePurchaseOrderRecord({ purchaseOrderId });
     } catch {
       // Error state is already surfaced via workspace context.
     }
@@ -368,25 +391,49 @@ export function PurchaseOrdersPage(): ReactElement {
                           {getPurchaseOrderStatusLabel(purchaseOrder.status, t)}
                         </Tag>
                       </div>
-                      {canCreatePurchaseOrders && purchaseOrder.status === "issued" ? (
+                      {canCreatePurchaseOrders &&
+                      (purchaseOrder.status === "issued" ||
+                        purchaseOrder.status === "partially_received" ||
+                        purchaseOrder.status === "received") ? (
                         <div className="record-actions">
-                          <Popconfirm
-                            title={t("purchaseOrders.cancelConfirm", {
-                              number: purchaseOrder.purchaseOrderNumber,
-                            })}
-                            okText={t("purchaseOrders.cancelAction")}
-                            cancelText={t("common.cancel")}
-                            onConfirm={() => void cancelPurchaseOrderAction(purchaseOrder.id)}
-                          >
-                            <Button
-                              data-testid="purchase-order-cancel-button"
-                              danger
-                              icon={<StopOutlined />}
-                              size="small"
+                          {purchaseOrder.status === "issued" ? (
+                            <Popconfirm
+                              title={t("purchaseOrders.cancelConfirm", {
+                                number: purchaseOrder.purchaseOrderNumber,
+                              })}
+                              okText={t("purchaseOrders.cancelAction")}
+                              cancelText={t("common.cancel")}
+                              onConfirm={() => void cancelPurchaseOrderAction(purchaseOrder.id)}
                             >
-                              {t("purchaseOrders.cancelAction")}
-                            </Button>
-                          </Popconfirm>
+                              <Button
+                                data-testid="purchase-order-cancel-button"
+                                danger
+                                icon={<StopOutlined />}
+                                size="small"
+                              >
+                                {t("purchaseOrders.cancelAction")}
+                              </Button>
+                            </Popconfirm>
+                          ) : (
+                            <Popconfirm
+                              title={t("purchaseOrders.closeConfirm", {
+                                number: purchaseOrder.purchaseOrderNumber,
+                              })}
+                              okText={t("purchaseOrders.closeAction")}
+                              cancelText={t("common.cancel")}
+                              onConfirm={() => void closePurchaseOrderAction(purchaseOrder.id)}
+                            >
+                              <Button
+                                data-testid="purchase-order-close-button"
+                                type="primary"
+                                ghost
+                                icon={<CheckCircleOutlined />}
+                                size="small"
+                              >
+                                {t("purchaseOrders.closeAction")}
+                              </Button>
+                            </Popconfirm>
+                          )}
                         </div>
                       ) : null}
                     </div>

@@ -364,7 +364,7 @@ export type DeleteProductInput = {
   productId: string;
 };
 
-export type PurchaseOrderStatus = "issued" | "partially_received" | "received" | "canceled";
+export type PurchaseOrderStatus = "issued" | "partially_received" | "received" | "closed" | "canceled";
 
 export type PurchaseOrderRecord = {
   id: string;
@@ -396,6 +396,11 @@ export type CreatePurchaseOrderInput = {
 };
 
 export type CancelPurchaseOrderInput = {
+  tenantId: string;
+  purchaseOrderId: string;
+};
+
+export type ClosePurchaseOrderInput = {
   tenantId: string;
   purchaseOrderId: string;
 };
@@ -477,7 +482,7 @@ export type ReceivePurchaseOrderResult = {
   receipt: PurchaseOrderReceiptRecord;
 };
 
-export type OrderStatus = "draft" | "confirmed" | "canceled";
+export type OrderStatus = "draft" | "confirmed" | "closed" | "canceled";
 
 export type OrderRecord = {
   id: string;
@@ -503,6 +508,11 @@ export type CreateOrderInput = {
 };
 
 export type CancelOrderInput = {
+  tenantId: string;
+  orderId: string;
+};
+
+export type CloseOrderInput = {
   tenantId: string;
   orderId: string;
 };
@@ -586,7 +596,9 @@ export type AuditActionType =
   | "invoice_reissued"
   | "invoice_voided"
   | "order_canceled"
+  | "order_closed"
   | "purchase_order_canceled"
+  | "purchase_order_closed"
   | "purchase_order_received"
   | "payment_recorded"
   | "collection_follow_up_updated"

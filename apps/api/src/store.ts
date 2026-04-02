@@ -16,6 +16,8 @@ import {
   type AccountType,
   type CancelOrderInput,
   type CancelPurchaseOrderInput,
+  type CloseOrderInput,
+  type ClosePurchaseOrderInput,
   createDemoSession,
   type CreateCustomerInput,
   type DeleteCustomerInput,
@@ -1021,6 +1023,12 @@ const countInvoicesForOrderStatement = db.prepare(`
   SELECT COUNT(*) AS count
   FROM invoices
   WHERE tenant_id = ? AND order_id = ? AND status <> 'void'
+`);
+
+const countUnpaidInvoicesForOrderStatement = db.prepare(`
+  SELECT COUNT(*) AS count
+  FROM invoices
+  WHERE tenant_id = ? AND order_id = ? AND status <> 'void' AND status <> 'paid'
 `);
 
 const getLatestVoidedInvoiceForOrderStatement = db.prepare(`
@@ -3558,6 +3566,10 @@ export function cancelOrder(input: CancelOrderInput): OrderRecord {
     throw new Error("The selected order does not exist.");
   }
 
+  if (existing.status === "closed") {
+    throw new Error("The selected order has already been closed.");
+  }
+
   if (existing.status === "canceled") {
     throw new Error("The selected order has already been canceled.");
   }
@@ -3635,6 +3647,61 @@ export function cancelOrder(input: CancelOrderInput): OrderRecord {
   }
 }
 
+export function closeOrder(input: CloseOrderInput): OrderRecord {
+  const existing = getOrderByIdStatement.get(input.tenantId, input.orderId) as OrderRow | undefined;
+  if (!existing) {
+    throw new Error("The selected order does not exist.");
+  }
+
+  if (existing.status === "closed") {
+    throw new Error("The selected order has already been closed.");
+  }
+
+  if (existing.status === "canceled") {
+    throw new Error("The selected order has already been canceled.");
+  }
+
+  const activeInvoiceCount = Number(
+    (countInvoicesForOrderStatement.get(input.tenantId, input.orderId) as { count?: number } | undefined)?.count ?? 0,
+  );
+  const unpaidInvoiceCount = Number(
+    (countUnpaidInvoicesForOrderStatement.get(
+      input.tenantId,
+      input.orderId,
+    ) as { count?: number } | undefined)?.count ?? 0,
+  );
+  if (activeInvoiceCount === 0 || unpaidInvoiceCount > 0) {
+    throw new Error("The selected order can only be closed after its active invoice is fully paid.");
+  }
+
+  const closedAt = timestamp();
+  db.exec("BEGIN");
+
+  try {
+    updateOrderStatusStatement.run("closed", input.tenantId, existing.id);
+
+    recordAuditLog({
+      tenantId: input.tenantId,
+      entityType: "order",
+      entityId: existing.id,
+      entityNumber: existing.order_number,
+      actionType: "order_closed",
+      summary: `Closed ${existing.order_number}`,
+      metadata: {
+        amount: existing.total_amount,
+        quantity: existing.quantity,
+      },
+      createdAt: closedAt,
+    });
+
+    db.exec("COMMIT");
+    return mapOrder({ ...existing, status: "closed" });
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
+}
+
 export function createPurchaseOrder(input: CreatePurchaseOrderInput): PurchaseOrderRecord {
   const supplier = getSupplierByIdStatement.get(input.tenantId, input.supplierId) as SupplierRow | undefined;
   if (!supplier) {
@@ -3701,6 +3768,10 @@ export function cancelPurchaseOrder(input: CancelPurchaseOrderInput): PurchaseOr
     throw new Error("The selected purchase order does not exist.");
   }
 
+  if (existing.status === "closed") {
+    throw new Error("The selected purchase order has already been closed.");
+  }
+
   if (existing.status === "canceled") {
     throw new Error("The selected purchase order has already been canceled.");
   }
@@ -3745,6 +3816,59 @@ export function cancelPurchaseOrder(input: CancelPurchaseOrderInput): PurchaseOr
   }
 }
 
+export function closePurchaseOrder(input: ClosePurchaseOrderInput): PurchaseOrderRecord {
+  const existing = getPurchaseOrderByIdStatement.get(input.tenantId, input.purchaseOrderId) as
+    | PurchaseOrderRow
+    | undefined;
+  if (!existing) {
+    throw new Error("The selected purchase order does not exist.");
+  }
+
+  if (existing.status === "closed") {
+    throw new Error("The selected purchase order has already been closed.");
+  }
+
+  if (existing.status === "canceled") {
+    throw new Error("The selected purchase order has already been canceled.");
+  }
+
+  if (existing.received_quantity <= 0) {
+    throw new Error("The selected purchase order can only be closed after at least one receipt has been posted.");
+  }
+
+  const closedAt = timestamp();
+  db.exec("BEGIN");
+
+  try {
+    updatePurchaseOrderStatusStatement.run("closed", input.tenantId, existing.id);
+
+    recordAuditLog({
+      tenantId: input.tenantId,
+      entityType: "purchase_order",
+      entityId: existing.id,
+      entityNumber: existing.purchase_order_number,
+      actionType: "purchase_order_closed",
+      summary: `Closed ${existing.purchase_order_number}`,
+      metadata: {
+        amount: existing.total_amount,
+        quantity: Math.max(existing.quantity_ordered - existing.received_quantity, 0),
+        unitCost: existing.unit_cost,
+        note:
+          existing.received_quantity < existing.quantity_ordered
+            ? `Outstanding quantity locked at ${existing.quantity_ordered - existing.received_quantity}`
+            : undefined,
+      },
+      createdAt: closedAt,
+    });
+
+    db.exec("COMMIT");
+    return mapPurchaseOrder({ ...existing, status: "closed" });
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
+}
+
 function receivePurchaseOrderInternal(input: ReceivePurchaseOrderInput): ReceivePurchaseOrderResult {
   const purchaseOrder = getPurchaseOrderByIdStatement.get(input.tenantId, input.purchaseOrderId) as
     | PurchaseOrderRow
@@ -3755,6 +3879,10 @@ function receivePurchaseOrderInternal(input: ReceivePurchaseOrderInput): Receive
 
   if (purchaseOrder.status === "canceled") {
     throw new Error("The selected purchase order has been canceled.");
+  }
+
+  if (purchaseOrder.status === "closed") {
+    throw new Error("The selected purchase order has been closed.");
   }
 
   if (!Number.isInteger(input.quantityReceived) || input.quantityReceived <= 0) {
@@ -4246,6 +4374,10 @@ function createInvoicePaymentInternal(input: CreateInvoicePaymentInput): Invoice
         { accountCode: "131", debitAmount: 0, creditAmount: input.amount },
       ],
     });
+
+    const nextPaidAmount = invoice.paid_amount + input.amount;
+    const nextInvoiceStatus = getInvoiceStatus(invoice.total_amount, nextPaidAmount);
+    updateInvoiceStatusStatement.run(nextInvoiceStatus, input.tenantId, input.invoiceId);
 
     const updatedInvoice = getInvoiceByIdStatement.get(input.tenantId, input.invoiceId) as InvoiceRow | undefined;
     if (!updatedInvoice) {

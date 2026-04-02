@@ -185,10 +185,12 @@ function isExpectedNegativePath(response) {
           response.url().endsWith("/api/suppliers") ||
           response.url().endsWith("/api/products") ||
           response.url().endsWith("/api/orders/cancel") ||
+          response.url().endsWith("/api/orders/close") ||
           response.url().endsWith("/api/customers/delete") ||
           response.url().endsWith("/api/suppliers/delete") ||
           response.url().endsWith("/api/products/delete") ||
           response.url().endsWith("/api/purchase-orders/cancel") ||
+          response.url().endsWith("/api/purchase-orders/close") ||
           response.url().endsWith("/api/purchase-orders/receipts") ||
           response.url().endsWith("/api/invoices") ||
           response.url().endsWith("/api/invoices/payments") ||
@@ -516,6 +518,8 @@ async function main() {
   let supplierAndPurchaseOrdersVerified = false;
   let purchaseOrderCancellationVerified = false;
   let purchaseOrderCancelGuardVerified = false;
+  let purchaseOrderCloseVerified = false;
+  let purchaseOrderCloseGuardVerified = false;
   let canceledPurchaseOrderReceiptGuardVerified = false;
   let purchaseReceiptApprovalVerified = false;
   let purchaseReceiptVerified = false;
@@ -526,6 +530,8 @@ async function main() {
   let paymentGuardVerified = false;
   let partialSettlementVerified = false;
   let finalSettlementVerified = false;
+  let orderCloseVerified = false;
+  let orderCloseGuardVerified = false;
   let invoiceVoidVerified = false;
   let invoiceReissueVerified = false;
   let invoiceReissueLineageVerified = false;
@@ -1115,6 +1121,84 @@ async function main() {
       "Received purchase order did not reject cancellation.",
     );
     purchaseOrderCancelGuardVerified = true;
+    await openSection(page, sidebarIndexes.purchaseOrders, "/dashboard/purchase-orders");
+    await waitForTenantContext(page, tenantName);
+    const purchaseOrderCloseResponse = page.waitForResponse(
+      (response) =>
+        response.url().endsWith("/api/purchase-orders/close") &&
+        response.request().method() === "POST" &&
+        response.status() === 200,
+      { timeout: 15000 },
+    );
+    await purchaseOrderRow.locator('[data-testid="purchase-order-close-button"]').click();
+    await page
+      .locator(".ant-popconfirm-buttons")
+      .last()
+      .getByRole("button", { name: /Chốt đơn mua|Close Purchase Order/ })
+      .click();
+    await purchaseOrderCloseResponse;
+    await openSection(page, sidebarIndexes.purchaseOrders, "/dashboard/purchase-orders");
+    await waitForTenantContext(page, tenantName);
+    await purchaseOrderRow.getByText(/Đã chốt|Closed/).waitFor({ timeout: 15000 });
+    const receiptOptionsTextAfterClose = await purchaseOrdersReceiveCard.textContent();
+    assert(
+      !receiptOptionsTextAfterClose?.includes(purchaseOrderNumber),
+      "Closed purchase order still appeared inside the receiving card.",
+    );
+    purchaseOrderCloseVerified = true;
+    const closedPurchaseOrderReceiptResponse = await page.evaluate(
+      async ({ purchaseOrderNumberToReceive, quantity, sessionKey, tenantKey, receivedDate }) => {
+        const rawSession = window.localStorage.getItem(sessionKey);
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
+        const headers = {
+          "content-type": "application/json",
+          authorization: `Bearer ${accessToken}`,
+        };
+
+        const purchaseOrdersResponse = await fetch(
+          `/api/purchase-orders?tenantId=${encodeURIComponent(tenantId ?? "")}`,
+          { headers },
+        );
+        const purchaseOrdersPayload = await purchaseOrdersResponse.json();
+        const targetPurchaseOrder = purchaseOrdersPayload.items.find(
+          (item) => item.purchaseOrderNumber === purchaseOrderNumberToReceive,
+        );
+
+        if (!targetPurchaseOrder || !tenantId) {
+          return { status: 0, body: { error: "Closed purchase order lookup failed before receipt guard test." } };
+        }
+
+        const response = await fetch("/api/purchase-orders/receipts", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            tenantId,
+            purchaseOrderId: targetPurchaseOrder.id,
+            quantityReceived: quantity,
+            receivedDate,
+          }),
+        });
+
+        return {
+          status: response.status,
+          body: await response.json(),
+        };
+      },
+      {
+        purchaseOrderNumberToReceive: purchaseOrderNumber,
+        quantity: 1,
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+        receivedDate: firstIssueDateInput,
+      },
+    );
+    assert(
+      closedPurchaseOrderReceiptResponse.status === 400 &&
+        closedPurchaseOrderReceiptResponse.body?.error === "The selected purchase order has been closed.",
+      "Closed purchase order still accepted a receipt.",
+    );
+    purchaseOrderCloseGuardVerified = true;
 
     await openSection(page, sidebarIndexes.inventory, "/dashboard/inventory");
     await waitForTenantContext(page, tenantName);
@@ -1440,6 +1524,32 @@ async function main() {
     await invoiceRow.getByText(buildAmountPattern(firstInvoiceAmount)).first().waitFor({ timeout: 15000 });
     await paymentCard.getByText("Mọi hóa đơn hiện tại đều đã được thanh toán đủ.", { exact: false }).waitFor({ timeout: 15000 });
     finalSettlementVerified = true;
+    await openSection(page, sidebarIndexes.orders, "/dashboard/orders");
+    await waitForTenantContext(page, tenantName);
+    const settledOrderRow = getListCard(page).locator(".record-row").filter({ hasText: orderNumber }).first();
+    await settledOrderRow.waitFor({ timeout: 15000 });
+    const orderCloseResponse = page.waitForResponse(
+      (response) =>
+        response.url().endsWith("/api/orders/close") &&
+        response.request().method() === "POST",
+      { timeout: 15000 },
+    );
+    await settledOrderRow.locator('[data-testid="order-close-button"]').click();
+    await page
+      .locator(".ant-popconfirm-buttons")
+      .last()
+      .getByRole("button", { name: /Chốt đơn hàng|Close Order/ })
+      .click();
+    const orderCloseResult = await orderCloseResponse;
+    const orderClosePayload = await orderCloseResult.json();
+    assert(
+      orderCloseResult.status() === 200,
+      `Settled order close failed: ${orderClosePayload?.error ?? orderCloseResult.status()}.`,
+    );
+    await openSection(page, sidebarIndexes.orders, "/dashboard/orders");
+    await waitForTenantContext(page, tenantName);
+    await settledOrderRow.getByText(/Đã chốt|Closed/).waitFor({ timeout: 15000 });
+    orderCloseVerified = true;
 
     await openSection(page, sidebarIndexes.orders, "/dashboard/orders");
     await waitForTenantContext(page, tenantName);
@@ -1770,6 +1880,53 @@ async function main() {
     await secondInvoiceRow.getByText("Đã phát hành", { exact: false }).waitFor({ timeout: 15000 });
     await secondInvoiceRow.getByText(`Quá hạn ${secondDaysPastDue} ngày`, { exact: false }).waitFor({ timeout: 15000 });
     await secondInvoiceRow.getByText(buildAmountPattern(secondInvoiceAmount)).first().waitFor({ timeout: 15000 });
+    const openOrderCloseResponse = await page.evaluate(
+      async ({ targetOrderNumber, sessionKey, tenantKey }) => {
+        const rawSession = window.localStorage.getItem(sessionKey);
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
+        const headers = {
+          "content-type": "application/json",
+          authorization: `Bearer ${accessToken}`,
+        };
+
+        const ordersResponse = await fetch(`/api/orders?tenantId=${encodeURIComponent(tenantId ?? "")}`, {
+          headers,
+        });
+        const ordersPayload = await ordersResponse.json();
+        const targetOrder = ordersPayload.items.find((item) => item.orderNumber === targetOrderNumber);
+
+        if (!targetOrder || !tenantId) {
+          return { status: 0, body: { error: "Open order lookup failed before close guard test." } };
+        }
+
+        const response = await fetch("/api/orders/close", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            tenantId,
+            orderId: targetOrder.id,
+          }),
+        });
+
+        return {
+          status: response.status,
+          body: await response.json(),
+        };
+      },
+      {
+        targetOrderNumber: secondOrderNumber,
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+      },
+    );
+    assert(
+      openOrderCloseResponse.status === 400 &&
+        openOrderCloseResponse.body?.error ===
+          "The selected order can only be closed after its active invoice is fully paid.",
+      "Open order did not reject close before payment.",
+    );
+    orderCloseGuardVerified = true;
     await waitForFormReady(followUpCard);
     await selectOption(page, followUpCard.getByRole("combobox").nth(0), secondInvoiceNumber);
     await selectOption(page, followUpCard.getByRole("combobox").nth(1), "Hứa thanh toán");
@@ -1972,6 +2129,8 @@ async function main() {
     await auditCard.getByText("Phát hành hóa đơn", { exact: false }).first().waitFor({ timeout: 15000 });
     await auditCard.getByText("Phát hành lại hóa đơn", { exact: false }).first().waitFor({ timeout: 15000 });
     await auditCard.getByText("Hủy hiệu lực hóa đơn", { exact: false }).first().waitFor({ timeout: 15000 });
+    await auditCard.getByText("Chốt đơn hàng", { exact: false }).first().waitFor({ timeout: 15000 });
+    await auditCard.getByText("Chốt đơn mua", { exact: false }).first().waitFor({ timeout: 15000 });
     await auditCard.getByText("Ghi nhận thanh toán", { exact: false }).first().waitFor({ timeout: 15000 });
     await auditCard.getByText("Cập nhật thu hồi", { exact: false }).first().waitFor({ timeout: 15000 });
     await auditCard.getByText("Hoàn tất thu hồi", { exact: false }).first().waitFor({ timeout: 15000 });
@@ -2623,6 +2782,8 @@ async function main() {
       supplierAndPurchaseOrdersVerified,
       purchaseOrderCancellationVerified,
       purchaseOrderCancelGuardVerified,
+      purchaseOrderCloseVerified,
+      purchaseOrderCloseGuardVerified,
       canceledPurchaseOrderReceiptGuardVerified,
       purchaseReceiptApprovalVerified,
       purchaseReceiptVerified,
@@ -2633,6 +2794,8 @@ async function main() {
       paymentGuardVerified,
       partialSettlementVerified,
       finalSettlementVerified,
+      orderCloseVerified,
+      orderCloseGuardVerified,
       invoiceVoidVerified,
       invoiceReissueVerified,
       invoiceReissueLineageVerified,

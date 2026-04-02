@@ -6,6 +6,8 @@ import type {
   ApprovalRequestRecord,
   CancelOrderInput,
   CancelPurchaseOrderInput,
+  CloseOrderInput,
+  ClosePurchaseOrderInput,
   CreateCustomerInput,
   CreateInventoryAdjustmentInput,
   CreateInvoiceInput,
@@ -45,10 +47,11 @@ import {
   submitInvoicePayment,
   submitInvoiceVoid,
 } from "../modules/invoices/api";
-import { submitOrder, submitOrderCancel } from "../modules/orders/api";
+import { submitOrder, submitOrderCancel, submitOrderClose } from "../modules/orders/api";
 import {
   submitPurchaseOrder,
   submitPurchaseOrderCancel,
+  submitPurchaseOrderClose,
   submitPurchaseOrderReceipt,
 } from "../modules/purchase-orders/api";
 import {
@@ -388,6 +391,19 @@ export function createWorkspaceCommands(dependencies: WorkspaceCommandsDependenc
       );
     },
 
+    async closeOrderRecord(input: Omit<CloseOrderInput, "tenantId">): Promise<void> {
+      const tenantId = getSelectedTenantIdOrThrow();
+
+      await runBusyAction(
+        { setErrorMessage, setIsBusy, setNoticeMessage },
+        "Order close failed.",
+        async () => {
+          await submitOrderClose({ ...input, tenantId });
+          await refreshTenantWorkspace(tenantId);
+        },
+      );
+    },
+
     async createPurchaseOrderRecord(
       input: Omit<CreatePurchaseOrderInput, "tenantId">,
     ): Promise<void> {
@@ -413,6 +429,21 @@ export function createWorkspaceCommands(dependencies: WorkspaceCommandsDependenc
         "Purchase order cancellation failed.",
         async () => {
           await submitPurchaseOrderCancel({ ...input, tenantId });
+          await refreshTenantWorkspace(tenantId);
+        },
+      );
+    },
+
+    async closePurchaseOrderRecord(
+      input: Omit<ClosePurchaseOrderInput, "tenantId">,
+    ): Promise<void> {
+      const tenantId = getSelectedTenantIdOrThrow();
+
+      await runBusyAction(
+        { setErrorMessage, setIsBusy, setNoticeMessage },
+        "Purchase order close failed.",
+        async () => {
+          await submitPurchaseOrderClose({ ...input, tenantId });
           await refreshTenantWorkspace(tenantId);
         },
       );

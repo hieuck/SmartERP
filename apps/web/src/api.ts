@@ -6,6 +6,8 @@ import type {
   AccountBalanceRecord,
   CancelOrderInput,
   CancelPurchaseOrderInput,
+  CloseOrderInput,
+  ClosePurchaseOrderInput,
   CreateCustomerInput,
   CreateInvoiceInput,
   UpdateInvoiceCollectionInput,
@@ -294,6 +296,14 @@ export async function cancelOrder(input: CancelOrderInput): Promise<OrderRecord>
   return payload.item;
 }
 
+export async function closeOrder(input: CloseOrderInput): Promise<OrderRecord> {
+  const payload = await request<{ item: OrderRecord }>("/api/orders/close", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  return payload.item;
+}
+
 export async function listPurchaseOrders(tenantId: string): Promise<PurchaseOrderRecord[]> {
   const payload = await request<{ items: PurchaseOrderRecord[] }>(
     `/api/purchase-orders?tenantId=${encodeURIComponent(tenantId)}`,
@@ -311,6 +321,14 @@ export async function createPurchaseOrder(input: CreatePurchaseOrderInput): Prom
 
 export async function cancelPurchaseOrder(input: CancelPurchaseOrderInput): Promise<PurchaseOrderRecord> {
   const payload = await request<{ item: PurchaseOrderRecord }>("/api/purchase-orders/cancel", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  return payload.item;
+}
+
+export async function closePurchaseOrder(input: ClosePurchaseOrderInput): Promise<PurchaseOrderRecord> {
+  const payload = await request<{ item: PurchaseOrderRecord }>("/api/purchase-orders/close", {
     method: "POST",
     body: JSON.stringify(input),
   });

@@ -1,4 +1,5 @@
 import {
+  CheckCircleOutlined,
   InboxOutlined,
   ShoppingOutlined,
   StopOutlined,
@@ -17,9 +18,13 @@ const { Paragraph, Title } = Typography;
 
 type OrderFormShape = Omit<CreateOrderInput, "tenantId">;
 
-function getOrderStatusColor(status: "draft" | "confirmed" | "canceled"): string {
+function getOrderStatusColor(status: "draft" | "confirmed" | "closed" | "canceled"): string {
   if (status === "canceled") {
     return "red";
+  }
+
+  if (status === "closed") {
+    return "blue";
   }
 
   if (status === "confirmed") {
@@ -30,11 +35,15 @@ function getOrderStatusColor(status: "draft" | "confirmed" | "canceled"): string
 }
 
 function getOrderStatusLabel(
-  status: "draft" | "confirmed" | "canceled",
+  status: "draft" | "confirmed" | "closed" | "canceled",
   t: ReturnType<typeof useLocale>["t"],
 ): string {
   if (status === "canceled") {
     return t("orders.statusCanceled");
+  }
+
+  if (status === "closed") {
+    return t("orders.statusClosed");
   }
 
   if (status === "confirmed") {
@@ -49,8 +58,10 @@ export function OrdersPage(): ReactElement {
   const {
     can,
     cancelOrderRecord,
+    closeOrderRecord,
     createOrderRecord,
     customers,
+    invoices,
     inventories,
     isBusy,
     orders,
@@ -77,6 +88,14 @@ export function OrdersPage(): ReactElement {
   async function cancelOrderAction(orderId: string): Promise<void> {
     try {
       await cancelOrderRecord({ orderId });
+    } catch {
+      // Error state is already surfaced via workspace context.
+    }
+  }
+
+  async function closeOrderAction(orderId: string): Promise<void> {
+    try {
+      await closeOrderRecord({ orderId });
     } catch {
       // Error state is already surfaced via workspace context.
     }
@@ -188,6 +207,7 @@ export function OrdersPage(): ReactElement {
             orders.length ? (
               <div className="record-stack">
                 {orders.map((order) => (
+                  // Keep order actions deterministic: cancel before invoicing, close after full settlement.
                   <div className="record-row" key={order.id}>
                     <div className="record-icon">
                       <InboxOutlined />
@@ -208,21 +228,42 @@ export function OrdersPage(): ReactElement {
                       </div>
                       {canManageOrders && order.status === "confirmed" ? (
                         <div className="record-actions">
-                          <Popconfirm
-                            title={t("orders.cancelConfirm", { number: order.orderNumber })}
-                            okText={t("orders.cancelAction")}
-                            cancelText={t("common.cancel")}
-                            onConfirm={() => void cancelOrderAction(order.id)}
-                          >
-                            <Button
-                              data-testid="order-cancel-button"
-                              danger
-                              icon={<StopOutlined />}
-                              size="small"
+                          {invoices.some((invoice) => invoice.orderId === order.id && invoice.status === "paid") ? (
+                            <Popconfirm
+                              title={t("orders.closeConfirm", { number: order.orderNumber })}
+                              okText={t("orders.closeAction")}
+                              cancelText={t("common.cancel")}
+                              onConfirm={() => void closeOrderAction(order.id)}
                             >
-                              {t("orders.cancelAction")}
-                            </Button>
-                          </Popconfirm>
+                              <Button
+                                data-testid="order-close-button"
+                                type="primary"
+                                ghost
+                                icon={<CheckCircleOutlined />}
+                                size="small"
+                              >
+                                {t("orders.closeAction")}
+                              </Button>
+                            </Popconfirm>
+                          ) : !invoices.some(
+                              (invoice) => invoice.orderId === order.id && invoice.status !== "void",
+                            ) ? (
+                            <Popconfirm
+                              title={t("orders.cancelConfirm", { number: order.orderNumber })}
+                              okText={t("orders.cancelAction")}
+                              cancelText={t("common.cancel")}
+                              onConfirm={() => void cancelOrderAction(order.id)}
+                            >
+                              <Button
+                                data-testid="order-cancel-button"
+                                danger
+                                icon={<StopOutlined />}
+                                size="small"
+                              >
+                                {t("orders.cancelAction")}
+                              </Button>
+                            </Popconfirm>
+                          ) : null}
                         </div>
                       ) : null}
                     </div>

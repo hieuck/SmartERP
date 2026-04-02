@@ -1,6 +1,7 @@
 import type {
   ApprovalAwareMutationResult,
   CancelPurchaseOrderInput,
+  ClosePurchaseOrderInput,
   CreatePurchaseOrderInput,
   PurchaseOrderRecord,
   ReceivePurchaseOrderInput,
@@ -9,6 +10,7 @@ import type {
 
 import {
   cancelPurchaseOrder,
+  closePurchaseOrder,
   createPurchaseOrder,
   listPurchaseOrders,
   receivePurchaseOrder,
@@ -26,6 +28,12 @@ export async function submitPurchaseOrderCancel(
   input: CancelPurchaseOrderInput,
 ): Promise<PurchaseOrderRecord> {
   return cancelPurchaseOrder(input);
+}
+
+export async function submitPurchaseOrderClose(
+  input: ClosePurchaseOrderInput,
+): Promise<PurchaseOrderRecord> {
+  return closePurchaseOrder(input);
 }
 
 export async function submitPurchaseOrderReceipt(
