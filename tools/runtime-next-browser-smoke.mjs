@@ -528,6 +528,8 @@ async function main() {
   let finalSettlementVerified = false;
   let invoiceVoidVerified = false;
   let invoiceReissueVerified = false;
+  let invoiceReissueLineageVerified = false;
+  let invoiceReissueAuditVerified = false;
   let reissuedInvoiceVoidVerified = false;
   let voidedInvoicePaymentGuardVerified = false;
   let voidedInvoiceCollectionGuardVerified = false;
@@ -1614,13 +1616,21 @@ async function main() {
     );
     assert(reissuedInvoiceResponse?.invoiceNumber, "Reissued invoice lookup did not return a new active invoice.");
     reissuedInvoiceNumber = reissuedInvoiceResponse.invoiceNumber;
-    await getListCard(page)
-      .locator(".record-row")
-      .filter({ hasText: reissuedInvoiceNumber })
-      .first()
-      .getByText("Đã phát hành", { exact: false })
-      .waitFor({ timeout: 15000 });
+    const originalVoidedInvoiceRow = getListCard(page).locator(".record-row").filter({ hasText: voidedInvoiceNumber }).first();
+    const reissuedInvoiceIssuedRow = getListCard(page).locator(".record-row").filter({ hasText: reissuedInvoiceNumber }).first();
+    await reissuedInvoiceIssuedRow.getByText("Đã phát hành", { exact: false }).waitFor({ timeout: 15000 });
+    const originalVoidedInvoiceText = await originalVoidedInvoiceRow.textContent();
+    const reissuedInvoiceText = await reissuedInvoiceIssuedRow.textContent();
+    assert(
+      originalVoidedInvoiceText?.includes(reissuedInvoiceNumber),
+      "Voided invoice row did not show the replacement invoice number.",
+    );
+    assert(
+      reissuedInvoiceText?.includes(voidedInvoiceNumber),
+      "Reissued invoice row did not show the original voided invoice number.",
+    );
     invoiceReissueVerified = true;
+    invoiceReissueLineageVerified = true;
 
     const reissuedInvoiceRowCard = getListCard(page).locator(".record-row").filter({ hasText: reissuedInvoiceNumber }).first();
     await reissuedInvoiceRowCard.locator('[data-testid="invoice-void-button"]').click();
@@ -1960,6 +1970,7 @@ async function main() {
     await auditCard.waitFor({ timeout: 15000 });
     await auditCard.getByText(/Nhận hàng từ đơn mua|Nhan hang tu don mua/).first().waitFor({ timeout: 15000 });
     await auditCard.getByText("Phát hành hóa đơn", { exact: false }).first().waitFor({ timeout: 15000 });
+    await auditCard.getByText("Phát hành lại hóa đơn", { exact: false }).first().waitFor({ timeout: 15000 });
     await auditCard.getByText("Hủy hiệu lực hóa đơn", { exact: false }).first().waitFor({ timeout: 15000 });
     await auditCard.getByText("Ghi nhận thanh toán", { exact: false }).first().waitFor({ timeout: 15000 });
     await auditCard.getByText("Cập nhật thu hồi", { exact: false }).first().waitFor({ timeout: 15000 });
@@ -1973,10 +1984,14 @@ async function main() {
     await auditCard.getByText(secondInvoiceNumber, { exact: false }).first().waitFor({ timeout: 15000 });
     await auditCard.getByText(invoiceNumber, { exact: false }).first().waitFor({ timeout: 15000 });
     await auditCard.getByText(voidedInvoiceNumber, { exact: false }).first().waitFor({ timeout: 15000 });
+    await auditCard.getByText(reissuedInvoiceNumber, { exact: false }).first().waitFor({ timeout: 15000 });
     await auditCard.getByText("SmartERP Founder", { exact: false }).first().waitFor({ timeout: 15000 });
+    await auditCard.getByText("Phát hành lại từ:", { exact: false }).first().waitFor({ timeout: 15000 });
+    await auditCard.getByText(voidedInvoiceNumber, { exact: false }).nth(1).waitFor({ timeout: 15000 });
     await auditCard.getByText(collectionNote, { exact: false }).first().waitFor({ timeout: 15000 });
     await auditCard.getByText(escalatedCollectionNote, { exact: false }).first().waitFor({ timeout: 15000 });
     auditTrailVerified = true;
+    invoiceReissueAuditVerified = true;
     await openSection(page, sidebarIndexes.operations, "/dashboard/operations");
     await page.getByRole("heading", { name: "Vận hành" }).waitFor({ timeout: 15000 });
     await page.getByText("Mức sẵn sàng pilot", { exact: false }).waitFor({ timeout: 15000 });
@@ -2620,6 +2635,8 @@ async function main() {
       finalSettlementVerified,
       invoiceVoidVerified,
       invoiceReissueVerified,
+      invoiceReissueLineageVerified,
+      invoiceReissueAuditVerified,
       reissuedInvoiceVoidVerified,
       voidedInvoicePaymentGuardVerified,
       voidedInvoiceCollectionGuardVerified,

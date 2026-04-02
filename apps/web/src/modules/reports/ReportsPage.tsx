@@ -25,6 +25,10 @@ import { useWorkspace } from "../../state/WorkspaceContext";
 const { Paragraph, Title } = Typography;
 
 function getAuditActionColor(actionType: AuditActionType): string {
+  if (actionType === "invoice_reissued") {
+    return "geekblue";
+  }
+
   if (actionType === "invoice_voided") {
     return "default";
   }
@@ -70,6 +74,10 @@ function getAuditActionLabel(
 ): string {
   if (actionType === "invoice_voided") {
     return t("reports.auditActionInvoiceVoided");
+  }
+
+  if (actionType === "invoice_reissued") {
+    return t("reports.auditActionInvoiceReissued");
   }
 
   if (actionType === "purchase_order_received") {
@@ -493,6 +501,16 @@ export function ReportsPage(): ReactElement {
                         <div className="record-detail">
                           {t("reports.auditOutstandingLabel")}{" "}
                           {formatCurrency(auditLog.metadata.outstandingAmount)}
+                        </div>
+                      ) : null}
+                      {auditLog.metadata.reissuedFromInvoiceNumber ? (
+                        <div className="record-detail">
+                          {t("reports.auditReissuedFromLabel")} {auditLog.metadata.reissuedFromInvoiceNumber}
+                        </div>
+                      ) : null}
+                      {auditLog.metadata.reissuedToInvoiceNumber ? (
+                        <div className="record-detail">
+                          {t("reports.auditReissuedToLabel")} {auditLog.metadata.reissuedToInvoiceNumber}
                         </div>
                       ) : null}
                       {auditLog.metadata.paymentMethod ? (

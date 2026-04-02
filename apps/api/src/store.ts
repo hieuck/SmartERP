@@ -199,6 +199,10 @@ type InvoiceRow = {
   id: string;
   tenant_id: string;
   invoice_number: string;
+  reissued_from_invoice_id: string | null;
+  reissued_from_invoice_number: string | null;
+  reissued_to_invoice_id: string | null;
+  reissued_to_invoice_number: string | null;
   order_id: string;
   order_number: string;
   customer_id: string;
@@ -1019,6 +1023,41 @@ const countInvoicesForOrderStatement = db.prepare(`
   WHERE tenant_id = ? AND order_id = ? AND status <> 'void'
 `);
 
+const getLatestVoidedInvoiceForOrderStatement = db.prepare(`
+  SELECT
+    id,
+    tenant_id,
+    invoice_number,
+    reissued_from_invoice_id,
+    reissued_from_invoice_number,
+    reissued_to_invoice_id,
+    reissued_to_invoice_number,
+    order_id,
+    order_number,
+    customer_id,
+    customer_name,
+    subtotal_amount,
+    tax_rate_percent,
+    tax_amount,
+    total_amount,
+    status,
+    0 AS paid_amount,
+    0 AS payment_count,
+    NULL AS last_payment_at,
+    issued_at,
+    due_date,
+    follow_up_status,
+    action_required,
+    promised_payment_date,
+    next_action_date,
+    collection_note,
+    last_collection_update_at
+  FROM invoices
+  WHERE tenant_id = ? AND order_id = ? AND status = 'void'
+  ORDER BY datetime(issued_at) DESC, rowid DESC
+  LIMIT 1
+`);
+
 const getOrderIssuedInventoryValueStatement = db.prepare(`
   SELECT COALESCE(SUM(credit_amount - debit_amount), 0) AS amount
   FROM journal_entries
@@ -1033,6 +1072,10 @@ const listInvoicesStatement = db.prepare(`
     i.id AS id,
     i.tenant_id AS tenant_id,
     i.invoice_number AS invoice_number,
+    i.reissued_from_invoice_id AS reissued_from_invoice_id,
+    i.reissued_from_invoice_number AS reissued_from_invoice_number,
+    i.reissued_to_invoice_id AS reissued_to_invoice_id,
+    i.reissued_to_invoice_number AS reissued_to_invoice_number,
     i.order_id AS order_id,
     i.order_number AS order_number,
     i.customer_id AS customer_id,
@@ -1060,6 +1103,10 @@ const listInvoicesStatement = db.prepare(`
     i.id,
     i.tenant_id,
     i.invoice_number,
+    i.reissued_from_invoice_id,
+    i.reissued_from_invoice_number,
+    i.reissued_to_invoice_id,
+    i.reissued_to_invoice_number,
     i.order_id,
     i.order_number,
     i.customer_id,
@@ -1085,6 +1132,10 @@ const getInvoiceByIdStatement = db.prepare(`
     i.id AS id,
     i.tenant_id AS tenant_id,
     i.invoice_number AS invoice_number,
+    i.reissued_from_invoice_id AS reissued_from_invoice_id,
+    i.reissued_from_invoice_number AS reissued_from_invoice_number,
+    i.reissued_to_invoice_id AS reissued_to_invoice_id,
+    i.reissued_to_invoice_number AS reissued_to_invoice_number,
     i.order_id AS order_id,
     i.order_number AS order_number,
     i.customer_id AS customer_id,
@@ -1112,6 +1163,10 @@ const getInvoiceByIdStatement = db.prepare(`
     i.id,
     i.tenant_id,
     i.invoice_number,
+    i.reissued_from_invoice_id,
+    i.reissued_from_invoice_number,
+    i.reissued_to_invoice_id,
+    i.reissued_to_invoice_number,
     i.order_id,
     i.order_number,
     i.customer_id,
@@ -1137,6 +1192,10 @@ const createInvoiceStatement = db.prepare(`
     id,
     tenant_id,
     invoice_number,
+    reissued_from_invoice_id,
+    reissued_from_invoice_number,
+    reissued_to_invoice_id,
+    reissued_to_invoice_number,
     order_id,
     order_number,
     customer_id,
@@ -1155,12 +1214,20 @@ const createInvoiceStatement = db.prepare(`
     collection_note,
     last_collection_update_at
   )
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `);
 
 const updateInvoiceStatusStatement = db.prepare(`
   UPDATE invoices
   SET status = ?
+  WHERE tenant_id = ? AND id = ?
+`);
+
+const updateInvoiceReissueLinkStatement = db.prepare(`
+  UPDATE invoices
+  SET
+    reissued_to_invoice_id = ?,
+    reissued_to_invoice_number = ?
   WHERE tenant_id = ? AND id = ?
 `);
 
@@ -1959,6 +2026,10 @@ function mapInvoice(row: InvoiceRow): InvoiceRecord {
     id: row.id,
     tenantId: row.tenant_id,
     invoiceNumber: row.invoice_number,
+    reissuedFromInvoiceId: row.reissued_from_invoice_id,
+    reissuedFromInvoiceNumber: row.reissued_from_invoice_number,
+    reissuedToInvoiceId: row.reissued_to_invoice_id,
+    reissuedToInvoiceNumber: row.reissued_to_invoice_number,
     orderId: row.order_id,
     orderNumber: row.order_number,
     customerId: row.customer_id,
@@ -3891,6 +3962,11 @@ function createInvoiceInternal(input: CreateInvoiceInput): InvoiceRecord {
     throw new Error("An invoice already exists for the selected order.");
   }
 
+  const priorVoidedInvoice = getLatestVoidedInvoiceForOrderStatement.get(
+    input.tenantId,
+    input.orderId,
+  ) as InvoiceRow | undefined;
+
   const subtotalAmount = order.total_amount;
   const taxAmount = Math.round((subtotalAmount * input.taxRatePercent) / 100);
   const issuedAt = createBusinessTimestamp(input.issueDate);
@@ -3902,6 +3978,10 @@ function createInvoiceInternal(input: CreateInvoiceInput): InvoiceRecord {
     id: randomUUID(),
     tenantId: input.tenantId,
     invoiceNumber: createInvoiceNumber(),
+    reissuedFromInvoiceId: priorVoidedInvoice?.id ?? null,
+    reissuedFromInvoiceNumber: priorVoidedInvoice?.invoice_number ?? null,
+    reissuedToInvoiceId: null,
+    reissuedToInvoiceNumber: null,
     orderId: order.id,
     orderNumber: order.order_number,
     customerId: order.customer_id,
@@ -3937,6 +4017,10 @@ function createInvoiceInternal(input: CreateInvoiceInput): InvoiceRecord {
       invoice.id,
       invoice.tenantId,
       invoice.invoiceNumber,
+      invoice.reissuedFromInvoiceId,
+      invoice.reissuedFromInvoiceNumber,
+      invoice.reissuedToInvoiceId,
+      invoice.reissuedToInvoiceNumber,
       invoice.orderId,
       invoice.orderNumber,
       invoice.customerId,
@@ -3955,6 +4039,15 @@ function createInvoiceInternal(input: CreateInvoiceInput): InvoiceRecord {
       invoice.collectionNote,
       invoice.lastCollectionUpdateAt,
     );
+
+    if (priorVoidedInvoice) {
+      updateInvoiceReissueLinkStatement.run(
+        invoice.id,
+        invoice.invoiceNumber,
+        invoice.tenantId,
+        priorVoidedInvoice.id,
+      );
+    }
 
     createJournalEntryLines({
       tenantId: invoice.tenantId,
@@ -3975,11 +4068,14 @@ function createInvoiceInternal(input: CreateInvoiceInput): InvoiceRecord {
       entityType: "invoice",
       entityId: invoice.id,
       entityNumber: invoice.invoiceNumber,
-      actionType: "invoice_issued",
-      summary: `Issued ${invoice.invoiceNumber} for ${invoice.customerName}`,
+      actionType: priorVoidedInvoice ? "invoice_reissued" : "invoice_issued",
+      summary: priorVoidedInvoice
+        ? `Reissued ${invoice.invoiceNumber} from ${priorVoidedInvoice.invoice_number}`
+        : `Issued ${invoice.invoiceNumber} for ${invoice.customerName}`,
       metadata: {
         amount: invoice.totalAmount,
         outstandingAmount: invoice.outstandingAmount,
+        reissuedFromInvoiceNumber: invoice.reissuedFromInvoiceNumber ?? undefined,
         note: `Due ${invoice.dueDate}`,
       },
       createdAt: invoice.issuedAt,

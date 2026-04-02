@@ -154,7 +154,11 @@ db.exec(`
     id TEXT PRIMARY KEY,
     tenant_id TEXT NOT NULL,
     invoice_number TEXT NOT NULL UNIQUE,
-    order_id TEXT NOT NULL UNIQUE,
+    reissued_from_invoice_id TEXT,
+    reissued_from_invoice_number TEXT,
+    reissued_to_invoice_id TEXT,
+    reissued_to_invoice_number TEXT,
+    order_id TEXT NOT NULL,
     order_number TEXT NOT NULL,
     customer_id TEXT NOT NULL,
     customer_name TEXT NOT NULL,
@@ -375,6 +379,10 @@ function migrateInvoicesForActiveOrderConstraint(): void {
       id TEXT PRIMARY KEY,
       tenant_id TEXT NOT NULL,
       invoice_number TEXT NOT NULL UNIQUE,
+      reissued_from_invoice_id TEXT,
+      reissued_from_invoice_number TEXT,
+      reissued_to_invoice_id TEXT,
+      reissued_to_invoice_number TEXT,
       order_id TEXT NOT NULL,
       order_number TEXT NOT NULL,
       customer_id TEXT NOT NULL,
@@ -404,6 +412,10 @@ function migrateInvoicesForActiveOrderConstraint(): void {
         id,
         tenant_id,
         invoice_number,
+        reissued_from_invoice_id,
+        reissued_from_invoice_number,
+        reissued_to_invoice_id,
+        reissued_to_invoice_number,
         order_id,
         order_number,
         customer_id,
@@ -426,6 +438,10 @@ function migrateInvoicesForActiveOrderConstraint(): void {
         id,
         tenant_id,
         invoice_number,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
         order_id,
         order_number,
         customer_id,
@@ -587,6 +603,22 @@ const invoiceColumns = db
 
 if (!invoiceColumns.some((column) => column.name === "due_date")) {
   db.exec("ALTER TABLE invoices ADD COLUMN due_date TEXT NOT NULL DEFAULT ''");
+}
+
+if (!invoiceColumns.some((column) => column.name === "reissued_from_invoice_id")) {
+  db.exec("ALTER TABLE invoices ADD COLUMN reissued_from_invoice_id TEXT");
+}
+
+if (!invoiceColumns.some((column) => column.name === "reissued_from_invoice_number")) {
+  db.exec("ALTER TABLE invoices ADD COLUMN reissued_from_invoice_number TEXT");
+}
+
+if (!invoiceColumns.some((column) => column.name === "reissued_to_invoice_id")) {
+  db.exec("ALTER TABLE invoices ADD COLUMN reissued_to_invoice_id TEXT");
+}
+
+if (!invoiceColumns.some((column) => column.name === "reissued_to_invoice_number")) {
+  db.exec("ALTER TABLE invoices ADD COLUMN reissued_to_invoice_number TEXT");
 }
 
 if (!invoiceColumns.some((column) => column.name === "follow_up_status")) {

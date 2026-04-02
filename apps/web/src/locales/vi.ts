@@ -862,12 +862,17 @@ Object.assign(vi.invoices, {
   collectionVoid: "Đã hủy hiệu lực",
   voidAction: "Hủy hiệu lực",
   voidConfirm: "Hủy hiệu lực {{number}}? Chỉ áp dụng khi hóa đơn chưa có bất kỳ thanh toán nào.",
+  reissuedFromLabel: "Phát hành lại từ:",
+  reissuedToLabel: "Đã phát hành lại thành:",
 });
 
 Object.assign(vi.reports, {
+  auditActionInvoiceReissued: "Phát hành lại hóa đơn",
   auditActionInvoiceVoided: "Hủy hiệu lực hóa đơn",
   auditActionOrderCanceled: "Hủy đơn hàng",
   auditActionPurchaseOrderCanceled: "Hủy đơn mua",
+  auditReissuedFromLabel: "Phát hành lại từ:",
+  auditReissuedToLabel: "Đã phát hành lại thành:",
 });
 
 Object.assign(vi.errors, {

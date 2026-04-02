@@ -817,6 +817,16 @@ export function InvoicesPage(): ReactElement {
                       <div className="record-detail">
                         <UserOutlined /> {invoice.customerName}
                       </div>
+                      {invoice.reissuedFromInvoiceNumber ? (
+                        <div className="record-detail">
+                          {t("invoices.reissuedFromLabel")} {invoice.reissuedFromInvoiceNumber}
+                        </div>
+                      ) : null}
+                      {invoice.reissuedToInvoiceNumber ? (
+                        <div className="record-detail">
+                          {t("invoices.reissuedToLabel")} {invoice.reissuedToInvoiceNumber}
+                        </div>
+                      ) : null}
                       <div className="record-detail">
                         <Tag color={getInvoiceStatusColor(invoice.status)}>
                           {getInvoiceStatusLabel(invoice.status, t)}

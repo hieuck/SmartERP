@@ -583,6 +583,7 @@ export type AuditEntityType =
 
 export type AuditActionType =
   | "invoice_issued"
+  | "invoice_reissued"
   | "invoice_voided"
   | "order_canceled"
   | "purchase_order_canceled"
@@ -600,6 +601,8 @@ export type AuditLogMetadata = {
   unitCost?: number;
   paymentMethod?: PaymentMethod;
   outstandingAmount?: number;
+  reissuedFromInvoiceNumber?: string;
+  reissuedToInvoiceNumber?: string;
   followUpStatus?: CollectionFollowUpStatus;
   actionRequired?: CollectionActionRequired;
   promisedPaymentDate?: string | null;
@@ -630,6 +633,10 @@ export type InvoiceRecord = {
   id: string;
   tenantId: string;
   invoiceNumber: string;
+  reissuedFromInvoiceId: string | null;
+  reissuedFromInvoiceNumber: string | null;
+  reissuedToInvoiceId: string | null;
+  reissuedToInvoiceNumber: string | null;
   orderId: string;
   orderNumber: string;
   customerId: string;
