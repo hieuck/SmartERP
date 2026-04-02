@@ -2,6 +2,7 @@ import {
   CheckCircleOutlined,
   EditOutlined,
   InboxOutlined,
+  RollbackOutlined,
   ShoppingOutlined,
   StopOutlined,
   UserOutlined,
@@ -82,6 +83,7 @@ export function OrdersPage(): ReactElement {
     selectedTenantId,
     setSelectedTenantId,
     tenants,
+    reopenOrderRecord,
     updateOrderRecord,
   } = useWorkspace();
   const canManageOrders = can("manage_orders");
@@ -154,6 +156,14 @@ export function OrdersPage(): ReactElement {
   async function closeOrderAction(orderId: string): Promise<void> {
     try {
       await closeOrderRecord({ orderId });
+    } catch {
+      // Error state is already surfaced via workspace context.
+    }
+  }
+
+  async function reopenOrderAction(orderId: string): Promise<void> {
+    try {
+      await reopenOrderRecord({ orderId });
     } catch {
       // Error state is already surfaced via workspace context.
     }
@@ -348,6 +358,23 @@ export function OrdersPage(): ReactElement {
                               </Button>
                             </Popconfirm>
                           ) : null}
+                        </div>
+                      ) : canManageOrders && order.status === "closed" ? (
+                        <div className="record-actions">
+                          <Popconfirm
+                            title={t("orders.reopenConfirm", { number: order.orderNumber })}
+                            okText={t("orders.reopenAction")}
+                            cancelText={t("common.cancel")}
+                            onConfirm={() => void reopenOrderAction(order.id)}
+                          >
+                            <Button
+                              data-testid="order-reopen-button"
+                              icon={<RollbackOutlined />}
+                              size="small"
+                            >
+                              {t("orders.reopenAction")}
+                            </Button>
+                          </Popconfirm>
                         </div>
                       ) : null}
                     </div>

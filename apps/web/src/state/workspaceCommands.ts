@@ -8,6 +8,8 @@ import type {
   CancelPurchaseOrderInput,
   CloseOrderInput,
   ClosePurchaseOrderInput,
+  ReopenOrderInput,
+  ReopenPurchaseOrderInput,
   CreateCustomerInput,
   CreateInventoryAdjustmentInput,
   CreateInvoiceInput,
@@ -53,12 +55,14 @@ import {
   submitOrder,
   submitOrderCancel,
   submitOrderClose,
+  submitOrderReopen,
   submitOrderUpdate,
 } from "../modules/orders/api";
 import {
   submitPurchaseOrder,
   submitPurchaseOrderCancel,
   submitPurchaseOrderClose,
+  submitPurchaseOrderReopen,
   submitPurchaseOrderReceipt,
   submitPurchaseOrderUpdate,
 } from "../modules/purchase-orders/api";
@@ -425,6 +429,19 @@ export function createWorkspaceCommands(dependencies: WorkspaceCommandsDependenc
       );
     },
 
+    async reopenOrderRecord(input: Omit<ReopenOrderInput, "tenantId">): Promise<void> {
+      const tenantId = getSelectedTenantIdOrThrow();
+
+      await runBusyAction(
+        { setErrorMessage, setIsBusy, setNoticeMessage },
+        "Order reopen failed.",
+        async () => {
+          await submitOrderReopen({ ...input, tenantId });
+          await refreshTenantWorkspace(tenantId);
+        },
+      );
+    },
+
     async createPurchaseOrderRecord(
       input: Omit<CreatePurchaseOrderInput, "tenantId">,
     ): Promise<void> {
@@ -480,6 +497,21 @@ export function createWorkspaceCommands(dependencies: WorkspaceCommandsDependenc
         "Purchase order close failed.",
         async () => {
           await submitPurchaseOrderClose({ ...input, tenantId });
+          await refreshTenantWorkspace(tenantId);
+        },
+      );
+    },
+
+    async reopenPurchaseOrderRecord(
+      input: Omit<ReopenPurchaseOrderInput, "tenantId">,
+    ): Promise<void> {
+      const tenantId = getSelectedTenantIdOrThrow();
+
+      await runBusyAction(
+        { setErrorMessage, setIsBusy, setNoticeMessage },
+        "Purchase order reopen failed.",
+        async () => {
+          await submitPurchaseOrderReopen({ ...input, tenantId });
           await refreshTenantWorkspace(tenantId);
         },
       );

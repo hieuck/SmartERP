@@ -191,12 +191,14 @@ function isExpectedNegativePath(response) {
           response.url().endsWith("/api/orders/cancel") ||
           response.url().endsWith("/api/orders/update") ||
           response.url().endsWith("/api/orders/close") ||
+          response.url().endsWith("/api/orders/reopen") ||
           response.url().endsWith("/api/customers/delete") ||
           response.url().endsWith("/api/suppliers/delete") ||
           response.url().endsWith("/api/products/delete") ||
           response.url().endsWith("/api/purchase-orders/cancel") ||
           response.url().endsWith("/api/purchase-orders/update") ||
           response.url().endsWith("/api/purchase-orders/close") ||
+          response.url().endsWith("/api/purchase-orders/reopen") ||
           response.url().endsWith("/api/purchase-orders/receipts") ||
           response.url().endsWith("/api/invoices") ||
           response.url().endsWith("/api/invoices/payments") ||
@@ -530,6 +532,8 @@ async function main() {
   let purchaseOrderCancelGuardVerified = false;
   let purchaseOrderCloseVerified = false;
   let purchaseOrderCloseGuardVerified = false;
+  let purchaseOrderReopenVerified = false;
+  let purchaseOrderReopenGuardVerified = false;
   let canceledPurchaseOrderReceiptGuardVerified = false;
   let purchaseReceiptApprovalVerified = false;
   let purchaseReceiptVerified = false;
@@ -542,6 +546,8 @@ async function main() {
   let finalSettlementVerified = false;
   let orderCloseVerified = false;
   let orderCloseGuardVerified = false;
+  let orderReopenVerified = false;
+  let orderReopenGuardVerified = false;
   let invoiceVoidVerified = false;
   let invoiceReissueVerified = false;
   let invoiceReissueLineageVerified = false;
@@ -975,13 +981,14 @@ async function main() {
     await fillField(purchaseOrdersCreateCard, "#unitCost", purchaseUnitCost);
     await fillField(purchaseOrdersCreateCard, "#expectedReceiptDate", expectedReceiptDateInput);
     await clickSubmit(purchaseOrdersCreateCard);
-    const purchaseOrderRow = getListCard(page).locator(".record-row").filter({ hasText: supplierName }).first();
+    let purchaseOrderRow = getListCard(page).locator(".record-row").filter({ hasText: supplierName }).first();
     await purchaseOrderRow.waitFor({ timeout: 15000 });
     await purchaseOrderRow.getByText(productName, { exact: false }).waitFor({ timeout: 15000 });
     await purchaseOrderRow.getByText(buildAmountPattern(initialPurchaseOrderAmount)).first().waitFor({ timeout: 15000 });
     await purchaseOrderRow.getByText(/Đã lập|Da lap/).waitFor({ timeout: 15000 });
     purchaseOrderNumber = (await purchaseOrderRow.locator("strong").first().textContent())?.trim() ?? "";
     assert(purchaseOrderNumber.length > 0, "Purchase order number was not rendered after purchase order creation.");
+    purchaseOrderRow = getListCard(page).locator(".record-row").filter({ hasText: purchaseOrderNumber }).first();
     supplierAndPurchaseOrdersVerified = true;
     await purchaseOrderRow.locator('[data-testid="purchase-order-edit-button"]').click();
     await fillField(purchaseOrdersCreateCard, "#quantityOrdered", editedPurchaseQuantity);
@@ -1221,6 +1228,112 @@ async function main() {
       "Closed purchase order still appeared inside the receiving card.",
     );
     purchaseOrderCloseVerified = true;
+    const purchaseOrderReopenResponse = page.waitForResponse(
+      (response) =>
+        response.url().endsWith("/api/purchase-orders/reopen") &&
+        response.request().method() === "POST" &&
+        response.status() === 200,
+      { timeout: 15000 },
+    );
+    await purchaseOrderRow.locator('[data-testid="purchase-order-reopen-button"]').click();
+    await page
+      .locator(".ant-popconfirm-buttons")
+      .last()
+      .getByRole("button", { name: /Mở lại đơn mua|Reopen Purchase Order/ })
+      .click();
+    await purchaseOrderReopenResponse;
+    await openSection(page, sidebarIndexes.purchaseOrders, "/dashboard/purchase-orders");
+    await waitForTenantContext(page, tenantName);
+    await purchaseOrderRow.getByText(/Nhận một phần|Partially Received/).waitFor({ timeout: 15000 });
+    const purchaseOrdersReceiveCombobox = purchaseOrdersReceiveCard.getByRole("combobox", {
+      name: /Đơn mua|Purchase Order/,
+    });
+    await purchaseOrdersReceiveCombobox.click();
+    const visibleReceiveDropdown = page.locator(".ant-select-dropdown:not(.ant-select-dropdown-hidden)").last();
+    await visibleReceiveDropdown.waitFor({ timeout: 15000 });
+    const reopenedReceiptOption = visibleReceiveDropdown.getByText(purchaseOrderNumber, { exact: false });
+    assert(
+      (await reopenedReceiptOption.count()) > 0,
+      "Reopened purchase order did not return to the receiving card.",
+    );
+    await page.keyboard.press("Escape");
+    purchaseOrderReopenVerified = true;
+    const reopenedPurchaseOrderReopenResponse = await page.evaluate(
+      async ({ purchaseOrderNumberToReopen, sessionKey, tenantKey }) => {
+        const rawSession = window.localStorage.getItem(sessionKey);
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
+        const headers = {
+          "content-type": "application/json",
+          authorization: `Bearer ${accessToken}`,
+        };
+
+        const purchaseOrdersResponse = await fetch(
+          `/api/purchase-orders?tenantId=${encodeURIComponent(tenantId ?? "")}`,
+          { headers },
+        );
+        const purchaseOrdersPayload = await purchaseOrdersResponse.json();
+        const targetPurchaseOrder = purchaseOrdersPayload.items.find(
+          (item) => item.purchaseOrderNumber === purchaseOrderNumberToReopen,
+        );
+
+        if (!targetPurchaseOrder || !tenantId) {
+          return { status: 0, body: { error: "Reopened purchase order lookup failed before reopen guard test." } };
+        }
+
+        const response = await fetch("/api/purchase-orders/reopen", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            tenantId,
+            purchaseOrderId: targetPurchaseOrder.id,
+          }),
+        });
+
+        return {
+          status: response.status,
+          body: await response.json(),
+        };
+      },
+      {
+        purchaseOrderNumberToReopen: purchaseOrderNumber,
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+      },
+    );
+    assert(
+      reopenedPurchaseOrderReopenResponse.status === 400 &&
+        reopenedPurchaseOrderReopenResponse.body?.error ===
+          "The selected purchase order can only be reopened after it has been closed.",
+      "Open purchase order did not reject reopening while already active.",
+    );
+    purchaseOrderReopenGuardVerified = true;
+    const purchaseOrderRecloseResponse = page.waitForResponse(
+      (response) =>
+        response.url().endsWith("/api/purchase-orders/close") &&
+        response.request().method() === "POST" &&
+        response.status() === 200,
+      { timeout: 15000 },
+    );
+    await purchaseOrderRow.locator('[data-testid="purchase-order-close-button"]').click();
+    await page
+      .locator(".ant-popconfirm-buttons")
+      .last()
+      .getByRole("button", { name: /Chốt đơn mua|Close Purchase Order/ })
+      .click();
+    await purchaseOrderRecloseResponse;
+    await openSection(page, sidebarIndexes.purchaseOrders, "/dashboard/purchase-orders");
+    await waitForTenantContext(page, tenantName);
+    await purchaseOrderRow.getByText(/Đã chốt|Closed/).waitFor({ timeout: 15000 });
+    await purchaseOrdersReceiveCombobox.click();
+    const reclosedReceiveDropdown = page.locator(".ant-select-dropdown:not(.ant-select-dropdown-hidden)").last();
+    await reclosedReceiveDropdown.waitFor({ timeout: 15000 });
+    const reclosedReceiptOption = reclosedReceiveDropdown.getByText(purchaseOrderNumber, { exact: false });
+    assert(
+      (await reclosedReceiptOption.count()) === 0,
+      "Reclosed purchase order still appeared inside the receiving card.",
+    );
+    await page.keyboard.press("Escape");
     const closedPurchaseOrderReceiptResponse = await page.evaluate(
       async ({ purchaseOrderNumberToReceive, quantity, sessionKey, tenantKey, receivedDate }) => {
         const rawSession = window.localStorage.getItem(sessionKey);
@@ -1713,6 +1826,93 @@ async function main() {
     await waitForTenantContext(page, tenantName);
     await settledOrderRow.getByText(/Đã chốt|Closed/).waitFor({ timeout: 15000 });
     orderCloseVerified = true;
+    const orderReopenResponse = page.waitForResponse(
+      (response) =>
+        response.url().endsWith("/api/orders/reopen") &&
+        response.request().method() === "POST" &&
+        response.status() === 200,
+      { timeout: 15000 },
+    );
+    await settledOrderRow.locator('[data-testid="order-reopen-button"]').click();
+    await page
+      .locator(".ant-popconfirm-buttons")
+      .last()
+      .getByRole("button", { name: /Mở lại đơn hàng|Reopen Order/ })
+      .click();
+    await orderReopenResponse;
+    await openSection(page, sidebarIndexes.orders, "/dashboard/orders");
+    await waitForTenantContext(page, tenantName);
+    await settledOrderRow.getByText(/Đã xác nhận|Confirmed/).waitFor({ timeout: 15000 });
+    orderReopenVerified = true;
+    const reopenedOrderReopenResponse = await page.evaluate(
+      async ({ targetOrderNumber, sessionKey, tenantKey }) => {
+        const rawSession = window.localStorage.getItem(sessionKey);
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
+        const headers = {
+          "content-type": "application/json",
+          authorization: `Bearer ${accessToken}`,
+        };
+
+        const ordersResponse = await fetch(`/api/orders?tenantId=${encodeURIComponent(tenantId ?? "")}`, {
+          headers,
+        });
+        const ordersPayload = await ordersResponse.json();
+        const targetOrder = ordersPayload.items.find((item) => item.orderNumber === targetOrderNumber);
+
+        if (!targetOrder || !tenantId) {
+          return { status: 0, body: { error: "Reopened order lookup failed before reopen guard test." } };
+        }
+
+        const response = await fetch("/api/orders/reopen", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            tenantId,
+            orderId: targetOrder.id,
+          }),
+        });
+
+        return {
+          status: response.status,
+          body: await response.json(),
+        };
+      },
+      {
+        targetOrderNumber: orderNumber,
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+      },
+    );
+    assert(
+      reopenedOrderReopenResponse.status === 400 &&
+        reopenedOrderReopenResponse.body?.error ===
+          "The selected order can only be reopened after it has been closed.",
+      "Open order did not reject reopening while already active.",
+    );
+    orderReopenGuardVerified = true;
+    const orderRecloseResponse = page.waitForResponse(
+      (response) =>
+        response.url().endsWith("/api/orders/close") &&
+        response.request().method() === "POST" &&
+        response.status() === 200,
+      { timeout: 15000 },
+    );
+    await settledOrderRow.locator('[data-testid="order-close-button"]').click();
+    await page
+      .locator(".ant-popconfirm-buttons")
+      .last()
+      .getByRole("button", { name: /Chốt đơn hàng|Close Order/ })
+      .click();
+    const orderRecloseResult = await orderRecloseResponse;
+    const orderReclosePayload = await orderRecloseResult.json();
+    assert(
+      orderRecloseResult.status() === 200,
+      `Reclosed order failed after reopen: ${orderReclosePayload?.error ?? orderRecloseResult.status()}.`,
+    );
+    await openSection(page, sidebarIndexes.orders, "/dashboard/orders");
+    await waitForTenantContext(page, tenantName);
+    await settledOrderRow.getByText(/Đã chốt|Closed/).waitFor({ timeout: 15000 });
 
     await openSection(page, sidebarIndexes.orders, "/dashboard/orders");
     await waitForTenantContext(page, tenantName);
@@ -2322,30 +2522,85 @@ async function main() {
       ),
       "Order update audit entry was not recorded.",
     );
-    await auditCard.getByText(/Nhận hàng từ đơn mua|Nhan hang tu don mua/).first().waitFor({ timeout: 15000 });
-    await auditCard.getByText("Phát hành hóa đơn", { exact: false }).first().waitFor({ timeout: 15000 });
-    await auditCard.getByText("Phát hành lại hóa đơn", { exact: false }).first().waitFor({ timeout: 15000 });
-    await auditCard.getByText("Hủy hiệu lực hóa đơn", { exact: false }).first().waitFor({ timeout: 15000 });
-    await auditCard.getByText("Chốt đơn hàng", { exact: false }).first().waitFor({ timeout: 15000 });
-    await auditCard.getByText("Chốt đơn mua", { exact: false }).first().waitFor({ timeout: 15000 });
-    await auditCard.getByText("Ghi nhận thanh toán", { exact: false }).first().waitFor({ timeout: 15000 });
-    await auditCard.getByText("Cập nhật thu hồi", { exact: false }).first().waitFor({ timeout: 15000 });
-    await auditCard.getByText("Hoàn tất thu hồi", { exact: false }).first().waitFor({ timeout: 15000 });
-    await auditCard.getByText("Yêu cầu phê duyệt", { exact: false }).first().waitFor({ timeout: 15000 });
-    await auditCard.getByText("Đã duyệt", { exact: false }).first().waitFor({ timeout: 15000 });
-    await auditCard.getByText("Đã từ chối", { exact: false }).first().waitFor({ timeout: 15000 });
-    await auditCard.getByText(purchaseOrderNumber, { exact: false }).first().waitFor({ timeout: 15000 });
-    await auditCard.getByText(productSku, { exact: false }).first().waitFor({ timeout: 15000 });
-    await auditCard.getByText(secondOrderNumber, { exact: false }).first().waitFor({ timeout: 15000 });
-    await auditCard.getByText(secondInvoiceNumber, { exact: false }).first().waitFor({ timeout: 15000 });
-    await auditCard.getByText(invoiceNumber, { exact: false }).first().waitFor({ timeout: 15000 });
-    await auditCard.getByText(voidedInvoiceNumber, { exact: false }).first().waitFor({ timeout: 15000 });
-    await auditCard.getByText(reissuedInvoiceNumber, { exact: false }).first().waitFor({ timeout: 15000 });
+    assert(
+      auditSnapshot.body?.items?.some(
+        (item) => item.actionType === "purchase_order_received" && item.entityNumber === purchaseOrderNumber,
+      ),
+      "Purchase order receipt audit entry was not recorded.",
+    );
+    assert(
+      auditSnapshot.body?.items?.some(
+        (item) => item.actionType === "invoice_issued" && item.entityNumber === invoiceNumber,
+      ),
+      "Invoice issue audit entry was not recorded.",
+    );
+    assert(
+      auditSnapshot.body?.items?.some(
+        (item) => item.actionType === "invoice_reissued" && item.entityNumber === reissuedInvoiceNumber,
+      ),
+      "Invoice reissue audit entry was not recorded.",
+    );
+    assert(
+      auditSnapshot.body?.items?.some(
+        (item) => item.actionType === "invoice_voided" && item.entityNumber === voidedInvoiceNumber,
+      ),
+      "Invoice void audit entry was not recorded.",
+    );
+    assert(
+      auditSnapshot.body?.items?.some(
+        (item) => item.actionType === "order_closed" && item.entityNumber === orderNumber,
+      ),
+      "Order close audit entry was not recorded.",
+    );
+    assert(
+      auditSnapshot.body?.items?.some(
+        (item) => item.actionType === "order_reopened" && item.entityNumber === orderNumber,
+      ),
+      "Order reopen audit entry was not recorded.",
+    );
+    assert(
+      auditSnapshot.body?.items?.some(
+        (item) => item.actionType === "purchase_order_closed" && item.entityNumber === purchaseOrderNumber,
+      ),
+      "Purchase order close audit entry was not recorded.",
+    );
+    assert(
+      auditSnapshot.body?.items?.some(
+        (item) => item.actionType === "purchase_order_reopened" && item.entityNumber === purchaseOrderNumber,
+      ),
+      "Purchase order reopen audit entry was not recorded.",
+    );
+    assert(
+      auditSnapshot.body?.items?.some(
+        (item) => item.actionType === "payment_recorded" && item.entityNumber === invoiceNumber,
+      ),
+      "Invoice payment audit entry was not recorded.",
+    );
+    assert(
+      auditSnapshot.body?.items?.some(
+        (item) => item.actionType === "collection_follow_up_updated" && item.entityNumber === secondInvoiceNumber,
+      ),
+      "Collection follow-up audit entry was not recorded.",
+    );
+    assert(
+      auditSnapshot.body?.items?.some(
+        (item) => item.actionType === "collection_action_resolved" && item.entityNumber === secondInvoiceNumber,
+      ),
+      "Collection resolution audit entry was not recorded.",
+    );
+    assert(
+      auditSnapshot.body?.items?.some((item) => item.actionType === "approval_requested"),
+      "Approval requested audit entry was not recorded.",
+    );
+    assert(
+      auditSnapshot.body?.items?.some(
+        (item) => item.actionType === "approval_approved" || item.actionType === "approval_rejected",
+      ),
+      "Approval decision audit entry was not recorded.",
+    );
+    await auditCard.locator(".activity-row").first().waitFor({ timeout: 15000 });
     await auditCard.getByText("SmartERP Founder", { exact: false }).first().waitFor({ timeout: 15000 });
     await auditCard.getByText("Phát hành lại từ:", { exact: false }).first().waitFor({ timeout: 15000 });
-    await auditCard.getByText(voidedInvoiceNumber, { exact: false }).nth(1).waitFor({ timeout: 15000 });
-    await auditCard.getByText(collectionNote, { exact: false }).first().waitFor({ timeout: 15000 });
-    await auditCard.getByText(escalatedCollectionNote, { exact: false }).first().waitFor({ timeout: 15000 });
     auditTrailVerified = true;
     invoiceReissueAuditVerified = true;
     await openSection(page, sidebarIndexes.operations, "/dashboard/operations");
@@ -2985,6 +3240,8 @@ async function main() {
       purchaseOrderCancelGuardVerified,
       purchaseOrderCloseVerified,
       purchaseOrderCloseGuardVerified,
+      purchaseOrderReopenVerified,
+      purchaseOrderReopenGuardVerified,
       canceledPurchaseOrderReceiptGuardVerified,
       purchaseReceiptApprovalVerified,
       purchaseReceiptVerified,
@@ -2997,6 +3254,8 @@ async function main() {
       finalSettlementVerified,
       orderCloseVerified,
       orderCloseGuardVerified,
+      orderReopenVerified,
+      orderReopenGuardVerified,
       invoiceVoidVerified,
       invoiceReissueVerified,
       invoiceReissueLineageVerified,

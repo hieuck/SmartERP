@@ -2,6 +2,7 @@ import {
   CalendarOutlined,
   CheckCircleOutlined,
   EditOutlined,
+  RollbackOutlined,
   ShoppingCartOutlined,
   StopOutlined,
   TeamOutlined,
@@ -97,6 +98,7 @@ export function PurchaseOrdersPage(): ReactElement {
     isBusy,
     products,
     purchaseOrders,
+    reopenPurchaseOrderRecord,
     selectedTenantId,
     setSelectedTenantId,
     suppliers,
@@ -171,6 +173,14 @@ export function PurchaseOrdersPage(): ReactElement {
   async function closePurchaseOrderAction(purchaseOrderId: string): Promise<void> {
     try {
       await closePurchaseOrderRecord({ purchaseOrderId });
+    } catch {
+      // Error state is already surfaced via workspace context.
+    }
+  }
+
+  async function reopenPurchaseOrderAction(purchaseOrderId: string): Promise<void> {
+    try {
+      await reopenPurchaseOrderRecord({ purchaseOrderId });
     } catch {
       // Error state is already surfaced via workspace context.
     }
@@ -458,7 +468,8 @@ export function PurchaseOrdersPage(): ReactElement {
                       {canCreatePurchaseOrders &&
                       (purchaseOrder.status === "issued" ||
                         purchaseOrder.status === "partially_received" ||
-                        purchaseOrder.status === "received") ? (
+                        purchaseOrder.status === "received" ||
+                        purchaseOrder.status === "closed") ? (
                         <div className="record-actions">
                           {purchaseOrder.status === "issued" ? (
                             <>
@@ -488,6 +499,23 @@ export function PurchaseOrdersPage(): ReactElement {
                                 </Button>
                               </Popconfirm>
                             </>
+                          ) : purchaseOrder.status === "closed" ? (
+                            <Popconfirm
+                              title={t("purchaseOrders.reopenConfirm", {
+                                number: purchaseOrder.purchaseOrderNumber,
+                              })}
+                              okText={t("purchaseOrders.reopenAction")}
+                              cancelText={t("common.cancel")}
+                              onConfirm={() => void reopenPurchaseOrderAction(purchaseOrder.id)}
+                            >
+                              <Button
+                                data-testid="purchase-order-reopen-button"
+                                icon={<RollbackOutlined />}
+                                size="small"
+                              >
+                                {t("purchaseOrders.reopenAction")}
+                              </Button>
+                            </Popconfirm>
                           ) : (
                             <Popconfirm
                               title={t("purchaseOrders.closeConfirm", {

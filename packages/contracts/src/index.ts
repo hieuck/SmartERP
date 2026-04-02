@@ -415,6 +415,11 @@ export type ClosePurchaseOrderInput = {
   purchaseOrderId: string;
 };
 
+export type ReopenPurchaseOrderInput = {
+  tenantId: string;
+  purchaseOrderId: string;
+};
+
 export type PurchaseOrderReceiptRecord = {
   id: string;
   tenantId: string;
@@ -535,6 +540,11 @@ export type CloseOrderInput = {
   orderId: string;
 };
 
+export type ReopenOrderInput = {
+  tenantId: string;
+  orderId: string;
+};
+
 export type InventoryRecord = {
   productId: string;
   tenantId: string;
@@ -616,9 +626,11 @@ export type AuditActionType =
   | "order_updated"
   | "order_canceled"
   | "order_closed"
+  | "order_reopened"
   | "purchase_order_updated"
   | "purchase_order_canceled"
   | "purchase_order_closed"
+  | "purchase_order_reopened"
   | "purchase_order_received"
   | "payment_recorded"
   | "collection_follow_up_updated"

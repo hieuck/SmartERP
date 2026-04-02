@@ -854,6 +854,8 @@ Object.assign(vi.orders, {
   cancelConfirm: "Hủy {{number}}? Hệ thống sẽ hoàn tồn kho và chặn xuất hóa đơn cho đơn này.",
   closeAction: "Chốt đơn hàng",
   closeConfirm: "Chốt {{number}}? Chỉ chốt được sau khi hóa đơn đang hiệu lực đã thanh toán đủ.",
+  reopenAction: "Mở lại đơn hàng",
+  reopenConfirm: "Mở lại {{number}}? Đơn sẽ trở về trạng thái đã xác nhận.",
 });
 
 Object.assign(vi.purchaseOrders, {
@@ -863,6 +865,8 @@ Object.assign(vi.purchaseOrders, {
   cancelConfirm: "Hủy {{number}}? Chỉ hủy được trước khi có bất kỳ lần nhận hàng nào.",
   closeAction: "Chốt đơn mua",
   closeConfirm: "Chốt {{number}}? Hệ thống sẽ khóa phần còn lại và không cho nhận thêm hàng.",
+  reopenAction: "Mở lại đơn mua",
+  reopenConfirm: "Mở lại {{number}}? Hệ thống sẽ khôi phục trạng thái nhận hàng trước khi chốt.",
 });
 
 Object.assign(vi.invoices, {
@@ -884,9 +888,11 @@ Object.assign(vi.reports, {
   auditActionOrderUpdated: "Cập nhật đơn hàng",
   auditActionOrderCanceled: "Hủy đơn hàng",
   auditActionOrderClosed: "Chốt đơn hàng",
+  auditActionOrderReopened: "Mở lại đơn hàng",
   auditActionPurchaseOrderUpdated: "Cập nhật đơn mua",
   auditActionPurchaseOrderCanceled: "Hủy đơn mua",
   auditActionPurchaseOrderClosed: "Chốt đơn mua",
+  auditActionPurchaseOrderReopened: "Mở lại đơn mua",
   auditReissuedFromLabel: "Phát hành lại từ:",
   auditReissuedToLabel: "Đã phát hành lại thành:",
 });
@@ -901,9 +907,11 @@ Object.assign(vi.errors, {
   updateOrderFailed: "Cập nhật đơn hàng thất bại.",
   cancelOrderFailed: "Hủy đơn hàng thất bại.",
   closeOrderFailed: "Chốt đơn hàng thất bại.",
+  reopenOrderFailed: "Mở lại đơn hàng thất bại.",
   updatePurchaseOrderFailed: "Cập nhật đơn mua thất bại.",
   cancelPurchaseOrderFailed: "Hủy đơn mua thất bại.",
   closePurchaseOrderFailed: "Chốt đơn mua thất bại.",
+  reopenPurchaseOrderFailed: "Mở lại đơn mua thất bại.",
   voidInvoiceFailed: "Hủy hiệu lực hóa đơn thất bại.",
   customerDeleteBlocked: "Không thể xóa khách hàng này vì đã có đơn hàng hoặc hóa đơn tham chiếu.",
   supplierDeleteBlocked: "Không thể xóa nhà cung cấp này vì đã có đơn mua tham chiếu.",
@@ -914,6 +922,7 @@ Object.assign(vi.errors, {
   orderUpdateBlocked: "Không thể sửa đơn hàng này vì đã có hóa đơn tham chiếu.",
   orderCancelBlocked: "Không thể hủy đơn hàng này vì đã có hóa đơn tham chiếu.",
   orderCloseBlocked: "Chỉ có thể chốt đơn hàng này sau khi hóa đơn đang hiệu lực đã thanh toán đủ.",
+  orderReopenBlocked: "Chỉ có thể mở lại đơn hàng này sau khi đơn đã được chốt.",
   orderMustBeConfirmed: "Chỉ đơn hàng đã xác nhận mới được xuất hóa đơn.",
   purchaseOrderAlreadyCanceled: "Đơn mua này đã bị hủy trước đó.",
   purchaseOrderAlreadyClosed: "Đơn mua này đã được chốt trước đó.",
@@ -923,6 +932,7 @@ Object.assign(vi.errors, {
   purchaseOrderUpdateBlocked: "Không thể sửa đơn mua này vì đã có dữ liệu nhận hàng.",
   purchaseOrderCancelBlocked: "Không thể hủy đơn mua này vì đã có dữ liệu nhận hàng.",
   purchaseOrderCloseBlocked: "Chỉ có thể chốt đơn mua này sau khi đã có ít nhất một lần nhận hàng.",
+  purchaseOrderReopenBlocked: "Chỉ có thể mở lại đơn mua này sau khi đơn đã được chốt.",
   invoiceAlreadyVoided: "Hóa đơn này đã được hủy hiệu lực trước đó.",
   invoiceVoided: "Hóa đơn này đã bị hủy hiệu lực.",
   invoiceVoidBlockedByPayments: "Không thể hủy hiệu lực hóa đơn này vì đã có thanh toán phát sinh.",

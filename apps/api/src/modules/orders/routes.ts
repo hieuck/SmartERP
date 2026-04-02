@@ -5,6 +5,7 @@ import {
   handleCloseOrder,
   handleCreateOrder,
   handleListOrders,
+  handleReopenOrder,
   handleUpdateOrder,
 } from "./http.js";
 
@@ -43,6 +44,13 @@ export const orderApiRoutes: ApiRoute[] = [
     path: "/api/orders/close",
     handle: withPermission("manage_orders", ({ request, response, session }) =>
       handleCloseOrder(request, response, session),
+    ),
+  },
+  {
+    method: "POST",
+    path: "/api/orders/reopen",
+    handle: withPermission("manage_orders", ({ request, response, session }) =>
+      handleReopenOrder(request, response, session),
     ),
   },
 ];

@@ -5,6 +5,7 @@ import {
   handleClosePurchaseOrder,
   handleCreatePurchaseOrder,
   handleListPurchaseOrders,
+  handleReopenPurchaseOrder,
   handleReceivePurchaseOrder,
   handleUpdatePurchaseOrder,
 } from "./http.js";
@@ -44,6 +45,13 @@ export const purchaseOrderApiRoutes: ApiRoute[] = [
     path: "/api/purchase-orders/close",
     handle: withPermission("manage_purchase_orders", ({ request, response, session }) =>
       handleClosePurchaseOrder(request, response, session),
+    ),
+  },
+  {
+    method: "POST",
+    path: "/api/purchase-orders/reopen",
+    handle: withPermission("manage_purchase_orders", ({ request, response, session }) =>
+      handleReopenPurchaseOrder(request, response, session),
     ),
   },
   {

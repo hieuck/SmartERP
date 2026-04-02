@@ -4,6 +4,7 @@ import type {
   CancelOrderInput,
   CloseOrderInput,
   CreateOrderInput,
+  ReopenOrderInput,
   Session,
   UpdateOrderInput,
 } from "@smarterp/contracts";
@@ -15,6 +16,7 @@ import {
   createOrder,
   hasTenant,
   listOrders,
+  reopenOrder,
   runWithSession,
   updateOrder,
 } from "../../store.js";
@@ -238,6 +240,48 @@ export async function handleCloseOrder(
         "The selected order has already been canceled.",
         "The selected order has already been closed.",
         "The selected order can only be closed after its active invoice is fully paid.",
+      ].includes(error.message)
+    ) {
+      badRequest(response, error.message);
+      return;
+    }
+
+    throw error;
+  }
+}
+
+export async function handleReopenOrder(
+  request: IncomingMessage,
+  response: ServerResponse,
+  requestSession: Session | null,
+): Promise<void> {
+  const input = await readJson<ReopenOrderInput>(request);
+
+  if (!input.tenantId?.trim()) {
+    badRequest(response, "tenantId is required.");
+    return;
+  }
+
+  if (!hasTenant(input.tenantId)) {
+    badRequest(response, "The selected tenant does not exist.");
+    return;
+  }
+
+  if (!input.orderId?.trim()) {
+    badRequest(response, "orderId is required.");
+    return;
+  }
+
+  try {
+    const order = runWithSession(requestSession, () => reopenOrder(input));
+    sendJson(response, 200, { item: order });
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      [
+        "The selected order does not exist.",
+        "The selected order has already been canceled.",
+        "The selected order can only be reopened after it has been closed.",
       ].includes(error.message)
     ) {
       badRequest(response, error.message);

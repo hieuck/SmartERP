@@ -4,6 +4,7 @@ import type {
   ClosePurchaseOrderInput,
   CreatePurchaseOrderInput,
   PurchaseOrderRecord,
+  ReopenPurchaseOrderInput,
   ReceivePurchaseOrderInput,
   ReceivePurchaseOrderResult,
   UpdatePurchaseOrderInput,
@@ -14,6 +15,7 @@ import {
   closePurchaseOrder,
   createPurchaseOrder,
   listPurchaseOrders,
+  reopenPurchaseOrder,
   receivePurchaseOrder,
   updatePurchaseOrder,
 } from "../../api";
@@ -42,6 +44,12 @@ export async function submitPurchaseOrderClose(
   input: ClosePurchaseOrderInput,
 ): Promise<PurchaseOrderRecord> {
   return closePurchaseOrder(input);
+}
+
+export async function submitPurchaseOrderReopen(
+  input: ReopenPurchaseOrderInput,
+): Promise<PurchaseOrderRecord> {
+  return reopenPurchaseOrder(input);
 }
 
 export async function submitPurchaseOrderReceipt(

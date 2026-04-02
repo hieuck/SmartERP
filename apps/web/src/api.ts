@@ -8,6 +8,8 @@ import type {
   CancelPurchaseOrderInput,
   CloseOrderInput,
   ClosePurchaseOrderInput,
+  ReopenOrderInput,
+  ReopenPurchaseOrderInput,
   CreateCustomerInput,
   CreateInvoiceInput,
   UpdateInvoiceCollectionInput,
@@ -314,6 +316,14 @@ export async function closeOrder(input: CloseOrderInput): Promise<OrderRecord> {
   return payload.item;
 }
 
+export async function reopenOrder(input: ReopenOrderInput): Promise<OrderRecord> {
+  const payload = await request<{ item: OrderRecord }>("/api/orders/reopen", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  return payload.item;
+}
+
 export async function listPurchaseOrders(tenantId: string): Promise<PurchaseOrderRecord[]> {
   const payload = await request<{ items: PurchaseOrderRecord[] }>(
     `/api/purchase-orders?tenantId=${encodeURIComponent(tenantId)}`,
@@ -347,6 +357,14 @@ export async function cancelPurchaseOrder(input: CancelPurchaseOrderInput): Prom
 
 export async function closePurchaseOrder(input: ClosePurchaseOrderInput): Promise<PurchaseOrderRecord> {
   const payload = await request<{ item: PurchaseOrderRecord }>("/api/purchase-orders/close", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  return payload.item;
+}
+
+export async function reopenPurchaseOrder(input: ReopenPurchaseOrderInput): Promise<PurchaseOrderRecord> {
+  const payload = await request<{ item: PurchaseOrderRecord }>("/api/purchase-orders/reopen", {
     method: "POST",
     body: JSON.stringify(input),
   });

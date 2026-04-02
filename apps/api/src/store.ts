@@ -18,6 +18,8 @@ import {
   type CancelPurchaseOrderInput,
   type CloseOrderInput,
   type ClosePurchaseOrderInput,
+  type ReopenOrderInput,
+  type ReopenPurchaseOrderInput,
   createDemoSession,
   type CreateCustomerInput,
   type DeleteCustomerInput,
@@ -636,7 +638,7 @@ const listAuditLogsStatement = db.prepare(`
   FROM audit_logs
   WHERE tenant_id = ?
   ORDER BY datetime(created_at) DESC, rowid DESC
-  LIMIT 24
+  LIMIT 60
 `);
 
 const listCustomersStatement = db.prepare(`
@@ -3910,6 +3912,48 @@ export function closeOrder(input: CloseOrderInput): OrderRecord {
   }
 }
 
+export function reopenOrder(input: ReopenOrderInput): OrderRecord {
+  const existing = getOrderByIdStatement.get(input.tenantId, input.orderId) as OrderRow | undefined;
+  if (!existing) {
+    throw new Error("The selected order does not exist.");
+  }
+
+  if (existing.status === "canceled") {
+    throw new Error("The selected order has already been canceled.");
+  }
+
+  if (existing.status !== "closed") {
+    throw new Error("The selected order can only be reopened after it has been closed.");
+  }
+
+  const reopenedAt = timestamp();
+  db.exec("BEGIN");
+
+  try {
+    updateOrderStatusStatement.run("confirmed", input.tenantId, existing.id);
+
+    recordAuditLog({
+      tenantId: input.tenantId,
+      entityType: "order",
+      entityId: existing.id,
+      entityNumber: existing.order_number,
+      actionType: "order_reopened",
+      summary: `Reopened ${existing.order_number}`,
+      metadata: {
+        amount: existing.total_amount,
+        quantity: existing.quantity,
+      },
+      createdAt: reopenedAt,
+    });
+
+    db.exec("COMMIT");
+    return mapOrder({ ...existing, status: "confirmed" });
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
+}
+
 export function createPurchaseOrder(input: CreatePurchaseOrderInput): PurchaseOrderRecord {
   const supplier = getSupplierByIdStatement.get(input.tenantId, input.supplierId) as SupplierRow | undefined;
   if (!supplier) {
@@ -4179,6 +4223,52 @@ export function closePurchaseOrder(input: ClosePurchaseOrderInput): PurchaseOrde
 
     db.exec("COMMIT");
     return mapPurchaseOrder({ ...existing, status: "closed" });
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
+}
+
+export function reopenPurchaseOrder(input: ReopenPurchaseOrderInput): PurchaseOrderRecord {
+  const existing = getPurchaseOrderByIdStatement.get(input.tenantId, input.purchaseOrderId) as
+    | PurchaseOrderRow
+    | undefined;
+  if (!existing) {
+    throw new Error("The selected purchase order does not exist.");
+  }
+
+  if (existing.status === "canceled") {
+    throw new Error("The selected purchase order has already been canceled.");
+  }
+
+  if (existing.status !== "closed") {
+    throw new Error("The selected purchase order can only be reopened after it has been closed.");
+  }
+
+  const reopenedStatus = getPurchaseOrderStatus(existing.quantity_ordered, existing.received_quantity);
+  const reopenedAt = timestamp();
+  db.exec("BEGIN");
+
+  try {
+    updatePurchaseOrderStatusStatement.run(reopenedStatus, input.tenantId, existing.id);
+
+    recordAuditLog({
+      tenantId: input.tenantId,
+      entityType: "purchase_order",
+      entityId: existing.id,
+      entityNumber: existing.purchase_order_number,
+      actionType: "purchase_order_reopened",
+      summary: `Reopened ${existing.purchase_order_number}`,
+      metadata: {
+        amount: existing.total_amount,
+        quantity: Math.max(existing.quantity_ordered - existing.received_quantity, 0),
+        unitCost: existing.unit_cost,
+      },
+      createdAt: reopenedAt,
+    });
+
+    db.exec("COMMIT");
+    return mapPurchaseOrder({ ...existing, status: reopenedStatus });
   } catch (error) {
     db.exec("ROLLBACK");
     throw error;

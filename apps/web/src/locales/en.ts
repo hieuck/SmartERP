@@ -518,9 +518,11 @@ const en = {
     auditActionOrderUpdated: "Order updated",
     auditActionOrderCanceled: "Order canceled",
     auditActionOrderClosed: "Order closed",
+    auditActionOrderReopened: "Order reopened",
     auditActionPurchaseOrderUpdated: "Purchase order updated",
     auditActionPurchaseOrderCanceled: "Purchase order canceled",
     auditActionPurchaseOrderClosed: "Purchase order closed",
+    auditActionPurchaseOrderReopened: "Purchase order reopened",
     auditActionPurchaseOrderReceived: "Purchase order received",
     auditActionPaymentRecorded: "Payment recorded",
     auditActionCollectionUpdated: "Collection updated",
@@ -871,6 +873,8 @@ Object.assign(en.orders, {
   cancelConfirm: "Cancel {{number}}? This restores stock and blocks invoicing for this order.",
   closeAction: "Close Order",
   closeConfirm: "Close {{number}}? This only works after the active invoice has been fully paid.",
+  reopenAction: "Reopen Order",
+  reopenConfirm: "Reopen {{number}}? This returns the order to confirmed status.",
 });
 
 Object.assign(en.purchaseOrders, {
@@ -880,6 +884,8 @@ Object.assign(en.purchaseOrders, {
   cancelConfirm: "Cancel {{number}}? This only works before any receipt has been posted.",
   closeAction: "Close Purchase Order",
   closeConfirm: "Close {{number}}? This locks any remaining outstanding quantity and blocks further receipts.",
+  reopenAction: "Reopen Purchase Order",
+  reopenConfirm: "Reopen {{number}}? This restores the previous receipt status and allows receiving again if quantity remains.",
 });
 
 Object.assign(en.errors, {
@@ -891,8 +897,10 @@ Object.assign(en.errors, {
   deleteProductFailed: "Product deletion failed.",
   cancelOrderFailed: "Order cancellation failed.",
   closeOrderFailed: "Order close failed.",
+  reopenOrderFailed: "Order reopen failed.",
   cancelPurchaseOrderFailed: "Purchase order cancellation failed.",
   closePurchaseOrderFailed: "Purchase order close failed.",
+  reopenPurchaseOrderFailed: "Purchase order reopen failed.",
   voidInvoiceFailed: "Invoice void failed.",
   customerDeleteBlocked: "This customer cannot be deleted because orders or invoices already reference it.",
   supplierDeleteBlocked: "This supplier cannot be deleted because purchase orders already reference it.",
@@ -903,6 +911,7 @@ Object.assign(en.errors, {
   orderUpdateBlocked: "This order cannot be edited because an invoice already references it.",
   orderCancelBlocked: "This order cannot be canceled because an invoice already references it.",
   orderCloseBlocked: "This order can only be closed after its active invoice is fully paid.",
+  orderReopenBlocked: "This order can only be reopened after it has been closed.",
   orderMustBeConfirmed: "Only confirmed orders can be invoiced.",
   purchaseOrderAlreadyCanceled: "This purchase order has already been canceled.",
   purchaseOrderAlreadyClosed: "This purchase order has already been closed.",
@@ -913,6 +922,7 @@ Object.assign(en.errors, {
     "This purchase order cannot be edited because receipts already exist.",
   purchaseOrderCancelBlocked: "This purchase order cannot be canceled because receipts already exist.",
   purchaseOrderCloseBlocked: "This purchase order can only be closed after at least one receipt has been posted.",
+  purchaseOrderReopenBlocked: "This purchase order can only be reopened after it has been closed.",
   invoiceAlreadyVoided: "This invoice has already been voided.",
   invoiceVoided: "This invoice has been voided.",
   invoiceVoidBlockedByPayments: "This invoice cannot be voided because payments already exist.",

@@ -3,10 +3,11 @@ import type {
   CloseOrderInput,
   CreateOrderInput,
   OrderRecord,
+  ReopenOrderInput,
   UpdateOrderInput,
 } from "@smarterp/contracts";
 
-import { cancelOrder, closeOrder, createOrder, listOrders, updateOrder } from "../../api";
+import { cancelOrder, closeOrder, createOrder, listOrders, reopenOrder, updateOrder } from "../../api";
 
 export async function loadOrders(tenantId: string): Promise<OrderRecord[]> {
   return listOrders(tenantId);
@@ -26,4 +27,8 @@ export async function submitOrderCancel(input: CancelOrderInput): Promise<OrderR
 
 export async function submitOrderClose(input: CloseOrderInput): Promise<OrderRecord> {
   return closeOrder(input);
+}
+
+export async function submitOrderReopen(input: ReopenOrderInput): Promise<OrderRecord> {
+  return reopenOrder(input);
 }

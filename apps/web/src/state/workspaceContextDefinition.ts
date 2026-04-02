@@ -6,6 +6,8 @@ import type {
   CancelPurchaseOrderInput,
   CloseOrderInput,
   ClosePurchaseOrderInput,
+  ReopenOrderInput,
+  ReopenPurchaseOrderInput,
   ApprovalRequestRecord,
   CreateCustomerInput,
   CreateInventoryAdjustmentInput,
@@ -102,10 +104,14 @@ export type WorkspaceContextValue = {
   updateOrderRecord: (input: Omit<UpdateOrderInput, "tenantId">) => Promise<void>;
   cancelOrderRecord: (input: Omit<CancelOrderInput, "tenantId">) => Promise<void>;
   closeOrderRecord: (input: Omit<CloseOrderInput, "tenantId">) => Promise<void>;
+  reopenOrderRecord: (input: Omit<ReopenOrderInput, "tenantId">) => Promise<void>;
   createPurchaseOrderRecord: (input: Omit<CreatePurchaseOrderInput, "tenantId">) => Promise<void>;
   updatePurchaseOrderRecord: (input: Omit<UpdatePurchaseOrderInput, "tenantId">) => Promise<void>;
   cancelPurchaseOrderRecord: (input: Omit<CancelPurchaseOrderInput, "tenantId">) => Promise<void>;
   closePurchaseOrderRecord: (input: Omit<ClosePurchaseOrderInput, "tenantId">) => Promise<void>;
+  reopenPurchaseOrderRecord: (
+    input: Omit<ReopenPurchaseOrderInput, "tenantId">,
+  ) => Promise<void>;
   receivePurchaseOrderRecord: (input: Omit<ReceivePurchaseOrderInput, "tenantId">) => Promise<void>;
   createInvoiceRecord: (input: Omit<CreateInvoiceInput, "tenantId">) => Promise<void>;
   createInvoicePaymentRecord: (input: Omit<CreateInvoicePaymentInput, "tenantId">) => Promise<void>;

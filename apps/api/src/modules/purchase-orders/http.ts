@@ -4,6 +4,7 @@ import type {
   CancelPurchaseOrderInput,
   ClosePurchaseOrderInput,
   CreatePurchaseOrderInput,
+  ReopenPurchaseOrderInput,
   ReceivePurchaseOrderInput,
   Session,
   UpdatePurchaseOrderInput,
@@ -16,6 +17,7 @@ import {
   createPurchaseOrder,
   hasTenant,
   listPurchaseOrders,
+  reopenPurchaseOrder,
   receivePurchaseOrder,
   runWithSession,
   updatePurchaseOrder,
@@ -257,6 +259,48 @@ export async function handleClosePurchaseOrder(
         "The selected purchase order has already been canceled.",
         "The selected purchase order has already been closed.",
         "The selected purchase order can only be closed after at least one receipt has been posted.",
+      ].includes(error.message)
+    ) {
+      badRequest(response, error.message);
+      return;
+    }
+
+    throw error;
+  }
+}
+
+export async function handleReopenPurchaseOrder(
+  request: IncomingMessage,
+  response: ServerResponse,
+  requestSession: Session | null,
+): Promise<void> {
+  const input = await readJson<ReopenPurchaseOrderInput>(request);
+
+  if (!input.tenantId?.trim()) {
+    badRequest(response, "tenantId is required.");
+    return;
+  }
+
+  if (!hasTenant(input.tenantId)) {
+    badRequest(response, "The selected tenant does not exist.");
+    return;
+  }
+
+  if (!input.purchaseOrderId?.trim()) {
+    badRequest(response, "purchaseOrderId is required.");
+    return;
+  }
+
+  try {
+    const purchaseOrder = runWithSession(requestSession, () => reopenPurchaseOrder(input));
+    sendJson(response, 200, { item: purchaseOrder });
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      [
+        "The selected purchase order does not exist.",
+        "The selected purchase order has already been canceled.",
+        "The selected purchase order can only be reopened after it has been closed.",
       ].includes(error.message)
     ) {
       badRequest(response, error.message);
