@@ -14,6 +14,8 @@ import {
   type AuditLogRecord,
   type AccountBalanceRecord,
   type AccountType,
+  type CancelOrderInput,
+  type CancelPurchaseOrderInput,
   createDemoSession,
   type CreateCustomerInput,
   type DeleteCustomerInput,
@@ -57,6 +59,7 @@ import {
   type ReportSummary,
   type OperationsTenantStatusRecord,
   type OperationsTotals,
+  type OrderStatus,
   type Session,
   type SupplierRecord,
   type TenantRecord,
@@ -132,7 +135,7 @@ type OrderRow = {
   quantity: number;
   unit_price: number;
   total_amount: number;
-  status: "draft" | "confirmed";
+  status: OrderStatus;
   created_at: string;
 };
 
@@ -879,6 +882,12 @@ const createOrderStatement = db.prepare(`
   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `);
 
+const updateOrderStatusStatement = db.prepare(`
+  UPDATE orders
+  SET status = ?
+  WHERE tenant_id = ? AND id = ?
+`);
+
 const listPurchaseOrdersStatement = db.prepare(`
   SELECT
     id,
@@ -947,6 +956,18 @@ const getPurchaseOrderByIdStatement = db.prepare(`
   LIMIT 1
 `);
 
+const countPurchaseOrderReceiptsStatement = db.prepare(`
+  SELECT COUNT(*) AS count
+  FROM purchase_order_receipts
+  WHERE tenant_id = ? AND purchase_order_id = ?
+`);
+
+const updatePurchaseOrderStatusStatement = db.prepare(`
+  UPDATE purchase_orders
+  SET status = ?
+  WHERE tenant_id = ? AND id = ?
+`);
+
 const updatePurchaseOrderReceivingStatement = db.prepare(`
   UPDATE purchase_orders
   SET received_quantity = ?, status = ?
@@ -988,6 +1009,21 @@ const getOrderByIdStatement = db.prepare(`
   FROM orders
   WHERE tenant_id = ? AND id = ?
   LIMIT 1
+`);
+
+const countInvoicesForOrderStatement = db.prepare(`
+  SELECT COUNT(*) AS count
+  FROM invoices
+  WHERE tenant_id = ? AND order_id = ?
+`);
+
+const getOrderIssuedInventoryValueStatement = db.prepare(`
+  SELECT COALESCE(SUM(credit_amount - debit_amount), 0) AS amount
+  FROM journal_entries
+  WHERE tenant_id = ?
+    AND reference_type = 'order'
+    AND reference_id = ?
+    AND account_code = '156'
 `);
 
 const listInvoicesStatement = db.prepare(`
@@ -1272,7 +1308,7 @@ const getReportCountsStatement = db.prepare(`
   SELECT
     (SELECT COUNT(*) FROM customers WHERE tenant_id = ?) AS customer_count,
     (SELECT COUNT(*) FROM products WHERE tenant_id = ?) AS product_count,
-    (SELECT COUNT(*) FROM orders WHERE tenant_id = ?) AS order_count,
+    (SELECT COUNT(*) FROM orders WHERE tenant_id = ? AND status <> 'canceled') AS order_count,
     (SELECT COUNT(*) FROM invoices WHERE tenant_id = ?) AS invoice_count,
     (
       SELECT COUNT(*)
@@ -1302,7 +1338,7 @@ const getReportCountsStatement = db.prepare(`
       ) invoice_totals
       WHERE paid_amount < total_amount
     ) AS open_invoice_count,
-    (SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE tenant_id = ?) AS gross_sales_amount,
+    (SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE tenant_id = ? AND status <> 'canceled') AS gross_sales_amount,
     (SELECT COALESCE(SUM(total_amount), 0) FROM invoices WHERE tenant_id = ?) AS invoiced_amount,
     (
       SELECT COALESCE(SUM(amount), 0)
@@ -1423,7 +1459,7 @@ const getTopCustomerStatement = db.prepare(`
     customer_name,
     SUM(total_amount) AS total_amount
   FROM orders
-  WHERE tenant_id = ?
+  WHERE tenant_id = ? AND status <> 'canceled'
   GROUP BY customer_id, customer_name
   ORDER BY total_amount DESC, customer_name COLLATE NOCASE ASC
   LIMIT 1
@@ -1434,7 +1470,7 @@ const getTopProductStatement = db.prepare(`
     product_name,
     SUM(quantity) AS total_units
   FROM orders
-  WHERE tenant_id = ?
+  WHERE tenant_id = ? AND status <> 'canceled'
   GROUP BY product_id, product_name
   ORDER BY total_units DESC, product_name COLLATE NOCASE ASC
   LIMIT 1
@@ -1447,9 +1483,9 @@ const getOperationsTotalsStatement = db.prepare(`
     (SELECT COUNT(*) FROM suppliers) AS supplier_count,
     (SELECT COUNT(*) FROM products) AS product_count,
     (SELECT COUNT(*) FROM purchase_orders) AS purchase_order_count,
-    (SELECT COUNT(*) FROM purchase_orders WHERE status <> 'received') AS open_purchase_order_count,
+    (SELECT COUNT(*) FROM purchase_orders WHERE status NOT IN ('received', 'canceled')) AS open_purchase_order_count,
     (SELECT COUNT(*) FROM inventory) AS inventory_line_count,
-    (SELECT COUNT(*) FROM orders) AS order_count,
+    (SELECT COUNT(*) FROM orders WHERE status <> 'canceled') AS order_count,
     (SELECT COUNT(*) FROM invoices) AS invoice_count,
     (
       SELECT COUNT(*)
@@ -1747,6 +1783,9 @@ function mapOrder(row: OrderRow): OrderRecord {
 }
 
 function mapPurchaseOrder(row: PurchaseOrderRow): PurchaseOrderRecord {
+  const outstandingQuantity =
+    row.status === "canceled" ? 0 : Math.max(row.quantity_ordered - row.received_quantity, 0);
+
   return {
     id: row.id,
     tenantId: row.tenant_id,
@@ -1759,7 +1798,7 @@ function mapPurchaseOrder(row: PurchaseOrderRow): PurchaseOrderRecord {
     productName: row.product_name,
     quantityOrdered: row.quantity_ordered,
     receivedQuantity: row.received_quantity,
-    outstandingQuantity: Math.max(row.quantity_ordered - row.received_quantity, 0),
+    outstandingQuantity,
     unitCost: row.unit_cost,
     totalAmount: row.total_amount,
     status: row.status,
@@ -3428,6 +3467,89 @@ export function createOrder(input: CreateOrderInput): OrderRecord {
   }
 }
 
+export function cancelOrder(input: CancelOrderInput): OrderRecord {
+  const existing = getOrderByIdStatement.get(input.tenantId, input.orderId) as OrderRow | undefined;
+  if (!existing) {
+    throw new Error("The selected order does not exist.");
+  }
+
+  if (existing.status === "canceled") {
+    throw new Error("The selected order has already been canceled.");
+  }
+
+  const invoiceCount = Number(
+    (countInvoicesForOrderStatement.get(input.tenantId, input.orderId) as { count?: number } | undefined)?.count ??
+      0,
+  );
+  if (invoiceCount > 0) {
+    throw new Error("The selected order cannot be canceled because an invoice already references it.");
+  }
+
+  const issuedInventoryValue = Number(
+    (getOrderIssuedInventoryValueStatement.get(
+      input.tenantId,
+      input.orderId,
+    ) as { amount?: number } | undefined)?.amount ?? 0,
+  );
+
+  db.exec("BEGIN");
+
+  try {
+    ensureInventoryRow(input.tenantId, existing.product_id);
+
+    const inventory = getInventoryRowStatement.get(input.tenantId, existing.product_id) as
+      | InventoryRow
+      | undefined;
+    if (!inventory) {
+      throw new Error("The selected product does not exist.");
+    }
+
+    const canceledAt = timestamp();
+    persistInventorySnapshot({
+      productId: existing.product_id,
+      quantityOnHand: inventory.quantity_on_hand + existing.quantity,
+      inventoryValue: inventory.inventory_value + issuedInventoryValue,
+      lastReceiptAt: inventory.last_receipt_at,
+      updatedAt: canceledAt,
+    });
+
+    updateOrderStatusStatement.run("canceled", input.tenantId, existing.id);
+
+    createJournalEntryLines({
+      tenantId: input.tenantId,
+      referenceType: "order",
+      referenceId: existing.id,
+      referenceNumber: existing.order_number,
+      description: `Cancel order ${existing.order_number}`,
+      createdAt: canceledAt,
+      lines: [
+        { accountCode: "156", debitAmount: issuedInventoryValue, creditAmount: 0 },
+        { accountCode: "632", debitAmount: 0, creditAmount: issuedInventoryValue },
+      ],
+    });
+
+    recordAuditLog({
+      tenantId: input.tenantId,
+      entityType: "order",
+      entityId: existing.id,
+      entityNumber: existing.order_number,
+      actionType: "order_canceled",
+      summary: `Canceled ${existing.order_number}`,
+      metadata: {
+        amount: existing.total_amount,
+        quantity: existing.quantity,
+      },
+      createdAt: canceledAt,
+    });
+
+    db.exec("COMMIT");
+    return mapOrder({ ...existing, status: "canceled" });
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
+}
+
 export function createPurchaseOrder(input: CreatePurchaseOrderInput): PurchaseOrderRecord {
   const supplier = getSupplierByIdStatement.get(input.tenantId, input.supplierId) as SupplierRow | undefined;
   if (!supplier) {
@@ -3486,12 +3608,68 @@ export function createPurchaseOrder(input: CreatePurchaseOrderInput): PurchaseOr
   return purchaseOrder;
 }
 
+export function cancelPurchaseOrder(input: CancelPurchaseOrderInput): PurchaseOrderRecord {
+  const existing = getPurchaseOrderByIdStatement.get(input.tenantId, input.purchaseOrderId) as
+    | PurchaseOrderRow
+    | undefined;
+  if (!existing) {
+    throw new Error("The selected purchase order does not exist.");
+  }
+
+  if (existing.status === "canceled") {
+    throw new Error("The selected purchase order has already been canceled.");
+  }
+
+  const receiptCount = Number(
+    (countPurchaseOrderReceiptsStatement.get(
+      input.tenantId,
+      input.purchaseOrderId,
+    ) as { count?: number } | undefined)?.count ?? 0,
+  );
+  if (existing.received_quantity > 0 || receiptCount > 0) {
+    throw new Error("The selected purchase order cannot be canceled because receipts already exist.");
+  }
+
+  const canceledAt = timestamp();
+
+  db.exec("BEGIN");
+
+  try {
+    updatePurchaseOrderStatusStatement.run("canceled", input.tenantId, existing.id);
+
+    recordAuditLog({
+      tenantId: input.tenantId,
+      entityType: "purchase_order",
+      entityId: existing.id,
+      entityNumber: existing.purchase_order_number,
+      actionType: "purchase_order_canceled",
+      summary: `Canceled ${existing.purchase_order_number}`,
+      metadata: {
+        amount: existing.total_amount,
+        quantity: existing.quantity_ordered,
+        unitCost: existing.unit_cost,
+      },
+      createdAt: canceledAt,
+    });
+
+    db.exec("COMMIT");
+    return mapPurchaseOrder({ ...existing, status: "canceled" });
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
+}
+
 function receivePurchaseOrderInternal(input: ReceivePurchaseOrderInput): ReceivePurchaseOrderResult {
   const purchaseOrder = getPurchaseOrderByIdStatement.get(input.tenantId, input.purchaseOrderId) as
     | PurchaseOrderRow
     | undefined;
   if (!purchaseOrder) {
     throw new Error("The selected purchase order does not exist.");
+  }
+
+  if (purchaseOrder.status === "canceled") {
+    throw new Error("The selected purchase order has been canceled.");
   }
 
   if (!Number.isInteger(input.quantityReceived) || input.quantityReceived <= 0) {
@@ -3631,6 +3809,10 @@ export function receivePurchaseOrder(
     throw new Error("The selected purchase order does not exist.");
   }
 
+  if (purchaseOrder.status === "canceled") {
+    throw new Error("The selected purchase order has been canceled.");
+  }
+
   if (!Number.isInteger(input.quantityReceived) || input.quantityReceived <= 0) {
     throw new Error("Received quantity must be a positive integer.");
   }
@@ -3674,6 +3856,10 @@ function createInvoiceInternal(input: CreateInvoiceInput): InvoiceRecord {
   const order = getOrderByIdStatement.get(input.tenantId, input.orderId) as OrderRow | undefined;
   if (!order) {
     throw new Error("The selected order does not exist.");
+  }
+
+  if (order.status !== "confirmed") {
+    throw new Error("Only confirmed orders can be invoiced.");
   }
 
   if (!isValidBusinessDateInput(input.issueDate)) {
@@ -3793,6 +3979,10 @@ export function createInvoice(
   const order = getOrderByIdStatement.get(input.tenantId, input.orderId) as OrderRow | undefined;
   if (!order) {
     throw new Error("The selected order does not exist.");
+  }
+
+  if (order.status !== "confirmed") {
+    throw new Error("Only confirmed orders can be invoiced.");
   }
 
   if (!isValidBusinessDateInput(input.issueDate)) {

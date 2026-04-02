@@ -364,7 +364,7 @@ export type DeleteProductInput = {
   productId: string;
 };
 
-export type PurchaseOrderStatus = "issued" | "partially_received" | "received";
+export type PurchaseOrderStatus = "issued" | "partially_received" | "received" | "canceled";
 
 export type PurchaseOrderRecord = {
   id: string;
@@ -393,6 +393,11 @@ export type CreatePurchaseOrderInput = {
   quantityOrdered: number;
   unitCost: number;
   expectedReceiptDate: string;
+};
+
+export type CancelPurchaseOrderInput = {
+  tenantId: string;
+  purchaseOrderId: string;
 };
 
 export type PurchaseOrderReceiptRecord = {
@@ -472,6 +477,8 @@ export type ReceivePurchaseOrderResult = {
   receipt: PurchaseOrderReceiptRecord;
 };
 
+export type OrderStatus = "draft" | "confirmed" | "canceled";
+
 export type OrderRecord = {
   id: string;
   tenantId: string;
@@ -484,7 +491,7 @@ export type OrderRecord = {
   quantity: number;
   unitPrice: number;
   totalAmount: number;
-  status: "draft" | "confirmed";
+  status: OrderStatus;
   createdAt: string;
 };
 
@@ -493,6 +500,11 @@ export type CreateOrderInput = {
   customerId: string;
   productId: string;
   quantity: number;
+};
+
+export type CancelOrderInput = {
+  tenantId: string;
+  orderId: string;
 };
 
 export type InventoryRecord = {
@@ -565,11 +577,14 @@ export type AuditEntityType =
   | "invoice"
   | "payment"
   | "collection"
+  | "order"
   | "purchase_order"
   | "approval";
 
 export type AuditActionType =
   | "invoice_issued"
+  | "order_canceled"
+  | "purchase_order_canceled"
   | "purchase_order_received"
   | "payment_recorded"
   | "collection_follow_up_updated"

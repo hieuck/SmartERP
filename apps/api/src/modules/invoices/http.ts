@@ -95,7 +95,10 @@ export async function handleCreateInvoice(
     sendJson(response, result.kind === "approval_requested" ? 202 : 201, { item: result });
   } catch (error) {
     if (error instanceof Error) {
-      if (error.message === "The selected order does not exist.") {
+      if (
+        error.message === "The selected order does not exist." ||
+        error.message === "Only confirmed orders can be invoiced."
+      ) {
         badRequest(response, error.message);
         return;
       }

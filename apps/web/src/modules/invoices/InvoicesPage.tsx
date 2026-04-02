@@ -235,7 +235,7 @@ export function InvoicesPage(): ReactElement {
   const todayDateInput = new Date().toISOString().slice(0, 10);
 
   const availableOrders = orders.filter(
-    (order) => !invoices.some((invoice) => invoice.orderId === order.id),
+    (order) => order.status === "confirmed" && !invoices.some((invoice) => invoice.orderId === order.id),
   );
   const payableInvoices = invoices.filter((invoice) => invoice.outstandingAmount > 0);
   const collectionQueue = [...payableInvoices].sort((left, right) => {

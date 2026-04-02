@@ -78,9 +78,11 @@ const unitPrice = 25000;
 const productImportCsv = `sku,name,unitPrice\n${productSku},${productName},${unitPrice}`;
 const purchaseUnitCost = 18000;
 const purchaseQuantity = 24;
+const cancelablePurchaseQuantity = 4;
 const stockInQuantity = 12;
 const saleQuantity = 5;
 const secondSaleQuantity = 2;
+const cancelableOrderQuantity = 1;
 const invalidQuantity = 20;
 const taxRate = 10;
 const partialPaymentAmount = 50000;
@@ -179,10 +181,13 @@ function isExpectedNegativePath(response) {
           response.url().endsWith("/api/tenants") ||
           response.url().endsWith("/api/suppliers") ||
           response.url().endsWith("/api/products") ||
+          response.url().endsWith("/api/orders/cancel") ||
           response.url().endsWith("/api/customers/delete") ||
           response.url().endsWith("/api/suppliers/delete") ||
           response.url().endsWith("/api/products/delete") ||
+          response.url().endsWith("/api/purchase-orders/cancel") ||
           response.url().endsWith("/api/purchase-orders/receipts") ||
+          response.url().endsWith("/api/invoices") ||
           response.url().endsWith("/api/invoices/payments")
         )
       )
@@ -497,7 +502,13 @@ async function main() {
   let productDeleteGuardVerified = false;
   let duplicateSupplierRejectedVerified = false;
   let duplicateProductRejectedVerified = false;
+  let orderCancellationVerified = false;
+  let orderCancelGuardVerified = false;
+  let canceledOrderInvoiceGuardVerified = false;
   let supplierAndPurchaseOrdersVerified = false;
+  let purchaseOrderCancellationVerified = false;
+  let purchaseOrderCancelGuardVerified = false;
+  let canceledPurchaseOrderReceiptGuardVerified = false;
   let purchaseReceiptApprovalVerified = false;
   let purchaseReceiptVerified = false;
   let purchaseReceiptGuardVerified = false;
@@ -846,6 +857,87 @@ async function main() {
     await waitForFormReady(purchaseOrdersCreateCard);
     await selectOption(page, purchaseOrdersCreateCard.getByRole("combobox", { name: /Nhà cung cấp|Nha cung cap/ }), supplierName);
     await selectOption(page, purchaseOrdersCreateCard.getByRole("combobox", { name: /Sản phẩm|San pham/ }), productName);
+    await fillField(purchaseOrdersCreateCard, "#quantityOrdered", cancelablePurchaseQuantity);
+    await fillField(purchaseOrdersCreateCard, "#unitCost", purchaseUnitCost);
+    await fillField(purchaseOrdersCreateCard, "#expectedReceiptDate", expectedReceiptDateInput);
+    await clickSubmit(purchaseOrdersCreateCard);
+    const cancelablePurchaseOrderRow = getListCard(page)
+      .locator(".record-row")
+      .filter({ hasText: `${supplierName} (${supplierCode})` })
+      .first();
+    await cancelablePurchaseOrderRow.waitFor({ timeout: 15000 });
+    const canceledPurchaseOrderNumber =
+      (await cancelablePurchaseOrderRow.locator("strong").first().textContent())?.trim() ?? "";
+    assert(
+      canceledPurchaseOrderNumber.length > 0,
+      "Cancelable purchase order number was not rendered before cancellation.",
+    );
+    await cancelablePurchaseOrderRow.locator('[data-testid="purchase-order-cancel-button"]').click();
+    await page.getByRole("button", { name: /Hủy đơn mua|Huy don mua/ }).last().click();
+    await cancelablePurchaseOrderRow.getByText(/Đã hủy|Da huy/).waitFor({ timeout: 15000 });
+    const receiptOptionsTextAfterCancel = await purchaseOrdersReceiveCard.textContent();
+    assert(
+      !receiptOptionsTextAfterCancel?.includes(canceledPurchaseOrderNumber),
+      "Canceled purchase order still appeared inside the receiving card.",
+    );
+    purchaseOrderCancellationVerified = true;
+    const canceledPurchaseOrderReceiptResponse = await page.evaluate(
+      async ({ purchaseOrderNumberToReceive, quantity, sessionKey, tenantKey, receivedDate }) => {
+        const rawSession = window.localStorage.getItem(sessionKey);
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
+        const headers = {
+          "content-type": "application/json",
+          authorization: `Bearer ${accessToken}`,
+        };
+
+        const purchaseOrdersResponse = await fetch(
+          `/api/purchase-orders?tenantId=${encodeURIComponent(tenantId ?? "")}`,
+          { headers },
+        );
+        const purchaseOrdersPayload = await purchaseOrdersResponse.json();
+        const targetPurchaseOrder = purchaseOrdersPayload.items.find(
+          (item) => item.purchaseOrderNumber === purchaseOrderNumberToReceive,
+        );
+
+        if (!targetPurchaseOrder || !tenantId) {
+          return { status: 0, body: { error: "Canceled purchase order lookup failed before receipt test." } };
+        }
+
+        const response = await fetch("/api/purchase-orders/receipts", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            tenantId,
+            purchaseOrderId: targetPurchaseOrder.id,
+            quantityReceived: quantity,
+            receivedDate,
+          }),
+        });
+
+        return {
+          status: response.status,
+          body: await response.json(),
+        };
+      },
+      {
+        purchaseOrderNumberToReceive: canceledPurchaseOrderNumber,
+        quantity: 1,
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+        receivedDate: firstIssueDateInput,
+      },
+    );
+    assert(
+      canceledPurchaseOrderReceiptResponse.status === 400 &&
+        canceledPurchaseOrderReceiptResponse.body?.error === "The selected purchase order has been canceled.",
+      "Canceled purchase order still accepted a receipt.",
+    );
+    canceledPurchaseOrderReceiptGuardVerified = true;
+
+    await waitForFormReady(purchaseOrdersCreateCard);
+    await selectOption(page, purchaseOrdersCreateCard.getByRole("combobox", { name: /Nhà cung cấp|Nha cung cap/ }), supplierName);
+    await selectOption(page, purchaseOrdersCreateCard.getByRole("combobox", { name: /Sản phẩm|San pham/ }), productName);
     await fillField(purchaseOrdersCreateCard, "#quantityOrdered", purchaseQuantity);
     await fillField(purchaseOrdersCreateCard, "#unitCost", purchaseUnitCost);
     await fillField(purchaseOrdersCreateCard, "#expectedReceiptDate", expectedReceiptDateInput);
@@ -957,6 +1049,56 @@ async function main() {
       "Excessive receipt did not return the expected validation message.",
     );
     purchaseReceiptGuardVerified = true;
+    const cancelReceivedPurchaseOrderResponse = await page.evaluate(
+      async ({ purchaseOrderNumberToCancel, sessionKey, tenantKey }) => {
+        const rawSession = window.localStorage.getItem(sessionKey);
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
+        const headers = {
+          "content-type": "application/json",
+          authorization: `Bearer ${accessToken}`,
+        };
+
+        const purchaseOrdersResponse = await fetch(
+          `/api/purchase-orders?tenantId=${encodeURIComponent(tenantId ?? "")}`,
+          { headers },
+        );
+        const purchaseOrdersPayload = await purchaseOrdersResponse.json();
+        const targetPurchaseOrder = purchaseOrdersPayload.items.find(
+          (item) => item.purchaseOrderNumber === purchaseOrderNumberToCancel,
+        );
+
+        if (!targetPurchaseOrder || !tenantId) {
+          return { status: 0, body: { error: "Received purchase order lookup failed before cancellation guard test." } };
+        }
+
+        const response = await fetch("/api/purchase-orders/cancel", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            tenantId,
+            purchaseOrderId: targetPurchaseOrder.id,
+          }),
+        });
+
+        return {
+          status: response.status,
+          body: await response.json(),
+        };
+      },
+      {
+        purchaseOrderNumberToCancel: purchaseOrderNumber,
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+      },
+    );
+    assert(
+      cancelReceivedPurchaseOrderResponse.status === 400 &&
+        cancelReceivedPurchaseOrderResponse.body?.error ===
+          "The selected purchase order cannot be canceled because receipts already exist.",
+      "Received purchase order did not reject cancellation.",
+    );
+    purchaseOrderCancelGuardVerified = true;
 
     await openSection(page, sidebarIndexes.inventory, "/dashboard/inventory");
     await waitForTenantContext(page, tenantName);
@@ -1013,9 +1155,112 @@ async function main() {
     await waitForFormReady(ordersFormCard);
     await selectOption(page, ordersFormCard.getByRole("combobox", { name: "* Khách hàng" }), customerName);
     await selectOption(page, ordersFormCard.getByRole("combobox", { name: "* Sản phẩm" }), productName);
+    await fillNumberInput(ordersFormCard.getByRole("spinbutton", { name: "* Số lượng" }), cancelableOrderQuantity);
+    await clickSubmit(ordersFormCard);
+    const canceledOrderRow = getListCard(page)
+      .locator(".record-row")
+      .filter({ hasText: `${productName} x ${cancelableOrderQuantity}` })
+      .first();
+    await canceledOrderRow.waitFor({ timeout: 15000 });
+    const canceledOrderNumber = (await canceledOrderRow.locator("strong").first().textContent())?.trim() ?? "";
+    assert(canceledOrderNumber.length > 0, "Cancelable order number was not rendered before cancellation.");
+    await canceledOrderRow.locator('[data-testid="order-cancel-button"]').click();
+    await page.getByRole("button", { name: /Hủy đơn hàng|Huy don hang/ }).last().click();
+    await canceledOrderRow.getByText(/Đã hủy|Da huy/).waitFor({ timeout: 15000 });
+    const canceledOrderInventoryResponse = await page.evaluate(
+      async ({ productSkuToCheck, sessionKey, tenantKey }) => {
+        const rawSession = window.localStorage.getItem(sessionKey);
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
+        const headers = {
+          authorization: `Bearer ${accessToken}`,
+        };
+
+        const response = await fetch(`/api/inventory?tenantId=${encodeURIComponent(tenantId ?? "")}`, {
+          headers,
+        });
+        const payload = await response.json();
+        const inventoryItem = payload.items.find((item) => item.sku === productSkuToCheck);
+
+        return {
+          status: response.status,
+          item: inventoryItem ?? null,
+        };
+      },
+      {
+        productSkuToCheck: productSku,
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+      },
+    );
+    assert(
+      canceledOrderInventoryResponse.status === 200 &&
+        canceledOrderInventoryResponse.item?.quantityOnHand === stockInQuantity,
+      "Canceling the order did not restore stock to the expected quantity.",
+    );
+    orderCancellationVerified = true;
+    const canceledOrderInvoiceResponse = await page.evaluate(
+      async ({ targetOrderNumber, issueDate, taxRatePercent, paymentTermDays, sessionKey, tenantKey }) => {
+        const rawSession = window.localStorage.getItem(sessionKey);
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
+        const headers = {
+          "content-type": "application/json",
+          authorization: `Bearer ${accessToken}`,
+        };
+
+        const ordersResponse = await fetch(`/api/orders?tenantId=${encodeURIComponent(tenantId ?? "")}`, {
+          headers,
+        });
+        const ordersPayload = await ordersResponse.json();
+        const targetOrder = ordersPayload.items.find((item) => item.orderNumber === targetOrderNumber);
+
+        if (!targetOrder || !tenantId) {
+          return { status: 0, body: { error: "Canceled order lookup failed before invoice guard test." } };
+        }
+
+        const response = await fetch("/api/invoices", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            tenantId,
+            orderId: targetOrder.id,
+            issueDate,
+            paymentTermDays,
+            taxRatePercent,
+          }),
+        });
+
+        return {
+          status: response.status,
+          body: await response.json(),
+        };
+      },
+      {
+        targetOrderNumber: canceledOrderNumber,
+        issueDate: firstIssueDateInput,
+        taxRatePercent: taxRate,
+        paymentTermDays: firstPaymentTermDays,
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+      },
+    );
+    assert(
+      canceledOrderInvoiceResponse.status === 400 &&
+        canceledOrderInvoiceResponse.body?.error === "Only confirmed orders can be invoiced.",
+      "Canceled order still accepted invoice issuance.",
+    );
+    canceledOrderInvoiceGuardVerified = true;
+
+    await waitForFormReady(ordersFormCard);
+    await selectOption(page, ordersFormCard.getByRole("combobox", { name: "* Khách hàng" }), customerName);
+    await selectOption(page, ordersFormCard.getByRole("combobox", { name: "* Sản phẩm" }), productName);
     await fillNumberInput(ordersFormCard.getByRole("spinbutton", { name: "* Số lượng" }), saleQuantity);
     await clickSubmit(ordersFormCard);
-    const orderRow = getListCard(page).locator(".record-row").filter({ hasText: productName }).first();
+    const orderRow = getListCard(page)
+      .locator(".record-row")
+      .filter({ hasText: `${productName} x ${saleQuantity}` })
+      .first();
     await orderRow.waitFor({ timeout: 15000 });
     await orderRow.getByText(customerName, { exact: false }).waitFor({ timeout: 15000 });
     orderNumber = (await orderRow.locator("strong").first().textContent())?.trim() ?? "";
@@ -1046,6 +1291,53 @@ async function main() {
     invoiceNumber = (await invoiceRow.locator("strong").first().textContent())?.trim() ?? "";
     assert(invoiceNumber.length > 0, "Invoice number was not rendered after invoice creation.");
     await invoiceRow.getByText(buildAmountPattern(firstInvoiceAmount)).first().waitFor({ timeout: 15000 });
+    const invoicedOrderCancelResponse = await page.evaluate(
+      async ({ targetOrderNumber, sessionKey, tenantKey }) => {
+        const rawSession = window.localStorage.getItem(sessionKey);
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
+        const headers = {
+          "content-type": "application/json",
+          authorization: `Bearer ${accessToken}`,
+        };
+
+        const ordersResponse = await fetch(`/api/orders?tenantId=${encodeURIComponent(tenantId ?? "")}`, {
+          headers,
+        });
+        const ordersPayload = await ordersResponse.json();
+        const targetOrder = ordersPayload.items.find((item) => item.orderNumber === targetOrderNumber);
+
+        if (!targetOrder || !tenantId) {
+          return { status: 0, body: { error: "Invoiced order lookup failed before cancel guard test." } };
+        }
+
+        const response = await fetch("/api/orders/cancel", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            tenantId,
+            orderId: targetOrder.id,
+          }),
+        });
+
+        return {
+          status: response.status,
+          body: await response.json(),
+        };
+      },
+      {
+        targetOrderNumber: orderNumber,
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+      },
+    );
+    assert(
+      invoicedOrderCancelResponse.status === 400 &&
+        invoicedOrderCancelResponse.body?.error ===
+          "The selected order cannot be canceled because an invoice already references it.",
+      "Invoiced order did not reject cancellation.",
+    );
+    orderCancelGuardVerified = true;
     await waitForFormReady(paymentCard);
     const excessivePaymentResponse = await page.evaluate(
       async ({ invoiceNumberToOverpay, amount, sessionKey, tenantKey }) => {
@@ -1152,12 +1444,61 @@ async function main() {
 
     await openSection(page, sidebarIndexes.invoices, "/dashboard/invoices");
     await waitForTenantContext(page, tenantName);
-    await waitForFormReady(issueInvoiceCard);
-    await selectOption(page, issueInvoiceCard.getByRole("combobox", { name: /Đơn hàng/ }), secondOrderNumber);
-    await fillField(issueInvoiceCard, "#issueDate", secondIssueDateInput);
-    await fillField(issueInvoiceCard, "#paymentTermDays", secondPaymentTermDays);
-    await fillField(issueInvoiceCard, "#taxRatePercent", taxRate);
-    await clickSubmit(issueInvoiceCard);
+    const backdatedInvoiceRequest = await page.evaluate(
+      async ({ targetOrderNumber, issueDate, paymentTermDays, taxRatePercent, sessionKey, tenantKey }) => {
+        const rawSession = window.localStorage.getItem(sessionKey);
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
+        const headers = {
+          "content-type": "application/json",
+          authorization: `Bearer ${accessToken}`,
+        };
+
+        const ordersResponse = await fetch(`/api/orders?tenantId=${encodeURIComponent(tenantId ?? "")}`, {
+          headers,
+        });
+        const ordersPayload = await ordersResponse.json();
+        const targetOrder = ordersPayload.items.find((item) => item.orderNumber === targetOrderNumber);
+
+        if (!targetOrder || !tenantId) {
+          return { status: 0, body: { error: "Second order lookup failed before backdated invoice request." } };
+        }
+
+        const response = await fetch("/api/invoices", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            tenantId,
+            orderId: targetOrder.id,
+            issueDate,
+            paymentTermDays,
+            taxRatePercent,
+          }),
+        });
+
+        return {
+          status: response.status,
+          body: await response.json(),
+        };
+      },
+      {
+        targetOrderNumber: secondOrderNumber,
+        issueDate: secondIssueDateInput,
+        paymentTermDays: secondPaymentTermDays,
+        taxRatePercent: taxRate,
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+      },
+    );
+    assert(
+      backdatedInvoiceRequest.status === 202 &&
+        backdatedInvoiceRequest.body?.item?.kind === "approval_requested",
+      "Backdated invoice request did not enter the expected approval flow.",
+    );
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("networkidle");
+    await page.waitForURL(/\/dashboard\/invoices$/, { timeout: 15000 });
+    await waitForTenantContext(page, tenantName);
     await openSection(page, sidebarIndexes.approvals, "/dashboard/approvals");
     await waitForTenantContext(page, tenantName);
     const backdatedInvoiceApprovalRow = approvalsPendingCard
@@ -2036,7 +2377,13 @@ async function main() {
       productDeleteGuardVerified,
       duplicateSupplierRejectedVerified,
       duplicateProductRejectedVerified,
+      orderCancellationVerified,
+      orderCancelGuardVerified,
+      canceledOrderInvoiceGuardVerified,
       supplierAndPurchaseOrdersVerified,
+      purchaseOrderCancellationVerified,
+      purchaseOrderCancelGuardVerified,
+      canceledPurchaseOrderReceiptGuardVerified,
       purchaseReceiptApprovalVerified,
       purchaseReceiptVerified,
       purchaseReceiptGuardVerified,

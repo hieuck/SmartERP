@@ -839,6 +839,19 @@ Object.assign(en.products, {
   deleteConfirm: "Delete {{name}}? This only works while sales, purchasing, and inventory are still clear.",
 });
 
+Object.assign(en.orders, {
+  statusDraft: "Draft",
+  statusCanceled: "Canceled",
+  cancelAction: "Cancel Order",
+  cancelConfirm: "Cancel {{number}}? This restores stock and blocks invoicing for this order.",
+});
+
+Object.assign(en.purchaseOrders, {
+  statusCanceled: "Canceled",
+  cancelAction: "Cancel Purchase Order",
+  cancelConfirm: "Cancel {{number}}? This only works before any receipt has been posted.",
+});
+
 Object.assign(en.errors, {
   updateCustomerFailed: "Customer update failed.",
   deleteCustomerFailed: "Customer deletion failed.",
@@ -846,7 +859,15 @@ Object.assign(en.errors, {
   deleteSupplierFailed: "Supplier deletion failed.",
   updateProductFailed: "Product update failed.",
   deleteProductFailed: "Product deletion failed.",
+  cancelOrderFailed: "Order cancellation failed.",
+  cancelPurchaseOrderFailed: "Purchase order cancellation failed.",
   customerDeleteBlocked: "This customer cannot be deleted because orders or invoices already reference it.",
   supplierDeleteBlocked: "This supplier cannot be deleted because purchase orders already reference it.",
   productDeleteBlocked: "This product cannot be deleted because sales, purchasing, or inventory already reference it.",
+  orderAlreadyCanceled: "This order has already been canceled.",
+  orderCancelBlocked: "This order cannot be canceled because an invoice already references it.",
+  orderMustBeConfirmed: "Only confirmed orders can be invoiced.",
+  purchaseOrderAlreadyCanceled: "This purchase order has already been canceled.",
+  purchaseOrderCanceled: "This purchase order has been canceled and can no longer be received.",
+  purchaseOrderCancelBlocked: "This purchase order cannot be canceled because receipts already exist.",
 });

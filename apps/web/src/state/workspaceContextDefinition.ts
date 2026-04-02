@@ -2,6 +2,8 @@ import { createContext, useContext } from "react";
 
 import type {
   ApprovalDecisionInput,
+  CancelOrderInput,
+  CancelPurchaseOrderInput,
   ApprovalRequestRecord,
   CreateCustomerInput,
   CreateInventoryAdjustmentInput,
@@ -92,7 +94,9 @@ export type WorkspaceContextValue = {
     input: Omit<CreateInventoryAdjustmentInput, "tenantId">,
   ) => Promise<void>;
   createOrderRecord: (input: Omit<CreateOrderInput, "tenantId">) => Promise<void>;
+  cancelOrderRecord: (input: Omit<CancelOrderInput, "tenantId">) => Promise<void>;
   createPurchaseOrderRecord: (input: Omit<CreatePurchaseOrderInput, "tenantId">) => Promise<void>;
+  cancelPurchaseOrderRecord: (input: Omit<CancelPurchaseOrderInput, "tenantId">) => Promise<void>;
   receivePurchaseOrderRecord: (input: Omit<ReceivePurchaseOrderInput, "tenantId">) => Promise<void>;
   createInvoiceRecord: (input: Omit<CreateInvoiceInput, "tenantId">) => Promise<void>;
   createInvoicePaymentRecord: (input: Omit<CreateInvoicePaymentInput, "tenantId">) => Promise<void>;

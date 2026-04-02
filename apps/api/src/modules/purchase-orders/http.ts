@@ -1,6 +1,7 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 
 import type {
+  CancelPurchaseOrderInput,
   CreatePurchaseOrderInput,
   ReceivePurchaseOrderInput,
   Session,
@@ -8,6 +9,7 @@ import type {
 
 import { readJson, sendJson } from "../../http.js";
 import {
+  cancelPurchaseOrder,
   createPurchaseOrder,
   hasTenant,
   listPurchaseOrders,
@@ -103,6 +105,48 @@ export async function handleCreatePurchaseOrder(
   }
 }
 
+export async function handleCancelPurchaseOrder(
+  request: IncomingMessage,
+  response: ServerResponse,
+  requestSession: Session | null,
+): Promise<void> {
+  const input = await readJson<CancelPurchaseOrderInput>(request);
+
+  if (!input.tenantId?.trim()) {
+    badRequest(response, "tenantId is required.");
+    return;
+  }
+
+  if (!hasTenant(input.tenantId)) {
+    badRequest(response, "The selected tenant does not exist.");
+    return;
+  }
+
+  if (!input.purchaseOrderId?.trim()) {
+    badRequest(response, "purchaseOrderId is required.");
+    return;
+  }
+
+  try {
+    const purchaseOrder = runWithSession(requestSession, () => cancelPurchaseOrder(input));
+    sendJson(response, 200, { item: purchaseOrder });
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      [
+        "The selected purchase order does not exist.",
+        "The selected purchase order has already been canceled.",
+        "The selected purchase order cannot be canceled because receipts already exist.",
+      ].includes(error.message)
+    ) {
+      badRequest(response, error.message);
+      return;
+    }
+
+    throw error;
+  }
+}
+
 export async function handleReceivePurchaseOrder(
   request: IncomingMessage,
   response: ServerResponse,
@@ -142,6 +186,7 @@ export async function handleReceivePurchaseOrder(
     if (error instanceof Error) {
       if (
         error.message === "The selected purchase order does not exist." ||
+        error.message === "The selected purchase order has been canceled." ||
         error.message === "The selected product does not exist." ||
         error.message === "Received quantity must be a positive integer." ||
         error.message === "Received date must be a valid YYYY-MM-DD value." ||

@@ -1,7 +1,12 @@
-import { InboxOutlined, ShoppingOutlined, UserOutlined } from "@ant-design/icons";
+import {
+  InboxOutlined,
+  ShoppingOutlined,
+  StopOutlined,
+  UserOutlined,
+} from "@ant-design/icons";
 import type { ReactElement } from "react";
 import type { FormProps } from "antd";
-import { Button, Card, Empty, Form, InputNumber, Select, Tag, Typography } from "antd";
+import { Button, Card, Empty, Form, InputNumber, Popconfirm, Select, Tag, Typography } from "antd";
 
 import type { CreateOrderInput } from "@smarterp/contracts";
 
@@ -12,9 +17,38 @@ const { Paragraph, Title } = Typography;
 
 type OrderFormShape = Omit<CreateOrderInput, "tenantId">;
 
+function getOrderStatusColor(status: "draft" | "confirmed" | "canceled"): string {
+  if (status === "canceled") {
+    return "red";
+  }
+
+  if (status === "confirmed") {
+    return "green";
+  }
+
+  return "gold";
+}
+
+function getOrderStatusLabel(
+  status: "draft" | "confirmed" | "canceled",
+  t: ReturnType<typeof useLocale>["t"],
+): string {
+  if (status === "canceled") {
+    return t("orders.statusCanceled");
+  }
+
+  if (status === "confirmed") {
+    return t("orders.statusConfirmed");
+  }
+
+  return t("orders.statusDraft");
+}
+
 export function OrdersPage(): ReactElement {
   const { formatCurrency, t } = useLocale();
   const {
+    can,
+    cancelOrderRecord,
     createOrderRecord,
     customers,
     inventories,
@@ -25,6 +59,7 @@ export function OrdersPage(): ReactElement {
     setSelectedTenantId,
     tenants,
   } = useWorkspace();
+  const canManageOrders = can("manage_orders");
 
   const [form] = Form.useForm<OrderFormShape>();
   const selectedProductId = Form.useWatch("productId", form);
@@ -38,6 +73,14 @@ export function OrdersPage(): ReactElement {
       // Error state is already surfaced via workspace context.
     }
   };
+
+  async function cancelOrderAction(orderId: string): Promise<void> {
+    try {
+      await cancelOrderRecord({ orderId });
+    } catch {
+      // Error state is already surfaced via workspace context.
+    }
+  }
 
   return (
     <div className="page-stack workspace-page">
@@ -64,74 +107,80 @@ export function OrdersPage(): ReactElement {
 
       <div className="two-column">
         <Card className="workspace-panel-card" title={t("orders.createTitle")}>
-          <Form<OrderFormShape> form={form} layout="vertical" onFinish={onFinish}>
-            <Form.Item<OrderFormShape>
-              label={t("orders.customer")}
-              name="customerId"
-              rules={[{ required: true }]}
-            >
-              <Select
-                placeholder={t("orders.customerPlaceholder")}
-                options={customers.map((customer) => ({
-                  label: `${customer.name} (${customer.email})`,
-                  value: customer.id,
-                }))}
-              />
-            </Form.Item>
+          {canManageOrders ? (
+            <Form<OrderFormShape> form={form} layout="vertical" onFinish={onFinish}>
+              <Form.Item<OrderFormShape>
+                label={t("orders.customer")}
+                name="customerId"
+                rules={[{ required: true }]}
+              >
+                <Select
+                  placeholder={t("orders.customerPlaceholder")}
+                  options={customers.map((customer) => ({
+                    label: `${customer.name} (${customer.email})`,
+                    value: customer.id,
+                  }))}
+                />
+              </Form.Item>
 
-            <Form.Item<OrderFormShape>
-              label={t("orders.product")}
-              name="productId"
-              rules={[{ required: true }]}
-            >
-              <Select
-                placeholder={t("orders.productPlaceholder")}
-                options={products.map((product) => ({
-                  label: `${product.name} (${product.sku})`,
-                  value: product.id,
-                }))}
-              />
-            </Form.Item>
+              <Form.Item<OrderFormShape>
+                label={t("orders.product")}
+                name="productId"
+                rules={[{ required: true }]}
+              >
+                <Select
+                  placeholder={t("orders.productPlaceholder")}
+                  options={products.map((product) => ({
+                    label: `${product.name} (${product.sku})`,
+                    value: product.id,
+                  }))}
+                />
+              </Form.Item>
 
-            <Form.Item<OrderFormShape>
-              label={t("orders.quantity")}
-              name="quantity"
-              initialValue={1}
-              dependencies={["productId"]}
-              extra={
-                selectedInventory
-                  ? t("orders.availableStock", { count: selectedInventory.quantityOnHand })
-                  : undefined
-              }
-              rules={[
-                { required: true },
-                {
-                  validator: async (_, value) => {
-                    if (
-                      !selectedInventory ||
-                      typeof value !== "number" ||
-                      value <= selectedInventory.quantityOnHand
-                    ) {
-                      return;
-                    }
+              <Form.Item<OrderFormShape>
+                label={t("orders.quantity")}
+                name="quantity"
+                initialValue={1}
+                dependencies={["productId"]}
+                extra={
+                  selectedInventory
+                    ? t("orders.availableStock", { count: selectedInventory.quantityOnHand })
+                    : undefined
+                }
+                rules={[
+                  { required: true },
+                  {
+                    validator: async (_, value) => {
+                      if (
+                        !selectedInventory ||
+                        typeof value !== "number" ||
+                        value <= selectedInventory.quantityOnHand
+                      ) {
+                        return;
+                      }
 
-                    throw new Error(t("errors.insufficientStock"));
+                      throw new Error(t("errors.insufficientStock"));
+                    },
                   },
-                },
-              ]}
-            >
-              <InputNumber min={1} precision={0} style={{ width: "100%" }} />
-            </Form.Item>
+                ]}
+              >
+                <InputNumber min={1} precision={0} style={{ width: "100%" }} />
+              </Form.Item>
 
-            <Button
-              type="primary"
-              htmlType="submit"
-              disabled={!selectedTenantId || customers.length === 0 || products.length === 0}
-              loading={isBusy}
-            >
-              {t("orders.create")}
-            </Button>
-          </Form>
+              <Button
+                type="primary"
+                htmlType="submit"
+                disabled={!selectedTenantId || customers.length === 0 || products.length === 0}
+                loading={isBusy}
+              >
+                {t("orders.create")}
+              </Button>
+            </Form>
+          ) : (
+            <Paragraph type="secondary" style={{ marginBottom: 0 }}>
+              {t("accessDenied.actionRestricted")}
+            </Paragraph>
+          )}
         </Card>
 
         <Card className="workspace-panel-card" title={t("orders.listTitle")}>
@@ -143,7 +192,7 @@ export function OrdersPage(): ReactElement {
                     <div className="record-icon">
                       <InboxOutlined />
                     </div>
-                    <div>
+                    <div className="record-content">
                       <strong>{order.orderNumber}</strong>
                       <div className="record-detail">
                         <UserOutlined /> {order.customerName}
@@ -152,9 +201,30 @@ export function OrdersPage(): ReactElement {
                         <ShoppingOutlined /> {order.productName} x {order.quantity}
                       </div>
                       <div className="record-detail">
-                        <Tag color="green">{t("orders.statusConfirmed")}</Tag>{" "}
+                        <Tag color={getOrderStatusColor(order.status)}>
+                          {getOrderStatusLabel(order.status, t)}
+                        </Tag>{" "}
                         {formatCurrency(order.totalAmount)}
                       </div>
+                      {canManageOrders && order.status === "confirmed" ? (
+                        <div className="record-actions">
+                          <Popconfirm
+                            title={t("orders.cancelConfirm", { number: order.orderNumber })}
+                            okText={t("orders.cancelAction")}
+                            cancelText={t("common.cancel")}
+                            onConfirm={() => void cancelOrderAction(order.id)}
+                          >
+                            <Button
+                              data-testid="order-cancel-button"
+                              danger
+                              icon={<StopOutlined />}
+                              size="small"
+                            >
+                              {t("orders.cancelAction")}
+                            </Button>
+                          </Popconfirm>
+                        </div>
+                      ) : null}
                     </div>
                   </div>
                 ))}

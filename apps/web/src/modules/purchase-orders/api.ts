@@ -1,5 +1,6 @@
 import type {
   ApprovalAwareMutationResult,
+  CancelPurchaseOrderInput,
   CreatePurchaseOrderInput,
   PurchaseOrderRecord,
   ReceivePurchaseOrderInput,
@@ -7,6 +8,7 @@ import type {
 } from "@smarterp/contracts";
 
 import {
+  cancelPurchaseOrder,
   createPurchaseOrder,
   listPurchaseOrders,
   receivePurchaseOrder,
@@ -18,6 +20,12 @@ export async function loadPurchaseOrders(tenantId: string): Promise<PurchaseOrde
 
 export async function submitPurchaseOrder(input: CreatePurchaseOrderInput): Promise<PurchaseOrderRecord> {
   return createPurchaseOrder(input);
+}
+
+export async function submitPurchaseOrderCancel(
+  input: CancelPurchaseOrderInput,
+): Promise<PurchaseOrderRecord> {
+  return cancelPurchaseOrder(input);
 }
 
 export async function submitPurchaseOrderReceipt(

@@ -1,7 +1,23 @@
-import { CalendarOutlined, ShoppingCartOutlined, TeamOutlined } from "@ant-design/icons";
+import {
+  CalendarOutlined,
+  ShoppingCartOutlined,
+  StopOutlined,
+  TeamOutlined,
+} from "@ant-design/icons";
 import type { ReactElement } from "react";
 import type { FormProps } from "antd";
-import { Button, Card, Empty, Form, Input, InputNumber, Select, Tag, Typography } from "antd";
+import {
+  Button,
+  Card,
+  Empty,
+  Form,
+  Input,
+  InputNumber,
+  Popconfirm,
+  Select,
+  Tag,
+  Typography,
+} from "antd";
 
 import type {
   CreatePurchaseOrderInput,
@@ -24,6 +40,10 @@ function getTodayPlusDays(days: number): string {
 }
 
 function getPurchaseOrderStatusColor(status: PurchaseOrderRecord["status"]): string {
+  if (status === "canceled") {
+    return "red";
+  }
+
   if (status === "received") {
     return "green";
   }
@@ -39,6 +59,10 @@ function getPurchaseOrderStatusLabel(
   status: PurchaseOrderRecord["status"],
   t: ReturnType<typeof useLocale>["t"],
 ): string {
+  if (status === "canceled") {
+    return t("purchaseOrders.statusCanceled");
+  }
+
   if (status === "received") {
     return t("purchaseOrders.statusReceived");
   }
@@ -54,6 +78,7 @@ export function PurchaseOrdersPage(): ReactElement {
   const { formatCurrency, localeCode, t } = useLocale();
   const {
     can,
+    cancelPurchaseOrderRecord,
     createPurchaseOrderRecord,
     receivePurchaseOrderRecord,
     isBusy,
@@ -101,6 +126,14 @@ export function PurchaseOrdersPage(): ReactElement {
       // Error state is already surfaced via workspace context.
     }
   };
+
+  async function cancelPurchaseOrderAction(purchaseOrderId: string): Promise<void> {
+    try {
+      await cancelPurchaseOrderRecord({ purchaseOrderId });
+    } catch {
+      // Error state is already surfaced via workspace context.
+    }
+  }
 
   function formatDate(value: string): string {
     return new Intl.DateTimeFormat(localeCode, {
@@ -309,7 +342,7 @@ export function PurchaseOrdersPage(): ReactElement {
                     <div className="record-icon">
                       <ShoppingCartOutlined />
                     </div>
-                    <div>
+                    <div className="record-content">
                       <strong>{purchaseOrder.purchaseOrderNumber}</strong>
                       <div className="record-detail">
                         <TeamOutlined /> {purchaseOrder.supplierName} ({purchaseOrder.supplierCode})
@@ -335,6 +368,27 @@ export function PurchaseOrdersPage(): ReactElement {
                           {getPurchaseOrderStatusLabel(purchaseOrder.status, t)}
                         </Tag>
                       </div>
+                      {canCreatePurchaseOrders && purchaseOrder.status === "issued" ? (
+                        <div className="record-actions">
+                          <Popconfirm
+                            title={t("purchaseOrders.cancelConfirm", {
+                              number: purchaseOrder.purchaseOrderNumber,
+                            })}
+                            okText={t("purchaseOrders.cancelAction")}
+                            cancelText={t("common.cancel")}
+                            onConfirm={() => void cancelPurchaseOrderAction(purchaseOrder.id)}
+                          >
+                            <Button
+                              data-testid="purchase-order-cancel-button"
+                              danger
+                              icon={<StopOutlined />}
+                              size="small"
+                            >
+                              {t("purchaseOrders.cancelAction")}
+                            </Button>
+                          </Popconfirm>
+                        </div>
+                      ) : null}
                     </div>
                   </div>
                 ))}

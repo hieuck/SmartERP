@@ -1,9 +1,9 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 
-import type { CreateOrderInput, Session } from "@smarterp/contracts";
+import type { CancelOrderInput, CreateOrderInput, Session } from "@smarterp/contracts";
 
 import { readJson, sendJson } from "../../http.js";
-import { createOrder, hasTenant, listOrders, runWithSession } from "../../store.js";
+import { cancelOrder, createOrder, hasTenant, listOrders, runWithSession } from "../../store.js";
 
 function badRequest(response: ServerResponse, message: string): void {
   sendJson(response, 400, { error: message });
@@ -78,6 +78,49 @@ export async function handleCreateOrder(
       error.message.includes("orders.order_number")
     ) {
       badRequest(response, "Order number conflict. Please try again.");
+      return;
+    }
+
+    throw error;
+  }
+}
+
+export async function handleCancelOrder(
+  request: IncomingMessage,
+  response: ServerResponse,
+  requestSession: Session | null,
+): Promise<void> {
+  const input = await readJson<CancelOrderInput>(request);
+
+  if (!input.tenantId?.trim()) {
+    badRequest(response, "tenantId is required.");
+    return;
+  }
+
+  if (!hasTenant(input.tenantId)) {
+    badRequest(response, "The selected tenant does not exist.");
+    return;
+  }
+
+  if (!input.orderId?.trim()) {
+    badRequest(response, "orderId is required.");
+    return;
+  }
+
+  try {
+    const order = runWithSession(requestSession, () => cancelOrder(input));
+    sendJson(response, 200, { item: order });
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      [
+        "The selected order does not exist.",
+        "The selected order has already been canceled.",
+        "The selected order cannot be canceled because an invoice already references it.",
+        "The selected product does not exist.",
+      ].includes(error.message)
+    ) {
+      badRequest(response, error.message);
       return;
     }
 
