@@ -259,7 +259,7 @@ export function DashboardPage(): ReactElement {
   }
 
   return (
-    <div className="page-stack">
+    <div className="page-stack workspace-page">
       <div className="page-header">
         <div>
           <Title level={2}>{t("dashboard.title")}</Title>
@@ -268,26 +268,26 @@ export function DashboardPage(): ReactElement {
         {session ? <Tag color="blue">{t("dashboard.signedInAs", { name: session.displayName })}</Tag> : null}
       </div>
 
-      <Row gutter={[16, 16]}>
+      <Row className="workspace-metrics-grid" gutter={[16, 16]}>
         <Col xs={24} md={8}>
-          <Card>
+          <Card className="workspace-metric-card">
             <Statistic title={t("dashboard.tenantsStat")} value={tenants.length} prefix={<ApartmentOutlined />} />
           </Card>
         </Col>
         <Col xs={24} md={8}>
-          <Card>
+          <Card className="workspace-metric-card">
             <Statistic title={t("dashboard.customersStat")} value={customers.length} prefix={<UserOutlined />} />
           </Card>
         </Col>
         <Col xs={24} md={8}>
-          <Card>
+          <Card className="workspace-metric-card">
             <Statistic title={t("dashboard.productsStat")} value={products.length} prefix={<ShoppingOutlined />} />
           </Card>
         </Col>
       </Row>
 
       {session && rolePlaybook ? (
-        <Card data-testid="role-onboarding-card" title={t("roleOnboarding.title")}>
+        <Card className="workspace-panel-card" data-testid="role-onboarding-card" title={t("roleOnboarding.title")}>
           <div className="role-onboarding-shell">
             <div className="role-onboarding-summary">
               <Space wrap size={[8, 8]}>
@@ -346,9 +346,9 @@ export function DashboardPage(): ReactElement {
 
       {selectedTenant ? (
         <>
-          <Row gutter={[16, 16]}>
+          <Row className="workspace-metrics-grid" gutter={[16, 16]}>
             <Col xs={24} sm={12} xl={6}>
-              <Card>
+              <Card className="workspace-metric-card">
                 <Statistic
                   title={t("dashboard.overdueAmount")}
                   value={overdueAmount}
@@ -358,17 +358,17 @@ export function DashboardPage(): ReactElement {
               </Card>
             </Col>
             <Col xs={24} sm={12} xl={6}>
-              <Card>
+              <Card className="workspace-metric-card">
                 <Statistic title={t("dashboard.openInvoices")} value={openInvoices.length} />
               </Card>
             </Col>
             <Col xs={24} sm={12} xl={6}>
-              <Card>
+              <Card className="workspace-metric-card">
                 <Statistic title={t("dashboard.dueTodayInvoices")} value={dueTodayInvoices.length} />
               </Card>
             </Col>
             <Col xs={24} sm={12} xl={6}>
-              <Card>
+              <Card className="workspace-metric-card">
                 <Statistic
                   title={t("dashboard.currentReceivables")}
                   value={currentReceivablesAmount}
@@ -377,7 +377,7 @@ export function DashboardPage(): ReactElement {
               </Card>
             </Col>
             <Col xs={24} sm={12} xl={6}>
-              <Card>
+              <Card className="workspace-metric-card">
                 <Statistic
                   title={t("dashboard.pendingApprovals")}
                   value={pendingApprovals.length}
@@ -389,7 +389,7 @@ export function DashboardPage(): ReactElement {
 
           <Row gutter={[16, 16]}>
             <Col xs={24} lg={14}>
-              <Card title={t("dashboard.todayWorklistTitle")}>
+              <Card className="workspace-panel-card" title={t("dashboard.todayWorklistTitle")}>
                 {todayWorklist.length ? (
                   <div className="collection-queue">
                     {todayWorklist.slice(0, 4).map((invoice) => (
@@ -429,7 +429,7 @@ export function DashboardPage(): ReactElement {
               </Card>
             </Col>
             <Col xs={24} lg={10}>
-              <Card title={t("dashboard.receivablePressureTitle")}>
+              <Card className="workspace-panel-card" title={t("dashboard.receivablePressureTitle")}>
                 <Space orientation="vertical" size={12}>
                   <div>
                     <strong>{t("dashboard.topReceivableCustomer")}</strong>
@@ -454,7 +454,7 @@ export function DashboardPage(): ReactElement {
             </Col>
           </Row>
 
-          <Card title={t("dashboard.recentCollectionsTitle")}>
+          <Card className="workspace-panel-card" title={t("dashboard.recentCollectionsTitle")}>
             {recentCollectionActivities.length ? (
               <div className="activity-feed">
                 {recentCollectionActivities.map((activity) => (
@@ -509,7 +509,7 @@ export function DashboardPage(): ReactElement {
 
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={14}>
-          <Card title={t("dashboard.rewriteOrder")}>
+          <Card className="workspace-panel-card" title={t("dashboard.rewriteOrder")}>
             <div className="record-stack">
               {[...(foundation?.modules ?? [])].map((item, index) => (
                 <div className="record-row" key={item}>
@@ -523,7 +523,7 @@ export function DashboardPage(): ReactElement {
           </Card>
         </Col>
         <Col xs={24} lg={10}>
-          <Card title={t("shell.activeContext")}>
+          <Card className="workspace-panel-card" title={t("shell.activeContext")}>
             <Space orientation="vertical" size={12}>
               <div>
                 <strong>{t("shell.session")}</strong>

@@ -164,7 +164,7 @@ export function ReportsPage(): ReactElement {
   }
 
   return (
-    <div className="page-stack">
+    <div className="page-stack workspace-page">
       <div className="page-header">
         <div>
           <Title level={2}>{t("reports.title")}</Title>
@@ -189,20 +189,20 @@ export function ReportsPage(): ReactElement {
       {error ? <Alert description={error} type="error" showIcon /> : null}
 
       {!selectedTenantId ? (
-        <Card>
+        <Card className="workspace-panel-card">
           <Empty description={t("reports.emptyNoTenant")} />
         </Card>
       ) : isLoading ? (
-        <Card>
+        <Card className="workspace-panel-card">
           <div className="boot-screen">
             <Spin size="large" />
           </div>
         </Card>
       ) : summary ? (
         <>
-          <Row gutter={[16, 16]}>
+          <Row className="workspace-metrics-grid" gutter={[16, 16]}>
             <Col xs={24} sm={12} xl={6}>
-              <Card>
+              <Card className="workspace-metric-card">
                 <Statistic
                   title={t("reports.grossSales")}
                   value={summary.grossSalesAmount}
@@ -212,7 +212,7 @@ export function ReportsPage(): ReactElement {
               </Card>
             </Col>
             <Col xs={24} sm={12} xl={6}>
-              <Card>
+              <Card className="workspace-metric-card">
                 <Statistic
                   title={t("reports.invoicedAmount")}
                   value={summary.invoicedAmount}
@@ -222,7 +222,7 @@ export function ReportsPage(): ReactElement {
               </Card>
             </Col>
             <Col xs={24} sm={12} xl={6}>
-              <Card>
+              <Card className="workspace-metric-card">
                 <Statistic
                   title={t("reports.cashCollected")}
                   value={summary.cashCollectedAmount}
@@ -232,7 +232,7 @@ export function ReportsPage(): ReactElement {
               </Card>
             </Col>
             <Col xs={24} sm={12} xl={6}>
-              <Card>
+              <Card className="workspace-metric-card">
                 <Statistic
                   title={t("reports.outstandingReceivables")}
                   value={summary.outstandingReceivablesAmount}
@@ -243,32 +243,32 @@ export function ReportsPage(): ReactElement {
             </Col>
           </Row>
 
-          <Row gutter={[16, 16]}>
+          <Row className="workspace-metrics-grid" gutter={[16, 16]}>
             <Col xs={24} sm={12} xl={6}>
-              <Card>
+              <Card className="workspace-metric-card">
                 <Statistic title={t("reports.orderCount")} value={summary.orderCount} prefix={<InboxOutlined />} />
               </Card>
             </Col>
             <Col xs={24} sm={12} xl={6}>
-              <Card>
+              <Card className="workspace-metric-card">
                 <Statistic title={t("reports.invoiceCount")} value={summary.invoiceCount} />
               </Card>
             </Col>
             <Col xs={24} sm={12} xl={6}>
-              <Card>
+              <Card className="workspace-metric-card">
                 <Statistic title={t("reports.paidInvoices")} value={summary.paidInvoiceCount} />
               </Card>
             </Col>
             <Col xs={24} sm={12} xl={6}>
-              <Card>
+              <Card className="workspace-metric-card">
                 <Statistic title={t("reports.openInvoices")} value={summary.openInvoiceCount} />
               </Card>
             </Col>
           </Row>
 
-          <Row gutter={[16, 16]}>
+          <Row className="workspace-metrics-grid" gutter={[16, 16]}>
             <Col xs={24} sm={12} xl={6}>
-              <Card>
+              <Card className="workspace-metric-card">
                 <Statistic
                   title={t("reports.agingCurrent")}
                   value={summary.currentReceivablesAmount}
@@ -277,7 +277,7 @@ export function ReportsPage(): ReactElement {
               </Card>
             </Col>
             <Col xs={24} sm={12} xl={6}>
-              <Card>
+              <Card className="workspace-metric-card">
                 <Statistic
                   title={t("reports.aging31To60")}
                   value={summary.overdue31To60Amount}
@@ -286,7 +286,7 @@ export function ReportsPage(): ReactElement {
               </Card>
             </Col>
             <Col xs={24} sm={12} xl={6}>
-              <Card>
+              <Card className="workspace-metric-card">
                 <Statistic
                   title={t("reports.aging61To90")}
                   value={summary.overdue61To90Amount}
@@ -295,7 +295,7 @@ export function ReportsPage(): ReactElement {
               </Card>
             </Col>
             <Col xs={24} sm={12} xl={6}>
-              <Card>
+              <Card className="workspace-metric-card">
                 <Statistic
                   title={t("reports.agingOver90")}
                   value={summary.overdueOver90Amount}
@@ -305,9 +305,9 @@ export function ReportsPage(): ReactElement {
             </Col>
           </Row>
 
-          <Row gutter={[16, 16]}>
+          <Row className="workspace-metrics-grid" gutter={[16, 16]}>
             <Col xs={24} sm={12} xl={6}>
-              <Card>
+              <Card className="workspace-metric-card">
                 <Statistic
                   title={t("reports.stockUnits")}
                   value={summary.stockUnitsOnHand}
@@ -316,7 +316,7 @@ export function ReportsPage(): ReactElement {
               </Card>
             </Col>
             <Col xs={24} sm={12} xl={6}>
-              <Card>
+              <Card className="workspace-metric-card">
                 <Statistic
                   title={t("reports.inventoryValue")}
                   value={summary.inventoryValueAmount}
@@ -325,20 +325,20 @@ export function ReportsPage(): ReactElement {
               </Card>
             </Col>
             <Col xs={24} sm={12} xl={6}>
-              <Card>
+              <Card className="workspace-metric-card">
                 <Statistic title={t("reports.averageOrderValue")} value={summary.averageOrderValue} formatter={(value) => formatCurrency(Number(value))} />
               </Card>
             </Col>
             <Col xs={24} sm={12} xl={6}>
-              <Card>
+              <Card className="workspace-metric-card">
                 <Statistic title={t("reports.outOfStockProducts")} value={summary.outOfStockProductCount} />
               </Card>
             </Col>
           </Row>
 
-          <Row gutter={[16, 16]}>
+          <Row className="workspace-metrics-grid" gutter={[16, 16]}>
             <Col xs={24} sm={12} xl={6}>
-              <Card>
+              <Card className="workspace-metric-card">
                 <Statistic title={t("reports.lowStockProducts")} value={summary.lowStockProductCount} />
               </Card>
             </Col>
@@ -346,7 +346,7 @@ export function ReportsPage(): ReactElement {
 
           <Row gutter={[16, 16]}>
             <Col xs={24} lg={12}>
-              <Card title={t("reports.commercialSignals")}>
+              <Card className="workspace-panel-card" title={t("reports.commercialSignals")}>
                 <div className="report-signal-stack">
                   <div className="report-signal-row">
                     <div className="report-signal-main">
@@ -372,7 +372,7 @@ export function ReportsPage(): ReactElement {
               </Card>
             </Col>
             <Col xs={24} lg={12}>
-              <Card title={t("reports.inventorySignals")}>
+              <Card className="workspace-panel-card" title={t("reports.inventorySignals")}>
                 <div className="report-signal-stack">
                   <div className="report-signal-row">
                     <div className="report-signal-main">
@@ -401,7 +401,7 @@ export function ReportsPage(): ReactElement {
 
           <Row gutter={[16, 16]}>
             <Col xs={24} lg={10}>
-              <Card title={t("reports.ledgerTitle")}>
+              <Card className="workspace-panel-card" title={t("reports.ledgerTitle")}>
                 {accountBalances.length ? (
                   <div className="record-stack">
                     {accountBalances.map((account) => (
@@ -422,7 +422,7 @@ export function ReportsPage(): ReactElement {
               </Card>
             </Col>
             <Col xs={24} lg={14}>
-              <Card title={t("reports.journalTitle")}>
+              <Card className="workspace-panel-card" title={t("reports.journalTitle")}>
                 {journalEntries.length ? (
                   <div className="record-stack">
                     {journalEntries.map((entry) => (
@@ -453,7 +453,7 @@ export function ReportsPage(): ReactElement {
             </Col>
           </Row>
 
-          <Card title={t("reports.auditTitle")}>
+          <Card className="workspace-panel-card" title={t("reports.auditTitle")}>
             {auditLogs.length ? (
               <div className="activity-feed">
                 {auditLogs.map((auditLog) => (
@@ -516,7 +516,7 @@ export function ReportsPage(): ReactElement {
           </Card>
         </>
       ) : (
-        <Card>
+        <Card className="workspace-panel-card">
           <Empty description={t("reports.empty")} />
         </Card>
       )}

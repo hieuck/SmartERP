@@ -118,7 +118,7 @@ export function OperationsPage(): ReactElement {
   }
 
   return (
-    <div className="page-stack">
+    <div className="page-stack workspace-page">
       <div className="page-header">
         <div>
           <Title level={2}>{t("operations.title")}</Title>
@@ -139,9 +139,9 @@ export function OperationsPage(): ReactElement {
         </Card>
       ) : status ? (
         <>
-          <Row gutter={[16, 16]}>
+          <Row className="workspace-metrics-grid" gutter={[16, 16]}>
             <Col xs={24} sm={12} xl={4}>
-              <Card>
+              <Card className="workspace-metric-card">
                 <Statistic
                   title={t("operations.tenantCount")}
                   value={status.totals.tenantCount}
@@ -150,7 +150,7 @@ export function OperationsPage(): ReactElement {
               </Card>
             </Col>
             <Col xs={24} sm={12} xl={4}>
-              <Card>
+              <Card className="workspace-metric-card">
                 <Statistic
                   title={t("operations.openInvoices")}
                   value={status.totals.openInvoiceCount}
@@ -159,7 +159,7 @@ export function OperationsPage(): ReactElement {
               </Card>
             </Col>
             <Col xs={24} sm={12} xl={4}>
-              <Card>
+              <Card className="workspace-metric-card">
                 <Statistic
                   title={t("operations.overdueReceivables")}
                   value={status.totals.overdueReceivablesAmount}
@@ -169,7 +169,7 @@ export function OperationsPage(): ReactElement {
               </Card>
             </Col>
             <Col xs={24} sm={12} xl={4}>
-              <Card>
+              <Card className="workspace-metric-card">
                 <Statistic
                   title={t("operations.pendingApprovals")}
                   value={status.totals.pendingApprovalCount}
@@ -178,7 +178,7 @@ export function OperationsPage(): ReactElement {
               </Card>
             </Col>
             <Col xs={24} sm={12} xl={4}>
-              <Card>
+              <Card className="workspace-metric-card">
                 <Statistic
                   title={t("operations.todayCollections")}
                   value={status.totals.todayCollectionActionCount}
@@ -187,7 +187,7 @@ export function OperationsPage(): ReactElement {
               </Card>
             </Col>
             <Col xs={24} sm={12} xl={4}>
-              <Card>
+              <Card className="workspace-metric-card">
                 <Statistic
                   title={t("operations.smokeChecks")}
                   value={status.smoke?.verifiedCheckCount ?? 0}
@@ -197,19 +197,19 @@ export function OperationsPage(): ReactElement {
             </Col>
           </Row>
 
-          <Row gutter={[16, 16]}>
+          <Row className="workspace-metrics-grid" gutter={[16, 16]}>
             <Col xs={24} sm={12} xl={6}>
-              <Card>
+              <Card className="workspace-metric-card">
                 <Statistic title={t("operations.productCount")} value={status.totals.productCount} />
               </Card>
             </Col>
             <Col xs={24} sm={12} xl={6}>
-              <Card>
+              <Card className="workspace-metric-card">
                 <Statistic title={t("operations.openPurchaseOrders")} value={status.totals.openPurchaseOrderCount} />
               </Card>
             </Col>
             <Col xs={24} sm={12} xl={6}>
-              <Card>
+              <Card className="workspace-metric-card">
                 <Statistic
                   title={t("operations.dbSize")}
                   value={formatBytes(status.database.sizeBytes)}
@@ -218,13 +218,13 @@ export function OperationsPage(): ReactElement {
               </Card>
             </Col>
             <Col xs={24} sm={12} xl={6}>
-              <Card>
+              <Card className="workspace-metric-card">
                 <Statistic title={t("operations.inventoryLines")} value={status.totals.inventoryLineCount} />
               </Card>
             </Col>
           </Row>
 
-          <Card title={t("operations.readinessTitle")}>
+          <Card className="workspace-panel-card" title={t("operations.readinessTitle")}>
             <div className="record-stack">
               <div className="compact-record-row">
                 <strong>{t("operations.readinessState")}</strong>
@@ -270,7 +270,7 @@ export function OperationsPage(): ReactElement {
           </Card>
 
           <div className="two-column">
-            <Card title={t("operations.databaseTitle")}>
+            <Card className="workspace-panel-card" title={t("operations.databaseTitle")}>
               <div className="record-stack">
                 <div className="compact-record-row">
                   <strong>{t("operations.serviceStatus")}</strong>
@@ -423,7 +423,7 @@ export function OperationsPage(): ReactElement {
               </div>
             </Card>
 
-            <Card title={t("operations.smokeTitle")}>
+            <Card className="workspace-panel-card" title={t("operations.smokeTitle")}>
               {status.smoke ? (
                 <div className="record-stack">
                   <div className="compact-record-row">
@@ -471,7 +471,7 @@ export function OperationsPage(): ReactElement {
             </Card>
           </div>
 
-          <Card title={t("operations.tenantsTitle")}>
+          <Card className="workspace-panel-card" title={t("operations.tenantsTitle")}>
             {status.tenants.length ? (
               <div className="activity-feed">
                 {status.tenants.map((tenant) => (
@@ -513,7 +513,7 @@ export function OperationsPage(): ReactElement {
           </Card>
         </>
       ) : (
-        <Card>
+        <Card className="workspace-panel-card">
           <Empty description={t("operations.empty")} />
         </Card>
       )}

@@ -307,7 +307,7 @@ export function SetupPage(): ReactElement {
   };
 
   return (
-    <div className="page-stack" data-testid="setup-page">
+    <div className="page-stack workspace-page" data-testid="setup-page">
       <div className="page-header">
         <div>
           <Title level={2}>{t("setup.title")}</Title>
@@ -336,7 +336,7 @@ export function SetupPage(): ReactElement {
       </div>
 
       <div className="two-column">
-        <Card data-testid="setup-checklist-card" title={t("setup.checklistTitle")}>
+        <Card className="workspace-panel-card" data-testid="setup-checklist-card" title={t("setup.checklistTitle")}>
           <div className="page-inline-stack">
             <Progress
               percent={Math.round((completedChecklistItems / checklistItems.length) * 100)}
@@ -371,7 +371,7 @@ export function SetupPage(): ReactElement {
           </div>
         </Card>
 
-        <Card data-testid="setup-create-tenant-card" title={t("setup.createTenantTitle")}>
+        <Card className="workspace-panel-card" data-testid="setup-create-tenant-card" title={t("setup.createTenantTitle")}>
           <Paragraph type="secondary">{t("setup.createTenantHint")}</Paragraph>
           <Form<CreateTenantInput> form={createForm} layout="vertical" onFinish={onCreateTenantFinish}>
             <Form.Item<CreateTenantInput> label={t("tenants.name")} name="name" rules={[{ required: true }]}>
@@ -414,7 +414,7 @@ export function SetupPage(): ReactElement {
       </div>
 
       <div className="two-column">
-        <Card data-testid="setup-onboarding-card" title={t("setup.seedTitle")}>
+        <Card className="workspace-panel-card" data-testid="setup-onboarding-card" title={t("setup.seedTitle")}>
           <Paragraph type="secondary">{t("setup.seedHint")}</Paragraph>
           <Form<OnboardingFormShape>
             form={onboardingForm}
@@ -477,7 +477,7 @@ export function SetupPage(): ReactElement {
           ) : null}
         </Card>
 
-        <Card data-testid="setup-recovery-card" title={t("setup.recoveryTitle")}>
+        <Card className="workspace-panel-card" data-testid="setup-recovery-card" title={t("setup.recoveryTitle")}>
           <Paragraph type="secondary">{t("setup.recoveryHint")}</Paragraph>
           <div className="page-inline-stack">
             <Button
@@ -625,6 +625,7 @@ export function SetupPage(): ReactElement {
 
           {recoveryDrillReport ? (
             <Card
+              className="workspace-panel-card"
               data-testid="setup-recovery-drill-card"
               title={t("setup.recoveryDrillTitle")}
               size="small"
@@ -711,7 +712,7 @@ export function SetupPage(): ReactElement {
         </Card>
       </div>
 
-      <Card data-testid="setup-handoff-card" title={t("setup.handoffTitle")}>
+      <Card className="workspace-panel-card" data-testid="setup-handoff-card" title={t("setup.handoffTitle")}>
         <Paragraph type="secondary">{t("setup.handoffHint")}</Paragraph>
         <div className="page-inline-stack">
           <Button
