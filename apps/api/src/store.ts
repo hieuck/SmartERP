@@ -21,6 +21,7 @@ import {
   type DeleteCustomerInput,
   type CreateInvoiceInput,
   type CreateInvoicePaymentInput,
+  type VoidInvoiceInput,
   type UpdateInvoiceCollectionInput,
   type ResolveInvoiceCollectionActionInput,
   type CollectionActionRequired,
@@ -206,6 +207,7 @@ type InvoiceRow = {
   tax_rate_percent: number;
   tax_amount: number;
   total_amount: number;
+  status: InvoiceRecord["status"];
   paid_amount: number;
   payment_count: number;
   last_payment_at: string | null;
@@ -1014,7 +1016,7 @@ const getOrderByIdStatement = db.prepare(`
 const countInvoicesForOrderStatement = db.prepare(`
   SELECT COUNT(*) AS count
   FROM invoices
-  WHERE tenant_id = ? AND order_id = ?
+  WHERE tenant_id = ? AND order_id = ? AND status <> 'void'
 `);
 
 const getOrderIssuedInventoryValueStatement = db.prepare(`
@@ -1039,6 +1041,7 @@ const listInvoicesStatement = db.prepare(`
     i.tax_rate_percent AS tax_rate_percent,
     i.tax_amount AS tax_amount,
     i.total_amount AS total_amount,
+    i.status AS status,
     COALESCE(SUM(p.amount), 0) AS paid_amount,
     COUNT(p.id) AS payment_count,
     MAX(p.paid_at) AS last_payment_at,
@@ -1065,6 +1068,7 @@ const listInvoicesStatement = db.prepare(`
     i.tax_rate_percent,
     i.tax_amount,
     i.total_amount,
+    i.status,
     i.issued_at,
     i.due_date,
     i.follow_up_status,
@@ -1089,6 +1093,7 @@ const getInvoiceByIdStatement = db.prepare(`
     i.tax_rate_percent AS tax_rate_percent,
     i.tax_amount AS tax_amount,
     i.total_amount AS total_amount,
+    i.status AS status,
     COALESCE(SUM(p.amount), 0) AS paid_amount,
     COUNT(p.id) AS payment_count,
     MAX(p.paid_at) AS last_payment_at,
@@ -1115,6 +1120,7 @@ const getInvoiceByIdStatement = db.prepare(`
     i.tax_rate_percent,
     i.tax_amount,
     i.total_amount,
+    i.status,
     i.issued_at,
     i.due_date,
     i.follow_up_status,
@@ -1150,6 +1156,12 @@ const createInvoiceStatement = db.prepare(`
     last_collection_update_at
   )
   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+`);
+
+const updateInvoiceStatusStatement = db.prepare(`
+  UPDATE invoices
+  SET status = ?
+  WHERE tenant_id = ? AND id = ?
 `);
 
 const updateInvoiceCollectionStatement = db.prepare(`
@@ -1232,7 +1244,7 @@ const listCustomerStatementsStatement = db.prepare(`
       COALESCE(SUM(p.amount), 0) AS paid_amount
     FROM invoices i
     LEFT JOIN invoice_payments p ON p.invoice_id = i.id
-    WHERE i.tenant_id = ?
+    WHERE i.tenant_id = ? AND i.status <> 'void'
     GROUP BY i.id, i.tenant_id, i.customer_id, i.total_amount, i.issued_at, i.due_date
   )
   SELECT
@@ -1309,7 +1321,7 @@ const getReportCountsStatement = db.prepare(`
     (SELECT COUNT(*) FROM customers WHERE tenant_id = ?) AS customer_count,
     (SELECT COUNT(*) FROM products WHERE tenant_id = ?) AS product_count,
     (SELECT COUNT(*) FROM orders WHERE tenant_id = ? AND status <> 'canceled') AS order_count,
-    (SELECT COUNT(*) FROM invoices WHERE tenant_id = ?) AS invoice_count,
+    (SELECT COUNT(*) FROM invoices WHERE tenant_id = ? AND status <> 'void') AS invoice_count,
     (
       SELECT COUNT(*)
       FROM (
@@ -1319,7 +1331,7 @@ const getReportCountsStatement = db.prepare(`
           COALESCE(SUM(p.amount), 0) AS paid_amount
         FROM invoices i
         LEFT JOIN invoice_payments p ON p.invoice_id = i.id
-        WHERE i.tenant_id = ?
+        WHERE i.tenant_id = ? AND i.status <> 'void'
         GROUP BY i.id, i.total_amount
       ) invoice_totals
       WHERE paid_amount >= total_amount
@@ -1333,13 +1345,13 @@ const getReportCountsStatement = db.prepare(`
           COALESCE(SUM(p.amount), 0) AS paid_amount
         FROM invoices i
         LEFT JOIN invoice_payments p ON p.invoice_id = i.id
-        WHERE i.tenant_id = ?
+        WHERE i.tenant_id = ? AND i.status <> 'void'
         GROUP BY i.id, i.total_amount
       ) invoice_totals
       WHERE paid_amount < total_amount
     ) AS open_invoice_count,
     (SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE tenant_id = ? AND status <> 'canceled') AS gross_sales_amount,
-    (SELECT COALESCE(SUM(total_amount), 0) FROM invoices WHERE tenant_id = ?) AS invoiced_amount,
+    (SELECT COALESCE(SUM(total_amount), 0) FROM invoices WHERE tenant_id = ? AND status <> 'void') AS invoiced_amount,
     (
       SELECT COALESCE(SUM(amount), 0)
       FROM invoice_payments
@@ -1354,7 +1366,7 @@ const getReportCountsStatement = db.prepare(`
           COALESCE(SUM(p.amount), 0) AS paid_amount
         FROM invoices i
         LEFT JOIN invoice_payments p ON p.invoice_id = i.id
-        WHERE i.tenant_id = ?
+        WHERE i.tenant_id = ? AND i.status <> 'void'
         GROUP BY i.id, i.total_amount
       ) invoice_totals
     ) AS outstanding_receivables_amount,
@@ -1375,7 +1387,7 @@ const getReportCountsStatement = db.prepare(`
           julianday(date('now')) - julianday(date(i.due_date)) AS age_days
         FROM invoices i
         LEFT JOIN invoice_payments p ON p.invoice_id = i.id
-        WHERE i.tenant_id = ?
+        WHERE i.tenant_id = ? AND i.status <> 'void'
         GROUP BY i.id, i.total_amount, i.due_date
       ) invoice_aging
     ) AS current_receivables_amount,
@@ -1396,7 +1408,7 @@ const getReportCountsStatement = db.prepare(`
           julianday(date('now')) - julianday(date(i.due_date)) AS age_days
         FROM invoices i
         LEFT JOIN invoice_payments p ON p.invoice_id = i.id
-        WHERE i.tenant_id = ?
+        WHERE i.tenant_id = ? AND i.status <> 'void'
         GROUP BY i.id, i.total_amount, i.due_date
       ) invoice_aging
     ) AS overdue_31_to_60_amount,
@@ -1417,7 +1429,7 @@ const getReportCountsStatement = db.prepare(`
           julianday(date('now')) - julianday(date(i.due_date)) AS age_days
         FROM invoices i
         LEFT JOIN invoice_payments p ON p.invoice_id = i.id
-        WHERE i.tenant_id = ?
+        WHERE i.tenant_id = ? AND i.status <> 'void'
         GROUP BY i.id, i.total_amount, i.due_date
       ) invoice_aging
     ) AS overdue_61_to_90_amount,
@@ -1486,7 +1498,7 @@ const getOperationsTotalsStatement = db.prepare(`
     (SELECT COUNT(*) FROM purchase_orders WHERE status NOT IN ('received', 'canceled')) AS open_purchase_order_count,
     (SELECT COUNT(*) FROM inventory) AS inventory_line_count,
     (SELECT COUNT(*) FROM orders WHERE status <> 'canceled') AS order_count,
-    (SELECT COUNT(*) FROM invoices) AS invoice_count,
+    (SELECT COUNT(*) FROM invoices WHERE status <> 'void') AS invoice_count,
     (
       SELECT COUNT(*)
       FROM (
@@ -1495,6 +1507,7 @@ const getOperationsTotalsStatement = db.prepare(`
           i.total_amount - COALESCE(SUM(p.amount), 0) AS outstanding_amount
         FROM invoices i
         LEFT JOIN invoice_payments p ON p.invoice_id = i.id
+        WHERE i.status <> 'void'
         GROUP BY i.id, i.total_amount
       ) invoice_totals
       WHERE outstanding_amount > 0
@@ -1512,7 +1525,7 @@ const getOperationsTotalsStatement = db.prepare(`
           i.total_amount - COALESCE(SUM(p.amount), 0) AS outstanding_amount
         FROM invoices i
         LEFT JOIN invoice_payments p ON p.invoice_id = i.id
-        WHERE date(i.due_date) < date('now')
+        WHERE i.status <> 'void' AND date(i.due_date) < date('now')
         GROUP BY i.id, i.total_amount, i.due_date
       ) overdue_invoices
       WHERE outstanding_amount > 0
@@ -1526,7 +1539,7 @@ const getOperationsTotalsStatement = db.prepare(`
           i.total_amount - COALESCE(SUM(p.amount), 0) AS outstanding_amount
         FROM invoices i
         LEFT JOIN invoice_payments p ON p.invoice_id = i.id
-        WHERE i.next_action_date IS NOT NULL
+        WHERE i.status <> 'void' AND i.next_action_date IS NOT NULL
         GROUP BY i.id, i.next_action_date, i.total_amount
       ) actionable_invoices
       WHERE outstanding_amount > 0 AND date(next_action_date) <= date('now')
@@ -1550,7 +1563,7 @@ const listOperationsTenantStatusStatement = db.prepare(`
           i.total_amount - COALESCE(SUM(p.amount), 0) AS outstanding_amount
         FROM invoices i
         LEFT JOIN invoice_payments p ON p.invoice_id = i.id
-        WHERE i.tenant_id = t.id
+        WHERE i.tenant_id = t.id AND i.status <> 'void'
         GROUP BY i.id, i.total_amount
       ) invoice_totals
       WHERE outstanding_amount > 0
@@ -1568,7 +1581,7 @@ const listOperationsTenantStatusStatement = db.prepare(`
           i.total_amount - COALESCE(SUM(p.amount), 0) AS outstanding_amount
         FROM invoices i
         LEFT JOIN invoice_payments p ON p.invoice_id = i.id
-        WHERE i.tenant_id = t.id AND date(i.due_date) < date('now')
+        WHERE i.tenant_id = t.id AND i.status <> 'void' AND date(i.due_date) < date('now')
         GROUP BY i.id, i.total_amount, i.due_date
       ) overdue_invoices
       WHERE outstanding_amount > 0
@@ -1928,7 +1941,8 @@ function getCollectionPriority(input: {
 
 function mapInvoice(row: InvoiceRow): InvoiceRecord {
   const paidAmount = row.paid_amount;
-  const outstandingAmount = Math.max(row.total_amount - paidAmount, 0);
+  const isVoided = row.status === "void";
+  const outstandingAmount = isVoided ? 0 : Math.max(row.total_amount - paidAmount, 0);
   const paymentTermDays = getCalendarDayDifference(row.issued_at, row.due_date);
   const daysUntilDue = getCalendarDayDifference(new Date(), row.due_date);
   const daysPastDue = daysUntilDue < 0 ? Math.abs(daysUntilDue) : 0;
@@ -1957,13 +1971,13 @@ function mapInvoice(row: InvoiceRow): InvoiceRecord {
     outstandingAmount,
     paymentCount: row.payment_count,
     lastPaymentAt: row.last_payment_at,
-    status: getInvoiceStatus(row.total_amount, paidAmount),
+    status: isVoided ? "void" : getInvoiceStatus(row.total_amount, paidAmount),
     issuedAt: row.issued_at,
     dueDate: row.due_date,
     paymentTermDays,
     daysUntilDue,
     daysPastDue,
-    collectionStatus: getCollectionStatus(outstandingAmount, daysUntilDue),
+    collectionStatus: isVoided ? "void" : getCollectionStatus(outstandingAmount, daysUntilDue),
     followUpStatus: row.follow_up_status,
     collectionPriority,
     actionRequired: row.action_required,
@@ -4014,10 +4028,78 @@ export function createInvoice(
   return createAppliedResult(createInvoiceInternal(input));
 }
 
+export function voidInvoice(input: VoidInvoiceInput): InvoiceRecord {
+  const invoice = getInvoiceByIdStatement.get(input.tenantId, input.invoiceId) as InvoiceRow | undefined;
+  if (!invoice) {
+    throw new Error("The selected invoice does not exist.");
+  }
+
+  if (invoice.status === "void") {
+    throw new Error("The selected invoice has already been voided.");
+  }
+
+  if (invoice.payment_count > 0 || invoice.paid_amount > 0) {
+    throw new Error("The selected invoice cannot be voided because payments already exist.");
+  }
+
+  const voidedAt = timestamp();
+
+  db.exec("BEGIN");
+
+  try {
+    updateInvoiceStatusStatement.run("void", input.tenantId, input.invoiceId);
+
+    createJournalEntryLines({
+      tenantId: input.tenantId,
+      referenceType: "invoice",
+      referenceId: invoice.id,
+      referenceNumber: invoice.invoice_number,
+      description: `Void invoice ${invoice.invoice_number}`,
+      createdAt: voidedAt,
+      lines: [
+        { accountCode: "511", debitAmount: invoice.subtotal_amount, creditAmount: 0 },
+        { accountCode: "3331", debitAmount: invoice.tax_amount, creditAmount: 0 },
+        { accountCode: "131", debitAmount: 0, creditAmount: invoice.total_amount },
+      ],
+    });
+
+    const voidedInvoice = getInvoiceByIdStatement.get(input.tenantId, input.invoiceId) as InvoiceRow | undefined;
+    if (!voidedInvoice) {
+      throw new Error("The selected invoice does not exist.");
+    }
+
+    const mappedInvoice = mapInvoice(voidedInvoice);
+    recordAuditLog({
+      tenantId: input.tenantId,
+      entityType: "invoice",
+      entityId: mappedInvoice.id,
+      entityNumber: mappedInvoice.invoiceNumber,
+      actionType: "invoice_voided",
+      summary: `Voided ${mappedInvoice.invoiceNumber}`,
+      metadata: {
+        amount: mappedInvoice.totalAmount,
+        outstandingAmount: mappedInvoice.outstandingAmount,
+        note: `Original due ${mappedInvoice.dueDate}`,
+      },
+      createdAt: voidedAt,
+    });
+
+    db.exec("COMMIT");
+    return mappedInvoice;
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
+}
+
 function createInvoicePaymentInternal(input: CreateInvoicePaymentInput): InvoiceRecord {
   const invoice = getInvoiceByIdStatement.get(input.tenantId, input.invoiceId) as InvoiceRow | undefined;
   if (!invoice) {
     throw new Error("The selected invoice does not exist.");
+  }
+
+  if (invoice.status === "void") {
+    throw new Error("The selected invoice has been voided.");
   }
 
   const outstandingAmount = Math.max(invoice.total_amount - invoice.paid_amount, 0);
@@ -4100,6 +4182,10 @@ export function createInvoicePayment(
     throw new Error("The selected invoice does not exist.");
   }
 
+  if (invoice.status === "void") {
+    throw new Error("The selected invoice has been voided.");
+  }
+
   const outstandingAmount = Math.max(invoice.total_amount - invoice.paid_amount, 0);
 
   if (outstandingAmount === 0) {
@@ -4174,6 +4260,10 @@ export function updateInvoiceCollection(input: UpdateInvoiceCollectionInput): In
     throw new Error("The selected invoice does not exist.");
   }
 
+  if (invoice.status === "void") {
+    throw new Error("The selected invoice has been voided.");
+  }
+
   const updateTimestamp = timestamp();
 
   db.exec("BEGIN");
@@ -4231,6 +4321,10 @@ export function resolveInvoiceCollectionAction(
   const invoice = getInvoiceByIdStatement.get(input.tenantId, input.invoiceId) as InvoiceRow | undefined;
   if (!invoice) {
     throw new Error("The selected invoice does not exist.");
+  }
+
+  if (invoice.status === "void") {
+    throw new Error("The selected invoice has been voided.");
   }
 
   if (invoice.action_required === "monitor" && !invoice.next_action_date) {

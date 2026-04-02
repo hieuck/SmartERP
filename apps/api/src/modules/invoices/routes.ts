@@ -7,6 +7,7 @@ import {
   handleListInvoices,
   handleResolveInvoiceCollectionAction,
   handleUpdateInvoiceCollection,
+  handleVoidInvoice,
 } from "./http.js";
 
 export const invoiceApiRoutes: ApiRoute[] = [
@@ -40,6 +41,13 @@ export const invoiceApiRoutes: ApiRoute[] = [
     path: "/api/invoices/payments",
     handle: withPermission("record_invoice_payments", ({ request, response, session }) =>
       handleCreateInvoicePayment(request, response, session),
+    ),
+  },
+  {
+    method: "POST",
+    path: "/api/invoices/void",
+    handle: withPermission("issue_invoices", ({ request, response, session }) =>
+      handleVoidInvoice(request, response, session),
     ),
   },
   {

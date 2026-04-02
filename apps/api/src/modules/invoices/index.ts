@@ -5,5 +5,6 @@ export {
   handleListInvoices,
   handleResolveInvoiceCollectionAction,
   handleUpdateInvoiceCollection,
+  handleVoidInvoice,
 } from "./http.js";
 export { invoiceApiRoutes } from "./routes.js";

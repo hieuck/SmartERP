@@ -25,8 +25,16 @@ import { useWorkspace } from "../../state/WorkspaceContext";
 const { Paragraph, Title } = Typography;
 
 function getAuditActionColor(actionType: AuditActionType): string {
+  if (actionType === "invoice_voided") {
+    return "default";
+  }
+
   if (actionType === "purchase_order_received") {
     return "cyan";
+  }
+
+  if (actionType === "order_canceled" || actionType === "purchase_order_canceled") {
+    return "orange";
   }
 
   if (actionType === "approval_requested") {
@@ -60,8 +68,20 @@ function getAuditActionLabel(
   actionType: AuditActionType,
   t: ReturnType<typeof useLocale>["t"],
 ): string {
+  if (actionType === "invoice_voided") {
+    return t("reports.auditActionInvoiceVoided");
+  }
+
   if (actionType === "purchase_order_received") {
     return t("reports.auditActionPurchaseOrderReceived");
+  }
+
+  if (actionType === "order_canceled") {
+    return t("reports.auditActionOrderCanceled");
+  }
+
+  if (actionType === "purchase_order_canceled") {
+    return t("reports.auditActionPurchaseOrderCanceled");
   }
 
   if (actionType === "approval_requested") {

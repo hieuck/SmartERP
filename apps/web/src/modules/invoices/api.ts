@@ -6,6 +6,7 @@ import type {
   InvoiceRecord,
   ResolveInvoiceCollectionActionInput,
   UpdateInvoiceCollectionInput,
+  VoidInvoiceInput,
 } from "@smarterp/contracts";
 
 import {
@@ -15,6 +16,7 @@ import {
   listInvoices,
   resolveInvoiceCollectionAction,
   updateInvoiceCollection,
+  voidInvoice,
 } from "../../api";
 
 export async function loadInvoices(tenantId: string): Promise<InvoiceRecord[]> {
@@ -37,6 +39,10 @@ export async function submitInvoicePayment(
   input: CreateInvoicePaymentInput,
 ): Promise<ApprovalAwareMutationResult<InvoiceRecord>> {
   return createInvoicePayment(input);
+}
+
+export async function submitInvoiceVoid(input: VoidInvoiceInput): Promise<InvoiceRecord> {
+  return voidInvoice(input);
 }
 
 export async function submitInvoiceCollectionUpdate(

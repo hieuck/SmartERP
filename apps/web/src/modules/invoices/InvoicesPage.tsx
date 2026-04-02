@@ -1,7 +1,15 @@
-import { BankOutlined, CheckCircleOutlined, FileTextOutlined, InboxOutlined, PhoneOutlined, UserOutlined } from "@ant-design/icons";
+import {
+  BankOutlined,
+  CheckCircleOutlined,
+  FileTextOutlined,
+  InboxOutlined,
+  PhoneOutlined,
+  StopOutlined,
+  UserOutlined,
+} from "@ant-design/icons";
 import type { ReactElement } from "react";
 import type { FormProps } from "antd";
-import { Button, Card, Empty, Form, Input, InputNumber, Select, Tag, Typography } from "antd";
+import { Button, Card, Empty, Form, Input, InputNumber, Popconfirm, Select, Tag, Typography } from "antd";
 
 import type {
   CollectionActionRequired,
@@ -12,6 +20,7 @@ import type {
   CreateInvoicePaymentInput,
   InvoiceRecord,
   UpdateInvoiceCollectionInput,
+  VoidInvoiceInput,
 } from "@smarterp/contracts";
 
 import { useLocale } from "../../locale/LocaleContext";
@@ -23,12 +32,17 @@ const { TextArea } = Input;
 type InvoiceFormShape = Omit<CreateInvoiceInput, "tenantId">;
 type InvoicePaymentFormShape = Omit<CreateInvoicePaymentInput, "tenantId">;
 type InvoiceCollectionFormShape = Omit<UpdateInvoiceCollectionInput, "tenantId">;
+type InvoiceVoidFormShape = Omit<VoidInvoiceInput, "tenantId">;
 
 function getTodayDateInputValue(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
 function getInvoiceStatusColor(status: InvoiceRecord["status"]): string {
+  if (status === "void") {
+    return "default";
+  }
+
   if (status === "paid") {
     return "green";
   }
@@ -41,6 +55,10 @@ function getInvoiceStatusColor(status: InvoiceRecord["status"]): string {
 }
 
 function getInvoiceStatusLabel(status: InvoiceRecord["status"], t: ReturnType<typeof useLocale>["t"]): string {
+  if (status === "void") {
+    return t("invoices.statusVoid");
+  }
+
   if (status === "paid") {
     return t("invoices.statusPaid");
   }
@@ -53,6 +71,10 @@ function getInvoiceStatusLabel(status: InvoiceRecord["status"], t: ReturnType<ty
 }
 
 function getCollectionStatusColor(status: InvoiceRecord["collectionStatus"]): string {
+  if (status === "void") {
+    return "default";
+  }
+
   if (status === "settled") {
     return "green";
   }
@@ -72,6 +94,10 @@ function getCollectionStatusLabel(
   invoice: InvoiceRecord,
   t: ReturnType<typeof useLocale>["t"],
 ): string {
+  if (invoice.collectionStatus === "void") {
+    return t("invoices.collectionVoid");
+  }
+
   if (invoice.collectionStatus === "settled") {
     return t("invoices.collectionSettled");
   }
@@ -212,6 +238,7 @@ export function InvoicesPage(): ReactElement {
     collectionActivities,
     createInvoicePaymentRecord,
     createInvoiceRecord,
+    voidInvoiceRecord,
     updateInvoiceCollectionRecord,
     resolveInvoiceCollectionActionRecord,
     invoices,
@@ -289,6 +316,14 @@ export function InvoicesPage(): ReactElement {
       await createInvoicePaymentRecord(values);
       paymentForm.resetFields();
       paymentForm.setFieldsValue({ method: "bank_transfer" });
+    } catch {
+      // Error state is already surfaced via workspace context.
+    }
+  };
+
+  const onVoidInvoice = async (values: InvoiceVoidFormShape): Promise<void> => {
+    try {
+      await voidInvoiceRecord(values);
     } catch {
       // Error state is already surfaced via workspace context.
     }
@@ -841,6 +876,25 @@ export function InvoicesPage(): ReactElement {
                       {invoice.lastCollectionUpdateAt ? (
                         <div className="record-detail">
                           {t("invoices.lastFollowUpLabel")} {formatTimestamp(invoice.lastCollectionUpdateAt)}
+                        </div>
+                      ) : null}
+                      {canIssueInvoices && invoice.status === "issued" && invoice.paidAmount === 0 ? (
+                        <div className="record-actions">
+                          <Popconfirm
+                            title={t("invoices.voidConfirm", { number: invoice.invoiceNumber })}
+                            okText={t("invoices.voidAction")}
+                            cancelText={t("common.cancel")}
+                            onConfirm={() => void onVoidInvoice({ invoiceId: invoice.id })}
+                          >
+                            <Button
+                              size="small"
+                              icon={<StopOutlined />}
+                              loading={isBusy}
+                              data-testid="invoice-void-button"
+                            >
+                              {t("invoices.voidAction")}
+                            </Button>
+                          </Popconfirm>
                         </div>
                       ) : null}
                     </div>

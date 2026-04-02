@@ -10,6 +10,7 @@ import type {
   CreateInventoryAdjustmentInput,
   CreateInvoiceInput,
   CreateInvoicePaymentInput,
+  VoidInvoiceInput,
   CreateOrderInput,
   CreateProductInput,
   CreatePurchaseOrderInput,
@@ -42,6 +43,7 @@ import {
   submitInvoiceCollectionUpdate,
   submitInvoiceIssue,
   submitInvoicePayment,
+  submitInvoiceVoid,
 } from "../modules/invoices/api";
 import { submitOrder, submitOrderCancel } from "../modules/orders/api";
 import {
@@ -486,6 +488,20 @@ export function createWorkspaceCommands(dependencies: WorkspaceCommandsDependenc
           const approvalRequest = await submitApprovalDecision({ ...input, tenantId });
           await refreshTenantWorkspace(tenantId);
           setNoticeMessage(buildApprovalNotice(approvalRequest, input.decision));
+        },
+        { clearNotice: true },
+      );
+    },
+
+    async voidInvoiceRecord(input: Omit<VoidInvoiceInput, "tenantId">): Promise<void> {
+      const tenantId = getSelectedTenantIdOrThrow();
+
+      await runBusyAction(
+        { setErrorMessage, setIsBusy, setNoticeMessage },
+        "Invoice void failed.",
+        async () => {
+          await submitInvoiceVoid({ ...input, tenantId });
+          await refreshTenantWorkspace(tenantId);
         },
         { clearNotice: true },
       );

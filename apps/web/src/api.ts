@@ -11,6 +11,7 @@ import type {
   UpdateInvoiceCollectionInput,
   ResolveInvoiceCollectionActionInput,
   CreateInvoicePaymentInput,
+  VoidInvoiceInput,
   CreateInventoryAdjustmentInput,
   CreateOrderInput,
   CreatePurchaseOrderInput,
@@ -347,6 +348,14 @@ export async function createInvoicePayment(
   input: CreateInvoicePaymentInput,
 ): Promise<ApprovalAwareMutationResult<InvoiceRecord>> {
   const payload = await request<{ item: ApprovalAwareMutationResult<InvoiceRecord> }>("/api/invoices/payments", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  return payload.item;
+}
+
+export async function voidInvoice(input: VoidInvoiceInput): Promise<InvoiceRecord> {
+  const payload = await request<{ item: InvoiceRecord }>("/api/invoices/void", {
     method: "POST",
     body: JSON.stringify(input),
   });

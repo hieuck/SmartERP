@@ -857,6 +857,19 @@ Object.assign(vi.purchaseOrders, {
   cancelConfirm: "Hủy {{number}}? Chỉ hủy được trước khi có bất kỳ lần nhận hàng nào.",
 });
 
+Object.assign(vi.invoices, {
+  statusVoid: "Đã hủy hiệu lực",
+  collectionVoid: "Đã hủy hiệu lực",
+  voidAction: "Hủy hiệu lực",
+  voidConfirm: "Hủy hiệu lực {{number}}? Chỉ áp dụng khi hóa đơn chưa có bất kỳ thanh toán nào.",
+});
+
+Object.assign(vi.reports, {
+  auditActionInvoiceVoided: "Hủy hiệu lực hóa đơn",
+  auditActionOrderCanceled: "Hủy đơn hàng",
+  auditActionPurchaseOrderCanceled: "Hủy đơn mua",
+});
+
 Object.assign(vi.errors, {
   updateCustomerFailed: "Cập nhật khách hàng thất bại.",
   deleteCustomerFailed: "Xóa khách hàng thất bại.",
@@ -866,6 +879,7 @@ Object.assign(vi.errors, {
   deleteProductFailed: "Xóa sản phẩm thất bại.",
   cancelOrderFailed: "Hủy đơn hàng thất bại.",
   cancelPurchaseOrderFailed: "Hủy đơn mua thất bại.",
+  voidInvoiceFailed: "Hủy hiệu lực hóa đơn thất bại.",
   customerDeleteBlocked: "Không thể xóa khách hàng này vì đã có đơn hàng hoặc hóa đơn tham chiếu.",
   supplierDeleteBlocked: "Không thể xóa nhà cung cấp này vì đã có đơn mua tham chiếu.",
   productDeleteBlocked: "Không thể xóa sản phẩm này vì đã có dữ liệu bán hàng, mua hàng, hoặc tồn kho tham chiếu.",
@@ -875,4 +889,7 @@ Object.assign(vi.errors, {
   purchaseOrderAlreadyCanceled: "Đơn mua này đã bị hủy trước đó.",
   purchaseOrderCanceled: "Đơn mua này đã bị hủy nên không thể nhận hàng nữa.",
   purchaseOrderCancelBlocked: "Không thể hủy đơn mua này vì đã có dữ liệu nhận hàng.",
+  invoiceAlreadyVoided: "Hóa đơn này đã được hủy hiệu lực trước đó.",
+  invoiceVoided: "Hóa đơn này đã bị hủy hiệu lực.",
+  invoiceVoidBlockedByPayments: "Không thể hủy hiệu lực hóa đơn này vì đã có thanh toán phát sinh.",
 });

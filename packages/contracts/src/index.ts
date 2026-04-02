@@ -526,11 +526,11 @@ export type CreateInventoryAdjustmentInput = {
   quantity: number;
 };
 
-export type InvoiceStatus = "issued" | "partially_paid" | "paid";
+export type InvoiceStatus = "issued" | "partially_paid" | "paid" | "void";
 
 export type PaymentMethod = "bank_transfer" | "cash" | "card";
 
-export type CollectionStatus = "current" | "due_today" | "overdue" | "settled";
+export type CollectionStatus = "current" | "due_today" | "overdue" | "settled" | "void";
 
 export type CollectionFollowUpStatus = "new" | "contacted" | "promised" | "escalated";
 
@@ -583,6 +583,7 @@ export type AuditEntityType =
 
 export type AuditActionType =
   | "invoice_issued"
+  | "invoice_voided"
   | "order_canceled"
   | "purchase_order_canceled"
   | "purchase_order_received"
@@ -683,6 +684,11 @@ export type UpdateInvoiceCollectionInput = {
 };
 
 export type ResolveInvoiceCollectionActionInput = {
+  tenantId: string;
+  invoiceId: string;
+};
+
+export type VoidInvoiceInput = {
   tenantId: string;
   invoiceId: string;
 };

@@ -6,6 +6,7 @@ import type {
   ResolveInvoiceCollectionActionInput,
   Session,
   UpdateInvoiceCollectionInput,
+  VoidInvoiceInput,
 } from "@smarterp/contracts";
 
 import { readJson, sendJson } from "../../http.js";
@@ -18,6 +19,7 @@ import {
   resolveInvoiceCollectionAction,
   runWithSession,
   updateInvoiceCollection,
+  voidInvoice,
 } from "../../store.js";
 
 function badRequest(response: ServerResponse, message: string): void {
@@ -170,6 +172,7 @@ export async function handleCreateInvoicePayment(
       error instanceof Error &&
       [
         "The selected invoice does not exist.",
+        "The selected invoice has been voided.",
         "The selected invoice is already settled.",
         "Payment amount cannot exceed the outstanding balance.",
       ].includes(error.message)
@@ -222,6 +225,7 @@ export async function handleUpdateInvoiceCollection(
       error instanceof Error &&
       [
         "The selected invoice does not exist.",
+        "The selected invoice has been voided.",
         "Promised payment date must be a valid YYYY-MM-DD value.",
         "Next action date must be a valid YYYY-MM-DD value.",
         "Promised payment date is required when status is promised.",
@@ -269,7 +273,50 @@ export async function handleResolveInvoiceCollectionAction(
       error instanceof Error &&
       [
         "The selected invoice does not exist.",
+        "The selected invoice has been voided.",
         "There is no assigned collection action to resolve.",
+      ].includes(error.message)
+    ) {
+      badRequest(response, error.message);
+      return;
+    }
+
+    throw error;
+  }
+}
+
+export async function handleVoidInvoice(
+  request: IncomingMessage,
+  response: ServerResponse,
+  requestSession: Session | null,
+): Promise<void> {
+  const input = await readJson<VoidInvoiceInput>(request);
+
+  if (!input.tenantId?.trim()) {
+    badRequest(response, "tenantId is required.");
+    return;
+  }
+
+  if (!hasTenant(input.tenantId)) {
+    badRequest(response, "The selected tenant does not exist.");
+    return;
+  }
+
+  if (!input.invoiceId?.trim()) {
+    badRequest(response, "invoiceId is required.");
+    return;
+  }
+
+  try {
+    const invoice = runWithSession(requestSession, () => voidInvoice(input));
+    sendJson(response, 200, { item: invoice });
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      [
+        "The selected invoice does not exist.",
+        "The selected invoice has already been voided.",
+        "The selected invoice cannot be voided because payments already exist.",
       ].includes(error.message)
     ) {
       badRequest(response, error.message);

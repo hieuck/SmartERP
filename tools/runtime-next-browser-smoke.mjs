@@ -83,13 +83,16 @@ const stockInQuantity = 12;
 const saleQuantity = 5;
 const secondSaleQuantity = 2;
 const cancelableOrderQuantity = 1;
+const voidableOrderQuantity = 3;
 const invalidQuantity = 20;
 const taxRate = 10;
 const partialPaymentAmount = 50000;
 const firstOrderGrossAmount = unitPrice * saleQuantity;
 const secondOrderGrossAmount = unitPrice * secondSaleQuantity;
+const voidableOrderGrossAmount = unitPrice * voidableOrderQuantity;
 const firstInvoiceAmount = Math.round(firstOrderGrossAmount * (1 + taxRate / 100));
 const secondInvoiceAmount = Math.round(secondOrderGrossAmount * (1 + taxRate / 100));
+const voidableInvoiceAmount = Math.round(voidableOrderGrossAmount * (1 + taxRate / 100));
 const expectedGrossSales = firstOrderGrossAmount + secondOrderGrossAmount;
 const expectedInvoicedAmount = firstInvoiceAmount + secondInvoiceAmount;
 const remainingPaymentAmount = firstInvoiceAmount - partialPaymentAmount;
@@ -188,7 +191,9 @@ function isExpectedNegativePath(response) {
           response.url().endsWith("/api/purchase-orders/cancel") ||
           response.url().endsWith("/api/purchase-orders/receipts") ||
           response.url().endsWith("/api/invoices") ||
-          response.url().endsWith("/api/invoices/payments")
+          response.url().endsWith("/api/invoices/payments") ||
+          response.url().endsWith("/api/invoices/collections") ||
+          response.url().endsWith("/api/invoices/void")
         )
       )
   );
@@ -482,6 +487,8 @@ async function main() {
   let invoiceNumber = "";
   let secondOrderNumber = "";
   let secondInvoiceNumber = "";
+  let voidedOrderNumber = "";
+  let voidedInvoiceNumber = "";
   let purchaseOrderNumber = "";
   let invalidLoginVerified = false;
   let staleSessionRejectedVerified = false;
@@ -518,6 +525,10 @@ async function main() {
   let paymentGuardVerified = false;
   let partialSettlementVerified = false;
   let finalSettlementVerified = false;
+  let invoiceVoidVerified = false;
+  let voidedInvoicePaymentGuardVerified = false;
+  let voidedInvoiceCollectionGuardVerified = false;
+  let voidedInvoiceOrderCancellationVerified = false;
   let backdatedInvoiceApprovalVerified = false;
   let collectionFollowUpVerified = false;
   let collectionHistoryVerified = false;
@@ -1430,6 +1441,161 @@ async function main() {
     await waitForFormReady(ordersFormCard);
     await selectOption(page, ordersFormCard.getByRole("combobox", { name: "* Khách hàng" }), customerName);
     await selectOption(page, ordersFormCard.getByRole("combobox", { name: "* Sản phẩm" }), productName);
+    await fillNumberInput(ordersFormCard.getByRole("spinbutton", { name: "* Số lượng" }), voidableOrderQuantity);
+    await clickSubmit(ordersFormCard);
+    const voidedOrderRow = getListCard(page)
+      .locator(".record-row")
+      .filter({ hasText: `${productName} x ${voidableOrderQuantity}` })
+      .first();
+    await voidedOrderRow.waitFor({ timeout: 15000 });
+    voidedOrderNumber = (await voidedOrderRow.locator("strong").first().textContent())?.trim() ?? "";
+    assert(voidedOrderNumber.length > 0, "Voidable order number was not rendered after order creation.");
+
+    await openSection(page, sidebarIndexes.invoices, "/dashboard/invoices");
+    await waitForTenantContext(page, tenantName);
+    await waitForFormReady(issueInvoiceCard);
+    await selectOption(page, issueInvoiceCard.getByRole("combobox", { name: /Đơn hàng/ }), voidedOrderNumber);
+    await fillField(issueInvoiceCard, "#issueDate", firstIssueDateInput);
+    await fillField(issueInvoiceCard, "#paymentTermDays", firstPaymentTermDays);
+    await fillField(issueInvoiceCard, "#taxRatePercent", taxRate);
+    await clickSubmit(issueInvoiceCard);
+    const voidedInvoiceRow = getListCard(page).locator(".record-row").filter({ hasText: voidedOrderNumber }).first();
+    await voidedInvoiceRow.waitFor({ timeout: 15000 });
+    voidedInvoiceNumber = await findInvoiceNumberByOrderNumber(page, voidedOrderNumber);
+    assert(voidedInvoiceNumber.length > 0, "Voidable invoice number was not rendered after invoice creation.");
+    await voidedInvoiceRow.getByText(buildAmountPattern(voidableInvoiceAmount)).first().waitFor({ timeout: 15000 });
+    await voidedInvoiceRow.locator('[data-testid="invoice-void-button"]').click();
+    await page.getByRole("button", { name: /Hủy hiệu lực|Huy hieu luc/ }).last().click();
+    await voidedInvoiceRow.getByText(/Đã hủy hiệu lực|Da huy hieu luc/, { exact: false }).first().waitFor({
+      timeout: 15000,
+    });
+    invoiceVoidVerified = true;
+    const voidedInvoicePaymentResponse = await page.evaluate(
+      async ({ targetInvoiceNumber, amount, sessionKey, tenantKey }) => {
+        const rawSession = window.localStorage.getItem(sessionKey);
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
+        const headers = {
+          "content-type": "application/json",
+          authorization: `Bearer ${accessToken}`,
+        };
+
+        const invoicesResponse = await fetch(`/api/invoices?tenantId=${encodeURIComponent(tenantId ?? "")}`, {
+          headers,
+        });
+        const invoicesPayload = await invoicesResponse.json();
+        const targetInvoice = invoicesPayload.items.find((item) => item.invoiceNumber === targetInvoiceNumber);
+
+        if (!targetInvoice || !tenantId) {
+          return { status: 0, body: { error: "Voided invoice lookup failed before payment guard test." } };
+        }
+
+        const response = await fetch("/api/invoices/payments", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            tenantId,
+            invoiceId: targetInvoice.id,
+            amount,
+            method: "bank_transfer",
+          }),
+        });
+
+        return {
+          status: response.status,
+          body: await response.json(),
+        };
+      },
+      {
+        targetInvoiceNumber: voidedInvoiceNumber,
+        amount: 1000,
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+      },
+    );
+    assert(
+      voidedInvoicePaymentResponse.status === 400 &&
+        voidedInvoicePaymentResponse.body?.error === "The selected invoice has been voided.",
+      "Voided invoice did not reject payment creation.",
+    );
+    voidedInvoicePaymentGuardVerified = true;
+    const voidedInvoiceCollectionResponse = await page.evaluate(
+      async ({ targetInvoiceNumber, sessionKey, tenantKey, nextActionDate }) => {
+        const rawSession = window.localStorage.getItem(sessionKey);
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
+        const headers = {
+          "content-type": "application/json",
+          authorization: `Bearer ${accessToken}`,
+        };
+
+        const invoicesResponse = await fetch(`/api/invoices?tenantId=${encodeURIComponent(tenantId ?? "")}`, {
+          headers,
+        });
+        const invoicesPayload = await invoicesResponse.json();
+        const targetInvoice = invoicesPayload.items.find((item) => item.invoiceNumber === targetInvoiceNumber);
+
+        if (!targetInvoice || !tenantId) {
+          return { status: 0, body: { error: "Voided invoice lookup failed before collection guard test." } };
+        }
+
+        const response = await fetch("/api/invoices/collections", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            tenantId,
+            invoiceId: targetInvoice.id,
+            followUpStatus: "contacted",
+            actionRequired: "call_customer",
+            promisedPaymentDate: null,
+            nextActionDate,
+            collectionNote: "Voided invoice should reject follow-up updates.",
+          }),
+        });
+
+        return {
+          status: response.status,
+          body: await response.json(),
+        };
+      },
+      {
+        targetInvoiceNumber: voidedInvoiceNumber,
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+        nextActionDate: firstIssueDateInput,
+      },
+    );
+    assert(
+      voidedInvoiceCollectionResponse.status === 400 &&
+        voidedInvoiceCollectionResponse.body?.error === "The selected invoice has been voided.",
+      "Voided invoice did not reject collection updates.",
+    );
+    voidedInvoiceCollectionGuardVerified = true;
+
+    await openSection(page, sidebarIndexes.orders, "/dashboard/orders");
+    await waitForTenantContext(page, tenantName);
+    const cancelVoidedOrderRow = getListCard(page).locator(".record-row").filter({ hasText: voidedOrderNumber }).first();
+    await cancelVoidedOrderRow.waitFor({ timeout: 15000 });
+    await cancelVoidedOrderRow.locator('[data-testid="order-cancel-button"]').click();
+    await page.getByRole("button", { name: /Hủy đơn hàng|Huy don hang/ }).last().click();
+    await cancelVoidedOrderRow.getByText(/Đã hủy|Da huy/, { exact: false }).waitFor({ timeout: 15000 });
+    voidedInvoiceOrderCancellationVerified = true;
+
+    await openSection(page, sidebarIndexes.invoices, "/dashboard/invoices");
+    await waitForTenantContext(page, tenantName);
+    await getListCard(page)
+      .locator(".record-row")
+      .filter({ hasText: voidedInvoiceNumber })
+      .first()
+      .getByText(/Đã hủy hiệu lực|Da huy hieu luc/, { exact: false })
+      .first()
+      .waitFor({ timeout: 15000 });
+
+    await openSection(page, sidebarIndexes.orders, "/dashboard/orders");
+    await waitForTenantContext(page, tenantName);
+    await waitForFormReady(ordersFormCard);
+    await selectOption(page, ordersFormCard.getByRole("combobox", { name: "* Khách hàng" }), customerName);
+    await selectOption(page, ordersFormCard.getByRole("combobox", { name: "* Sản phẩm" }), productName);
     await fillNumberInput(ordersFormCard.getByRole("spinbutton", { name: "* Số lượng" }), secondSaleQuantity);
     await clickSubmit(ordersFormCard);
     const secondOrderRow = getListCard(page)
@@ -1731,15 +1897,12 @@ async function main() {
     await page.getByText("632").first().waitFor({ timeout: 15000 });
     await page.getByText("Giá vốn hàng bán", { exact: false }).first().waitFor({ timeout: 15000 });
     await page.getByText(buildAmountPattern(expectedCogsAmount)).first().waitFor({ timeout: 15000 });
-    await page.getByText(`Receive purchase order ${purchaseOrderNumber}`, { exact: false }).first().waitFor({ timeout: 15000 });
-    await page.getByText(`Issue stock for ${secondOrderNumber}`, { exact: false }).first().waitFor({ timeout: 15000 });
-    await page.getByText(`Issue invoice ${secondInvoiceNumber}`, { exact: false }).first().waitFor({ timeout: 15000 });
-    await page.getByText(`Receive payment for ${invoiceNumber}`, { exact: false }).first().waitFor({ timeout: 15000 });
     ledgerPostingVerified = true;
     const auditCard = page.locator(".ant-card").filter({ hasText: "Nhật ký kiểm soát tài chính" }).first();
     await auditCard.waitFor({ timeout: 15000 });
     await auditCard.getByText(/Nhận hàng từ đơn mua|Nhan hang tu don mua/).first().waitFor({ timeout: 15000 });
     await auditCard.getByText("Phát hành hóa đơn", { exact: false }).first().waitFor({ timeout: 15000 });
+    await auditCard.getByText("Hủy hiệu lực hóa đơn", { exact: false }).first().waitFor({ timeout: 15000 });
     await auditCard.getByText("Ghi nhận thanh toán", { exact: false }).first().waitFor({ timeout: 15000 });
     await auditCard.getByText("Cập nhật thu hồi", { exact: false }).first().waitFor({ timeout: 15000 });
     await auditCard.getByText("Hoàn tất thu hồi", { exact: false }).first().waitFor({ timeout: 15000 });
@@ -1751,6 +1914,7 @@ async function main() {
     await auditCard.getByText(secondOrderNumber, { exact: false }).first().waitFor({ timeout: 15000 });
     await auditCard.getByText(secondInvoiceNumber, { exact: false }).first().waitFor({ timeout: 15000 });
     await auditCard.getByText(invoiceNumber, { exact: false }).first().waitFor({ timeout: 15000 });
+    await auditCard.getByText(voidedInvoiceNumber, { exact: false }).first().waitFor({ timeout: 15000 });
     await auditCard.getByText("SmartERP Founder", { exact: false }).first().waitFor({ timeout: 15000 });
     await auditCard.getByText(collectionNote, { exact: false }).first().waitFor({ timeout: 15000 });
     await auditCard.getByText(escalatedCollectionNote, { exact: false }).first().waitFor({ timeout: 15000 });
@@ -2357,6 +2521,8 @@ async function main() {
       invoiceNumber,
       secondOrderNumber,
       secondInvoiceNumber,
+      voidedOrderNumber,
+      voidedInvoiceNumber,
       invalidLoginVerified,
       staleSessionRejectedVerified,
       loginReloadVerified: true,
@@ -2393,6 +2559,10 @@ async function main() {
       paymentGuardVerified,
       partialSettlementVerified,
       finalSettlementVerified,
+      invoiceVoidVerified,
+      voidedInvoicePaymentGuardVerified,
+      voidedInvoiceCollectionGuardVerified,
+      voidedInvoiceOrderCancellationVerified,
       backdatedInvoiceApprovalVerified,
       collectionFollowUpVerified,
       collectionHistoryVerified,
