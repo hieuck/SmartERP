@@ -347,7 +347,7 @@ export function InvoicesPage(): ReactElement {
   }
 
   return (
-    <div className="page-stack">
+    <div className="page-stack workspace-page">
       <div className="page-header">
         <div>
           <Title level={2}>{t("invoices.title")}</Title>
@@ -371,7 +371,7 @@ export function InvoicesPage(): ReactElement {
 
       <div className="two-column">
         <div className="page-column-stack">
-          <Card title={t("invoices.createTitle")}>
+          <Card className="workspace-panel-card" title={t("invoices.createTitle")}>
             {canIssueInvoices ? (
               <>
                 <Form<InvoiceFormShape>
@@ -445,7 +445,7 @@ export function InvoicesPage(): ReactElement {
             )}
           </Card>
 
-          <Card title={t("invoices.settlementTitle")}>
+          <Card className="workspace-panel-card" title={t("invoices.settlementTitle")}>
             {canRecordPayments ? (
               <>
                 <Form<InvoicePaymentFormShape>
@@ -524,7 +524,7 @@ export function InvoicesPage(): ReactElement {
             )}
           </Card>
 
-          <Card title={t("invoices.followUpTitle")}>
+          <Card className="workspace-panel-card" title={t("invoices.followUpTitle")}>
             {canManageCollections ? (
               <Form<InvoiceCollectionFormShape>
                 form={collectionForm}
@@ -633,7 +633,7 @@ export function InvoicesPage(): ReactElement {
             ) : null}
           </Card>
 
-          <Card title={t("invoices.worklistTitle")}>
+          <Card className="workspace-panel-card" title={t("invoices.worklistTitle")}>
             {selectedTenantId ? (
               actionableWorklist.length ? (
                 <div className="collection-queue">
@@ -702,7 +702,7 @@ export function InvoicesPage(): ReactElement {
             )}
           </Card>
 
-          <Card title={t("invoices.activityTitle")}>
+          <Card className="workspace-panel-card" title={t("invoices.activityTitle")}>
             {selectedTenantId ? (
               visibleCollectionActivities.length ? (
                 <div className="activity-feed">
@@ -763,7 +763,7 @@ export function InvoicesPage(): ReactElement {
           </Card>
         </div>
 
-        <Card title={t("invoices.listTitle")}>
+        <Card className="workspace-panel-card" title={t("invoices.listTitle")}>
           {selectedTenantId ? (
             invoices.length ? (
               <div className="record-stack">

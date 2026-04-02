@@ -35,7 +35,7 @@ export function SuppliersPage(): ReactElement {
   };
 
   return (
-    <div className="page-stack">
+    <div className="page-stack workspace-page">
       <div className="page-header">
         <div>
           <Title level={2}>{t("suppliers.title")}</Title>
@@ -58,7 +58,7 @@ export function SuppliersPage(): ReactElement {
       </div>
 
       <div className="two-column">
-        <Card title={t("suppliers.addTitle")}>
+        <Card className="workspace-panel-card" title={t("suppliers.addTitle")}>
           <Form<SupplierFormShape>
             form={form}
             layout="vertical"
@@ -105,7 +105,7 @@ export function SuppliersPage(): ReactElement {
           </Form>
         </Card>
 
-        <Card title={t("suppliers.listTitle")}>
+        <Card className="workspace-panel-card" title={t("suppliers.listTitle")}>
           {selectedTenantId ? (
             suppliers.length ? (
               <div className="record-stack">

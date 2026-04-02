@@ -109,7 +109,7 @@ export function PurchaseOrdersPage(): ReactElement {
   }
 
   return (
-    <div className="page-stack">
+    <div className="page-stack workspace-page">
       <div className="page-header">
         <div>
           <Title level={2}>{t("purchaseOrders.title")}</Title>
@@ -133,7 +133,7 @@ export function PurchaseOrdersPage(): ReactElement {
 
       <div className="two-column">
         <div className="page-column-stack">
-          <Card title={t("purchaseOrders.createTitle")}>
+          <Card className="workspace-panel-card" title={t("purchaseOrders.createTitle")}>
             {canCreatePurchaseOrders ? (
               <>
                 <Form<PurchaseOrderFormShape>
@@ -226,7 +226,7 @@ export function PurchaseOrdersPage(): ReactElement {
             )}
           </Card>
 
-          <Card title={t("purchaseOrders.receiveTitle")}>
+          <Card className="workspace-panel-card" title={t("purchaseOrders.receiveTitle")}>
             {canReceivePurchaseOrders ? (
               <>
                 <Form<PurchaseOrderReceiptFormShape>
@@ -300,7 +300,7 @@ export function PurchaseOrdersPage(): ReactElement {
           </Card>
         </div>
 
-        <Card title={t("purchaseOrders.listTitle")}>
+        <Card className="workspace-panel-card" title={t("purchaseOrders.listTitle")}>
           {selectedTenantId ? (
             purchaseOrders.length ? (
               <div className="record-stack">

@@ -99,7 +99,7 @@ export function ApprovalsPage(): ReactElement {
   }
 
   return (
-    <div className="page-stack">
+    <div className="page-stack workspace-page">
       <div className="page-header">
         <div>
           <Title level={2}>{t("approvals.title")}</Title>
@@ -122,7 +122,7 @@ export function ApprovalsPage(): ReactElement {
       </div>
 
       <div className="two-column">
-        <Card title={t("approvals.pendingTitle")}>
+        <Card className="workspace-panel-card" title={t("approvals.pendingTitle")}>
           {selectedTenantId ? (
             pendingRequests.length ? (
               <div className="activity-feed">
@@ -187,7 +187,7 @@ export function ApprovalsPage(): ReactElement {
           )}
         </Card>
 
-        <Card title={t("approvals.historyTitle")}>
+        <Card className="workspace-panel-card" title={t("approvals.historyTitle")}>
           {selectedTenantId ? (
             recentDecisions.length ? (
               <div className="record-stack">

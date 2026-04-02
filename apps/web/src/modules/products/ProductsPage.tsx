@@ -34,7 +34,7 @@ export function ProductsPage(): ReactElement {
   };
 
   return (
-    <div className="page-stack">
+    <div className="page-stack workspace-page">
       <div className="page-header">
         <div>
           <Title level={2}>{t("products.title")}</Title>
@@ -59,7 +59,7 @@ export function ProductsPage(): ReactElement {
       </div>
 
       <div className="two-column">
-        <Card title={t("products.addTitle")}>
+        <Card className="workspace-panel-card" title={t("products.addTitle")}>
           <Form<ProductFormShape> form={form} layout="vertical" onFinish={onFinish}>
             <Form.Item<ProductFormShape> label={t("products.sku")} name="sku" rules={[{ required: true }]}>
               <Input placeholder={t("products.placeholderSku")} />
@@ -76,7 +76,7 @@ export function ProductsPage(): ReactElement {
           </Form>
         </Card>
 
-        <Card title={t("products.listTitle")}>
+        <Card className="workspace-panel-card" title={t("products.listTitle")}>
           {selectedTenantId ? (
             products.length ? (
               <div className="record-stack">

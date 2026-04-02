@@ -40,7 +40,7 @@ export function OrdersPage(): ReactElement {
   };
 
   return (
-    <div className="page-stack">
+    <div className="page-stack workspace-page">
       <div className="page-header">
         <div>
           <Title level={2}>{t("orders.title")}</Title>
@@ -63,7 +63,7 @@ export function OrdersPage(): ReactElement {
       </div>
 
       <div className="two-column">
-        <Card title={t("orders.createTitle")}>
+        <Card className="workspace-panel-card" title={t("orders.createTitle")}>
           <Form<OrderFormShape> form={form} layout="vertical" onFinish={onFinish}>
             <Form.Item<OrderFormShape>
               label={t("orders.customer")}
@@ -134,7 +134,7 @@ export function OrdersPage(): ReactElement {
           </Form>
         </Card>
 
-        <Card title={t("orders.listTitle")}>
+        <Card className="workspace-panel-card" title={t("orders.listTitle")}>
           {selectedTenantId ? (
             orders.length ? (
               <div className="record-stack">

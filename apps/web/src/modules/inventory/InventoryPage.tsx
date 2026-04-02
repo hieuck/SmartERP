@@ -49,7 +49,7 @@ export function InventoryPage(): ReactElement {
   }
 
   return (
-    <div className="page-stack">
+    <div className="page-stack workspace-page">
       <div className="page-header">
         <div>
           <Title level={2}>{t("inventory.title")}</Title>
@@ -72,7 +72,7 @@ export function InventoryPage(): ReactElement {
       </div>
 
       <div className="two-column">
-        <Card title={t("inventory.adjustTitle")}>
+        <Card className="workspace-panel-card" title={t("inventory.adjustTitle")}>
           {canAdjustInventory ? (
             <Form<InventoryAdjustmentFormShape>
               form={form}
@@ -131,7 +131,7 @@ export function InventoryPage(): ReactElement {
           )}
         </Card>
 
-        <Card title={t("inventory.listTitle")}>
+        <Card className="workspace-panel-card" title={t("inventory.listTitle")}>
           {selectedTenantId ? (
             inventories.length ? (
               <div className="record-stack">
