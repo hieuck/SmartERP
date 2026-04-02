@@ -36,6 +36,9 @@ import type {
   UpdateInvoiceCollectionInput,
   CustomerRecord,
   CustomerStatementRecord,
+  UpdateCustomerInput,
+  UpdateProductInput,
+  UpdateSupplierInput,
 } from "@smarterp/contracts";
 
 export type WorkspaceContextValue = {
@@ -77,8 +80,14 @@ export type WorkspaceContextValue = {
     input: RestoreTenantSnapshotInput,
   ) => Promise<RestoreTenantSnapshotResult>;
   createCustomerRecord: (input: Omit<CreateCustomerInput, "tenantId">) => Promise<void>;
+  updateCustomerRecord: (input: Omit<UpdateCustomerInput, "tenantId">) => Promise<void>;
+  deleteCustomerRecord: (customerId: string) => Promise<void>;
   createSupplierRecord: (input: Omit<CreateSupplierInput, "tenantId">) => Promise<void>;
+  updateSupplierRecord: (input: Omit<UpdateSupplierInput, "tenantId">) => Promise<void>;
+  deleteSupplierRecord: (supplierId: string) => Promise<void>;
   createProductRecord: (input: Omit<CreateProductInput, "tenantId">) => Promise<void>;
+  updateProductRecord: (input: Omit<UpdateProductInput, "tenantId">) => Promise<void>;
+  deleteProductRecord: (productId: string) => Promise<void>;
   createInventoryAdjustmentRecord: (
     input: Omit<CreateInventoryAdjustmentInput, "tenantId">,
   ) => Promise<void>;

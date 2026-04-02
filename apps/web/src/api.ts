@@ -15,6 +15,9 @@ import type {
   ReceivePurchaseOrderInput,
   ReceivePurchaseOrderResult,
   CreateProductInput,
+  DeleteCustomerInput,
+  DeleteProductInput,
+  DeleteSupplierInput,
   CreateSupplierInput,
   CreateTenantInput,
   ImportOnboardingInput,
@@ -40,6 +43,9 @@ import type {
   RestoreTenantSnapshotInput,
   RestoreTenantSnapshotPreview,
   RestoreTenantSnapshotResult,
+  UpdateCustomerInput,
+  UpdateProductInput,
+  UpdateSupplierInput,
 } from "@smarterp/contracts";
 
 type RequestOptions = {
@@ -160,6 +166,22 @@ export async function createCustomer(input: CreateCustomerInput): Promise<Custom
   return payload.item;
 }
 
+export async function updateCustomer(input: UpdateCustomerInput): Promise<CustomerRecord> {
+  const payload = await request<{ item: CustomerRecord }>("/api/customers/update", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  return payload.item;
+}
+
+export async function deleteCustomer(input: DeleteCustomerInput): Promise<CustomerRecord> {
+  const payload = await request<{ item: CustomerRecord }>("/api/customers/delete", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  return payload.item;
+}
+
 export async function listSuppliers(tenantId: string): Promise<SupplierRecord[]> {
   const payload = await request<{ items: SupplierRecord[] }>(
     `/api/suppliers?tenantId=${encodeURIComponent(tenantId)}`,
@@ -169,6 +191,22 @@ export async function listSuppliers(tenantId: string): Promise<SupplierRecord[]>
 
 export async function createSupplier(input: CreateSupplierInput): Promise<SupplierRecord> {
   const payload = await request<{ item: SupplierRecord }>("/api/suppliers", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  return payload.item;
+}
+
+export async function updateSupplier(input: UpdateSupplierInput): Promise<SupplierRecord> {
+  const payload = await request<{ item: SupplierRecord }>("/api/suppliers/update", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  return payload.item;
+}
+
+export async function deleteSupplier(input: DeleteSupplierInput): Promise<SupplierRecord> {
+  const payload = await request<{ item: SupplierRecord }>("/api/suppliers/delete", {
     method: "POST",
     body: JSON.stringify(input),
   });
@@ -191,6 +229,22 @@ export async function listProducts(tenantId: string): Promise<ProductRecord[]> {
 
 export async function createProduct(input: CreateProductInput): Promise<ProductRecord> {
   const payload = await request<{ item: ProductRecord }>("/api/products", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  return payload.item;
+}
+
+export async function updateProduct(input: UpdateProductInput): Promise<ProductRecord> {
+  const payload = await request<{ item: ProductRecord }>("/api/products/update", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  return payload.item;
+}
+
+export async function deleteProduct(input: DeleteProductInput): Promise<ProductRecord> {
+  const payload = await request<{ item: ProductRecord }>("/api/products/delete", {
     method: "POST",
     body: JSON.stringify(input),
   });

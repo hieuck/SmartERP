@@ -1,6 +1,11 @@
 import type { ApiRoute } from "../route-dispatch/http.js";
 import { withModuleAccess, withPermission, withTenantQuery } from "../route-dispatch/helpers.js";
-import { handleCreateProduct, handleListProducts } from "./http.js";
+import {
+  handleCreateProduct,
+  handleDeleteProduct,
+  handleListProducts,
+  handleUpdateProduct,
+} from "./http.js";
 
 export const productApiRoutes: ApiRoute[] = [
   {
@@ -16,6 +21,20 @@ export const productApiRoutes: ApiRoute[] = [
     path: "/api/products",
     handle: withPermission("manage_products", ({ request, response, session }) =>
       handleCreateProduct(request, response, session),
+    ),
+  },
+  {
+    method: "POST",
+    path: "/api/products/update",
+    handle: withPermission("manage_products", ({ request, response, session }) =>
+      handleUpdateProduct(request, response, session),
+    ),
+  },
+  {
+    method: "POST",
+    path: "/api/products/delete",
+    handle: withPermission("manage_products", ({ request, response, session }) =>
+      handleDeleteProduct(request, response, session),
     ),
   },
 ];

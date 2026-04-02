@@ -264,6 +264,20 @@ export type CreateCustomerInput = {
   city: string;
 };
 
+export type UpdateCustomerInput = {
+  tenantId: string;
+  customerId: string;
+  name: string;
+  email: string;
+  phone: string;
+  city: string;
+};
+
+export type DeleteCustomerInput = {
+  tenantId: string;
+  customerId: string;
+};
+
 export type SupplierRecord = {
   id: string;
   tenantId: string;
@@ -284,6 +298,22 @@ export type CreateSupplierInput = {
   phone: string;
   city: string;
   leadTimeDays: number;
+};
+
+export type UpdateSupplierInput = {
+  tenantId: string;
+  supplierId: string;
+  supplierCode: string;
+  name: string;
+  email: string;
+  phone: string;
+  city: string;
+  leadTimeDays: number;
+};
+
+export type DeleteSupplierInput = {
+  tenantId: string;
+  supplierId: string;
 };
 
 export type CustomerStatementRecord = {
@@ -319,6 +349,19 @@ export type CreateProductInput = {
   sku: string;
   name: string;
   unitPrice: number;
+};
+
+export type UpdateProductInput = {
+  tenantId: string;
+  productId: string;
+  sku: string;
+  name: string;
+  unitPrice: number;
+};
+
+export type DeleteProductInput = {
+  tenantId: string;
+  productId: string;
 };
 
 export type PurchaseOrderStatus = "issued" | "partially_received" | "received";

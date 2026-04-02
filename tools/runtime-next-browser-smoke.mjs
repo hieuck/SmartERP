@@ -40,6 +40,30 @@ const restoredTenantSlug = `restored-${smokeId}`;
 const restoredTenantIndustry = "Restored Smoke QA";
 const customerImportCsv = `name,email,phone,city\n${customerName},${customerEmail},${customerPhone},${customerCity}`;
 const supplierImportCsv = `supplierCode,name,email,phone,city,leadTimeDays\n${supplierCode},${supplierName},${supplierEmail},${supplierPhone},${supplierCity},7`;
+const editableCustomerName = `Editable Buyer ${smokeId}`;
+const editableCustomerEmail = `editable.buyer.${smokeId}@example.com`;
+const editableCustomerPhone = "+84 98 111 1111";
+const editableCustomerCity = "Da Nang";
+const editedCustomerName = `Edited Buyer ${smokeId}`;
+const editedCustomerEmail = `edited.buyer.${smokeId}@example.com`;
+const editedCustomerPhone = "+84 98 222 2222";
+const editedCustomerCity = "Can Tho";
+const editableSupplierCode = `EDIT-SUP-${smokeId}`;
+const editableSupplierName = `Editable Supplier ${smokeId}`;
+const editableSupplierEmail = `editable.supplier.${smokeId}@example.com`;
+const editableSupplierPhone = "+84 27 4000 1111";
+const editableSupplierCity = "Dong Nai";
+const editedSupplierCode = `EDIT2-SUP-${smokeId}`;
+const editedSupplierName = `Edited Supplier ${smokeId}`;
+const editedSupplierEmail = `edited.supplier.${smokeId}@example.com`;
+const editedSupplierPhone = "+84 27 4000 2222";
+const editedSupplierCity = "Long An";
+const editableProductSku = `EDIT-${smokeId}`;
+const editableProductName = `Editable Product ${smokeId}`;
+const editableProductUnitPrice = 31000;
+const editedProductSku = `EDIT2-${smokeId}`;
+const editedProductName = `Edited Product ${smokeId}`;
+const editedProductUnitPrice = 33000;
 const expectedReceiptDateInput = buildDateInputFromToday(7);
 const firstPaymentTermDays = 14;
 const secondPaymentTermDays = 10;
@@ -155,6 +179,9 @@ function isExpectedNegativePath(response) {
           response.url().endsWith("/api/tenants") ||
           response.url().endsWith("/api/suppliers") ||
           response.url().endsWith("/api/products") ||
+          response.url().endsWith("/api/customers/delete") ||
+          response.url().endsWith("/api/suppliers/delete") ||
+          response.url().endsWith("/api/products/delete") ||
           response.url().endsWith("/api/purchase-orders/receipts") ||
           response.url().endsWith("/api/invoices/payments")
         )
@@ -462,6 +489,12 @@ async function main() {
   let baselineRestorePreviewVerified = false;
   let baselineRestoreVerified = false;
   let recoveryDrillVerified = false;
+  let customerCrudVerified = false;
+  let supplierCrudVerified = false;
+  let productCrudVerified = false;
+  let customerDeleteGuardVerified = false;
+  let supplierDeleteGuardVerified = false;
+  let productDeleteGuardVerified = false;
   let duplicateSupplierRejectedVerified = false;
   let duplicateProductRejectedVerified = false;
   let supplierAndPurchaseOrdersVerified = false;
@@ -637,14 +670,64 @@ async function main() {
     await openDirectRoute(page, "/dashboard/customers");
     await waitForTenantContext(page, tenantName);
     const customersListCard = getListCard(page);
+    const customersFormCard = getFormCard(page);
     await customersListCard.getByText(customerName, { exact: false }).waitFor({ timeout: 15000 });
     await customersListCard.getByText(customerEmail, { exact: false }).waitFor({ timeout: 15000 });
+    await waitForFormReady(customersFormCard);
+    await fillField(customersFormCard, "#name", editableCustomerName);
+    await fillField(customersFormCard, "#email", editableCustomerEmail);
+    await fillField(customersFormCard, "#phone", editableCustomerPhone);
+    await fillField(customersFormCard, "#city", editableCustomerCity);
+    await clickSubmit(customersFormCard);
+    const editableCustomerRow = customersListCard.locator(".record-row").filter({ hasText: editableCustomerName }).first();
+    await editableCustomerRow.waitFor({ timeout: 15000 });
+    await editableCustomerRow.locator('[data-testid="customer-edit-button"]').click();
+    await waitForFormReady(customersFormCard);
+    await fillField(customersFormCard, "#name", editedCustomerName);
+    await fillField(customersFormCard, "#email", editedCustomerEmail);
+    await fillField(customersFormCard, "#phone", editedCustomerPhone);
+    await fillField(customersFormCard, "#city", editedCustomerCity);
+    await clickSubmit(customersFormCard);
+    const editedCustomerRow = customersListCard.locator(".record-row").filter({ hasText: editedCustomerName }).first();
+    await editedCustomerRow.waitFor({ timeout: 15000 });
+    await editedCustomerRow.getByText(editedCustomerEmail, { exact: false }).waitFor({ timeout: 15000 });
+    await editedCustomerRow.locator('[data-testid="customer-delete-button"]').click();
+    await page.locator(".ant-popover .ant-btn-primary").click();
+    await waitForLocatorCount(page, customersListCard.locator(".record-row").filter({ hasText: editedCustomerName }), 0);
+    customerCrudVerified = true;
 
     await openSection(page, sidebarIndexes.suppliers, "/dashboard/suppliers");
     await waitForTenantContext(page, tenantName);
     const suppliersListCard = getListCard(page);
+    const suppliersFormCard = getFormCard(page);
     await suppliersListCard.getByText(supplierName, { exact: false }).waitFor({ timeout: 15000 });
     await suppliersListCard.getByText(supplierCode, { exact: false }).waitFor({ timeout: 15000 });
+    await waitForFormReady(suppliersFormCard);
+    await fillField(suppliersFormCard, "#supplierCode", editableSupplierCode);
+    await fillField(suppliersFormCard, "#name", editableSupplierName);
+    await fillField(suppliersFormCard, "#email", editableSupplierEmail);
+    await fillField(suppliersFormCard, "#phone", editableSupplierPhone);
+    await fillField(suppliersFormCard, "#city", editableSupplierCity);
+    await fillField(suppliersFormCard, "#leadTimeDays", 5);
+    await clickSubmit(suppliersFormCard);
+    const editableSupplierRow = suppliersListCard.locator(".record-row").filter({ hasText: editableSupplierName }).first();
+    await editableSupplierRow.waitFor({ timeout: 15000 });
+    await editableSupplierRow.locator('[data-testid="supplier-edit-button"]').click();
+    await waitForFormReady(suppliersFormCard);
+    await fillField(suppliersFormCard, "#supplierCode", editedSupplierCode);
+    await fillField(suppliersFormCard, "#name", editedSupplierName);
+    await fillField(suppliersFormCard, "#email", editedSupplierEmail);
+    await fillField(suppliersFormCard, "#phone", editedSupplierPhone);
+    await fillField(suppliersFormCard, "#city", editedSupplierCity);
+    await fillField(suppliersFormCard, "#leadTimeDays", 9);
+    await clickSubmit(suppliersFormCard);
+    const editedSupplierRow = suppliersListCard.locator(".record-row").filter({ hasText: editedSupplierName }).first();
+    await editedSupplierRow.waitFor({ timeout: 15000 });
+    await editedSupplierRow.getByText(editedSupplierCode, { exact: false }).waitFor({ timeout: 15000 });
+    await editedSupplierRow.locator('[data-testid="supplier-delete-button"]').click();
+    await page.locator(".ant-popover .ant-btn-primary").click();
+    await waitForLocatorCount(page, suppliersListCard.locator(".record-row").filter({ hasText: editedSupplierName }), 0);
+    supplierCrudVerified = true;
     const duplicateSupplierResponse = await page.evaluate(
       async ({ duplicateCode, duplicateName, duplicateEmail, sessionKey, tenantKey }) => {
         const tenantId = window.localStorage.getItem(tenantKey);
@@ -692,8 +775,29 @@ async function main() {
     await openSection(page, sidebarIndexes.products, "/dashboard/products");
     await waitForTenantContext(page, tenantName);
     const productsListCard = getListCard(page);
+    const productsFormCard = getFormCard(page);
     await productsListCard.getByText(productName, { exact: false }).waitFor({ timeout: 15000 });
     await productsListCard.getByText(productSku, { exact: false }).waitFor({ timeout: 15000 });
+    await waitForFormReady(productsFormCard);
+    await fillField(productsFormCard, "#sku", editableProductSku);
+    await fillField(productsFormCard, "#name", editableProductName);
+    await fillField(productsFormCard, "#unitPrice", editableProductUnitPrice);
+    await clickSubmit(productsFormCard);
+    const editableProductRow = productsListCard.locator(".record-row").filter({ hasText: editableProductName }).first();
+    await editableProductRow.waitFor({ timeout: 15000 });
+    await editableProductRow.locator('[data-testid="product-edit-button"]').click();
+    await waitForFormReady(productsFormCard);
+    await fillField(productsFormCard, "#sku", editedProductSku);
+    await fillField(productsFormCard, "#name", editedProductName);
+    await fillField(productsFormCard, "#unitPrice", editedProductUnitPrice);
+    await clickSubmit(productsFormCard);
+    const editedProductRow = productsListCard.locator(".record-row").filter({ hasText: editedProductName }).first();
+    await editedProductRow.waitFor({ timeout: 15000 });
+    await editedProductRow.getByText(editedProductSku, { exact: false }).waitFor({ timeout: 15000 });
+    await editedProductRow.locator('[data-testid="product-delete-button"]').click();
+    await page.locator(".ant-popover .ant-btn-primary").click();
+    await waitForLocatorCount(page, productsListCard.locator(".record-row").filter({ hasText: editedProductName }), 0);
+    productCrudVerified = true;
     const duplicateProductResponse = await page.evaluate(
       async ({ duplicateSku, duplicateName, duplicateUnitPrice, sessionKey, tenantKey }) => {
         const tenantId = window.localStorage.getItem(tenantKey);
@@ -1162,6 +1266,92 @@ async function main() {
       .filter({ hasText: "Số hóa đơn" })
       .getByText("2", { exact: true })
       .waitFor({ timeout: 15000 });
+    const deleteGuardResponse = await page.evaluate(
+      async ({ sessionKey, tenantKey, targetCustomerName, targetSupplierCode, targetProductSku }) => {
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const session = window.localStorage.getItem(sessionKey);
+        const accessToken = session ? JSON.parse(session).accessToken : "";
+
+        const request = async (url) => {
+          const response = await fetch(url, {
+            headers: {
+              authorization: `Bearer ${accessToken}`,
+            },
+          });
+
+          return response.json();
+        };
+
+        const [customersPayload, suppliersPayload, productsPayload] = await Promise.all([
+          request(`/api/customers?tenantId=${encodeURIComponent(tenantId ?? "")}`),
+          request(`/api/suppliers?tenantId=${encodeURIComponent(tenantId ?? "")}`),
+          request(`/api/products?tenantId=${encodeURIComponent(tenantId ?? "")}`),
+        ]);
+
+        const customer = customersPayload.items.find((item) => item.name === targetCustomerName);
+        const supplier = suppliersPayload.items.find((item) => item.supplierCode === targetSupplierCode);
+        const product = productsPayload.items.find((item) => item.sku === targetProductSku);
+
+        const postDelete = async (url, body) => {
+          const response = await fetch(url, {
+            method: "POST",
+            headers: {
+              "content-type": "application/json",
+              authorization: `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify(body),
+          });
+
+          return {
+            status: response.status,
+            body: await response.json(),
+          };
+        };
+
+        return {
+          customer: await postDelete("/api/customers/delete", {
+            tenantId,
+            customerId: customer?.id ?? "",
+          }),
+          supplier: await postDelete("/api/suppliers/delete", {
+            tenantId,
+            supplierId: supplier?.id ?? "",
+          }),
+          product: await postDelete("/api/products/delete", {
+            tenantId,
+            productId: product?.id ?? "",
+          }),
+        };
+      },
+      {
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+        targetCustomerName: customerName,
+        targetSupplierCode: supplierCode,
+        targetProductSku: productSku,
+      },
+    );
+    assert(
+      deleteGuardResponse.customer.status === 400 &&
+        deleteGuardResponse.customer.body?.error ===
+          "The selected customer cannot be deleted because orders or invoices already reference it.",
+      "Customer delete guard did not block deletion of a referenced customer.",
+    );
+    assert(
+      deleteGuardResponse.supplier.status === 400 &&
+        deleteGuardResponse.supplier.body?.error ===
+          "The selected supplier cannot be deleted because purchase orders already reference it.",
+      "Supplier delete guard did not block deletion of a referenced supplier.",
+    );
+    assert(
+      deleteGuardResponse.product.status === 400 &&
+        deleteGuardResponse.product.body?.error ===
+          "The selected product cannot be deleted because sales, purchasing, or inventory already reference it.",
+      "Product delete guard did not block deletion of a referenced product.",
+    );
+    customerDeleteGuardVerified = true;
+    supplierDeleteGuardVerified = true;
+    productDeleteGuardVerified = true;
 
     await openSection(page, sidebarIndexes.reports, "/dashboard/reports");
     await waitForTenantContext(page, tenantName);
@@ -1838,6 +2028,12 @@ async function main() {
       baselineRestorePreviewVerified,
       baselineRestoreVerified,
       recoveryDrillVerified,
+      customerCrudVerified,
+      supplierCrudVerified,
+      productCrudVerified,
+      customerDeleteGuardVerified,
+      supplierDeleteGuardVerified,
+      productDeleteGuardVerified,
       duplicateSupplierRejectedVerified,
       duplicateProductRejectedVerified,
       supplierAndPurchaseOrdersVerified,

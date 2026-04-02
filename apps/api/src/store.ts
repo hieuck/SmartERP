@@ -16,6 +16,7 @@ import {
   type AccountType,
   createDemoSession,
   type CreateCustomerInput,
+  type DeleteCustomerInput,
   type CreateInvoiceInput,
   type CreateInvoicePaymentInput,
   type UpdateInvoiceCollectionInput,
@@ -28,7 +29,9 @@ import {
   type ReceivePurchaseOrderInput,
   type ReceivePurchaseOrderResult,
   type CreateProductInput,
+  type DeleteProductInput,
   type CreateSupplierInput,
+  type DeleteSupplierInput,
   type CreateTenantInput,
   type ImportOnboardingInput,
   type ImportOnboardingResult,
@@ -58,6 +61,9 @@ import {
   type SupplierRecord,
   type TenantRecord,
   type TenantExportBundle,
+  type UpdateCustomerInput,
+  type UpdateProductInput,
+  type UpdateSupplierInput,
 } from "@smarterp/contracts";
 
 import { db } from "./database.js";
@@ -629,6 +635,40 @@ const createCustomerStatement = db.prepare(`
   VALUES (?, ?, ?, ?, ?, ?, ?)
 `);
 
+const getCustomerByIdStatement = db.prepare(`
+  SELECT id, tenant_id, name, email, phone, city, created_at
+  FROM customers
+  WHERE tenant_id = ? AND id = ?
+  LIMIT 1
+`);
+
+const updateCustomerStatement = db.prepare(`
+  UPDATE customers
+  SET
+    name = ?,
+    email = ?,
+    phone = ?,
+    city = ?
+  WHERE tenant_id = ? AND id = ?
+`);
+
+const deleteCustomerStatement = db.prepare(`
+  DELETE FROM customers
+  WHERE tenant_id = ? AND id = ?
+`);
+
+const countOrdersForCustomerStatement = db.prepare(`
+  SELECT COUNT(*) AS count
+  FROM orders
+  WHERE tenant_id = ? AND customer_id = ?
+`);
+
+const countInvoicesForCustomerStatement = db.prepare(`
+  SELECT COUNT(*) AS count
+  FROM invoices
+  WHERE tenant_id = ? AND customer_id = ?
+`);
+
 const listSuppliersStatement = db.prepare(`
   SELECT id, tenant_id, supplier_code, name, email, phone, city, lead_time_days, created_at
   FROM suppliers
@@ -658,6 +698,29 @@ const getSupplierByIdStatement = db.prepare(`
   LIMIT 1
 `);
 
+const updateSupplierStatement = db.prepare(`
+  UPDATE suppliers
+  SET
+    supplier_code = ?,
+    name = ?,
+    email = ?,
+    phone = ?,
+    city = ?,
+    lead_time_days = ?
+  WHERE tenant_id = ? AND id = ?
+`);
+
+const deleteSupplierStatement = db.prepare(`
+  DELETE FROM suppliers
+  WHERE tenant_id = ? AND id = ?
+`);
+
+const countPurchaseOrdersForSupplierStatement = db.prepare(`
+  SELECT COUNT(*) AS count
+  FROM purchase_orders
+  WHERE tenant_id = ? AND supplier_id = ?
+`);
+
 const getCustomerForOrderStatement = db.prepare(`
   SELECT id, tenant_id, name, email, phone, city, created_at
   FROM customers
@@ -681,6 +744,41 @@ const getProductByIdStatement = db.prepare(`
   SELECT id, tenant_id, sku, name, unit_price, status, created_at
   FROM products
   WHERE tenant_id = ? AND id = ?
+  LIMIT 1
+`);
+
+const updateProductStatement = db.prepare(`
+  UPDATE products
+  SET
+    sku = ?,
+    name = ?,
+    unit_price = ?
+  WHERE tenant_id = ? AND id = ?
+`);
+
+const deleteProductStatement = db.prepare(`
+  DELETE FROM products
+  WHERE tenant_id = ? AND id = ?
+`);
+
+const countOrdersForProductStatement = db.prepare(`
+  SELECT COUNT(*) AS count
+  FROM orders
+  WHERE tenant_id = ? AND product_id = ?
+`);
+
+const countPurchaseOrdersForProductStatement = db.prepare(`
+  SELECT COUNT(*) AS count
+  FROM purchase_orders
+  WHERE tenant_id = ? AND product_id = ?
+`);
+
+const getInventoryFootprintForProductStatement = db.prepare(`
+  SELECT
+    COALESCE(quantity_on_hand, 0) AS quantity_on_hand,
+    COALESCE(inventory_value, 0) AS inventory_value
+  FROM inventory
+  WHERE tenant_id = ? AND product_id = ?
   LIMIT 1
 `);
 
@@ -2693,6 +2791,57 @@ export function createCustomer(input: CreateCustomerInput): CustomerRecord {
   return customer;
 }
 
+export function updateCustomer(input: UpdateCustomerInput): CustomerRecord {
+  const existing = getCustomerByIdStatement.get(input.tenantId, input.customerId) as CustomerRow | undefined;
+  if (!existing) {
+    throw new Error("The selected customer does not exist.");
+  }
+
+  const customer: CustomerRecord = {
+    id: existing.id,
+    tenantId: existing.tenant_id,
+    name: input.name.trim(),
+    email: input.email.trim(),
+    phone: input.phone.trim(),
+    city: input.city.trim(),
+    createdAt: existing.created_at,
+  };
+
+  updateCustomerStatement.run(
+    customer.name,
+    customer.email,
+    customer.phone,
+    customer.city,
+    customer.tenantId,
+    customer.id,
+  );
+
+  return customer;
+}
+
+export function deleteCustomer(input: DeleteCustomerInput): CustomerRecord {
+  const existing = getCustomerByIdStatement.get(input.tenantId, input.customerId) as CustomerRow | undefined;
+  if (!existing) {
+    throw new Error("The selected customer does not exist.");
+  }
+
+  const orderCount = Number(
+    (countOrdersForCustomerStatement.get(input.tenantId, input.customerId) as { count?: number } | undefined)
+      ?.count ?? 0,
+  );
+  const invoiceCount = Number(
+    (countInvoicesForCustomerStatement.get(input.tenantId, input.customerId) as { count?: number } | undefined)
+      ?.count ?? 0,
+  );
+
+  if (orderCount > 0 || invoiceCount > 0) {
+    throw new Error("The selected customer cannot be deleted because orders or invoices already reference it.");
+  }
+
+  deleteCustomerStatement.run(input.tenantId, input.customerId);
+  return mapCustomer(existing);
+}
+
 export function createSupplier(input: CreateSupplierInput): SupplierRecord {
   const supplier: SupplierRecord = {
     id: randomUUID(),
@@ -2719,6 +2868,59 @@ export function createSupplier(input: CreateSupplierInput): SupplierRecord {
   );
 
   return supplier;
+}
+
+export function updateSupplier(input: UpdateSupplierInput): SupplierRecord {
+  const existing = getSupplierByIdStatement.get(input.tenantId, input.supplierId) as SupplierRow | undefined;
+  if (!existing) {
+    throw new Error("The selected supplier does not exist.");
+  }
+
+  const supplier: SupplierRecord = {
+    id: existing.id,
+    tenantId: existing.tenant_id,
+    supplierCode: input.supplierCode.trim().toUpperCase(),
+    name: input.name.trim(),
+    email: input.email.trim(),
+    phone: input.phone.trim(),
+    city: input.city.trim(),
+    leadTimeDays: input.leadTimeDays,
+    createdAt: existing.created_at,
+  };
+
+  updateSupplierStatement.run(
+    supplier.supplierCode,
+    supplier.name,
+    supplier.email,
+    supplier.phone,
+    supplier.city,
+    supplier.leadTimeDays,
+    supplier.tenantId,
+    supplier.id,
+  );
+
+  return supplier;
+}
+
+export function deleteSupplier(input: DeleteSupplierInput): SupplierRecord {
+  const existing = getSupplierByIdStatement.get(input.tenantId, input.supplierId) as SupplierRow | undefined;
+  if (!existing) {
+    throw new Error("The selected supplier does not exist.");
+  }
+
+  const purchaseOrderCount = Number(
+    (countPurchaseOrdersForSupplierStatement.get(
+      input.tenantId,
+      input.supplierId,
+    ) as { count?: number } | undefined)?.count ?? 0,
+  );
+
+  if (purchaseOrderCount > 0) {
+    throw new Error("The selected supplier cannot be deleted because purchase orders already reference it.");
+  }
+
+  deleteSupplierStatement.run(input.tenantId, input.supplierId);
+  return mapSupplier(existing);
 }
 
 export function listProducts(tenantId: string): ProductRecord[] {
@@ -2749,6 +2951,67 @@ export function createProduct(input: CreateProductInput): ProductRecord {
   ensureInventoryRow(product.tenantId, product.id);
 
   return product;
+}
+
+export function updateProduct(input: UpdateProductInput): ProductRecord {
+  const existing = getProductByIdStatement.get(input.tenantId, input.productId) as ProductRow | undefined;
+  if (!existing) {
+    throw new Error("The selected product does not exist.");
+  }
+
+  const product: ProductRecord = {
+    id: existing.id,
+    tenantId: existing.tenant_id,
+    sku: input.sku.trim().toUpperCase(),
+    name: input.name.trim(),
+    unitPrice: input.unitPrice,
+    status: existing.status,
+    createdAt: existing.created_at,
+  };
+
+  updateProductStatement.run(
+    product.sku,
+    product.name,
+    product.unitPrice,
+    product.tenantId,
+    product.id,
+  );
+
+  return product;
+}
+
+export function deleteProduct(input: DeleteProductInput): ProductRecord {
+  const existing = getProductByIdStatement.get(input.tenantId, input.productId) as ProductRow | undefined;
+  if (!existing) {
+    throw new Error("The selected product does not exist.");
+  }
+
+  const orderCount = Number(
+    (countOrdersForProductStatement.get(input.tenantId, input.productId) as { count?: number } | undefined)
+      ?.count ?? 0,
+  );
+  const purchaseOrderCount = Number(
+    (countPurchaseOrdersForProductStatement.get(
+      input.tenantId,
+      input.productId,
+    ) as { count?: number } | undefined)?.count ?? 0,
+  );
+  const inventoryFootprint = getInventoryFootprintForProductStatement.get(
+    input.tenantId,
+    input.productId,
+  ) as { quantity_on_hand?: number; inventory_value?: number } | undefined;
+
+  if (
+    orderCount > 0 ||
+    purchaseOrderCount > 0 ||
+    Number(inventoryFootprint?.quantity_on_hand ?? 0) > 0 ||
+    Number(inventoryFootprint?.inventory_value ?? 0) > 0
+  ) {
+    throw new Error("The selected product cannot be deleted because sales, purchasing, or inventory already reference it.");
+  }
+
+  deleteProductStatement.run(input.tenantId, input.productId);
+  return mapProduct(existing);
 }
 
 export function listInventory(tenantId: string): InventoryRecord[] {

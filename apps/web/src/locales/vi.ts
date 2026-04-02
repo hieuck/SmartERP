@@ -821,3 +821,37 @@ Object.assign(vi.operations, {
   buildFeatureAsset: "Feature asset",
   buildEmpty: "Chưa có build summary nào được ghi nhận.",
 });
+
+Object.assign(vi.common, {
+  edit: "Sửa",
+  delete: "Xóa",
+  cancel: "Hủy",
+  saveChanges: "Lưu thay đổi",
+});
+
+Object.assign(vi.customers, {
+  editTitle: "Sửa khách hàng",
+  deleteConfirm: "Xóa {{name}}? Chỉ xóa được khi khách hàng này chưa bị dùng trong đơn hàng hoặc hóa đơn.",
+});
+
+Object.assign(vi.suppliers, {
+  editTitle: "Sửa nhà cung cấp",
+  deleteConfirm: "Xóa {{name}}? Chỉ xóa được khi nhà cung cấp này chưa bị dùng trong đơn mua.",
+});
+
+Object.assign(vi.products, {
+  editTitle: "Sửa sản phẩm",
+  deleteConfirm: "Xóa {{name}}? Chỉ xóa được khi sản phẩm này chưa bị dùng trong bán hàng, mua hàng, hoặc tồn kho.",
+});
+
+Object.assign(vi.errors, {
+  updateCustomerFailed: "Cập nhật khách hàng thất bại.",
+  deleteCustomerFailed: "Xóa khách hàng thất bại.",
+  updateSupplierFailed: "Cập nhật nhà cung cấp thất bại.",
+  deleteSupplierFailed: "Xóa nhà cung cấp thất bại.",
+  updateProductFailed: "Cập nhật sản phẩm thất bại.",
+  deleteProductFailed: "Xóa sản phẩm thất bại.",
+  customerDeleteBlocked: "Không thể xóa khách hàng này vì đã có đơn hàng hoặc hóa đơn tham chiếu.",
+  supplierDeleteBlocked: "Không thể xóa nhà cung cấp này vì đã có đơn mua tham chiếu.",
+  productDeleteBlocked: "Không thể xóa sản phẩm này vì đã có dữ liệu bán hàng, mua hàng, hoặc tồn kho tham chiếu.",
+});

@@ -13,6 +13,9 @@ import type {
   CreatePurchaseOrderInput,
   CreateSupplierInput,
   CreateTenantInput,
+  UpdateCustomerInput,
+  UpdateProductInput,
+  UpdateSupplierInput,
   ImportOnboardingInput,
   ImportOnboardingResult,
   ReceivePurchaseOrderInput,
@@ -26,7 +29,11 @@ import type {
 } from "@smarterp/contracts";
 
 import { submitApprovalDecision } from "../modules/approvals/api";
-import { submitCustomer } from "../modules/customers/api";
+import {
+  submitCustomer,
+  submitCustomerDelete,
+  submitCustomerUpdate,
+} from "../modules/customers/api";
 import { submitInventoryAdjustment } from "../modules/inventory/api";
 import {
   submitInvoiceCollectionResolution,
@@ -39,8 +46,16 @@ import {
   submitPurchaseOrder,
   submitPurchaseOrderReceipt,
 } from "../modules/purchase-orders/api";
-import { submitProduct } from "../modules/products/api";
-import { submitSupplier } from "../modules/suppliers/api";
+import {
+  submitProduct,
+  submitProductDelete,
+  submitProductUpdate,
+} from "../modules/products/api";
+import {
+  submitSupplier,
+  submitSupplierDelete,
+  submitSupplierUpdate,
+} from "../modules/suppliers/api";
 import {
   exportTenantSnapshotBundle,
   loadTenants,
@@ -218,6 +233,32 @@ export function createWorkspaceCommands(dependencies: WorkspaceCommandsDependenc
       );
     },
 
+    async updateCustomerRecord(input: Omit<UpdateCustomerInput, "tenantId">): Promise<void> {
+      const tenantId = getSelectedTenantIdOrThrow();
+
+      await runBusyAction(
+        { setErrorMessage, setIsBusy, setNoticeMessage },
+        "Customer update failed.",
+        async () => {
+          await submitCustomerUpdate({ ...input, tenantId });
+          await refreshTenantWorkspace(tenantId);
+        },
+      );
+    },
+
+    async deleteCustomerRecord(customerId: string): Promise<void> {
+      const tenantId = getSelectedTenantIdOrThrow();
+
+      await runBusyAction(
+        { setErrorMessage, setIsBusy, setNoticeMessage },
+        "Customer deletion failed.",
+        async () => {
+          await submitCustomerDelete({ tenantId, customerId });
+          await refreshTenantWorkspace(tenantId);
+        },
+      );
+    },
+
     async createSupplierRecord(input: Omit<CreateSupplierInput, "tenantId">): Promise<void> {
       const tenantId = getSelectedTenantIdOrThrow();
 
@@ -231,6 +272,32 @@ export function createWorkspaceCommands(dependencies: WorkspaceCommandsDependenc
       );
     },
 
+    async updateSupplierRecord(input: Omit<UpdateSupplierInput, "tenantId">): Promise<void> {
+      const tenantId = getSelectedTenantIdOrThrow();
+
+      await runBusyAction(
+        { setErrorMessage, setIsBusy, setNoticeMessage },
+        "Supplier update failed.",
+        async () => {
+          await submitSupplierUpdate({ ...input, tenantId });
+          await refreshTenantWorkspace(tenantId);
+        },
+      );
+    },
+
+    async deleteSupplierRecord(supplierId: string): Promise<void> {
+      const tenantId = getSelectedTenantIdOrThrow();
+
+      await runBusyAction(
+        { setErrorMessage, setIsBusy, setNoticeMessage },
+        "Supplier deletion failed.",
+        async () => {
+          await submitSupplierDelete({ tenantId, supplierId });
+          await refreshTenantWorkspace(tenantId);
+        },
+      );
+    },
+
     async createProductRecord(input: Omit<CreateProductInput, "tenantId">): Promise<void> {
       const tenantId = getSelectedTenantIdOrThrow();
 
@@ -239,6 +306,32 @@ export function createWorkspaceCommands(dependencies: WorkspaceCommandsDependenc
         "Product creation failed.",
         async () => {
           await submitProduct({ ...input, tenantId });
+          await refreshTenantWorkspace(tenantId);
+        },
+      );
+    },
+
+    async updateProductRecord(input: Omit<UpdateProductInput, "tenantId">): Promise<void> {
+      const tenantId = getSelectedTenantIdOrThrow();
+
+      await runBusyAction(
+        { setErrorMessage, setIsBusy, setNoticeMessage },
+        "Product update failed.",
+        async () => {
+          await submitProductUpdate({ ...input, tenantId });
+          await refreshTenantWorkspace(tenantId);
+        },
+      );
+    },
+
+    async deleteProductRecord(productId: string): Promise<void> {
+      const tenantId = getSelectedTenantIdOrThrow();
+
+      await runBusyAction(
+        { setErrorMessage, setIsBusy, setNoticeMessage },
+        "Product deletion failed.",
+        async () => {
+          await submitProductDelete({ tenantId, productId });
           await refreshTenantWorkspace(tenantId);
         },
       );

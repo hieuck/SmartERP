@@ -1,9 +1,21 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 
-import type { CreateSupplierInput, Session } from "@smarterp/contracts";
+import type {
+  CreateSupplierInput,
+  DeleteSupplierInput,
+  Session,
+  UpdateSupplierInput,
+} from "@smarterp/contracts";
 
 import { readJson, sendJson } from "../../http.js";
-import { createSupplier, hasTenant, listSuppliers, runWithSession } from "../../store.js";
+import {
+  createSupplier,
+  deleteSupplier,
+  hasTenant,
+  listSuppliers,
+  runWithSession,
+  updateSupplier,
+} from "../../store.js";
 
 function badRequest(response: ServerResponse, message: string): void {
   sendJson(response, 400, { error: message });
@@ -62,6 +74,100 @@ export async function handleCreateSupplier(
       error.message.includes("suppliers.tenant_id, suppliers.supplier_code")
     ) {
       badRequest(response, "A supplier with this code already exists for the selected tenant.");
+      return;
+    }
+
+    throw error;
+  }
+}
+
+export async function handleUpdateSupplier(
+  request: IncomingMessage,
+  response: ServerResponse,
+  requestSession: Session | null,
+): Promise<void> {
+  const input = await readJson<UpdateSupplierInput>(request);
+
+  if (!input.tenantId?.trim()) {
+    badRequest(response, "tenantId is required.");
+    return;
+  }
+
+  if (!hasTenant(input.tenantId)) {
+    badRequest(response, "The selected tenant does not exist.");
+    return;
+  }
+
+  if (!input.supplierId?.trim()) {
+    badRequest(response, "supplierId is required.");
+    return;
+  }
+
+  if (!input.supplierCode?.trim() || !input.name?.trim() || !input.email?.trim()) {
+    badRequest(response, "Supplier code, name, and email are required.");
+    return;
+  }
+
+  if (!Number.isInteger(input.leadTimeDays) || input.leadTimeDays < 0 || input.leadTimeDays > 180) {
+    badRequest(response, "Lead time days must be an integer between 0 and 180.");
+    return;
+  }
+
+  try {
+    const supplier = runWithSession(requestSession, () => updateSupplier(input));
+    sendJson(response, 200, { item: supplier });
+  } catch (error) {
+    if (error instanceof Error && error.message === "The selected supplier does not exist.") {
+      badRequest(response, error.message);
+      return;
+    }
+
+    if (
+      isSqliteConstraintError(error) &&
+      error.message.includes("suppliers.tenant_id, suppliers.supplier_code")
+    ) {
+      badRequest(response, "A supplier with this code already exists for the selected tenant.");
+      return;
+    }
+
+    throw error;
+  }
+}
+
+export async function handleDeleteSupplier(
+  request: IncomingMessage,
+  response: ServerResponse,
+  requestSession: Session | null,
+): Promise<void> {
+  const input = await readJson<DeleteSupplierInput>(request);
+
+  if (!input.tenantId?.trim()) {
+    badRequest(response, "tenantId is required.");
+    return;
+  }
+
+  if (!hasTenant(input.tenantId)) {
+    badRequest(response, "The selected tenant does not exist.");
+    return;
+  }
+
+  if (!input.supplierId?.trim()) {
+    badRequest(response, "supplierId is required.");
+    return;
+  }
+
+  try {
+    const supplier = runWithSession(requestSession, () => deleteSupplier(input));
+    sendJson(response, 200, { item: supplier });
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      (
+        error.message === "The selected supplier does not exist." ||
+        error.message === "The selected supplier cannot be deleted because purchase orders already reference it."
+      )
+    ) {
+      badRequest(response, error.message);
       return;
     }
 

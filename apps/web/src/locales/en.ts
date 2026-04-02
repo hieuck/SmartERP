@@ -816,3 +816,37 @@ Object.assign(en.operations, {
   buildFeatureAsset: "Feature asset",
   buildEmpty: "No build summary has been captured yet.",
 });
+
+Object.assign(en.common, {
+  edit: "Edit",
+  delete: "Delete",
+  cancel: "Cancel",
+  saveChanges: "Save Changes",
+});
+
+Object.assign(en.customers, {
+  editTitle: "Edit Customer",
+  deleteConfirm: "Delete {{name}}? This only works while no orders or invoices reference this customer.",
+});
+
+Object.assign(en.suppliers, {
+  editTitle: "Edit Supplier",
+  deleteConfirm: "Delete {{name}}? This only works while no purchase orders reference this supplier.",
+});
+
+Object.assign(en.products, {
+  editTitle: "Edit Product",
+  deleteConfirm: "Delete {{name}}? This only works while sales, purchasing, and inventory are still clear.",
+});
+
+Object.assign(en.errors, {
+  updateCustomerFailed: "Customer update failed.",
+  deleteCustomerFailed: "Customer deletion failed.",
+  updateSupplierFailed: "Supplier update failed.",
+  deleteSupplierFailed: "Supplier deletion failed.",
+  updateProductFailed: "Product update failed.",
+  deleteProductFailed: "Product deletion failed.",
+  customerDeleteBlocked: "This customer cannot be deleted because orders or invoices already reference it.",
+  supplierDeleteBlocked: "This supplier cannot be deleted because purchase orders already reference it.",
+  productDeleteBlocked: "This product cannot be deleted because sales, purchasing, or inventory already reference it.",
+});
