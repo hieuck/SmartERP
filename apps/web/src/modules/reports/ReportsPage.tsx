@@ -537,6 +537,17 @@ export function ReportsPage(): ReactElement {
                           {t("reports.auditReissuedToLabel")} {auditLog.metadata.reissuedToInvoiceNumber}
                         </div>
                       ) : null}
+                      {auditLog.metadata.amendmentRootInvoiceNumber ? (
+                        <div className="record-detail">
+                          {t("reports.auditAmendmentRootLabel")} {auditLog.metadata.amendmentRootInvoiceNumber}
+                        </div>
+                      ) : null}
+                      {typeof auditLog.metadata.revisionNumber === "number" ? (
+                        <div className="record-detail">
+                          {t("reports.auditRevisionLabel")}{" "}
+                          {t("invoices.revisionValue", { count: auditLog.metadata.revisionNumber })}
+                        </div>
+                      ) : null}
                       {auditLog.metadata.paymentMethod ? (
                         <div className="record-detail">
                           {t("reports.auditMethodLabel")}{" "}

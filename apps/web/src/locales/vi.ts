@@ -866,6 +866,8 @@ Object.assign(vi.purchaseOrders, {
 });
 
 Object.assign(vi.invoices, {
+  amendmentRootLabel: "Hóa đơn gốc:",
+  revisionValue: "Bản sửa đổi {{count}}",
   statusVoid: "Đã hủy hiệu lực",
   collectionVoid: "Đã hủy hiệu lực",
   voidAction: "Hủy hiệu lực",
@@ -875,6 +877,8 @@ Object.assign(vi.invoices, {
 });
 
 Object.assign(vi.reports, {
+  auditAmendmentRootLabel: "Hóa đơn gốc:",
+  auditRevisionLabel: "Bản sửa đổi:",
   auditActionInvoiceReissued: "Phát hành lại hóa đơn",
   auditActionInvoiceVoided: "Hủy hiệu lực hóa đơn",
   auditActionOrderUpdated: "Cập nhật đơn hàng",

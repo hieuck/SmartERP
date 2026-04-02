@@ -154,6 +154,9 @@ db.exec(`
     id TEXT PRIMARY KEY,
     tenant_id TEXT NOT NULL,
     invoice_number TEXT NOT NULL UNIQUE,
+    amendment_root_invoice_id TEXT NOT NULL,
+    amendment_root_invoice_number TEXT NOT NULL,
+    revision_number INTEGER NOT NULL DEFAULT 1,
     reissued_from_invoice_id TEXT,
     reissued_from_invoice_number TEXT,
     reissued_to_invoice_id TEXT,
@@ -379,6 +382,9 @@ function migrateInvoicesForActiveOrderConstraint(): void {
       id TEXT PRIMARY KEY,
       tenant_id TEXT NOT NULL,
       invoice_number TEXT NOT NULL UNIQUE,
+      amendment_root_invoice_id TEXT NOT NULL,
+      amendment_root_invoice_number TEXT NOT NULL,
+      revision_number INTEGER NOT NULL DEFAULT 1,
       reissued_from_invoice_id TEXT,
       reissued_from_invoice_number TEXT,
       reissued_to_invoice_id TEXT,
@@ -412,6 +418,9 @@ function migrateInvoicesForActiveOrderConstraint(): void {
         id,
         tenant_id,
         invoice_number,
+        amendment_root_invoice_id,
+        amendment_root_invoice_number,
+        revision_number,
         reissued_from_invoice_id,
         reissued_from_invoice_number,
         reissued_to_invoice_id,
@@ -438,6 +447,12 @@ function migrateInvoicesForActiveOrderConstraint(): void {
         id,
         tenant_id,
         invoice_number,
+        COALESCE(reissued_from_invoice_id, id),
+        COALESCE(reissued_from_invoice_number, invoice_number),
+        CASE
+          WHEN reissued_from_invoice_id IS NULL THEN 1
+          ELSE 2
+        END,
         NULL,
         NULL,
         NULL,
@@ -605,6 +620,18 @@ if (!invoiceColumns.some((column) => column.name === "due_date")) {
   db.exec("ALTER TABLE invoices ADD COLUMN due_date TEXT NOT NULL DEFAULT ''");
 }
 
+if (!invoiceColumns.some((column) => column.name === "amendment_root_invoice_id")) {
+  db.exec("ALTER TABLE invoices ADD COLUMN amendment_root_invoice_id TEXT");
+}
+
+if (!invoiceColumns.some((column) => column.name === "amendment_root_invoice_number")) {
+  db.exec("ALTER TABLE invoices ADD COLUMN amendment_root_invoice_number TEXT");
+}
+
+if (!invoiceColumns.some((column) => column.name === "revision_number")) {
+  db.exec("ALTER TABLE invoices ADD COLUMN revision_number INTEGER NOT NULL DEFAULT 1");
+}
+
 if (!invoiceColumns.some((column) => column.name === "reissued_from_invoice_id")) {
   db.exec("ALTER TABLE invoices ADD COLUMN reissued_from_invoice_id TEXT");
 }
@@ -649,6 +676,26 @@ db.exec(`
   CREATE UNIQUE INDEX IF NOT EXISTS idx_invoices_tenant_order_active_unique
   ON invoices (tenant_id, order_id)
   WHERE status <> 'void'
+`);
+
+db.exec(`
+  UPDATE invoices
+  SET amendment_root_invoice_id = COALESCE(amendment_root_invoice_id, COALESCE(reissued_from_invoice_id, id))
+  WHERE amendment_root_invoice_id IS NULL OR amendment_root_invoice_id = ''
+`);
+
+db.exec(`
+  UPDATE invoices
+  SET amendment_root_invoice_number = COALESCE(amendment_root_invoice_number, COALESCE(reissued_from_invoice_number, invoice_number))
+  WHERE amendment_root_invoice_number IS NULL OR amendment_root_invoice_number = ''
+`);
+
+db.exec(`
+  UPDATE invoices
+  SET revision_number = CASE
+    WHEN reissued_from_invoice_id IS NULL THEN COALESCE(revision_number, 1)
+    ELSE CASE WHEN COALESCE(revision_number, 1) < 2 THEN 2 ELSE revision_number END
+  END
 `);
 
 db.exec(`

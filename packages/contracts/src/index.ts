@@ -635,6 +635,8 @@ export type AuditLogMetadata = {
   outstandingAmount?: number;
   reissuedFromInvoiceNumber?: string;
   reissuedToInvoiceNumber?: string;
+  amendmentRootInvoiceNumber?: string;
+  revisionNumber?: number;
   followUpStatus?: CollectionFollowUpStatus;
   actionRequired?: CollectionActionRequired;
   promisedPaymentDate?: string | null;
@@ -665,6 +667,9 @@ export type InvoiceRecord = {
   id: string;
   tenantId: string;
   invoiceNumber: string;
+  amendmentRootInvoiceId: string;
+  amendmentRootInvoiceNumber: string;
+  revisionNumber: number;
   reissuedFromInvoiceId: string | null;
   reissuedFromInvoiceNumber: string | null;
   reissuedToInvoiceId: string | null;

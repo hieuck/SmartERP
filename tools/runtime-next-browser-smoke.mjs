@@ -545,6 +545,7 @@ async function main() {
   let invoiceVoidVerified = false;
   let invoiceReissueVerified = false;
   let invoiceReissueLineageVerified = false;
+  let invoiceRevisionLineageVerified = false;
   let invoiceReissueAuditVerified = false;
   let reissuedInvoiceVoidVerified = false;
   let voidedInvoicePaymentGuardVerified = false;
@@ -1887,6 +1888,14 @@ async function main() {
       },
     );
     assert(reissuedInvoiceResponse?.invoiceNumber, "Reissued invoice lookup did not return a new active invoice.");
+    assert(
+      reissuedInvoiceResponse?.revisionNumber === 2,
+      `Reissued invoice revision should be 2, got ${reissuedInvoiceResponse?.revisionNumber ?? "unknown"}.`,
+    );
+    assert(
+      reissuedInvoiceResponse?.amendmentRootInvoiceNumber === voidedInvoiceNumber,
+      "Reissued invoice did not retain the expected root invoice number.",
+    );
     reissuedInvoiceNumber = reissuedInvoiceResponse.invoiceNumber;
     const originalVoidedInvoiceRow = getListCard(page).locator(".record-row").filter({ hasText: voidedInvoiceNumber }).first();
     const reissuedInvoiceIssuedRow = getListCard(page).locator(".record-row").filter({ hasText: reissuedInvoiceNumber }).first();
@@ -1903,6 +1912,7 @@ async function main() {
     );
     invoiceReissueVerified = true;
     invoiceReissueLineageVerified = true;
+    invoiceRevisionLineageVerified = true;
 
     const reissuedInvoiceRowCard = getListCard(page).locator(".record-row").filter({ hasText: reissuedInvoiceNumber }).first();
     await reissuedInvoiceRowCard.locator('[data-testid="invoice-void-button"]').click();
@@ -2990,6 +3000,7 @@ async function main() {
       invoiceVoidVerified,
       invoiceReissueVerified,
       invoiceReissueLineageVerified,
+      invoiceRevisionLineageVerified,
       invoiceReissueAuditVerified,
       reissuedInvoiceVoidVerified,
       voidedInvoicePaymentGuardVerified,

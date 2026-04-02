@@ -817,6 +817,11 @@ export function InvoicesPage(): ReactElement {
                       <div className="record-detail">
                         <UserOutlined /> {invoice.customerName}
                       </div>
+                      {invoice.revisionNumber > 1 ? (
+                        <div className="record-detail">
+                          {t("invoices.amendmentRootLabel")} {invoice.amendmentRootInvoiceNumber}
+                        </div>
+                      ) : null}
                       {invoice.reissuedFromInvoiceNumber ? (
                         <div className="record-detail">
                           {t("invoices.reissuedFromLabel")} {invoice.reissuedFromInvoiceNumber}
@@ -840,6 +845,11 @@ export function InvoicesPage(): ReactElement {
                         <Tag color={getCollectionPriorityColor(invoice.collectionPriority)}>
                           {getCollectionPriorityLabel(invoice.collectionPriority, t)}
                         </Tag>{" "}
+                        {invoice.revisionNumber > 1 ? (
+                          <Tag color="purple">
+                            {t("invoices.revisionValue", { count: invoice.revisionNumber })}
+                          </Tag>
+                        ) : null}{" "}
                         {t("invoices.taxSummary", { rate: invoice.taxRatePercent })} {formatCurrency(invoice.taxAmount)}
                       </div>
                       <div className="record-detail">

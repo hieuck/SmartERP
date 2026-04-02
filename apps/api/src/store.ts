@@ -203,6 +203,9 @@ type InvoiceRow = {
   id: string;
   tenant_id: string;
   invoice_number: string;
+  amendment_root_invoice_id: string;
+  amendment_root_invoice_number: string;
+  revision_number: number;
   reissued_from_invoice_id: string | null;
   reissued_from_invoice_number: string | null;
   reissued_to_invoice_id: string | null;
@@ -1069,6 +1072,9 @@ const getLatestVoidedInvoiceForOrderStatement = db.prepare(`
     id,
     tenant_id,
     invoice_number,
+    amendment_root_invoice_id,
+    amendment_root_invoice_number,
+    revision_number,
     reissued_from_invoice_id,
     reissued_from_invoice_number,
     reissued_to_invoice_id,
@@ -1113,6 +1119,9 @@ const listInvoicesStatement = db.prepare(`
     i.id AS id,
     i.tenant_id AS tenant_id,
     i.invoice_number AS invoice_number,
+    i.amendment_root_invoice_id AS amendment_root_invoice_id,
+    i.amendment_root_invoice_number AS amendment_root_invoice_number,
+    i.revision_number AS revision_number,
     i.reissued_from_invoice_id AS reissued_from_invoice_id,
     i.reissued_from_invoice_number AS reissued_from_invoice_number,
     i.reissued_to_invoice_id AS reissued_to_invoice_id,
@@ -1144,6 +1153,9 @@ const listInvoicesStatement = db.prepare(`
     i.id,
     i.tenant_id,
     i.invoice_number,
+    i.amendment_root_invoice_id,
+    i.amendment_root_invoice_number,
+    i.revision_number,
     i.reissued_from_invoice_id,
     i.reissued_from_invoice_number,
     i.reissued_to_invoice_id,
@@ -1173,6 +1185,9 @@ const getInvoiceByIdStatement = db.prepare(`
     i.id AS id,
     i.tenant_id AS tenant_id,
     i.invoice_number AS invoice_number,
+    i.amendment_root_invoice_id AS amendment_root_invoice_id,
+    i.amendment_root_invoice_number AS amendment_root_invoice_number,
+    i.revision_number AS revision_number,
     i.reissued_from_invoice_id AS reissued_from_invoice_id,
     i.reissued_from_invoice_number AS reissued_from_invoice_number,
     i.reissued_to_invoice_id AS reissued_to_invoice_id,
@@ -1204,6 +1219,9 @@ const getInvoiceByIdStatement = db.prepare(`
     i.id,
     i.tenant_id,
     i.invoice_number,
+    i.amendment_root_invoice_id,
+    i.amendment_root_invoice_number,
+    i.revision_number,
     i.reissued_from_invoice_id,
     i.reissued_from_invoice_number,
     i.reissued_to_invoice_id,
@@ -1233,6 +1251,9 @@ const createInvoiceStatement = db.prepare(`
     id,
     tenant_id,
     invoice_number,
+    amendment_root_invoice_id,
+    amendment_root_invoice_number,
+    revision_number,
     reissued_from_invoice_id,
     reissued_from_invoice_number,
     reissued_to_invoice_id,
@@ -1255,7 +1276,7 @@ const createInvoiceStatement = db.prepare(`
     collection_note,
     last_collection_update_at
   )
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `);
 
 const updateInvoiceStatusStatement = db.prepare(`
@@ -2067,6 +2088,9 @@ function mapInvoice(row: InvoiceRow): InvoiceRecord {
     id: row.id,
     tenantId: row.tenant_id,
     invoiceNumber: row.invoice_number,
+    amendmentRootInvoiceId: row.amendment_root_invoice_id,
+    amendmentRootInvoiceNumber: row.amendment_root_invoice_number,
+    revisionNumber: row.revision_number,
     reissuedFromInvoiceId: row.reissued_from_invoice_id,
     reissuedFromInvoiceNumber: row.reissued_from_invoice_number,
     reissuedToInvoiceId: row.reissued_to_invoice_id,
@@ -4393,11 +4417,19 @@ function createInvoiceInternal(input: CreateInvoiceInput): InvoiceRecord {
   const dueDate = addBusinessDays(issuedAt, input.paymentTermDays);
   const daysUntilDue = getCalendarDayDifference(new Date(), dueDate);
   const outstandingAmount = subtotalAmount + taxAmount;
+  const amendmentRootInvoiceId = priorVoidedInvoice?.amendment_root_invoice_id ?? randomUUID();
+  const amendmentRootInvoiceNumber = priorVoidedInvoice?.amendment_root_invoice_number ?? createInvoiceNumber();
+  const invoiceId = priorVoidedInvoice?.id ? randomUUID() : amendmentRootInvoiceId;
+  const invoiceNumber = priorVoidedInvoice?.invoice_number ? createInvoiceNumber() : amendmentRootInvoiceNumber;
+  const revisionNumber = priorVoidedInvoice ? Math.max(priorVoidedInvoice.revision_number, 1) + 1 : 1;
 
   const invoice: InvoiceRecord = {
-    id: randomUUID(),
+    id: invoiceId,
     tenantId: input.tenantId,
-    invoiceNumber: createInvoiceNumber(),
+    invoiceNumber,
+    amendmentRootInvoiceId,
+    amendmentRootInvoiceNumber,
+    revisionNumber,
     reissuedFromInvoiceId: priorVoidedInvoice?.id ?? null,
     reissuedFromInvoiceNumber: priorVoidedInvoice?.invoice_number ?? null,
     reissuedToInvoiceId: null,
@@ -4437,6 +4469,9 @@ function createInvoiceInternal(input: CreateInvoiceInput): InvoiceRecord {
       invoice.id,
       invoice.tenantId,
       invoice.invoiceNumber,
+      invoice.amendmentRootInvoiceId,
+      invoice.amendmentRootInvoiceNumber,
+      invoice.revisionNumber,
       invoice.reissuedFromInvoiceId,
       invoice.reissuedFromInvoiceNumber,
       invoice.reissuedToInvoiceId,
@@ -4495,6 +4530,8 @@ function createInvoiceInternal(input: CreateInvoiceInput): InvoiceRecord {
       metadata: {
         amount: invoice.totalAmount,
         outstandingAmount: invoice.outstandingAmount,
+        amendmentRootInvoiceNumber: invoice.amendmentRootInvoiceNumber,
+        revisionNumber: invoice.revisionNumber,
         reissuedFromInvoiceNumber: invoice.reissuedFromInvoiceNumber ?? undefined,
         note: `Due ${invoice.dueDate}`,
       },
