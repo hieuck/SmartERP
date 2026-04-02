@@ -3884,6 +3884,13 @@ function createInvoiceInternal(input: CreateInvoiceInput): InvoiceRecord {
     throw new Error("Payment term days must be an integer between 0 and 365.");
   }
 
+  const activeInvoiceCount = Number(
+    (countInvoicesForOrderStatement.get(input.tenantId, input.orderId) as { count?: number } | undefined)?.count ?? 0,
+  );
+  if (activeInvoiceCount > 0) {
+    throw new Error("An invoice already exists for the selected order.");
+  }
+
   const subtotalAmount = order.total_amount;
   const taxAmount = Math.round((subtotalAmount * input.taxRatePercent) / 100);
   const issuedAt = createBusinessTimestamp(input.issueDate);

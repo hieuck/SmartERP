@@ -99,7 +99,8 @@ export async function handleCreateInvoice(
     if (error instanceof Error) {
       if (
         error.message === "The selected order does not exist." ||
-        error.message === "Only confirmed orders can be invoiced."
+        error.message === "Only confirmed orders can be invoiced." ||
+        error.message === "An invoice already exists for the selected order."
       ) {
         badRequest(response, error.message);
         return;
@@ -116,7 +117,10 @@ export async function handleCreateInvoice(
       }
 
       if (isSqliteConstraintError(error)) {
-        if (error.message.includes("invoices.order_id")) {
+        if (
+          error.message.includes("invoices.order_id") ||
+          error.message.includes("idx_invoices_tenant_order_active_unique")
+        ) {
           badRequest(response, "An invoice already exists for the selected order.");
           return;
         }

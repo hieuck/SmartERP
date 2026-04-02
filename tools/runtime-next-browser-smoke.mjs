@@ -489,6 +489,7 @@ async function main() {
   let secondInvoiceNumber = "";
   let voidedOrderNumber = "";
   let voidedInvoiceNumber = "";
+  let reissuedInvoiceNumber = "";
   let purchaseOrderNumber = "";
   let invalidLoginVerified = false;
   let staleSessionRejectedVerified = false;
@@ -526,6 +527,8 @@ async function main() {
   let partialSettlementVerified = false;
   let finalSettlementVerified = false;
   let invoiceVoidVerified = false;
+  let invoiceReissueVerified = false;
+  let reissuedInvoiceVoidVerified = false;
   let voidedInvoicePaymentGuardVerified = false;
   let voidedInvoiceCollectionGuardVerified = false;
   let voidedInvoiceOrderCancellationVerified = false;
@@ -1572,6 +1575,61 @@ async function main() {
     );
     voidedInvoiceCollectionGuardVerified = true;
 
+    await waitForFormReady(issueInvoiceCard);
+    await selectOption(page, issueInvoiceCard.getByRole("combobox", { name: /Đơn hàng/ }), voidedOrderNumber);
+    await fillField(issueInvoiceCard, "#issueDate", firstIssueDateInput);
+    await fillField(issueInvoiceCard, "#paymentTermDays", firstPaymentTermDays);
+    await fillField(issueInvoiceCard, "#taxRatePercent", taxRate);
+    await clickSubmit(issueInvoiceCard);
+    const reissuedInvoiceRow = getListCard(page).locator(".record-row").filter({ hasText: voidedOrderNumber }).first();
+    await reissuedInvoiceRow.waitFor({ timeout: 15000 });
+    const reissuedInvoiceResponse = await page.evaluate(
+      async ({ targetOrderNumber, targetVoidedInvoiceNumber, sessionKey, tenantKey }) => {
+        const rawSession = window.localStorage.getItem(sessionKey);
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
+        const headers = {
+          authorization: `Bearer ${accessToken}`,
+        };
+
+        const response = await fetch(`/api/invoices?tenantId=${encodeURIComponent(tenantId ?? "")}`, {
+          headers,
+        });
+        const payload = await response.json();
+        const reissued = payload.items.find(
+          (item) =>
+            item.orderNumber === targetOrderNumber &&
+            item.status === "issued" &&
+            item.invoiceNumber !== targetVoidedInvoiceNumber,
+        );
+
+        return reissued ?? null;
+      },
+      {
+        targetOrderNumber: voidedOrderNumber,
+        targetVoidedInvoiceNumber: voidedInvoiceNumber,
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+      },
+    );
+    assert(reissuedInvoiceResponse?.invoiceNumber, "Reissued invoice lookup did not return a new active invoice.");
+    reissuedInvoiceNumber = reissuedInvoiceResponse.invoiceNumber;
+    await getListCard(page)
+      .locator(".record-row")
+      .filter({ hasText: reissuedInvoiceNumber })
+      .first()
+      .getByText("Đã phát hành", { exact: false })
+      .waitFor({ timeout: 15000 });
+    invoiceReissueVerified = true;
+
+    const reissuedInvoiceRowCard = getListCard(page).locator(".record-row").filter({ hasText: reissuedInvoiceNumber }).first();
+    await reissuedInvoiceRowCard.locator('[data-testid="invoice-void-button"]').click();
+    await page.getByRole("button", { name: /Hủy hiệu lực|Huy hieu luc/ }).last().click();
+    await reissuedInvoiceRowCard.getByText(/Đã hủy hiệu lực|Da huy hieu luc/, { exact: false }).first().waitFor({
+      timeout: 15000,
+    });
+    reissuedInvoiceVoidVerified = true;
+
     await openSection(page, sidebarIndexes.orders, "/dashboard/orders");
     await waitForTenantContext(page, tenantName);
     const cancelVoidedOrderRow = getListCard(page).locator(".record-row").filter({ hasText: voidedOrderNumber }).first();
@@ -2523,6 +2581,7 @@ async function main() {
       secondInvoiceNumber,
       voidedOrderNumber,
       voidedInvoiceNumber,
+      reissuedInvoiceNumber,
       invalidLoginVerified,
       staleSessionRejectedVerified,
       loginReloadVerified: true,
@@ -2560,6 +2619,8 @@ async function main() {
       partialSettlementVerified,
       finalSettlementVerified,
       invoiceVoidVerified,
+      invoiceReissueVerified,
+      reissuedInvoiceVoidVerified,
       voidedInvoicePaymentGuardVerified,
       voidedInvoiceCollectionGuardVerified,
       voidedInvoiceOrderCancellationVerified,

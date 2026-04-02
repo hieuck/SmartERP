@@ -311,6 +311,276 @@ db.exec(`
   ON audit_logs (tenant_id, domain, created_at DESC);
 `);
 
+function getTableSql(name: string): string | null {
+  const row = db
+    .prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?")
+    .get(name) as { sql?: string } | undefined;
+
+  return row?.sql ?? null;
+}
+
+function tableExists(name: string): boolean {
+  return Boolean(getTableSql(name));
+}
+
+function migrateInvoicesForActiveOrderConstraint(): void {
+  const invoiceTableSql = getTableSql("invoices");
+  const invoicePaymentsTableSql = getTableSql("invoice_payments");
+  const collectionActivityTableSql = getTableSql("invoice_collection_activities");
+
+  const needsInvoiceOrderConstraintRepair = invoiceTableSql?.includes("order_id TEXT NOT NULL UNIQUE") ?? false;
+  const needsInvoicePaymentsReferenceRepair =
+    invoicePaymentsTableSql?.includes('"invoices_legacy"') ?? false;
+  const needsCollectionActivityReferenceRepair =
+    collectionActivityTableSql?.includes('"invoices_legacy"') ?? false;
+
+  if (
+    !needsInvoiceOrderConstraintRepair &&
+    !needsInvoicePaymentsReferenceRepair &&
+    !needsCollectionActivityReferenceRepair
+  ) {
+    return;
+  }
+
+  const hasInvoices = tableExists("invoices");
+  const hasInvoicePayments = tableExists("invoice_payments");
+  const hasCollectionActivities = tableExists("invoice_collection_activities");
+
+  db.exec(`
+    PRAGMA foreign_keys = OFF;
+    BEGIN;
+
+    DROP INDEX IF EXISTS idx_invoices_tenant_issued_at;
+    DROP INDEX IF EXISTS idx_invoices_tenant_order_active_unique;
+    DROP INDEX IF EXISTS idx_invoice_payments_tenant_paid_at;
+    DROP INDEX IF EXISTS idx_invoice_payments_invoice;
+    DROP INDEX IF EXISTS idx_invoice_collection_activities_tenant_created_at;
+    DROP INDEX IF EXISTS idx_invoice_collection_activities_invoice;
+  `);
+
+  if (hasCollectionActivities) {
+    db.exec("ALTER TABLE invoice_collection_activities RENAME TO invoice_collection_activities_reissue_legacy");
+  }
+
+  if (hasInvoicePayments) {
+    db.exec("ALTER TABLE invoice_payments RENAME TO invoice_payments_reissue_legacy");
+  }
+
+  if (hasInvoices) {
+    db.exec("ALTER TABLE invoices RENAME TO invoices_reissue_legacy");
+  }
+
+  db.exec(`
+    CREATE TABLE invoices (
+      id TEXT PRIMARY KEY,
+      tenant_id TEXT NOT NULL,
+      invoice_number TEXT NOT NULL UNIQUE,
+      order_id TEXT NOT NULL,
+      order_number TEXT NOT NULL,
+      customer_id TEXT NOT NULL,
+      customer_name TEXT NOT NULL,
+      subtotal_amount INTEGER NOT NULL,
+      tax_rate_percent INTEGER NOT NULL,
+      tax_amount INTEGER NOT NULL,
+      total_amount INTEGER NOT NULL,
+      status TEXT NOT NULL,
+      issued_at TEXT NOT NULL,
+      due_date TEXT NOT NULL DEFAULT '',
+      follow_up_status TEXT NOT NULL DEFAULT 'new',
+      action_required TEXT NOT NULL DEFAULT 'monitor',
+      promised_payment_date TEXT,
+      next_action_date TEXT,
+      collection_note TEXT NOT NULL DEFAULT '',
+      last_collection_update_at TEXT,
+      FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+      FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+      FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
+    );
+  `);
+
+  if (hasInvoices) {
+    db.exec(`
+      INSERT INTO invoices (
+        id,
+        tenant_id,
+        invoice_number,
+        order_id,
+        order_number,
+        customer_id,
+        customer_name,
+        subtotal_amount,
+        tax_rate_percent,
+        tax_amount,
+        total_amount,
+        status,
+        issued_at,
+        due_date,
+        follow_up_status,
+        action_required,
+        promised_payment_date,
+        next_action_date,
+        collection_note,
+        last_collection_update_at
+      )
+      SELECT
+        id,
+        tenant_id,
+        invoice_number,
+        order_id,
+        order_number,
+        customer_id,
+        customer_name,
+        subtotal_amount,
+        tax_rate_percent,
+        tax_amount,
+        total_amount,
+        status,
+        issued_at,
+        due_date,
+        follow_up_status,
+        action_required,
+        promised_payment_date,
+        next_action_date,
+        collection_note,
+        last_collection_update_at
+      FROM invoices_reissue_legacy;
+    `);
+  }
+
+  db.exec(`
+    CREATE TABLE invoice_payments (
+      id TEXT PRIMARY KEY,
+      tenant_id TEXT NOT NULL,
+      invoice_id TEXT NOT NULL,
+      invoice_number TEXT NOT NULL,
+      amount INTEGER NOT NULL,
+      method TEXT NOT NULL,
+      paid_at TEXT NOT NULL,
+      FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+      FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE CASCADE
+    );
+  `);
+
+  if (hasInvoicePayments) {
+    db.exec(`
+      INSERT INTO invoice_payments (
+        id,
+        tenant_id,
+        invoice_id,
+        invoice_number,
+        amount,
+        method,
+        paid_at
+      )
+      SELECT
+        id,
+        tenant_id,
+        invoice_id,
+        invoice_number,
+        amount,
+        method,
+        paid_at
+      FROM invoice_payments_reissue_legacy;
+    `);
+  }
+
+  db.exec(`
+    CREATE TABLE invoice_collection_activities (
+      id TEXT PRIMARY KEY,
+      tenant_id TEXT NOT NULL,
+      invoice_id TEXT NOT NULL,
+      invoice_number TEXT NOT NULL,
+      customer_id TEXT NOT NULL,
+      customer_name TEXT NOT NULL,
+      follow_up_status TEXT NOT NULL,
+      collection_priority TEXT NOT NULL,
+      action_required TEXT NOT NULL,
+      promised_payment_date TEXT,
+      next_action_date TEXT,
+      collection_note TEXT NOT NULL DEFAULT '',
+      outstanding_amount_snapshot INTEGER NOT NULL,
+      action_state TEXT NOT NULL DEFAULT 'assigned',
+      created_at TEXT NOT NULL,
+      FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+      FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE CASCADE,
+      FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
+    );
+  `);
+
+  if (hasCollectionActivities) {
+    db.exec(`
+      INSERT INTO invoice_collection_activities (
+        id,
+        tenant_id,
+        invoice_id,
+        invoice_number,
+        customer_id,
+        customer_name,
+        follow_up_status,
+        collection_priority,
+        action_required,
+        promised_payment_date,
+        next_action_date,
+        collection_note,
+        outstanding_amount_snapshot,
+        action_state,
+        created_at
+      )
+      SELECT
+        id,
+        tenant_id,
+        invoice_id,
+        invoice_number,
+        customer_id,
+        customer_name,
+        follow_up_status,
+        collection_priority,
+        action_required,
+        promised_payment_date,
+        next_action_date,
+        collection_note,
+        outstanding_amount_snapshot,
+        action_state,
+        created_at
+      FROM invoice_collection_activities_reissue_legacy;
+    `);
+  }
+
+  if (hasCollectionActivities) {
+    db.exec("DROP TABLE invoice_collection_activities_reissue_legacy");
+  }
+
+  if (hasInvoicePayments) {
+    db.exec("DROP TABLE invoice_payments_reissue_legacy");
+  }
+
+  if (hasInvoices) {
+    db.exec("DROP TABLE invoices_reissue_legacy");
+  }
+
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_invoices_tenant_issued_at
+    ON invoices (tenant_id, issued_at DESC);
+
+    CREATE INDEX IF NOT EXISTS idx_invoice_payments_tenant_paid_at
+    ON invoice_payments (tenant_id, paid_at DESC);
+
+    CREATE INDEX IF NOT EXISTS idx_invoice_payments_invoice
+    ON invoice_payments (invoice_id, paid_at DESC);
+
+    CREATE INDEX IF NOT EXISTS idx_invoice_collection_activities_tenant_created_at
+    ON invoice_collection_activities (tenant_id, created_at DESC);
+
+    CREATE INDEX IF NOT EXISTS idx_invoice_collection_activities_invoice
+    ON invoice_collection_activities (invoice_id, created_at DESC);
+
+    COMMIT;
+    PRAGMA foreign_keys = ON;
+  `);
+}
+
+migrateInvoicesForActiveOrderConstraint();
+
 const invoiceColumns = db
   .prepare("PRAGMA table_info(invoices)")
   .all() as Array<{ name: string }>;
@@ -342,6 +612,12 @@ if (!invoiceColumns.some((column) => column.name === "collection_note")) {
 if (!invoiceColumns.some((column) => column.name === "last_collection_update_at")) {
   db.exec("ALTER TABLE invoices ADD COLUMN last_collection_update_at TEXT");
 }
+
+db.exec(`
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_invoices_tenant_order_active_unique
+  ON invoices (tenant_id, order_id)
+  WHERE status <> 'void'
+`);
 
 db.exec(`
   UPDATE invoices
