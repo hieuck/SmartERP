@@ -49,7 +49,7 @@ export const onboardingDatasets = [
 export const onboardingCsvTemplates: Record<OnboardingDataset, string> = {
   customers: "name,email,phone,city\nTran Minh Trading,buyer@tranminh.vn,+84 90 123 4567,Ho Chi Minh City",
   suppliers: "supplierCode,name,email,phone,city,leadTimeDays\nSUP-ALPHA,Alpha Packaging,ops@alphapack.example,+84 28 5555 0000,Binh Duong,7",
-  products: "sku,name,unitPrice\nNW-PET-001,PET Bottle 1L,25000",
+  products: "name,category,unitPrice,sku\nPET Bottle 1L,Bottles,25000,",
 };
 
 export const rewriteMessage =
@@ -334,9 +334,35 @@ export type CustomerStatementRecord = {
   lastInvoiceAt: string | null;
 };
 
+export type ProductCategoryRecord = {
+  id: string;
+  tenantId: string;
+  name: string;
+  slug: string;
+  createdAt: string;
+};
+
+export type CreateProductCategoryInput = {
+  tenantId: string;
+  name: string;
+};
+
+export type UpdateProductCategoryInput = {
+  tenantId: string;
+  categoryId: string;
+  name: string;
+};
+
+export type DeleteProductCategoryInput = {
+  tenantId: string;
+  categoryId: string;
+};
+
 export type ProductRecord = {
   id: string;
   tenantId: string;
+  categoryId: string;
+  categoryName: string;
   sku: string;
   name: string;
   unitPrice: number;
@@ -346,7 +372,8 @@ export type ProductRecord = {
 
 export type CreateProductInput = {
   tenantId: string;
-  sku: string;
+  categoryId: string;
+  sku?: string;
   name: string;
   unitPrice: number;
 };
@@ -354,7 +381,8 @@ export type CreateProductInput = {
 export type UpdateProductInput = {
   tenantId: string;
   productId: string;
-  sku: string;
+  categoryId: string;
+  sku?: string;
   name: string;
   unitPrice: number;
 };
@@ -799,6 +827,7 @@ export type TenantExportBundle = {
   exportedAt: string;
   customers: CustomerRecord[];
   suppliers: SupplierRecord[];
+  productCategories: ProductCategoryRecord[];
   products: ProductRecord[];
   inventories: InventoryRecord[];
   orders: OrderRecord[];

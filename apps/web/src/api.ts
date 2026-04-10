@@ -19,9 +19,11 @@ import type {
   CreateInventoryAdjustmentInput,
   CreateOrderInput,
   CreatePurchaseOrderInput,
+  CreateProductCategoryInput,
   ReceivePurchaseOrderInput,
   ReceivePurchaseOrderResult,
   CreateProductInput,
+  DeleteProductCategoryInput,
   DeleteCustomerInput,
   DeleteProductInput,
   DeleteSupplierInput,
@@ -41,6 +43,7 @@ import type {
   OperationsStatusPayload,
   OrderRecord,
   PurchaseOrderRecord,
+  ProductCategoryRecord,
   ProductRecord,
   ReportSummary,
   Session,
@@ -53,6 +56,7 @@ import type {
   UpdateCustomerInput,
   UpdateOrderInput,
   UpdatePurchaseOrderInput,
+  UpdateProductCategoryInput,
   UpdateProductInput,
   UpdateSupplierInput,
 } from "@smarterp/contracts";
@@ -234,6 +238,37 @@ export async function listProducts(tenantId: string): Promise<ProductRecord[]> {
     `/api/products?tenantId=${encodeURIComponent(tenantId)}`,
   );
   return payload.items;
+}
+
+export async function listProductCategories(tenantId: string): Promise<ProductCategoryRecord[]> {
+  const payload = await request<{ items: ProductCategoryRecord[] }>(
+    `/api/product-categories?tenantId=${encodeURIComponent(tenantId)}`,
+  );
+  return payload.items;
+}
+
+export async function createProductCategory(input: CreateProductCategoryInput): Promise<ProductCategoryRecord> {
+  const payload = await request<{ item: ProductCategoryRecord }>("/api/product-categories", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  return payload.item;
+}
+
+export async function updateProductCategory(input: UpdateProductCategoryInput): Promise<ProductCategoryRecord> {
+  const payload = await request<{ item: ProductCategoryRecord }>("/api/product-categories/update", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  return payload.item;
+}
+
+export async function deleteProductCategory(input: DeleteProductCategoryInput): Promise<ProductCategoryRecord> {
+  const payload = await request<{ item: ProductCategoryRecord }>("/api/product-categories/delete", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  return payload.item;
 }
 
 export async function createProduct(input: CreateProductInput): Promise<ProductRecord> {

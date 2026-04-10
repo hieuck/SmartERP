@@ -29,6 +29,7 @@ import type {
   LoginInput,
   OrderRecord,
   Permission,
+  ProductCategoryRecord,
   PurchaseOrderRecord,
   ProductRecord,
   ReceivePurchaseOrderInput,
@@ -69,6 +70,7 @@ export type WorkspaceContextValue = {
   suppliers: SupplierRecord[];
   customerStatements: CustomerStatementRecord[];
   collectionActivities: InvoiceCollectionActivityRecord[];
+  productCategories: ProductCategoryRecord[];
   products: ProductRecord[];
   inventories: InventoryRecord[];
   orders: OrderRecord[];
@@ -94,6 +96,9 @@ export type WorkspaceContextValue = {
   createSupplierRecord: (input: Omit<CreateSupplierInput, "tenantId">) => Promise<void>;
   updateSupplierRecord: (input: Omit<UpdateSupplierInput, "tenantId">) => Promise<void>;
   deleteSupplierRecord: (supplierId: string) => Promise<void>;
+  createProductCategoryRecord: (name: string) => Promise<void>;
+  updateProductCategoryRecord: (categoryId: string, name: string) => Promise<void>;
+  deleteProductCategoryRecord: (categoryId: string) => Promise<void>;
   createProductRecord: (input: Omit<CreateProductInput, "tenantId">) => Promise<void>;
   updateProductRecord: (input: Omit<UpdateProductInput, "tenantId">) => Promise<void>;
   deleteProductRecord: (productId: string) => Promise<void>;

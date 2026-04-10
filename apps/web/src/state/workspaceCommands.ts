@@ -16,6 +16,7 @@ import type {
   CreateInvoicePaymentInput,
   VoidInvoiceInput,
   CreateOrderInput,
+  CreateProductCategoryInput,
   CreateProductInput,
   CreatePurchaseOrderInput,
   CreateSupplierInput,
@@ -23,6 +24,7 @@ import type {
   UpdateCustomerInput,
   UpdateOrderInput,
   UpdatePurchaseOrderInput,
+  UpdateProductCategoryInput,
   UpdateProductInput,
   UpdateSupplierInput,
   ImportOnboardingInput,
@@ -67,6 +69,9 @@ import {
   submitPurchaseOrderUpdate,
 } from "../modules/purchase-orders/api";
 import {
+  submitProductCategory,
+  submitProductCategoryDelete,
+  submitProductCategoryUpdate,
   submitProduct,
   submitProductDelete,
   submitProductUpdate,
@@ -313,6 +318,45 @@ export function createWorkspaceCommands(dependencies: WorkspaceCommandsDependenc
         "Supplier deletion failed.",
         async () => {
           await submitSupplierDelete({ tenantId, supplierId });
+          await refreshTenantWorkspace(tenantId);
+          },
+        );
+      },
+
+    async createProductCategoryRecord(name: string): Promise<void> {
+      const tenantId = getSelectedTenantIdOrThrow();
+
+      await runBusyAction(
+        { setErrorMessage, setIsBusy, setNoticeMessage },
+        "Product category creation failed.",
+        async () => {
+          await submitProductCategory({ tenantId, name });
+          await refreshTenantWorkspace(tenantId);
+        },
+      );
+    },
+
+    async updateProductCategoryRecord(categoryId: string, name: string): Promise<void> {
+      const tenantId = getSelectedTenantIdOrThrow();
+
+      await runBusyAction(
+        { setErrorMessage, setIsBusy, setNoticeMessage },
+        "Product category update failed.",
+        async () => {
+          await submitProductCategoryUpdate({ tenantId, categoryId, name });
+          await refreshTenantWorkspace(tenantId);
+        },
+      );
+    },
+
+    async deleteProductCategoryRecord(categoryId: string): Promise<void> {
+      const tenantId = getSelectedTenantIdOrThrow();
+
+      await runBusyAction(
+        { setErrorMessage, setIsBusy, setNoticeMessage },
+        "Product category deletion failed.",
+        async () => {
+          await submitProductCategoryDelete({ tenantId, categoryId });
           await refreshTenantWorkspace(tenantId);
         },
       );

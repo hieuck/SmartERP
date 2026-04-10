@@ -33,9 +33,11 @@ import {
   type CreateInventoryAdjustmentInput,
   type CreateOrderInput,
   type CreatePurchaseOrderInput,
+  type CreateProductCategoryInput,
   type ReceivePurchaseOrderInput,
   type ReceivePurchaseOrderResult,
   type CreateProductInput,
+  type DeleteProductCategoryInput,
   type DeleteProductInput,
   type CreateSupplierInput,
   type DeleteSupplierInput,
@@ -60,6 +62,7 @@ import {
   type PurchaseOrderReceiptRecord,
   type PurchaseOrderRecord,
   type PurchaseOrderStatus,
+  type ProductCategoryRecord,
   type ProductRecord,
   type ReportSummary,
   type OperationsTenantStatusRecord,
@@ -72,6 +75,7 @@ import {
   type UpdateCustomerInput,
   type UpdateOrderInput,
   type UpdatePurchaseOrderInput,
+  type UpdateProductCategoryInput,
   type UpdateProductInput,
   type UpdateSupplierInput,
 } from "@smarterp/contracts";
@@ -108,9 +112,19 @@ type SupplierRow = {
   created_at: string;
 };
 
+type ProductCategoryRow = {
+  id: string;
+  tenant_id: string;
+  name: string;
+  slug: string;
+  created_at: string;
+};
+
 type ProductRow = {
   id: string;
   tenant_id: string;
+  category_id: string;
+  category_name: string;
   sku: string;
   name: string;
   unit_price: number;
@@ -746,20 +760,82 @@ const getCustomerForOrderStatement = db.prepare(`
   LIMIT 1
 `);
 
-const listProductsStatement = db.prepare(`
-  SELECT id, tenant_id, sku, name, unit_price, status, created_at
+const listProductCategoriesStatement = db.prepare(`
+  SELECT id, tenant_id, name, slug, created_at
+  FROM product_categories
+  WHERE tenant_id = ?
+  ORDER BY name COLLATE NOCASE ASC, datetime(created_at) ASC, rowid ASC
+`);
+
+const createProductCategoryStatement = db.prepare(`
+  INSERT INTO product_categories (id, tenant_id, name, slug, created_at)
+  VALUES (?, ?, ?, ?, ?)
+`);
+
+const getProductCategoryByIdStatement = db.prepare(`
+  SELECT id, tenant_id, name, slug, created_at
+  FROM product_categories
+  WHERE tenant_id = ? AND id = ?
+  LIMIT 1
+`);
+
+const getProductCategoryBySlugStatement = db.prepare(`
+  SELECT id, tenant_id, name, slug, created_at
+  FROM product_categories
+  WHERE tenant_id = ? AND slug = ?
+  LIMIT 1
+`);
+
+const updateProductCategoryStatement = db.prepare(`
+  UPDATE product_categories
+  SET name = ?, slug = ?
+  WHERE tenant_id = ? AND id = ?
+`);
+
+const updateProductsForCategoryStatement = db.prepare(`
+  UPDATE products
+  SET category_name = ?
+  WHERE tenant_id = ? AND category_id = ?
+`);
+
+const deleteProductCategoryStatement = db.prepare(`
+  DELETE FROM product_categories
+  WHERE tenant_id = ? AND id = ?
+`);
+
+const countProductsForCategoryStatement = db.prepare(`
+  SELECT COUNT(*) AS count
+  FROM products
+  WHERE tenant_id = ? AND category_id = ?
+`);
+
+const countProductsForTenantStatement = db.prepare(`
+  SELECT COUNT(*) AS count
   FROM products
   WHERE tenant_id = ?
-  ORDER BY datetime(created_at) DESC, rowid DESC
+`);
+
+const getProductBySkuStatement = db.prepare(`
+  SELECT id, tenant_id, category_id, category_name, sku, name, unit_price, status, created_at
+  FROM products
+  WHERE tenant_id = ? AND sku = ?
+  LIMIT 1
+`);
+
+const listProductsStatement = db.prepare(`
+  SELECT id, tenant_id, category_id, category_name, sku, name, unit_price, status, created_at
+  FROM products
+  WHERE tenant_id = ?
+  ORDER BY category_name COLLATE NOCASE ASC, name COLLATE NOCASE ASC, datetime(created_at) DESC, rowid DESC
 `);
 
 const createProductStatement = db.prepare(`
-  INSERT INTO products (id, tenant_id, sku, name, unit_price, status, created_at)
-  VALUES (?, ?, ?, ?, ?, ?, ?)
+  INSERT INTO products (id, tenant_id, category_id, category_name, sku, name, unit_price, status, created_at)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 `);
 
 const getProductByIdStatement = db.prepare(`
-  SELECT id, tenant_id, sku, name, unit_price, status, created_at
+  SELECT id, tenant_id, category_id, category_name, sku, name, unit_price, status, created_at
   FROM products
   WHERE tenant_id = ? AND id = ?
   LIMIT 1
@@ -768,9 +844,17 @@ const getProductByIdStatement = db.prepare(`
 const updateProductStatement = db.prepare(`
   UPDATE products
   SET
+    category_id = ?,
+    category_name = ?,
     sku = ?,
     name = ?,
     unit_price = ?
+  WHERE tenant_id = ? AND id = ?
+`);
+
+const updateProductCategoryAssignmentStatement = db.prepare(`
+  UPDATE products
+  SET category_id = ?, category_name = ?
   WHERE tenant_id = ? AND id = ?
 `);
 
@@ -1862,6 +1946,16 @@ function mapSupplier(row: SupplierRow): SupplierRecord {
   };
 }
 
+function mapProductCategory(row: ProductCategoryRow): ProductCategoryRecord {
+  return {
+    id: row.id,
+    tenantId: row.tenant_id,
+    name: row.name,
+    slug: row.slug,
+    createdAt: row.created_at,
+  };
+}
+
 function mapCustomerStatement(row: CustomerStatementRow): CustomerStatementRecord {
   return {
     customerId: row.customer_id,
@@ -1886,6 +1980,8 @@ function mapProduct(row: ProductRow): ProductRecord {
   return {
     id: row.id,
     tenantId: row.tenant_id,
+    categoryId: row.category_id,
+    categoryName: row.category_name,
     sku: row.sku,
     name: row.name,
     unitPrice: row.unit_price,
@@ -2513,6 +2609,7 @@ export function createTenant(input: CreateTenantInput): TenantRecord {
   );
 
   ensureDefaultAccounts(tenant.id);
+  ensureDefaultProductCategory(tenant.id);
 
   return tenant;
 }
@@ -2520,6 +2617,140 @@ export function createTenant(input: CreateTenantInput): TenantRecord {
 export function hasTenant(tenantId: string): boolean {
   return Boolean(hasTenantStatement.get(tenantId));
 }
+
+function slugifyCategoryName(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 32);
+}
+
+function buildProductSkuPrefix(categorySlug: string): string {
+  const normalized = categorySlug.replace(/[^a-z0-9]/gi, "").toUpperCase();
+  return (normalized.slice(0, 4) || "PRD").padEnd(3, "X");
+}
+
+function createGeneratedProductSku(tenantId: string, categorySlug: string): string {
+  const prefix = buildProductSkuPrefix(categorySlug);
+  const baseCount = Number(
+    (countProductsForTenantStatement.get(tenantId) as { count?: number } | undefined)?.count ?? 0,
+  );
+
+  for (let attempt = 0; attempt < 5000; attempt += 1) {
+    const candidate = `${prefix}-${String(baseCount + attempt + 1).padStart(4, "0")}`;
+    const existing = getProductBySkuStatement.get(tenantId, candidate) as ProductRow | undefined;
+
+    if (!existing) {
+      return candidate;
+    }
+  }
+
+  throw new Error("Unable to generate a unique SKU for this tenant.");
+}
+
+function ensureDefaultProductCategory(tenantId: string): ProductCategoryRecord {
+  const existing = getProductCategoryBySlugStatement.get(tenantId, "general") as
+    | ProductCategoryRow
+    | undefined;
+  if (existing) {
+    return mapProductCategory(existing);
+  }
+
+  const category: ProductCategoryRecord = {
+    id: randomUUID(),
+    tenantId,
+    name: "General",
+    slug: "general",
+    createdAt: timestamp(),
+  };
+
+  createProductCategoryStatement.run(
+    category.id,
+    category.tenantId,
+    category.name,
+    category.slug,
+    category.createdAt,
+  );
+
+  return category;
+}
+
+function ensureProductCategoryByName(tenantId: string, rawName: string): ProductCategoryRecord {
+  const name = rawName.trim();
+  if (!name) {
+    return ensureDefaultProductCategory(tenantId);
+  }
+
+  const baseSlug = slugifyCategoryName(name) || "general";
+  let slug = baseSlug;
+  let suffix = 1;
+
+  while (true) {
+    const existing = getProductCategoryBySlugStatement.get(tenantId, slug) as
+      | ProductCategoryRow
+      | undefined;
+
+    if (!existing) {
+      const category: ProductCategoryRecord = {
+        id: randomUUID(),
+        tenantId,
+        name,
+        slug,
+        createdAt: timestamp(),
+      };
+
+      createProductCategoryStatement.run(
+        category.id,
+        category.tenantId,
+        category.name,
+        category.slug,
+        category.createdAt,
+      );
+
+      return category;
+    }
+
+    if (existing.name.localeCompare(name, undefined, { sensitivity: "accent" }) === 0) {
+      return mapProductCategory(existing);
+    }
+
+    slug = `${baseSlug}-${suffix}`;
+    suffix += 1;
+  }
+}
+
+function bootstrapProductCategories(): void {
+  const tenants = listTenantsStatement.all() as TenantRow[];
+
+  for (const tenant of tenants) {
+    const defaultCategory = ensureDefaultProductCategory(tenant.id);
+    const products = listProductsStatement.all(tenant.id) as ProductRow[];
+
+    for (const product of products) {
+      if (product.category_id && product.category_name) {
+        continue;
+      }
+
+      const category =
+        product.category_name?.trim()
+          ? ensureProductCategoryByName(tenant.id, product.category_name)
+          : defaultCategory;
+
+      updateProductCategoryAssignmentStatement.run(
+        category.id,
+        category.name,
+        tenant.id,
+        product.id,
+      );
+    }
+  }
+}
+
+bootstrapProductCategories();
 
 function normalizeCsvHeader(value: string): string {
   return value.trim().replace(/^\uFEFF/, "").replace(/[\s_-]+/g, "").toLowerCase();
@@ -2708,19 +2939,20 @@ function importSuppliersCsv(tenantId: string, csvText: string): ImportOnboarding
 
 function importProductsCsv(tenantId: string, csvText: string): ImportOnboardingResult {
   const { headers, rows } = parseCsvDocument(csvText);
-  const headerIndex = buildHeaderIndex(headers, ["sku", "name", "unitprice"]);
+  const headerIndex = buildHeaderIndex(headers, ["name", "category", "unitprice"]);
   const errors: OnboardingImportError[] = [];
   let createdCount = 0;
 
   rows.forEach((row, rowIndex) => {
     const lineNumber = rowIndex + 2;
-    const sku = readCsvValue(row, headerIndex, "sku");
     const name = readCsvValue(row, headerIndex, "name");
+    const categoryName = readCsvValue(row, headerIndex, "category");
     const unitPriceRaw = readCsvValue(row, headerIndex, "unitprice");
+    const sku = headerIndex.sku !== undefined ? readCsvValue(row, headerIndex, "sku") : "";
     const unitPrice = Number(unitPriceRaw);
 
-    if (!sku || !name || !unitPriceRaw) {
-      recordImportError(errors, lineNumber, "Product SKU, name, and unit price are required.");
+    if (!name || !categoryName || !unitPriceRaw) {
+      recordImportError(errors, lineNumber, "Product category, name, and unit price are required.");
       return;
     }
 
@@ -2730,8 +2962,10 @@ function importProductsCsv(tenantId: string, csvText: string): ImportOnboardingR
     }
 
     try {
+      const category = ensureProductCategoryByName(tenantId, categoryName);
       createProduct({
         tenantId,
+        categoryId: category.id,
         sku,
         name,
         unitPrice,
@@ -2811,6 +3045,7 @@ export function exportTenantSnapshot(tenantId: string): TenantExportBundle {
     exportedAt: timestamp(),
     customers: listCustomers(tenantId),
     suppliers: listSuppliers(tenantId),
+    productCategories: listProductCategories(tenantId),
     products: listProducts(tenantId),
     inventories: listInventory(tenantId),
     orders: listOrders(tenantId),
@@ -2901,9 +3136,25 @@ export function restoreTenantSnapshot(input: RestoreTenantSnapshotInput): Restor
     restoredSuppliers += 1;
   }
 
+  const restoredCategoryIds = new Map<string, string>();
+  const snapshotCategories = input.snapshot.productCategories ?? [];
+
+  for (const category of snapshotCategories) {
+    const restoredCategory = createProductCategory({
+      tenantId: restoredTenant.id,
+      name: category.name,
+    });
+    restoredCategoryIds.set(category.id, restoredCategory.id);
+  }
+
   for (const product of input.snapshot.products ?? []) {
+    const restoredCategoryId =
+      (product.categoryId && restoredCategoryIds.get(product.categoryId)) ??
+      ensureProductCategoryByName(restoredTenant.id, product.categoryName || "").id;
+
     const restoredProduct = createProduct({
       tenantId: restoredTenant.id,
+      categoryId: restoredCategoryId,
       sku: product.sku,
       name: product.name,
       unitPrice: product.unitPrice,
@@ -3118,11 +3369,100 @@ export function listProducts(tenantId: string): ProductRecord[] {
   return (listProductsStatement.all(tenantId) as ProductRow[]).map(mapProduct);
 }
 
+export function listProductCategories(tenantId: string): ProductCategoryRecord[] {
+  return (listProductCategoriesStatement.all(tenantId) as ProductCategoryRow[]).map(mapProductCategory);
+}
+
+export function createProductCategory(input: CreateProductCategoryInput): ProductCategoryRecord {
+  const name = input.name.trim();
+  if (!name) {
+    throw new Error("Product category name is required.");
+  }
+
+  return ensureProductCategoryByName(input.tenantId, name);
+}
+
+export function updateProductCategory(input: UpdateProductCategoryInput): ProductCategoryRecord {
+  const existing = getProductCategoryByIdStatement.get(input.tenantId, input.categoryId) as
+    | ProductCategoryRow
+    | undefined;
+  if (!existing) {
+    throw new Error("The selected product category does not exist.");
+  }
+
+  const name = input.name.trim();
+  if (!name) {
+    throw new Error("Product category name is required.");
+  }
+
+  const baseSlug = slugifyCategoryName(name) || "general";
+  let slug = baseSlug;
+  let suffix = 1;
+
+  while (true) {
+    const duplicate = getProductCategoryBySlugStatement.get(input.tenantId, slug) as
+      | ProductCategoryRow
+      | undefined;
+    if (!duplicate || duplicate.id === existing.id) {
+      break;
+    }
+
+    slug = `${baseSlug}-${suffix}`;
+    suffix += 1;
+  }
+
+  updateProductCategoryStatement.run(name, slug, input.tenantId, input.categoryId);
+  updateProductsForCategoryStatement.run(name, input.tenantId, input.categoryId);
+
+  return {
+    id: existing.id,
+    tenantId: existing.tenant_id,
+    name,
+    slug,
+    createdAt: existing.created_at,
+  };
+}
+
+export function deleteProductCategory(input: DeleteProductCategoryInput): ProductCategoryRecord {
+  const existing = getProductCategoryByIdStatement.get(input.tenantId, input.categoryId) as
+    | ProductCategoryRow
+    | undefined;
+  if (!existing) {
+    throw new Error("The selected product category does not exist.");
+  }
+
+  const productCount = Number(
+    (countProductsForCategoryStatement.get(input.tenantId, input.categoryId) as { count?: number } | undefined)
+      ?.count ?? 0,
+  );
+
+  if (productCount > 0) {
+    throw new Error("The selected product category cannot be deleted because products still reference it.");
+  }
+
+  if (existing.slug === "general") {
+    throw new Error("The default product category cannot be deleted.");
+  }
+
+  deleteProductCategoryStatement.run(input.tenantId, input.categoryId);
+  return mapProductCategory(existing);
+}
+
 export function createProduct(input: CreateProductInput): ProductRecord {
+  const category = getProductCategoryByIdStatement.get(input.tenantId, input.categoryId) as
+    | ProductCategoryRow
+    | undefined;
+  if (!category) {
+    throw new Error("The selected product category does not exist.");
+  }
+
+  const manualSku = input.sku?.trim() ?? "";
   const product: ProductRecord = {
     id: randomUUID(),
     tenantId: input.tenantId,
-    sku: input.sku.trim().toUpperCase(),
+    categoryId: category.id,
+    categoryName: category.name,
+    sku: manualSku ? manualSku.toUpperCase() : createGeneratedProductSku(input.tenantId, category.slug),
     name: input.name.trim(),
     unitPrice: input.unitPrice,
     status: "active",
@@ -3132,6 +3472,8 @@ export function createProduct(input: CreateProductInput): ProductRecord {
   createProductStatement.run(
     product.id,
     product.tenantId,
+    product.categoryId,
+    product.categoryName,
     product.sku,
     product.name,
     product.unitPrice,
@@ -3150,10 +3492,20 @@ export function updateProduct(input: UpdateProductInput): ProductRecord {
     throw new Error("The selected product does not exist.");
   }
 
+  const category = getProductCategoryByIdStatement.get(input.tenantId, input.categoryId) as
+    | ProductCategoryRow
+    | undefined;
+  if (!category) {
+    throw new Error("The selected product category does not exist.");
+  }
+
+  const manualSku = input.sku?.trim() ?? "";
   const product: ProductRecord = {
     id: existing.id,
     tenantId: existing.tenant_id,
-    sku: input.sku.trim().toUpperCase(),
+    categoryId: category.id,
+    categoryName: category.name,
+    sku: manualSku ? manualSku.toUpperCase() : existing.sku,
     name: input.name.trim(),
     unitPrice: input.unitPrice,
     status: existing.status,
@@ -3161,6 +3513,8 @@ export function updateProduct(input: UpdateProductInput): ProductRecord {
   };
 
   updateProductStatement.run(
+    product.categoryId,
+    product.categoryName,
     product.sku,
     product.name,
     product.unitPrice,

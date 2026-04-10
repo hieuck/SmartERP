@@ -2,12 +2,45 @@ import type { ApiRoute } from "../route-dispatch/http.js";
 import { withModuleAccess, withPermission, withTenantQuery } from "../route-dispatch/helpers.js";
 import {
   handleCreateProduct,
+  handleCreateProductCategory,
   handleDeleteProduct,
+  handleDeleteProductCategory,
+  handleListProductCategories,
   handleListProducts,
+  handleUpdateProductCategory,
   handleUpdateProduct,
 } from "./http.js";
 
 export const productApiRoutes: ApiRoute[] = [
+  {
+    method: "GET",
+    path: "/api/product-categories",
+    handle: withModuleAccess(
+      "products",
+      withTenantQuery(({ response }, tenantId) => handleListProductCategories(response, tenantId)),
+    ),
+  },
+  {
+    method: "POST",
+    path: "/api/product-categories",
+    handle: withPermission("manage_products", ({ request, response, session }) =>
+      handleCreateProductCategory(request, response, session),
+    ),
+  },
+  {
+    method: "POST",
+    path: "/api/product-categories/update",
+    handle: withPermission("manage_products", ({ request, response, session }) =>
+      handleUpdateProductCategory(request, response, session),
+    ),
+  },
+  {
+    method: "POST",
+    path: "/api/product-categories/delete",
+    handle: withPermission("manage_products", ({ request, response, session }) =>
+      handleDeleteProductCategory(request, response, session),
+    ),
+  },
   {
     method: "GET",
     path: "/api/products",

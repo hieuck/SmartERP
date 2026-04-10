@@ -33,6 +33,7 @@ const supplierEmail = `supply.${smokeId}@example.com`;
 const supplierPhone = "+84 27 4123 4567";
 const supplierCity = "Binh Duong";
 const supplierCode = `SUP-${smokeId}`;
+const productCategoryName = `Bottles ${smokeId}`;
 const productName = `Smoke Bottle ${smokeId}`;
 const productSku = `SMK-${smokeId}`;
 const restoredTenantName = `Restored Tenant ${smokeId}`;
@@ -58,10 +59,10 @@ const editedSupplierName = `Edited Supplier ${smokeId}`;
 const editedSupplierEmail = `edited.supplier.${smokeId}@example.com`;
 const editedSupplierPhone = "+84 27 4000 2222";
 const editedSupplierCity = "Long An";
-const editableProductSku = `EDIT-${smokeId}`;
+const editableProductCategoryName = `Editable Category ${smokeId}`;
+const editedProductCategoryName = `Edited Category ${smokeId}`;
 const editableProductName = `Editable Product ${smokeId}`;
 const editableProductUnitPrice = 31000;
-const editedProductSku = `EDIT2-${smokeId}`;
 const editedProductName = `Edited Product ${smokeId}`;
 const editedProductUnitPrice = 33000;
 const expectedReceiptDateInput = buildDateInputFromToday(7);
@@ -76,7 +77,7 @@ const escalatedCollectionNote = "Qua ngay hua thanh toan, can founder xu ly truc
 const firstIssueDateInput = buildDateInputFromToday(0);
 const secondIssueDateInput = buildDateInputFromToday(-(secondDaysPastDue + secondPaymentTermDays));
 const unitPrice = 25000;
-const productImportCsv = `sku,name,unitPrice\n${productSku},${productName},${unitPrice}`;
+const productImportCsv = `name,category,unitPrice,sku\n${productName},${productCategoryName},${unitPrice},${productSku}`;
 const purchaseUnitCost = 18000;
 const purchaseQuantity = 24;
 const editedPurchaseQuantity = 26;
@@ -194,6 +195,7 @@ function isExpectedNegativePath(response) {
           response.url().endsWith("/api/orders/reopen") ||
           response.url().endsWith("/api/customers/delete") ||
           response.url().endsWith("/api/suppliers/delete") ||
+          response.url().endsWith("/api/product-categories/delete") ||
           response.url().endsWith("/api/products/delete") ||
           response.url().endsWith("/api/purchase-orders/cancel") ||
           response.url().endsWith("/api/purchase-orders/update") ||
@@ -514,9 +516,11 @@ async function main() {
   let recoveryDrillVerified = false;
   let customerCrudVerified = false;
   let supplierCrudVerified = false;
+  let productCategoryCrudVerified = false;
   let productCrudVerified = false;
   let customerDeleteGuardVerified = false;
   let supplierDeleteGuardVerified = false;
+  let productCategoryDeleteGuardVerified = false;
   let productDeleteGuardVerified = false;
   let duplicateSupplierRejectedVerified = false;
   let duplicateProductRejectedVerified = false;
@@ -824,44 +828,132 @@ async function main() {
 
     await openSection(page, sidebarIndexes.products, "/dashboard/products");
     await waitForTenantContext(page, tenantName);
-    const productsListCard = getListCard(page);
-    const productsFormCard = getFormCard(page);
-    await productsListCard.getByText(productName, { exact: false }).waitFor({ timeout: 15000 });
-    await productsListCard.getByText(productSku, { exact: false }).waitFor({ timeout: 15000 });
+    const productsListCard = page.getByTestId("product-list-card");
+    const productsFormCard = page.getByTestId("product-form-card");
+    const productCategoriesCard = page.getByTestId("product-categories-card");
+    const importedProductRow = productsListCard.locator(".record-row").filter({ hasText: productName }).first();
+    await importedProductRow.waitFor({ timeout: 15000 });
+    const importedProductRowText = (await importedProductRow.textContent()) ?? "";
+    assert(
+      importedProductRowText.includes(productSku),
+      "Imported product row did not include the expected SKU.",
+    );
+    assert(
+      importedProductRowText.includes(productCategoryName),
+      "Imported product row did not include the expected category name.",
+    );
+    await waitForFormReady(productCategoriesCard);
+    await fillField(productCategoriesCard, "#name", editableProductCategoryName);
+    await clickSubmit(productCategoriesCard);
+    const editableCategoryRow = productCategoriesCard
+      .locator(".compact-record-row")
+      .filter({ hasText: editableProductCategoryName })
+      .first();
+    await editableCategoryRow.waitFor({ timeout: 15000 });
+    await editableCategoryRow.locator('[data-testid="product-category-edit-button"]').click();
+    await waitForFormReady(productCategoriesCard);
+    await fillField(productCategoriesCard, "#name", editedProductCategoryName);
+    await clickSubmit(productCategoriesCard);
+    const editedCategoryRow = productCategoriesCard
+      .locator(".compact-record-row")
+      .filter({ hasText: editedProductCategoryName })
+      .first();
+    await editedCategoryRow.waitFor({ timeout: 15000 });
+    await editedCategoryRow.getByText(/0 .*phẩm|0 product/, { exact: false }).waitFor({ timeout: 15000 });
     await waitForFormReady(productsFormCard);
-    await fillField(productsFormCard, "#sku", editableProductSku);
+    await selectOption(
+      page,
+      productsFormCard.getByRole("combobox", { name: /Danh mục|Category/ }),
+      editedProductCategoryName,
+    );
     await fillField(productsFormCard, "#name", editableProductName);
     await fillField(productsFormCard, "#unitPrice", editableProductUnitPrice);
     await clickSubmit(productsFormCard);
     const editableProductRow = productsListCard.locator(".record-row").filter({ hasText: editableProductName }).first();
     await editableProductRow.waitFor({ timeout: 15000 });
+    const editableProductLookup = await page.evaluate(
+      async ({ targetProductName, sessionKey, tenantKey }) => {
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const session = window.localStorage.getItem(sessionKey);
+        const accessToken = session ? JSON.parse(session).accessToken : "";
+        const response = await fetch(`/api/products?tenantId=${encodeURIComponent(tenantId ?? "")}`, {
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+          },
+        });
+        const payload = await response.json();
+        const product = payload.items.find((item) => item.name === targetProductName);
+
+        return {
+          status: response.status,
+          item: product ?? null,
+        };
+      },
+      {
+        targetProductName: editableProductName,
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+      },
+    );
+    assert(
+      editableProductLookup.status === 200 &&
+        editableProductLookup.item?.sku &&
+        /^[A-Z0-9]{3,4}-\d{4}$/.test(editableProductLookup.item.sku) &&
+        editableProductLookup.item.categoryName === editedProductCategoryName,
+      "Product creation did not generate a valid SKU inside the selected category.",
+    );
+    const editableGeneratedProductSku = editableProductLookup.item.sku;
+    assert(
+      ((await editableProductRow.textContent()) ?? "").includes(editableGeneratedProductSku),
+      "Editable product row did not render the generated SKU.",
+    );
     await editableProductRow.locator('[data-testid="product-edit-button"]').click();
     await waitForFormReady(productsFormCard);
-    await fillField(productsFormCard, "#sku", editedProductSku);
+    await fillField(productsFormCard, "#sku", "");
     await fillField(productsFormCard, "#name", editedProductName);
     await fillField(productsFormCard, "#unitPrice", editedProductUnitPrice);
     await clickSubmit(productsFormCard);
     const editedProductRow = productsListCard.locator(".record-row").filter({ hasText: editedProductName }).first();
     await editedProductRow.waitFor({ timeout: 15000 });
-    await editedProductRow.getByText(editedProductSku, { exact: false }).waitFor({ timeout: 15000 });
+    assert(
+      ((await editedProductRow.textContent()) ?? "").includes(editableGeneratedProductSku),
+      "Edited product row did not preserve the generated SKU when SKU input stayed blank.",
+    );
     await editedProductRow.locator('[data-testid="product-delete-button"]').click();
     await page.locator(".ant-popover .ant-btn-primary").click();
     await waitForLocatorCount(page, productsListCard.locator(".record-row").filter({ hasText: editedProductName }), 0);
+    await editedCategoryRow.locator('[data-testid="product-category-delete-button"]').click();
+    await page.locator(".ant-popover .ant-btn-primary").click();
+    await waitForLocatorCount(
+      page,
+      productCategoriesCard.locator(".compact-record-row").filter({ hasText: editedProductCategoryName }),
+      0,
+    );
+    productCategoryCrudVerified = true;
     productCrudVerified = true;
     const duplicateProductResponse = await page.evaluate(
-      async ({ duplicateSku, duplicateName, duplicateUnitPrice, sessionKey, tenantKey }) => {
+      async ({ categoryName, duplicateSku, duplicateName, duplicateUnitPrice, sessionKey, tenantKey }) => {
         const tenantId = window.localStorage.getItem(tenantKey);
         const session = window.localStorage.getItem(sessionKey);
         const accessToken = session ? JSON.parse(session).accessToken : "";
+        const headers = {
+          "content-type": "application/json",
+          authorization: `Bearer ${accessToken}`,
+        };
+
+        const categoriesResponse = await fetch(
+          `/api/product-categories?tenantId=${encodeURIComponent(tenantId ?? "")}`,
+          { headers: { authorization: `Bearer ${accessToken}` } },
+        );
+        const categoriesPayload = await categoriesResponse.json();
+        const category = categoriesPayload.items.find((item) => item.name === categoryName);
 
         const response = await fetch("/api/products", {
           method: "POST",
-          headers: {
-            "content-type": "application/json",
-            authorization: `Bearer ${accessToken}`,
-          },
+          headers,
           body: JSON.stringify({
             tenantId,
+            categoryId: category?.id ?? "",
             sku: duplicateSku,
             name: duplicateName,
             unitPrice: duplicateUnitPrice,
@@ -874,6 +966,7 @@ async function main() {
         };
       },
       {
+        categoryName: productCategoryName,
         duplicateSku: productSku,
         duplicateName: `${productName} Duplicate`,
         duplicateUnitPrice: unitPrice + 1000,
@@ -2371,7 +2464,7 @@ async function main() {
       .getByText("2", { exact: true })
       .waitFor({ timeout: 15000 });
     const deleteGuardResponse = await page.evaluate(
-      async ({ sessionKey, tenantKey, targetCustomerName, targetSupplierCode, targetProductSku }) => {
+      async ({ sessionKey, tenantKey, targetCustomerName, targetSupplierCode, targetProductSku, targetCategoryName }) => {
         const tenantId = window.localStorage.getItem(tenantKey);
         const session = window.localStorage.getItem(sessionKey);
         const accessToken = session ? JSON.parse(session).accessToken : "";
@@ -2386,15 +2479,17 @@ async function main() {
           return response.json();
         };
 
-        const [customersPayload, suppliersPayload, productsPayload] = await Promise.all([
+        const [customersPayload, suppliersPayload, productsPayload, categoriesPayload] = await Promise.all([
           request(`/api/customers?tenantId=${encodeURIComponent(tenantId ?? "")}`),
           request(`/api/suppliers?tenantId=${encodeURIComponent(tenantId ?? "")}`),
           request(`/api/products?tenantId=${encodeURIComponent(tenantId ?? "")}`),
+          request(`/api/product-categories?tenantId=${encodeURIComponent(tenantId ?? "")}`),
         ]);
 
         const customer = customersPayload.items.find((item) => item.name === targetCustomerName);
         const supplier = suppliersPayload.items.find((item) => item.supplierCode === targetSupplierCode);
         const product = productsPayload.items.find((item) => item.sku === targetProductSku);
+        const category = categoriesPayload.items.find((item) => item.name === targetCategoryName);
 
         const postDelete = async (url, body) => {
           const response = await fetch(url, {
@@ -2412,29 +2507,34 @@ async function main() {
           };
         };
 
-        return {
-          customer: await postDelete("/api/customers/delete", {
-            tenantId,
-            customerId: customer?.id ?? "",
-          }),
+          return {
+            customer: await postDelete("/api/customers/delete", {
+              tenantId,
+              customerId: customer?.id ?? "",
+            }),
           supplier: await postDelete("/api/suppliers/delete", {
             tenantId,
             supplierId: supplier?.id ?? "",
           }),
-          product: await postDelete("/api/products/delete", {
-            tenantId,
-            productId: product?.id ?? "",
-          }),
-        };
-      },
-      {
-        sessionKey: sessionStorageKey,
-        tenantKey: tenantStorageKey,
-        targetCustomerName: customerName,
-        targetSupplierCode: supplierCode,
-        targetProductSku: productSku,
-      },
-    );
+            product: await postDelete("/api/products/delete", {
+              tenantId,
+              productId: product?.id ?? "",
+            }),
+            category: await postDelete("/api/product-categories/delete", {
+              tenantId,
+              categoryId: category?.id ?? "",
+            }),
+          };
+        },
+        {
+          sessionKey: sessionStorageKey,
+          tenantKey: tenantStorageKey,
+          targetCustomerName: customerName,
+          targetSupplierCode: supplierCode,
+          targetProductSku: productSku,
+          targetCategoryName: productCategoryName,
+        },
+      );
     assert(
       deleteGuardResponse.customer.status === 400 &&
         deleteGuardResponse.customer.body?.error ===
@@ -2447,15 +2547,22 @@ async function main() {
           "The selected supplier cannot be deleted because purchase orders already reference it.",
       "Supplier delete guard did not block deletion of a referenced supplier.",
     );
-    assert(
-      deleteGuardResponse.product.status === 400 &&
-        deleteGuardResponse.product.body?.error ===
-          "The selected product cannot be deleted because sales, purchasing, or inventory already reference it.",
-      "Product delete guard did not block deletion of a referenced product.",
-    );
-    customerDeleteGuardVerified = true;
-    supplierDeleteGuardVerified = true;
-    productDeleteGuardVerified = true;
+      assert(
+        deleteGuardResponse.product.status === 400 &&
+          deleteGuardResponse.product.body?.error ===
+            "The selected product cannot be deleted because sales, purchasing, or inventory already reference it.",
+        "Product delete guard did not block deletion of a referenced product.",
+      );
+      assert(
+        deleteGuardResponse.category.status === 400 &&
+          deleteGuardResponse.category.body?.error ===
+            "The selected product category cannot be deleted because products still reference it.",
+        "Product category delete guard did not block deletion of a referenced category.",
+      );
+      customerDeleteGuardVerified = true;
+      supplierDeleteGuardVerified = true;
+      productCategoryDeleteGuardVerified = true;
+      productDeleteGuardVerified = true;
 
     await openSection(page, sidebarIndexes.reports, "/dashboard/reports");
     await waitForTenantContext(page, tenantName);
@@ -3222,9 +3329,11 @@ async function main() {
       recoveryDrillVerified,
       customerCrudVerified,
       supplierCrudVerified,
+      productCategoryCrudVerified,
       productCrudVerified,
       customerDeleteGuardVerified,
       supplierDeleteGuardVerified,
+      productCategoryDeleteGuardVerified,
       productDeleteGuardVerified,
       duplicateSupplierRejectedVerified,
       duplicateProductRejectedVerified,

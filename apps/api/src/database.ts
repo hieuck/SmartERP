@@ -53,9 +53,24 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_suppliers_tenant_created_at
   ON suppliers (tenant_id, created_at DESC);
 
+  CREATE TABLE IF NOT EXISTS product_categories (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    slug TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+    UNIQUE (tenant_id, slug)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_product_categories_tenant_created_at
+  ON product_categories (tenant_id, created_at DESC);
+
   CREATE TABLE IF NOT EXISTS products (
     id TEXT PRIMARY KEY,
     tenant_id TEXT NOT NULL,
+    category_id TEXT NOT NULL DEFAULT '',
+    category_name TEXT NOT NULL DEFAULT '',
     sku TEXT NOT NULL,
     name TEXT NOT NULL,
     unit_price INTEGER NOT NULL,
@@ -741,6 +756,41 @@ if (collectionActivityColumns.length > 0) {
 const inventoryColumns = db
   .prepare("PRAGMA table_info(inventory)")
   .all() as Array<{ name: string }>;
+
+const productCategoryColumns = db
+  .prepare("PRAGMA table_info(product_categories)")
+  .all() as Array<{ name: string }>;
+
+if (productCategoryColumns.length === 0) {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS product_categories (
+      id TEXT PRIMARY KEY,
+      tenant_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      slug TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+      UNIQUE (tenant_id, slug)
+    )
+  `);
+}
+
+db.exec(`
+  CREATE INDEX IF NOT EXISTS idx_product_categories_tenant_created_at
+  ON product_categories (tenant_id, created_at DESC)
+`);
+
+const productColumns = db
+  .prepare("PRAGMA table_info(products)")
+  .all() as Array<{ name: string }>;
+
+if (!productColumns.some((column) => column.name === "category_id")) {
+  db.exec("ALTER TABLE products ADD COLUMN category_id TEXT NOT NULL DEFAULT ''");
+}
+
+if (!productColumns.some((column) => column.name === "category_name")) {
+  db.exec("ALTER TABLE products ADD COLUMN category_name TEXT NOT NULL DEFAULT ''");
+}
 
 if (!inventoryColumns.some((column) => column.name === "average_unit_cost")) {
   db.exec("ALTER TABLE inventory ADD COLUMN average_unit_cost INTEGER NOT NULL DEFAULT 0");

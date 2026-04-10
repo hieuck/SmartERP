@@ -7,6 +7,7 @@ import type {
   InvoiceRecord,
   InventoryRecord,
   OrderRecord,
+  ProductCategoryRecord,
   ProductRecord,
   PurchaseOrderRecord,
   SupplierRecord,
@@ -21,7 +22,7 @@ import {
 } from "../modules/invoices/api";
 import { loadOrders } from "../modules/orders/api";
 import { loadPurchaseOrders } from "../modules/purchase-orders/api";
-import { loadProducts } from "../modules/products/api";
+import { loadProductCategories, loadProducts } from "../modules/products/api";
 import { loadSuppliers } from "../modules/suppliers/api";
 
 export type TenantWorkspaceData = {
@@ -30,6 +31,7 @@ export type TenantWorkspaceData = {
   suppliers: SupplierRecord[];
   customerStatements: CustomerStatementRecord[];
   collectionActivities: InvoiceCollectionActivityRecord[];
+  productCategories: ProductCategoryRecord[];
   products: ProductRecord[];
   inventories: InventoryRecord[];
   orders: OrderRecord[];
@@ -44,6 +46,7 @@ export function createEmptyTenantWorkspaceData(): TenantWorkspaceData {
     suppliers: [],
     customerStatements: [],
     collectionActivities: [],
+    productCategories: [],
     products: [],
     inventories: [],
     orders: [],
@@ -62,6 +65,7 @@ export async function loadTenantWorkspaceData(
     suppliers,
     customerStatements,
     collectionActivities,
+    productCategories,
     products,
     inventories,
     orders,
@@ -73,6 +77,7 @@ export async function loadTenantWorkspaceData(
     canAccessModule("suppliers") ? loadSuppliers(tenantId) : Promise.resolve([]),
     canAccessModule("customers") ? loadCustomerStatements(tenantId) : Promise.resolve([]),
     canAccessModule("invoices") ? loadInvoiceCollectionActivities(tenantId) : Promise.resolve([]),
+    canAccessModule("products") ? loadProductCategories(tenantId) : Promise.resolve([]),
     canAccessModule("products") ? loadProducts(tenantId) : Promise.resolve([]),
     canAccessModule("inventory") ? loadInventory(tenantId) : Promise.resolve([]),
     canAccessModule("orders") ? loadOrders(tenantId) : Promise.resolve([]),
@@ -86,6 +91,7 @@ export async function loadTenantWorkspaceData(
     suppliers,
     customerStatements,
     collectionActivities,
+    productCategories,
     products,
     inventories,
     orders,

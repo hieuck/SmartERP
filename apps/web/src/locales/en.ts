@@ -861,6 +861,39 @@ Object.assign(en.suppliers, {
 });
 
 Object.assign(en.products, {
+  categoryTitle: "Manage Categories",
+  categoryEditTitle: "Edit Category",
+  categoryHint: "Categories are managed here and reused across inventory, purchasing, and sales.",
+  category: "Category",
+  categoryName: "Category Name",
+  categoryAdd: "Add Category",
+  categoryEmpty: "No product categories for this tenant yet.",
+  categoryDeleteConfirm: "Delete category {{name}}?",
+  categoryProductCount: "{{count}} product(s)",
+  skuOptional: "SKU (Optional)",
+  autoSkuHint: "Leave SKU blank and SmartERP Next will generate it from the selected category.",
+  placeholderCategory: "Bottles",
+  placeholderCategorySelect: "Select a category",
+  placeholderSkuAuto: "Leave blank to auto-generate",
+  editTitle: "Edit Product",
+  deleteConfirm: "Delete {{name}}? This only works while no sales, purchasing, or inventory rows reference it.",
+});
+
+Object.assign(en.errors, {
+  createProductCategoryFailed: "Product category creation failed.",
+  updateProductCategoryFailed: "Product category update failed.",
+  deleteProductCategoryFailed: "Product category deletion failed.",
+  productCategoryIdRequired: "productCategoryId is required.",
+  productCategoryNameRequired: "Product category name is required.",
+  selectedProductCategoryMissing: "The selected product category does not exist.",
+  productFieldsRequired: "Product category and name are required.",
+  productImportFieldsRequired: "Product category, name, and unit price are required.",
+  productCategoryDeleteBlocked:
+    "The selected product category cannot be deleted because products still reference it.",
+  defaultProductCategoryDeleteBlocked: "The default product category cannot be deleted.",
+});
+
+Object.assign(en.products, {
   editTitle: "Edit Product",
   deleteConfirm: "Delete {{name}}? This only works while sales, purchasing, and inventory are still clear.",
 });
