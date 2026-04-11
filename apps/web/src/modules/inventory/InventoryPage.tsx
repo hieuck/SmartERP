@@ -1,5 +1,6 @@
 import { DatabaseOutlined } from "@ant-design/icons";
 import type { ReactElement } from "react";
+import { useState } from "react";
 import type { FormProps } from "antd";
 import { Button, Card, Empty, Form, InputNumber, Select, Space, Tag, Typography } from "antd";
 
@@ -19,14 +20,24 @@ export function InventoryPage(): ReactElement {
     createInventoryAdjustmentRecord,
     inventories,
     isBusy,
+    productCategories,
     products,
     selectedTenantId,
     setSelectedTenantId,
     tenants,
   } = useWorkspace();
   const canAdjustInventory = can("manage_inventory");
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("all");
 
   const [form] = Form.useForm<InventoryAdjustmentFormShape>();
+  const filteredProducts =
+    selectedCategoryId === "all"
+      ? products
+      : products.filter((product) => product.categoryId === selectedCategoryId);
+  const filteredInventories =
+    selectedCategoryId === "all"
+      ? inventories
+      : inventories.filter((inventory) => inventory.categoryId === selectedCategoryId);
 
   const onFinish: FormProps<InventoryAdjustmentFormShape>["onFinish"] = async (values) => {
     try {
@@ -69,6 +80,19 @@ export function InventoryPage(): ReactElement {
           }))}
           onChange={setSelectedTenantId}
         />
+        <span>{t("inventory.categoryFilter")}</span>
+        <Select
+          value={selectedCategoryId}
+          style={{ minWidth: 220 }}
+          options={[
+            { label: t("common.allCategories"), value: "all" },
+            ...productCategories.map((category) => ({
+              label: category.name,
+              value: category.id,
+            })),
+          ]}
+          onChange={setSelectedCategoryId}
+        />
       </div>
 
       <div className="two-column">
@@ -87,8 +111,8 @@ export function InventoryPage(): ReactElement {
               >
                 <Select
                   placeholder={t("inventory.productPlaceholder")}
-                  options={products.map((product) => ({
-                    label: `${product.name} (${product.sku})`,
+                  options={filteredProducts.map((product) => ({
+                    label: `${product.name} (${product.sku}) · ${product.categoryName}`,
                     value: product.id,
                   }))}
                 />
@@ -115,13 +139,13 @@ export function InventoryPage(): ReactElement {
                 <InputNumber min={1} precision={0} style={{ width: "100%" }} />
               </Form.Item>
 
-              <Button
-                type="primary"
-                htmlType="submit"
-                disabled={!selectedTenantId || products.length === 0}
-                loading={isBusy}
-              >
-                {t("inventory.adjust")}
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  disabled={!selectedTenantId || filteredProducts.length === 0}
+                  loading={isBusy}
+                >
+                  {t("inventory.adjust")}
               </Button>
             </Form>
           ) : (
@@ -133,15 +157,18 @@ export function InventoryPage(): ReactElement {
 
         <Card className="workspace-panel-card" title={t("inventory.listTitle")}>
           {selectedTenantId ? (
-            inventories.length ? (
+            filteredInventories.length ? (
               <div className="record-stack">
-                {inventories.map((item) => (
+                {filteredInventories.map((item) => (
                   <div className="record-row" key={item.productId}>
                     <div className="record-icon">
                       <DatabaseOutlined />
                     </div>
                     <div>
                       <strong>{item.productName}</strong>
+                      <div className="record-detail">
+                        <Tag>{item.categoryName}</Tag>
+                      </div>
                       <div className="record-detail">{item.sku}</div>
                       <div className="record-detail">
                         <Space size="small">

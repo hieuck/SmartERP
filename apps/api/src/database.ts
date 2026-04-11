@@ -102,6 +102,8 @@ db.exec(`
     customer_id TEXT NOT NULL,
     customer_name TEXT NOT NULL,
     product_id TEXT NOT NULL,
+    product_category_id TEXT NOT NULL DEFAULT '',
+    product_category_name TEXT NOT NULL DEFAULT '',
     product_name TEXT NOT NULL,
     product_sku TEXT NOT NULL,
     quantity INTEGER NOT NULL,
@@ -125,6 +127,8 @@ db.exec(`
     supplier_code TEXT NOT NULL,
     supplier_name TEXT NOT NULL,
     product_id TEXT NOT NULL,
+    product_category_id TEXT NOT NULL DEFAULT '',
+    product_category_name TEXT NOT NULL DEFAULT '',
     product_sku TEXT NOT NULL,
     product_name TEXT NOT NULL,
     quantity_ordered INTEGER NOT NULL,
@@ -148,6 +152,8 @@ db.exec(`
     purchase_order_id TEXT NOT NULL,
     purchase_order_number TEXT NOT NULL,
     product_id TEXT NOT NULL,
+    product_category_id TEXT NOT NULL DEFAULT '',
+    product_category_name TEXT NOT NULL DEFAULT '',
     product_sku TEXT NOT NULL,
     product_name TEXT NOT NULL,
     quantity_received INTEGER NOT NULL,
@@ -784,12 +790,48 @@ const productColumns = db
   .prepare("PRAGMA table_info(products)")
   .all() as Array<{ name: string }>;
 
+const orderColumns = db
+  .prepare("PRAGMA table_info(orders)")
+  .all() as Array<{ name: string }>;
+
+const purchaseOrderColumns = db
+  .prepare("PRAGMA table_info(purchase_orders)")
+  .all() as Array<{ name: string }>;
+
+const purchaseOrderReceiptColumns = db
+  .prepare("PRAGMA table_info(purchase_order_receipts)")
+  .all() as Array<{ name: string }>;
+
 if (!productColumns.some((column) => column.name === "category_id")) {
   db.exec("ALTER TABLE products ADD COLUMN category_id TEXT NOT NULL DEFAULT ''");
 }
 
 if (!productColumns.some((column) => column.name === "category_name")) {
   db.exec("ALTER TABLE products ADD COLUMN category_name TEXT NOT NULL DEFAULT ''");
+}
+
+if (!orderColumns.some((column) => column.name === "product_category_id")) {
+  db.exec("ALTER TABLE orders ADD COLUMN product_category_id TEXT NOT NULL DEFAULT ''");
+}
+
+if (!orderColumns.some((column) => column.name === "product_category_name")) {
+  db.exec("ALTER TABLE orders ADD COLUMN product_category_name TEXT NOT NULL DEFAULT ''");
+}
+
+if (!purchaseOrderColumns.some((column) => column.name === "product_category_id")) {
+  db.exec("ALTER TABLE purchase_orders ADD COLUMN product_category_id TEXT NOT NULL DEFAULT ''");
+}
+
+if (!purchaseOrderColumns.some((column) => column.name === "product_category_name")) {
+  db.exec("ALTER TABLE purchase_orders ADD COLUMN product_category_name TEXT NOT NULL DEFAULT ''");
+}
+
+if (!purchaseOrderReceiptColumns.some((column) => column.name === "product_category_id")) {
+  db.exec("ALTER TABLE purchase_order_receipts ADD COLUMN product_category_id TEXT NOT NULL DEFAULT ''");
+}
+
+if (!purchaseOrderReceiptColumns.some((column) => column.name === "product_category_name")) {
+  db.exec("ALTER TABLE purchase_order_receipts ADD COLUMN product_category_name TEXT NOT NULL DEFAULT ''");
 }
 
 if (!inventoryColumns.some((column) => column.name === "average_unit_cost")) {
@@ -803,6 +845,44 @@ if (!inventoryColumns.some((column) => column.name === "inventory_value")) {
 if (!inventoryColumns.some((column) => column.name === "last_receipt_at")) {
   db.exec("ALTER TABLE inventory ADD COLUMN last_receipt_at TEXT");
 }
+
+db.exec(`
+  UPDATE orders
+  SET
+    product_category_id = COALESCE(NULLIF(product_category_id, ''), (
+      SELECT category_id FROM products WHERE products.id = orders.product_id
+    ), ''),
+    product_category_name = COALESCE(NULLIF(product_category_name, ''), (
+      SELECT category_name FROM products WHERE products.id = orders.product_id
+    ), '')
+  WHERE product_category_id = '' OR product_category_name = '';
+
+  UPDATE purchase_orders
+  SET
+    product_category_id = COALESCE(NULLIF(product_category_id, ''), (
+      SELECT category_id FROM products WHERE products.id = purchase_orders.product_id
+    ), ''),
+    product_category_name = COALESCE(NULLIF(product_category_name, ''), (
+      SELECT category_name FROM products WHERE products.id = purchase_orders.product_id
+    ), '')
+  WHERE product_category_id = '' OR product_category_name = '';
+
+  UPDATE purchase_order_receipts
+  SET
+    product_category_id = COALESCE(NULLIF(product_category_id, ''), (
+      SELECT product_category_id FROM purchase_orders
+      WHERE purchase_orders.id = purchase_order_receipts.purchase_order_id
+    ), (
+      SELECT category_id FROM products WHERE products.id = purchase_order_receipts.product_id
+    ), ''),
+    product_category_name = COALESCE(NULLIF(product_category_name, ''), (
+      SELECT product_category_name FROM purchase_orders
+      WHERE purchase_orders.id = purchase_order_receipts.purchase_order_id
+    ), (
+      SELECT category_name FROM products WHERE products.id = purchase_order_receipts.product_id
+    ), '')
+  WHERE product_category_id = '' OR product_category_name = '';
+`);
 
 export function getDatabasePath(): string {
   return databasePath;

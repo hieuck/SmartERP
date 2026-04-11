@@ -79,6 +79,7 @@ export function OrdersPage(): ReactElement {
     inventories,
     isBusy,
     orders,
+    productCategories,
     products,
     selectedTenantId,
     setSelectedTenantId,
@@ -90,8 +91,17 @@ export function OrdersPage(): ReactElement {
 
   const [form] = Form.useForm<OrderFormShape>();
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("all");
   const selectedProductId = Form.useWatch("productId", form);
   const editingOrder = orders.find((item) => item.id === editingOrderId) ?? null;
+  const filteredProducts =
+    selectedCategoryId === "all"
+      ? products
+      : products.filter((product) => product.categoryId === selectedCategoryId);
+  const filteredOrders =
+    selectedCategoryId === "all"
+      ? orders
+      : orders.filter((order) => order.productCategoryId === selectedCategoryId);
   const selectedInventory = inventories.find((item) => item.productId === selectedProductId) ?? null;
   const effectiveAvailableStock =
     (selectedInventory?.quantityOnHand ?? 0) +
@@ -194,6 +204,19 @@ export function OrdersPage(): ReactElement {
           }))}
           onChange={setSelectedTenantId}
         />
+        <span>{t("orders.categoryFilter")}</span>
+        <Select
+          value={selectedCategoryId}
+          style={{ minWidth: 220 }}
+          options={[
+            { label: t("common.allCategories"), value: "all" },
+            ...productCategories.map((category) => ({
+              label: category.name,
+              value: category.id,
+            })),
+          ]}
+          onChange={setSelectedCategoryId}
+        />
       </div>
 
       <div className="two-column">
@@ -224,8 +247,8 @@ export function OrdersPage(): ReactElement {
               >
                 <Select
                   placeholder={t("orders.productPlaceholder")}
-                  options={products.map((product) => ({
-                    label: `${product.name} (${product.sku})`,
+                  options={filteredProducts.map((product) => ({
+                    label: `${product.name} (${product.sku}) · ${product.categoryName}`,
                     value: product.id,
                   }))}
                 />
@@ -266,7 +289,7 @@ export function OrdersPage(): ReactElement {
                   data-testid="order-submit-button"
                   type="primary"
                   htmlType="submit"
-                  disabled={!selectedTenantId || customers.length === 0 || products.length === 0}
+                  disabled={!selectedTenantId || customers.length === 0 || filteredProducts.length === 0}
                   loading={isBusy}
                 >
                   {editingOrderId ? t("common.saveChanges") : t("orders.create")}
@@ -287,9 +310,9 @@ export function OrdersPage(): ReactElement {
 
         <Card className="workspace-panel-card" title={t("orders.listTitle")}>
           {selectedTenantId ? (
-            orders.length ? (
+            filteredOrders.length ? (
               <div className="record-stack">
-                {orders.map((order) => (
+                {filteredOrders.map((order) => (
                   // Keep order actions deterministic: cancel before invoicing, close after full settlement.
                   <div
                     className={`record-row${editingOrderId === order.id ? " is-editing" : ""}`}
@@ -305,6 +328,9 @@ export function OrdersPage(): ReactElement {
                       </div>
                       <div className="record-detail">
                         <ShoppingOutlined /> {order.productName} x {order.quantity}
+                      </div>
+                      <div className="record-detail">
+                        <Tag>{order.productCategoryName}</Tag>
                       </div>
                       <div className="record-detail">
                         <Tag color={getOrderStatusColor(order.status)}>

@@ -402,6 +402,8 @@ export type PurchaseOrderRecord = {
   supplierCode: string;
   supplierName: string;
   productId: string;
+  productCategoryId: string;
+  productCategoryName: string;
   productSku: string;
   productName: string;
   quantityOrdered: number;
@@ -454,6 +456,8 @@ export type PurchaseOrderReceiptRecord = {
   purchaseOrderId: string;
   purchaseOrderNumber: string;
   productId: string;
+  productCategoryId: string;
+  productCategoryName: string;
   productSku: string;
   productName: string;
   quantityReceived: number;
@@ -534,6 +538,8 @@ export type OrderRecord = {
   customerId: string;
   customerName: string;
   productId: string;
+  productCategoryId: string;
+  productCategoryName: string;
   productName: string;
   productSku: string;
   quantity: number;
@@ -576,6 +582,8 @@ export type ReopenOrderInput = {
 export type InventoryRecord = {
   productId: string;
   tenantId: string;
+  categoryId: string;
+  categoryName: string;
   sku: string;
   productName: string;
   quantityOnHand: number;
@@ -795,10 +803,21 @@ export type InvoiceCollectionActivityRecord = {
   createdAt: string;
 };
 
+export type ReportCategoryPerformanceRecord = {
+  categoryId: string;
+  categoryName: string;
+  productCount: number;
+  stockUnitsOnHand: number;
+  inventoryValueAmount: number;
+  grossSalesAmount: number;
+  purchaseCommitmentAmount: number;
+};
+
 export type ReportSummary = {
   tenantId: string;
   customerCount: number;
   productCount: number;
+  categoryCount: number;
   orderCount: number;
   invoiceCount: number;
   paidInvoiceCount: number;
@@ -820,6 +839,9 @@ export type ReportSummary = {
   topCustomerAmount: number;
   topProductName: string;
   topProductUnits: number;
+  topCategoryName: string;
+  topCategorySalesAmount: number;
+  categoryPerformance: ReportCategoryPerformanceRecord[];
 };
 
 export type TenantExportBundle = {

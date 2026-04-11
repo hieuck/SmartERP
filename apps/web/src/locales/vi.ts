@@ -807,6 +807,34 @@ Object.assign(vi, {
 
 export default vi;
 
+Object.assign(vi.common, {
+  allCategories: "Tất cả danh mục",
+});
+
+Object.assign(vi.inventory, {
+  categoryFilter: "Danh mục",
+});
+
+Object.assign(vi.orders, {
+  categoryFilter: "Danh mục",
+});
+
+Object.assign(vi.purchaseOrders, {
+  categoryFilter: "Danh mục",
+});
+
+Object.assign(vi.reports, {
+  categoryCount: "Danh mục",
+  topCategory: "Danh mục dẫn đầu",
+  noCategorySignal: "Chưa có tín hiệu danh mục",
+  categoryPerformanceTitle: "Hiệu quả theo danh mục",
+  categoryPerformanceEmpty: "Chưa có hoạt động theo danh mục.",
+  categoryProductCount: "{{count}} sản phẩm",
+  categoryStockUnits: "{{count}} đơn vị tồn",
+  categoryInventoryValue: "Giá trị tồn kho",
+  categoryPurchaseCommitment: "Mua hàng đang mở",
+});
+
 Object.assign(vi.operations, {
   buildTitle: "Tóm tắt build",
   buildState: "Sức khỏe build",

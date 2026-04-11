@@ -96,6 +96,7 @@ export function PurchaseOrdersPage(): ReactElement {
     createPurchaseOrderRecord,
     receivePurchaseOrderRecord,
     isBusy,
+    productCategories,
     products,
     purchaseOrders,
     reopenPurchaseOrderRecord,
@@ -110,12 +111,21 @@ export function PurchaseOrdersPage(): ReactElement {
   const [createForm] = Form.useForm<PurchaseOrderFormShape>();
   const [receiptForm] = Form.useForm<PurchaseOrderReceiptFormShape>();
   const [editingPurchaseOrderId, setEditingPurchaseOrderId] = useState<string | null>(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("all");
   const selectedProductId = Form.useWatch("productId", createForm);
   const selectedReceiptOrderId = Form.useWatch("purchaseOrderId", receiptForm);
+  const filteredProducts =
+    selectedCategoryId === "all"
+      ? products
+      : products.filter((product) => product.categoryId === selectedCategoryId);
+  const filteredPurchaseOrders =
+    selectedCategoryId === "all"
+      ? purchaseOrders
+      : purchaseOrders.filter((purchaseOrder) => purchaseOrder.productCategoryId === selectedCategoryId);
   const selectedProduct = products.find((product) => product.id === selectedProductId) ?? null;
   const selectedReceiptOrder =
-    purchaseOrders.find((purchaseOrder) => purchaseOrder.id === selectedReceiptOrderId) ?? null;
-  const receivablePurchaseOrders = purchaseOrders.filter(
+    filteredPurchaseOrders.find((purchaseOrder) => purchaseOrder.id === selectedReceiptOrderId) ?? null;
+  const receivablePurchaseOrders = filteredPurchaseOrders.filter(
     (purchaseOrder) =>
       purchaseOrder.outstandingQuantity > 0 &&
       purchaseOrder.status !== "canceled" &&
@@ -244,6 +254,19 @@ export function PurchaseOrdersPage(): ReactElement {
           }))}
           onChange={setSelectedTenantId}
         />
+        <span>{t("purchaseOrders.categoryFilter")}</span>
+        <Select
+          value={selectedCategoryId}
+          style={{ minWidth: 220 }}
+          options={[
+            { label: t("common.allCategories"), value: "all" },
+            ...productCategories.map((category) => ({
+              label: category.name,
+              value: category.id,
+            })),
+          ]}
+          onChange={setSelectedCategoryId}
+        />
       </div>
 
       <div className="two-column">
@@ -285,8 +308,8 @@ export function PurchaseOrdersPage(): ReactElement {
                   >
                     <Select
                       placeholder={t("purchaseOrders.productPlaceholder")}
-                      options={products.map((product) => ({
-                        label: `${product.name} (${product.sku})`,
+                      options={filteredProducts.map((product) => ({
+                        label: `${product.name} (${product.sku}) · ${product.categoryName}`,
                         value: product.id,
                       }))}
                     />
@@ -326,7 +349,7 @@ export function PurchaseOrdersPage(): ReactElement {
                       data-testid="purchase-order-submit-button"
                       type="primary"
                       htmlType="submit"
-                      disabled={!selectedTenantId || suppliers.length === 0 || products.length === 0}
+                      disabled={!selectedTenantId || suppliers.length === 0 || filteredProducts.length === 0}
                       loading={isBusy}
                     >
                       {editingPurchaseOrderId ? t("common.saveChanges") : t("purchaseOrders.create")}
@@ -376,7 +399,7 @@ export function PurchaseOrdersPage(): ReactElement {
                     <Select
                       placeholder={t("purchaseOrders.purchaseOrderPlaceholder")}
                       options={receivablePurchaseOrders.map((purchaseOrder) => ({
-                        label: `${purchaseOrder.purchaseOrderNumber} | ${purchaseOrder.productName} (${purchaseOrder.outstandingQuantity})`,
+                        label: `${purchaseOrder.purchaseOrderNumber} | ${purchaseOrder.productName} (${purchaseOrder.productCategoryName}) | ${purchaseOrder.outstandingQuantity}`,
                         value: purchaseOrder.id,
                       }))}
                     />
@@ -432,9 +455,9 @@ export function PurchaseOrdersPage(): ReactElement {
 
         <Card className="workspace-panel-card" title={t("purchaseOrders.listTitle")}>
           {selectedTenantId ? (
-            purchaseOrders.length ? (
+            filteredPurchaseOrders.length ? (
               <div className="record-stack">
-                {purchaseOrders.map((purchaseOrder) => (
+                {filteredPurchaseOrders.map((purchaseOrder) => (
                   <div className="record-row" key={purchaseOrder.id}>
                     <div className="record-icon">
                       <ShoppingCartOutlined />
@@ -446,6 +469,9 @@ export function PurchaseOrdersPage(): ReactElement {
                       </div>
                       <div className="record-detail">
                         {purchaseOrder.productName} ({purchaseOrder.productSku})
+                      </div>
+                      <div className="record-detail">
+                        <Tag>{purchaseOrder.productCategoryName}</Tag>
                       </div>
                       <div className="record-detail">
                         {t("purchaseOrders.orderedLabel")} {purchaseOrder.quantityOrdered} |{" "}

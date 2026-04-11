@@ -64,6 +64,7 @@ import {
   type PurchaseOrderStatus,
   type ProductCategoryRecord,
   type ProductRecord,
+  type ReportCategoryPerformanceRecord,
   type ReportSummary,
   type OperationsTenantStatusRecord,
   type OperationsTotals,
@@ -135,6 +136,8 @@ type ProductRow = {
 type InventoryRow = {
   product_id: string;
   tenant_id: string;
+  category_id: string;
+  category_name: string;
   sku: string;
   product_name: string;
   quantity_on_hand: number;
@@ -151,6 +154,8 @@ type OrderRow = {
   customer_id: string;
   customer_name: string;
   product_id: string;
+  product_category_id: string;
+  product_category_name: string;
   product_name: string;
   product_sku: string;
   quantity: number;
@@ -168,6 +173,8 @@ type PurchaseOrderRow = {
   supplier_code: string;
   supplier_name: string;
   product_id: string;
+  product_category_id: string;
+  product_category_name: string;
   product_sku: string;
   product_name: string;
   quantity_ordered: number;
@@ -185,6 +192,8 @@ type PurchaseOrderReceiptRow = {
   purchase_order_id: string;
   purchase_order_number: string;
   product_id: string;
+  product_category_id: string;
+  product_category_name: string;
   product_sku: string;
   product_name: string;
   quantity_received: number;
@@ -281,6 +290,10 @@ type ReportCountsRow = {
   overdue_31_to_60_amount: number;
   overdue_61_to_90_amount: number;
   overdue_over_90_amount: number;
+};
+
+type CategoryCountRow = {
+  category_count: number;
 };
 
 type OperationsTotalsRow = {
@@ -393,6 +406,16 @@ type TopCustomerRow = {
 type TopProductRow = {
   product_name: string;
   total_units: number;
+};
+
+type ReportCategoryPerformanceRow = {
+  category_id: string;
+  category_name: string;
+  product_count: number;
+  stock_units_on_hand: number;
+  inventory_value_amount: number;
+  gross_sales_amount: number;
+  purchase_commitment_amount: number;
 };
 
 let currentSession = createDemoSession();
@@ -912,6 +935,8 @@ const getInventoryRowStatement = db.prepare(`
   SELECT
     p.id AS product_id,
     p.tenant_id AS tenant_id,
+    p.category_id AS category_id,
+    p.category_name AS category_name,
     p.sku AS sku,
     p.name AS product_name,
     COALESCE(i.quantity_on_hand, 0) AS quantity_on_hand,
@@ -929,6 +954,8 @@ const listInventoryStatement = db.prepare(`
   SELECT
     p.id AS product_id,
     p.tenant_id AS tenant_id,
+    p.category_id AS category_id,
+    p.category_name AS category_name,
     p.sku AS sku,
     p.name AS product_name,
     COALESCE(i.quantity_on_hand, 0) AS quantity_on_hand,
@@ -950,6 +977,8 @@ const listOrdersStatement = db.prepare(`
     customer_id,
     customer_name,
     product_id,
+    product_category_id,
+    product_category_name,
     product_name,
     product_sku,
     quantity,
@@ -970,6 +999,8 @@ const createOrderStatement = db.prepare(`
     customer_id,
     customer_name,
     product_id,
+    product_category_id,
+    product_category_name,
     product_name,
     product_sku,
     quantity,
@@ -978,7 +1009,7 @@ const createOrderStatement = db.prepare(`
     status,
     created_at
   )
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `);
 
 const updateOrderStatement = db.prepare(`
@@ -987,6 +1018,8 @@ const updateOrderStatement = db.prepare(`
     customer_id = ?,
     customer_name = ?,
     product_id = ?,
+    product_category_id = ?,
+    product_category_name = ?,
     product_name = ?,
     product_sku = ?,
     quantity = ?,
@@ -1010,6 +1043,8 @@ const listPurchaseOrdersStatement = db.prepare(`
     supplier_code,
     supplier_name,
     product_id,
+    product_category_id,
+    product_category_name,
     product_sku,
     product_name,
     quantity_ordered,
@@ -1033,6 +1068,8 @@ const createPurchaseOrderStatement = db.prepare(`
     supplier_code,
     supplier_name,
     product_id,
+    product_category_id,
+    product_category_name,
     product_sku,
     product_name,
     quantity_ordered,
@@ -1043,7 +1080,7 @@ const createPurchaseOrderStatement = db.prepare(`
     expected_receipt_date,
     created_at
   )
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `);
 
 const updatePurchaseOrderStatement = db.prepare(`
@@ -1053,6 +1090,8 @@ const updatePurchaseOrderStatement = db.prepare(`
     supplier_code = ?,
     supplier_name = ?,
     product_id = ?,
+    product_category_id = ?,
+    product_category_name = ?,
     product_sku = ?,
     product_name = ?,
     quantity_ordered = ?,
@@ -1072,6 +1111,8 @@ const getPurchaseOrderByIdStatement = db.prepare(`
     supplier_code,
     supplier_name,
     product_id,
+    product_category_id,
+    product_category_name,
     product_sku,
     product_name,
     quantity_ordered,
@@ -1111,6 +1152,8 @@ const createPurchaseOrderReceiptStatement = db.prepare(`
     purchase_order_id,
     purchase_order_number,
     product_id,
+    product_category_id,
+    product_category_name,
     product_sku,
     product_name,
     quantity_received,
@@ -1118,7 +1161,7 @@ const createPurchaseOrderReceiptStatement = db.prepare(`
     total_cost,
     received_at
   )
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `);
 
 const getOrderByIdStatement = db.prepare(`
@@ -1129,6 +1172,8 @@ const getOrderByIdStatement = db.prepare(`
     customer_id,
     customer_name,
     product_id,
+    product_category_id,
+    product_category_name,
     product_name,
     product_sku,
     quantity,
@@ -1681,6 +1726,12 @@ const getInventorySummaryStatement = db.prepare(`
   WHERE tenant_id = ?
 `);
 
+const getCategoryCountStatement = db.prepare(`
+  SELECT COUNT(*) AS category_count
+  FROM product_categories
+  WHERE tenant_id = ?
+`);
+
 const getTopCustomerStatement = db.prepare(`
   SELECT
     customer_name,
@@ -1701,6 +1752,55 @@ const getTopProductStatement = db.prepare(`
   GROUP BY product_id, product_name
   ORDER BY total_units DESC, product_name COLLATE NOCASE ASC
   LIMIT 1
+`);
+
+const listReportCategoryPerformanceStatement = db.prepare(`
+  SELECT
+    pc.id AS category_id,
+    pc.name AS category_name,
+    COUNT(DISTINCT p.id) AS product_count,
+    COALESCE(SUM(COALESCE(i.quantity_on_hand, 0)), 0) AS stock_units_on_hand,
+    COALESCE(SUM(COALESCE(i.inventory_value, 0)), 0) AS inventory_value_amount,
+    COALESCE(order_totals.gross_sales_amount, 0) AS gross_sales_amount,
+    COALESCE(purchase_totals.purchase_commitment_amount, 0) AS purchase_commitment_amount
+  FROM product_categories pc
+  LEFT JOIN products p
+    ON p.tenant_id = pc.tenant_id
+   AND p.category_id = pc.id
+  LEFT JOIN inventory i
+    ON i.product_id = p.id
+  LEFT JOIN (
+    SELECT
+      tenant_id,
+      product_category_id,
+      SUM(total_amount) AS gross_sales_amount
+    FROM orders
+    WHERE tenant_id = ? AND status <> 'canceled'
+    GROUP BY tenant_id, product_category_id
+  ) order_totals
+    ON order_totals.tenant_id = pc.tenant_id
+   AND order_totals.product_category_id = pc.id
+  LEFT JOIN (
+    SELECT
+      tenant_id,
+      product_category_id,
+      SUM(MAX(quantity_ordered - received_quantity, 0) * unit_cost) AS purchase_commitment_amount
+    FROM purchase_orders
+    WHERE tenant_id = ? AND status NOT IN ('canceled', 'closed')
+    GROUP BY tenant_id, product_category_id
+  ) purchase_totals
+    ON purchase_totals.tenant_id = pc.tenant_id
+   AND purchase_totals.product_category_id = pc.id
+  WHERE pc.tenant_id = ?
+  GROUP BY
+    pc.id,
+    pc.name,
+    order_totals.gross_sales_amount,
+    purchase_totals.purchase_commitment_amount
+  ORDER BY
+    gross_sales_amount DESC,
+    inventory_value_amount DESC,
+    pc.name COLLATE NOCASE ASC
 `);
 
 const getOperationsTotalsStatement = db.prepare(`
@@ -1994,6 +2094,8 @@ function mapInventory(row: InventoryRow): InventoryRecord {
   return {
     productId: row.product_id,
     tenantId: row.tenant_id,
+    categoryId: row.category_id,
+    categoryName: row.category_name,
     sku: row.sku,
     productName: row.product_name,
     quantityOnHand: row.quantity_on_hand,
@@ -2012,6 +2114,8 @@ function mapOrder(row: OrderRow): OrderRecord {
     customerId: row.customer_id,
     customerName: row.customer_name,
     productId: row.product_id,
+    productCategoryId: row.product_category_id,
+    productCategoryName: row.product_category_name,
     productName: row.product_name,
     productSku: row.product_sku,
     quantity: row.quantity,
@@ -2034,6 +2138,8 @@ function mapPurchaseOrder(row: PurchaseOrderRow): PurchaseOrderRecord {
     supplierCode: row.supplier_code,
     supplierName: row.supplier_name,
     productId: row.product_id,
+    productCategoryId: row.product_category_id,
+    productCategoryName: row.product_category_name,
     productSku: row.product_sku,
     productName: row.product_name,
     quantityOrdered: row.quantity_ordered,
@@ -2054,12 +2160,28 @@ function mapPurchaseOrderReceipt(row: PurchaseOrderReceiptRow): PurchaseOrderRec
     purchaseOrderId: row.purchase_order_id,
     purchaseOrderNumber: row.purchase_order_number,
     productId: row.product_id,
+    productCategoryId: row.product_category_id,
+    productCategoryName: row.product_category_name,
     productSku: row.product_sku,
     productName: row.product_name,
     quantityReceived: row.quantity_received,
     unitCost: row.unit_cost,
     totalCost: row.total_cost,
     receivedAt: row.received_at,
+  };
+}
+
+function mapReportCategoryPerformance(
+  row: ReportCategoryPerformanceRow,
+): ReportCategoryPerformanceRecord {
+  return {
+    categoryId: row.category_id,
+    categoryName: row.category_name,
+    productCount: row.product_count,
+    stockUnitsOnHand: row.stock_units_on_hand,
+    inventoryValueAmount: row.inventory_value_amount,
+    grossSalesAmount: row.gross_sales_amount,
+    purchaseCommitmentAmount: row.purchase_commitment_amount,
   };
 }
 
@@ -3823,14 +3945,21 @@ export function getReportSummary(tenantId: string): ReportSummary {
     tenantId,
     tenantId,
   ) as ReportCountsRow;
+  const categoryCount = getCategoryCountStatement.get(tenantId) as CategoryCountRow | undefined;
   const inventory = getInventorySummaryStatement.get(tenantId) as InventorySummaryRow | undefined;
   const topCustomer = getTopCustomerStatement.get(tenantId) as TopCustomerRow | undefined;
   const topProduct = getTopProductStatement.get(tenantId) as TopProductRow | undefined;
+  const categoryPerformance = (
+    listReportCategoryPerformanceStatement.all(tenantId, tenantId, tenantId) as ReportCategoryPerformanceRow[]
+  ).map(mapReportCategoryPerformance);
+  const topCategory =
+    categoryPerformance.find((category) => category.grossSalesAmount > 0) ?? categoryPerformance[0] ?? null;
 
   return {
     tenantId,
     customerCount: counts.customer_count,
     productCount: counts.product_count,
+    categoryCount: categoryCount?.category_count ?? 0,
     orderCount: counts.order_count,
     invoiceCount: counts.invoice_count,
     paidInvoiceCount: counts.paid_invoice_count,
@@ -3852,6 +3981,9 @@ export function getReportSummary(tenantId: string): ReportSummary {
     topCustomerAmount: topCustomer?.total_amount ?? 0,
     topProductName: topProduct?.product_name ?? "",
     topProductUnits: topProduct?.total_units ?? 0,
+    topCategoryName: topCategory?.categoryName ?? "",
+    topCategorySalesAmount: topCategory?.grossSalesAmount ?? 0,
+    categoryPerformance,
   };
 }
 
@@ -3907,15 +4039,17 @@ export function createOrder(input: CreateOrderInput): OrderRecord {
       throw new Error("Insufficient stock for the selected product.");
     }
 
-    const order: OrderRecord = {
-      id: randomUUID(),
-      tenantId: input.tenantId,
-      orderNumber: createOrderNumber(),
-      customerId: customer.id,
-      customerName: customer.name,
-      productId: product.id,
-      productName: product.name,
-      productSku: product.sku,
+  const order: OrderRecord = {
+    id: randomUUID(),
+    tenantId: input.tenantId,
+    orderNumber: createOrderNumber(),
+    customerId: customer.id,
+    customerName: customer.name,
+    productId: product.id,
+    productCategoryId: product.category_id,
+    productCategoryName: product.category_name,
+    productName: product.name,
+    productSku: product.sku,
       quantity: input.quantity,
       unitPrice: product.unit_price,
       totalAmount: product.unit_price * input.quantity,
@@ -3940,11 +4074,13 @@ export function createOrder(input: CreateOrderInput): OrderRecord {
       order.id,
       order.tenantId,
       order.orderNumber,
-      order.customerId,
-      order.customerName,
-      order.productId,
-      order.productName,
-      order.productSku,
+    order.customerId,
+    order.customerName,
+    order.productId,
+    order.productCategoryId,
+    order.productCategoryName,
+    order.productName,
+    order.productSku,
       order.quantity,
       order.unitPrice,
       order.totalAmount,
@@ -4061,11 +4197,13 @@ export function updateOrder(input: UpdateOrderInput): OrderRecord {
       id: existing.id,
       tenantId: existing.tenant_id,
       orderNumber: existing.order_number,
-      customerId: customer.id,
-      customerName: customer.name,
-      productId: product.id,
-      productName: product.name,
-      productSku: product.sku,
+    customerId: customer.id,
+    customerName: customer.name,
+    productId: product.id,
+    productCategoryId: product.category_id,
+    productCategoryName: product.category_name,
+    productName: product.name,
+    productSku: product.sku,
       quantity: input.quantity,
       unitPrice: product.unit_price,
       totalAmount: product.unit_price * input.quantity,
@@ -4077,6 +4215,8 @@ export function updateOrder(input: UpdateOrderInput): OrderRecord {
       order.customerId,
       order.customerName,
       order.productId,
+      order.productCategoryId,
+      order.productCategoryName,
       order.productName,
       order.productSku,
       order.quantity,
@@ -4332,6 +4472,8 @@ export function createPurchaseOrder(input: CreatePurchaseOrderInput): PurchaseOr
     supplierCode: supplier.supplier_code,
     supplierName: supplier.name,
     productId: product.id,
+    productCategoryId: product.category_id,
+    productCategoryName: product.category_name,
     productSku: product.sku,
     productName: product.name,
     quantityOrdered: input.quantityOrdered,
@@ -4352,6 +4494,8 @@ export function createPurchaseOrder(input: CreatePurchaseOrderInput): PurchaseOr
     purchaseOrder.supplierCode,
     purchaseOrder.supplierName,
     purchaseOrder.productId,
+    purchaseOrder.productCategoryId,
+    purchaseOrder.productCategoryName,
     purchaseOrder.productSku,
     purchaseOrder.productName,
     purchaseOrder.quantityOrdered,
@@ -4419,6 +4563,8 @@ export function updatePurchaseOrder(input: UpdatePurchaseOrderInput): PurchaseOr
     supplierCode: supplier.supplier_code,
     supplierName: supplier.name,
     productId: product.id,
+    productCategoryId: product.category_id,
+    productCategoryName: product.category_name,
     productSku: product.sku,
     productName: product.name,
     quantityOrdered: input.quantityOrdered,
@@ -4439,6 +4585,8 @@ export function updatePurchaseOrder(input: UpdatePurchaseOrderInput): PurchaseOr
       purchaseOrder.supplierCode,
       purchaseOrder.supplierName,
       purchaseOrder.productId,
+      purchaseOrder.productCategoryId,
+      purchaseOrder.productCategoryName,
       purchaseOrder.productSku,
       purchaseOrder.productName,
       purchaseOrder.quantityOrdered,
@@ -4678,6 +4826,8 @@ function receivePurchaseOrderInternal(input: ReceivePurchaseOrderInput): Receive
     purchase_order_id: purchaseOrder.id,
     purchase_order_number: purchaseOrder.purchase_order_number,
     product_id: purchaseOrder.product_id,
+    product_category_id: purchaseOrder.product_category_id,
+    product_category_name: purchaseOrder.product_category_name,
     product_sku: purchaseOrder.product_sku,
     product_name: purchaseOrder.product_name,
     quantity_received: input.quantityReceived,
@@ -4700,6 +4850,8 @@ function receivePurchaseOrderInternal(input: ReceivePurchaseOrderInput): Receive
       receiptRow.purchase_order_id,
       receiptRow.purchase_order_number,
       receiptRow.product_id,
+      receiptRow.product_category_id,
+      receiptRow.product_category_name,
       receiptRow.product_sku,
       receiptRow.product_name,
       receiptRow.quantity_received,

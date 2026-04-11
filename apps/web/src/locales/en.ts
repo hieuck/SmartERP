@@ -960,3 +960,31 @@ Object.assign(en.errors, {
   invoiceVoided: "This invoice has been voided.",
   invoiceVoidBlockedByPayments: "This invoice cannot be voided because payments already exist.",
 });
+
+Object.assign(en.common, {
+  allCategories: "All Categories",
+});
+
+Object.assign(en.inventory, {
+  categoryFilter: "Category",
+});
+
+Object.assign(en.orders, {
+  categoryFilter: "Category",
+});
+
+Object.assign(en.purchaseOrders, {
+  categoryFilter: "Category",
+});
+
+Object.assign(en.reports, {
+  categoryCount: "Categories",
+  topCategory: "Top Category",
+  noCategorySignal: "No category signal yet",
+  categoryPerformanceTitle: "Category Performance",
+  categoryPerformanceEmpty: "No category activity yet.",
+  categoryProductCount: "{{count}} product(s)",
+  categoryStockUnits: "{{count}} unit(s) on hand",
+  categoryInventoryValue: "Inventory value",
+  categoryPurchaseCommitment: "Open purchasing",
+});

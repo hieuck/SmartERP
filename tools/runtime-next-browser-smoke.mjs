@@ -297,7 +297,7 @@ async function waitForInputValue(input, expectedValue, timeout = 15000) {
 
 async function selectOption(page, combobox, optionText) {
   await combobox.click();
-  const option = page.locator(".ant-select-item-option").filter({ hasText: optionText }).last();
+  const option = page.locator(".ant-select-dropdown:visible .ant-select-item-option").filter({ hasText: optionText }).first();
   await option.waitFor({ timeout: 15000 });
   await option.click();
 }
@@ -542,8 +542,10 @@ async function main() {
   let purchaseReceiptApprovalVerified = false;
   let purchaseReceiptVerified = false;
   let purchaseReceiptGuardVerified = false;
+  let purchaseOrderCategoryFlowVerified = false;
   let inventoryAdjustmentRejectionVerified = false;
   let inventoryValuationVerified = false;
+  let inventoryCategoryFlowVerified = false;
   let invoicePaymentApprovalVerified = false;
   let paymentGuardVerified = false;
   let partialSettlementVerified = false;
@@ -552,6 +554,7 @@ async function main() {
   let orderCloseGuardVerified = false;
   let orderReopenVerified = false;
   let orderReopenGuardVerified = false;
+  let orderCategoryFlowVerified = false;
   let invoiceVoidVerified = false;
   let invoiceReissueVerified = false;
   let invoiceReissueLineageVerified = false;
@@ -582,6 +585,7 @@ async function main() {
   let warehouseRoleOnboardingVerified = false;
   let rbacCollectorActionSplitVerified = false;
   let collectorRoleOnboardingVerified = false;
+  let reportCategoryPerformanceVerified = false;
 
   try {
     await openApp(page);
@@ -998,6 +1002,7 @@ async function main() {
       .filter({ hasText: `${supplierName} (${supplierCode})` })
       .first();
     await cancelablePurchaseOrderRow.waitFor({ timeout: 15000 });
+    await cancelablePurchaseOrderRow.getByText(productCategoryName, { exact: false }).waitFor({ timeout: 15000 });
     const canceledPurchaseOrderNumber =
       (await cancelablePurchaseOrderRow.locator("strong").first().textContent())?.trim() ?? "";
     assert(
@@ -1077,12 +1082,14 @@ async function main() {
     let purchaseOrderRow = getListCard(page).locator(".record-row").filter({ hasText: supplierName }).first();
     await purchaseOrderRow.waitFor({ timeout: 15000 });
     await purchaseOrderRow.getByText(productName, { exact: false }).waitFor({ timeout: 15000 });
+    await purchaseOrderRow.getByText(productCategoryName, { exact: false }).waitFor({ timeout: 15000 });
     await purchaseOrderRow.getByText(buildAmountPattern(initialPurchaseOrderAmount)).first().waitFor({ timeout: 15000 });
     await purchaseOrderRow.getByText(/Đã lập|Da lap/).waitFor({ timeout: 15000 });
     purchaseOrderNumber = (await purchaseOrderRow.locator("strong").first().textContent())?.trim() ?? "";
     assert(purchaseOrderNumber.length > 0, "Purchase order number was not rendered after purchase order creation.");
     purchaseOrderRow = getListCard(page).locator(".record-row").filter({ hasText: purchaseOrderNumber }).first();
     supplierAndPurchaseOrdersVerified = true;
+    purchaseOrderCategoryFlowVerified = true;
     await purchaseOrderRow.locator('[data-testid="purchase-order-edit-button"]').click();
     await fillField(purchaseOrdersCreateCard, "#quantityOrdered", editedPurchaseQuantity);
     await fillField(purchaseOrdersCreateCard, "#expectedReceiptDate", editedExpectedReceiptDateInput);
@@ -1486,6 +1493,7 @@ async function main() {
     const inventoryFormCard = getFormCard(page);
     const inventoryRow = getListCard(page).locator(".record-row").filter({ hasText: productName }).first();
     await inventoryRow.waitFor({ timeout: 15000 });
+    await inventoryRow.getByText(productCategoryName, { exact: false }).waitFor({ timeout: 15000 });
     await inventoryRow.getByText(String(stockInQuantity), { exact: true }).waitFor({ timeout: 15000 });
     await inventoryRow.getByText(buildAmountPattern(purchaseUnitCost)).first().waitFor({ timeout: 15000 });
     await inventoryRow.getByText(buildAmountPattern(expectedReceivedPurchaseValue)).first().waitFor({ timeout: 15000 });
@@ -1529,6 +1537,7 @@ async function main() {
     await inventoryRow.getByText(String(stockInQuantity), { exact: true }).waitFor({ timeout: 15000 });
     await inventoryRow.getByText(buildAmountPattern(expectedReceivedPurchaseValue)).first().waitFor({ timeout: 15000 });
     inventoryValuationVerified = true;
+    inventoryCategoryFlowVerified = true;
 
     await openSection(page, sidebarIndexes.orders, "/dashboard/orders");
     await waitForTenantContext(page, tenantName);
@@ -1543,6 +1552,7 @@ async function main() {
       .filter({ hasText: `${productName} x ${cancelableOrderQuantity}` })
       .first();
     await canceledOrderRow.waitFor({ timeout: 15000 });
+    await canceledOrderRow.getByText(productCategoryName, { exact: false }).waitFor({ timeout: 15000 });
     const canceledOrderNumber = (await canceledOrderRow.locator("strong").first().textContent())?.trim() ?? "";
     assert(canceledOrderNumber.length > 0, "Cancelable order number was not rendered before cancellation.");
     await canceledOrderRow.locator('[data-testid="order-cancel-button"]').click();
@@ -1644,6 +1654,7 @@ async function main() {
       .first();
     await initialOrderRow.waitFor({ timeout: 15000 });
     await initialOrderRow.getByText(customerName, { exact: false }).waitFor({ timeout: 15000 });
+    await initialOrderRow.getByText(productCategoryName, { exact: false }).waitFor({ timeout: 15000 });
     orderNumber = (await initialOrderRow.locator("strong").first().textContent())?.trim() ?? "";
     assert(orderNumber.length > 0, "Order number was not rendered after order creation.");
     const orderRow = getListCard(page).locator(".record-row").filter({ hasText: orderNumber }).first();
@@ -1683,6 +1694,7 @@ async function main() {
       "Editing the order did not rebalance stock to the expected quantity.",
     );
     orderEditVerified = true;
+    orderCategoryFlowVerified = true;
 
     await selectOption(page, ordersFormCard.getByRole("combobox", { name: "* Khách hàng" }), customerName);
     await selectOption(page, ordersFormCard.getByRole("combobox", { name: "* Sản phẩm" }), productName);
@@ -2601,6 +2613,15 @@ async function main() {
     await page.getByText("632").first().waitFor({ timeout: 15000 });
     await page.getByText("Giá vốn hàng bán", { exact: false }).first().waitFor({ timeout: 15000 });
     await page.getByText(buildAmountPattern(expectedCogsAmount)).first().waitFor({ timeout: 15000 });
+    const categoryPerformanceCard = page.getByTestId("reports-category-performance-card");
+    await categoryPerformanceCard.waitFor({ timeout: 15000 });
+    await categoryPerformanceCard.getByText(productCategoryName, { exact: false }).waitFor({ timeout: 15000 });
+    await categoryPerformanceCard.getByText(buildAmountPattern(expectedGrossSales)).first().waitFor({
+      timeout: 15000,
+    });
+    await page.getByText("Danh mục dẫn đầu", { exact: false }).first().waitFor({ timeout: 15000 });
+    await page.getByText(productCategoryName, { exact: false }).first().waitFor({ timeout: 15000 });
+    reportCategoryPerformanceVerified = true;
     ledgerPostingVerified = true;
     const auditCard = page.locator(".ant-card").filter({ hasText: "Nhật ký kiểm soát tài chính" }).first();
     await auditCard.waitFor({ timeout: 15000 });
@@ -3355,8 +3376,10 @@ async function main() {
       purchaseReceiptApprovalVerified,
       purchaseReceiptVerified,
       purchaseReceiptGuardVerified,
+      purchaseOrderCategoryFlowVerified,
       inventoryAdjustmentRejectionVerified,
       inventoryValuationVerified,
+      inventoryCategoryFlowVerified,
       invoicePaymentApprovalVerified,
       paymentGuardVerified,
       partialSettlementVerified,
@@ -3365,6 +3388,7 @@ async function main() {
       orderCloseGuardVerified,
       orderReopenVerified,
       orderReopenGuardVerified,
+      orderCategoryFlowVerified,
       invoiceVoidVerified,
       invoiceReissueVerified,
       invoiceReissueLineageVerified,
@@ -3394,6 +3418,7 @@ async function main() {
       warehouseRoleOnboardingVerified,
       rbacCollectorActionSplitVerified,
       collectorRoleOnboardingVerified,
+      reportCategoryPerformanceVerified,
       directRouteVerified: true,
       logoutClearsStorageVerified: true,
       logoutBlocksProtectedRouteVerified: true,

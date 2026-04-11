@@ -1,4 +1,11 @@
-import { BarChartOutlined, ClockCircleOutlined, FileTextOutlined, InboxOutlined, WarningOutlined } from "@ant-design/icons";
+import {
+  AppstoreOutlined,
+  BarChartOutlined,
+  ClockCircleOutlined,
+  FileTextOutlined,
+  InboxOutlined,
+  WarningOutlined,
+} from "@ant-design/icons";
 import type { ReactElement } from "react";
 import { useEffect, useState } from "react";
 import { Alert, Card, Col, Empty, Row, Select, Spin, Statistic, Tag, Typography } from "antd";
@@ -407,6 +414,15 @@ export function ReportsPage(): ReactElement {
                 <Statistic title={t("reports.lowStockProducts")} value={summary.lowStockProductCount} />
               </Card>
             </Col>
+            <Col xs={24} sm={12} xl={6}>
+              <Card className="workspace-metric-card">
+                <Statistic
+                  title={t("reports.categoryCount")}
+                  value={summary.categoryCount}
+                  prefix={<AppstoreOutlined />}
+                />
+              </Card>
+            </Col>
           </Row>
 
           <Row gutter={[16, 16]}>
@@ -454,6 +470,19 @@ export function ReportsPage(): ReactElement {
                   </div>
                   <div className="report-signal-row">
                     <div className="report-signal-main">
+                      <strong>{t("reports.topCategory")}</strong>
+                      <div className="record-detail">
+                        {summary.topCategoryName || t("reports.noCategorySignal")}
+                      </div>
+                    </div>
+                    <Tag className="report-signal-meta" color="purple">
+                      {summary.topCategorySalesAmount > 0
+                        ? formatCurrency(summary.topCategorySalesAmount)
+                        : t("reports.noAmount")}
+                    </Tag>
+                  </div>
+                  <div className="report-signal-row">
+                    <div className="report-signal-main">
                       <strong>{t("reports.productCount")}</strong>
                       <div className="record-detail">{summary.productCount}</div>
                     </div>
@@ -463,6 +492,42 @@ export function ReportsPage(): ReactElement {
               </Card>
             </Col>
           </Row>
+
+          <Card
+            className="workspace-panel-card"
+            data-testid="reports-category-performance-card"
+            title={t("reports.categoryPerformanceTitle")}
+          >
+            {summary.categoryPerformance.length ? (
+              <div className="report-signal-stack">
+                {summary.categoryPerformance.map((category) => (
+                  <div className="report-signal-row" key={category.categoryId}>
+                    <div className="report-signal-main">
+                      <strong>{category.categoryName}</strong>
+                      <div className="record-detail">
+                        {t("reports.categoryProductCount", { count: category.productCount })}
+                      </div>
+                      <div className="record-detail">
+                        {t("reports.categoryStockUnits", { count: category.stockUnitsOnHand })}
+                      </div>
+                      <div className="record-detail">
+                        {t("reports.categoryInventoryValue")} {formatCurrency(category.inventoryValueAmount)}
+                      </div>
+                      <div className="record-detail">
+                        {t("reports.categoryPurchaseCommitment")}{" "}
+                        {formatCurrency(category.purchaseCommitmentAmount)}
+                      </div>
+                    </div>
+                    <Tag className="report-signal-meta" color="blue">
+                      {formatCurrency(category.grossSalesAmount)}
+                    </Tag>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <Empty description={t("reports.categoryPerformanceEmpty")} />
+            )}
+          </Card>
 
           <Row gutter={[16, 16]}>
             <Col xs={24} lg={10}>
