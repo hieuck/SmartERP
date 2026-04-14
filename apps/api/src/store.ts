@@ -239,6 +239,10 @@ type InvoiceRow = {
   order_number: string;
   customer_id: string;
   customer_name: string;
+  product_category_id: string;
+  product_category_name: string;
+  product_sku: string;
+  product_name: string;
   subtotal_amount: number;
   tax_rate_percent: number;
   tax_amount: number;
@@ -1200,39 +1204,44 @@ const countUnpaidInvoicesForOrderStatement = db.prepare(`
 
 const getLatestVoidedInvoiceForOrderStatement = db.prepare(`
   SELECT
-    id,
-    tenant_id,
-    invoice_number,
-    amendment_root_invoice_id,
-    amendment_root_invoice_number,
-    revision_number,
-    reissued_from_invoice_id,
-    reissued_from_invoice_number,
-    reissued_to_invoice_id,
-    reissued_to_invoice_number,
-    order_id,
-    order_number,
-    customer_id,
-    customer_name,
-    subtotal_amount,
-    tax_rate_percent,
-    tax_amount,
-    total_amount,
-    status,
+    i.id AS id,
+    i.tenant_id AS tenant_id,
+    i.invoice_number AS invoice_number,
+    i.amendment_root_invoice_id AS amendment_root_invoice_id,
+    i.amendment_root_invoice_number AS amendment_root_invoice_number,
+    i.revision_number AS revision_number,
+    i.reissued_from_invoice_id AS reissued_from_invoice_id,
+    i.reissued_from_invoice_number AS reissued_from_invoice_number,
+    i.reissued_to_invoice_id AS reissued_to_invoice_id,
+    i.reissued_to_invoice_number AS reissued_to_invoice_number,
+    i.order_id AS order_id,
+    i.order_number AS order_number,
+    i.customer_id AS customer_id,
+    i.customer_name AS customer_name,
+    COALESCE(o.product_category_id, '') AS product_category_id,
+    COALESCE(o.product_category_name, '') AS product_category_name,
+    COALESCE(o.product_sku, '') AS product_sku,
+    COALESCE(o.product_name, '') AS product_name,
+    i.subtotal_amount AS subtotal_amount,
+    i.tax_rate_percent AS tax_rate_percent,
+    i.tax_amount AS tax_amount,
+    i.total_amount AS total_amount,
+    i.status AS status,
     0 AS paid_amount,
     0 AS payment_count,
     NULL AS last_payment_at,
-    issued_at,
-    due_date,
-    follow_up_status,
-    action_required,
-    promised_payment_date,
-    next_action_date,
-    collection_note,
-    last_collection_update_at
-  FROM invoices
-  WHERE tenant_id = ? AND order_id = ? AND status = 'void'
-  ORDER BY datetime(issued_at) DESC, rowid DESC
+    i.issued_at AS issued_at,
+    i.due_date AS due_date,
+    i.follow_up_status AS follow_up_status,
+    i.action_required AS action_required,
+    i.promised_payment_date AS promised_payment_date,
+    i.next_action_date AS next_action_date,
+    i.collection_note AS collection_note,
+    i.last_collection_update_at AS last_collection_update_at
+  FROM invoices i
+  LEFT JOIN orders o ON o.id = i.order_id AND o.tenant_id = i.tenant_id
+  WHERE i.tenant_id = ? AND i.order_id = ? AND i.status = 'void'
+  ORDER BY datetime(i.issued_at) DESC, i.rowid DESC
   LIMIT 1
 `);
 
@@ -1261,6 +1270,10 @@ const listInvoicesStatement = db.prepare(`
     i.order_number AS order_number,
     i.customer_id AS customer_id,
     i.customer_name AS customer_name,
+    COALESCE(o.product_category_id, '') AS product_category_id,
+    COALESCE(o.product_category_name, '') AS product_category_name,
+    COALESCE(o.product_sku, '') AS product_sku,
+    COALESCE(o.product_name, '') AS product_name,
     i.subtotal_amount AS subtotal_amount,
     i.tax_rate_percent AS tax_rate_percent,
     i.tax_amount AS tax_amount,
@@ -1278,6 +1291,7 @@ const listInvoicesStatement = db.prepare(`
     i.collection_note AS collection_note,
     i.last_collection_update_at AS last_collection_update_at
   FROM invoices i
+  LEFT JOIN orders o ON o.id = i.order_id AND o.tenant_id = i.tenant_id
   LEFT JOIN invoice_payments p ON p.invoice_id = i.id
   WHERE i.tenant_id = ?
   GROUP BY
@@ -1295,6 +1309,10 @@ const listInvoicesStatement = db.prepare(`
     i.order_number,
     i.customer_id,
     i.customer_name,
+    o.product_category_id,
+    o.product_category_name,
+    o.product_sku,
+    o.product_name,
     i.subtotal_amount,
     i.tax_rate_percent,
     i.tax_amount,
@@ -1327,6 +1345,10 @@ const getInvoiceByIdStatement = db.prepare(`
     i.order_number AS order_number,
     i.customer_id AS customer_id,
     i.customer_name AS customer_name,
+    COALESCE(o.product_category_id, '') AS product_category_id,
+    COALESCE(o.product_category_name, '') AS product_category_name,
+    COALESCE(o.product_sku, '') AS product_sku,
+    COALESCE(o.product_name, '') AS product_name,
     i.subtotal_amount AS subtotal_amount,
     i.tax_rate_percent AS tax_rate_percent,
     i.tax_amount AS tax_amount,
@@ -1344,6 +1366,7 @@ const getInvoiceByIdStatement = db.prepare(`
     i.collection_note AS collection_note,
     i.last_collection_update_at AS last_collection_update_at
   FROM invoices i
+  LEFT JOIN orders o ON o.id = i.order_id AND o.tenant_id = i.tenant_id
   LEFT JOIN invoice_payments p ON p.invoice_id = i.id
   WHERE i.tenant_id = ? AND i.id = ?
   GROUP BY
@@ -1361,6 +1384,10 @@ const getInvoiceByIdStatement = db.prepare(`
     i.order_number,
     i.customer_id,
     i.customer_name,
+    o.product_category_id,
+    o.product_category_name,
+    o.product_sku,
+    o.product_name,
     i.subtotal_amount,
     i.tax_rate_percent,
     i.tax_amount,
@@ -2185,7 +2212,121 @@ function mapReportCategoryPerformance(
   };
 }
 
+type ProductContext = {
+  productCategoryId: string | null;
+  productCategoryName: string | null;
+  productSku: string | null;
+  productName: string | null;
+};
+
+function emptyProductContext(): ProductContext {
+  return {
+    productCategoryId: null,
+    productCategoryName: null,
+    productSku: null,
+    productName: null,
+  };
+}
+
+function getProductContextFromProductRow(product: ProductRow | undefined): ProductContext {
+  if (!product) {
+    return emptyProductContext();
+  }
+
+  return {
+    productCategoryId: product.category_id,
+    productCategoryName: product.category_name,
+    productSku: product.sku,
+    productName: product.name,
+  };
+}
+
+function getProductContextFromOrderRow(order: OrderRow | undefined): ProductContext {
+  if (!order) {
+    return emptyProductContext();
+  }
+
+  return {
+    productCategoryId: order.product_category_id,
+    productCategoryName: order.product_category_name,
+    productSku: order.product_sku,
+    productName: order.product_name,
+  };
+}
+
+function getProductContextFromPurchaseOrderRow(
+  purchaseOrder: PurchaseOrderRow | undefined,
+): ProductContext {
+  if (!purchaseOrder) {
+    return emptyProductContext();
+  }
+
+  return {
+    productCategoryId: purchaseOrder.product_category_id,
+    productCategoryName: purchaseOrder.product_category_name,
+    productSku: purchaseOrder.product_sku,
+    productName: purchaseOrder.product_name,
+  };
+}
+
+function getProductContextFromInvoiceRow(invoice: InvoiceRow | undefined): ProductContext {
+  if (!invoice) {
+    return emptyProductContext();
+  }
+
+  return {
+    productCategoryId: invoice.product_category_id,
+    productCategoryName: invoice.product_category_name,
+    productSku: invoice.product_sku,
+    productName: invoice.product_name,
+  };
+}
+
+function getApprovalRequestProductContext(row: ApprovalRequestRow): ProductContext {
+  try {
+    const payload = JSON.parse(row.payload_json) as
+      | CreateInventoryAdjustmentInput
+      | ReceivePurchaseOrderInput
+      | CreateInvoiceInput
+      | CreateInvoicePaymentInput;
+
+    switch (row.request_type) {
+      case "inventory_adjustment":
+        return getProductContextFromProductRow(
+          getProductByIdStatement.get(row.tenant_id, (payload as CreateInventoryAdjustmentInput).productId) as
+            | ProductRow
+            | undefined,
+        );
+      case "purchase_order_receipt":
+        return getProductContextFromPurchaseOrderRow(
+          getPurchaseOrderByIdStatement.get(
+            row.tenant_id,
+            (payload as ReceivePurchaseOrderInput).purchaseOrderId,
+          ) as PurchaseOrderRow | undefined,
+        );
+      case "invoice_issue":
+        return getProductContextFromOrderRow(
+          getOrderByIdStatement.get(row.tenant_id, (payload as CreateInvoiceInput).orderId) as
+            | OrderRow
+            | undefined,
+        );
+      case "invoice_payment":
+        return getProductContextFromInvoiceRow(
+          getInvoiceByIdStatement.get(row.tenant_id, (payload as CreateInvoicePaymentInput).invoiceId) as
+            | InvoiceRow
+            | undefined,
+        );
+      default:
+        return emptyProductContext();
+    }
+  } catch {
+    return emptyProductContext();
+  }
+}
+
 function mapApprovalRequest(row: ApprovalRequestRow): ApprovalRequestRecord {
+  const productContext = getApprovalRequestProductContext(row);
+
   return {
     id: row.id,
     tenantId: row.tenant_id,
@@ -2198,6 +2339,10 @@ function mapApprovalRequest(row: ApprovalRequestRow): ApprovalRequestRecord {
     riskLevel: row.risk_level,
     amount: row.amount,
     quantity: row.quantity,
+    productCategoryId: productContext.productCategoryId,
+    productCategoryName: productContext.productCategoryName,
+    productSku: productContext.productSku,
+    productName: productContext.productName,
     requestedByEmail: row.requested_by_email,
     requestedByDisplayName: row.requested_by_display_name,
     decisionByEmail: row.decision_by_email,
@@ -2319,6 +2464,10 @@ function mapInvoice(row: InvoiceRow): InvoiceRecord {
     orderNumber: row.order_number,
     customerId: row.customer_id,
     customerName: row.customer_name,
+    productCategoryId: row.product_category_id,
+    productCategoryName: row.product_category_name,
+    productSku: row.product_sku,
+    productName: row.product_name,
     subtotalAmount: row.subtotal_amount,
     taxRatePercent: row.tax_rate_percent,
     taxAmount: row.tax_amount,
@@ -2569,6 +2718,10 @@ function createApprovalRequest(input: {
   reason: string;
   amount?: number;
   quantity?: number;
+  productCategoryId?: string;
+  productCategoryName?: string;
+  productSku?: string;
+  productName?: string;
   payload: unknown;
 }): ApprovalRequestRecord {
   const requestedAt = timestamp();
@@ -2626,6 +2779,10 @@ function createApprovalRequest(input: {
     metadata: {
       amount: row.amount ?? undefined,
       quantity: row.quantity ?? undefined,
+      productCategoryId: input.productCategoryId,
+      productCategoryName: input.productCategoryName,
+      productSku: input.productSku,
+      productName: input.productName,
       approvalRequestType: input.requestType,
       approvalRiskLevel: input.riskLevel,
       note: input.reason,
@@ -3748,6 +3905,10 @@ export function createInventoryAdjustment(
         summary: `Approval requested for stock adjustment on ${product.name}`,
         reason: approvalRule.reason,
         quantity: input.quantity,
+        productCategoryId: product.category_id,
+        productCategoryName: product.category_name,
+        productSku: product.sku,
+        productName: product.name,
         payload: input,
       }),
     );
@@ -3853,6 +4014,8 @@ export function resolveApprovalRequest(input: ApprovalDecisionInput): ApprovalRe
     throw new Error("The selected approval request does not exist.");
   }
 
+  const productContext = getApprovalRequestProductContext(resolved);
+
   recordAuditLog({
     tenantId: input.tenantId,
     entityType: "approval",
@@ -3866,6 +4029,10 @@ export function resolveApprovalRequest(input: ApprovalDecisionInput): ApprovalRe
     metadata: {
       amount: resolved.amount ?? undefined,
       quantity: resolved.quantity ?? undefined,
+      productCategoryId: productContext.productCategoryId ?? undefined,
+      productCategoryName: productContext.productCategoryName ?? undefined,
+      productSku: productContext.productSku ?? undefined,
+      productName: productContext.productName ?? undefined,
       approvalRequestType: resolved.request_type,
       approvalRiskLevel: resolved.risk_level,
       decision: input.decision,
@@ -4251,6 +4418,10 @@ export function updateOrder(input: UpdateOrderInput): OrderRecord {
       metadata: {
         amount: order.totalAmount,
         quantity: order.quantity,
+        productCategoryId: order.productCategoryId,
+        productCategoryName: order.productCategoryName,
+        productSku: order.productSku,
+        productName: order.productName,
         note: `Customer ${existing.customer_name} -> ${order.customerName}; product ${existing.product_name} -> ${order.productName}`,
       },
       createdAt: updatedAt,
@@ -4339,6 +4510,10 @@ export function cancelOrder(input: CancelOrderInput): OrderRecord {
       metadata: {
         amount: existing.total_amount,
         quantity: existing.quantity,
+        productCategoryId: existing.product_category_id,
+        productCategoryName: existing.product_category_name,
+        productSku: existing.product_sku,
+        productName: existing.product_name,
       },
       createdAt: canceledAt,
     });
@@ -4394,6 +4569,10 @@ export function closeOrder(input: CloseOrderInput): OrderRecord {
       metadata: {
         amount: existing.total_amount,
         quantity: existing.quantity,
+        productCategoryId: existing.product_category_id,
+        productCategoryName: existing.product_category_name,
+        productSku: existing.product_sku,
+        productName: existing.product_name,
       },
       createdAt: closedAt,
     });
@@ -4436,6 +4615,10 @@ export function reopenOrder(input: ReopenOrderInput): OrderRecord {
       metadata: {
         amount: existing.total_amount,
         quantity: existing.quantity,
+        productCategoryId: existing.product_category_id,
+        productCategoryName: existing.product_category_name,
+        productSku: existing.product_sku,
+        productName: existing.product_name,
       },
       createdAt: reopenedAt,
     });
@@ -4609,6 +4792,10 @@ export function updatePurchaseOrder(input: UpdatePurchaseOrderInput): PurchaseOr
         amount: purchaseOrder.totalAmount,
         quantity: purchaseOrder.quantityOrdered,
         unitCost: purchaseOrder.unitCost,
+        productCategoryId: purchaseOrder.productCategoryId,
+        productCategoryName: purchaseOrder.productCategoryName,
+        productSku: purchaseOrder.productSku,
+        productName: purchaseOrder.productName,
         note: `Supplier ${existing.supplier_name} -> ${purchaseOrder.supplierName}; product ${existing.product_name} -> ${purchaseOrder.productName}`,
       },
       createdAt: updatedAt,
@@ -4666,6 +4853,10 @@ export function cancelPurchaseOrder(input: CancelPurchaseOrderInput): PurchaseOr
         amount: existing.total_amount,
         quantity: existing.quantity_ordered,
         unitCost: existing.unit_cost,
+        productCategoryId: existing.product_category_id,
+        productCategoryName: existing.product_category_name,
+        productSku: existing.product_sku,
+        productName: existing.product_name,
       },
       createdAt: canceledAt,
     });
@@ -4715,6 +4906,10 @@ export function closePurchaseOrder(input: ClosePurchaseOrderInput): PurchaseOrde
         amount: existing.total_amount,
         quantity: Math.max(existing.quantity_ordered - existing.received_quantity, 0),
         unitCost: existing.unit_cost,
+        productCategoryId: existing.product_category_id,
+        productCategoryName: existing.product_category_name,
+        productSku: existing.product_sku,
+        productName: existing.product_name,
         note:
           existing.received_quantity < existing.quantity_ordered
             ? `Outstanding quantity locked at ${existing.quantity_ordered - existing.received_quantity}`
@@ -4765,6 +4960,10 @@ export function reopenPurchaseOrder(input: ReopenPurchaseOrderInput): PurchaseOr
         amount: existing.total_amount,
         quantity: Math.max(existing.quantity_ordered - existing.received_quantity, 0),
         unitCost: existing.unit_cost,
+        productCategoryId: existing.product_category_id,
+        productCategoryName: existing.product_category_name,
+        productSku: existing.product_sku,
+        productName: existing.product_name,
       },
       createdAt: reopenedAt,
     });
@@ -4894,6 +5093,10 @@ function receivePurchaseOrderInternal(input: ReceivePurchaseOrderInput): Receive
         amount: receiptRow.total_cost,
         quantity: input.quantityReceived,
         unitCost: purchaseOrder.unit_cost,
+        productCategoryId: purchaseOrder.product_category_id,
+        productCategoryName: purchaseOrder.product_category_name,
+        productSku: purchaseOrder.product_sku,
+        productName: purchaseOrder.product_name,
         note: `${purchaseOrder.product_name} from ${purchaseOrder.supplier_name}`,
       },
       createdAt: receiptRow.received_at,
@@ -4969,6 +5172,10 @@ export function receivePurchaseOrder(
         reason: approvalRule.reason,
         amount: input.quantityReceived * purchaseOrder.unit_cost,
         quantity: input.quantityReceived,
+        productCategoryId: purchaseOrder.product_category_id,
+        productCategoryName: purchaseOrder.product_category_name,
+        productSku: purchaseOrder.product_sku,
+        productName: purchaseOrder.product_name,
         payload: input,
       }),
     );
@@ -5034,6 +5241,10 @@ function createInvoiceInternal(input: CreateInvoiceInput): InvoiceRecord {
     orderNumber: order.order_number,
     customerId: order.customer_id,
     customerName: order.customer_name,
+    productCategoryId: order.product_category_id,
+    productCategoryName: order.product_category_name,
+    productSku: order.product_sku,
+    productName: order.product_name,
     subtotalAmount,
     taxRatePercent: input.taxRatePercent,
     taxAmount,
@@ -5126,6 +5337,10 @@ function createInvoiceInternal(input: CreateInvoiceInput): InvoiceRecord {
       metadata: {
         amount: invoice.totalAmount,
         outstandingAmount: invoice.outstandingAmount,
+        productCategoryId: invoice.productCategoryId,
+        productCategoryName: invoice.productCategoryName,
+        productSku: invoice.productSku,
+        productName: invoice.productName,
         amendmentRootInvoiceNumber: invoice.amendmentRootInvoiceNumber,
         revisionNumber: invoice.revisionNumber,
         reissuedFromInvoiceNumber: invoice.reissuedFromInvoiceNumber ?? undefined,
@@ -5176,6 +5391,10 @@ export function createInvoice(
         reason: approvalRule.reason,
         amount: order.total_amount,
         quantity: order.quantity,
+        productCategoryId: order.product_category_id,
+        productCategoryName: order.product_category_name,
+        productSku: order.product_sku,
+        productName: order.product_name,
         payload: input,
       }),
     );
@@ -5235,6 +5454,10 @@ export function voidInvoice(input: VoidInvoiceInput): InvoiceRecord {
       metadata: {
         amount: mappedInvoice.totalAmount,
         outstandingAmount: mappedInvoice.outstandingAmount,
+        productCategoryId: mappedInvoice.productCategoryId,
+        productCategoryName: mappedInvoice.productCategoryName,
+        productSku: mappedInvoice.productSku,
+        productName: mappedInvoice.productName,
         note: `Original due ${mappedInvoice.dueDate}`,
       },
       createdAt: voidedAt,
@@ -5322,6 +5545,10 @@ function createInvoicePaymentInternal(input: CreateInvoicePaymentInput): Invoice
         amount: input.amount,
         paymentMethod: input.method,
         outstandingAmount: mappedInvoice.outstandingAmount,
+        productCategoryId: mappedInvoice.productCategoryId,
+        productCategoryName: mappedInvoice.productCategoryName,
+        productSku: mappedInvoice.productSku,
+        productName: mappedInvoice.productName,
       },
       createdAt: paidAt,
     });
@@ -5368,6 +5595,10 @@ export function createInvoicePayment(
         summary: `Approval requested to record payment for ${invoice.invoice_number}`,
         reason: approvalRule.reason,
         amount: input.amount,
+        productCategoryId: invoice.product_category_id,
+        productCategoryName: invoice.product_category_name,
+        productSku: invoice.product_sku,
+        productName: invoice.product_name,
         payload: input,
       }),
     );
@@ -5458,6 +5689,10 @@ export function updateInvoiceCollection(input: UpdateInvoiceCollectionInput): In
       summary: `Updated collection follow-up for ${mappedInvoice.invoiceNumber}`,
       metadata: {
         outstandingAmount: mappedInvoice.outstandingAmount,
+        productCategoryId: mappedInvoice.productCategoryId,
+        productCategoryName: mappedInvoice.productCategoryName,
+        productSku: mappedInvoice.productSku,
+        productName: mappedInvoice.productName,
         followUpStatus: mappedInvoice.followUpStatus,
         actionRequired: mappedInvoice.actionRequired,
         promisedPaymentDate: mappedInvoice.promisedPaymentDate,
@@ -5525,6 +5760,10 @@ export function resolveInvoiceCollectionAction(
       summary: `Resolved collection action for ${mappedInvoice.invoiceNumber}`,
       metadata: {
         outstandingAmount: mappedInvoice.outstandingAmount,
+        productCategoryId: mappedInvoice.productCategoryId,
+        productCategoryName: mappedInvoice.productCategoryName,
+        productSku: mappedInvoice.productSku,
+        productName: mappedInvoice.productName,
         followUpStatus: mappedInvoice.followUpStatus,
         actionRequired: mappedInvoice.actionRequired,
         promisedPaymentDate: mappedInvoice.promisedPaymentDate,

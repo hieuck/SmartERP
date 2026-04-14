@@ -490,6 +490,10 @@ export type ApprovalRequestRecord = {
   riskLevel: ApprovalRiskLevel;
   amount: number | null;
   quantity: number | null;
+  productCategoryId: string | null;
+  productCategoryName: string | null;
+  productSku: string | null;
+  productName: string | null;
   requestedByEmail: string;
   requestedByDisplayName: string;
   decisionByEmail: string | null;
@@ -681,6 +685,10 @@ export type AuditLogMetadata = {
   unitCost?: number;
   paymentMethod?: PaymentMethod;
   outstandingAmount?: number;
+  productCategoryId?: string;
+  productCategoryName?: string;
+  productSku?: string;
+  productName?: string;
   reissuedFromInvoiceNumber?: string;
   reissuedToInvoiceNumber?: string;
   amendmentRootInvoiceNumber?: string;
@@ -726,6 +734,10 @@ export type InvoiceRecord = {
   orderNumber: string;
   customerId: string;
   customerName: string;
+  productCategoryId: string;
+  productCategoryName: string;
+  productSku: string;
+  productName: string;
   subtotalAmount: number;
   taxRatePercent: number;
   taxAmount: number;

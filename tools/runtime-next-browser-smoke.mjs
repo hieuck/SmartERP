@@ -560,6 +560,7 @@ async function main() {
   let invoiceReissueLineageVerified = false;
   let invoiceRevisionLineageVerified = false;
   let invoiceReissueAuditVerified = false;
+  let invoiceCategoryContextVerified = false;
   let reissuedInvoiceVoidVerified = false;
   let voidedInvoicePaymentGuardVerified = false;
   let voidedInvoiceCollectionGuardVerified = false;
@@ -586,6 +587,8 @@ async function main() {
   let rbacCollectorActionSplitVerified = false;
   let collectorRoleOnboardingVerified = false;
   let reportCategoryPerformanceVerified = false;
+  let approvalCategoryContextVerified = false;
+  let auditCategoryContextVerified = false;
 
   try {
     await openApp(page);
@@ -1118,6 +1121,7 @@ async function main() {
     await purchaseReceiptApprovalRow
       .getByText("Large inventory receipt requires founder approval.", { exact: false })
       .waitFor({ timeout: 15000 });
+    await purchaseReceiptApprovalRow.getByText(productCategoryName, { exact: false }).waitFor({ timeout: 15000 });
     const purchaseReceiptApprovalResponse = page.waitForResponse(
       (response) =>
         response.url().endsWith("/api/approval-requests/decision") &&
@@ -1514,6 +1518,7 @@ async function main() {
     await inventoryAdjustmentApprovalRow
       .getByText("Outbound inventory adjustments require founder approval.", { exact: false })
       .waitFor({ timeout: 15000 });
+    await inventoryAdjustmentApprovalRow.getByText(productCategoryName, { exact: false }).waitFor({ timeout: 15000 });
     const inventoryAdjustmentDecisionResponse = page.waitForResponse(
       (response) =>
         response.url().endsWith("/api/approval-requests/decision") &&
@@ -1718,6 +1723,7 @@ async function main() {
     const invoiceRow = getListCard(page).locator(".record-row").filter({ hasText: orderNumber }).first();
     await invoiceRow.waitFor({ timeout: 15000 });
     await invoiceRow.getByText(customerName, { exact: false }).waitFor({ timeout: 15000 });
+    await invoiceRow.getByText(productCategoryName, { exact: false }).waitFor({ timeout: 15000 });
     invoiceNumber = (await invoiceRow.locator("strong").first().textContent())?.trim() ?? "";
     assert(invoiceNumber.length > 0, "Invoice number was not rendered after invoice creation.");
     await invoiceRow.getByText(buildAmountPattern(firstInvoiceAmount)).first().waitFor({ timeout: 15000 });
@@ -1885,6 +1891,7 @@ async function main() {
     await paymentApprovalRow
       .getByText("Large cash receipt requires founder approval.", { exact: false })
       .waitFor({ timeout: 15000 });
+    await paymentApprovalRow.getByText(productCategoryName, { exact: false }).waitFor({ timeout: 15000 });
     await paymentApprovalRow.getByRole("button", { name: "Duyệt" }).click();
     await waitForLocatorCount(page, approvalsPendingCard.locator(".activity-row").filter({ hasText: invoiceNumber }), 0);
     await approvalsHistoryCard.getByText(invoiceNumber, { exact: false }).first().waitFor({ timeout: 15000 });
@@ -2330,6 +2337,7 @@ async function main() {
     await backdatedInvoiceApprovalRow
       .getByText("Backdated invoice issue requires founder approval.", { exact: false })
       .waitFor({ timeout: 15000 });
+    await backdatedInvoiceApprovalRow.getByText(productCategoryName, { exact: false }).waitFor({ timeout: 15000 });
     const backdatedInvoiceApprovalResponse = page.waitForResponse(
       (response) =>
         response.url().endsWith("/api/approval-requests/decision") &&
@@ -2347,6 +2355,7 @@ async function main() {
     await approvalsHistoryCard.getByText(secondOrderNumber, { exact: false }).first().waitFor({ timeout: 15000 });
     await approvalsHistoryCard.getByText("Đã duyệt", { exact: false }).first().waitFor({ timeout: 15000 });
     backdatedInvoiceApprovalVerified = true;
+    approvalCategoryContextVerified = true;
     await dismissGlobalAlerts(page);
     await openSection(page, sidebarIndexes.invoices, "/dashboard/invoices");
     await waitForTenantContext(page, tenantName);
@@ -2355,8 +2364,10 @@ async function main() {
     secondInvoiceNumber = await findInvoiceNumberByOrderNumber(page, secondOrderNumber);
     assert(secondInvoiceNumber.length > 0, "Second invoice number was not rendered after invoice creation.");
     await secondInvoiceRow.getByText("Đã phát hành", { exact: false }).waitFor({ timeout: 15000 });
+    await secondInvoiceRow.getByText(productCategoryName, { exact: false }).waitFor({ timeout: 15000 });
     await secondInvoiceRow.getByText(`Quá hạn ${secondDaysPastDue} ngày`, { exact: false }).waitFor({ timeout: 15000 });
     await secondInvoiceRow.getByText(buildAmountPattern(secondInvoiceAmount)).first().waitFor({ timeout: 15000 });
+    invoiceCategoryContextVerified = true;
     const openOrderCloseResponse = await page.evaluate(
       async ({ targetOrderNumber, sessionKey, tenantKey }) => {
         const rawSession = window.localStorage.getItem(sessionKey);
@@ -2658,15 +2669,21 @@ async function main() {
     );
     assert(
       auditSnapshot.body?.items?.some(
-        (item) => item.actionType === "invoice_issued" && item.entityNumber === invoiceNumber,
+        (item) =>
+          item.actionType === "invoice_issued" &&
+          item.entityNumber === invoiceNumber &&
+          item.metadata?.productCategoryName === productCategoryName,
       ),
-      "Invoice issue audit entry was not recorded.",
+      "Invoice issue audit entry was not recorded with category context.",
     );
     assert(
       auditSnapshot.body?.items?.some(
-        (item) => item.actionType === "invoice_reissued" && item.entityNumber === reissuedInvoiceNumber,
+        (item) =>
+          item.actionType === "invoice_reissued" &&
+          item.entityNumber === reissuedInvoiceNumber &&
+          item.metadata?.productCategoryName === productCategoryName,
       ),
-      "Invoice reissue audit entry was not recorded.",
+      "Invoice reissue audit entry was not recorded with category context.",
     );
     assert(
       auditSnapshot.body?.items?.some(
@@ -2700,9 +2717,12 @@ async function main() {
     );
     assert(
       auditSnapshot.body?.items?.some(
-        (item) => item.actionType === "payment_recorded" && item.entityNumber === invoiceNumber,
+        (item) =>
+          item.actionType === "payment_recorded" &&
+          item.entityNumber === invoiceNumber &&
+          item.metadata?.productCategoryName === productCategoryName,
       ),
-      "Invoice payment audit entry was not recorded.",
+      "Invoice payment audit entry was not recorded with category context.",
     );
     assert(
       auditSnapshot.body?.items?.some(
@@ -2717,8 +2737,10 @@ async function main() {
       "Collection resolution audit entry was not recorded.",
     );
     assert(
-      auditSnapshot.body?.items?.some((item) => item.actionType === "approval_requested"),
-      "Approval requested audit entry was not recorded.",
+      auditSnapshot.body?.items?.some(
+        (item) => item.actionType === "approval_requested" && item.metadata?.productCategoryName === productCategoryName,
+      ),
+      "Approval requested audit entry was not recorded with category context.",
     );
     assert(
       auditSnapshot.body?.items?.some(
@@ -2728,9 +2750,11 @@ async function main() {
     );
     await auditCard.locator(".activity-row").first().waitFor({ timeout: 15000 });
     await auditCard.getByText("SmartERP Founder", { exact: false }).first().waitFor({ timeout: 15000 });
+    await auditCard.getByText(productCategoryName, { exact: false }).first().waitFor({ timeout: 15000 });
     await auditCard.getByText("Phát hành lại từ:", { exact: false }).first().waitFor({ timeout: 15000 });
     auditTrailVerified = true;
     invoiceReissueAuditVerified = true;
+    auditCategoryContextVerified = true;
     await openSection(page, sidebarIndexes.operations, "/dashboard/operations");
     await page.getByRole("heading", { name: "Vận hành" }).waitFor({ timeout: 15000 });
     await page.getByText("Mức sẵn sàng pilot", { exact: false }).waitFor({ timeout: 15000 });
@@ -3394,6 +3418,7 @@ async function main() {
       invoiceReissueLineageVerified,
       invoiceRevisionLineageVerified,
       invoiceReissueAuditVerified,
+      invoiceCategoryContextVerified,
       reissuedInvoiceVoidVerified,
       voidedInvoicePaymentGuardVerified,
       voidedInvoiceCollectionGuardVerified,
@@ -3419,6 +3444,8 @@ async function main() {
       rbacCollectorActionSplitVerified,
       collectorRoleOnboardingVerified,
       reportCategoryPerformanceVerified,
+      approvalCategoryContextVerified,
+      auditCategoryContextVerified,
       directRouteVerified: true,
       logoutClearsStorageVerified: true,
       logoutBlocksProtectedRouteVerified: true,

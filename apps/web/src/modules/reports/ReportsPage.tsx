@@ -605,6 +605,13 @@ export function ReportsPage(): ReactElement {
                           {formatCurrency(auditLog.metadata.outstandingAmount)}
                         </div>
                       ) : null}
+                      {auditLog.metadata.productCategoryName ? (
+                        <div className="record-detail">
+                          <AppstoreOutlined /> {t("products.category")}: {auditLog.metadata.productCategoryName}
+                          {auditLog.metadata.productName ? ` - ${auditLog.metadata.productName}` : ""}
+                          {auditLog.metadata.productSku ? ` (${auditLog.metadata.productSku})` : ""}
+                        </div>
+                      ) : null}
                       {auditLog.metadata.reissuedFromInvoiceNumber ? (
                         <div className="record-detail">
                           {t("reports.auditReissuedFromLabel")} {auditLog.metadata.reissuedFromInvoiceNumber}

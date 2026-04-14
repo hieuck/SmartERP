@@ -1,4 +1,9 @@
-import { CheckCircleOutlined, CloseCircleOutlined, SafetyCertificateOutlined } from "@ant-design/icons";
+import {
+  AppstoreOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  SafetyCertificateOutlined,
+} from "@ant-design/icons";
 import type { ReactElement } from "react";
 import { Button, Card, Empty, Select, Tag, Typography } from "antd";
 
@@ -137,6 +142,13 @@ export function ApprovalsPage(): ReactElement {
                       <div className="record-detail">
                         {t("approvals.reasonLabel")} {request.reason}
                       </div>
+                      {request.productCategoryName ? (
+                        <div className="record-detail">
+                          <AppstoreOutlined /> {t("products.category")}: {request.productCategoryName}
+                          {request.productName ? ` - ${request.productName}` : ""}
+                          {request.productSku ? ` (${request.productSku})` : ""}
+                        </div>
+                      ) : null}
                       {typeof request.amount === "number" ? (
                         <div className="record-detail">
                           {t("approvals.amountLabel")} {formatCurrency(request.amount)}
@@ -202,6 +214,13 @@ export function ApprovalsPage(): ReactElement {
                       <div className="record-detail">
                         {getRequestTypeLabel(request.requestType)} - {getRiskLabel(request.riskLevel)}
                       </div>
+                      {request.productCategoryName ? (
+                        <div className="record-detail">
+                          <AppstoreOutlined /> {t("products.category")}: {request.productCategoryName}
+                          {request.productName ? ` - ${request.productName}` : ""}
+                          {request.productSku ? ` (${request.productSku})` : ""}
+                        </div>
+                      ) : null}
                       <div className="record-detail">
                         {t("approvals.decidedByLabel")}{" "}
                         {request.decisionByDisplayName

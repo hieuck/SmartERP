@@ -1,4 +1,5 @@
 import {
+  AppstoreOutlined,
   BankOutlined,
   CheckCircleOutlined,
   FileTextOutlined,
@@ -298,6 +299,7 @@ export function InvoicesPage(): ReactElement {
   const visibleCollectionActivities = selectedCollectionInvoiceId
     ? collectionActivities.filter((activity) => activity.invoiceId === selectedCollectionInvoiceId)
     : collectionActivities.slice(0, 8);
+  const invoiceLookupById = new Map(invoices.map((invoice) => [invoice.id, invoice] as const));
 
   const onCreateInvoice: FormProps<InvoiceFormShape>["onFinish"] = async (values) => {
     try {
@@ -429,7 +431,7 @@ export function InvoicesPage(): ReactElement {
                     <Select
                       placeholder={t("invoices.orderPlaceholder")}
                       options={availableOrders.map((order) => ({
-                        label: `${order.orderNumber} - ${order.customerName} - ${formatCurrency(order.totalAmount)}`,
+                        label: `${order.orderNumber} - ${order.productCategoryName} - ${order.customerName} - ${formatCurrency(order.totalAmount)}`,
                         value: order.id,
                       }))}
                     />
@@ -499,7 +501,7 @@ export function InvoicesPage(): ReactElement {
                     <Select
                       placeholder={t("invoices.invoicePlaceholder")}
                       options={payableInvoices.map((invoice) => ({
-                        label: `${invoice.invoiceNumber} - ${invoice.customerName} - ${formatCurrency(invoice.outstandingAmount)}`,
+                        label: `${invoice.invoiceNumber} - ${invoice.productCategoryName} - ${invoice.customerName} - ${formatCurrency(invoice.outstandingAmount)}`,
                         value: invoice.id,
                       }))}
                     />
@@ -583,7 +585,7 @@ export function InvoicesPage(): ReactElement {
                 <Select
                   placeholder={t("invoices.invoicePlaceholder")}
                   options={collectionQueue.map((invoice) => ({
-                    label: `${invoice.invoiceNumber} - ${invoice.customerName} - ${formatCurrency(invoice.outstandingAmount)}`,
+                    label: `${invoice.invoiceNumber} - ${invoice.productCategoryName} - ${invoice.customerName} - ${formatCurrency(invoice.outstandingAmount)}`,
                     value: invoice.id,
                   }))}
                 />
@@ -682,6 +684,9 @@ export function InvoicesPage(): ReactElement {
                           <UserOutlined /> {invoice.customerName}
                         </div>
                         <div className="record-detail">
+                          <AppstoreOutlined /> {invoice.productCategoryName} - {invoice.productName} ({invoice.productSku})
+                        </div>
+                        <div className="record-detail">
                           {t("invoices.dueDateLabel")} {formatDate(invoice.dueDate)}
                         </div>
                         <div className="record-detail">
@@ -743,53 +748,63 @@ export function InvoicesPage(): ReactElement {
             {selectedTenantId ? (
               visibleCollectionActivities.length ? (
                 <div className="activity-feed">
-                  {visibleCollectionActivities.map((activity) => (
-                    <div className="activity-row" key={activity.id}>
-                      <div className="activity-main">
-                        <strong>{activity.invoiceNumber}</strong>
-                        <div className="record-detail">
-                          <UserOutlined /> {activity.customerName}
-                        </div>
-                      <div className="record-detail">
-                        {t("invoices.activityOutstandingLabel")}{" "}
-                        {formatCurrency(activity.outstandingAmountSnapshot)}
-                      </div>
-                      <div className="record-detail">
-                        <PhoneOutlined /> {t("invoices.actionRequiredLabel")}{" "}
-                        {getActionRequiredLabel(activity.actionRequired, t)}
-                      </div>
-                      {activity.nextActionDate ? (
-                        <div className="record-detail">
-                          {t("invoices.nextActionDateLabel")} {formatDate(activity.nextActionDate)}
-                        </div>
-                      ) : null}
-                      {activity.promisedPaymentDate ? (
-                        <div className="record-detail">
-                          {t("invoices.promisedPaymentDateLabel")} {formatDate(activity.promisedPaymentDate)}
-                        </div>
-                      ) : null}
-                        {activity.collectionNote ? (
+                  {visibleCollectionActivities.map((activity) => {
+                    const linkedInvoice = invoiceLookupById.get(activity.invoiceId);
+
+                    return (
+                      <div className="activity-row" key={activity.id}>
+                        <div className="activity-main">
+                          <strong>{activity.invoiceNumber}</strong>
                           <div className="record-detail">
-                            {t("invoices.collectionNoteLabel")} {activity.collectionNote}
+                            <UserOutlined /> {activity.customerName}
                           </div>
-                        ) : null}
-                      </div>
-                      <div className="activity-meta">
-                        <Tag color={getActivityStateColor(activity.actionState)}>
-                          {getActivityStateLabel(activity.actionState, t)}
-                        </Tag>
-                        <Tag color={getCollectionPriorityColor(activity.collectionPriority)}>
-                          {getCollectionPriorityLabel(activity.collectionPriority, t)}
-                        </Tag>
-                        <Tag color={getFollowUpStatusColor(activity.followUpStatus)}>
-                          {getFollowUpStatusLabel(activity.followUpStatus, t)}
-                        </Tag>
-                        <div className="record-detail">
-                          {t("invoices.activityRecordedAtLabel")} {formatTimestamp(activity.createdAt)}
+                          {linkedInvoice ? (
+                            <div className="record-detail">
+                              <AppstoreOutlined /> {linkedInvoice.productCategoryName} - {linkedInvoice.productName} (
+                              {linkedInvoice.productSku})
+                            </div>
+                          ) : null}
+                          <div className="record-detail">
+                            {t("invoices.activityOutstandingLabel")}{" "}
+                            {formatCurrency(activity.outstandingAmountSnapshot)}
+                          </div>
+                          <div className="record-detail">
+                            <PhoneOutlined /> {t("invoices.actionRequiredLabel")}{" "}
+                            {getActionRequiredLabel(activity.actionRequired, t)}
+                          </div>
+                          {activity.nextActionDate ? (
+                            <div className="record-detail">
+                              {t("invoices.nextActionDateLabel")} {formatDate(activity.nextActionDate)}
+                            </div>
+                          ) : null}
+                          {activity.promisedPaymentDate ? (
+                            <div className="record-detail">
+                              {t("invoices.promisedPaymentDateLabel")} {formatDate(activity.promisedPaymentDate)}
+                            </div>
+                          ) : null}
+                          {activity.collectionNote ? (
+                            <div className="record-detail">
+                              {t("invoices.collectionNoteLabel")} {activity.collectionNote}
+                            </div>
+                          ) : null}
+                        </div>
+                        <div className="activity-meta">
+                          <Tag color={getActivityStateColor(activity.actionState)}>
+                            {getActivityStateLabel(activity.actionState, t)}
+                          </Tag>
+                          <Tag color={getCollectionPriorityColor(activity.collectionPriority)}>
+                            {getCollectionPriorityLabel(activity.collectionPriority, t)}
+                          </Tag>
+                          <Tag color={getFollowUpStatusColor(activity.followUpStatus)}>
+                            {getFollowUpStatusLabel(activity.followUpStatus, t)}
+                          </Tag>
+                          <div className="record-detail">
+                            {t("invoices.activityRecordedAtLabel")} {formatTimestamp(activity.createdAt)}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <Empty description={t("invoices.activityEmpty")} />
@@ -816,6 +831,9 @@ export function InvoicesPage(): ReactElement {
                       </div>
                       <div className="record-detail">
                         <UserOutlined /> {invoice.customerName}
+                      </div>
+                      <div className="record-detail">
+                        <AppstoreOutlined /> {invoice.productCategoryName} - {invoice.productName} ({invoice.productSku})
                       </div>
                       {invoice.revisionNumber > 1 ? (
                         <div className="record-detail">
