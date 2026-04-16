@@ -232,6 +232,7 @@ type InvoiceRow = {
   amendment_root_invoice_id: string;
   amendment_root_invoice_number: string;
   revision_number: number;
+  amendment_note: string | null;
   reissued_from_invoice_id: string | null;
   reissued_from_invoice_number: string | null;
   reissued_to_invoice_id: string | null;
@@ -1211,6 +1212,7 @@ const getLatestVoidedInvoiceForOrderStatement = db.prepare(`
     i.amendment_root_invoice_id AS amendment_root_invoice_id,
     i.amendment_root_invoice_number AS amendment_root_invoice_number,
     i.revision_number AS revision_number,
+    i.amendment_note AS amendment_note,
     i.reissued_from_invoice_id AS reissued_from_invoice_id,
     i.reissued_from_invoice_number AS reissued_from_invoice_number,
     i.reissued_to_invoice_id AS reissued_to_invoice_id,
@@ -1263,6 +1265,7 @@ const listInvoicesStatement = db.prepare(`
     i.amendment_root_invoice_id AS amendment_root_invoice_id,
     i.amendment_root_invoice_number AS amendment_root_invoice_number,
     i.revision_number AS revision_number,
+    i.amendment_note AS amendment_note,
     i.reissued_from_invoice_id AS reissued_from_invoice_id,
     i.reissued_from_invoice_number AS reissued_from_invoice_number,
     i.reissued_to_invoice_id AS reissued_to_invoice_id,
@@ -1302,6 +1305,7 @@ const listInvoicesStatement = db.prepare(`
     i.amendment_root_invoice_id,
     i.amendment_root_invoice_number,
     i.revision_number,
+    i.amendment_note,
     i.reissued_from_invoice_id,
     i.reissued_from_invoice_number,
     i.reissued_to_invoice_id,
@@ -1338,6 +1342,7 @@ const getInvoiceByIdStatement = db.prepare(`
     i.amendment_root_invoice_id AS amendment_root_invoice_id,
     i.amendment_root_invoice_number AS amendment_root_invoice_number,
     i.revision_number AS revision_number,
+    i.amendment_note AS amendment_note,
     i.reissued_from_invoice_id AS reissued_from_invoice_id,
     i.reissued_from_invoice_number AS reissued_from_invoice_number,
     i.reissued_to_invoice_id AS reissued_to_invoice_id,
@@ -1377,6 +1382,7 @@ const getInvoiceByIdStatement = db.prepare(`
     i.amendment_root_invoice_id,
     i.amendment_root_invoice_number,
     i.revision_number,
+    i.amendment_note,
     i.reissued_from_invoice_id,
     i.reissued_from_invoice_number,
     i.reissued_to_invoice_id,
@@ -1413,6 +1419,7 @@ const createInvoiceStatement = db.prepare(`
     amendment_root_invoice_id,
     amendment_root_invoice_number,
     revision_number,
+    amendment_note,
     reissued_from_invoice_id,
     reissued_from_invoice_number,
     reissued_to_invoice_id,
@@ -1435,7 +1442,7 @@ const createInvoiceStatement = db.prepare(`
     collection_note,
     last_collection_update_at
   )
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `);
 
 const updateInvoiceStatusStatement = db.prepare(`
@@ -2457,6 +2464,7 @@ function mapInvoice(row: InvoiceRow): InvoiceRecord {
     amendmentRootInvoiceId: row.amendment_root_invoice_id,
     amendmentRootInvoiceNumber: row.amendment_root_invoice_number,
     revisionNumber: row.revision_number,
+    amendmentNote: row.amendment_note,
     reissuedFromInvoiceId: row.reissued_from_invoice_id,
     reissuedFromInvoiceNumber: row.reissued_from_invoice_number,
     reissuedToInvoiceId: row.reissued_to_invoice_id,
@@ -2492,6 +2500,19 @@ function mapInvoice(row: InvoiceRow): InvoiceRecord {
     collectionNote: row.collection_note,
     lastCollectionUpdateAt: row.last_collection_update_at,
   };
+}
+
+function normalizeInvoiceAmendmentNote(input: string | null | undefined): string | null {
+  const trimmed = input?.trim() ?? "";
+  if (!trimmed) {
+    return null;
+  }
+
+  if (trimmed.length > 240) {
+    throw new Error("Amendment note must be 240 characters or fewer.");
+  }
+
+  return trimmed;
 }
 
 function mapInvoiceCollectionActivity(
@@ -5214,6 +5235,11 @@ function createInvoiceInternal(input: CreateInvoiceInput): InvoiceRecord {
     input.tenantId,
     input.orderId,
   ) as InvoiceRow | undefined;
+  const amendmentNote = normalizeInvoiceAmendmentNote(input.amendmentNote);
+
+  if (priorVoidedInvoice && !amendmentNote) {
+    throw new Error("Amendment note is required when reissuing an invoice.");
+  }
 
   const subtotalAmount = order.total_amount;
   const taxAmount = Math.round((subtotalAmount * input.taxRatePercent) / 100);
@@ -5234,6 +5260,7 @@ function createInvoiceInternal(input: CreateInvoiceInput): InvoiceRecord {
     amendmentRootInvoiceId,
     amendmentRootInvoiceNumber,
     revisionNumber,
+    amendmentNote,
     reissuedFromInvoiceId: priorVoidedInvoice?.id ?? null,
     reissuedFromInvoiceNumber: priorVoidedInvoice?.invoice_number ?? null,
     reissuedToInvoiceId: null,
@@ -5280,6 +5307,7 @@ function createInvoiceInternal(input: CreateInvoiceInput): InvoiceRecord {
       invoice.amendmentRootInvoiceId,
       invoice.amendmentRootInvoiceNumber,
       invoice.revisionNumber,
+      invoice.amendmentNote,
       invoice.reissuedFromInvoiceId,
       invoice.reissuedFromInvoiceNumber,
       invoice.reissuedToInvoiceId,
@@ -5342,6 +5370,7 @@ function createInvoiceInternal(input: CreateInvoiceInput): InvoiceRecord {
         productCategoryName: invoice.productCategoryName,
         productSku: invoice.productSku,
         productName: invoice.productName,
+        amendmentNote: invoice.amendmentNote ?? undefined,
         amendmentRootInvoiceNumber: invoice.amendmentRootInvoiceNumber,
         revisionNumber: invoice.revisionNumber,
         reissuedFromInvoiceNumber: invoice.reissuedFromInvoiceNumber ?? undefined,
@@ -5379,6 +5408,21 @@ export function createInvoice(
     throw new Error("Payment term days must be an integer between 0 and 365.");
   }
 
+  const priorVoidedInvoice = getLatestVoidedInvoiceForOrderStatement.get(
+    input.tenantId,
+    input.orderId,
+  ) as InvoiceRow | undefined;
+  const amendmentNote = normalizeInvoiceAmendmentNote(input.amendmentNote);
+
+  if (priorVoidedInvoice && !amendmentNote) {
+    throw new Error("Amendment note is required when reissuing an invoice.");
+  }
+
+  const normalizedInput: CreateInvoiceInput = {
+    ...input,
+    amendmentNote,
+  };
+
   const approvalRule = shouldRequireInvoiceIssueApproval(input);
   if (approvalRule) {
     return createApprovalRequestedResult(
@@ -5396,12 +5440,12 @@ export function createInvoice(
         productCategoryName: order.product_category_name,
         productSku: order.product_sku,
         productName: order.product_name,
-        payload: input,
+        payload: normalizedInput,
       }),
     );
   }
 
-  return createAppliedResult(createInvoiceInternal(input));
+  return createAppliedResult(createInvoiceInternal(normalizedInput));
 }
 
 export function voidInvoice(input: VoidInvoiceInput): InvoiceRecord {
@@ -5459,6 +5503,7 @@ export function voidInvoice(input: VoidInvoiceInput): InvoiceRecord {
         productCategoryName: mappedInvoice.productCategoryName,
         productSku: mappedInvoice.productSku,
         productName: mappedInvoice.productName,
+        amendmentNote: mappedInvoice.amendmentNote ?? undefined,
         note: `Original due ${mappedInvoice.dueDate}`,
       },
       createdAt: voidedAt,
@@ -5534,6 +5579,7 @@ export function reopenInvoice(input: ReopenInvoiceInput): InvoiceRecord {
         productCategoryName: mappedInvoice.productCategoryName,
         productSku: mappedInvoice.productSku,
         productName: mappedInvoice.productName,
+        amendmentNote: mappedInvoice.amendmentNote ?? undefined,
         amendmentRootInvoiceNumber: mappedInvoice.amendmentRootInvoiceNumber,
         revisionNumber: mappedInvoice.revisionNumber,
         reissuedFromInvoiceNumber: mappedInvoice.reissuedFromInvoiceNumber ?? undefined,

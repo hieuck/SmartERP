@@ -85,6 +85,8 @@ const errorKeyByMessage: Record<string, string> = {
     "errors.invoiceReopenRevisionBlocked",
   "The selected invoice cannot be reopened because an active revision already exists.":
     "errors.invoiceReopenActiveRevisionBlocked",
+  "Amendment note must be 240 characters or fewer.": "errors.invalidInvoiceAmendmentNote",
+  "Amendment note is required when reissuing an invoice.": "errors.invoiceAmendmentNoteRequired",
   "The selected approval request does not exist.": "errors.selectedApprovalRequestMissing",
   "The selected invoice is already settled.": "errors.invoiceAlreadySettled",
   "The selected approval request has already been resolved.": "errors.approvalRequestResolved",

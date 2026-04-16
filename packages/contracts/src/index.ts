@@ -690,6 +690,7 @@ export type AuditLogMetadata = {
   productCategoryName?: string;
   productSku?: string;
   productName?: string;
+  amendmentNote?: string;
   reissuedFromInvoiceNumber?: string;
   reissuedToInvoiceNumber?: string;
   amendmentRootInvoiceNumber?: string;
@@ -727,6 +728,7 @@ export type InvoiceRecord = {
   amendmentRootInvoiceId: string;
   amendmentRootInvoiceNumber: string;
   revisionNumber: number;
+  amendmentNote: string | null;
   reissuedFromInvoiceId: string | null;
   reissuedFromInvoiceNumber: string | null;
   reissuedToInvoiceId: string | null;
@@ -769,6 +771,7 @@ export type CreateInvoiceInput = {
   taxRatePercent: number;
   issueDate: string;
   paymentTermDays: number;
+  amendmentNote: string | null;
 };
 
 export type CreateInvoicePaymentInput = {

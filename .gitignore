@@ -134,3 +134,5 @@ HOAN-THANH-*.md
 !SETUP.md
 !PRINT-FEATURE.md
 !HUONG-DAN-TUY-CHINH-MAU-IN.md
+/.playwright-cli
+/output/playwright

@@ -651,6 +651,11 @@ Object.assign(vi.tenants, {
   },
 });
 
+Object.assign(vi.errors, {
+  invalidInvoiceAmendmentNote: "Ghi chú sửa đổi không được dài quá 240 ký tự.",
+  invoiceAmendmentNoteRequired: "Bắt buộc nhập ghi chú sửa đổi khi phát hành lại hóa đơn.",
+});
+
 Object.assign(vi.shell, {
   setup: "Khởi tạo",
 });
@@ -824,6 +829,7 @@ Object.assign(vi.purchaseOrders, {
 });
 
 Object.assign(vi.reports, {
+  auditAmendmentNoteLabel: "Ghi chú sửa đổi:",
   categoryCount: "Danh mục",
   topCategory: "Danh mục dẫn đầu",
   noCategorySignal: "Chưa có tín hiệu danh mục",
@@ -898,6 +904,11 @@ Object.assign(vi.purchaseOrders, {
 });
 
 Object.assign(vi.invoices, {
+  amendmentNote: "Ghi chú sửa đổi",
+  amendmentNoteLabel: "Ghi chú sửa đổi:",
+  amendmentNoteHint: "Ghi chú ngữ cảnh cho bản hóa đơn này nếu cần.",
+  amendmentNoteRequiredHint: "Bắt buộc vì {{number}} đã bị hủy hiệu lực và bản sửa đổi này cần lý do nghiệp vụ.",
+  amendmentNotePlaceholder: "Điều chỉnh lại số lượng giao hàng sau khi hóa đơn trước bị hủy hiệu lực.",
   amendmentRootLabel: "Hóa đơn gốc:",
   revisionValue: "Bản sửa đổi {{count}}",
   statusVoid: "Đã hủy hiệu lực",

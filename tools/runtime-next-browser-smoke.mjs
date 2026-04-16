@@ -74,6 +74,7 @@ const promisedPaymentDateInput = buildDateInputFromToday(3);
 const worklistActionDateInput = buildDateInputFromToday(0);
 const collectionNote = "Khach xac nhan se chuyen khoan vao cuoi tuan.";
 const escalatedCollectionNote = "Qua ngay hua thanh toan, can founder xu ly truc tiep.";
+const reissueAmendmentNote = "Corrected shipping quantity after voiding the previous invoice revision.";
 const firstIssueDateInput = buildDateInputFromToday(0);
 const secondIssueDateInput = buildDateInputFromToday(-(secondDaysPastDue + secondPaymentTermDays));
 const unitPrice = 25000;
@@ -560,6 +561,9 @@ async function main() {
   let invoiceReissueVerified = false;
   let invoiceReissueLineageVerified = false;
   let invoiceRevisionLineageVerified = false;
+  let invoiceAmendmentNoteGuardVerified = false;
+  let invoiceAmendmentNoteUiVerified = false;
+  let invoiceAmendmentNoteAuditVerified = false;
   let invoiceReopenVerified = false;
   let invoiceReopenGuardVerified = false;
   let invoiceReopenRevisionGuardVerified = false;
@@ -2168,11 +2172,66 @@ async function main() {
     );
     voidedInvoiceCollectionGuardVerified = true;
 
+    const missingAmendmentNoteResponse = await page.evaluate(
+      async ({ targetOrderNumber, issueDate, paymentTermDays, taxRatePercent, sessionKey, tenantKey }) => {
+        const rawSession = window.localStorage.getItem(sessionKey);
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
+        const headers = {
+          "content-type": "application/json",
+          authorization: `Bearer ${accessToken}`,
+        };
+
+        const ordersResponse = await fetch(`/api/orders?tenantId=${encodeURIComponent(tenantId ?? "")}`, {
+          headers,
+        });
+        const ordersPayload = await ordersResponse.json();
+        const targetOrder = ordersPayload.items.find((item) => item.orderNumber === targetOrderNumber);
+
+        if (!targetOrder || !tenantId) {
+          return { status: 0, body: { error: "Voided order lookup failed before amendment note guard test." } };
+        }
+
+        const response = await fetch("/api/invoices", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            tenantId,
+            orderId: targetOrder.id,
+            issueDate,
+            paymentTermDays,
+            taxRatePercent,
+            amendmentNote: "",
+          }),
+        });
+
+        return {
+          status: response.status,
+          body: await response.json(),
+        };
+      },
+      {
+        targetOrderNumber: voidedOrderNumber,
+        issueDate: firstIssueDateInput,
+        paymentTermDays: firstPaymentTermDays,
+        taxRatePercent: taxRate,
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+      },
+    );
+    assert(
+      missingAmendmentNoteResponse.status === 400 &&
+        missingAmendmentNoteResponse.body?.error === "Amendment note is required when reissuing an invoice.",
+      "Invoice reissue did not require an amendment note after a prior revision was voided.",
+    );
+    invoiceAmendmentNoteGuardVerified = true;
+
     await waitForFormReady(issueInvoiceCard);
     await selectOption(page, issueInvoiceCard.getByRole("combobox", { name: /Đơn hàng/ }), voidedOrderNumber);
     await fillField(issueInvoiceCard, "#issueDate", firstIssueDateInput);
     await fillField(issueInvoiceCard, "#paymentTermDays", firstPaymentTermDays);
     await fillField(issueInvoiceCard, "#taxRatePercent", taxRate);
+    await fillField(issueInvoiceCard, "#amendmentNote", reissueAmendmentNote);
     await clickSubmit(issueInvoiceCard);
     const reissuedInvoiceRow = getListCard(page).locator(".record-row").filter({ hasText: voidedOrderNumber }).first();
     await reissuedInvoiceRow.waitFor({ timeout: 15000 });
@@ -2228,9 +2287,14 @@ async function main() {
       reissuedInvoiceText?.includes(voidedInvoiceNumber),
       "Reissued invoice row did not show the original voided invoice number.",
     );
+    assert(
+      reissuedInvoiceText?.includes(reissueAmendmentNote),
+      "Reissued invoice row did not show the amendment note.",
+    );
     invoiceReissueVerified = true;
     invoiceReissueLineageVerified = true;
     invoiceRevisionLineageVerified = true;
+    invoiceAmendmentNoteUiVerified = true;
 
     const reissuedInvoiceRowCard = getListCard(page).locator(".record-row").filter({ hasText: reissuedInvoiceNumber }).first();
     await reissuedInvoiceRowCard.locator('[data-testid="invoice-void-button"]').click();
@@ -2844,9 +2908,10 @@ async function main() {
         (item) =>
           item.actionType === "invoice_reissued" &&
           item.entityNumber === reissuedInvoiceNumber &&
-          item.metadata?.productCategoryName === productCategoryName,
+          item.metadata?.productCategoryName === productCategoryName &&
+          item.metadata?.amendmentNote === reissueAmendmentNote,
       ),
-      "Invoice reissue audit entry was not recorded with category context.",
+      "Invoice reissue audit entry was not recorded with category and amendment note context.",
     );
     assert(
       auditSnapshot.body?.items?.some(
@@ -2925,8 +2990,10 @@ async function main() {
     await auditCard.getByText("SmartERP Founder", { exact: false }).first().waitFor({ timeout: 15000 });
     await auditCard.getByText(productCategoryName, { exact: false }).first().waitFor({ timeout: 15000 });
     await auditCard.getByText("Phát hành lại từ:", { exact: false }).first().waitFor({ timeout: 15000 });
+    await auditCard.getByText(reissueAmendmentNote, { exact: false }).first().waitFor({ timeout: 15000 });
     auditTrailVerified = true;
     invoiceReissueAuditVerified = true;
+    invoiceAmendmentNoteAuditVerified = true;
     auditCategoryContextVerified = true;
     await openSection(page, sidebarIndexes.operations, "/dashboard/operations");
     await page.getByRole("heading", { name: "Vận hành" }).waitFor({ timeout: 15000 });
@@ -3590,6 +3657,9 @@ async function main() {
       invoiceReissueVerified,
       invoiceReissueLineageVerified,
       invoiceRevisionLineageVerified,
+      invoiceAmendmentNoteGuardVerified,
+      invoiceAmendmentNoteUiVerified,
+      invoiceAmendmentNoteAuditVerified,
       invoiceReopenVerified,
       invoiceReopenGuardVerified,
       invoiceReopenRevisionGuardVerified,

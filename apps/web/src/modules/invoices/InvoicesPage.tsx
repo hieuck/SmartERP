@@ -259,6 +259,7 @@ export function InvoicesPage(): ReactElement {
   const [invoiceForm] = Form.useForm<InvoiceFormShape>();
   const [paymentForm] = Form.useForm<InvoicePaymentFormShape>();
   const [collectionForm] = Form.useForm<InvoiceCollectionFormShape>();
+  const selectedInvoiceOrderId = Form.useWatch("orderId", invoiceForm);
   const selectedInvoiceId = Form.useWatch("invoiceId", paymentForm);
   const selectedCollectionInvoiceId = Form.useWatch("invoiceId", collectionForm);
   const selectedFollowUpStatus = Form.useWatch("followUpStatus", collectionForm);
@@ -303,6 +304,10 @@ export function InvoicesPage(): ReactElement {
     ? collectionActivities.filter((activity) => activity.invoiceId === selectedCollectionInvoiceId)
     : collectionActivities.slice(0, 8);
   const invoiceLookupById = new Map(invoices.map((invoice) => [invoice.id, invoice] as const));
+  const selectedPriorVoidedInvoice =
+    invoices
+      .filter((invoice) => invoice.orderId === selectedInvoiceOrderId && invoice.status === "void")
+      .sort((left, right) => right.revisionNumber - left.revisionNumber)[0] ?? null;
 
   const onCreateInvoice: FormProps<InvoiceFormShape>["onFinish"] = async (values) => {
     try {
@@ -312,6 +317,7 @@ export function InvoicesPage(): ReactElement {
         taxRatePercent: 10,
         issueDate: getTodayDateInputValue(),
         paymentTermDays: 30,
+        amendmentNote: "",
       });
     } catch {
       // Error state is already surfaced via workspace context.
@@ -432,6 +438,7 @@ export function InvoicesPage(): ReactElement {
                     taxRatePercent: 10,
                     issueDate: getTodayDateInputValue(),
                     paymentTermDays: 30,
+                    amendmentNote: "",
                   }}
                 >
                   <Form.Item<InvoiceFormShape>
@@ -470,6 +477,25 @@ export function InvoicesPage(): ReactElement {
                     rules={[{ required: true }]}
                   >
                     <InputNumber min={0} max={100} precision={0} style={{ width: "100%" }} />
+                  </Form.Item>
+
+                  <Form.Item<InvoiceFormShape>
+                    label={t("invoices.amendmentNote")}
+                    name="amendmentNote"
+                    rules={[{ max: 240 }]}
+                    extra={
+                      selectedPriorVoidedInvoice
+                        ? t("invoices.amendmentNoteRequiredHint", {
+                            number: selectedPriorVoidedInvoice.invoiceNumber,
+                          })
+                        : t("invoices.amendmentNoteHint")
+                    }
+                  >
+                    <TextArea
+                      rows={3}
+                      maxLength={240}
+                      placeholder={t("invoices.amendmentNotePlaceholder")}
+                    />
                   </Form.Item>
 
                   <Button
@@ -859,6 +885,11 @@ export function InvoicesPage(): ReactElement {
                       {invoice.reissuedToInvoiceNumber ? (
                         <div className="record-detail">
                           {t("invoices.reissuedToLabel")} {invoice.reissuedToInvoiceNumber}
+                        </div>
+                      ) : null}
+                      {invoice.amendmentNote ? (
+                        <div className="record-detail">
+                          {t("invoices.amendmentNoteLabel")} {invoice.amendmentNote}
                         </div>
                       ) : null}
                       <div className="record-detail">

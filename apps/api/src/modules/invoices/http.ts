@@ -94,6 +94,11 @@ export async function handleCreateInvoice(
     return;
   }
 
+  if (input.amendmentNote !== null && input.amendmentNote !== undefined && typeof input.amendmentNote !== "string") {
+    badRequest(response, "Amendment note must be 240 characters or fewer.");
+    return;
+  }
+
   try {
     const result = runWithSession(requestSession, () => createInvoice(input));
     sendJson(response, result.kind === "approval_requested" ? 202 : 201, { item: result });
@@ -114,6 +119,14 @@ export async function handleCreateInvoice(
       }
 
       if (error.message === "Payment term days must be an integer between 0 and 365.") {
+        badRequest(response, error.message);
+        return;
+      }
+
+      if (
+        error.message === "Amendment note is required when reissuing an invoice." ||
+        error.message === "Amendment note must be 240 characters or fewer."
+      ) {
         badRequest(response, error.message);
         return;
       }

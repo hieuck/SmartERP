@@ -635,6 +635,11 @@ export function ReportsPage(): ReactElement {
                           {t("reports.auditAmendmentRootLabel")} {auditLog.metadata.amendmentRootInvoiceNumber}
                         </div>
                       ) : null}
+                      {auditLog.metadata.amendmentNote ? (
+                        <div className="record-detail">
+                          {t("reports.auditAmendmentNoteLabel")} {auditLog.metadata.amendmentNote}
+                        </div>
+                      ) : null}
                       {typeof auditLog.metadata.revisionNumber === "number" ? (
                         <div className="record-detail">
                           {t("reports.auditRevisionLabel")}{" "}
