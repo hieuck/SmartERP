@@ -1656,7 +1656,7 @@ const getReportCountsStatement = db.prepare(`
   SELECT
     (SELECT COUNT(*) FROM customers WHERE tenant_id = ?) AS customer_count,
     (SELECT COUNT(*) FROM products WHERE tenant_id = ?) AS product_count,
-    (SELECT COUNT(*) FROM orders WHERE tenant_id = ? AND status <> 'canceled') AS order_count,
+    (SELECT COUNT(*) FROM orders WHERE tenant_id = ? AND status NOT IN ('canceled', 'returned')) AS order_count,
     (SELECT COUNT(*) FROM invoices WHERE tenant_id = ? AND status <> 'void') AS invoice_count,
     (
       SELECT COUNT(*)
@@ -1691,7 +1691,7 @@ const getReportCountsStatement = db.prepare(`
       FROM invoices
       WHERE tenant_id = ? AND status = 'credited'
     ) AS credited_invoice_count,
-    (SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE tenant_id = ? AND status <> 'canceled') AS gross_sales_amount,
+    (SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE tenant_id = ? AND status NOT IN ('canceled', 'returned')) AS gross_sales_amount,
     (SELECT COALESCE(SUM(total_amount), 0) FROM invoices WHERE tenant_id = ? AND status NOT IN ('void', 'credited')) AS invoiced_amount,
     (
       SELECT COALESCE(SUM(net_paid_amount), 0)
@@ -1830,7 +1830,7 @@ const getTopCustomerStatement = db.prepare(`
     customer_name,
     SUM(total_amount) AS total_amount
   FROM orders
-  WHERE tenant_id = ? AND status <> 'canceled'
+  WHERE tenant_id = ? AND status NOT IN ('canceled', 'returned')
   GROUP BY customer_id, customer_name
   ORDER BY total_amount DESC, customer_name COLLATE NOCASE ASC
   LIMIT 1
@@ -1841,7 +1841,7 @@ const getTopProductStatement = db.prepare(`
     product_name,
     SUM(quantity) AS total_units
   FROM orders
-  WHERE tenant_id = ? AND status <> 'canceled'
+  WHERE tenant_id = ? AND status NOT IN ('canceled', 'returned')
   GROUP BY product_id, product_name
   ORDER BY total_units DESC, product_name COLLATE NOCASE ASC
   LIMIT 1
@@ -1868,7 +1868,7 @@ const listReportCategoryPerformanceStatement = db.prepare(`
       product_category_id,
       SUM(total_amount) AS gross_sales_amount
     FROM orders
-    WHERE tenant_id = ? AND status <> 'canceled'
+    WHERE tenant_id = ? AND status NOT IN ('canceled', 'returned')
     GROUP BY tenant_id, product_category_id
   ) order_totals
     ON order_totals.tenant_id = pc.tenant_id
@@ -1905,7 +1905,7 @@ const getOperationsTotalsStatement = db.prepare(`
     (SELECT COUNT(*) FROM purchase_orders) AS purchase_order_count,
     (SELECT COUNT(*) FROM purchase_orders WHERE status NOT IN ('received', 'canceled')) AS open_purchase_order_count,
     (SELECT COUNT(*) FROM inventory) AS inventory_line_count,
-    (SELECT COUNT(*) FROM orders WHERE status <> 'canceled') AS order_count,
+    (SELECT COUNT(*) FROM orders WHERE status NOT IN ('canceled', 'returned')) AS order_count,
     (SELECT COUNT(*) FROM invoices WHERE status <> 'void') AS invoice_count,
     (
       SELECT COUNT(*)
@@ -4565,6 +4565,10 @@ export function updateOrder(input: UpdateOrderInput): OrderRecord {
     throw new Error("The selected order has already been canceled.");
   }
 
+  if (existing.status === "returned") {
+    throw new Error("The selected order has already been returned.");
+  }
+
   if (existing.status !== "confirmed") {
     throw new Error("The selected order can only be edited while it is still confirmed.");
   }
@@ -4724,6 +4728,10 @@ export function cancelOrder(input: CancelOrderInput): OrderRecord {
     throw new Error("The selected order has already been canceled.");
   }
 
+  if (existing.status === "returned") {
+    throw new Error("The selected order has already been returned.");
+  }
+
   const invoiceCount = Number(
     (countInvoicesForOrderStatement.get(input.tenantId, input.orderId) as { count?: number } | undefined)?.count ??
       0,
@@ -4815,6 +4823,10 @@ export function closeOrder(input: CloseOrderInput): OrderRecord {
     throw new Error("The selected order has already been canceled.");
   }
 
+  if (existing.status === "returned") {
+    throw new Error("The selected order has already been returned.");
+  }
+
   const activeInvoiceCount = Number(
     (countInvoicesForOrderStatement.get(input.tenantId, input.orderId) as { count?: number } | undefined)?.count ?? 0,
   );
@@ -4868,6 +4880,10 @@ export function reopenOrder(input: ReopenOrderInput): OrderRecord {
 
   if (existing.status === "canceled") {
     throw new Error("The selected order has already been canceled.");
+  }
+
+  if (existing.status === "returned") {
+    throw new Error("The selected order has already been returned.");
   }
 
   if (existing.status !== "closed") {
@@ -5811,6 +5827,7 @@ export function creditInvoice(input: CreditInvoiceInput): InvoiceRecord {
     });
 
     updateInvoiceCreditStatement.run(creditNote, creditedAt, input.method, creditedAt, input.tenantId, input.invoiceId);
+    updateOrderStatusStatement.run("returned", input.tenantId, order.id);
 
     createJournalEntryLines({
       tenantId: input.tenantId,
@@ -5851,6 +5868,26 @@ export function creditInvoice(input: CreditInvoiceInput): InvoiceRecord {
         quantity: order.quantity,
         inventoryValue: issuedInventoryValue,
         creditNote,
+        note: creditNote,
+      },
+      createdAt: creditedAt,
+    });
+
+    recordAuditLog({
+      tenantId: input.tenantId,
+      entityType: "order",
+      entityId: order.id,
+      entityNumber: order.order_number,
+      actionType: "order_returned",
+      summary: `Returned ${order.order_number}`,
+      metadata: {
+        amount: order.total_amount,
+        quantity: order.quantity,
+        productCategoryId: order.product_category_id,
+        productCategoryName: order.product_category_name,
+        productSku: order.product_sku,
+        productName: order.product_name,
+        inventoryValue: issuedInventoryValue,
         note: creditNote,
       },
       createdAt: creditedAt,

@@ -135,6 +135,7 @@ const errorKeyByMessage: Record<string, string> = {
   "The selected product cannot be deleted because sales, purchasing, or inventory already reference it.": "errors.productDeleteBlocked",
   "The selected order has already been canceled.": "errors.orderAlreadyCanceled",
   "The selected order has already been closed.": "errors.orderAlreadyClosed",
+  "The selected order has already been returned.": "errors.orderAlreadyReturned",
   "The selected order can only be edited while it is still confirmed.": "errors.orderUpdateStateBlocked",
   "The selected order cannot be edited because an invoice already references it.": "errors.orderUpdateBlocked",
   "The selected order cannot be canceled because an invoice already references it.": "errors.orderCancelBlocked",

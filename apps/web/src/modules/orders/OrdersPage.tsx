@@ -32,9 +32,13 @@ const { Paragraph, Title } = Typography;
 
 type OrderFormShape = Omit<CreateOrderInput, "tenantId">;
 
-function getOrderStatusColor(status: "draft" | "confirmed" | "closed" | "canceled"): string {
+function getOrderStatusColor(status: OrderRecord["status"]): string {
   if (status === "canceled") {
     return "red";
+  }
+
+  if (status === "returned") {
+    return "magenta";
   }
 
   if (status === "closed") {
@@ -49,11 +53,15 @@ function getOrderStatusColor(status: "draft" | "confirmed" | "closed" | "cancele
 }
 
 function getOrderStatusLabel(
-  status: "draft" | "confirmed" | "closed" | "canceled",
+  status: OrderRecord["status"],
   t: ReturnType<typeof useLocale>["t"],
 ): string {
   if (status === "canceled") {
     return t("orders.statusCanceled");
+  }
+
+  if (status === "returned") {
+    return t("orders.statusReturned");
   }
 
   if (status === "closed") {

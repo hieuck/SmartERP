@@ -133,6 +133,7 @@ export async function handleCancelOrder(
         "The selected order does not exist.",
         "The selected order has already been canceled.",
         "The selected order has already been closed.",
+        "The selected order has already been returned.",
         "The selected order cannot be canceled because an invoice already references it.",
         "The selected product does not exist.",
       ].includes(error.message)
@@ -192,6 +193,7 @@ export async function handleUpdateOrder(
         "The selected order does not exist.",
         "The selected order has already been canceled.",
         "The selected order has already been closed.",
+        "The selected order has already been returned.",
         "The selected order can only be edited while it is still confirmed.",
         "The selected order cannot be edited because an invoice already references it.",
         "The selected customer does not exist.",
@@ -239,6 +241,7 @@ export async function handleCloseOrder(
         "The selected order does not exist.",
         "The selected order has already been canceled.",
         "The selected order has already been closed.",
+        "The selected order has already been returned.",
         "The selected order can only be closed after its active invoice is fully paid.",
       ].includes(error.message)
     ) {
@@ -281,6 +284,7 @@ export async function handleReopenOrder(
       [
         "The selected order does not exist.",
         "The selected order has already been canceled.",
+        "The selected order has already been returned.",
         "The selected order can only be reopened after it has been closed.",
       ].includes(error.message)
     ) {

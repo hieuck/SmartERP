@@ -534,7 +534,7 @@ export type ReceivePurchaseOrderResult = {
   receipt: PurchaseOrderReceiptRecord;
 };
 
-export type OrderStatus = "draft" | "confirmed" | "closed" | "canceled";
+export type OrderStatus = "draft" | "confirmed" | "closed" | "canceled" | "returned";
 
 export type OrderRecord = {
   id: string;
@@ -670,6 +670,7 @@ export type AuditActionType =
   | "order_updated"
   | "order_canceled"
   | "order_closed"
+  | "order_returned"
   | "order_reopened"
   | "purchase_order_updated"
   | "purchase_order_canceled"

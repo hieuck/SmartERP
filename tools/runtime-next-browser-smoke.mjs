@@ -593,6 +593,11 @@ async function main() {
   let invoiceCreditVerified = false;
   let invoiceCreditAuditVerified = false;
   let invoiceCreditInventoryRestockVerified = false;
+  let creditedOrderReturnedVerified = false;
+  let creditedOrderReturnAuditVerified = false;
+  let creditedOrderExcludedFromSalesVerified = false;
+  let creditedOrderCancelGuardVerified = false;
+  let creditedOrderCloseGuardVerified = false;
   let invoiceReopenGuardVerified = false;
   let invoiceReopenRevisionGuardVerified = false;
   let invoiceReopenAuditVerified = false;
@@ -3376,6 +3381,31 @@ async function main() {
 
     await openSection(page, sidebarIndexes.reports, "/dashboard/reports");
     await waitForTenantContext(page, tenantName);
+    const creditedOrderReportSnapshot = await page.evaluate(async ({ sessionKey, tenantKey }) => {
+      const tenantId = window.localStorage.getItem(tenantKey);
+      const session = window.localStorage.getItem(sessionKey);
+      const accessToken = session ? JSON.parse(session).accessToken : "";
+      const response = await fetch(`/api/reports/summary?tenantId=${encodeURIComponent(tenantId ?? "")}`, {
+        headers: {
+          authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      return {
+        status: response.status,
+        body: await response.json(),
+      };
+    }, {
+      sessionKey: sessionStorageKey,
+      tenantKey: tenantStorageKey,
+    });
+    assert(
+      creditedOrderReportSnapshot.status === 200 &&
+        creditedOrderReportSnapshot.body?.item?.grossSalesAmount === expectedGrossSales &&
+        creditedOrderReportSnapshot.body?.item?.topCategorySalesAmount === expectedGrossSales,
+      "Report summary did not exclude the fully credited order from sales totals.",
+    );
+    creditedOrderExcludedFromSalesVerified = true;
     await getStatisticValue(page, "Giá trị đã ghi giảm").getByText(buildAmountPattern(creditedInvoiceAmount)).waitFor({
       timeout: 15000,
     });
@@ -3412,8 +3442,127 @@ async function main() {
         ),
       "Invoice credit audit entry was not recorded with note, method, and category context.",
     );
+    assert(
+      creditAuditSnapshot.body?.items?.some(
+        (item) =>
+          item.actionType === "order_returned" &&
+          item.entityNumber === creditedOrderNumber &&
+          item.metadata?.productCategoryName === productCategoryName &&
+          item.metadata?.quantity === creditedOrderQuantity &&
+          item.metadata?.inventoryValue === purchaseUnitCost * creditedOrderQuantity &&
+          item.metadata?.note === invoiceCreditNote,
+      ),
+      "Order return audit entry was not recorded after the full credit note.",
+    );
     await page.getByText(invoiceCreditNote, { exact: false }).first().waitFor({ timeout: 15000 });
     invoiceCreditAuditVerified = true;
+    creditedOrderReturnAuditVerified = true;
+    await openSection(page, sidebarIndexes.orders, "/dashboard/orders");
+    await waitForTenantContext(page, tenantName);
+    const returnedOrderRow = getListCard(page).locator(".record-row").filter({ hasText: creditedOrderNumber }).first();
+    await returnedOrderRow.waitFor({ timeout: 15000 });
+    await returnedOrderRow.getByText(/Đã trả hàng|Da tra hang|Returned/, { exact: false }).first().waitFor({
+      timeout: 15000,
+    });
+    assert(
+      (await returnedOrderRow.locator('[data-testid="order-cancel-button"]').count()) === 0 &&
+        (await returnedOrderRow.locator('[data-testid="order-close-button"]').count()) === 0 &&
+        (await returnedOrderRow.locator('[data-testid="order-reopen-button"]').count()) === 0,
+      "Returned orders should not expose lifecycle action buttons.",
+    );
+    creditedOrderReturnedVerified = true;
+    const returnedOrderCancelResponse = await page.evaluate(
+      async ({ targetOrderNumber, sessionKey, tenantKey }) => {
+        const rawSession = window.localStorage.getItem(sessionKey);
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
+        const headers = {
+          "content-type": "application/json",
+          authorization: `Bearer ${accessToken}`,
+        };
+
+        const ordersResponse = await fetch(`/api/orders?tenantId=${encodeURIComponent(tenantId ?? "")}`, {
+          headers,
+        });
+        const ordersPayload = await ordersResponse.json();
+        const targetOrder = ordersPayload.items.find((item) => item.orderNumber === targetOrderNumber);
+
+        if (!targetOrder || !tenantId) {
+          return { status: 0, body: { error: "Returned order lookup failed before cancel guard test." } };
+        }
+
+        const response = await fetch("/api/orders/cancel", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            tenantId,
+            orderId: targetOrder.id,
+          }),
+        });
+
+        return {
+          status: response.status,
+          body: await response.json(),
+        };
+      },
+      {
+        targetOrderNumber: creditedOrderNumber,
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+      },
+    );
+    assert(
+      returnedOrderCancelResponse.status === 400 &&
+        returnedOrderCancelResponse.body?.error === "The selected order has already been returned.",
+      "Returned order did not reject cancellation.",
+    );
+    creditedOrderCancelGuardVerified = true;
+    const returnedOrderCloseResponse = await page.evaluate(
+      async ({ targetOrderNumber, sessionKey, tenantKey }) => {
+        const rawSession = window.localStorage.getItem(sessionKey);
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
+        const headers = {
+          "content-type": "application/json",
+          authorization: `Bearer ${accessToken}`,
+        };
+
+        const ordersResponse = await fetch(`/api/orders?tenantId=${encodeURIComponent(tenantId ?? "")}`, {
+          headers,
+        });
+        const ordersPayload = await ordersResponse.json();
+        const targetOrder = ordersPayload.items.find((item) => item.orderNumber === targetOrderNumber);
+
+        if (!targetOrder || !tenantId) {
+          return { status: 0, body: { error: "Returned order lookup failed before close guard test." } };
+        }
+
+        const response = await fetch("/api/orders/close", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            tenantId,
+            orderId: targetOrder.id,
+          }),
+        });
+
+        return {
+          status: response.status,
+          body: await response.json(),
+        };
+      },
+      {
+        targetOrderNumber: creditedOrderNumber,
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+      },
+    );
+    assert(
+      returnedOrderCloseResponse.status === 400 &&
+        returnedOrderCloseResponse.body?.error === "The selected order has already been returned.",
+      "Returned order did not reject closing.",
+    );
+    creditedOrderCloseGuardVerified = true;
     await openSection(page, sidebarIndexes.inventory, "/dashboard/inventory");
     await waitForTenantContext(page, tenantName);
     const creditedInventoryRow = getListCard(page).locator(".record-row").filter({ hasText: productName }).first();
@@ -4105,6 +4254,11 @@ async function main() {
       invoiceCreditVerified,
       invoiceCreditAuditVerified,
       invoiceCreditInventoryRestockVerified,
+      creditedOrderReturnedVerified,
+      creditedOrderReturnAuditVerified,
+      creditedOrderExcludedFromSalesVerified,
+      creditedOrderCancelGuardVerified,
+      creditedOrderCloseGuardVerified,
       invoiceReissueAuditVerified,
       invoiceCategoryContextVerified,
       creditedInvoicePaymentGuardVerified,

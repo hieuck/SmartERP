@@ -8,6 +8,9 @@ export const localeOverrides: Record<"vi" | "en", TranslationTree> = {
     approvals: {
       typeInvoiceAmend: "Sửa đổi hóa đơn",
     },
+    orders: {
+      statusReturned: "Đã trả hàng",
+    },
     invoices: {
       amendmentNoteActiveHint: "Bắt buộc để giải thích vì sao {{number}} đang được sửa đổi.",
       amendAction: "Sửa hóa đơn",
@@ -29,6 +32,7 @@ export const localeOverrides: Record<"vi" | "en", TranslationTree> = {
     reports: {
       auditActionInvoiceAmended: "Sửa đổi hóa đơn",
       auditActionInvoiceCredited: "Ghi giảm hóa đơn",
+      auditActionOrderReturned: "Đơn hàng đã trả lại",
       creditedInvoices: "Hóa đơn đã ghi giảm",
       creditedAmount: "Giá trị đã ghi giảm",
     },
@@ -45,6 +49,7 @@ export const localeOverrides: Record<"vi" | "en", TranslationTree> = {
       invoiceCreditBlocked: "Hóa đơn này chỉ có thể ghi giảm sau khi đã được thanh toán đủ.",
       invoiceCreditNoteRequired: "Cần có ghi chú nghiệp vụ khi ghi giảm một hóa đơn đã thanh toán.",
       invalidInvoiceCreditNote: "Ghi chú ghi giảm không được vượt quá 240 ký tự.",
+      orderAlreadyReturned: "Đơn hàng này đã được trả lại.",
     },
   },
 };

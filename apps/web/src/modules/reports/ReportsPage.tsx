@@ -52,6 +52,10 @@ function getAuditActionColor(actionType: AuditActionType): string {
     return "green";
   }
 
+  if (actionType === "order_returned") {
+    return "magenta";
+  }
+
   if (actionType === "order_updated" || actionType === "purchase_order_updated") {
     return "processing";
   }
@@ -138,6 +142,10 @@ function getAuditActionLabel(
 
   if (actionType === "order_closed") {
     return t("reports.auditActionOrderClosed");
+  }
+
+  if (actionType === "order_returned") {
+    return t("reports.auditActionOrderReturned");
   }
 
   if (actionType === "order_reopened") {
