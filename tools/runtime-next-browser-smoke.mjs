@@ -547,14 +547,14 @@ async function main() {
   let duplicateTenantRejectedVerified = false;
   let setupWorkspaceVerified = false;
   let pilotHandoffPackageVerified = false;
-  let pilotHandoffReturnReceiptSummaryVerified = false;
+  let pilotHandoffTransactionSummaryVerified = false;
   let onboardingImportVerified = false;
   let onboardingExportVerified = false;
   let baselineRestorePreviewVerified = false;
-  let baselineRestoreReturnReceiptScopeVerified = false;
+  let baselineRestoreTransactionReplayVerified = false;
   let baselineRestoreVerified = false;
   let recoveryDrillVerified = false;
-  let recoveryDrillReturnReceiptScopeVerified = false;
+  let recoveryDrillTransactionReplayVerified = false;
   let customerCrudVerified = false;
   let supplierCrudVerified = false;
   let productCategoryCrudVerified = false;
@@ -3945,13 +3945,18 @@ async function main() {
       "Pilot handoff package did not include operations readiness context.",
     );
     assert(
-      handoffPackage.snapshotSummary?.invoiceReturnReceiptCount === handoffPackage.tenantSnapshot?.invoiceReturnReceipts?.length &&
+      handoffPackage.snapshotSummary?.purchaseOrderReceiptCount ===
+        handoffPackage.tenantSnapshot?.purchaseOrderReceipts?.length &&
+        handoffPackage.snapshotSummary?.invoicePaymentCount ===
+          handoffPackage.tenantSnapshot?.invoicePayments?.length &&
+        handoffPackage.snapshotSummary?.invoiceReturnReceiptCount ===
+          handoffPackage.tenantSnapshot?.invoiceReturnReceipts?.length &&
         handoffPackage.snapshotSummary.invoiceReturnReceiptCount > 0,
-      "Pilot handoff package did not include the expected invoice return receipt count.",
+      "Pilot handoff package did not summarize the expected transaction replay counts.",
     );
     await handoffCard.getByText(tenantName, { exact: false }).waitFor({ timeout: 15000 });
     pilotHandoffPackageVerified = true;
-    pilotHandoffReturnReceiptSummaryVerified = true;
+    pilotHandoffTransactionSummaryVerified = true;
     await openSection(page, sidebarIndexes.setup, "/dashboard/setup");
     await waitForTenantContext(page, tenantName);
     const recoveryCard = page.getByTestId("setup-recovery-card");
@@ -3986,9 +3991,27 @@ async function main() {
       "Tenant export snapshot did not include the purchase order.",
     );
     assert(
+      exportedSnapshot?.purchaseOrderReceipts?.some(
+        (item) =>
+          item.purchaseOrderNumber === purchaseOrderNumber &&
+          item.quantityReceived === stockInQuantity &&
+          item.totalCost === expectedReceivedPurchaseValue,
+      ),
+      "Tenant export snapshot did not include the purchase order receipt history.",
+    );
+    assert(
       exportedSnapshot?.invoices?.some((item) => item.invoiceNumber === invoiceNumber) &&
         exportedSnapshot?.invoices?.some((item) => item.invoiceNumber === secondInvoiceNumber),
       "Tenant export snapshot did not include the created invoices.",
+    );
+    assert(
+      exportedSnapshot?.invoicePayments?.some(
+        (item) => item.invoiceNumber === invoiceNumber && item.amount === partialPaymentAmount,
+      ) &&
+        exportedSnapshot?.invoicePayments?.some(
+          (item) => item.invoiceNumber === creditedInvoiceNumber && item.amount === creditedInvoiceAmount,
+        ),
+      "Tenant export snapshot did not include the invoice payment history.",
     );
     assert(
       exportedSnapshot?.auditLogs?.length > 0 &&
@@ -4029,24 +4052,38 @@ async function main() {
       { timeout: 15000 },
     );
     await restoreCard.getByRole("button", { name: "Xem trước khôi phục" }).click();
-    await previewResponse;
+    const previewResult = await previewResponse;
+    const restorePreviewPayload = (await previewResult.json()).item;
     await restoreCard.getByText(restoredTenantName, { exact: false }).waitFor({ timeout: 15000 });
     await restoreCard.getByText("Slug đích đang sẵn sàng", { exact: false }).waitFor({ timeout: 15000 });
-    await restoreCard
-      .getByText(
-        new RegExp(
-          `${exportedSnapshot.invoiceReturnReceipts.length} (phiếu nhận trả theo hóa đơn|invoice return receipts)`,
-          "i",
-        ),
-        { exact: false },
-      )
-      .waitFor({
-        timeout: 15000,
-      });
+    assert(
+      Array.isArray(restorePreviewPayload?.restoredScopes) &&
+        restorePreviewPayload.restoredScopes.includes("orders") &&
+        restorePreviewPayload.restoredScopes.includes("purchaseOrders") &&
+        restorePreviewPayload.restoredScopes.includes("purchaseOrderReceipts") &&
+        restorePreviewPayload.restoredScopes.includes("invoices") &&
+        restorePreviewPayload.restoredScopes.includes("invoicePayments") &&
+        restorePreviewPayload.restoredScopes.includes("invoiceReturnReceipts") &&
+        restorePreviewPayload.restoredScopes.includes("collections"),
+      "Restore preview did not promote transaction scopes into the baseline replay set.",
+    );
+    assert(
+      Array.isArray(restorePreviewPayload?.pendingScopes) &&
+        restorePreviewPayload.pendingScopes.length === 3 &&
+        !restorePreviewPayload.pendingScopes.includes("invoiceReturnReceipts"),
+      "Restore preview still marked replayable transaction scopes as deferred.",
+    );
+    assert(
+      restorePreviewPayload.purchaseOrderReceiptCount === exportedSnapshot.purchaseOrderReceipts.length &&
+        restorePreviewPayload.invoicePaymentCount === exportedSnapshot.invoicePayments.length &&
+        restorePreviewPayload.invoiceReturnReceiptCount === exportedSnapshot.invoiceReturnReceipts.length &&
+        restorePreviewPayload.collectionActivityCount === exportedSnapshot.collectionActivities.length,
+      "Restore preview counts did not match the exported transaction graph.",
+    );
     const restoreButton = restoreCard.getByRole("button", { name: "Khôi phục baseline" });
     assert(!(await restoreButton.isDisabled()), "Restore button stayed disabled after preview.");
     baselineRestorePreviewVerified = true;
-    baselineRestoreReturnReceiptScopeVerified = true;
+    baselineRestoreTransactionReplayVerified = true;
     const restoreResponse = page.waitForResponse(
       (response) =>
         response.url().endsWith("/api/onboarding/restore") &&
@@ -4055,7 +4092,18 @@ async function main() {
       { timeout: 15000 },
     );
     await restoreButton.click();
-    await restoreResponse;
+    const restoreResultResponse = await restoreResponse;
+    const restoreResultPayload = (await restoreResultResponse.json()).item;
+    assert(
+      restoreResultPayload.restoredOrders === exportedSnapshot.orders.length &&
+        restoreResultPayload.restoredPurchaseOrders === exportedSnapshot.purchaseOrders.length &&
+        restoreResultPayload.restoredPurchaseOrderReceipts === exportedSnapshot.purchaseOrderReceipts.length &&
+        restoreResultPayload.restoredInvoices === exportedSnapshot.invoices.length &&
+        restoreResultPayload.restoredInvoicePayments === exportedSnapshot.invoicePayments.length &&
+        restoreResultPayload.restoredInvoiceReturnReceipts === exportedSnapshot.invoiceReturnReceipts.length &&
+        restoreResultPayload.restoredCollectionActivities === exportedSnapshot.collectionActivities.length,
+      "Restore result did not replay the expected transaction graph counts.",
+    );
     await restoreCard.getByText(restoredTenantName, { exact: false }).waitFor({ timeout: 15000 });
     await waitForTenantContext(page, restoredTenantName);
     await openSection(page, sidebarIndexes.customers, "/dashboard/customers");
@@ -4076,6 +4124,74 @@ async function main() {
     });
     await restoredInventoryRow
       .getByText(buildAmountPattern(expectedRestoreInventoryValueAmount))
+      .first()
+      .waitFor({ timeout: 15000 });
+    const restoredTransactionSnapshot = await page.evaluate(
+      async ({ sessionKey, tenantKey }) => {
+        const rawSession = window.localStorage.getItem(sessionKey);
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
+
+        if (!tenantId || !accessToken) {
+          return null;
+        }
+
+        const headers = {
+          authorization: `Bearer ${accessToken}`,
+        };
+
+        const [ordersResponse, purchaseOrdersResponse, invoicesResponse] = await Promise.all([
+          fetch(`/api/orders?tenantId=${encodeURIComponent(tenantId)}`, { headers }),
+          fetch(`/api/purchase-orders?tenantId=${encodeURIComponent(tenantId)}`, { headers }),
+          fetch(`/api/invoices?tenantId=${encodeURIComponent(tenantId)}`, { headers }),
+        ]);
+
+        const [ordersPayload, purchaseOrdersPayload, invoicesPayload] = await Promise.all([
+          ordersResponse.json(),
+          purchaseOrdersResponse.json(),
+          invoicesResponse.json(),
+        ]);
+
+        return {
+          ordersStatus: ordersResponse.status,
+          purchaseOrdersStatus: purchaseOrdersResponse.status,
+          invoicesStatus: invoicesResponse.status,
+          orderCount: ordersPayload.items?.length ?? 0,
+          returnedOrderCount:
+            ordersPayload.items?.filter((item) => item.status === "returned").length ?? 0,
+          purchaseOrderCount: purchaseOrdersPayload.items?.length ?? 0,
+          invoiceCount: invoicesPayload.items?.length ?? 0,
+          creditedInvoiceCount:
+            invoicesPayload.items?.filter((item) => item.status === "credited").length ?? 0,
+          invoiceReturnReceiptCount:
+            invoicesPayload.items?.reduce(
+              (sum, item) => sum + (item.returnReceiptCount ?? 0),
+              0,
+            ) ?? 0,
+        };
+      },
+      {
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+      },
+    );
+    assert(
+      restoredTransactionSnapshot &&
+        restoredTransactionSnapshot.ordersStatus === 200 &&
+        restoredTransactionSnapshot.purchaseOrdersStatus === 200 &&
+        restoredTransactionSnapshot.invoicesStatus === 200 &&
+        restoredTransactionSnapshot.orderCount === exportedSnapshot.orders.length &&
+        restoredTransactionSnapshot.returnedOrderCount >= 1 &&
+        restoredTransactionSnapshot.purchaseOrderCount === exportedSnapshot.purchaseOrders.length &&
+        restoredTransactionSnapshot.invoiceCount === exportedSnapshot.invoices.length &&
+        restoredTransactionSnapshot.creditedInvoiceCount >= 1 &&
+        restoredTransactionSnapshot.invoiceReturnReceiptCount === exportedSnapshot.invoiceReturnReceipts.length,
+      "Restored tenant API snapshot did not preserve the expected transaction graph.",
+    );
+    await openSection(page, sidebarIndexes.invoices, "/dashboard/invoices");
+    await waitForTenantContext(page, restoredTenantName);
+    await getListCard(page)
+      .getByText(/Return receipts:|Phiếu nhận trả:/, { exact: false })
       .first()
       .waitFor({ timeout: 15000 });
     baselineRestoreVerified = true;
@@ -4105,11 +4221,14 @@ async function main() {
     );
     assert(
       recoveryDrillReport.baselineCounts?.invoiceReturnReceipts === exportedSnapshot.invoiceReturnReceipts.length &&
-        recoveryDrillReport.checks.some((check) => check.key === "invoice-return-receipts-deferred" && check.passed === true),
-      "Recovery drill report did not surface deferred invoice return receipts correctly.",
+        recoveryDrillReport.restoredCounts?.invoiceReturnReceipts === exportedSnapshot.invoiceReturnReceipts.length &&
+        recoveryDrillReport.checks.some((check) => check.key === "invoice-return-receipts-restored" && check.passed === true) &&
+        recoveryDrillReport.checks.some((check) => check.key === "invoice-payments-restored" && check.passed === true) &&
+        recoveryDrillReport.checks.some((check) => check.key === "purchase-order-receipts-restored" && check.passed === true),
+      "Recovery drill report did not confirm restored transaction replay correctly.",
     );
     recoveryDrillVerified = true;
-    recoveryDrillReturnReceiptScopeVerified = true;
+    recoveryDrillTransactionReplayVerified = true;
     await page.evaluate(
       ({ key, tenantId }) => {
         if (tenantId) {
@@ -4486,14 +4605,14 @@ async function main() {
       duplicateTenantRejectedVerified,
       setupWorkspaceVerified,
       pilotHandoffPackageVerified,
-      pilotHandoffReturnReceiptSummaryVerified,
+      pilotHandoffTransactionSummaryVerified,
       onboardingImportVerified,
       onboardingExportVerified,
       baselineRestorePreviewVerified,
-      baselineRestoreReturnReceiptScopeVerified,
+      baselineRestoreTransactionReplayVerified,
       baselineRestoreVerified,
       recoveryDrillVerified,
-      recoveryDrillReturnReceiptScopeVerified,
+      recoveryDrillTransactionReplayVerified,
       customerCrudVerified,
       supplierCrudVerified,
       productCategoryCrudVerified,

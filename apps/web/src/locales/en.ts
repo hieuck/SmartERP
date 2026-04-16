@@ -190,10 +190,10 @@ const en = {
     restorePreviewSlugBlocked: "Slug already belongs to {{conflictingTenantName}}.",
     restorePreviewCountsNowLabel: "Restored in this baseline",
     restorePreviewCountsNowValue:
-      "{{customerCount}} customers, {{supplierCount}} suppliers, {{productCount}} products, and {{inventoryLineCount}} inventory lines.",
+      "{{customerCount}} customers, {{supplierCount}} suppliers, {{productCount}} products, {{inventoryLineCount}} inventory lines, {{orderCount}} orders, {{purchaseOrderCount}} purchase orders, {{purchaseOrderReceiptCount}} purchase receipts, {{invoiceCount}} invoices, {{invoicePaymentCount}} invoice payments, {{invoiceReturnReceiptCount}} invoice return receipts, and {{collectionActivityCount}} collection activities.",
     restorePreviewCountsLaterLabel: "Deferred for later replay",
     restorePreviewCountsLaterValue:
-      "{{orderCount}} orders, {{purchaseOrderCount}} purchase orders, {{invoiceCount}} invoices, {{invoiceReturnReceiptCount}} invoice return receipts, {{collectionActivityCount}} collection activities, {{approvalCount}} approvals, {{auditLogCount}} audit logs, {{journalEntryCount}} journal entries, and {{accountBalanceCount}} ledger balances.",
+      "{{approvalCount}} approvals, {{auditLogCount}} audit logs, {{journalEntryCount}} journal entries, and {{accountBalanceCount}} ledger balances.",
     restoreAction: "Restore Baseline",
     restoreSummary:
       "Baseline restored for {{tenantName}} with {{restoredCustomers}} customers, {{restoredProducts}} products, and {{restoredInventoryLines}} inventory lines.",
@@ -204,9 +204,10 @@ const en = {
     restorePendingScopes: "Still pending",
     restoreScopeTitle: "Recovery scope",
     restoreNowLabel: "Included in this restore",
-    restoreNowValue: "Tenant, customers, suppliers, products, and opening inventory.",
+    restoreNowValue:
+      "Tenant, customers, suppliers, products, opening inventory, orders, purchase orders, purchase receipts, invoices, invoice payments, return receipts, and collection activities.",
     restoreLaterLabel: "Still outside this slice",
-    restoreLaterValue: "Orders, purchase orders, invoices, invoice return receipts, collections, approvals, audit, and ledger replay.",
+    restoreLaterValue: "Approvals, audit, and ledger replay.",
     datasets: {
       customers: "Customers",
       suppliers: "Suppliers",
@@ -754,7 +755,7 @@ Object.assign(en.modules, {
     handoffReadinessLabel: "Readiness level",
     handoffSnapshotLabel: "Embedded snapshot",
     handoffSnapshotValue:
-      "{{customers}} customers, {{suppliers}} suppliers, {{products}} products, {{invoices}} invoices, {{invoiceReturnReceipts}} invoice return receipts",
+      "{{customers}} customers, {{suppliers}} suppliers, {{products}} products, {{invoices}} invoices, {{invoicePayments}} invoice payments, {{purchaseOrderReceipts}} purchase receipts, {{invoiceReturnReceipts}} invoice return receipts",
     handoffStepFounder: "Founder confirms the target tenant in Setup and keeps the pilot scoped to one explicit tenant.",
     handoffStepOperations: "Founder opens Operations and checks readiness, smoke status, runtime services, and artifacts before user onboarding.",
     handoffStepRoles: "Pilot operators receive role-based demo accounts for finance, sales, warehouse, purchasing, and collections.",
@@ -774,7 +775,7 @@ Object.assign(en.modules, {
       recoveryDrillNoPendingScopes: "No deferred scopes",
       recoveryDrillBaselineCounts: "Baseline counts",
       recoveryDrillBaselineCountsValue:
-        "{{customers}} customers, {{suppliers}} suppliers, {{products}} products, {{inventoryLines}} inventory lines, {{invoiceReturnReceipts}} invoice return receipts",
+        "{{customers}} customers, {{suppliers}} suppliers, {{products}} products, {{inventoryLines}} inventory lines, {{orders}} orders, {{purchaseOrders}} purchase orders, {{purchaseOrderReceipts}} purchase receipts, {{invoices}} invoices, {{invoicePayments}} invoice payments, {{invoiceReturnReceipts}} invoice return receipts",
       checklistTenantCreated: "Create the pilot tenant",
       checklistTenantCreatedDescription: "A live pilot needs a dedicated tenant with its own slug and industry context.",
       checklistTenantSelected: "Lock the working tenant",
@@ -793,7 +794,13 @@ Object.assign(en.modules, {
         "suppliers-restored": "Supplier baseline restored",
         "products-restored": "Product baseline restored",
         "inventory-restored": "Opening inventory restored",
-        "invoice-return-receipts-deferred": "Invoice return receipts stay deferred",
+        "orders-restored": "Orders replayed",
+        "purchase-orders-restored": "Purchase orders replayed",
+        "purchase-order-receipts-restored": "Purchase receipts replayed",
+        "invoices-restored": "Invoices replayed",
+        "invoice-payments-restored": "Invoice payments replayed",
+        "invoice-return-receipts-restored": "Invoice return receipts replayed",
+        "collections-restored": "Collection activity replayed",
         "deferred-scopes-acknowledged": "Deferred scopes acknowledged",
       },
     },

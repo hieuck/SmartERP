@@ -224,7 +224,9 @@ export type RestoreTenantSnapshotPreview = {
   inventoryLineCount: number;
   orderCount: number;
   purchaseOrderCount: number;
+  purchaseOrderReceiptCount: number;
   invoiceCount: number;
+  invoicePaymentCount: number;
   invoiceReturnReceiptCount: number;
   collectionActivityCount: number;
   approvalCount: number;
@@ -243,6 +245,13 @@ export type RestoreTenantSnapshotResult = {
   restoredSuppliers: number;
   restoredProducts: number;
   restoredInventoryLines: number;
+  restoredOrders: number;
+  restoredPurchaseOrders: number;
+  restoredPurchaseOrderReceipts: number;
+  restoredInvoices: number;
+  restoredInvoicePayments: number;
+  restoredInvoiceReturnReceipts: number;
+  restoredCollectionActivities: number;
   restoredScopes: string[];
   pendingScopes: string[];
 };
@@ -465,6 +474,16 @@ export type PurchaseOrderReceiptRecord = {
   unitCost: number;
   totalCost: number;
   receivedAt: string;
+};
+
+export type InvoicePaymentRecord = {
+  id: string;
+  tenantId: string;
+  invoiceId: string;
+  invoiceNumber: string;
+  amount: number;
+  method: PaymentMethod;
+  paidAt: string;
 };
 
 export type InvoiceReturnReceiptRecord = {
@@ -928,7 +947,9 @@ export type TenantExportBundle = {
   inventories: InventoryRecord[];
   orders: OrderRecord[];
   purchaseOrders: PurchaseOrderRecord[];
+  purchaseOrderReceipts: PurchaseOrderReceiptRecord[];
   invoices: InvoiceRecord[];
+  invoicePayments: InvoicePaymentRecord[];
   invoiceReturnReceipts: InvoiceReturnReceiptRecord[];
   customerStatements: CustomerStatementRecord[];
   collectionActivities: InvoiceCollectionActivityRecord[];
@@ -964,7 +985,9 @@ export type PilotHandoffPackage = {
     inventoryLineCount: number;
     orderCount: number;
     purchaseOrderCount: number;
+    purchaseOrderReceiptCount: number;
     invoiceCount: number;
+    invoicePaymentCount: number;
     invoiceReturnReceiptCount: number;
     collectionActivityCount: number;
     approvalCount: number;

@@ -47,18 +47,25 @@ export const localeOverrides: Record<"vi" | "en", TranslationTree> = {
       creditedAmount: "Giá trị đã ghi giảm",
     },
     tenants: {
+      restorePreviewCountsNowValue:
+        "{{customerCount}} khách hàng, {{supplierCount}} nhà cung cấp, {{productCount}} sản phẩm, {{inventoryLineCount}} dòng tồn kho, {{orderCount}} đơn hàng, {{purchaseOrderCount}} đơn mua, {{purchaseOrderReceiptCount}} phiếu nhận hàng, {{invoiceCount}} hóa đơn, {{invoicePaymentCount}} phiếu thanh toán, {{invoiceReturnReceiptCount}} phiếu nhận trả theo hóa đơn, và {{collectionActivityCount}} hoạt động thu hồi.",
       restorePreviewCountsLaterValue:
-        "{{orderCount}} đơn hàng, {{purchaseOrderCount}} đơn mua, {{invoiceCount}} hóa đơn, {{invoiceReturnReceiptCount}} phiếu nhận trả theo hóa đơn, {{collectionActivityCount}} hoạt động thu hồi, {{approvalCount}} phê duyệt, {{auditLogCount}} audit log, {{journalEntryCount}} bút toán, và {{accountBalanceCount}} số dư sổ cái.",
-      restoreLaterValue:
-        "Đơn hàng, đơn mua, hóa đơn, phiếu nhận trả theo hóa đơn, collections, approvals, audit, và replay sổ cái.",
+        "{{approvalCount}} phê duyệt, {{auditLogCount}} audit log, {{journalEntryCount}} bút toán, và {{accountBalanceCount}} số dư sổ cái.",
+      restoreLaterValue: "Phê duyệt, audit, và replay sổ cái.",
     },
     setup: {
       handoffSnapshotValue:
-        "{{customers}} khách hàng, {{suppliers}} nhà cung cấp, {{products}} sản phẩm, {{invoices}} hóa đơn, {{invoiceReturnReceipts}} phiếu nhận trả theo hóa đơn",
+        "{{customers}} khách hàng, {{suppliers}} nhà cung cấp, {{products}} sản phẩm, {{invoices}} hóa đơn, {{invoicePayments}} phiếu thanh toán, {{purchaseOrderReceipts}} phiếu nhận hàng, {{invoiceReturnReceipts}} phiếu nhận trả theo hóa đơn",
       recoveryDrillBaselineCountsValue:
-        "{{customers}} khách hàng, {{suppliers}} nhà cung cấp, {{products}} sản phẩm, {{inventoryLines}} dòng tồn kho, {{invoiceReturnReceipts}} phiếu nhận trả theo hóa đơn",
+        "{{customers}} khách hàng, {{suppliers}} nhà cung cấp, {{products}} sản phẩm, {{inventoryLines}} dòng tồn kho, {{orders}} đơn hàng, {{purchaseOrders}} đơn mua, {{purchaseOrderReceipts}} phiếu nhận hàng, {{invoices}} hóa đơn, {{invoicePayments}} phiếu thanh toán, {{invoiceReturnReceipts}} phiếu nhận trả theo hóa đơn",
       recoveryChecks: {
-        "invoice-return-receipts-deferred": "Phiếu nhận trả theo hóa đơn vẫn đang deferred",
+        "orders-restored": "Đơn hàng đã được replay",
+        "purchase-orders-restored": "Đơn mua đã được replay",
+        "purchase-order-receipts-restored": "Phiếu nhận hàng đã được replay",
+        "invoices-restored": "Hóa đơn đã được replay",
+        "invoice-payments-restored": "Phiếu thanh toán đã được replay",
+        "invoice-return-receipts-restored": "Phiếu nhận trả theo hóa đơn đã được replay",
+        "collections-restored": "Hoạt động thu hồi đã được replay",
       },
     },
     errors: {

@@ -60,6 +60,7 @@ import {
   type JournalReferenceType,
   type CustomerRecord,
   type InvoiceRecord,
+  type InvoicePaymentRecord,
   type InvoiceReturnReceiptRecord,
   type InventoryRecord,
   type OrderRecord,
@@ -308,6 +309,16 @@ type InvoiceCollectionActivityRow = {
   outstanding_amount_snapshot: number;
   action_state: CollectionActivityState;
   created_at: string;
+};
+
+type InvoicePaymentRow = {
+  id: string;
+  tenant_id: string;
+  invoice_id: string;
+  invoice_number: string;
+  amount: number;
+  method: InvoicePaymentRecord["method"];
+  paid_at: string;
 };
 
 type ReportCountsRow = {
@@ -1201,6 +1212,26 @@ const createPurchaseOrderReceiptStatement = db.prepare(`
   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `);
 
+const listPurchaseOrderReceiptsStatement = db.prepare(`
+  SELECT
+    id,
+    tenant_id,
+    purchase_order_id,
+    purchase_order_number,
+    product_id,
+    product_category_id,
+    product_category_name,
+    product_sku,
+    product_name,
+    quantity_received,
+    unit_cost,
+    total_cost,
+    received_at
+  FROM purchase_order_receipts
+  WHERE tenant_id = ?
+  ORDER BY datetime(received_at) DESC, rowid DESC
+`);
+
 const listInvoiceReturnReceiptsStatement = db.prepare(`
   SELECT
     id,
@@ -1689,6 +1720,20 @@ const createInvoicePaymentStatement = db.prepare(`
     paid_at
   )
   VALUES (?, ?, ?, ?, ?, ?, ?)
+`);
+
+const listInvoicePaymentsStatement = db.prepare(`
+  SELECT
+    id,
+    tenant_id,
+    invoice_id,
+    invoice_number,
+    amount,
+    method,
+    paid_at
+  FROM invoice_payments
+  WHERE tenant_id = ?
+  ORDER BY datetime(paid_at) DESC, rowid DESC
 `);
 
 const listCustomerStatementsStatement = db.prepare(`
@@ -2342,6 +2387,18 @@ function mapPurchaseOrderReceipt(row: PurchaseOrderReceiptRow): PurchaseOrderRec
   };
 }
 
+function mapInvoicePayment(row: InvoicePaymentRow): InvoicePaymentRecord {
+  return {
+    id: row.id,
+    tenantId: row.tenant_id,
+    invoiceId: row.invoice_id,
+    invoiceNumber: row.invoice_number,
+    amount: row.amount,
+    method: row.method,
+    paidAt: row.paid_at,
+  };
+}
+
 function mapInvoiceReturnReceipt(row: InvoiceReturnReceiptRow): InvoiceReturnReceiptRecord {
   return {
     id: row.id,
@@ -2359,6 +2416,10 @@ function mapInvoiceReturnReceipt(row: InvoiceReturnReceiptRow): InvoiceReturnRec
     inventoryValue: row.inventory_value,
     receivedAt: row.received_at,
   };
+}
+
+function compareIsoAscending(left: string, right: string): number {
+  return left.localeCompare(right);
 }
 
 function mapReportCategoryPerformance(
@@ -2554,6 +2615,38 @@ function getInvoiceStatus(
   }
 
   return "issued";
+}
+
+function deriveInvoiceCreditBreakdown(
+  invoice: InvoiceRecord,
+  sourceOrder: OrderRecord | undefined,
+): {
+  creditedSubtotalAmount: number;
+  creditedTaxAmount: number;
+} {
+  if (invoice.creditedAmount <= 0) {
+    return {
+      creditedSubtotalAmount: 0,
+      creditedTaxAmount: 0,
+    };
+  }
+
+  let creditedSubtotalAmount = 0;
+
+  if (sourceOrder && invoice.creditedQuantity > 0 && sourceOrder.quantity > 0) {
+    creditedSubtotalAmount = Math.round((invoice.subtotalAmount / sourceOrder.quantity) * invoice.creditedQuantity);
+  } else if (invoice.totalAmount > 0) {
+    creditedSubtotalAmount = Math.round(
+      (invoice.subtotalAmount * invoice.creditedAmount) / invoice.totalAmount,
+    );
+  }
+
+  creditedSubtotalAmount = Math.max(Math.min(creditedSubtotalAmount, invoice.subtotalAmount), 0);
+
+  return {
+    creditedSubtotalAmount,
+    creditedTaxAmount: Math.max(invoice.creditedAmount - creditedSubtotalAmount, 0),
+  };
 }
 
 function getCollectionStatus(
@@ -3695,17 +3788,21 @@ export function importOnboardingDataset(input: ImportOnboardingInput): ImportOnb
   }
 }
 
-const restoreImmediateScopes = ["tenant", "customers", "suppliers", "products", "inventory"] as const;
-const restoreDeferredScopes = [
+const restoreImmediateScopes = [
+  "tenant",
+  "customers",
+  "suppliers",
+  "products",
+  "inventory",
   "orders",
   "purchaseOrders",
+  "purchaseOrderReceipts",
   "invoices",
+  "invoicePayments",
   "invoiceReturnReceipts",
   "collections",
-  "approvals",
-  "audit",
-  "ledger",
 ] as const;
+const restoreDeferredScopes = ["approvals", "audit", "ledger"] as const;
 
 function normalizeRestoreTarget(input: RestoreTenantSnapshotInput): {
   targetName: string;
@@ -3753,7 +3850,9 @@ export function exportTenantSnapshot(tenantId: string): TenantExportBundle {
     inventories: listInventory(tenantId),
     orders: listOrders(tenantId),
     purchaseOrders: listPurchaseOrders(tenantId),
+    purchaseOrderReceipts: listPurchaseOrderReceipts(tenantId),
     invoices: listInvoices(tenantId),
+    invoicePayments: listInvoicePayments(tenantId),
     invoiceReturnReceipts: listInvoiceReturnReceipts(tenantId),
     customerStatements: listCustomerStatements(tenantId),
     collectionActivities: listInvoiceCollectionActivities(tenantId),
@@ -3767,6 +3866,10 @@ export function exportTenantSnapshot(tenantId: string): TenantExportBundle {
 export function previewRestoreTenantSnapshot(input: RestoreTenantSnapshotInput): RestoreTenantSnapshotPreview {
   const { targetName, targetSlug, targetIndustry } = normalizeRestoreTarget(input);
   const conflictingTenant = getTenantBySlugStatement.get(targetSlug) as TenantRow | undefined;
+  const purchaseOrderReceipts = input.snapshot.purchaseOrderReceipts ?? [];
+  const invoicePayments = input.snapshot.invoicePayments ?? [];
+  const invoiceReturnReceipts = input.snapshot.invoiceReturnReceipts ?? [];
+  const collectionActivities = input.snapshot.collectionActivities ?? [];
 
   return {
     sourceTenantName: input.snapshot.tenant.name,
@@ -3783,9 +3886,11 @@ export function previewRestoreTenantSnapshot(input: RestoreTenantSnapshotInput):
     inventoryLineCount: input.snapshot.inventories.length,
     orderCount: input.snapshot.orders.length,
     purchaseOrderCount: input.snapshot.purchaseOrders.length,
+    purchaseOrderReceiptCount: purchaseOrderReceipts.length,
     invoiceCount: input.snapshot.invoices.length,
-    invoiceReturnReceiptCount: input.snapshot.invoiceReturnReceipts.length,
-    collectionActivityCount: input.snapshot.collectionActivities.length,
+    invoicePaymentCount: invoicePayments.length,
+    invoiceReturnReceiptCount: invoiceReturnReceipts.length,
+    collectionActivityCount: collectionActivities.length,
     approvalCount: input.snapshot.approvalRequests.length,
     auditLogCount: input.snapshot.auditLogs.length,
     journalEntryCount: input.snapshot.journalEntries.length,
@@ -3815,21 +3920,32 @@ export function restoreTenantSnapshot(input: RestoreTenantSnapshotInput): Restor
   let restoredSuppliers = 0;
   let restoredProducts = 0;
   let restoredInventoryLines = 0;
+  let restoredOrders = 0;
+  let restoredPurchaseOrders = 0;
+  let restoredPurchaseOrderReceipts = 0;
+  let restoredInvoices = 0;
+  let restoredInvoicePayments = 0;
+  let restoredInvoiceReturnReceipts = 0;
+  let restoredCollectionActivities = 0;
+  const customerIdMap = new Map<string, string>();
+  const supplierIdMap = new Map<string, string>();
   const productIdMap = new Map<string, string>();
+  const restoredProductsBySourceId = new Map<string, ProductRecord>();
 
   for (const customer of input.snapshot.customers ?? []) {
-    createCustomer({
+    const restoredCustomer = createCustomer({
       tenantId: restoredTenant.id,
       name: customer.name,
       email: customer.email,
       phone: customer.phone,
       city: customer.city,
     });
+    customerIdMap.set(customer.id, restoredCustomer.id);
     restoredCustomers += 1;
   }
 
   for (const supplier of input.snapshot.suppliers ?? []) {
-    createSupplier({
+    const restoredSupplier = createSupplier({
       tenantId: restoredTenant.id,
       supplierCode: supplier.supplierCode,
       name: supplier.name,
@@ -3838,6 +3954,7 @@ export function restoreTenantSnapshot(input: RestoreTenantSnapshotInput): Restor
       city: supplier.city,
       leadTimeDays: supplier.leadTimeDays,
     });
+    supplierIdMap.set(supplier.id, restoredSupplier.id);
     restoredSuppliers += 1;
   }
 
@@ -3865,6 +3982,7 @@ export function restoreTenantSnapshot(input: RestoreTenantSnapshotInput): Restor
       unitPrice: product.unitPrice,
     });
     productIdMap.set(product.id, restoredProduct.id);
+    restoredProductsBySourceId.set(product.id, restoredProduct);
     restoredProducts += 1;
   }
 
@@ -3889,12 +4007,292 @@ export function restoreTenantSnapshot(input: RestoreTenantSnapshotInput): Restor
     restoredInventoryLines += 1;
   }
 
+  const orderIdMap = new Map<string, string>();
+  const orderNumberMap = new Map<string, string>();
+  const purchaseOrderIdMap = new Map<string, string>();
+  const purchaseOrderNumberMap = new Map<string, string>();
+  const invoiceIdMap = new Map<string, string>();
+  const invoiceNumberMap = new Map<string, string>();
+
+  const snapshotOrders = [...(input.snapshot.orders ?? [])].sort((left, right) =>
+    compareIsoAscending(left.createdAt, right.createdAt),
+  );
+
+  for (const order of snapshotOrders) {
+    const restoredCustomerId = customerIdMap.get(order.customerId);
+    const restoredProductId = productIdMap.get(order.productId);
+    if (!restoredCustomerId || !restoredProductId) {
+      continue;
+    }
+
+    const restoredOrderId = randomUUID();
+    const restoredOrderNumber = createOrderNumber();
+    orderIdMap.set(order.id, restoredOrderId);
+    orderNumberMap.set(order.id, restoredOrderNumber);
+    const restoredProduct = restoredProductsBySourceId.get(order.productId);
+
+    createOrderStatement.run(
+      restoredOrderId,
+      restoredTenant.id,
+      restoredOrderNumber,
+      restoredCustomerId,
+      order.customerName,
+      restoredProductId,
+      restoredCategoryIds.get(order.productCategoryId) ?? restoredProduct?.categoryId ?? "",
+      order.productCategoryName,
+      order.productName,
+      order.productSku,
+      order.quantity,
+      order.unitPrice,
+      order.totalAmount,
+      order.status,
+      order.createdAt,
+    );
+    restoredOrders += 1;
+  }
+
+  const snapshotPurchaseOrders = [...(input.snapshot.purchaseOrders ?? [])].sort((left, right) =>
+    compareIsoAscending(left.createdAt, right.createdAt),
+  );
+
+  for (const purchaseOrder of snapshotPurchaseOrders) {
+    const restoredSupplierId = supplierIdMap.get(purchaseOrder.supplierId);
+    const restoredProductId = productIdMap.get(purchaseOrder.productId);
+    if (!restoredSupplierId || !restoredProductId) {
+      continue;
+    }
+
+    const restoredPurchaseOrderId = randomUUID();
+    const restoredPurchaseOrderNumber = createPurchaseOrderNumber();
+    purchaseOrderIdMap.set(purchaseOrder.id, restoredPurchaseOrderId);
+    purchaseOrderNumberMap.set(purchaseOrder.id, restoredPurchaseOrderNumber);
+    const restoredProduct = restoredProductsBySourceId.get(purchaseOrder.productId);
+
+    createPurchaseOrderStatement.run(
+      restoredPurchaseOrderId,
+      restoredTenant.id,
+      restoredPurchaseOrderNumber,
+      restoredSupplierId,
+      purchaseOrder.supplierCode,
+      purchaseOrder.supplierName,
+      restoredProductId,
+      restoredCategoryIds.get(purchaseOrder.productCategoryId) ?? restoredProduct?.categoryId ?? "",
+      purchaseOrder.productCategoryName,
+      purchaseOrder.productSku,
+      purchaseOrder.productName,
+      purchaseOrder.quantityOrdered,
+      purchaseOrder.receivedQuantity,
+      purchaseOrder.unitCost,
+      purchaseOrder.totalAmount,
+      purchaseOrder.status,
+      purchaseOrder.expectedReceiptDate,
+      purchaseOrder.createdAt,
+    );
+    restoredPurchaseOrders += 1;
+  }
+
+  const snapshotInvoices = [...(input.snapshot.invoices ?? [])];
+  for (const invoice of snapshotInvoices) {
+    invoiceIdMap.set(invoice.id, randomUUID());
+    invoiceNumberMap.set(invoice.id, createInvoiceNumber());
+  }
+
+  snapshotInvoices
+    .sort((left, right) => {
+      const byIssuedAt = compareIsoAscending(left.issuedAt, right.issuedAt);
+      if (byIssuedAt !== 0) {
+        return byIssuedAt;
+      }
+
+      if (left.revisionNumber !== right.revisionNumber) {
+        return left.revisionNumber - right.revisionNumber;
+      }
+
+      return left.invoiceNumber.localeCompare(right.invoiceNumber);
+    })
+    .forEach((invoice) => {
+      const restoredInvoiceId = invoiceIdMap.get(invoice.id);
+      const restoredOrderId = orderIdMap.get(invoice.orderId);
+      const restoredOrderNumber = orderNumberMap.get(invoice.orderId);
+      const restoredCustomerId = customerIdMap.get(invoice.customerId);
+      const sourceOrder = input.snapshot.orders.find((item) => item.id === invoice.orderId);
+      const creditBreakdown = deriveInvoiceCreditBreakdown(invoice, sourceOrder);
+      const restoredInvoiceNumber = invoiceNumberMap.get(invoice.id);
+
+      if (!restoredInvoiceId || !restoredOrderId || !restoredOrderNumber || !restoredCustomerId || !restoredInvoiceNumber) {
+        return;
+      }
+
+      createInvoiceStatement.run(
+        restoredInvoiceId,
+        restoredTenant.id,
+        restoredInvoiceNumber,
+        invoiceIdMap.get(invoice.amendmentRootInvoiceId) ?? restoredInvoiceId,
+        invoiceNumberMap.get(invoice.amendmentRootInvoiceId) ?? restoredInvoiceNumber,
+        invoice.revisionNumber,
+        invoice.amendmentNote,
+        invoice.creditNote,
+        invoice.creditedAt,
+        invoice.creditMethod,
+        invoice.creditedAmount,
+        invoice.creditedQuantity,
+        creditBreakdown.creditedSubtotalAmount,
+        creditBreakdown.creditedTaxAmount,
+        invoice.reissuedFromInvoiceId ? (invoiceIdMap.get(invoice.reissuedFromInvoiceId) ?? null) : null,
+        invoice.reissuedFromInvoiceId
+          ? (invoiceNumberMap.get(invoice.reissuedFromInvoiceId) ?? null)
+          : null,
+        invoice.reissuedToInvoiceId ? (invoiceIdMap.get(invoice.reissuedToInvoiceId) ?? null) : null,
+        invoice.reissuedToInvoiceId ? (invoiceNumberMap.get(invoice.reissuedToInvoiceId) ?? null) : null,
+        restoredOrderId,
+        restoredOrderNumber,
+        restoredCustomerId,
+        invoice.customerName,
+        invoice.subtotalAmount,
+        invoice.taxRatePercent,
+        invoice.taxAmount,
+        invoice.totalAmount,
+        invoice.status,
+        invoice.issuedAt,
+        invoice.dueDate,
+        invoice.followUpStatus,
+        invoice.actionRequired,
+        invoice.promisedPaymentDate,
+        invoice.nextActionDate,
+        invoice.collectionNote,
+        invoice.lastCollectionUpdateAt,
+      );
+      restoredInvoices += 1;
+    });
+
+  const snapshotPurchaseOrderReceipts = [...(input.snapshot.purchaseOrderReceipts ?? [])].sort((left, right) =>
+    compareIsoAscending(left.receivedAt, right.receivedAt),
+  );
+
+  for (const receipt of snapshotPurchaseOrderReceipts) {
+    const restoredPurchaseOrderId = purchaseOrderIdMap.get(receipt.purchaseOrderId);
+    const restoredProductId = productIdMap.get(receipt.productId);
+    if (!restoredPurchaseOrderId || !restoredProductId) {
+      continue;
+    }
+
+    const restoredProduct = restoredProductsBySourceId.get(receipt.productId);
+    createPurchaseOrderReceiptStatement.run(
+      randomUUID(),
+      restoredTenant.id,
+      restoredPurchaseOrderId,
+      purchaseOrderNumberMap.get(receipt.purchaseOrderId) ?? receipt.purchaseOrderNumber,
+      restoredProductId,
+      restoredCategoryIds.get(receipt.productCategoryId) ?? restoredProduct?.categoryId ?? "",
+      receipt.productCategoryName,
+      receipt.productSku,
+      receipt.productName,
+      receipt.quantityReceived,
+      receipt.unitCost,
+      receipt.totalCost,
+      receipt.receivedAt,
+    );
+    restoredPurchaseOrderReceipts += 1;
+  }
+
+  const snapshotInvoicePayments = [...(input.snapshot.invoicePayments ?? [])].sort((left, right) =>
+    compareIsoAscending(left.paidAt, right.paidAt),
+  );
+
+  for (const payment of snapshotInvoicePayments) {
+    const restoredInvoiceId = invoiceIdMap.get(payment.invoiceId);
+    if (!restoredInvoiceId) {
+      continue;
+    }
+
+    createInvoicePaymentStatement.run(
+      randomUUID(),
+      restoredTenant.id,
+      restoredInvoiceId,
+      invoiceNumberMap.get(payment.invoiceId) ?? payment.invoiceNumber,
+      payment.amount,
+      payment.method,
+      payment.paidAt,
+    );
+    restoredInvoicePayments += 1;
+  }
+
+  const snapshotInvoiceReturnReceipts = [...(input.snapshot.invoiceReturnReceipts ?? [])].sort(
+    (left, right) => compareIsoAscending(left.receivedAt, right.receivedAt),
+  );
+
+  for (const receipt of snapshotInvoiceReturnReceipts) {
+    const restoredInvoiceId = invoiceIdMap.get(receipt.invoiceId);
+    const restoredOrderId = orderIdMap.get(receipt.orderId);
+    const restoredProductId = productIdMap.get(receipt.productId);
+    if (!restoredInvoiceId || !restoredOrderId || !restoredProductId) {
+      continue;
+    }
+
+    const restoredProduct = restoredProductsBySourceId.get(receipt.productId);
+    createInvoiceReturnReceiptStatement.run(
+      randomUUID(),
+      restoredTenant.id,
+      restoredInvoiceId,
+      invoiceNumberMap.get(receipt.invoiceId) ?? receipt.invoiceNumber,
+      restoredOrderId,
+      orderNumberMap.get(receipt.orderId) ?? receipt.orderNumber,
+      restoredProductId,
+      restoredCategoryIds.get(receipt.productCategoryId) ?? restoredProduct?.categoryId ?? "",
+      receipt.productCategoryName,
+      receipt.productSku,
+      receipt.productName,
+      receipt.quantityReturned,
+      receipt.inventoryValue,
+      receipt.receivedAt,
+    );
+    restoredInvoiceReturnReceipts += 1;
+  }
+
+  const snapshotCollectionActivities = [...(input.snapshot.collectionActivities ?? [])].sort(
+    (left, right) => compareIsoAscending(left.createdAt, right.createdAt),
+  );
+
+  for (const activity of snapshotCollectionActivities) {
+    const restoredInvoiceId = invoiceIdMap.get(activity.invoiceId);
+    const restoredCustomerId = customerIdMap.get(activity.customerId);
+    if (!restoredInvoiceId || !restoredCustomerId) {
+      continue;
+    }
+
+    createInvoiceCollectionActivityStatement.run(
+      randomUUID(),
+      restoredTenant.id,
+      restoredInvoiceId,
+      invoiceNumberMap.get(activity.invoiceId) ?? activity.invoiceNumber,
+      restoredCustomerId,
+      activity.customerName,
+      activity.followUpStatus,
+      activity.collectionPriority,
+      activity.actionRequired,
+      activity.promisedPaymentDate,
+      activity.nextActionDate,
+      activity.collectionNote,
+      activity.outstandingAmountSnapshot,
+      activity.actionState,
+      activity.createdAt,
+    );
+    restoredCollectionActivities += 1;
+  }
+
   return {
     tenant: restoredTenant,
     restoredCustomers,
     restoredSuppliers,
     restoredProducts,
     restoredInventoryLines,
+    restoredOrders,
+    restoredPurchaseOrders,
+    restoredPurchaseOrderReceipts,
+    restoredInvoices,
+    restoredInvoicePayments,
+    restoredInvoiceReturnReceipts,
+    restoredCollectionActivities,
     restoredScopes: [...restoreImmediateScopes],
     pendingScopes: [...restoreDeferredScopes],
   };
@@ -4357,8 +4755,18 @@ export function listPurchaseOrders(tenantId: string): PurchaseOrderRecord[] {
   return (listPurchaseOrdersStatement.all(tenantId) as PurchaseOrderRow[]).map(mapPurchaseOrder);
 }
 
+export function listPurchaseOrderReceipts(tenantId: string): PurchaseOrderReceiptRecord[] {
+  return (listPurchaseOrderReceiptsStatement.all(tenantId) as PurchaseOrderReceiptRow[]).map(
+    mapPurchaseOrderReceipt,
+  );
+}
+
 export function listInvoices(tenantId: string): InvoiceRecord[] {
   return (listInvoicesStatement.all(tenantId) as InvoiceRow[]).map(mapInvoice);
+}
+
+export function listInvoicePayments(tenantId: string): InvoicePaymentRecord[] {
+  return (listInvoicePaymentsStatement.all(tenantId) as InvoicePaymentRow[]).map(mapInvoicePayment);
 }
 
 export function listInvoiceCollectionActivities(

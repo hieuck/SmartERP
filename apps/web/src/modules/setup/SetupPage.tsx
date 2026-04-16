@@ -595,6 +595,13 @@ export function SetupPage(): ReactElement {
                       supplierCount: restorePreview.supplierCount,
                       productCount: restorePreview.productCount,
                       inventoryLineCount: restorePreview.inventoryLineCount,
+                      orderCount: restorePreview.orderCount,
+                      purchaseOrderCount: restorePreview.purchaseOrderCount,
+                      purchaseOrderReceiptCount: restorePreview.purchaseOrderReceiptCount,
+                      invoiceCount: restorePreview.invoiceCount,
+                      invoicePaymentCount: restorePreview.invoicePaymentCount,
+                      invoiceReturnReceiptCount: restorePreview.invoiceReturnReceiptCount,
+                      collectionActivityCount: restorePreview.collectionActivityCount,
                     })}
                   </span>
                 </div>
@@ -602,11 +609,6 @@ export function SetupPage(): ReactElement {
                   <strong>{t("tenants.restorePreviewCountsLaterLabel")}</strong>
                   <span>
                     {t("tenants.restorePreviewCountsLaterValue", {
-                      orderCount: restorePreview.orderCount,
-                      purchaseOrderCount: restorePreview.purchaseOrderCount,
-                      invoiceCount: restorePreview.invoiceCount,
-                      invoiceReturnReceiptCount: restorePreview.invoiceReturnReceiptCount,
-                      collectionActivityCount: restorePreview.collectionActivityCount,
                       approvalCount: restorePreview.approvalCount,
                       auditLogCount: restorePreview.auditLogCount,
                       journalEntryCount: restorePreview.journalEntryCount,
@@ -691,6 +693,11 @@ export function SetupPage(): ReactElement {
                         suppliers: recoveryDrillReport.baselineCounts.suppliers,
                         products: recoveryDrillReport.baselineCounts.products,
                         inventoryLines: recoveryDrillReport.baselineCounts.inventoryLines,
+                        orders: recoveryDrillReport.baselineCounts.orders,
+                        purchaseOrders: recoveryDrillReport.baselineCounts.purchaseOrders,
+                        purchaseOrderReceipts: recoveryDrillReport.baselineCounts.purchaseOrderReceipts,
+                        invoices: recoveryDrillReport.baselineCounts.invoices,
+                        invoicePayments: recoveryDrillReport.baselineCounts.invoicePayments,
                         invoiceReturnReceipts: recoveryDrillReport.baselineCounts.invoiceReturnReceipts,
                       })}
                     </span>
@@ -781,7 +788,9 @@ export function SetupPage(): ReactElement {
                   customers: handoffPackage.snapshotSummary.customerCount,
                   suppliers: handoffPackage.snapshotSummary.supplierCount,
                   products: handoffPackage.snapshotSummary.productCount,
+                  purchaseOrderReceipts: handoffPackage.snapshotSummary.purchaseOrderReceiptCount,
                   invoices: handoffPackage.snapshotSummary.invoiceCount,
+                  invoicePayments: handoffPackage.snapshotSummary.invoicePaymentCount,
                   invoiceReturnReceipts: handoffPackage.snapshotSummary.invoiceReturnReceiptCount,
                 })}
               </span>
