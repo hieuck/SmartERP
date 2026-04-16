@@ -60,6 +60,7 @@ import {
   type JournalReferenceType,
   type CustomerRecord,
   type InvoiceRecord,
+  type InvoiceReturnReceiptRecord,
   type InventoryRecord,
   type OrderRecord,
   type PurchaseOrderReceiptRecord,
@@ -205,6 +206,23 @@ type PurchaseOrderReceiptRow = {
   received_at: string;
 };
 
+type InvoiceReturnReceiptRow = {
+  id: string;
+  tenant_id: string;
+  invoice_id: string;
+  invoice_number: string;
+  order_id: string;
+  order_number: string;
+  product_id: string;
+  product_category_id: string;
+  product_category_name: string;
+  product_sku: string;
+  product_name: string;
+  quantity_returned: number;
+  inventory_value: number;
+  received_at: string;
+};
+
 type ApprovalRequestRow = {
   id: string;
   tenant_id: string;
@@ -242,6 +260,8 @@ type InvoiceRow = {
   credited_quantity: number;
   credited_subtotal_amount: number;
   credited_tax_amount: number;
+  return_receipt_count: number;
+  last_return_receipt_at: string | null;
   reissued_from_invoice_id: string | null;
   reissued_from_invoice_number: string | null;
   reissued_to_invoice_id: string | null;
@@ -1181,6 +1201,47 @@ const createPurchaseOrderReceiptStatement = db.prepare(`
   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `);
 
+const listInvoiceReturnReceiptsStatement = db.prepare(`
+  SELECT
+    id,
+    tenant_id,
+    invoice_id,
+    invoice_number,
+    order_id,
+    order_number,
+    product_id,
+    product_category_id,
+    product_category_name,
+    product_sku,
+    product_name,
+    quantity_returned,
+    inventory_value,
+    received_at
+  FROM invoice_return_receipts
+  WHERE tenant_id = ?
+  ORDER BY datetime(received_at) DESC, rowid DESC
+`);
+
+const createInvoiceReturnReceiptStatement = db.prepare(`
+  INSERT INTO invoice_return_receipts (
+    id,
+    tenant_id,
+    invoice_id,
+    invoice_number,
+    order_id,
+    order_number,
+    product_id,
+    product_category_id,
+    product_category_name,
+    product_sku,
+    product_name,
+    quantity_returned,
+    inventory_value,
+    received_at
+  )
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+`);
+
 const getOrderByIdStatement = db.prepare(`
   SELECT
     id,
@@ -1231,6 +1292,16 @@ const getLatestVoidedInvoiceForOrderStatement = db.prepare(`
     i.credited_quantity AS credited_quantity,
     i.credited_subtotal_amount AS credited_subtotal_amount,
     i.credited_tax_amount AS credited_tax_amount,
+    (
+      SELECT COUNT(*)
+      FROM invoice_return_receipts irr
+      WHERE irr.invoice_id = i.id
+    ) AS return_receipt_count,
+    (
+      SELECT MAX(irr.received_at)
+      FROM invoice_return_receipts irr
+      WHERE irr.invoice_id = i.id
+    ) AS last_return_receipt_at,
     i.reissued_from_invoice_id AS reissued_from_invoice_id,
     i.reissued_from_invoice_number AS reissued_from_invoice_number,
     i.reissued_to_invoice_id AS reissued_to_invoice_id,
@@ -1291,6 +1362,16 @@ const listInvoicesStatement = db.prepare(`
     COALESCE(i.credited_quantity, 0) AS credited_quantity,
     COALESCE(i.credited_subtotal_amount, 0) AS credited_subtotal_amount,
     COALESCE(i.credited_tax_amount, 0) AS credited_tax_amount,
+    (
+      SELECT COUNT(*)
+      FROM invoice_return_receipts irr
+      WHERE irr.invoice_id = i.id
+    ) AS return_receipt_count,
+    (
+      SELECT MAX(irr.received_at)
+      FROM invoice_return_receipts irr
+      WHERE irr.invoice_id = i.id
+    ) AS last_return_receipt_at,
     i.reissued_from_invoice_id AS reissued_from_invoice_id,
     i.reissued_from_invoice_number AS reissued_from_invoice_number,
     i.reissued_to_invoice_id AS reissued_to_invoice_id,
@@ -1382,6 +1463,16 @@ const getInvoiceByIdStatement = db.prepare(`
     i.credited_quantity AS credited_quantity,
     i.credited_subtotal_amount AS credited_subtotal_amount,
     i.credited_tax_amount AS credited_tax_amount,
+    (
+      SELECT COUNT(*)
+      FROM invoice_return_receipts irr
+      WHERE irr.invoice_id = i.id
+    ) AS return_receipt_count,
+    (
+      SELECT MAX(irr.received_at)
+      FROM invoice_return_receipts irr
+      WHERE irr.invoice_id = i.id
+    ) AS last_return_receipt_at,
     i.reissued_from_invoice_id AS reissued_from_invoice_id,
     i.reissued_from_invoice_number AS reissued_from_invoice_number,
     i.reissued_to_invoice_id AS reissued_to_invoice_id,
@@ -1999,6 +2090,8 @@ const listOperationsTenantStatusStatement = db.prepare(`
         UNION ALL
         SELECT MAX(received_at) AS event_time FROM purchase_order_receipts pr WHERE pr.tenant_id = t.id
         UNION ALL
+        SELECT MAX(received_at) AS event_time FROM invoice_return_receipts irr WHERE irr.tenant_id = t.id
+        UNION ALL
         SELECT MAX(issued_at) AS event_time FROM invoices i WHERE i.tenant_id = t.id
         UNION ALL
         SELECT MAX(paid_at) AS event_time FROM invoice_payments ip WHERE ip.tenant_id = t.id
@@ -2245,6 +2338,25 @@ function mapPurchaseOrderReceipt(row: PurchaseOrderReceiptRow): PurchaseOrderRec
     quantityReceived: row.quantity_received,
     unitCost: row.unit_cost,
     totalCost: row.total_cost,
+    receivedAt: row.received_at,
+  };
+}
+
+function mapInvoiceReturnReceipt(row: InvoiceReturnReceiptRow): InvoiceReturnReceiptRecord {
+  return {
+    id: row.id,
+    tenantId: row.tenant_id,
+    invoiceId: row.invoice_id,
+    invoiceNumber: row.invoice_number,
+    orderId: row.order_id,
+    orderNumber: row.order_number,
+    productId: row.product_id,
+    productCategoryId: row.product_category_id,
+    productCategoryName: row.product_category_name,
+    productSku: row.product_sku,
+    productName: row.product_name,
+    quantityReturned: row.quantity_returned,
+    inventoryValue: row.inventory_value,
     receivedAt: row.received_at,
   };
 }
@@ -2545,6 +2657,8 @@ function mapInvoice(row: InvoiceRow): InvoiceRecord {
     creditMethod: row.credit_method,
     creditedAmount,
     creditedQuantity,
+    returnReceiptCount: row.return_receipt_count,
+    lastReturnReceiptAt: row.last_return_receipt_at,
     reissuedFromInvoiceId: row.reissued_from_invoice_id,
     reissuedFromInvoiceNumber: row.reissued_from_invoice_number,
     reissuedToInvoiceId: row.reissued_to_invoice_id,
@@ -2664,6 +2778,8 @@ function buildInvoiceRecord(
     creditMethod: null,
     creditedAmount: 0,
     creditedQuantity: 0,
+    returnReceiptCount: 0,
+    lastReturnReceiptAt: null,
     reissuedFromInvoiceId: priorInvoice?.id ?? null,
     reissuedFromInvoiceNumber: priorInvoice?.invoice_number ?? null,
     reissuedToInvoiceId: null,
@@ -3629,6 +3745,7 @@ export function exportTenantSnapshot(tenantId: string): TenantExportBundle {
     orders: listOrders(tenantId),
     purchaseOrders: listPurchaseOrders(tenantId),
     invoices: listInvoices(tenantId),
+    invoiceReturnReceipts: listInvoiceReturnReceipts(tenantId),
     customerStatements: listCustomerStatements(tenantId),
     collectionActivities: listInvoiceCollectionActivities(tenantId),
     approvalRequests: listApprovalRequests(tenantId),
@@ -3784,6 +3901,12 @@ export function listSuppliers(tenantId: string): SupplierRecord[] {
 export function listCustomerStatements(tenantId: string): CustomerStatementRecord[] {
   return (listCustomerStatementsStatement.all(tenantId, tenantId) as CustomerStatementRow[]).map(
     mapCustomerStatement,
+  );
+}
+
+export function listInvoiceReturnReceipts(tenantId: string): InvoiceReturnReceiptRecord[] {
+  return (listInvoiceReturnReceiptsStatement.all(tenantId) as InvoiceReturnReceiptRow[]).map(
+    mapInvoiceReturnReceipt,
   );
 }
 
@@ -5846,6 +5969,22 @@ export function creditInvoice(input: CreditInvoiceInput): InvoiceRecord {
       ? "credited"
       : "partially_credited";
   const shouldMarkOrderReturned = nextInvoiceStatus === "credited" && order.status !== "returned";
+  const returnReceiptRow: InvoiceReturnReceiptRow = {
+    id: randomUUID(),
+    tenant_id: input.tenantId,
+    invoice_id: invoice.id,
+    invoice_number: invoice.invoice_number,
+    order_id: order.id,
+    order_number: order.order_number,
+    product_id: order.product_id,
+    product_category_id: order.product_category_id,
+    product_category_name: order.product_category_name,
+    product_sku: order.product_sku,
+    product_name: order.product_name,
+    quantity_returned: creditQuantity,
+    inventory_value: creditInventoryValue,
+    received_at: creditedAt,
+  };
 
   db.exec("BEGIN");
 
@@ -5861,9 +6000,26 @@ export function creditInvoice(input: CreditInvoiceInput): InvoiceRecord {
       productId: order.product_id,
       quantityOnHand: inventory.quantity_on_hand + creditQuantity,
       inventoryValue: inventory.inventory_value + creditInventoryValue,
-      lastReceiptAt: inventory.last_receipt_at,
+      lastReceiptAt: returnReceiptRow.received_at,
       updatedAt: creditedAt,
     });
+
+    createInvoiceReturnReceiptStatement.run(
+      returnReceiptRow.id,
+      returnReceiptRow.tenant_id,
+      returnReceiptRow.invoice_id,
+      returnReceiptRow.invoice_number,
+      returnReceiptRow.order_id,
+      returnReceiptRow.order_number,
+      returnReceiptRow.product_id,
+      returnReceiptRow.product_category_id,
+      returnReceiptRow.product_category_name,
+      returnReceiptRow.product_sku,
+      returnReceiptRow.product_name,
+      returnReceiptRow.quantity_returned,
+      returnReceiptRow.inventory_value,
+      returnReceiptRow.received_at,
+    );
 
     updateInvoiceCreditStatement.run(
       nextInvoiceStatus,
@@ -5905,6 +6061,28 @@ export function creditInvoice(input: CreditInvoiceInput): InvoiceRecord {
     }
 
     const mappedInvoice = mapInvoice(creditedInvoice);
+    recordAuditLog({
+      tenantId: input.tenantId,
+      entityType: "invoice",
+      entityId: mappedInvoice.id,
+      entityNumber: mappedInvoice.invoiceNumber,
+      actionType: "invoice_return_received",
+      summary: `Received returned goods for ${mappedInvoice.invoiceNumber}`,
+      metadata: {
+        quantity: returnReceiptRow.quantity_returned,
+        inventoryValue: returnReceiptRow.inventory_value,
+        productCategoryId: mappedInvoice.productCategoryId,
+        productCategoryName: mappedInvoice.productCategoryName,
+        productSku: mappedInvoice.productSku,
+        productName: mappedInvoice.productName,
+        creditedAmount: mappedInvoice.creditedAmount,
+        creditedQuantity: mappedInvoice.creditedQuantity,
+        creditNote,
+        note: `Return receipt ${returnReceiptRow.id}`,
+      },
+      createdAt: creditedAt,
+    });
+
     recordAuditLog({
       tenantId: input.tenantId,
       entityType: "invoice",

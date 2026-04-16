@@ -1209,6 +1209,11 @@ export function InvoicesPage(): ReactElement {
                             {t("invoices.creditedQuantityLabel")} {invoice.creditedQuantity}
                           </div>
                         ) : null}
+                        {invoice.returnReceiptCount > 0 ? (
+                          <div className="record-detail">
+                            <InboxOutlined /> {t("invoices.returnReceiptsLabel")} {invoice.returnReceiptCount}
+                          </div>
+                        ) : null}
                         <div className="record-detail">
                           <BankOutlined /> {t("invoices.paymentCountLabel")} {invoice.paymentCount}
                         </div>
@@ -1218,6 +1223,11 @@ export function InvoicesPage(): ReactElement {
                         {invoice.creditedAt ? (
                           <div className="record-detail">
                             {t("invoices.creditedAtLabel")} {formatTimestamp(invoice.creditedAt)}
+                          </div>
+                        ) : null}
+                        {invoice.lastReturnReceiptAt ? (
+                          <div className="record-detail">
+                            {t("invoices.lastReturnReceiptLabel")} {formatTimestamp(invoice.lastReturnReceiptAt)}
                           </div>
                         ) : null}
                         {invoice.creditMethod ? (

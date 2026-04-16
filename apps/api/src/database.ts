@@ -260,6 +260,33 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_invoice_collection_activities_invoice
   ON invoice_collection_activities (invoice_id, created_at DESC);
 
+  CREATE TABLE IF NOT EXISTS invoice_return_receipts (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL,
+    invoice_id TEXT NOT NULL,
+    invoice_number TEXT NOT NULL,
+    order_id TEXT NOT NULL,
+    order_number TEXT NOT NULL,
+    product_id TEXT NOT NULL,
+    product_category_id TEXT NOT NULL DEFAULT '',
+    product_category_name TEXT NOT NULL DEFAULT '',
+    product_sku TEXT NOT NULL,
+    product_name TEXT NOT NULL,
+    quantity_returned INTEGER NOT NULL,
+    inventory_value INTEGER NOT NULL,
+    received_at TEXT NOT NULL,
+    FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+    FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE CASCADE,
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_invoice_return_receipts_tenant_received_at
+  ON invoice_return_receipts (tenant_id, received_at DESC);
+
+  CREATE INDEX IF NOT EXISTS idx_invoice_return_receipts_invoice
+  ON invoice_return_receipts (invoice_id, received_at DESC);
+
   CREATE TABLE IF NOT EXISTS accounts (
     tenant_id TEXT NOT NULL,
     account_code TEXT NOT NULL,

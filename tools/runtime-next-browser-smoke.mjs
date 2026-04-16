@@ -608,12 +608,14 @@ async function main() {
   let invoiceCreditVerified = false;
   let invoiceCreditAuditVerified = false;
   let invoiceCreditInventoryRestockVerified = false;
+  let invoiceReturnReceiptVerified = false;
   let partialInvoiceCreditVerified = false;
   let partialInvoiceCreditAuditVerified = false;
   let partialInvoiceCreditInventoryRestockVerified = false;
   let partialInvoiceCreditReportVerified = false;
   let partialInvoiceCreditOrderStateVerified = false;
   let partialInvoiceCreditCollectionGuardVerified = false;
+  let partialInvoiceReturnReceiptVerified = false;
   let creditedOrderReturnedVerified = false;
   let creditedOrderReturnAuditVerified = false;
   let creditedOrderExcludedFromSalesVerified = false;
@@ -643,6 +645,7 @@ async function main() {
   let operationsBuildVerified = false;
   let loginRoleHintsVerified = false;
   let financeRoleOnboardingVerified = false;
+  let exportedInvoiceReturnReceiptsVerified = false;
   let unauthorizedApiBlockedVerified = false;
   let rbacSalesVisibilityVerified = false;
   let salesRoleOnboardingVerified = false;
@@ -3297,6 +3300,10 @@ async function main() {
     });
     await creditedInvoiceRow.getByText(invoiceCreditNote, { exact: false }).first().waitFor({ timeout: 15000 });
     await creditedInvoiceRow.getByText("Chuyển khoản", { exact: false }).first().waitFor({ timeout: 15000 });
+    await creditedInvoiceRow
+      .getByText(/Phiếu nhận trả:\s*1|Return receipts:\s*1/, { exact: false })
+      .first()
+      .waitFor({ timeout: 15000 });
     invoiceCreditVerified = true;
 
     const creditedInvoicePaymentResponse = await page.evaluate(
@@ -3468,6 +3475,17 @@ async function main() {
     assert(
       creditAuditSnapshot.body?.items?.some(
         (item) =>
+          item.actionType === "invoice_return_received" &&
+          item.entityNumber === creditedInvoiceNumber &&
+          item.metadata?.quantity === creditedOrderQuantity &&
+          item.metadata?.inventoryValue === purchaseUnitCost * creditedOrderQuantity &&
+          item.metadata?.creditNote === invoiceCreditNote,
+      ),
+      "Invoice return receipt audit entry was not recorded after the full credit note.",
+    );
+    assert(
+      creditAuditSnapshot.body?.items?.some(
+        (item) =>
           item.actionType === "order_returned" &&
           item.entityNumber === creditedOrderNumber &&
           item.metadata?.productCategoryName === productCategoryName &&
@@ -3479,6 +3497,7 @@ async function main() {
     );
     await page.getByText(invoiceCreditNote, { exact: false }).first().waitFor({ timeout: 15000 });
     invoiceCreditAuditVerified = true;
+    invoiceReturnReceiptVerified = true;
     creditedOrderReturnAuditVerified = true;
     await openSection(page, sidebarIndexes.orders, "/dashboard/orders");
     await waitForTenantContext(page, tenantName);
@@ -3651,6 +3670,10 @@ async function main() {
       timeout: 15000,
     });
     await partialCreditInvoiceRow.getByText(buildAmountPattern(partialCreditAmount)).first().waitFor({ timeout: 15000 });
+    await partialCreditInvoiceRow
+      .getByText(/Phiếu nhận trả:\s*1|Return receipts:\s*1/, { exact: false })
+      .first()
+      .waitFor({ timeout: 15000 });
     partialInvoiceCreditVerified = true;
 
     const partialCreditCollectionResponse = await page.evaluate(
@@ -3770,12 +3793,24 @@ async function main() {
       "Partial credit audit entry was not recorded with quantity and amount context.",
     );
     assert(
+      partialCreditAuditSnapshot.body?.items?.some(
+        (item) =>
+          item.actionType === "invoice_return_received" &&
+          item.entityNumber === partialCreditInvoiceNumber &&
+          item.metadata?.quantity === partialCreditQuantity &&
+          item.metadata?.inventoryValue === purchaseUnitCost * partialCreditQuantity &&
+          item.metadata?.creditNote === partialInvoiceCreditNote,
+      ),
+      "Partial credit did not record an invoice return receipt audit entry.",
+    );
+    assert(
       !partialCreditAuditSnapshot.body?.items?.some(
         (item) => item.actionType === "order_returned" && item.entityNumber === partialCreditOrderNumber,
       ),
       "Partial credit must not mark the order as fully returned.",
     );
     partialInvoiceCreditAuditVerified = true;
+    partialInvoiceReturnReceiptVerified = true;
     partialInvoiceCreditOrderStateVerified = true;
 
     await openSection(page, sidebarIndexes.inventory, "/dashboard/inventory");
@@ -3951,7 +3986,23 @@ async function main() {
         exportedSnapshot?.journalEntries?.length > 0,
       "Tenant export snapshot did not include audit or ledger data.",
     );
+    assert(
+      exportedSnapshot?.invoiceReturnReceipts?.some(
+        (item) =>
+          item.invoiceNumber === creditedInvoiceNumber &&
+          item.quantityReturned === creditedOrderQuantity &&
+          item.inventoryValue === purchaseUnitCost * creditedOrderQuantity,
+      ) &&
+        exportedSnapshot?.invoiceReturnReceipts?.some(
+          (item) =>
+            item.invoiceNumber === partialCreditInvoiceNumber &&
+            item.quantityReturned === partialCreditQuantity &&
+            item.inventoryValue === purchaseUnitCost * partialCreditQuantity,
+        ),
+      "Tenant export snapshot did not include the expected invoice return receipts.",
+    );
     onboardingExportVerified = true;
+    exportedInvoiceReturnReceiptsVerified = true;
     const originalTenantId = await page.evaluate((key) => window.localStorage.getItem(key), tenantStorageKey);
     await openSection(page, sidebarIndexes.setup, "/dashboard/setup");
     await waitForTenantContext(page, tenantName);
@@ -4472,12 +4523,14 @@ async function main() {
       invoiceCreditVerified,
       invoiceCreditAuditVerified,
       invoiceCreditInventoryRestockVerified,
+      invoiceReturnReceiptVerified,
       partialInvoiceCreditVerified,
       partialInvoiceCreditAuditVerified,
       partialInvoiceCreditInventoryRestockVerified,
       partialInvoiceCreditReportVerified,
       partialInvoiceCreditOrderStateVerified,
       partialInvoiceCreditCollectionGuardVerified,
+      partialInvoiceReturnReceiptVerified,
       creditedOrderReturnedVerified,
       creditedOrderReturnAuditVerified,
       creditedOrderExcludedFromSalesVerified,
@@ -4504,6 +4557,7 @@ async function main() {
       operationsBuildVerified,
       loginRoleHintsVerified,
       financeRoleOnboardingVerified,
+      exportedInvoiceReturnReceiptsVerified,
       rbacSalesVisibilityVerified,
       salesRoleOnboardingVerified,
       rbacSalesBlockedRouteVerified,

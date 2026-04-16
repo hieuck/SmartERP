@@ -466,6 +466,23 @@ export type PurchaseOrderReceiptRecord = {
   receivedAt: string;
 };
 
+export type InvoiceReturnReceiptRecord = {
+  id: string;
+  tenantId: string;
+  invoiceId: string;
+  invoiceNumber: string;
+  orderId: string;
+  orderNumber: string;
+  productId: string;
+  productCategoryId: string;
+  productCategoryName: string;
+  productSku: string;
+  productName: string;
+  quantityReturned: number;
+  inventoryValue: number;
+  receivedAt: string;
+};
+
 export type ApprovalRequestType =
   | "inventory_adjustment"
   | "purchase_order_receipt"
@@ -665,6 +682,7 @@ export type AuditActionType =
   | "invoice_reissued"
   | "invoice_amended"
   | "invoice_credited"
+  | "invoice_return_received"
   | "invoice_voided"
   | "invoice_reopened"
   | "order_updated"
@@ -742,6 +760,8 @@ export type InvoiceRecord = {
   creditMethod: PaymentMethod | null;
   creditedAmount: number;
   creditedQuantity: number;
+  returnReceiptCount: number;
+  lastReturnReceiptAt: string | null;
   reissuedFromInvoiceId: string | null;
   reissuedFromInvoiceNumber: string | null;
   reissuedToInvoiceId: string | null;
@@ -908,6 +928,7 @@ export type TenantExportBundle = {
   orders: OrderRecord[];
   purchaseOrders: PurchaseOrderRecord[];
   invoices: InvoiceRecord[];
+  invoiceReturnReceipts: InvoiceReturnReceiptRecord[];
   customerStatements: CustomerStatementRecord[];
   collectionActivities: InvoiceCollectionActivityRecord[];
   approvalRequests: ApprovalRequestRecord[];
