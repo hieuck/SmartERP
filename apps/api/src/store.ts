@@ -5758,6 +5758,11 @@ export function creditInvoice(input: CreditInvoiceInput): InvoiceRecord {
     throw new Error("The selected invoice does not exist.");
   }
 
+  const order = getOrderByIdStatement.get(input.tenantId, invoice.order_id) as OrderRow | undefined;
+  if (!order) {
+    throw new Error("The selected order does not exist.");
+  }
+
   if (invoice.status === "credited") {
     throw new Error("The selected invoice has already been credited.");
   }
@@ -5780,10 +5785,31 @@ export function creditInvoice(input: CreditInvoiceInput): InvoiceRecord {
   }
 
   const creditedAt = timestamp();
+  const issuedInventoryValue = Number(
+    (getOrderIssuedInventoryValueStatement.get(
+      input.tenantId,
+      invoice.order_id,
+    ) as { amount?: number } | undefined)?.amount ?? 0,
+  );
 
   db.exec("BEGIN");
 
   try {
+    ensureInventoryRow(input.tenantId, order.product_id);
+
+    const inventory = getInventoryRowStatement.get(input.tenantId, order.product_id) as InventoryRow | undefined;
+    if (!inventory) {
+      throw new Error("The selected product does not exist.");
+    }
+
+    persistInventorySnapshot({
+      productId: order.product_id,
+      quantityOnHand: inventory.quantity_on_hand + order.quantity,
+      inventoryValue: inventory.inventory_value + issuedInventoryValue,
+      lastReceiptAt: inventory.last_receipt_at,
+      updatedAt: creditedAt,
+    });
+
     updateInvoiceCreditStatement.run(creditNote, creditedAt, input.method, creditedAt, input.tenantId, input.invoiceId);
 
     createJournalEntryLines({
@@ -5797,6 +5823,8 @@ export function creditInvoice(input: CreditInvoiceInput): InvoiceRecord {
         { accountCode: "511", debitAmount: invoice.subtotal_amount, creditAmount: 0 },
         { accountCode: "3331", debitAmount: invoice.tax_amount, creditAmount: 0 },
         { accountCode: input.method === "cash" ? "111" : "112", debitAmount: 0, creditAmount: invoice.total_amount },
+        { accountCode: "156", debitAmount: issuedInventoryValue, creditAmount: 0 },
+        { accountCode: "632", debitAmount: 0, creditAmount: issuedInventoryValue },
       ],
     });
 
@@ -5820,6 +5848,8 @@ export function creditInvoice(input: CreditInvoiceInput): InvoiceRecord {
         productCategoryName: mappedInvoice.productCategoryName,
         productSku: mappedInvoice.productSku,
         productName: mappedInvoice.productName,
+        quantity: order.quantity,
+        inventoryValue: issuedInventoryValue,
         creditNote,
         note: creditNote,
       },

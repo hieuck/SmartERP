@@ -687,6 +687,7 @@ export type AuditLogMetadata = {
   amount?: number;
   quantity?: number;
   unitCost?: number;
+  inventoryValue?: number;
   paymentMethod?: PaymentMethod;
   outstandingAmount?: number;
   productCategoryId?: string;

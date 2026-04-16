@@ -113,8 +113,8 @@ const expectedOverdue31To60Amount = secondInvoiceAmount;
 const expectedRemainingStock = stockInQuantity - editedSaleQuantity - secondSaleQuantity;
 const expectedReceivedPurchaseValue = stockInQuantity * purchaseUnitCost;
 const expectedInventoryValueAmount = expectedRemainingStock * purchaseUnitCost;
-const expectedRestoreRemainingStock = expectedRemainingStock - creditedOrderQuantity;
-const expectedRestoreInventoryValueAmount = expectedRestoreRemainingStock * purchaseUnitCost;
+const expectedRestoreRemainingStock = expectedRemainingStock;
+const expectedRestoreInventoryValueAmount = expectedInventoryValueAmount;
 const expectedCashOnHandAmount = partialPaymentAmount;
 const expectedBankAmount = remainingPaymentAmount;
 const expectedReceivablesLedgerAmount = expectedOutstandingReceivablesAmount;
@@ -592,6 +592,7 @@ async function main() {
   let invoiceCreditGuardVerified = false;
   let invoiceCreditVerified = false;
   let invoiceCreditAuditVerified = false;
+  let invoiceCreditInventoryRestockVerified = false;
   let invoiceReopenGuardVerified = false;
   let invoiceReopenRevisionGuardVerified = false;
   let invoiceReopenAuditVerified = false;
@@ -3405,12 +3406,24 @@ async function main() {
             item.entityNumber === creditedInvoiceNumber &&
             item.metadata?.productCategoryName === productCategoryName &&
             item.metadata?.paymentMethod === "bank_transfer" &&
+            item.metadata?.quantity === creditedOrderQuantity &&
+            item.metadata?.inventoryValue === purchaseUnitCost * creditedOrderQuantity &&
             item.metadata?.creditNote === invoiceCreditNote,
         ),
       "Invoice credit audit entry was not recorded with note, method, and category context.",
     );
     await page.getByText(invoiceCreditNote, { exact: false }).first().waitFor({ timeout: 15000 });
     invoiceCreditAuditVerified = true;
+    await openSection(page, sidebarIndexes.inventory, "/dashboard/inventory");
+    await waitForTenantContext(page, tenantName);
+    const creditedInventoryRow = getListCard(page).locator(".record-row").filter({ hasText: productName }).first();
+    await creditedInventoryRow.waitFor({ timeout: 15000 });
+    await creditedInventoryRow.getByText(String(expectedRemainingStock), { exact: true }).waitFor({ timeout: 15000 });
+    await creditedInventoryRow
+      .getByText(buildAmountPattern(expectedInventoryValueAmount))
+      .first()
+      .waitFor({ timeout: 15000 });
+    invoiceCreditInventoryRestockVerified = true;
     await openSection(page, sidebarIndexes.operations, "/dashboard/operations");
     await page.getByRole("heading", { name: "Vận hành" }).waitFor({ timeout: 15000 });
     await page.getByText("Mức sẵn sàng pilot", { exact: false }).waitFor({ timeout: 15000 });
@@ -4091,6 +4104,7 @@ async function main() {
       invoiceCreditGuardVerified,
       invoiceCreditVerified,
       invoiceCreditAuditVerified,
+      invoiceCreditInventoryRestockVerified,
       invoiceReissueAuditVerified,
       invoiceCategoryContextVerified,
       creditedInvoicePaymentGuardVerified,
