@@ -1,6 +1,7 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 
 import type {
+  AmendInvoiceInput,
   CreateInvoiceInput,
   CreateInvoicePaymentInput,
   ReopenInvoiceInput,
@@ -12,6 +13,7 @@ import type {
 
 import { readJson, sendJson } from "../../http.js";
 import {
+  amendInvoice,
   createInvoice,
   createInvoicePayment,
   hasTenant,
@@ -144,6 +146,88 @@ export async function handleCreateInvoice(
           badRequest(response, "Invoice number conflict. Please try again.");
           return;
         }
+      }
+    }
+
+    throw error;
+  }
+}
+
+export async function handleAmendInvoice(
+  request: IncomingMessage,
+  response: ServerResponse,
+  requestSession: Session | null,
+): Promise<void> {
+  const input = await readJson<AmendInvoiceInput>(request);
+
+  if (!input.tenantId?.trim()) {
+    badRequest(response, "tenantId is required.");
+    return;
+  }
+
+  if (!hasTenant(input.tenantId)) {
+    badRequest(response, "The selected tenant does not exist.");
+    return;
+  }
+
+  if (!input.invoiceId?.trim()) {
+    badRequest(response, "invoiceId is required.");
+    return;
+  }
+
+  if (!Number.isInteger(input.taxRatePercent) || input.taxRatePercent < 0 || input.taxRatePercent > 100) {
+    badRequest(response, "taxRatePercent must be an integer between 0 and 100.");
+    return;
+  }
+
+  if (!input.issueDate?.trim()) {
+    badRequest(response, "issueDate is required.");
+    return;
+  }
+
+  if (!Number.isInteger(input.paymentTermDays) || input.paymentTermDays < 0 || input.paymentTermDays > 365) {
+    badRequest(response, "Payment term days must be an integer between 0 and 365.");
+    return;
+  }
+
+  if (input.amendmentNote !== null && input.amendmentNote !== undefined && typeof input.amendmentNote !== "string") {
+    badRequest(response, "Amendment note must be 240 characters or fewer.");
+    return;
+  }
+
+  try {
+    const result = runWithSession(requestSession, () => amendInvoice(input));
+    sendJson(response, result.kind === "approval_requested" ? 202 : 200, { item: result });
+  } catch (error) {
+    if (error instanceof Error) {
+      if (
+        error.message === "The selected invoice does not exist." ||
+        error.message === "The selected invoice can only be amended while it is active." ||
+        error.message === "The selected invoice cannot be amended because payments already exist." ||
+        error.message === "The selected invoice cannot be amended because a newer revision already exists." ||
+        error.message === "The selected order does not exist." ||
+        error.message === "Only confirmed orders can be invoiced."
+      ) {
+        badRequest(response, error.message);
+        return;
+      }
+
+      if (error.message === "Issue date must be a valid YYYY-MM-DD value.") {
+        badRequest(response, error.message);
+        return;
+      }
+
+      if (error.message === "Payment term days must be an integer between 0 and 365.") {
+        badRequest(response, error.message);
+        return;
+      }
+
+      if (
+        error.message === "Amendment note is required when amending an active invoice." ||
+        error.message === "Amendment note must be 240 characters or fewer."
+      ) {
+        badRequest(response, error.message);
+        return;
       }
     }
 

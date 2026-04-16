@@ -1,5 +1,6 @@
 import type {
   ApprovalAwareMutationResult,
+  AmendInvoiceInput,
   CreateInvoiceInput,
   CreateInvoicePaymentInput,
   InvoiceCollectionActivityRecord,
@@ -11,6 +12,7 @@ import type {
 } from "@smarterp/contracts";
 
 import {
+  amendInvoice,
   createInvoice,
   createInvoicePayment,
   listInvoiceCollectionActivities,
@@ -35,6 +37,12 @@ export async function submitInvoiceIssue(
   input: CreateInvoiceInput,
 ): Promise<ApprovalAwareMutationResult<InvoiceRecord>> {
   return createInvoice(input);
+}
+
+export async function submitInvoiceAmend(
+  input: AmendInvoiceInput,
+): Promise<ApprovalAwareMutationResult<InvoiceRecord>> {
+  return amendInvoice(input);
 }
 
 export async function submitInvoicePayment(

@@ -470,6 +470,7 @@ export type ApprovalRequestType =
   | "inventory_adjustment"
   | "purchase_order_receipt"
   | "invoice_issue"
+  | "invoice_amend"
   | "invoice_payment";
 
 export type ApprovalStatus = "pending" | "approved" | "rejected";
@@ -662,6 +663,7 @@ export type AuditEntityType =
 export type AuditActionType =
   | "invoice_issued"
   | "invoice_reissued"
+  | "invoice_amended"
   | "invoice_voided"
   | "invoice_reopened"
   | "order_updated"
@@ -768,6 +770,15 @@ export type InvoiceRecord = {
 export type CreateInvoiceInput = {
   tenantId: string;
   orderId: string;
+  taxRatePercent: number;
+  issueDate: string;
+  paymentTermDays: number;
+  amendmentNote: string | null;
+};
+
+export type AmendInvoiceInput = {
+  tenantId: string;
+  invoiceId: string;
   taxRatePercent: number;
   issueDate: string;
   paymentTermDays: number;

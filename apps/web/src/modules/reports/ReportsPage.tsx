@@ -36,6 +36,10 @@ function getAuditActionColor(actionType: AuditActionType): string {
     return "geekblue";
   }
 
+  if (actionType === "invoice_amended") {
+    return "purple";
+  }
+
   if (actionType === "invoice_voided") {
     return "default";
   }
@@ -102,6 +106,10 @@ function getAuditActionLabel(
 
   if (actionType === "invoice_reissued") {
     return t("reports.auditActionInvoiceReissued");
+  }
+
+  if (actionType === "invoice_amended") {
+    return t("reports.auditActionInvoiceAmended");
   }
 
   if (actionType === "invoice_reopened") {

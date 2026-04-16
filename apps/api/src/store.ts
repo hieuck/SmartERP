@@ -23,6 +23,7 @@ import {
   createDemoSession,
   type CreateCustomerInput,
   type DeleteCustomerInput,
+  type AmendInvoiceInput,
   type CreateInvoiceInput,
   type CreateInvoicePaymentInput,
   type ReopenInvoiceInput,
@@ -2515,6 +2516,170 @@ function normalizeInvoiceAmendmentNote(input: string | null | undefined): string
   return trimmed;
 }
 
+type InvoiceDraftInput = Pick<CreateInvoiceInput, "issueDate" | "paymentTermDays" | "taxRatePercent">;
+type NormalizedInvoiceDraftInput = InvoiceDraftInput & { amendmentNote: string | null };
+
+function validateInvoiceDraftInput(input: InvoiceDraftInput): void {
+  if (!isValidBusinessDateInput(input.issueDate)) {
+    throw new Error("Issue date must be a valid YYYY-MM-DD value.");
+  }
+
+  if (!Number.isInteger(input.paymentTermDays) || input.paymentTermDays < 0 || input.paymentTermDays > 365) {
+    throw new Error("Payment term days must be an integer between 0 and 365.");
+  }
+
+  if (!Number.isInteger(input.taxRatePercent) || input.taxRatePercent < 0 || input.taxRatePercent > 100) {
+    throw new Error("taxRatePercent must be an integer between 0 and 100.");
+  }
+}
+
+function buildInvoiceRecord(
+  tenantId: string,
+  order: OrderRow,
+  input: NormalizedInvoiceDraftInput,
+  priorInvoice?: InvoiceRow,
+): InvoiceRecord {
+  const subtotalAmount = order.total_amount;
+  const taxAmount = Math.round((subtotalAmount * input.taxRatePercent) / 100);
+  const issuedAt = createBusinessTimestamp(input.issueDate);
+  const dueDate = addBusinessDays(issuedAt, input.paymentTermDays);
+  const daysUntilDue = getCalendarDayDifference(new Date(), dueDate);
+  const outstandingAmount = subtotalAmount + taxAmount;
+  const amendmentRootInvoiceId = priorInvoice?.amendment_root_invoice_id ?? randomUUID();
+  const amendmentRootInvoiceNumber = priorInvoice?.amendment_root_invoice_number ?? createInvoiceNumber();
+  const invoiceId = priorInvoice?.id ? randomUUID() : amendmentRootInvoiceId;
+  const invoiceNumber = priorInvoice?.invoice_number ? createInvoiceNumber() : amendmentRootInvoiceNumber;
+  const revisionNumber = priorInvoice ? Math.max(priorInvoice.revision_number, 1) + 1 : 1;
+
+  return {
+    id: invoiceId,
+    tenantId,
+    invoiceNumber,
+    amendmentRootInvoiceId,
+    amendmentRootInvoiceNumber,
+    revisionNumber,
+    amendmentNote: input.amendmentNote,
+    reissuedFromInvoiceId: priorInvoice?.id ?? null,
+    reissuedFromInvoiceNumber: priorInvoice?.invoice_number ?? null,
+    reissuedToInvoiceId: null,
+    reissuedToInvoiceNumber: null,
+    orderId: order.id,
+    orderNumber: order.order_number,
+    customerId: order.customer_id,
+    customerName: order.customer_name,
+    productCategoryId: order.product_category_id,
+    productCategoryName: order.product_category_name,
+    productSku: order.product_sku,
+    productName: order.product_name,
+    subtotalAmount,
+    taxRatePercent: input.taxRatePercent,
+    taxAmount,
+    totalAmount: outstandingAmount,
+    paidAmount: 0,
+    outstandingAmount,
+    paymentCount: 0,
+    lastPaymentAt: null,
+    status: "issued",
+    issuedAt,
+    dueDate,
+    paymentTermDays: input.paymentTermDays,
+    daysUntilDue,
+    daysPastDue: Math.max(getCalendarDayDifference(dueDate, new Date()), 0),
+    collectionStatus: getCollectionStatus(outstandingAmount, daysUntilDue),
+    followUpStatus: "new",
+    collectionPriority: "low",
+    actionRequired: "monitor",
+    promisedPaymentDate: null,
+    nextActionDate: null,
+    collectionNote: "",
+    lastCollectionUpdateAt: null,
+  };
+}
+
+function insertIssuedInvoiceRecord(
+  invoice: InvoiceRecord,
+  priorInvoice: InvoiceRow | undefined,
+  auditActionType: AuditActionType,
+  auditSummary: string,
+): void {
+  createInvoiceStatement.run(
+    invoice.id,
+    invoice.tenantId,
+    invoice.invoiceNumber,
+    invoice.amendmentRootInvoiceId,
+    invoice.amendmentRootInvoiceNumber,
+    invoice.revisionNumber,
+    invoice.amendmentNote,
+    invoice.reissuedFromInvoiceId,
+    invoice.reissuedFromInvoiceNumber,
+    invoice.reissuedToInvoiceId,
+    invoice.reissuedToInvoiceNumber,
+    invoice.orderId,
+    invoice.orderNumber,
+    invoice.customerId,
+    invoice.customerName,
+    invoice.subtotalAmount,
+    invoice.taxRatePercent,
+    invoice.taxAmount,
+    invoice.totalAmount,
+    invoice.status,
+    invoice.issuedAt,
+    invoice.dueDate,
+    invoice.followUpStatus,
+    invoice.actionRequired,
+    invoice.promisedPaymentDate,
+    invoice.nextActionDate,
+    invoice.collectionNote,
+    invoice.lastCollectionUpdateAt,
+  );
+
+  if (priorInvoice) {
+    updateInvoiceReissueLinkStatement.run(
+      invoice.id,
+      invoice.invoiceNumber,
+      invoice.tenantId,
+      priorInvoice.id,
+    );
+  }
+
+  createJournalEntryLines({
+    tenantId: invoice.tenantId,
+    referenceType: "invoice",
+    referenceId: invoice.id,
+    referenceNumber: invoice.invoiceNumber,
+    description: `Issue invoice ${invoice.invoiceNumber}`,
+    createdAt: invoice.issuedAt,
+    lines: [
+      { accountCode: "131", debitAmount: invoice.totalAmount, creditAmount: 0 },
+      { accountCode: "511", debitAmount: 0, creditAmount: invoice.subtotalAmount },
+      { accountCode: "3331", debitAmount: 0, creditAmount: invoice.taxAmount },
+    ],
+  });
+
+  recordAuditLog({
+    tenantId: invoice.tenantId,
+    entityType: "invoice",
+    entityId: invoice.id,
+    entityNumber: invoice.invoiceNumber,
+    actionType: auditActionType,
+    summary: auditSummary,
+    metadata: {
+      amount: invoice.totalAmount,
+      outstandingAmount: invoice.outstandingAmount,
+      productCategoryId: invoice.productCategoryId,
+      productCategoryName: invoice.productCategoryName,
+      productSku: invoice.productSku,
+      productName: invoice.productName,
+      amendmentNote: invoice.amendmentNote ?? undefined,
+      amendmentRootInvoiceNumber: invoice.amendmentRootInvoiceNumber,
+      revisionNumber: invoice.revisionNumber,
+      reissuedFromInvoiceNumber: invoice.reissuedFromInvoiceNumber ?? undefined,
+      note: `Due ${invoice.dueDate}`,
+    },
+    createdAt: invoice.issuedAt,
+  });
+}
+
 function mapInvoiceCollectionActivity(
   row: InvoiceCollectionActivityRow,
 ): InvoiceCollectionActivityRecord {
@@ -2831,7 +2996,7 @@ function shouldRequirePurchaseReceiptApproval(
 }
 
 function shouldRequireInvoiceIssueApproval(
-  input: CreateInvoiceInput,
+  input: { issueDate: string },
 ): { riskLevel: ApprovalRiskLevel; reason: string } | null {
   if (input.issueDate < getTodayDateInput()) {
     return {
@@ -3997,6 +4162,7 @@ export function resolveApprovalRequest(input: ApprovalDecisionInput): ApprovalRe
       | CreateInventoryAdjustmentInput
       | ReceivePurchaseOrderInput
       | CreateInvoiceInput
+      | AmendInvoiceInput
       | CreateInvoicePaymentInput;
 
     switch (approvalRequest.request_type) {
@@ -4008,6 +4174,9 @@ export function resolveApprovalRequest(input: ApprovalDecisionInput): ApprovalRe
         break;
       case "invoice_issue":
         createInvoiceInternal(payload as CreateInvoiceInput);
+        break;
+      case "invoice_amend":
+        amendInvoiceInternal(payload as AmendInvoiceInput);
         break;
       case "invoice_payment":
         createInvoicePaymentInternal(payload as CreateInvoicePaymentInput);
@@ -5216,13 +5385,7 @@ function createInvoiceInternal(input: CreateInvoiceInput): InvoiceRecord {
     throw new Error("Only confirmed orders can be invoiced.");
   }
 
-  if (!isValidBusinessDateInput(input.issueDate)) {
-    throw new Error("Issue date must be a valid YYYY-MM-DD value.");
-  }
-
-  if (!Number.isInteger(input.paymentTermDays) || input.paymentTermDays < 0 || input.paymentTermDays > 365) {
-    throw new Error("Payment term days must be an integer between 0 and 365.");
-  }
+  validateInvoiceDraftInput(input);
 
   const activeInvoiceCount = Number(
     (countInvoicesForOrderStatement.get(input.tenantId, input.orderId) as { count?: number } | undefined)?.count ?? 0,
@@ -5241,143 +5404,29 @@ function createInvoiceInternal(input: CreateInvoiceInput): InvoiceRecord {
     throw new Error("Amendment note is required when reissuing an invoice.");
   }
 
-  const subtotalAmount = order.total_amount;
-  const taxAmount = Math.round((subtotalAmount * input.taxRatePercent) / 100);
-  const issuedAt = createBusinessTimestamp(input.issueDate);
-  const dueDate = addBusinessDays(issuedAt, input.paymentTermDays);
-  const daysUntilDue = getCalendarDayDifference(new Date(), dueDate);
-  const outstandingAmount = subtotalAmount + taxAmount;
-  const amendmentRootInvoiceId = priorVoidedInvoice?.amendment_root_invoice_id ?? randomUUID();
-  const amendmentRootInvoiceNumber = priorVoidedInvoice?.amendment_root_invoice_number ?? createInvoiceNumber();
-  const invoiceId = priorVoidedInvoice?.id ? randomUUID() : amendmentRootInvoiceId;
-  const invoiceNumber = priorVoidedInvoice?.invoice_number ? createInvoiceNumber() : amendmentRootInvoiceNumber;
-  const revisionNumber = priorVoidedInvoice ? Math.max(priorVoidedInvoice.revision_number, 1) + 1 : 1;
-
-  const invoice: InvoiceRecord = {
-    id: invoiceId,
-    tenantId: input.tenantId,
-    invoiceNumber,
-    amendmentRootInvoiceId,
-    amendmentRootInvoiceNumber,
-    revisionNumber,
-    amendmentNote,
-    reissuedFromInvoiceId: priorVoidedInvoice?.id ?? null,
-    reissuedFromInvoiceNumber: priorVoidedInvoice?.invoice_number ?? null,
-    reissuedToInvoiceId: null,
-    reissuedToInvoiceNumber: null,
-    orderId: order.id,
-    orderNumber: order.order_number,
-    customerId: order.customer_id,
-    customerName: order.customer_name,
-    productCategoryId: order.product_category_id,
-    productCategoryName: order.product_category_name,
-    productSku: order.product_sku,
-    productName: order.product_name,
-    subtotalAmount,
-    taxRatePercent: input.taxRatePercent,
-    taxAmount,
-    totalAmount: outstandingAmount,
-    paidAmount: 0,
-    outstandingAmount,
-    paymentCount: 0,
-    lastPaymentAt: null,
-    status: "issued",
-    issuedAt,
-    dueDate,
-    paymentTermDays: input.paymentTermDays,
-    daysUntilDue,
-    daysPastDue: Math.max(getCalendarDayDifference(dueDate, new Date()), 0),
-    collectionStatus: getCollectionStatus(outstandingAmount, daysUntilDue),
-    followUpStatus: "new",
-    collectionPriority: "low",
-    actionRequired: "monitor",
-    promisedPaymentDate: null,
-    nextActionDate: null,
-    collectionNote: "",
-    lastCollectionUpdateAt: null,
-  };
+  const invoice = buildInvoiceRecord(
+    input.tenantId,
+    order,
+    {
+      issueDate: input.issueDate,
+      paymentTermDays: input.paymentTermDays,
+      taxRatePercent: input.taxRatePercent,
+      amendmentNote,
+    },
+    priorVoidedInvoice,
+  );
 
   db.exec("BEGIN");
 
   try {
-    createInvoiceStatement.run(
-      invoice.id,
-      invoice.tenantId,
-      invoice.invoiceNumber,
-      invoice.amendmentRootInvoiceId,
-      invoice.amendmentRootInvoiceNumber,
-      invoice.revisionNumber,
-      invoice.amendmentNote,
-      invoice.reissuedFromInvoiceId,
-      invoice.reissuedFromInvoiceNumber,
-      invoice.reissuedToInvoiceId,
-      invoice.reissuedToInvoiceNumber,
-      invoice.orderId,
-      invoice.orderNumber,
-      invoice.customerId,
-      invoice.customerName,
-      invoice.subtotalAmount,
-      invoice.taxRatePercent,
-      invoice.taxAmount,
-      invoice.totalAmount,
-      invoice.status,
-      invoice.issuedAt,
-      invoice.dueDate,
-      invoice.followUpStatus,
-      invoice.actionRequired,
-      invoice.promisedPaymentDate,
-      invoice.nextActionDate,
-      invoice.collectionNote,
-      invoice.lastCollectionUpdateAt,
-    );
-
-    if (priorVoidedInvoice) {
-      updateInvoiceReissueLinkStatement.run(
-        invoice.id,
-        invoice.invoiceNumber,
-        invoice.tenantId,
-        priorVoidedInvoice.id,
-      );
-    }
-
-    createJournalEntryLines({
-      tenantId: invoice.tenantId,
-      referenceType: "invoice",
-      referenceId: invoice.id,
-      referenceNumber: invoice.invoiceNumber,
-      description: `Issue invoice ${invoice.invoiceNumber}`,
-      createdAt: invoice.issuedAt,
-      lines: [
-        { accountCode: "131", debitAmount: invoice.totalAmount, creditAmount: 0 },
-        { accountCode: "511", debitAmount: 0, creditAmount: invoice.subtotalAmount },
-        { accountCode: "3331", debitAmount: 0, creditAmount: invoice.taxAmount },
-      ],
-    });
-
-    recordAuditLog({
-      tenantId: invoice.tenantId,
-      entityType: "invoice",
-      entityId: invoice.id,
-      entityNumber: invoice.invoiceNumber,
-      actionType: priorVoidedInvoice ? "invoice_reissued" : "invoice_issued",
-      summary: priorVoidedInvoice
+    insertIssuedInvoiceRecord(
+      invoice,
+      priorVoidedInvoice,
+      priorVoidedInvoice ? "invoice_reissued" : "invoice_issued",
+      priorVoidedInvoice
         ? `Reissued ${invoice.invoiceNumber} from ${priorVoidedInvoice.invoice_number}`
         : `Issued ${invoice.invoiceNumber} for ${invoice.customerName}`,
-      metadata: {
-        amount: invoice.totalAmount,
-        outstandingAmount: invoice.outstandingAmount,
-        productCategoryId: invoice.productCategoryId,
-        productCategoryName: invoice.productCategoryName,
-        productSku: invoice.productSku,
-        productName: invoice.productName,
-        amendmentNote: invoice.amendmentNote ?? undefined,
-        amendmentRootInvoiceNumber: invoice.amendmentRootInvoiceNumber,
-        revisionNumber: invoice.revisionNumber,
-        reissuedFromInvoiceNumber: invoice.reissuedFromInvoiceNumber ?? undefined,
-        note: `Due ${invoice.dueDate}`,
-      },
-      createdAt: invoice.issuedAt,
-    });
+    );
 
     db.exec("COMMIT");
   } catch (error) {
@@ -5400,13 +5449,7 @@ export function createInvoice(
     throw new Error("Only confirmed orders can be invoiced.");
   }
 
-  if (!isValidBusinessDateInput(input.issueDate)) {
-    throw new Error("Issue date must be a valid YYYY-MM-DD value.");
-  }
-
-  if (!Number.isInteger(input.paymentTermDays) || input.paymentTermDays < 0 || input.paymentTermDays > 365) {
-    throw new Error("Payment term days must be an integer between 0 and 365.");
-  }
+  validateInvoiceDraftInput(input);
 
   const priorVoidedInvoice = getLatestVoidedInvoiceForOrderStatement.get(
     input.tenantId,
@@ -5446,6 +5489,183 @@ export function createInvoice(
   }
 
   return createAppliedResult(createInvoiceInternal(normalizedInput));
+}
+
+function amendInvoiceInternal(input: AmendInvoiceInput): InvoiceRecord {
+  const invoice = getInvoiceByIdStatement.get(input.tenantId, input.invoiceId) as InvoiceRow | undefined;
+  if (!invoice) {
+    throw new Error("The selected invoice does not exist.");
+  }
+
+  if (invoice.payment_count > 0 || invoice.paid_amount > 0) {
+    throw new Error("The selected invoice cannot be amended because payments already exist.");
+  }
+
+  if (invoice.status !== "issued") {
+    throw new Error("The selected invoice can only be amended while it is active.");
+  }
+
+  if (invoice.reissued_to_invoice_id || invoice.reissued_to_invoice_number) {
+    throw new Error("The selected invoice cannot be amended because a newer revision already exists.");
+  }
+
+  const order = getOrderByIdStatement.get(input.tenantId, invoice.order_id) as OrderRow | undefined;
+  if (!order) {
+    throw new Error("The selected order does not exist.");
+  }
+
+  if (order.status !== "confirmed") {
+    throw new Error("Only confirmed orders can be invoiced.");
+  }
+
+  validateInvoiceDraftInput(input);
+
+  const amendmentNote = normalizeInvoiceAmendmentNote(input.amendmentNote);
+  if (!amendmentNote) {
+    throw new Error("Amendment note is required when amending an active invoice.");
+  }
+
+  const amendedInvoice = buildInvoiceRecord(
+    input.tenantId,
+    order,
+    {
+      issueDate: input.issueDate,
+      paymentTermDays: input.paymentTermDays,
+      taxRatePercent: input.taxRatePercent,
+      amendmentNote,
+    },
+    invoice,
+  );
+  const amendedAt = timestamp();
+
+  db.exec("BEGIN");
+
+  try {
+    updateInvoiceStatusStatement.run("void", input.tenantId, input.invoiceId);
+
+    createJournalEntryLines({
+      tenantId: input.tenantId,
+      referenceType: "invoice",
+      referenceId: invoice.id,
+      referenceNumber: invoice.invoice_number,
+      description: `Amend invoice ${invoice.invoice_number}`,
+      createdAt: amendedAt,
+      lines: [
+        { accountCode: "511", debitAmount: invoice.subtotal_amount, creditAmount: 0 },
+        { accountCode: "3331", debitAmount: invoice.tax_amount, creditAmount: 0 },
+        { accountCode: "131", debitAmount: 0, creditAmount: invoice.total_amount },
+      ],
+    });
+
+    insertIssuedInvoiceRecord(
+      amendedInvoice,
+      invoice,
+      "invoice_amended",
+      `Amended ${invoice.invoice_number} as ${amendedInvoice.invoiceNumber}`,
+    );
+
+    const voidedInvoice = getInvoiceByIdStatement.get(input.tenantId, input.invoiceId) as InvoiceRow | undefined;
+    if (!voidedInvoice) {
+      throw new Error("The selected invoice does not exist.");
+    }
+
+    const mappedVoidedInvoice = mapInvoice(voidedInvoice);
+    recordAuditLog({
+      tenantId: input.tenantId,
+      entityType: "invoice",
+      entityId: mappedVoidedInvoice.id,
+      entityNumber: mappedVoidedInvoice.invoiceNumber,
+      actionType: "invoice_voided",
+      summary: `Voided ${mappedVoidedInvoice.invoiceNumber} for amendment to ${amendedInvoice.invoiceNumber}`,
+      metadata: {
+        amount: mappedVoidedInvoice.totalAmount,
+        outstandingAmount: mappedVoidedInvoice.outstandingAmount,
+        productCategoryId: mappedVoidedInvoice.productCategoryId,
+        productCategoryName: mappedVoidedInvoice.productCategoryName,
+        productSku: mappedVoidedInvoice.productSku,
+        productName: mappedVoidedInvoice.productName,
+        amendmentNote: amendedInvoice.amendmentNote ?? undefined,
+        amendmentRootInvoiceNumber: mappedVoidedInvoice.amendmentRootInvoiceNumber,
+        revisionNumber: mappedVoidedInvoice.revisionNumber,
+        reissuedToInvoiceNumber: amendedInvoice.invoiceNumber,
+        note: `Amended as ${amendedInvoice.invoiceNumber}`,
+      },
+      createdAt: amendedAt,
+    });
+
+    db.exec("COMMIT");
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
+
+  return amendedInvoice;
+}
+
+export function amendInvoice(
+  input: AmendInvoiceInput,
+): ApprovalAwareMutationResult<InvoiceRecord> {
+  const invoice = getInvoiceByIdStatement.get(input.tenantId, input.invoiceId) as InvoiceRow | undefined;
+  if (!invoice) {
+    throw new Error("The selected invoice does not exist.");
+  }
+
+  if (invoice.payment_count > 0 || invoice.paid_amount > 0) {
+    throw new Error("The selected invoice cannot be amended because payments already exist.");
+  }
+
+  if (invoice.status !== "issued") {
+    throw new Error("The selected invoice can only be amended while it is active.");
+  }
+
+  if (invoice.reissued_to_invoice_id || invoice.reissued_to_invoice_number) {
+    throw new Error("The selected invoice cannot be amended because a newer revision already exists.");
+  }
+
+  const order = getOrderByIdStatement.get(input.tenantId, invoice.order_id) as OrderRow | undefined;
+  if (!order) {
+    throw new Error("The selected order does not exist.");
+  }
+
+  if (order.status !== "confirmed") {
+    throw new Error("Only confirmed orders can be invoiced.");
+  }
+
+  validateInvoiceDraftInput(input);
+
+  const amendmentNote = normalizeInvoiceAmendmentNote(input.amendmentNote);
+  if (!amendmentNote) {
+    throw new Error("Amendment note is required when amending an active invoice.");
+  }
+
+  const normalizedInput: AmendInvoiceInput = {
+    ...input,
+    amendmentNote,
+  };
+
+  const approvalRule = shouldRequireInvoiceIssueApproval(input);
+  if (approvalRule) {
+    return createApprovalRequestedResult(
+      createApprovalRequest({
+        tenantId: input.tenantId,
+        requestType: "invoice_amend",
+        riskLevel: approvalRule.riskLevel,
+        referenceId: invoice.id,
+        referenceNumber: invoice.invoice_number,
+        summary: `Approval requested to amend ${invoice.invoice_number}`,
+        reason: approvalRule.reason,
+        amount: invoice.total_amount,
+        quantity: order.quantity,
+        productCategoryId: order.product_category_id,
+        productCategoryName: order.product_category_name,
+        productSku: order.product_sku,
+        productName: order.product_name,
+        payload: normalizedInput,
+      }),
+    );
+  }
+
+  return createAppliedResult(amendInvoiceInternal(normalizedInput));
 }
 
 export function voidInvoice(input: VoidInvoiceInput): InvoiceRecord {

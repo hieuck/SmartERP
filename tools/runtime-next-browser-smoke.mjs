@@ -74,9 +74,11 @@ const promisedPaymentDateInput = buildDateInputFromToday(3);
 const worklistActionDateInput = buildDateInputFromToday(0);
 const collectionNote = "Khach xac nhan se chuyen khoan vao cuoi tuan.";
 const escalatedCollectionNote = "Qua ngay hua thanh toan, can founder xu ly truc tiep.";
+const invoiceAmendmentNote = "Corrected commercial terms before customer payment posting.";
 const reissueAmendmentNote = "Corrected shipping quantity after voiding the previous invoice revision.";
 const firstIssueDateInput = buildDateInputFromToday(0);
 const secondIssueDateInput = buildDateInputFromToday(-(secondDaysPastDue + secondPaymentTermDays));
+const amendedPaymentTermDays = firstPaymentTermDays + 7;
 const unitPrice = 25000;
 const productImportCsv = `name,category,unitPrice,sku\n${productName},${productCategoryName},${unitPrice},${productSku}`;
 const purchaseUnitCost = 18000;
@@ -177,6 +179,7 @@ function isExpectedNegativePath(response) {
         response.request().method() === "POST" &&
         (
           response.url().endsWith("/api/invoices") ||
+          response.url().endsWith("/api/invoices/amend") ||
           response.url().endsWith("/api/purchase-orders") ||
           response.url().endsWith("/api/onboarding/import") ||
           response.url().endsWith("/api/onboarding/restore/preview") ||
@@ -204,6 +207,7 @@ function isExpectedNegativePath(response) {
           response.url().endsWith("/api/purchase-orders/reopen") ||
           response.url().endsWith("/api/purchase-orders/receipts") ||
           response.url().endsWith("/api/invoices") ||
+          response.url().endsWith("/api/invoices/amend") ||
           response.url().endsWith("/api/invoices/payments") ||
           response.url().endsWith("/api/invoices/collections") ||
           response.url().endsWith("/api/invoices/void") ||
@@ -268,6 +272,13 @@ function getFormCard(page) {
 
 function getListCard(page) {
   return page.locator(".two-column > .ant-card").last();
+}
+
+function getInvoiceRowByNumber(page, invoiceNumber) {
+  return getListCard(page)
+    .locator(".record-row")
+    .filter({ has: page.locator("strong", { hasText: invoiceNumber }) })
+    .first();
 }
 
 async function fillField(container, selector, value) {
@@ -498,6 +509,7 @@ async function main() {
   });
 
   let orderNumber = "";
+  let initialInvoiceNumber = "";
   let invoiceNumber = "";
   let secondOrderNumber = "";
   let secondInvoiceNumber = "";
@@ -558,6 +570,9 @@ async function main() {
   let orderReopenGuardVerified = false;
   let orderCategoryFlowVerified = false;
   let invoiceVoidVerified = false;
+  let invoiceAmendGuardVerified = false;
+  let invoiceAmendVerified = false;
+  let invoiceAmendAuditVerified = false;
   let invoiceReissueVerified = false;
   let invoiceReissueLineageVerified = false;
   let invoiceRevisionLineageVerified = false;
@@ -1730,13 +1745,148 @@ async function main() {
     await fillField(issueInvoiceCard, "#paymentTermDays", firstPaymentTermDays);
     await fillField(issueInvoiceCard, "#taxRatePercent", taxRate);
     await clickSubmit(issueInvoiceCard);
-    const invoiceRow = getListCard(page).locator(".record-row").filter({ hasText: orderNumber }).first();
+    let invoiceRow = getListCard(page).locator(".record-row").filter({ hasText: orderNumber }).first();
     await invoiceRow.waitFor({ timeout: 15000 });
     await invoiceRow.getByText(customerName, { exact: false }).waitFor({ timeout: 15000 });
     await invoiceRow.getByText(productCategoryName, { exact: false }).waitFor({ timeout: 15000 });
     invoiceNumber = (await invoiceRow.locator("strong").first().textContent())?.trim() ?? "";
     assert(invoiceNumber.length > 0, "Invoice number was not rendered after invoice creation.");
+    initialInvoiceNumber = invoiceNumber;
     await invoiceRow.getByText(buildAmountPattern(firstInvoiceAmount)).first().waitFor({ timeout: 15000 });
+    const missingActiveAmendmentNoteResponse = await page.evaluate(
+      async ({ targetInvoiceNumber, issueDate, paymentTermDays, taxRatePercent, sessionKey, tenantKey }) => {
+        const rawSession = window.localStorage.getItem(sessionKey);
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
+        const headers = {
+          "content-type": "application/json",
+          authorization: `Bearer ${accessToken}`,
+        };
+
+        const invoicesResponse = await fetch(`/api/invoices?tenantId=${encodeURIComponent(tenantId ?? "")}`, {
+          headers,
+        });
+        const invoicesPayload = await invoicesResponse.json();
+        const targetInvoice = invoicesPayload.items.find((item) => item.invoiceNumber === targetInvoiceNumber);
+
+        if (!targetInvoice || !tenantId) {
+          return { status: 0, body: { error: "Invoice lookup failed before active amendment note guard test." } };
+        }
+
+        const response = await fetch("/api/invoices/amend", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            tenantId,
+            invoiceId: targetInvoice.id,
+            issueDate,
+            paymentTermDays,
+            taxRatePercent,
+            amendmentNote: "",
+          }),
+        });
+
+        return {
+          status: response.status,
+          body: await response.json(),
+        };
+      },
+      {
+        targetInvoiceNumber: invoiceNumber,
+        issueDate: firstIssueDateInput,
+        paymentTermDays: amendedPaymentTermDays,
+        taxRatePercent: taxRate,
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+      },
+    );
+    assert(
+      missingActiveAmendmentNoteResponse.status === 400 &&
+        missingActiveAmendmentNoteResponse.body?.error ===
+          "Amendment note is required when amending an active invoice.",
+      "Active invoice amendment did not require an amendment note.",
+    );
+    invoiceAmendGuardVerified = true;
+
+    const originalInvoiceNumber = invoiceNumber;
+    await invoiceRow.locator('[data-testid="invoice-amend-button"]').click();
+    const amendInvoiceModal = page.locator(".ant-modal:visible");
+    await amendInvoiceModal.waitFor({ timeout: 15000 });
+    await fillField(amendInvoiceModal, "#issueDate", firstIssueDateInput);
+    await fillField(amendInvoiceModal, "#paymentTermDays", amendedPaymentTermDays);
+    await fillField(amendInvoiceModal, "#taxRatePercent", taxRate);
+    await fillField(amendInvoiceModal, "#amendmentNote", invoiceAmendmentNote);
+    await amendInvoiceModal.locator("button[type='submit']").click();
+    await amendInvoiceModal.waitFor({ state: "hidden", timeout: 15000 });
+
+    const amendedInvoiceResponse = await page.evaluate(
+      async ({ targetOrderNumber, targetOriginalInvoiceNumber, sessionKey, tenantKey }) => {
+        const rawSession = window.localStorage.getItem(sessionKey);
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
+        const headers = {
+          authorization: `Bearer ${accessToken}`,
+        };
+
+        const response = await fetch(`/api/invoices?tenantId=${encodeURIComponent(tenantId ?? "")}`, {
+          headers,
+        });
+        const payload = await response.json();
+        const amendedInvoice = payload.items.find(
+          (item) =>
+            item.orderNumber === targetOrderNumber &&
+            item.status === "issued" &&
+            item.invoiceNumber !== targetOriginalInvoiceNumber,
+        );
+
+        return amendedInvoice ?? null;
+      },
+      {
+        targetOrderNumber: orderNumber,
+        targetOriginalInvoiceNumber: originalInvoiceNumber,
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+      },
+    );
+    assert(amendedInvoiceResponse?.invoiceNumber, "Invoice amend did not create a new active invoice revision.");
+    assert(
+      amendedInvoiceResponse?.revisionNumber === 2,
+      `Invoice amend revision should be 2, got ${amendedInvoiceResponse?.revisionNumber ?? "unknown"}.`,
+    );
+    assert(
+      amendedInvoiceResponse?.amendmentRootInvoiceNumber === originalInvoiceNumber,
+      "Amended invoice did not retain the expected root invoice number.",
+    );
+    assert(
+      amendedInvoiceResponse?.amendmentNote === invoiceAmendmentNote,
+      "Amended invoice did not persist the amendment note.",
+    );
+    invoiceNumber = amendedInvoiceResponse.invoiceNumber;
+    const originalInvoiceRow = getInvoiceRowByNumber(page, originalInvoiceNumber);
+    const amendedInvoiceRow = getInvoiceRowByNumber(page, invoiceNumber);
+    await originalInvoiceRow.getByText(/Đã hủy hiệu lực|Da huy hieu luc/, { exact: false }).first().waitFor({
+      timeout: 15000,
+    });
+    await amendedInvoiceRow.getByText(/Đã phát hành|Da phat hanh/, { exact: false }).first().waitFor({
+      timeout: 15000,
+    });
+    const originalInvoiceText = await originalInvoiceRow.textContent();
+    const amendedInvoiceText = await amendedInvoiceRow.textContent();
+    assert(
+      originalInvoiceText?.includes(invoiceNumber),
+      "Original invoice row did not show the amended replacement invoice number.",
+    );
+    assert(
+      amendedInvoiceText?.includes(originalInvoiceNumber),
+      "Amended invoice row did not show the original invoice number.",
+    );
+    assert(
+      amendedInvoiceText?.includes(invoiceAmendmentNote),
+      "Amended invoice row did not show the amendment note.",
+    );
+    invoiceRow = amendedInvoiceRow;
+    invoiceAmendVerified = true;
+
     const invoicedOrderUpdateResponse = await page.evaluate(
       async ({ targetOrderNumber, quantity, sessionKey, tenantKey }) => {
         const rawSession = window.localStorage.getItem(sessionKey);
@@ -2898,10 +3048,20 @@ async function main() {
       auditSnapshot.body?.items?.some(
         (item) =>
           item.actionType === "invoice_issued" &&
-          item.entityNumber === invoiceNumber &&
+          item.entityNumber === initialInvoiceNumber &&
           item.metadata?.productCategoryName === productCategoryName,
       ),
       "Invoice issue audit entry was not recorded with category context.",
+    );
+    assert(
+      auditSnapshot.body?.items?.some(
+        (item) =>
+          item.actionType === "invoice_amended" &&
+          item.entityNumber === invoiceNumber &&
+          item.metadata?.productCategoryName === productCategoryName &&
+          item.metadata?.amendmentNote === invoiceAmendmentNote,
+      ),
+      "Invoice amendment audit entry was not recorded with category and amendment note context.",
     );
     assert(
       auditSnapshot.body?.items?.some(
@@ -2989,9 +3149,11 @@ async function main() {
     await auditCard.locator(".activity-row").first().waitFor({ timeout: 15000 });
     await auditCard.getByText("SmartERP Founder", { exact: false }).first().waitFor({ timeout: 15000 });
     await auditCard.getByText(productCategoryName, { exact: false }).first().waitFor({ timeout: 15000 });
+    await auditCard.getByText(invoiceAmendmentNote, { exact: false }).first().waitFor({ timeout: 15000 });
     await auditCard.getByText("Phát hành lại từ:", { exact: false }).first().waitFor({ timeout: 15000 });
     await auditCard.getByText(reissueAmendmentNote, { exact: false }).first().waitFor({ timeout: 15000 });
     auditTrailVerified = true;
+    invoiceAmendAuditVerified = true;
     invoiceReissueAuditVerified = true;
     invoiceAmendmentNoteAuditVerified = true;
     auditCategoryContextVerified = true;
@@ -3654,6 +3816,9 @@ async function main() {
       orderReopenGuardVerified,
       orderCategoryFlowVerified,
       invoiceVoidVerified,
+      invoiceAmendGuardVerified,
+      invoiceAmendVerified,
+      invoiceAmendAuditVerified,
       invoiceReissueVerified,
       invoiceReissueLineageVerified,
       invoiceRevisionLineageVerified,

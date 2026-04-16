@@ -68,6 +68,10 @@ export function ApprovalsPage(): ReactElement {
       return t("approvals.typeInvoiceIssue");
     }
 
+    if (requestType === "invoice_amend") {
+      return t("approvals.typeInvoiceAmend");
+    }
+
     return t("approvals.typeInvoicePayment");
   }
 

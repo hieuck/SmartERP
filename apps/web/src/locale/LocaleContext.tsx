@@ -5,6 +5,7 @@ import enUS from "antd/locale/en_US";
 import viVN from "antd/locale/vi_VN";
 
 import en from "../locales/en";
+import { localeOverrides } from "../locales/overrides";
 import vi from "../locales/vi";
 
 export type SupportedLanguage = "vi" | "en";
@@ -24,9 +25,41 @@ type LocaleContextValue = {
 
 const STORAGE_KEY = "smarterp-next-language";
 
-const localeMap: Record<SupportedLanguage, TranslationTree> = {
+const localeMapBase: Record<SupportedLanguage, TranslationTree> = {
   vi,
   en,
+};
+
+function mergeTranslationTrees(base: TranslationTree, override: TranslationTree): TranslationTree {
+  const merged: TranslationTree = { ...base };
+
+  for (const [key, overrideValue] of Object.entries(override)) {
+    const baseValue = merged[key];
+
+    if (
+      overrideValue &&
+      typeof overrideValue === "object" &&
+      !Array.isArray(overrideValue) &&
+      baseValue &&
+      typeof baseValue === "object" &&
+      !Array.isArray(baseValue)
+    ) {
+      merged[key] = mergeTranslationTrees(
+        baseValue as TranslationTree,
+        overrideValue as TranslationTree,
+      );
+      continue;
+    }
+
+    merged[key] = overrideValue;
+  }
+
+  return merged;
+}
+
+const localeMap: Record<SupportedLanguage, TranslationTree> = {
+  vi: mergeTranslationTrees(localeMapBase.vi, localeOverrides.vi),
+  en: mergeTranslationTrees(localeMapBase.en, localeOverrides.en),
 };
 
 const antdLocaleMap: Record<SupportedLanguage, Locale> = {

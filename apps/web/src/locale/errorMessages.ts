@@ -51,6 +51,7 @@ const errorKeyByMessage: Record<string, string> = {
   "Purchase order reopen failed.": "errors.reopenPurchaseOrderFailed",
   "Purchase order receiving failed.": "errors.receivePurchaseOrderFailed",
   "Invoice creation failed.": "errors.createInvoiceFailed",
+  "Invoice amendment failed.": "errors.invoiceAmendFailed",
   "Invoice payment failed.": "errors.createInvoicePaymentFailed",
   "Invoice void failed.": "errors.voidInvoiceFailed",
   "Invoice reopen failed.": "errors.invoiceReopenFailed",
@@ -80,6 +81,10 @@ const errorKeyByMessage: Record<string, string> = {
   "The selected invoice does not exist.": "errors.selectedInvoiceMissing",
   "The selected invoice has already been voided.": "errors.invoiceAlreadyVoided",
   "The selected invoice has been voided.": "errors.invoiceVoided",
+  "The selected invoice can only be amended while it is active.": "errors.invoiceAmendBlocked",
+  "The selected invoice cannot be amended because payments already exist.": "errors.invoiceAmendBlockedByPayments",
+  "The selected invoice cannot be amended because a newer revision already exists.":
+    "errors.invoiceAmendRevisionBlocked",
   "The selected invoice can only be reopened after it has been voided.": "errors.invoiceReopenBlocked",
   "The selected invoice cannot be reopened because a newer revision already exists.":
     "errors.invoiceReopenRevisionBlocked",
@@ -87,6 +92,7 @@ const errorKeyByMessage: Record<string, string> = {
     "errors.invoiceReopenActiveRevisionBlocked",
   "Amendment note must be 240 characters or fewer.": "errors.invalidInvoiceAmendmentNote",
   "Amendment note is required when reissuing an invoice.": "errors.invoiceAmendmentNoteRequired",
+  "Amendment note is required when amending an active invoice.": "errors.invoiceActiveAmendmentNoteRequired",
   "The selected approval request does not exist.": "errors.selectedApprovalRequestMissing",
   "The selected invoice is already settled.": "errors.invoiceAlreadySettled",
   "The selected approval request has already been resolved.": "errors.approvalRequestResolved",

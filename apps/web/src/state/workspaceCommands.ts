@@ -1,6 +1,7 @@
 import type { Dispatch, SetStateAction } from "react";
 
 import type {
+  AmendInvoiceInput,
   ApprovalDecision,
   ApprovalDecisionInput,
   ApprovalRequestRecord,
@@ -48,6 +49,7 @@ import {
 } from "../modules/customers/api";
 import { submitInventoryAdjustment } from "../modules/inventory/api";
 import {
+  submitInvoiceAmend,
   submitInvoiceCollectionResolution,
   submitInvoiceCollectionUpdate,
   submitInvoiceIssue,
@@ -591,6 +593,24 @@ export function createWorkspaceCommands(dependencies: WorkspaceCommandsDependenc
         "Invoice creation failed.",
         async () => {
           const result = await submitInvoiceIssue({ ...input, tenantId });
+          await refreshTenantWorkspace(tenantId);
+
+          if (result.kind === "approval_requested") {
+            setNoticeMessage(buildApprovalNotice(result.approvalRequest));
+          }
+        },
+        { clearNotice: true },
+      );
+    },
+
+    async amendInvoiceRecord(input: Omit<AmendInvoiceInput, "tenantId">): Promise<void> {
+      const tenantId = getSelectedTenantIdOrThrow();
+
+      await runBusyAction(
+        { setErrorMessage, setIsBusy, setNoticeMessage },
+        "Invoice amendment failed.",
+        async () => {
+          const result = await submitInvoiceAmend({ ...input, tenantId });
           await refreshTenantWorkspace(tenantId);
 
           if (result.kind === "approval_requested") {

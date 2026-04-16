@@ -1,5 +1,6 @@
 import type {
   ApprovalAwareMutationResult,
+  AmendInvoiceInput,
   ApprovalDecisionInput,
   ApprovalRequestRecord,
   AuditLogRecord,
@@ -428,6 +429,16 @@ export async function createInvoice(
   input: CreateInvoiceInput,
 ): Promise<ApprovalAwareMutationResult<InvoiceRecord>> {
   const payload = await request<{ item: ApprovalAwareMutationResult<InvoiceRecord> }>("/api/invoices", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  return payload.item;
+}
+
+export async function amendInvoice(
+  input: AmendInvoiceInput,
+): Promise<ApprovalAwareMutationResult<InvoiceRecord>> {
+  const payload = await request<{ item: ApprovalAwareMutationResult<InvoiceRecord> }>("/api/invoices/amend", {
     method: "POST",
     body: JSON.stringify(input),
   });

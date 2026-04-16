@@ -2,6 +2,7 @@ import {
   AppstoreOutlined,
   BankOutlined,
   CheckCircleOutlined,
+  EditOutlined,
   FileTextOutlined,
   InboxOutlined,
   PhoneOutlined,
@@ -9,10 +10,12 @@ import {
   UserOutlined,
 } from "@ant-design/icons";
 import type { ReactElement } from "react";
+import { useState } from "react";
 import type { FormProps } from "antd";
-import { Button, Card, Empty, Form, Input, InputNumber, Popconfirm, Select, Tag, Typography } from "antd";
+import { Button, Card, Empty, Form, Input, InputNumber, Modal, Popconfirm, Select, Tag, Typography } from "antd";
 
 import type {
+  AmendInvoiceInput,
   CollectionActionRequired,
   CollectionActivityState,
   CollectionFollowUpStatus,
@@ -32,6 +35,7 @@ const { Paragraph, Title } = Typography;
 const { TextArea } = Input;
 
 type InvoiceFormShape = Omit<CreateInvoiceInput, "tenantId">;
+type AmendInvoiceFormShape = Omit<AmendInvoiceInput, "tenantId">;
 type InvoicePaymentFormShape = Omit<CreateInvoicePaymentInput, "tenantId">;
 type InvoiceCollectionFormShape = Omit<UpdateInvoiceCollectionInput, "tenantId">;
 type InvoiceReopenFormShape = Omit<ReopenInvoiceInput, "tenantId">;
@@ -239,6 +243,7 @@ export function InvoicesPage(): ReactElement {
   const {
     can,
     collectionActivities,
+    amendInvoiceRecord,
     createInvoicePaymentRecord,
     createInvoiceRecord,
     reopenInvoiceRecord,
@@ -257,8 +262,10 @@ export function InvoicesPage(): ReactElement {
   const canManageCollections = can("manage_collections");
 
   const [invoiceForm] = Form.useForm<InvoiceFormShape>();
+  const [amendInvoiceForm] = Form.useForm<AmendInvoiceFormShape>();
   const [paymentForm] = Form.useForm<InvoicePaymentFormShape>();
   const [collectionForm] = Form.useForm<InvoiceCollectionFormShape>();
+  const [invoiceBeingAmended, setInvoiceBeingAmended] = useState<InvoiceRecord | null>(null);
   const selectedInvoiceOrderId = Form.useWatch("orderId", invoiceForm);
   const selectedInvoiceId = Form.useWatch("invoiceId", paymentForm);
   const selectedCollectionInvoiceId = Form.useWatch("invoiceId", collectionForm);
@@ -308,6 +315,7 @@ export function InvoicesPage(): ReactElement {
     invoices
       .filter((invoice) => invoice.orderId === selectedInvoiceOrderId && invoice.status === "void")
       .sort((left, right) => right.revisionNumber - left.revisionNumber)[0] ?? null;
+  const isAmendModalOpen = invoiceBeingAmended !== null;
 
   const onCreateInvoice: FormProps<InvoiceFormShape>["onFinish"] = async (values) => {
     try {
@@ -329,6 +337,37 @@ export function InvoicesPage(): ReactElement {
       await createInvoicePaymentRecord(values);
       paymentForm.resetFields();
       paymentForm.setFieldsValue({ method: "bank_transfer" });
+    } catch {
+      // Error state is already surfaced via workspace context.
+    }
+  };
+
+  function openAmendInvoiceModal(invoice: InvoiceRecord): void {
+    setInvoiceBeingAmended(invoice);
+    amendInvoiceForm.setFieldsValue({
+      invoiceId: invoice.id,
+      issueDate: invoice.issuedAt.slice(0, 10),
+      paymentTermDays: invoice.paymentTermDays,
+      taxRatePercent: invoice.taxRatePercent,
+      amendmentNote: "",
+    });
+  }
+
+  function closeAmendInvoiceModal(): void {
+    setInvoiceBeingAmended(null);
+    amendInvoiceForm.resetFields();
+  }
+
+  const onAmendInvoice: FormProps<AmendInvoiceFormShape>["onFinish"] = async (values) => {
+    try {
+      await amendInvoiceRecord({
+        invoiceId: values.invoiceId,
+        issueDate: values.issueDate,
+        paymentTermDays: values.paymentTermDays,
+        taxRatePercent: values.taxRatePercent,
+        amendmentNote: values.amendmentNote,
+      });
+      closeAmendInvoiceModal();
     } catch {
       // Error state is already surfaced via workspace context.
     }
@@ -404,6 +443,66 @@ export function InvoicesPage(): ReactElement {
 
   return (
     <div className="page-stack workspace-page">
+      <Modal
+        open={isAmendModalOpen}
+        title={invoiceBeingAmended ? t("invoices.amendTitle", { number: invoiceBeingAmended.invoiceNumber }) : t("invoices.amendAction")}
+        onCancel={closeAmendInvoiceModal}
+        footer={null}
+        forceRender
+      >
+        <Form<AmendInvoiceFormShape> form={amendInvoiceForm} layout="vertical" onFinish={onAmendInvoice}>
+          <Form.Item<AmendInvoiceFormShape> name="invoiceId" hidden>
+            <Input />
+          </Form.Item>
+
+          <Form.Item<AmendInvoiceFormShape>
+            label={t("invoices.issueDate")}
+            name="issueDate"
+            rules={[{ required: true }]}
+          >
+            <Input type="date" />
+          </Form.Item>
+
+          <Form.Item<AmendInvoiceFormShape>
+            label={t("invoices.paymentTermDays")}
+            name="paymentTermDays"
+            rules={[{ required: true }]}
+          >
+            <InputNumber min={0} max={365} precision={0} style={{ width: "100%" }} />
+          </Form.Item>
+
+          <Form.Item<AmendInvoiceFormShape>
+            label={t("invoices.taxRate")}
+            name="taxRatePercent"
+            rules={[{ required: true }]}
+          >
+            <InputNumber min={0} max={100} precision={0} style={{ width: "100%" }} />
+          </Form.Item>
+
+          <Form.Item<AmendInvoiceFormShape>
+            label={t("invoices.amendmentNote")}
+            name="amendmentNote"
+            rules={[{ required: true }, { max: 240 }]}
+            extra={
+              invoiceBeingAmended
+                ? t("invoices.amendmentNoteActiveHint", {
+                    number: invoiceBeingAmended.invoiceNumber,
+                  })
+                : t("invoices.amendmentNoteHint")
+            }
+          >
+            <TextArea rows={3} maxLength={240} placeholder={t("invoices.amendmentNotePlaceholder")} />
+          </Form.Item>
+
+          <div className="record-actions">
+            <Button onClick={closeAmendInvoiceModal}>{t("common.cancel")}</Button>
+            <Button type="primary" htmlType="submit" loading={isBusy}>
+              {t("invoices.amendSubmit")}
+            </Button>
+          </div>
+        </Form>
+      </Modal>
+
       <div className="page-header">
         <div>
           <Title level={2}>{t("invoices.title")}</Title>
@@ -962,6 +1061,15 @@ export function InvoicesPage(): ReactElement {
                       ) : null}
                       {canIssueInvoices && invoice.status === "issued" && invoice.paidAmount === 0 ? (
                         <div className="record-actions">
+                          <Button
+                            size="small"
+                            icon={<EditOutlined />}
+                            loading={isBusy}
+                            data-testid="invoice-amend-button"
+                            onClick={() => openAmendInvoiceModal(invoice)}
+                          >
+                            {t("invoices.amendAction")}
+                          </Button>
                           <Popconfirm
                             title={t("invoices.voidConfirm", { number: invoice.invoiceNumber })}
                             okText={t("invoices.voidAction")}

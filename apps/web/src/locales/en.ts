@@ -400,10 +400,14 @@ const en = {
     amendmentNoteLabel: "Amendment note:",
     amendmentNoteHint: "Optional context note for this invoice revision.",
     amendmentNoteRequiredHint: "Required because {{number}} was voided and this revision needs a business reason.",
+    amendmentNoteActiveHint: "Required to explain why {{number}} is being amended.",
     amendmentNotePlaceholder: "Corrected shipping quantity after the previous invoice was voided.",
     reissuedFromLabel: "Reissued from:",
     reissuedToLabel: "Reissued as:",
     revisionValue: "Rev {{count}}",
+    amendAction: "Amend Invoice",
+    amendSubmit: "Apply Amendment",
+    amendTitle: "Amend {{number}}",
     paymentTermLabel: "Terms:",
     paymentTermValue: "{{count}} days",
     collectionTitle: "Collections Queue",
@@ -472,6 +476,7 @@ const en = {
     typeInventoryAdjustment: "Inventory adjustment",
     typePurchaseReceipt: "Purchase receipt",
     typeInvoiceIssue: "Invoice issue",
+    typeInvoiceAmend: "Invoice amendment",
     typeInvoicePayment: "Invoice payment",
     reasonLabel: "Reason:",
     amountLabel: "Amount:",
@@ -969,12 +974,17 @@ Object.assign(en.errors, {
   purchaseOrderReopenBlocked: "This purchase order can only be reopened after it has been closed.",
   invoiceAlreadyVoided: "This invoice has already been voided.",
   invoiceVoided: "This invoice has been voided.",
+  invoiceAmendFailed: "Invoice amendment failed.",
   invoiceReopenFailed: "Invoice reopen failed.",
+  invoiceAmendBlocked: "This invoice can only be amended while it is active.",
+  invoiceAmendRevisionBlocked: "This invoice cannot be amended because a newer revision already exists.",
+  invoiceAmendBlockedByPayments: "This invoice cannot be amended because payments already exist.",
   invoiceReopenBlocked: "This invoice can only be reopened after it has been voided.",
   invoiceReopenRevisionBlocked: "This invoice cannot be reopened because a newer revision already exists.",
   invoiceReopenActiveRevisionBlocked:
     "This invoice cannot be reopened because another active revision already exists.",
   invoiceVoidBlockedByPayments: "This invoice cannot be voided because payments already exist.",
+  invoiceActiveAmendmentNoteRequired: "A business note is required when amending an active invoice.",
 });
 
 Object.assign(en.common, {
@@ -994,6 +1004,7 @@ Object.assign(en.purchaseOrders, {
 });
 
 Object.assign(en.reports, {
+  auditActionInvoiceAmended: "Invoice amended",
   categoryCount: "Categories",
   topCategory: "Top Category",
   noCategorySignal: "No category signal yet",
