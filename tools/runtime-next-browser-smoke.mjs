@@ -77,6 +77,7 @@ const escalatedCollectionNote = "Qua ngay hua thanh toan, can founder xu ly truc
 const invoiceAmendmentNote = "Corrected commercial terms before customer payment posting.";
 const reissueAmendmentNote = "Corrected shipping quantity after voiding the previous invoice revision.";
 const invoiceCreditNote = "Returned shipment after full settlement and inspection.";
+const partialInvoiceCreditNote = "Refund one damaged bottle after full settlement.";
 const firstIssueDateInput = buildDateInputFromToday(0);
 const secondIssueDateInput = buildDateInputFromToday(-(secondDaysPastDue + secondPaymentTermDays));
 const amendedPaymentTermDays = firstPaymentTermDays + 7;
@@ -91,6 +92,8 @@ const saleQuantity = 5;
 const editedSaleQuantity = 4;
 const secondSaleQuantity = 2;
 const creditedOrderQuantity = 1;
+const partialCreditOrderQuantity = 5;
+const partialCreditQuantity = 2;
 const cancelableOrderQuantity = 1;
 const voidableOrderQuantity = 3;
 const invalidQuantity = 20;
@@ -102,7 +105,11 @@ const voidableOrderGrossAmount = unitPrice * voidableOrderQuantity;
 const firstInvoiceAmount = Math.round(firstOrderGrossAmount * (1 + taxRate / 100));
 const secondInvoiceAmount = Math.round(secondOrderGrossAmount * (1 + taxRate / 100));
 const creditedInvoiceAmount = Math.round(unitPrice * creditedOrderQuantity * (1 + taxRate / 100));
+const partialCreditInvoiceAmount = Math.round(unitPrice * partialCreditOrderQuantity * (1 + taxRate / 100));
+const partialCreditAmount = Math.round(unitPrice * partialCreditQuantity * (1 + taxRate / 100));
 const voidableInvoiceAmount = Math.round(voidableOrderGrossAmount * (1 + taxRate / 100));
+const partialCreditNetGrossAmount = unitPrice * (partialCreditOrderQuantity - partialCreditQuantity);
+const partialCreditNetInvoiceAmount = partialCreditInvoiceAmount - partialCreditAmount;
 const expectedGrossSales = firstOrderGrossAmount + secondOrderGrossAmount;
 const expectedInvoicedAmount = firstInvoiceAmount + secondInvoiceAmount;
 const remainingPaymentAmount = firstInvoiceAmount - partialPaymentAmount;
@@ -113,8 +120,6 @@ const expectedOverdue31To60Amount = secondInvoiceAmount;
 const expectedRemainingStock = stockInQuantity - editedSaleQuantity - secondSaleQuantity;
 const expectedReceivedPurchaseValue = stockInQuantity * purchaseUnitCost;
 const expectedInventoryValueAmount = expectedRemainingStock * purchaseUnitCost;
-const expectedRestoreRemainingStock = expectedRemainingStock;
-const expectedRestoreInventoryValueAmount = expectedInventoryValueAmount;
 const expectedCashOnHandAmount = partialPaymentAmount;
 const expectedBankAmount = remainingPaymentAmount;
 const expectedReceivablesLedgerAmount = expectedOutstandingReceivablesAmount;
@@ -122,6 +127,14 @@ const expectedPayablesAmount = expectedReceivedPurchaseValue;
 const expectedCogsAmount = (editedSaleQuantity + secondSaleQuantity) * purchaseUnitCost;
 const expectedVatPayableAmount = firstInvoiceAmount + secondInvoiceAmount - expectedGrossSales;
 const expectedRevenueAmount = expectedGrossSales;
+const expectedGrossSalesAfterPartialCredit = expectedGrossSales + partialCreditNetGrossAmount;
+const expectedInvoicedAmountAfterPartialCredit = expectedInvoicedAmount + partialCreditNetInvoiceAmount;
+const expectedCashCollectedAmountAfterPartialCredit = expectedCashCollectedAmount + partialCreditNetInvoiceAmount;
+const expectedCreditedAmountAfterPartialCredit = creditedInvoiceAmount + partialCreditAmount;
+const expectedRemainingStockAfterPartialCredit = expectedRemainingStock - partialCreditOrderQuantity + partialCreditQuantity;
+const expectedInventoryValueAfterPartialCredit = expectedRemainingStockAfterPartialCredit * purchaseUnitCost;
+const expectedRestoreRemainingStock = expectedRemainingStockAfterPartialCredit;
+const expectedRestoreInventoryValueAmount = expectedInventoryValueAfterPartialCredit;
 const initialPurchaseOrderAmount = purchaseUnitCost * purchaseQuantity;
 const expectedPurchaseOrderAmount = purchaseUnitCost * editedPurchaseQuantity;
 const sidebarIndexes = {
@@ -522,6 +535,8 @@ async function main() {
   let secondInvoiceNumber = "";
   let creditedOrderNumber = "";
   let creditedInvoiceNumber = "";
+  let partialCreditOrderNumber = "";
+  let partialCreditInvoiceNumber = "";
   let voidedOrderNumber = "";
   let voidedInvoiceNumber = "";
   let reissuedInvoiceNumber = "";
@@ -593,6 +608,12 @@ async function main() {
   let invoiceCreditVerified = false;
   let invoiceCreditAuditVerified = false;
   let invoiceCreditInventoryRestockVerified = false;
+  let partialInvoiceCreditVerified = false;
+  let partialInvoiceCreditAuditVerified = false;
+  let partialInvoiceCreditInventoryRestockVerified = false;
+  let partialInvoiceCreditReportVerified = false;
+  let partialInvoiceCreditOrderStateVerified = false;
+  let partialInvoiceCreditCollectionGuardVerified = false;
   let creditedOrderReturnedVerified = false;
   let creditedOrderReturnAuditVerified = false;
   let creditedOrderExcludedFromSalesVerified = false;
@@ -3214,7 +3235,7 @@ async function main() {
     await creditedInvoiceRow.getByText("Đã thanh toán", { exact: false }).waitFor({ timeout: 15000 });
 
     const missingCreditNoteResponse = await page.evaluate(
-      async ({ targetInvoiceNumber, method, sessionKey, tenantKey }) => {
+      async ({ targetInvoiceNumber, method, creditQuantity, sessionKey, tenantKey }) => {
         const rawSession = window.localStorage.getItem(sessionKey);
         const tenantId = window.localStorage.getItem(tenantKey);
         const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
@@ -3240,6 +3261,7 @@ async function main() {
             tenantId,
             invoiceId: targetInvoice.id,
             method,
+            creditQuantity,
             creditNote: "",
           }),
         });
@@ -3252,6 +3274,7 @@ async function main() {
       {
         targetInvoiceNumber: creditedInvoiceNumber,
         method: "bank_transfer",
+        creditQuantity: creditedOrderQuantity,
         sessionKey: sessionStorageKey,
         tenantKey: tenantStorageKey,
       },
@@ -3573,6 +3596,201 @@ async function main() {
       .first()
       .waitFor({ timeout: 15000 });
     invoiceCreditInventoryRestockVerified = true;
+
+    await openSection(page, sidebarIndexes.orders, "/dashboard/orders");
+    await waitForTenantContext(page, tenantName);
+    const partialCreditOrderFormCard = getFormCard(page);
+    await waitForFormReady(partialCreditOrderFormCard);
+    await selectOption(page, partialCreditOrderFormCard.getByRole("combobox", { name: /Khách hàng/ }), customerName);
+    await selectOption(page, partialCreditOrderFormCard.getByRole("combobox", { name: /Sản phẩm/ }), productName);
+    await fillNumberInput(
+      partialCreditOrderFormCard.getByRole("spinbutton", { name: /\* Số lượng/ }),
+      partialCreditOrderQuantity,
+    );
+    await clickSubmit(partialCreditOrderFormCard);
+    const partialCreditOrderRow = getListCard(page)
+      .locator(".record-row")
+      .filter({ hasText: `${productName} x ${partialCreditOrderQuantity}` })
+      .filter({ hasText: /Đã xác nhận|Da xac nhan|Confirmed/ })
+      .first();
+    await partialCreditOrderRow.waitFor({ timeout: 15000 });
+    partialCreditOrderNumber = (await partialCreditOrderRow.locator("strong").first().textContent())?.trim() ?? "";
+    assert(partialCreditOrderNumber.length > 0, "Partial-credit order number was not rendered after order creation.");
+
+    await openSection(page, sidebarIndexes.invoices, "/dashboard/invoices");
+    await waitForTenantContext(page, tenantName);
+    await waitForFormReady(issueInvoiceCard);
+    await selectOption(page, issueInvoiceCard.getByRole("combobox", { name: /Đơn hàng/ }), partialCreditOrderNumber);
+    await fillField(issueInvoiceCard, "#issueDate", firstIssueDateInput);
+    await fillField(issueInvoiceCard, "#paymentTermDays", firstPaymentTermDays);
+    await fillField(issueInvoiceCard, "#taxRatePercent", taxRate);
+    await clickSubmit(issueInvoiceCard);
+    partialCreditInvoiceNumber = await findInvoiceNumberByOrderNumber(page, partialCreditOrderNumber);
+    assert(partialCreditInvoiceNumber.length > 0, "Partial-credit invoice number was not rendered after issue.");
+    const partialCreditInvoiceRow = getInvoiceRowByNumber(page, partialCreditInvoiceNumber);
+    await partialCreditInvoiceRow.waitFor({ timeout: 15000 });
+
+    await waitForFormReady(paymentCard);
+    await selectOption(page, paymentCard.getByRole("combobox", { name: /Hóa đơn/ }), partialCreditInvoiceNumber);
+    await selectOption(page, paymentCard.getByRole("combobox", { name: /Phương thức/ }), "Chuyển khoản");
+    await fillNumberInput(paymentCard.getByRole("spinbutton", { name: /Số tiền/ }), partialCreditInvoiceAmount);
+    await clickSubmit(paymentCard);
+    await partialCreditInvoiceRow.getByText("Đã thanh toán", { exact: false }).waitFor({ timeout: 15000 });
+
+    await partialCreditInvoiceRow.locator('[data-testid="invoice-credit-button"]').click();
+    const partialCreditModal = page.locator(".ant-modal:visible").last();
+    await partialCreditModal.waitFor({ timeout: 15000 });
+    await selectOption(page, partialCreditModal.getByRole("combobox").first(), "Chuyển khoản");
+    await fillNumberInput(partialCreditModal.getByRole("spinbutton").first(), partialCreditQuantity);
+    await fillField(partialCreditModal, "#creditNote", partialInvoiceCreditNote);
+    await partialCreditModal.getByRole("button", { name: "Ghi credit note" }).click();
+    await partialCreditInvoiceRow.getByText(/Đã ghi giảm một phần|Partially Credited/, { exact: false }).first().waitFor({
+      timeout: 15000,
+    });
+    await partialCreditInvoiceRow.getByText(partialInvoiceCreditNote, { exact: false }).first().waitFor({
+      timeout: 15000,
+    });
+    await partialCreditInvoiceRow.getByText(buildAmountPattern(partialCreditAmount)).first().waitFor({ timeout: 15000 });
+    partialInvoiceCreditVerified = true;
+
+    const partialCreditCollectionResponse = await page.evaluate(
+      async ({ targetInvoiceNumber, sessionKey, tenantKey, nextActionDate }) => {
+        const rawSession = window.localStorage.getItem(sessionKey);
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
+        const headers = {
+          "content-type": "application/json",
+          authorization: `Bearer ${accessToken}`,
+        };
+
+        const invoicesResponse = await fetch(`/api/invoices?tenantId=${encodeURIComponent(tenantId ?? "")}`, {
+          headers,
+        });
+        const invoicesPayload = await invoicesResponse.json();
+        const targetInvoice = invoicesPayload.items.find((item) => item.invoiceNumber === targetInvoiceNumber);
+
+        if (!targetInvoice || !tenantId) {
+          return { status: 0, body: { error: "Partial-credit invoice lookup failed before collection guard test." } };
+        }
+
+        const response = await fetch("/api/invoices/collections", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            tenantId,
+            invoiceId: targetInvoice.id,
+            followUpStatus: "contacted",
+            actionRequired: "call_customer",
+            promisedPaymentDate: null,
+            nextActionDate,
+            collectionNote: "Partially credited invoice should reject follow-up updates.",
+          }),
+        });
+
+        return {
+          status: response.status,
+          body: await response.json(),
+        };
+      },
+      {
+        targetInvoiceNumber: partialCreditInvoiceNumber,
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+        nextActionDate: firstIssueDateInput,
+      },
+    );
+    assert(
+      partialCreditCollectionResponse.status === 400 &&
+        partialCreditCollectionResponse.body?.error === "The selected invoice has been credited.",
+      "Partially credited invoice did not reject collection updates.",
+    );
+    partialInvoiceCreditCollectionGuardVerified = true;
+
+    await openSection(page, sidebarIndexes.reports, "/dashboard/reports");
+    await waitForTenantContext(page, tenantName);
+    const partialCreditReportSnapshot = await page.evaluate(async ({ sessionKey, tenantKey }) => {
+      const tenantId = window.localStorage.getItem(tenantKey);
+      const session = window.localStorage.getItem(sessionKey);
+      const accessToken = session ? JSON.parse(session).accessToken : "";
+      const response = await fetch(`/api/reports/summary?tenantId=${encodeURIComponent(tenantId ?? "")}`, {
+        headers: {
+          authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      return {
+        status: response.status,
+        body: await response.json(),
+      };
+    }, {
+      sessionKey: sessionStorageKey,
+      tenantKey: tenantStorageKey,
+    });
+    assert(
+      partialCreditReportSnapshot.status === 200 &&
+        partialCreditReportSnapshot.body?.item?.grossSalesAmount === expectedGrossSalesAfterPartialCredit &&
+        partialCreditReportSnapshot.body?.item?.invoicedAmount === expectedInvoicedAmountAfterPartialCredit &&
+        partialCreditReportSnapshot.body?.item?.cashCollectedAmount === expectedCashCollectedAmountAfterPartialCredit &&
+        partialCreditReportSnapshot.body?.item?.creditedAmount === expectedCreditedAmountAfterPartialCredit,
+      "Report summary did not reflect the partial credit note.",
+    );
+    partialInvoiceCreditReportVerified = true;
+
+    const partialCreditAuditSnapshot = await page.evaluate(async ({ sessionKey, tenantKey }) => {
+      const tenantId = window.localStorage.getItem(tenantKey);
+      const session = window.localStorage.getItem(sessionKey);
+      const accessToken = session ? JSON.parse(session).accessToken : "";
+      const response = await fetch(`/api/audit-logs?tenantId=${encodeURIComponent(tenantId ?? "")}`, {
+        headers: {
+          authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      return {
+        status: response.status,
+        body: await response.json(),
+      };
+    }, {
+      sessionKey: sessionStorageKey,
+      tenantKey: tenantStorageKey,
+    });
+    assert(
+      partialCreditAuditSnapshot.status === 200 &&
+        partialCreditAuditSnapshot.body?.items?.some(
+          (item) =>
+            item.actionType === "invoice_credited" &&
+            item.entityNumber === partialCreditInvoiceNumber &&
+            item.metadata?.quantity === partialCreditQuantity &&
+            item.metadata?.amount === partialCreditAmount &&
+            item.metadata?.creditedQuantity === partialCreditQuantity &&
+            item.metadata?.creditedAmount === partialCreditAmount &&
+            item.metadata?.inventoryValue === purchaseUnitCost * partialCreditQuantity &&
+            item.metadata?.creditNote === partialInvoiceCreditNote,
+        ),
+      "Partial credit audit entry was not recorded with quantity and amount context.",
+    );
+    assert(
+      !partialCreditAuditSnapshot.body?.items?.some(
+        (item) => item.actionType === "order_returned" && item.entityNumber === partialCreditOrderNumber,
+      ),
+      "Partial credit must not mark the order as fully returned.",
+    );
+    partialInvoiceCreditAuditVerified = true;
+    partialInvoiceCreditOrderStateVerified = true;
+
+    await openSection(page, sidebarIndexes.inventory, "/dashboard/inventory");
+    await waitForTenantContext(page, tenantName);
+    const partialCreditInventoryRow = getListCard(page).locator(".record-row").filter({ hasText: productName }).first();
+    await partialCreditInventoryRow.waitFor({ timeout: 15000 });
+    await partialCreditInventoryRow
+      .getByText(String(expectedRemainingStockAfterPartialCredit), { exact: true })
+      .waitFor({ timeout: 15000 });
+    await partialCreditInventoryRow
+      .getByText(buildAmountPattern(expectedInventoryValueAfterPartialCredit))
+      .first()
+      .waitFor({ timeout: 15000 });
+    partialInvoiceCreditInventoryRestockVerified = true;
+
     await openSection(page, sidebarIndexes.operations, "/dashboard/operations");
     await page.getByRole("heading", { name: "Vận hành" }).waitFor({ timeout: 15000 });
     await page.getByText("Mức sẵn sàng pilot", { exact: false }).waitFor({ timeout: 15000 });
@@ -4254,6 +4472,12 @@ async function main() {
       invoiceCreditVerified,
       invoiceCreditAuditVerified,
       invoiceCreditInventoryRestockVerified,
+      partialInvoiceCreditVerified,
+      partialInvoiceCreditAuditVerified,
+      partialInvoiceCreditInventoryRestockVerified,
+      partialInvoiceCreditReportVerified,
+      partialInvoiceCreditOrderStateVerified,
+      partialInvoiceCreditCollectionGuardVerified,
       creditedOrderReturnedVerified,
       creditedOrderReturnAuditVerified,
       creditedOrderExcludedFromSalesVerified,
@@ -4299,16 +4523,24 @@ async function main() {
       expectedPurchaseOrderAmount,
       expectedInvoicedAmount,
       expectedCashCollectedAmount,
+      expectedGrossSalesAfterPartialCredit,
+      expectedInvoicedAmountAfterPartialCredit,
+      expectedCashCollectedAmountAfterPartialCredit,
+      expectedCreditedAmountAfterPartialCredit,
       creditedInvoiceAmount,
       creditedOrderNumber,
       creditedInvoiceNumber,
+      partialCreditOrderNumber,
+      partialCreditInvoiceNumber,
       expectedOutstandingReceivablesAmount,
       expectedCurrentReceivablesAmount,
       expectedOverdue31To60Amount,
       expectedRemainingStock,
+      expectedRemainingStockAfterPartialCredit,
       expectedRestoreRemainingStock,
       expectedReceivedPurchaseValue,
       expectedInventoryValueAmount,
+      expectedInventoryValueAfterPartialCredit,
       expectedRestoreInventoryValueAmount,
       expectedCashOnHandAmount,
       expectedBankAmount,

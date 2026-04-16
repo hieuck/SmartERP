@@ -94,6 +94,8 @@ const errorKeyByMessage: Record<string, string> = {
     "errors.invoiceReopenRevisionBlocked",
   "The selected invoice cannot be reopened because an active revision already exists.":
     "errors.invoiceReopenActiveRevisionBlocked",
+  "Credit quantity must be a positive integer.": "errors.invalidInvoiceCreditQuantity",
+  "Credit quantity cannot exceed the remaining uncredited quantity.": "errors.invoiceCreditQuantityExceedsRemaining",
   "Amendment note must be 240 characters or fewer.": "errors.invalidInvoiceAmendmentNote",
   "Amendment note is required when reissuing an invoice.": "errors.invoiceAmendmentNoteRequired",
   "Amendment note is required when amending an active invoice.": "errors.invoiceActiveAmendmentNoteRequired",

@@ -57,6 +57,10 @@ function getInvoiceStatusColor(status: InvoiceRecord["status"]): string {
     return "magenta";
   }
 
+  if (status === "partially_credited") {
+    return "purple";
+  }
+
   if (status === "paid") {
     return "green";
   }
@@ -75,6 +79,10 @@ function getInvoiceStatusLabel(status: InvoiceRecord["status"], t: ReturnType<ty
 
   if (status === "credited") {
     return t("invoices.statusCredited");
+  }
+
+  if (status === "partially_credited") {
+    return t("invoices.statusPartiallyCredited");
   }
 
   if (status === "paid") {
@@ -300,6 +308,7 @@ export function InvoicesPage(): ReactElement {
       order.status === "confirmed" &&
       !invoices.some((invoice) => invoice.orderId === order.id && invoice.status !== "void"),
   );
+  const orderLookupById = new Map(orders.map((order) => [order.id, order] as const));
   const payableInvoices = invoices.filter((invoice) => invoice.outstandingAmount > 0);
   const collectionQueue = [...payableInvoices].sort((left, right) => {
     if (getPriorityRank(left.collectionPriority) !== getPriorityRank(right.collectionPriority)) {
@@ -333,6 +342,10 @@ export function InvoicesPage(): ReactElement {
     ? collectionActivities.filter((activity) => activity.invoiceId === selectedCollectionInvoiceId)
     : collectionActivities.slice(0, 8);
   const invoiceLookupById = new Map(invoices.map((invoice) => [invoice.id, invoice] as const));
+  const creditTargetOrder = invoiceBeingCredited ? orderLookupById.get(invoiceBeingCredited.orderId) ?? null : null;
+  const remainingCreditQuantity = invoiceBeingCredited
+    ? Math.max((creditTargetOrder?.quantity ?? invoiceBeingCredited.creditedQuantity) - invoiceBeingCredited.creditedQuantity, 0)
+    : 0;
   const selectedPriorVoidedInvoice =
     invoices
       .filter((invoice) => invoice.orderId === selectedInvoiceOrderId && invoice.status === "void")
@@ -386,6 +399,7 @@ export function InvoicesPage(): ReactElement {
     creditInvoiceForm.setFieldsValue({
       invoiceId: invoice.id,
       method: "bank_transfer",
+      creditQuantity: 1,
       creditNote: "",
     });
   }
@@ -423,6 +437,7 @@ export function InvoicesPage(): ReactElement {
       await creditInvoiceRecord({
         invoiceId: values.invoiceId,
         method: values.method,
+        creditQuantity: values.creditQuantity,
         creditNote: values.creditNote,
       });
       closeCreditInvoiceModal();
@@ -579,6 +594,28 @@ export function InvoicesPage(): ReactElement {
                 { value: "cash", label: t("invoices.methodCash") },
                 { value: "card", label: t("invoices.methodCard") },
               ]}
+            />
+          </Form.Item>
+
+          <Form.Item<CreditInvoiceFormShape>
+            label={t("invoices.creditQuantity")}
+            name="creditQuantity"
+            rules={[{ required: true }]}
+            extra={
+              invoiceBeingCredited
+                ? t("invoices.creditQuantityHint", {
+                    number: invoiceBeingCredited.invoiceNumber,
+                    count: remainingCreditQuantity,
+                  })
+                : t("invoices.creditQuantityGenericHint")
+            }
+          >
+            <InputNumber
+              min={1}
+              max={Math.max(remainingCreditQuantity, 1)}
+              precision={0}
+              placeholder={t("invoices.creditQuantityPlaceholder")}
+              style={{ width: "100%" }}
             />
           </Form.Item>
 
@@ -1056,196 +1093,217 @@ export function InvoicesPage(): ReactElement {
           {selectedTenantId ? (
             invoices.length ? (
               <div className="record-stack">
-                {invoices.map((invoice) => (
-                  <div className="record-row" key={invoice.id}>
-                    <div className="record-icon">
-                      <FileTextOutlined />
-                    </div>
-                    <div>
-                      <strong>{invoice.invoiceNumber}</strong>
-                      <div className="record-detail">
-                        <InboxOutlined /> {invoice.orderNumber}
+                {invoices.map((invoice) => {
+                  const relatedOrder = orderLookupById.get(invoice.orderId) ?? null;
+                  const remainingInvoiceCreditQuantity = Math.max(
+                    (relatedOrder?.quantity ?? invoice.creditedQuantity) - invoice.creditedQuantity,
+                    0,
+                  );
+
+                  return (
+                    <div className="record-row" key={invoice.id}>
+                      <div className="record-icon">
+                        <FileTextOutlined />
                       </div>
-                      <div className="record-detail">
-                        <UserOutlined /> {invoice.customerName}
-                      </div>
-                      <div className="record-detail">
-                        <AppstoreOutlined /> {invoice.productCategoryName} - {invoice.productName} ({invoice.productSku})
-                      </div>
-                      {invoice.revisionNumber > 1 ? (
+                      <div>
+                        <strong>{invoice.invoiceNumber}</strong>
                         <div className="record-detail">
-                          {t("invoices.amendmentRootLabel")} {invoice.amendmentRootInvoiceNumber}
+                          <InboxOutlined /> {invoice.orderNumber}
                         </div>
-                      ) : null}
-                      {invoice.reissuedFromInvoiceNumber ? (
                         <div className="record-detail">
-                          {t("invoices.reissuedFromLabel")} {invoice.reissuedFromInvoiceNumber}
+                          <UserOutlined /> {invoice.customerName}
                         </div>
-                      ) : null}
-                      {invoice.reissuedToInvoiceNumber ? (
                         <div className="record-detail">
-                          {t("invoices.reissuedToLabel")} {invoice.reissuedToInvoiceNumber}
+                          <AppstoreOutlined /> {invoice.productCategoryName} - {invoice.productName} ({invoice.productSku})
                         </div>
-                      ) : null}
-                      {invoice.amendmentNote ? (
-                        <div className="record-detail">
-                          {t("invoices.amendmentNoteLabel")} {invoice.amendmentNote}
-                        </div>
-                      ) : null}
-                      {invoice.creditNote ? (
-                        <div className="record-detail">
-                          {t("invoices.creditNoteLabel")} {invoice.creditNote}
-                        </div>
-                      ) : null}
-                      <div className="record-detail">
-                        <Tag color={getInvoiceStatusColor(invoice.status)}>
-                          {getInvoiceStatusLabel(invoice.status, t)}
-                        </Tag>{" "}
-                        <Tag color={getCollectionStatusColor(invoice.collectionStatus)}>
-                          {getCollectionStatusLabel(invoice, t)}
-                        </Tag>{" "}
-                        <Tag color={getFollowUpStatusColor(invoice.followUpStatus)}>
-                          {getFollowUpStatusLabel(invoice.followUpStatus, t)}
-                        </Tag>{" "}
-                        <Tag color={getCollectionPriorityColor(invoice.collectionPriority)}>
-                          {getCollectionPriorityLabel(invoice.collectionPriority, t)}
-                        </Tag>{" "}
                         {invoice.revisionNumber > 1 ? (
-                          <Tag color="purple">
-                            {t("invoices.revisionValue", { count: invoice.revisionNumber })}
-                          </Tag>
-                        ) : null}{" "}
-                        {t("invoices.taxSummary", { rate: invoice.taxRatePercent })} {formatCurrency(invoice.taxAmount)}
-                      </div>
-                      <div className="record-detail">
-                        {t("invoices.issuedOnLabel")} {formatDate(invoice.issuedAt)}
-                      </div>
-                      <div className="record-detail">
-                        {t("invoices.dueDateLabel")} {formatDate(invoice.dueDate)}
-                      </div>
-                      {invoice.promisedPaymentDate ? (
+                          <div className="record-detail">
+                            {t("invoices.amendmentRootLabel")} {invoice.amendmentRootInvoiceNumber}
+                          </div>
+                        ) : null}
+                        {invoice.reissuedFromInvoiceNumber ? (
+                          <div className="record-detail">
+                            {t("invoices.reissuedFromLabel")} {invoice.reissuedFromInvoiceNumber}
+                          </div>
+                        ) : null}
+                        {invoice.reissuedToInvoiceNumber ? (
+                          <div className="record-detail">
+                            {t("invoices.reissuedToLabel")} {invoice.reissuedToInvoiceNumber}
+                          </div>
+                        ) : null}
+                        {invoice.amendmentNote ? (
+                          <div className="record-detail">
+                            {t("invoices.amendmentNoteLabel")} {invoice.amendmentNote}
+                          </div>
+                        ) : null}
+                        {invoice.creditNote ? (
+                          <div className="record-detail">
+                            {t("invoices.creditNoteLabel")} {invoice.creditNote}
+                          </div>
+                        ) : null}
                         <div className="record-detail">
-                          {t("invoices.promisedPaymentDateLabel")} {formatDate(invoice.promisedPaymentDate)}
+                          <Tag color={getInvoiceStatusColor(invoice.status)}>
+                            {getInvoiceStatusLabel(invoice.status, t)}
+                          </Tag>{" "}
+                          <Tag color={getCollectionStatusColor(invoice.collectionStatus)}>
+                            {getCollectionStatusLabel(invoice, t)}
+                          </Tag>{" "}
+                          <Tag color={getFollowUpStatusColor(invoice.followUpStatus)}>
+                            {getFollowUpStatusLabel(invoice.followUpStatus, t)}
+                          </Tag>{" "}
+                          <Tag color={getCollectionPriorityColor(invoice.collectionPriority)}>
+                            {getCollectionPriorityLabel(invoice.collectionPriority, t)}
+                          </Tag>{" "}
+                          {invoice.revisionNumber > 1 ? (
+                            <Tag color="purple">
+                              {t("invoices.revisionValue", { count: invoice.revisionNumber })}
+                            </Tag>
+                          ) : null}{" "}
+                          {t("invoices.taxSummary", { rate: invoice.taxRatePercent })} {formatCurrency(invoice.taxAmount)}
                         </div>
-                      ) : null}
-                      {invoice.nextActionDate ? (
                         <div className="record-detail">
-                          {t("invoices.nextActionDateLabel")} {formatDate(invoice.nextActionDate)}
+                          {t("invoices.issuedOnLabel")} {formatDate(invoice.issuedAt)}
                         </div>
-                      ) : null}
-                      <div className="record-detail">
-                        <PhoneOutlined /> {t("invoices.actionRequiredLabel")}{" "}
-                        {getActionRequiredLabel(invoice.actionRequired, t)}
-                      </div>
-                      {invoice.collectionNote ? (
                         <div className="record-detail">
-                          {t("invoices.collectionNoteLabel")} {invoice.collectionNote}
+                          {t("invoices.dueDateLabel")} {formatDate(invoice.dueDate)}
                         </div>
-                      ) : null}
-                      <div className="record-detail">
-                        {t("invoices.paymentTermLabel")} {t("invoices.paymentTermValue", { count: invoice.paymentTermDays })}
-                      </div>
-                      <div className="record-detail">
-                        {t("invoices.totalLabel")} {formatCurrency(invoice.totalAmount)}
-                      </div>
-                      <div className="record-detail">
-                        {t("invoices.paidLabel")} {formatCurrency(invoice.paidAmount)}
-                      </div>
-                      <div className="record-detail">
-                        {t("invoices.outstandingLabel")} {formatCurrency(invoice.outstandingAmount)}
-                      </div>
-                      <div className="record-detail">
-                        <BankOutlined /> {t("invoices.paymentCountLabel")} {invoice.paymentCount}
-                      </div>
-                      <div className="record-detail">
-                        {t("invoices.lastPaymentLabel")} {formatTimestamp(invoice.lastPaymentAt)}
-                      </div>
-                      {invoice.creditedAt ? (
+                        {invoice.promisedPaymentDate ? (
+                          <div className="record-detail">
+                            {t("invoices.promisedPaymentDateLabel")} {formatDate(invoice.promisedPaymentDate)}
+                          </div>
+                        ) : null}
+                        {invoice.nextActionDate ? (
+                          <div className="record-detail">
+                            {t("invoices.nextActionDateLabel")} {formatDate(invoice.nextActionDate)}
+                          </div>
+                        ) : null}
                         <div className="record-detail">
-                          {t("invoices.creditedAtLabel")} {formatTimestamp(invoice.creditedAt)}
+                          <PhoneOutlined /> {t("invoices.actionRequiredLabel")}{" "}
+                          {getActionRequiredLabel(invoice.actionRequired, t)}
                         </div>
-                      ) : null}
-                      {invoice.creditMethod ? (
+                        {invoice.collectionNote ? (
+                          <div className="record-detail">
+                            {t("invoices.collectionNoteLabel")} {invoice.collectionNote}
+                          </div>
+                        ) : null}
                         <div className="record-detail">
-                          {t("invoices.creditMethodLabel")}{" "}
-                          {invoice.creditMethod === "cash"
-                            ? t("invoices.methodCash")
-                            : invoice.creditMethod === "card"
-                              ? t("invoices.methodCard")
-                              : t("invoices.methodBankTransfer")}
+                          {t("invoices.paymentTermLabel")}{" "}
+                          {t("invoices.paymentTermValue", { count: invoice.paymentTermDays })}
                         </div>
-                      ) : null}
-                      {invoice.lastCollectionUpdateAt ? (
                         <div className="record-detail">
-                          {t("invoices.lastFollowUpLabel")} {formatTimestamp(invoice.lastCollectionUpdateAt)}
+                          {t("invoices.totalLabel")} {formatCurrency(invoice.totalAmount)}
                         </div>
-                      ) : null}
-                      {canIssueInvoices && invoice.status === "issued" && invoice.paidAmount === 0 ? (
-                        <div className="record-actions">
-                          <Button
-                            size="small"
-                            icon={<EditOutlined />}
-                            loading={isBusy}
-                            data-testid="invoice-amend-button"
-                            onClick={() => openAmendInvoiceModal(invoice)}
-                          >
-                            {t("invoices.amendAction")}
-                          </Button>
-                          <Popconfirm
-                            title={t("invoices.voidConfirm", { number: invoice.invoiceNumber })}
-                            okText={t("invoices.voidAction")}
-                            cancelText={t("common.cancel")}
-                            onConfirm={() => void onVoidInvoice({ invoiceId: invoice.id })}
-                          >
+                        <div className="record-detail">
+                          {t("invoices.paidLabel")} {formatCurrency(invoice.paidAmount)}
+                        </div>
+                        <div className="record-detail">
+                          {t("invoices.outstandingLabel")} {formatCurrency(invoice.outstandingAmount)}
+                        </div>
+                        {invoice.creditedAmount > 0 ? (
+                          <div className="record-detail">
+                            {t("invoices.creditedAmountLabel")} {formatCurrency(invoice.creditedAmount)}
+                          </div>
+                        ) : null}
+                        {invoice.creditedQuantity > 0 ? (
+                          <div className="record-detail">
+                            {t("invoices.creditedQuantityLabel")} {invoice.creditedQuantity}
+                          </div>
+                        ) : null}
+                        <div className="record-detail">
+                          <BankOutlined /> {t("invoices.paymentCountLabel")} {invoice.paymentCount}
+                        </div>
+                        <div className="record-detail">
+                          {t("invoices.lastPaymentLabel")} {formatTimestamp(invoice.lastPaymentAt)}
+                        </div>
+                        {invoice.creditedAt ? (
+                          <div className="record-detail">
+                            {t("invoices.creditedAtLabel")} {formatTimestamp(invoice.creditedAt)}
+                          </div>
+                        ) : null}
+                        {invoice.creditMethod ? (
+                          <div className="record-detail">
+                            {t("invoices.creditMethodLabel")}{" "}
+                            {invoice.creditMethod === "cash"
+                              ? t("invoices.methodCash")
+                              : invoice.creditMethod === "card"
+                                ? t("invoices.methodCard")
+                                : t("invoices.methodBankTransfer")}
+                          </div>
+                        ) : null}
+                        {invoice.lastCollectionUpdateAt ? (
+                          <div className="record-detail">
+                            {t("invoices.lastFollowUpLabel")} {formatTimestamp(invoice.lastCollectionUpdateAt)}
+                          </div>
+                        ) : null}
+                        {canIssueInvoices && invoice.status === "issued" && invoice.paidAmount === 0 ? (
+                          <div className="record-actions">
                             <Button
                               size="small"
-                              icon={<StopOutlined />}
+                              icon={<EditOutlined />}
                               loading={isBusy}
-                              data-testid="invoice-void-button"
+                              data-testid="invoice-amend-button"
+                              onClick={() => openAmendInvoiceModal(invoice)}
                             >
-                              {t("invoices.voidAction")}
+                              {t("invoices.amendAction")}
                             </Button>
-                          </Popconfirm>
-                        </div>
-                      ) : null}
-                      {canIssueInvoices && invoice.status === "paid" ? (
-                        <div className="record-actions">
-                          <Button
-                            size="small"
-                            icon={<RollbackOutlined />}
-                            loading={isBusy}
-                            data-testid="invoice-credit-button"
-                            onClick={() => openCreditInvoiceModal(invoice)}
-                          >
-                            {t("invoices.creditAction")}
-                          </Button>
-                        </div>
-                      ) : null}
-                      {canIssueInvoices &&
-                      invoice.status === "void" &&
-                      !invoice.reissuedToInvoiceId &&
-                      !invoice.reissuedToInvoiceNumber ? (
-                        <div className="record-actions">
-                          <Popconfirm
-                            title={t("invoices.reopenConfirm", { number: invoice.invoiceNumber })}
-                            okText={t("invoices.reopenAction")}
-                            cancelText={t("common.cancel")}
-                            onConfirm={() => void onReopenInvoice({ invoiceId: invoice.id })}
-                          >
+                            <Popconfirm
+                              title={t("invoices.voidConfirm", { number: invoice.invoiceNumber })}
+                              okText={t("invoices.voidAction")}
+                              cancelText={t("common.cancel")}
+                              onConfirm={() => void onVoidInvoice({ invoiceId: invoice.id })}
+                            >
+                              <Button
+                                size="small"
+                                icon={<StopOutlined />}
+                                loading={isBusy}
+                                data-testid="invoice-void-button"
+                              >
+                                {t("invoices.voidAction")}
+                              </Button>
+                            </Popconfirm>
+                          </div>
+                        ) : null}
+                        {canIssueInvoices &&
+                        (invoice.status === "paid" || invoice.status === "partially_credited") &&
+                        remainingInvoiceCreditQuantity > 0 ? (
+                          <div className="record-actions">
                             <Button
                               size="small"
-                              icon={<CheckCircleOutlined />}
+                              icon={<RollbackOutlined />}
                               loading={isBusy}
-                              data-testid="invoice-reopen-button"
+                              data-testid="invoice-credit-button"
+                              onClick={() => openCreditInvoiceModal(invoice)}
                             >
-                              {t("invoices.reopenAction")}
+                              {t("invoices.creditAction")}
                             </Button>
-                          </Popconfirm>
-                        </div>
-                      ) : null}
+                          </div>
+                        ) : null}
+                        {canIssueInvoices &&
+                        invoice.status === "void" &&
+                        !invoice.reissuedToInvoiceId &&
+                        !invoice.reissuedToInvoiceNumber ? (
+                          <div className="record-actions">
+                            <Popconfirm
+                              title={t("invoices.reopenConfirm", { number: invoice.invoiceNumber })}
+                              okText={t("invoices.reopenAction")}
+                              cancelText={t("common.cancel")}
+                              onConfirm={() => void onReopenInvoice({ invoiceId: invoice.id })}
+                            >
+                              <Button
+                                size="small"
+                                icon={<CheckCircleOutlined />}
+                                loading={isBusy}
+                                data-testid="invoice-reopen-button"
+                              >
+                                {t("invoices.reopenAction")}
+                              </Button>
+                            </Popconfirm>
+                          </div>
+                        ) : null}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <Empty description={t("invoices.empty")} />

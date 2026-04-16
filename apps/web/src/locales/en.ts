@@ -383,6 +383,7 @@ const en = {
     statusIssued: "Issued",
     statusVoid: "Voided",
     statusCredited: "Credited",
+    statusPartiallyCredited: "Partially Credited",
     statusPartiallyPaid: "Partially Paid",
     statusPaid: "Paid",
     methodCash: "Cash",
@@ -408,8 +409,14 @@ const en = {
     creditNoteHint: "Required to explain why {{number}} is being credited after it was settled.",
     creditNoteGenericHint: "Required business note for the credit note.",
     creditNotePlaceholder: "Full refund after goods return and settlement.",
+    creditQuantity: "Credit Quantity",
+    creditQuantityHint: "Select how many settled units should be refunded from {{number}}. Remaining eligible quantity: {{count}}.",
+    creditQuantityGenericHint: "Select how many settled units should be refunded.",
+    creditQuantityPlaceholder: "1",
     creditedAtLabel: "Credited at:",
     creditMethodLabel: "Refund method:",
+    creditedAmountLabel: "Credited value:",
+    creditedQuantityLabel: "Credited quantity:",
     reissuedFromLabel: "Reissued from:",
     reissuedToLabel: "Reissued as:",
     revisionValue: "Rev {{count}}",
@@ -1009,7 +1016,9 @@ Object.assign(en.errors, {
   invoiceActiveAmendmentNoteRequired: "A business note is required when amending an active invoice.",
   invoiceCreditNoteRequired: "A business note is required when crediting a paid invoice.",
   invalidInvoiceCreditNote: "Credit note must be 240 characters or fewer.",
-});
+  invalidInvoiceCreditQuantity: "Credit quantity must be a positive integer.",
+  invoiceCreditQuantityExceedsRemaining: "Credit quantity cannot exceed the remaining uncredited quantity.",
+  });
 
 Object.assign(en.common, {
   allCategories: "All Categories",

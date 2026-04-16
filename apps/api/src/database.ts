@@ -182,6 +182,10 @@ db.exec(`
     credit_note TEXT,
     credited_at TEXT,
     credit_method TEXT,
+    credited_amount INTEGER NOT NULL DEFAULT 0,
+    credited_quantity INTEGER NOT NULL DEFAULT 0,
+    credited_subtotal_amount INTEGER NOT NULL DEFAULT 0,
+    credited_tax_amount INTEGER NOT NULL DEFAULT 0,
     reissued_from_invoice_id TEXT,
     reissued_from_invoice_number TEXT,
     reissued_to_invoice_id TEXT,
@@ -414,6 +418,10 @@ function migrateInvoicesForActiveOrderConstraint(): void {
       credit_note TEXT,
       credited_at TEXT,
       credit_method TEXT,
+      credited_amount INTEGER NOT NULL DEFAULT 0,
+      credited_quantity INTEGER NOT NULL DEFAULT 0,
+      credited_subtotal_amount INTEGER NOT NULL DEFAULT 0,
+      credited_tax_amount INTEGER NOT NULL DEFAULT 0,
       reissued_from_invoice_id TEXT,
       reissued_from_invoice_number TEXT,
       reissued_to_invoice_id TEXT,
@@ -454,6 +462,10 @@ function migrateInvoicesForActiveOrderConstraint(): void {
         credit_note,
         credited_at,
         credit_method,
+        credited_amount,
+        credited_quantity,
+        credited_subtotal_amount,
+        credited_tax_amount,
         reissued_from_invoice_id,
         reissued_from_invoice_number,
         reissued_to_invoice_id,
@@ -490,6 +502,10 @@ function migrateInvoicesForActiveOrderConstraint(): void {
         NULL,
         NULL,
         NULL,
+        0,
+        0,
+        0,
+        0,
         NULL,
         NULL,
         NULL,
@@ -683,6 +699,22 @@ if (!invoiceColumns.some((column) => column.name === "credited_at")) {
 
 if (!invoiceColumns.some((column) => column.name === "credit_method")) {
   db.exec("ALTER TABLE invoices ADD COLUMN credit_method TEXT");
+}
+
+if (!invoiceColumns.some((column) => column.name === "credited_amount")) {
+  db.exec("ALTER TABLE invoices ADD COLUMN credited_amount INTEGER NOT NULL DEFAULT 0");
+}
+
+if (!invoiceColumns.some((column) => column.name === "credited_quantity")) {
+  db.exec("ALTER TABLE invoices ADD COLUMN credited_quantity INTEGER NOT NULL DEFAULT 0");
+}
+
+if (!invoiceColumns.some((column) => column.name === "credited_subtotal_amount")) {
+  db.exec("ALTER TABLE invoices ADD COLUMN credited_subtotal_amount INTEGER NOT NULL DEFAULT 0");
+}
+
+if (!invoiceColumns.some((column) => column.name === "credited_tax_amount")) {
+  db.exec("ALTER TABLE invoices ADD COLUMN credited_tax_amount INTEGER NOT NULL DEFAULT 0");
 }
 
 if (!invoiceColumns.some((column) => column.name === "reissued_from_invoice_id")) {

@@ -318,6 +318,11 @@ export async function handleCreditInvoice(
     return;
   }
 
+  if (!Number.isInteger(input.creditQuantity) || input.creditQuantity <= 0) {
+    badRequest(response, "Credit quantity must be a positive integer.");
+    return;
+  }
+
   if (input.creditNote !== null && input.creditNote !== undefined && typeof input.creditNote !== "string") {
     badRequest(response, "Credit note must be 240 characters or fewer.");
     return;
@@ -331,13 +336,15 @@ export async function handleCreditInvoice(
       error instanceof Error &&
       [
         "The selected invoice does not exist.",
-        "The selected invoice has already been credited.",
-        "The selected invoice has been voided.",
-        "The selected invoice can only be credited after it has been fully paid.",
-        "Credit note is required when crediting a paid invoice.",
-        "Credit note must be 240 characters or fewer.",
-        "Payment method is invalid.",
-      ].includes(error.message)
+          "The selected invoice has already been credited.",
+          "The selected invoice has been voided.",
+          "The selected invoice can only be credited after it has been fully paid.",
+          "Credit quantity must be a positive integer.",
+          "Credit quantity cannot exceed the remaining uncredited quantity.",
+          "Credit note is required when crediting a paid invoice.",
+          "Credit note must be 240 characters or fewer.",
+          "Payment method is invalid.",
+        ].includes(error.message)
     ) {
       badRequest(response, error.message);
       return;
