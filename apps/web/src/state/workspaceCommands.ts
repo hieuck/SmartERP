@@ -8,6 +8,7 @@ import type {
   CancelPurchaseOrderInput,
   CloseOrderInput,
   ClosePurchaseOrderInput,
+  ReopenInvoiceInput,
   ReopenOrderInput,
   ReopenPurchaseOrderInput,
   CreateCustomerInput,
@@ -51,6 +52,7 @@ import {
   submitInvoiceCollectionUpdate,
   submitInvoiceIssue,
   submitInvoicePayment,
+  submitInvoiceReopen,
   submitInvoiceVoid,
 } from "../modules/invoices/api";
 import {
@@ -644,6 +646,20 @@ export function createWorkspaceCommands(dependencies: WorkspaceCommandsDependenc
         "Invoice void failed.",
         async () => {
           await submitInvoiceVoid({ ...input, tenantId });
+          await refreshTenantWorkspace(tenantId);
+        },
+        { clearNotice: true },
+      );
+    },
+
+    async reopenInvoiceRecord(input: Omit<ReopenInvoiceInput, "tenantId">): Promise<void> {
+      const tenantId = getSelectedTenantIdOrThrow();
+
+      await runBusyAction(
+        { setErrorMessage, setIsBusy, setNoticeMessage },
+        "Invoice reopen failed.",
+        async () => {
+          await submitInvoiceReopen({ ...input, tenantId });
           await refreshTenantWorkspace(tenantId);
         },
         { clearNotice: true },

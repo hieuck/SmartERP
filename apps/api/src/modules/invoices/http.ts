@@ -3,6 +3,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import type {
   CreateInvoiceInput,
   CreateInvoicePaymentInput,
+  ReopenInvoiceInput,
   ResolveInvoiceCollectionActionInput,
   Session,
   UpdateInvoiceCollectionInput,
@@ -16,6 +17,7 @@ import {
   hasTenant,
   listInvoiceCollectionActivities,
   listInvoices,
+  reopenInvoice,
   resolveInvoiceCollectionAction,
   runWithSession,
   updateInvoiceCollection,
@@ -321,6 +323,49 @@ export async function handleVoidInvoice(
         "The selected invoice does not exist.",
         "The selected invoice has already been voided.",
         "The selected invoice cannot be voided because payments already exist.",
+      ].includes(error.message)
+    ) {
+      badRequest(response, error.message);
+      return;
+    }
+
+    throw error;
+  }
+}
+
+export async function handleReopenInvoice(
+  request: IncomingMessage,
+  response: ServerResponse,
+  requestSession: Session | null,
+): Promise<void> {
+  const input = await readJson<ReopenInvoiceInput>(request);
+
+  if (!input.tenantId?.trim()) {
+    badRequest(response, "tenantId is required.");
+    return;
+  }
+
+  if (!hasTenant(input.tenantId)) {
+    badRequest(response, "The selected tenant does not exist.");
+    return;
+  }
+
+  if (!input.invoiceId?.trim()) {
+    badRequest(response, "invoiceId is required.");
+    return;
+  }
+
+  try {
+    const invoice = runWithSession(requestSession, () => reopenInvoice(input));
+    sendJson(response, 200, { item: invoice });
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      [
+        "The selected invoice does not exist.",
+        "The selected invoice can only be reopened after it has been voided.",
+        "The selected invoice cannot be reopened because a newer revision already exists.",
+        "The selected invoice cannot be reopened because an active revision already exists.",
       ].includes(error.message)
     ) {
       badRequest(response, error.message);

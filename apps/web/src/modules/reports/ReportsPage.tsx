@@ -40,6 +40,10 @@ function getAuditActionColor(actionType: AuditActionType): string {
     return "default";
   }
 
+  if (actionType === "invoice_reopened") {
+    return "green";
+  }
+
   if (actionType === "order_updated" || actionType === "purchase_order_updated") {
     return "processing";
   }
@@ -98,6 +102,10 @@ function getAuditActionLabel(
 
   if (actionType === "invoice_reissued") {
     return t("reports.auditActionInvoiceReissued");
+  }
+
+  if (actionType === "invoice_reopened") {
+    return t("reports.auditActionInvoiceReopened");
   }
 
   if (actionType === "order_updated") {

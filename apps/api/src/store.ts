@@ -25,6 +25,7 @@ import {
   type DeleteCustomerInput,
   type CreateInvoiceInput,
   type CreateInvoicePaymentInput,
+  type ReopenInvoiceInput,
   type VoidInvoiceInput,
   type UpdateInvoiceCollectionInput,
   type ResolveInvoiceCollectionActionInput,
@@ -5461,6 +5462,84 @@ export function voidInvoice(input: VoidInvoiceInput): InvoiceRecord {
         note: `Original due ${mappedInvoice.dueDate}`,
       },
       createdAt: voidedAt,
+    });
+
+    db.exec("COMMIT");
+    return mappedInvoice;
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
+}
+
+export function reopenInvoice(input: ReopenInvoiceInput): InvoiceRecord {
+  const invoice = getInvoiceByIdStatement.get(input.tenantId, input.invoiceId) as InvoiceRow | undefined;
+  if (!invoice) {
+    throw new Error("The selected invoice does not exist.");
+  }
+
+  if (invoice.status !== "void") {
+    throw new Error("The selected invoice can only be reopened after it has been voided.");
+  }
+
+  if (invoice.reissued_to_invoice_id || invoice.reissued_to_invoice_number) {
+    throw new Error("The selected invoice cannot be reopened because a newer revision already exists.");
+  }
+
+  const activeInvoiceCount = Number(
+    (countInvoicesForOrderStatement.get(input.tenantId, invoice.order_id) as { count?: number } | undefined)?.count ?? 0,
+  );
+  if (activeInvoiceCount > 0) {
+    throw new Error("The selected invoice cannot be reopened because an active revision already exists.");
+  }
+
+  const reopenedAt = timestamp();
+
+  db.exec("BEGIN");
+
+  try {
+    updateInvoiceStatusStatement.run("issued", input.tenantId, input.invoiceId);
+
+    createJournalEntryLines({
+      tenantId: input.tenantId,
+      referenceType: "invoice",
+      referenceId: invoice.id,
+      referenceNumber: invoice.invoice_number,
+      description: `Reopen invoice ${invoice.invoice_number}`,
+      createdAt: reopenedAt,
+      lines: [
+        { accountCode: "131", debitAmount: invoice.total_amount, creditAmount: 0 },
+        { accountCode: "511", debitAmount: 0, creditAmount: invoice.subtotal_amount },
+        { accountCode: "3331", debitAmount: 0, creditAmount: invoice.tax_amount },
+      ],
+    });
+
+    const reopenedInvoice = getInvoiceByIdStatement.get(input.tenantId, input.invoiceId) as InvoiceRow | undefined;
+    if (!reopenedInvoice) {
+      throw new Error("The selected invoice does not exist.");
+    }
+
+    const mappedInvoice = mapInvoice(reopenedInvoice);
+    recordAuditLog({
+      tenantId: input.tenantId,
+      entityType: "invoice",
+      entityId: mappedInvoice.id,
+      entityNumber: mappedInvoice.invoiceNumber,
+      actionType: "invoice_reopened",
+      summary: `Reopened ${mappedInvoice.invoiceNumber}`,
+      metadata: {
+        amount: mappedInvoice.totalAmount,
+        outstandingAmount: mappedInvoice.outstandingAmount,
+        productCategoryId: mappedInvoice.productCategoryId,
+        productCategoryName: mappedInvoice.productCategoryName,
+        productSku: mappedInvoice.productSku,
+        productName: mappedInvoice.productName,
+        amendmentRootInvoiceNumber: mappedInvoice.amendmentRootInvoiceNumber,
+        revisionNumber: mappedInvoice.revisionNumber,
+        reissuedFromInvoiceNumber: mappedInvoice.reissuedFromInvoiceNumber ?? undefined,
+        note: `Due ${mappedInvoice.dueDate}`,
+      },
+      createdAt: reopenedAt,
     });
 
     db.exec("COMMIT");

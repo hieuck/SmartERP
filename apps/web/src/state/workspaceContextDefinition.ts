@@ -6,6 +6,7 @@ import type {
   CancelPurchaseOrderInput,
   CloseOrderInput,
   ClosePurchaseOrderInput,
+  ReopenInvoiceInput,
   ReopenOrderInput,
   ReopenPurchaseOrderInput,
   ApprovalRequestRecord,
@@ -121,6 +122,7 @@ export type WorkspaceContextValue = {
   createInvoiceRecord: (input: Omit<CreateInvoiceInput, "tenantId">) => Promise<void>;
   createInvoicePaymentRecord: (input: Omit<CreateInvoicePaymentInput, "tenantId">) => Promise<void>;
   voidInvoiceRecord: (input: Omit<VoidInvoiceInput, "tenantId">) => Promise<void>;
+  reopenInvoiceRecord: (input: Omit<ReopenInvoiceInput, "tenantId">) => Promise<void>;
   updateInvoiceCollectionRecord: (
     input: Omit<UpdateInvoiceCollectionInput, "tenantId">,
   ) => Promise<void>;

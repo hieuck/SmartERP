@@ -904,6 +904,8 @@ Object.assign(vi.invoices, {
   collectionVoid: "Đã hủy hiệu lực",
   voidAction: "Hủy hiệu lực",
   voidConfirm: "Hủy hiệu lực {{number}}? Chỉ áp dụng khi hóa đơn chưa có bất kỳ thanh toán nào.",
+  reopenAction: "Mở lại hóa đơn",
+  reopenConfirm: "Mở lại {{number}}? Chỉ áp dụng khi chưa có bản sửa đổi mới hơn.",
   reissuedFromLabel: "Phát hành lại từ:",
   reissuedToLabel: "Đã phát hành lại thành:",
 });
@@ -913,6 +915,7 @@ Object.assign(vi.reports, {
   auditRevisionLabel: "Bản sửa đổi:",
   auditActionInvoiceReissued: "Phát hành lại hóa đơn",
   auditActionInvoiceVoided: "Hủy hiệu lực hóa đơn",
+  auditActionInvoiceReopened: "Mở lại hóa đơn",
   auditActionOrderUpdated: "Cập nhật đơn hàng",
   auditActionOrderCanceled: "Hủy đơn hàng",
   auditActionOrderClosed: "Chốt đơn hàng",
@@ -992,5 +995,9 @@ Object.assign(vi.errors, {
   purchaseOrderReopenBlocked: "Chỉ có thể mở lại đơn mua này sau khi đơn đã được chốt.",
   invoiceAlreadyVoided: "Hóa đơn này đã được hủy hiệu lực trước đó.",
   invoiceVoided: "Hóa đơn này đã bị hủy hiệu lực.",
+  invoiceReopenFailed: "Mở lại hóa đơn thất bại.",
+  invoiceReopenBlocked: "Hóa đơn này chỉ được mở lại sau khi đã hủy hiệu lực.",
+  invoiceReopenRevisionBlocked: "Hóa đơn này không thể mở lại vì đã có bản sửa đổi mới hơn.",
+  invoiceReopenActiveRevisionBlocked: "Hóa đơn này không thể mở lại vì đang có một bản sửa đổi còn hiệu lực.",
   invoiceVoidBlockedByPayments: "Không thể hủy hiệu lực hóa đơn này vì đã có thanh toán phát sinh.",
 });

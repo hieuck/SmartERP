@@ -4,6 +4,7 @@ import type {
   CreateInvoicePaymentInput,
   InvoiceCollectionActivityRecord,
   InvoiceRecord,
+  ReopenInvoiceInput,
   ResolveInvoiceCollectionActionInput,
   UpdateInvoiceCollectionInput,
   VoidInvoiceInput,
@@ -14,6 +15,7 @@ import {
   createInvoicePayment,
   listInvoiceCollectionActivities,
   listInvoices,
+  reopenInvoice,
   resolveInvoiceCollectionAction,
   updateInvoiceCollection,
   voidInvoice,
@@ -43,6 +45,10 @@ export async function submitInvoicePayment(
 
 export async function submitInvoiceVoid(input: VoidInvoiceInput): Promise<InvoiceRecord> {
   return voidInvoice(input);
+}
+
+export async function submitInvoiceReopen(input: ReopenInvoiceInput): Promise<InvoiceRecord> {
+  return reopenInvoice(input);
 }
 
 export async function submitInvoiceCollectionUpdate(

@@ -446,6 +446,8 @@ const en = {
     activityOutstandingLabel: "Outstanding snapshot:",
     voidAction: "Void Invoice",
     voidConfirm: "Void {{number}}? This only works before any payment has been posted.",
+    reopenAction: "Reopen Invoice",
+    reopenConfirm: "Reopen {{number}}? This restores the same invoice revision while no newer revision exists.",
   },
   approvals: {
     title: "Approvals",
@@ -515,6 +517,7 @@ const en = {
     auditActionInvoiceIssued: "Invoice issued",
     auditActionInvoiceReissued: "Invoice reissued",
     auditActionInvoiceVoided: "Invoice voided",
+    auditActionInvoiceReopened: "Invoice reopened",
     auditActionOrderUpdated: "Order updated",
     auditActionOrderCanceled: "Order canceled",
     auditActionOrderClosed: "Order closed",
@@ -958,6 +961,11 @@ Object.assign(en.errors, {
   purchaseOrderReopenBlocked: "This purchase order can only be reopened after it has been closed.",
   invoiceAlreadyVoided: "This invoice has already been voided.",
   invoiceVoided: "This invoice has been voided.",
+  invoiceReopenFailed: "Invoice reopen failed.",
+  invoiceReopenBlocked: "This invoice can only be reopened after it has been voided.",
+  invoiceReopenRevisionBlocked: "This invoice cannot be reopened because a newer revision already exists.",
+  invoiceReopenActiveRevisionBlocked:
+    "This invoice cannot be reopened because another active revision already exists.",
   invoiceVoidBlockedByPayments: "This invoice cannot be voided because payments already exist.",
 });
 

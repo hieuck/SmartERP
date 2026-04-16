@@ -20,6 +20,7 @@ import type {
   CreateInvoiceInput,
   CreateInvoicePaymentInput,
   InvoiceRecord,
+  ReopenInvoiceInput,
   UpdateInvoiceCollectionInput,
   VoidInvoiceInput,
 } from "@smarterp/contracts";
@@ -33,6 +34,7 @@ const { TextArea } = Input;
 type InvoiceFormShape = Omit<CreateInvoiceInput, "tenantId">;
 type InvoicePaymentFormShape = Omit<CreateInvoicePaymentInput, "tenantId">;
 type InvoiceCollectionFormShape = Omit<UpdateInvoiceCollectionInput, "tenantId">;
+type InvoiceReopenFormShape = Omit<ReopenInvoiceInput, "tenantId">;
 type InvoiceVoidFormShape = Omit<VoidInvoiceInput, "tenantId">;
 
 function getTodayDateInputValue(): string {
@@ -239,6 +241,7 @@ export function InvoicesPage(): ReactElement {
     collectionActivities,
     createInvoicePaymentRecord,
     createInvoiceRecord,
+    reopenInvoiceRecord,
     voidInvoiceRecord,
     updateInvoiceCollectionRecord,
     resolveInvoiceCollectionActionRecord,
@@ -328,6 +331,14 @@ export function InvoicesPage(): ReactElement {
   const onVoidInvoice = async (values: InvoiceVoidFormShape): Promise<void> => {
     try {
       await voidInvoiceRecord(values);
+    } catch {
+      // Error state is already surfaced via workspace context.
+    }
+  };
+
+  const onReopenInvoice = async (values: InvoiceReopenFormShape): Promise<void> => {
+    try {
+      await reopenInvoiceRecord(values);
     } catch {
       // Error state is already surfaced via workspace context.
     }
@@ -933,6 +944,28 @@ export function InvoicesPage(): ReactElement {
                               data-testid="invoice-void-button"
                             >
                               {t("invoices.voidAction")}
+                            </Button>
+                          </Popconfirm>
+                        </div>
+                      ) : null}
+                      {canIssueInvoices &&
+                      invoice.status === "void" &&
+                      !invoice.reissuedToInvoiceId &&
+                      !invoice.reissuedToInvoiceNumber ? (
+                        <div className="record-actions">
+                          <Popconfirm
+                            title={t("invoices.reopenConfirm", { number: invoice.invoiceNumber })}
+                            okText={t("invoices.reopenAction")}
+                            cancelText={t("common.cancel")}
+                            onConfirm={() => void onReopenInvoice({ invoiceId: invoice.id })}
+                          >
+                            <Button
+                              size="small"
+                              icon={<CheckCircleOutlined />}
+                              loading={isBusy}
+                              data-testid="invoice-reopen-button"
+                            >
+                              {t("invoices.reopenAction")}
                             </Button>
                           </Popconfirm>
                         </div>

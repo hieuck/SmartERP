@@ -205,7 +205,8 @@ function isExpectedNegativePath(response) {
           response.url().endsWith("/api/invoices") ||
           response.url().endsWith("/api/invoices/payments") ||
           response.url().endsWith("/api/invoices/collections") ||
-          response.url().endsWith("/api/invoices/void")
+          response.url().endsWith("/api/invoices/void") ||
+          response.url().endsWith("/api/invoices/reopen")
         )
       )
   );
@@ -559,11 +560,16 @@ async function main() {
   let invoiceReissueVerified = false;
   let invoiceReissueLineageVerified = false;
   let invoiceRevisionLineageVerified = false;
+  let invoiceReopenVerified = false;
+  let invoiceReopenGuardVerified = false;
+  let invoiceReopenRevisionGuardVerified = false;
+  let invoiceReopenAuditVerified = false;
   let invoiceReissueAuditVerified = false;
   let invoiceCategoryContextVerified = false;
   let reissuedInvoiceVoidVerified = false;
   let voidedInvoicePaymentGuardVerified = false;
   let voidedInvoiceCollectionGuardVerified = false;
+  let reopenedInvoiceOrderCancellationGuardVerified = false;
   let voidedInvoiceOrderCancellationVerified = false;
   let backdatedInvoiceApprovalVerified = false;
   let collectionFollowUpVerified = false;
@@ -2234,6 +2240,163 @@ async function main() {
     });
     reissuedInvoiceVoidVerified = true;
 
+    await reissuedInvoiceRowCard.locator('[data-testid="invoice-reopen-button"]').click();
+    await page.getByRole("button", { name: /Mở lại hóa đơn|Mo lai hoa don/ }).last().click();
+    await reissuedInvoiceRowCard.getByText(/Đã phát hành|Da phat hanh/, { exact: false }).first().waitFor({
+      timeout: 15000,
+    });
+    invoiceReopenVerified = true;
+
+    const reopenedInvoiceReopenResponse = await page.evaluate(
+      async ({ targetInvoiceNumber, sessionKey, tenantKey }) => {
+        const rawSession = window.localStorage.getItem(sessionKey);
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
+        const headers = {
+          "content-type": "application/json",
+          authorization: `Bearer ${accessToken}`,
+        };
+
+        const invoicesResponse = await fetch(`/api/invoices?tenantId=${encodeURIComponent(tenantId ?? "")}`, {
+          headers,
+        });
+        const invoicesPayload = await invoicesResponse.json();
+        const targetInvoice = invoicesPayload.items.find((item) => item.invoiceNumber === targetInvoiceNumber);
+
+        if (!targetInvoice || !tenantId) {
+          return { status: 0, body: { error: "Reopened invoice lookup failed before reopen guard test." } };
+        }
+
+        const response = await fetch("/api/invoices/reopen", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            tenantId,
+            invoiceId: targetInvoice.id,
+          }),
+        });
+
+        return {
+          status: response.status,
+          body: await response.json(),
+        };
+      },
+      {
+        targetInvoiceNumber: reissuedInvoiceNumber,
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+      },
+    );
+    assert(
+      reopenedInvoiceReopenResponse.status === 400 &&
+        reopenedInvoiceReopenResponse.body?.error ===
+          "The selected invoice can only be reopened after it has been voided.",
+      "Issued invoice did not reject reopen while already active.",
+    );
+    invoiceReopenGuardVerified = true;
+
+    const supersededInvoiceReopenResponse = await page.evaluate(
+      async ({ targetInvoiceNumber, sessionKey, tenantKey }) => {
+        const rawSession = window.localStorage.getItem(sessionKey);
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
+        const headers = {
+          "content-type": "application/json",
+          authorization: `Bearer ${accessToken}`,
+        };
+
+        const invoicesResponse = await fetch(`/api/invoices?tenantId=${encodeURIComponent(tenantId ?? "")}`, {
+          headers,
+        });
+        const invoicesPayload = await invoicesResponse.json();
+        const targetInvoice = invoicesPayload.items.find((item) => item.invoiceNumber === targetInvoiceNumber);
+
+        if (!targetInvoice || !tenantId) {
+          return { status: 0, body: { error: "Superseded invoice lookup failed before reopen guard test." } };
+        }
+
+        const response = await fetch("/api/invoices/reopen", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            tenantId,
+            invoiceId: targetInvoice.id,
+          }),
+        });
+
+        return {
+          status: response.status,
+          body: await response.json(),
+        };
+      },
+      {
+        targetInvoiceNumber: voidedInvoiceNumber,
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+      },
+    );
+    assert(
+      supersededInvoiceReopenResponse.status === 400 &&
+        supersededInvoiceReopenResponse.body?.error ===
+          "The selected invoice cannot be reopened because a newer revision already exists.",
+      "Superseded invoice did not reject reopen after a newer revision existed.",
+    );
+    invoiceReopenRevisionGuardVerified = true;
+
+    const reopenedInvoiceOrderCancelResponse = await page.evaluate(
+      async ({ targetOrderNumber, sessionKey, tenantKey }) => {
+        const rawSession = window.localStorage.getItem(sessionKey);
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
+        const headers = {
+          "content-type": "application/json",
+          authorization: `Bearer ${accessToken}`,
+        };
+
+        const ordersResponse = await fetch(`/api/orders?tenantId=${encodeURIComponent(tenantId ?? "")}`, {
+          headers,
+        });
+        const ordersPayload = await ordersResponse.json();
+        const targetOrder = ordersPayload.items.find((item) => item.orderNumber === targetOrderNumber);
+
+        if (!targetOrder || !tenantId) {
+          return { status: 0, body: { error: "Order lookup failed before cancel guard test after invoice reopen." } };
+        }
+
+        const response = await fetch("/api/orders/cancel", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            tenantId,
+            orderId: targetOrder.id,
+          }),
+        });
+
+        return {
+          status: response.status,
+          body: await response.json(),
+        };
+      },
+      {
+        targetOrderNumber: voidedOrderNumber,
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+      },
+    );
+    assert(
+      reopenedInvoiceOrderCancelResponse.status === 400 &&
+        reopenedInvoiceOrderCancelResponse.body?.error ===
+          "The selected order cannot be canceled because an invoice already references it.",
+      "Order cancellation did not reject while a reopened invoice revision was active.",
+    );
+    reopenedInvoiceOrderCancellationGuardVerified = true;
+
+    await reissuedInvoiceRowCard.locator('[data-testid="invoice-void-button"]').click();
+    await page.getByRole("button", { name: /Hủy hiệu lực|Huy hieu luc/ }).last().click();
+    await reissuedInvoiceRowCard.getByText(/Đã hủy hiệu lực|Da huy hieu luc/, { exact: false }).first().waitFor({
+      timeout: 15000,
+    });
+
     await openSection(page, sidebarIndexes.orders, "/dashboard/orders");
     await waitForTenantContext(page, tenantName);
     const cancelVoidedOrderRow = getListCard(page).locator(".record-row").filter({ hasText: voidedOrderNumber }).first();
@@ -2685,6 +2848,16 @@ async function main() {
       ),
       "Invoice reissue audit entry was not recorded with category context.",
     );
+    assert(
+      auditSnapshot.body?.items?.some(
+        (item) =>
+          item.actionType === "invoice_reopened" &&
+          item.entityNumber === reissuedInvoiceNumber &&
+          item.metadata?.productCategoryName === productCategoryName,
+      ),
+      "Invoice reopen audit entry was not recorded with category context.",
+    );
+    invoiceReopenAuditVerified = true;
     assert(
       auditSnapshot.body?.items?.some(
         (item) => item.actionType === "invoice_voided" && item.entityNumber === voidedInvoiceNumber,
@@ -3417,11 +3590,16 @@ async function main() {
       invoiceReissueVerified,
       invoiceReissueLineageVerified,
       invoiceRevisionLineageVerified,
+      invoiceReopenVerified,
+      invoiceReopenGuardVerified,
+      invoiceReopenRevisionGuardVerified,
+      invoiceReopenAuditVerified,
       invoiceReissueAuditVerified,
       invoiceCategoryContextVerified,
       reissuedInvoiceVoidVerified,
       voidedInvoicePaymentGuardVerified,
       voidedInvoiceCollectionGuardVerified,
+      reopenedInvoiceOrderCancellationGuardVerified,
       voidedInvoiceOrderCancellationVerified,
       backdatedInvoiceApprovalVerified,
       collectionFollowUpVerified,

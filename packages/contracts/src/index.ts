@@ -663,6 +663,7 @@ export type AuditActionType =
   | "invoice_issued"
   | "invoice_reissued"
   | "invoice_voided"
+  | "invoice_reopened"
   | "order_updated"
   | "order_canceled"
   | "order_closed"
@@ -793,6 +794,11 @@ export type ResolveInvoiceCollectionActionInput = {
 };
 
 export type VoidInvoiceInput = {
+  tenantId: string;
+  invoiceId: string;
+};
+
+export type ReopenInvoiceInput = {
   tenantId: string;
   invoiceId: string;
 };

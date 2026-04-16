@@ -5,6 +5,7 @@ import {
   handleCreateInvoicePayment,
   handleListInvoiceCollectionActivities,
   handleListInvoices,
+  handleReopenInvoice,
   handleResolveInvoiceCollectionAction,
   handleUpdateInvoiceCollection,
   handleVoidInvoice,
@@ -48,6 +49,13 @@ export const invoiceApiRoutes: ApiRoute[] = [
     path: "/api/invoices/void",
     handle: withPermission("issue_invoices", ({ request, response, session }) =>
       handleVoidInvoice(request, response, session),
+    ),
+  },
+  {
+    method: "POST",
+    path: "/api/invoices/reopen",
+    handle: withPermission("issue_invoices", ({ request, response, session }) =>
+      handleReopenInvoice(request, response, session),
     ),
   },
   {

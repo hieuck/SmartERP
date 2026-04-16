@@ -53,6 +53,7 @@ const errorKeyByMessage: Record<string, string> = {
   "Invoice creation failed.": "errors.createInvoiceFailed",
   "Invoice payment failed.": "errors.createInvoicePaymentFailed",
   "Invoice void failed.": "errors.voidInvoiceFailed",
+  "Invoice reopen failed.": "errors.invoiceReopenFailed",
   "Invoice collection update failed.": "errors.updateInvoiceCollectionFailed",
   "Approval decision failed.": "errors.decideApprovalFailed",
   "Select a tenant first.": "errors.selectTenantFirst",
@@ -79,6 +80,11 @@ const errorKeyByMessage: Record<string, string> = {
   "The selected invoice does not exist.": "errors.selectedInvoiceMissing",
   "The selected invoice has already been voided.": "errors.invoiceAlreadyVoided",
   "The selected invoice has been voided.": "errors.invoiceVoided",
+  "The selected invoice can only be reopened after it has been voided.": "errors.invoiceReopenBlocked",
+  "The selected invoice cannot be reopened because a newer revision already exists.":
+    "errors.invoiceReopenRevisionBlocked",
+  "The selected invoice cannot be reopened because an active revision already exists.":
+    "errors.invoiceReopenActiveRevisionBlocked",
   "The selected approval request does not exist.": "errors.selectedApprovalRequestMissing",
   "The selected invoice is already settled.": "errors.invoiceAlreadySettled",
   "The selected approval request has already been resolved.": "errors.approvalRequestResolved",
