@@ -547,11 +547,14 @@ async function main() {
   let duplicateTenantRejectedVerified = false;
   let setupWorkspaceVerified = false;
   let pilotHandoffPackageVerified = false;
+  let pilotHandoffReturnReceiptSummaryVerified = false;
   let onboardingImportVerified = false;
   let onboardingExportVerified = false;
   let baselineRestorePreviewVerified = false;
+  let baselineRestoreReturnReceiptScopeVerified = false;
   let baselineRestoreVerified = false;
   let recoveryDrillVerified = false;
+  let recoveryDrillReturnReceiptScopeVerified = false;
   let customerCrudVerified = false;
   let supplierCrudVerified = false;
   let productCategoryCrudVerified = false;
@@ -3941,8 +3944,14 @@ async function main() {
         typeof handoffPackage.operations.smokePassed === "boolean",
       "Pilot handoff package did not include operations readiness context.",
     );
+    assert(
+      handoffPackage.snapshotSummary?.invoiceReturnReceiptCount === handoffPackage.tenantSnapshot?.invoiceReturnReceipts?.length &&
+        handoffPackage.snapshotSummary.invoiceReturnReceiptCount > 0,
+      "Pilot handoff package did not include the expected invoice return receipt count.",
+    );
     await handoffCard.getByText(tenantName, { exact: false }).waitFor({ timeout: 15000 });
     pilotHandoffPackageVerified = true;
+    pilotHandoffReturnReceiptSummaryVerified = true;
     await openSection(page, sidebarIndexes.setup, "/dashboard/setup");
     await waitForTenantContext(page, tenantName);
     const recoveryCard = page.getByTestId("setup-recovery-card");
@@ -4023,9 +4032,21 @@ async function main() {
     await previewResponse;
     await restoreCard.getByText(restoredTenantName, { exact: false }).waitFor({ timeout: 15000 });
     await restoreCard.getByText("Slug đích đang sẵn sàng", { exact: false }).waitFor({ timeout: 15000 });
+    await restoreCard
+      .getByText(
+        new RegExp(
+          `${exportedSnapshot.invoiceReturnReceipts.length} (phiếu nhận trả theo hóa đơn|invoice return receipts)`,
+          "i",
+        ),
+        { exact: false },
+      )
+      .waitFor({
+        timeout: 15000,
+      });
     const restoreButton = restoreCard.getByRole("button", { name: "Khôi phục baseline" });
     assert(!(await restoreButton.isDisabled()), "Restore button stayed disabled after preview.");
     baselineRestorePreviewVerified = true;
+    baselineRestoreReturnReceiptScopeVerified = true;
     const restoreResponse = page.waitForResponse(
       (response) =>
         response.url().endsWith("/api/onboarding/restore") &&
@@ -4062,7 +4083,7 @@ async function main() {
     await waitForTenantContext(page, restoredTenantName);
     const recoveryDrillCard = page.getByTestId("setup-recovery-drill-card");
     await recoveryDrillCard.waitFor({ timeout: 15000 });
-    await recoveryDrillCard.getByText("6 / 6", { exact: false }).waitFor({ timeout: 15000 });
+    await page.getByTestId("setup-recovery-drill-download").waitFor({ timeout: 15000 });
     const recoveryDrillDownloadPromise = page.waitForEvent("download", { timeout: 15000 });
     await page.getByTestId("setup-recovery-drill-download").click();
     const recoveryDrillDownload = await recoveryDrillDownloadPromise;
@@ -4082,7 +4103,13 @@ async function main() {
         recoveryDrillReport.checks.every((check) => check.passed === true),
       "Recovery drill report did not pass every recovery check.",
     );
+    assert(
+      recoveryDrillReport.baselineCounts?.invoiceReturnReceipts === exportedSnapshot.invoiceReturnReceipts.length &&
+        recoveryDrillReport.checks.some((check) => check.key === "invoice-return-receipts-deferred" && check.passed === true),
+      "Recovery drill report did not surface deferred invoice return receipts correctly.",
+    );
     recoveryDrillVerified = true;
+    recoveryDrillReturnReceiptScopeVerified = true;
     await page.evaluate(
       ({ key, tenantId }) => {
         if (tenantId) {
@@ -4459,11 +4486,14 @@ async function main() {
       duplicateTenantRejectedVerified,
       setupWorkspaceVerified,
       pilotHandoffPackageVerified,
+      pilotHandoffReturnReceiptSummaryVerified,
       onboardingImportVerified,
       onboardingExportVerified,
       baselineRestorePreviewVerified,
+      baselineRestoreReturnReceiptScopeVerified,
       baselineRestoreVerified,
       recoveryDrillVerified,
+      recoveryDrillReturnReceiptScopeVerified,
       customerCrudVerified,
       supplierCrudVerified,
       productCategoryCrudVerified,

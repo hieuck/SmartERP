@@ -46,6 +46,21 @@ export const localeOverrides: Record<"vi" | "en", TranslationTree> = {
       creditedInvoices: "Hóa đơn đã ghi giảm",
       creditedAmount: "Giá trị đã ghi giảm",
     },
+    tenants: {
+      restorePreviewCountsLaterValue:
+        "{{orderCount}} đơn hàng, {{purchaseOrderCount}} đơn mua, {{invoiceCount}} hóa đơn, {{invoiceReturnReceiptCount}} phiếu nhận trả theo hóa đơn, {{collectionActivityCount}} hoạt động thu hồi, {{approvalCount}} phê duyệt, {{auditLogCount}} audit log, {{journalEntryCount}} bút toán, và {{accountBalanceCount}} số dư sổ cái.",
+      restoreLaterValue:
+        "Đơn hàng, đơn mua, hóa đơn, phiếu nhận trả theo hóa đơn, collections, approvals, audit, và replay sổ cái.",
+    },
+    setup: {
+      handoffSnapshotValue:
+        "{{customers}} khách hàng, {{suppliers}} nhà cung cấp, {{products}} sản phẩm, {{invoices}} hóa đơn, {{invoiceReturnReceipts}} phiếu nhận trả theo hóa đơn",
+      recoveryDrillBaselineCountsValue:
+        "{{customers}} khách hàng, {{suppliers}} nhà cung cấp, {{products}} sản phẩm, {{inventoryLines}} dòng tồn kho, {{invoiceReturnReceipts}} phiếu nhận trả theo hóa đơn",
+      recoveryChecks: {
+        "invoice-return-receipts-deferred": "Phiếu nhận trả theo hóa đơn vẫn đang deferred",
+      },
+    },
     errors: {
       invoiceAmendFailed: "Sửa đổi hóa đơn thất bại.",
       invoiceCreditFailed: "Ghi giảm hóa đơn thất bại.",

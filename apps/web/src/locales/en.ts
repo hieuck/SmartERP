@@ -193,7 +193,7 @@ const en = {
       "{{customerCount}} customers, {{supplierCount}} suppliers, {{productCount}} products, and {{inventoryLineCount}} inventory lines.",
     restorePreviewCountsLaterLabel: "Deferred for later replay",
     restorePreviewCountsLaterValue:
-      "{{orderCount}} orders, {{purchaseOrderCount}} purchase orders, {{invoiceCount}} invoices, {{collectionActivityCount}} collection activities, {{approvalCount}} approvals, {{auditLogCount}} audit logs, {{journalEntryCount}} journal entries, and {{accountBalanceCount}} ledger balances.",
+      "{{orderCount}} orders, {{purchaseOrderCount}} purchase orders, {{invoiceCount}} invoices, {{invoiceReturnReceiptCount}} invoice return receipts, {{collectionActivityCount}} collection activities, {{approvalCount}} approvals, {{auditLogCount}} audit logs, {{journalEntryCount}} journal entries, and {{accountBalanceCount}} ledger balances.",
     restoreAction: "Restore Baseline",
     restoreSummary:
       "Baseline restored for {{tenantName}} with {{restoredCustomers}} customers, {{restoredProducts}} products, and {{restoredInventoryLines}} inventory lines.",
@@ -206,7 +206,7 @@ const en = {
     restoreNowLabel: "Included in this restore",
     restoreNowValue: "Tenant, customers, suppliers, products, and opening inventory.",
     restoreLaterLabel: "Still outside this slice",
-    restoreLaterValue: "Orders, purchase orders, invoices, collections, approvals, audit, and ledger replay.",
+    restoreLaterValue: "Orders, purchase orders, invoices, invoice return receipts, collections, approvals, audit, and ledger replay.",
     datasets: {
       customers: "Customers",
       suppliers: "Suppliers",
@@ -753,7 +753,8 @@ Object.assign(en.modules, {
     handoffAccountsLabel: "Role accounts included",
     handoffReadinessLabel: "Readiness level",
     handoffSnapshotLabel: "Embedded snapshot",
-    handoffSnapshotValue: "{{customers}} customers, {{suppliers}} suppliers, {{products}} products, {{invoices}} invoices",
+    handoffSnapshotValue:
+      "{{customers}} customers, {{suppliers}} suppliers, {{products}} products, {{invoices}} invoices, {{invoiceReturnReceipts}} invoice return receipts",
     handoffStepFounder: "Founder confirms the target tenant in Setup and keeps the pilot scoped to one explicit tenant.",
     handoffStepOperations: "Founder opens Operations and checks readiness, smoke status, runtime services, and artifacts before user onboarding.",
     handoffStepRoles: "Pilot operators receive role-based demo accounts for finance, sales, warehouse, purchasing, and collections.",
@@ -773,7 +774,7 @@ Object.assign(en.modules, {
       recoveryDrillNoPendingScopes: "No deferred scopes",
       recoveryDrillBaselineCounts: "Baseline counts",
       recoveryDrillBaselineCountsValue:
-        "{{customers}} customers, {{suppliers}} suppliers, {{products}} products, {{inventoryLines}} inventory lines",
+        "{{customers}} customers, {{suppliers}} suppliers, {{products}} products, {{inventoryLines}} inventory lines, {{invoiceReturnReceipts}} invoice return receipts",
       checklistTenantCreated: "Create the pilot tenant",
       checklistTenantCreatedDescription: "A live pilot needs a dedicated tenant with its own slug and industry context.",
       checklistTenantSelected: "Lock the working tenant",
@@ -792,6 +793,7 @@ Object.assign(en.modules, {
         "suppliers-restored": "Supplier baseline restored",
         "products-restored": "Product baseline restored",
         "inventory-restored": "Opening inventory restored",
+        "invoice-return-receipts-deferred": "Invoice return receipts stay deferred",
         "deferred-scopes-acknowledged": "Deferred scopes acknowledged",
       },
     },

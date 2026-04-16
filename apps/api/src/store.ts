@@ -3696,7 +3696,16 @@ export function importOnboardingDataset(input: ImportOnboardingInput): ImportOnb
 }
 
 const restoreImmediateScopes = ["tenant", "customers", "suppliers", "products", "inventory"] as const;
-const restoreDeferredScopes = ["orders", "purchaseOrders", "invoices", "collections", "approvals", "audit", "ledger"] as const;
+const restoreDeferredScopes = [
+  "orders",
+  "purchaseOrders",
+  "invoices",
+  "invoiceReturnReceipts",
+  "collections",
+  "approvals",
+  "audit",
+  "ledger",
+] as const;
 
 function normalizeRestoreTarget(input: RestoreTenantSnapshotInput): {
   targetName: string;
@@ -3775,6 +3784,7 @@ export function previewRestoreTenantSnapshot(input: RestoreTenantSnapshotInput):
     orderCount: input.snapshot.orders.length,
     purchaseOrderCount: input.snapshot.purchaseOrders.length,
     invoiceCount: input.snapshot.invoices.length,
+    invoiceReturnReceiptCount: input.snapshot.invoiceReturnReceipts.length,
     collectionActivityCount: input.snapshot.collectionActivities.length,
     approvalCount: input.snapshot.approvalRequests.length,
     auditLogCount: input.snapshot.auditLogs.length,

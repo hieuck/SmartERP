@@ -225,6 +225,7 @@ export type RestoreTenantSnapshotPreview = {
   orderCount: number;
   purchaseOrderCount: number;
   invoiceCount: number;
+  invoiceReturnReceiptCount: number;
   collectionActivityCount: number;
   approvalCount: number;
   auditLogCount: number;
@@ -964,6 +965,7 @@ export type PilotHandoffPackage = {
     orderCount: number;
     purchaseOrderCount: number;
     invoiceCount: number;
+    invoiceReturnReceiptCount: number;
     collectionActivityCount: number;
     approvalCount: number;
     auditLogCount: number;

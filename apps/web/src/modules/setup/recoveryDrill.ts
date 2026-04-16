@@ -21,6 +21,7 @@ export type RecoveryDrillReport = {
     suppliers: number;
     products: number;
     inventoryLines: number;
+    invoiceReturnReceipts: number;
     deferredScopes: number;
   };
   restoredCounts: {
@@ -73,6 +74,13 @@ export function buildRecoveryDrillReport(args: {
       detail: `${result.restoredInventoryLines}/${snapshot.inventories.length} inventory lines restored into the baseline.`,
     },
     {
+      key: "invoice-return-receipts-deferred",
+      passed:
+        preview.invoiceReturnReceiptCount === snapshot.invoiceReturnReceipts.length &&
+        preview.pendingScopes.includes("invoiceReturnReceipts"),
+      detail: `${preview.invoiceReturnReceiptCount}/${snapshot.invoiceReturnReceipts.length} invoice return receipts remain explicitly deferred for replay.`,
+    },
+    {
       key: "deferred-scopes-acknowledged",
       passed: preview.pendingScopes.length > 0,
       detail:
@@ -101,6 +109,7 @@ export function buildRecoveryDrillReport(args: {
       suppliers: snapshot.suppliers.length,
       products: snapshot.products.length,
       inventoryLines: snapshot.inventories.length,
+      invoiceReturnReceipts: snapshot.invoiceReturnReceipts.length,
       deferredScopes: preview.pendingScopes.length,
     },
     restoredCounts: {

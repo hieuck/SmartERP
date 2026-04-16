@@ -598,6 +598,22 @@ export function SetupPage(): ReactElement {
                     })}
                   </span>
                 </div>
+                <div className="compact-record-row">
+                  <strong>{t("tenants.restorePreviewCountsLaterLabel")}</strong>
+                  <span>
+                    {t("tenants.restorePreviewCountsLaterValue", {
+                      orderCount: restorePreview.orderCount,
+                      purchaseOrderCount: restorePreview.purchaseOrderCount,
+                      invoiceCount: restorePreview.invoiceCount,
+                      invoiceReturnReceiptCount: restorePreview.invoiceReturnReceiptCount,
+                      collectionActivityCount: restorePreview.collectionActivityCount,
+                      approvalCount: restorePreview.approvalCount,
+                      auditLogCount: restorePreview.auditLogCount,
+                      journalEntryCount: restorePreview.journalEntryCount,
+                      accountBalanceCount: restorePreview.accountBalanceCount,
+                    })}
+                  </span>
+                </div>
               </div>
             </div>
           ) : null}
@@ -675,6 +691,7 @@ export function SetupPage(): ReactElement {
                         suppliers: recoveryDrillReport.baselineCounts.suppliers,
                         products: recoveryDrillReport.baselineCounts.products,
                         inventoryLines: recoveryDrillReport.baselineCounts.inventoryLines,
+                        invoiceReturnReceipts: recoveryDrillReport.baselineCounts.invoiceReturnReceipts,
                       })}
                     </span>
                   </div>
@@ -765,6 +782,7 @@ export function SetupPage(): ReactElement {
                   suppliers: handoffPackage.snapshotSummary.supplierCount,
                   products: handoffPackage.snapshotSummary.productCount,
                   invoices: handoffPackage.snapshotSummary.invoiceCount,
+                  invoiceReturnReceipts: handoffPackage.snapshotSummary.invoiceReturnReceiptCount,
                 })}
               </span>
             </div>
