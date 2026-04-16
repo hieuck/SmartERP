@@ -2,6 +2,7 @@ import type { ApiRoute } from "../route-dispatch/http.js";
 import { withModuleAccess, withPermission, withTenantQuery } from "../route-dispatch/helpers.js";
 import {
   handleAmendInvoice,
+  handleCreditInvoice,
   handleCreateInvoice,
   handleCreateInvoicePayment,
   handleListInvoiceCollectionActivities,
@@ -50,6 +51,13 @@ export const invoiceApiRoutes: ApiRoute[] = [
     path: "/api/invoices/payments",
     handle: withPermission("record_invoice_payments", ({ request, response, session }) =>
       handleCreateInvoicePayment(request, response, session),
+    ),
+  },
+  {
+    method: "POST",
+    path: "/api/invoices/credit",
+    handle: withPermission("issue_invoices", ({ request, response, session }) =>
+      handleCreditInvoice(request, response, session),
     ),
   },
   {

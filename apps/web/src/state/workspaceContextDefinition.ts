@@ -2,6 +2,7 @@ import { createContext, useContext } from "react";
 
 import type {
   AmendInvoiceInput,
+  CreditInvoiceInput,
   ApprovalDecisionInput,
   CancelOrderInput,
   CancelPurchaseOrderInput,
@@ -123,6 +124,7 @@ export type WorkspaceContextValue = {
   createInvoiceRecord: (input: Omit<CreateInvoiceInput, "tenantId">) => Promise<void>;
   amendInvoiceRecord: (input: Omit<AmendInvoiceInput, "tenantId">) => Promise<void>;
   createInvoicePaymentRecord: (input: Omit<CreateInvoicePaymentInput, "tenantId">) => Promise<void>;
+  creditInvoiceRecord: (input: Omit<CreditInvoiceInput, "tenantId">) => Promise<void>;
   voidInvoiceRecord: (input: Omit<VoidInvoiceInput, "tenantId">) => Promise<void>;
   reopenInvoiceRecord: (input: Omit<ReopenInvoiceInput, "tenantId">) => Promise<void>;
   updateInvoiceCollectionRecord: (

@@ -2,6 +2,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 
 import type {
   AmendInvoiceInput,
+  CreditInvoiceInput,
   CreateInvoiceInput,
   CreateInvoicePaymentInput,
   ReopenInvoiceInput,
@@ -14,6 +15,7 @@ import type {
 import { readJson, sendJson } from "../../http.js";
 import {
   amendInvoice,
+  creditInvoice,
   createInvoice,
   createInvoicePayment,
   hasTenant,
@@ -276,8 +278,65 @@ export async function handleCreateInvoicePayment(
       [
         "The selected invoice does not exist.",
         "The selected invoice has been voided.",
+        "The selected invoice has been credited.",
         "The selected invoice is already settled.",
         "Payment amount cannot exceed the outstanding balance.",
+      ].includes(error.message)
+    ) {
+      badRequest(response, error.message);
+      return;
+    }
+
+    throw error;
+  }
+}
+
+export async function handleCreditInvoice(
+  request: IncomingMessage,
+  response: ServerResponse,
+  requestSession: Session | null,
+): Promise<void> {
+  const input = await readJson<CreditInvoiceInput>(request);
+
+  if (!input.tenantId?.trim()) {
+    badRequest(response, "tenantId is required.");
+    return;
+  }
+
+  if (!hasTenant(input.tenantId)) {
+    badRequest(response, "The selected tenant does not exist.");
+    return;
+  }
+
+  if (!input.invoiceId?.trim()) {
+    badRequest(response, "invoiceId is required.");
+    return;
+  }
+
+  if (!["bank_transfer", "cash", "card"].includes(input.method)) {
+    badRequest(response, "Payment method is invalid.");
+    return;
+  }
+
+  if (input.creditNote !== null && input.creditNote !== undefined && typeof input.creditNote !== "string") {
+    badRequest(response, "Credit note must be 240 characters or fewer.");
+    return;
+  }
+
+  try {
+    const invoice = runWithSession(requestSession, () => creditInvoice(input));
+    sendJson(response, 200, { item: invoice });
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      [
+        "The selected invoice does not exist.",
+        "The selected invoice has already been credited.",
+        "The selected invoice has been voided.",
+        "The selected invoice can only be credited after it has been fully paid.",
+        "Credit note is required when crediting a paid invoice.",
+        "Credit note must be 240 characters or fewer.",
+        "Payment method is invalid.",
       ].includes(error.message)
     ) {
       badRequest(response, error.message);
@@ -329,6 +388,7 @@ export async function handleUpdateInvoiceCollection(
       [
         "The selected invoice does not exist.",
         "The selected invoice has been voided.",
+        "The selected invoice has been credited.",
         "Promised payment date must be a valid YYYY-MM-DD value.",
         "Next action date must be a valid YYYY-MM-DD value.",
         "Promised payment date is required when status is promised.",
@@ -377,6 +437,7 @@ export async function handleResolveInvoiceCollectionAction(
       [
         "The selected invoice does not exist.",
         "The selected invoice has been voided.",
+        "The selected invoice has been credited.",
         "There is no assigned collection action to resolve.",
       ].includes(error.message)
     ) {
@@ -419,6 +480,7 @@ export async function handleVoidInvoice(
       [
         "The selected invoice does not exist.",
         "The selected invoice has already been voided.",
+        "The selected invoice has already been credited.",
         "The selected invoice cannot be voided because payments already exist.",
       ].includes(error.message)
     ) {

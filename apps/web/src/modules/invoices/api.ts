@@ -1,6 +1,7 @@
 import type {
   ApprovalAwareMutationResult,
   AmendInvoiceInput,
+  CreditInvoiceInput,
   CreateInvoiceInput,
   CreateInvoicePaymentInput,
   InvoiceCollectionActivityRecord,
@@ -13,6 +14,7 @@ import type {
 
 import {
   amendInvoice,
+  creditInvoice,
   createInvoice,
   createInvoicePayment,
   listInvoiceCollectionActivities,
@@ -49,6 +51,10 @@ export async function submitInvoicePayment(
   input: CreateInvoicePaymentInput,
 ): Promise<ApprovalAwareMutationResult<InvoiceRecord>> {
   return createInvoicePayment(input);
+}
+
+export async function submitInvoiceCredit(input: CreditInvoiceInput): Promise<InvoiceRecord> {
+  return creditInvoice(input);
 }
 
 export async function submitInvoiceVoid(input: VoidInvoiceInput): Promise<InvoiceRecord> {

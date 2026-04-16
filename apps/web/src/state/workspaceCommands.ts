@@ -2,6 +2,7 @@ import type { Dispatch, SetStateAction } from "react";
 
 import type {
   AmendInvoiceInput,
+  CreditInvoiceInput,
   ApprovalDecision,
   ApprovalDecisionInput,
   ApprovalRequestRecord,
@@ -50,6 +51,7 @@ import {
 import { submitInventoryAdjustment } from "../modules/inventory/api";
 import {
   submitInvoiceAmend,
+  submitInvoiceCredit,
   submitInvoiceCollectionResolution,
   submitInvoiceCollectionUpdate,
   submitInvoiceIssue,
@@ -636,6 +638,20 @@ export function createWorkspaceCommands(dependencies: WorkspaceCommandsDependenc
           if (result.kind === "approval_requested") {
             setNoticeMessage(buildApprovalNotice(result.approvalRequest));
           }
+        },
+        { clearNotice: true },
+      );
+    },
+
+    async creditInvoiceRecord(input: Omit<CreditInvoiceInput, "tenantId">): Promise<void> {
+      const tenantId = getSelectedTenantIdOrThrow();
+
+      await runBusyAction(
+        { setErrorMessage, setIsBusy, setNoticeMessage },
+        "Invoice credit failed.",
+        async () => {
+          await submitInvoiceCredit({ ...input, tenantId });
+          await refreshTenantWorkspace(tenantId);
         },
         { clearNotice: true },
       );

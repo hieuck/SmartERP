@@ -6,6 +6,7 @@ import {
   FileTextOutlined,
   InboxOutlined,
   PhoneOutlined,
+  RollbackOutlined,
   StopOutlined,
   UserOutlined,
 } from "@ant-design/icons";
@@ -20,6 +21,7 @@ import type {
   CollectionActivityState,
   CollectionFollowUpStatus,
   CollectionPriority,
+  CreditInvoiceInput,
   CreateInvoiceInput,
   CreateInvoicePaymentInput,
   InvoiceRecord,
@@ -36,6 +38,7 @@ const { TextArea } = Input;
 
 type InvoiceFormShape = Omit<CreateInvoiceInput, "tenantId">;
 type AmendInvoiceFormShape = Omit<AmendInvoiceInput, "tenantId">;
+type CreditInvoiceFormShape = Omit<CreditInvoiceInput, "tenantId">;
 type InvoicePaymentFormShape = Omit<CreateInvoicePaymentInput, "tenantId">;
 type InvoiceCollectionFormShape = Omit<UpdateInvoiceCollectionInput, "tenantId">;
 type InvoiceReopenFormShape = Omit<ReopenInvoiceInput, "tenantId">;
@@ -48,6 +51,10 @@ function getTodayDateInputValue(): string {
 function getInvoiceStatusColor(status: InvoiceRecord["status"]): string {
   if (status === "void") {
     return "default";
+  }
+
+  if (status === "credited") {
+    return "magenta";
   }
 
   if (status === "paid") {
@@ -66,6 +73,10 @@ function getInvoiceStatusLabel(status: InvoiceRecord["status"], t: ReturnType<ty
     return t("invoices.statusVoid");
   }
 
+  if (status === "credited") {
+    return t("invoices.statusCredited");
+  }
+
   if (status === "paid") {
     return t("invoices.statusPaid");
   }
@@ -80,6 +91,10 @@ function getInvoiceStatusLabel(status: InvoiceRecord["status"], t: ReturnType<ty
 function getCollectionStatusColor(status: InvoiceRecord["collectionStatus"]): string {
   if (status === "void") {
     return "default";
+  }
+
+  if (status === "credited") {
+    return "magenta";
   }
 
   if (status === "settled") {
@@ -103,6 +118,10 @@ function getCollectionStatusLabel(
 ): string {
   if (invoice.collectionStatus === "void") {
     return t("invoices.collectionVoid");
+  }
+
+  if (invoice.collectionStatus === "credited") {
+    return t("invoices.collectionCredited");
   }
 
   if (invoice.collectionStatus === "settled") {
@@ -244,6 +263,7 @@ export function InvoicesPage(): ReactElement {
     can,
     collectionActivities,
     amendInvoiceRecord,
+    creditInvoiceRecord,
     createInvoicePaymentRecord,
     createInvoiceRecord,
     reopenInvoiceRecord,
@@ -263,9 +283,11 @@ export function InvoicesPage(): ReactElement {
 
   const [invoiceForm] = Form.useForm<InvoiceFormShape>();
   const [amendInvoiceForm] = Form.useForm<AmendInvoiceFormShape>();
+  const [creditInvoiceForm] = Form.useForm<CreditInvoiceFormShape>();
   const [paymentForm] = Form.useForm<InvoicePaymentFormShape>();
   const [collectionForm] = Form.useForm<InvoiceCollectionFormShape>();
   const [invoiceBeingAmended, setInvoiceBeingAmended] = useState<InvoiceRecord | null>(null);
+  const [invoiceBeingCredited, setInvoiceBeingCredited] = useState<InvoiceRecord | null>(null);
   const selectedInvoiceOrderId = Form.useWatch("orderId", invoiceForm);
   const selectedInvoiceId = Form.useWatch("invoiceId", paymentForm);
   const selectedCollectionInvoiceId = Form.useWatch("invoiceId", collectionForm);
@@ -316,6 +338,7 @@ export function InvoicesPage(): ReactElement {
       .filter((invoice) => invoice.orderId === selectedInvoiceOrderId && invoice.status === "void")
       .sort((left, right) => right.revisionNumber - left.revisionNumber)[0] ?? null;
   const isAmendModalOpen = invoiceBeingAmended !== null;
+  const isCreditModalOpen = invoiceBeingCredited !== null;
 
   const onCreateInvoice: FormProps<InvoiceFormShape>["onFinish"] = async (values) => {
     try {
@@ -358,6 +381,20 @@ export function InvoicesPage(): ReactElement {
     amendInvoiceForm.resetFields();
   }
 
+  function openCreditInvoiceModal(invoice: InvoiceRecord): void {
+    setInvoiceBeingCredited(invoice);
+    creditInvoiceForm.setFieldsValue({
+      invoiceId: invoice.id,
+      method: "bank_transfer",
+      creditNote: "",
+    });
+  }
+
+  function closeCreditInvoiceModal(): void {
+    setInvoiceBeingCredited(null);
+    creditInvoiceForm.resetFields();
+  }
+
   const onAmendInvoice: FormProps<AmendInvoiceFormShape>["onFinish"] = async (values) => {
     try {
       await amendInvoiceRecord({
@@ -376,6 +413,19 @@ export function InvoicesPage(): ReactElement {
   const onVoidInvoice = async (values: InvoiceVoidFormShape): Promise<void> => {
     try {
       await voidInvoiceRecord(values);
+    } catch {
+      // Error state is already surfaced via workspace context.
+    }
+  };
+
+  const onCreditInvoice: FormProps<CreditInvoiceFormShape>["onFinish"] = async (values) => {
+    try {
+      await creditInvoiceRecord({
+        invoiceId: values.invoiceId,
+        method: values.method,
+        creditNote: values.creditNote,
+      });
+      closeCreditInvoiceModal();
     } catch {
       // Error state is already surfaced via workspace context.
     }
@@ -498,6 +548,57 @@ export function InvoicesPage(): ReactElement {
             <Button onClick={closeAmendInvoiceModal}>{t("common.cancel")}</Button>
             <Button type="primary" htmlType="submit" loading={isBusy}>
               {t("invoices.amendSubmit")}
+            </Button>
+          </div>
+        </Form>
+      </Modal>
+      <Modal
+        open={isCreditModalOpen}
+        title={
+          invoiceBeingCredited
+            ? t("invoices.creditTitle", { number: invoiceBeingCredited.invoiceNumber })
+            : t("invoices.creditAction")
+        }
+        onCancel={closeCreditInvoiceModal}
+        footer={null}
+        forceRender
+      >
+        <Form<CreditInvoiceFormShape> form={creditInvoiceForm} layout="vertical" onFinish={onCreditInvoice}>
+          <Form.Item<CreditInvoiceFormShape> name="invoiceId" hidden>
+            <Input />
+          </Form.Item>
+
+          <Form.Item<CreditInvoiceFormShape>
+            label={t("invoices.method")}
+            name="method"
+            rules={[{ required: true }]}
+          >
+            <Select
+              options={[
+                { value: "bank_transfer", label: t("invoices.methodBankTransfer") },
+                { value: "cash", label: t("invoices.methodCash") },
+                { value: "card", label: t("invoices.methodCard") },
+              ]}
+            />
+          </Form.Item>
+
+          <Form.Item<CreditInvoiceFormShape>
+            label={t("invoices.creditNote")}
+            name="creditNote"
+            rules={[{ required: true }, { max: 240 }]}
+            extra={
+              invoiceBeingCredited
+                ? t("invoices.creditNoteHint", { number: invoiceBeingCredited.invoiceNumber })
+                : t("invoices.creditNoteGenericHint")
+            }
+          >
+            <TextArea rows={3} maxLength={240} placeholder={t("invoices.creditNotePlaceholder")} />
+          </Form.Item>
+
+          <div className="record-actions">
+            <Button onClick={closeCreditInvoiceModal}>{t("common.cancel")}</Button>
+            <Button type="primary" htmlType="submit" loading={isBusy}>
+              {t("invoices.creditSubmit")}
             </Button>
           </div>
         </Form>
@@ -991,6 +1092,11 @@ export function InvoicesPage(): ReactElement {
                           {t("invoices.amendmentNoteLabel")} {invoice.amendmentNote}
                         </div>
                       ) : null}
+                      {invoice.creditNote ? (
+                        <div className="record-detail">
+                          {t("invoices.creditNoteLabel")} {invoice.creditNote}
+                        </div>
+                      ) : null}
                       <div className="record-detail">
                         <Tag color={getInvoiceStatusColor(invoice.status)}>
                           {getInvoiceStatusLabel(invoice.status, t)}
@@ -1054,6 +1160,21 @@ export function InvoicesPage(): ReactElement {
                       <div className="record-detail">
                         {t("invoices.lastPaymentLabel")} {formatTimestamp(invoice.lastPaymentAt)}
                       </div>
+                      {invoice.creditedAt ? (
+                        <div className="record-detail">
+                          {t("invoices.creditedAtLabel")} {formatTimestamp(invoice.creditedAt)}
+                        </div>
+                      ) : null}
+                      {invoice.creditMethod ? (
+                        <div className="record-detail">
+                          {t("invoices.creditMethodLabel")}{" "}
+                          {invoice.creditMethod === "cash"
+                            ? t("invoices.methodCash")
+                            : invoice.creditMethod === "card"
+                              ? t("invoices.methodCard")
+                              : t("invoices.methodBankTransfer")}
+                        </div>
+                      ) : null}
                       {invoice.lastCollectionUpdateAt ? (
                         <div className="record-detail">
                           {t("invoices.lastFollowUpLabel")} {formatTimestamp(invoice.lastCollectionUpdateAt)}
@@ -1085,6 +1206,19 @@ export function InvoicesPage(): ReactElement {
                               {t("invoices.voidAction")}
                             </Button>
                           </Popconfirm>
+                        </div>
+                      ) : null}
+                      {canIssueInvoices && invoice.status === "paid" ? (
+                        <div className="record-actions">
+                          <Button
+                            size="small"
+                            icon={<RollbackOutlined />}
+                            loading={isBusy}
+                            data-testid="invoice-credit-button"
+                            onClick={() => openCreditInvoiceModal(invoice)}
+                          >
+                            {t("invoices.creditAction")}
+                          </Button>
                         </div>
                       ) : null}
                       {canIssueInvoices &&

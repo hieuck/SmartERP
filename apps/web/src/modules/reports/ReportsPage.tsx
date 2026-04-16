@@ -40,6 +40,10 @@ function getAuditActionColor(actionType: AuditActionType): string {
     return "purple";
   }
 
+  if (actionType === "invoice_credited") {
+    return "magenta";
+  }
+
   if (actionType === "invoice_voided") {
     return "default";
   }
@@ -110,6 +114,10 @@ function getAuditActionLabel(
 
   if (actionType === "invoice_amended") {
     return t("reports.auditActionInvoiceAmended");
+  }
+
+  if (actionType === "invoice_credited") {
+    return t("reports.auditActionInvoiceCredited");
   }
 
   if (actionType === "invoice_reopened") {
@@ -329,6 +337,16 @@ export function ReportsPage(): ReactElement {
                 />
               </Card>
             </Col>
+            <Col xs={24} sm={12} xl={6}>
+              <Card className="workspace-metric-card">
+                <Statistic
+                  title={t("reports.creditedAmount")}
+                  value={summary.creditedAmount}
+                  formatter={(value) => formatCurrency(Number(value))}
+                  prefix={<FileTextOutlined />}
+                />
+              </Card>
+            </Col>
           </Row>
 
           <Row className="workspace-metrics-grid" gutter={[16, 16]}>
@@ -350,6 +368,11 @@ export function ReportsPage(): ReactElement {
             <Col xs={24} sm={12} xl={6}>
               <Card className="workspace-metric-card">
                 <Statistic title={t("reports.openInvoices")} value={summary.openInvoiceCount} />
+              </Card>
+            </Col>
+            <Col xs={24} sm={12} xl={6}>
+              <Card className="workspace-metric-card">
+                <Statistic title={t("reports.creditedInvoices")} value={summary.creditedInvoiceCount} />
               </Card>
             </Col>
           </Row>

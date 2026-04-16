@@ -76,6 +76,7 @@ const collectionNote = "Khach xac nhan se chuyen khoan vao cuoi tuan.";
 const escalatedCollectionNote = "Qua ngay hua thanh toan, can founder xu ly truc tiep.";
 const invoiceAmendmentNote = "Corrected commercial terms before customer payment posting.";
 const reissueAmendmentNote = "Corrected shipping quantity after voiding the previous invoice revision.";
+const invoiceCreditNote = "Returned shipment after full settlement and inspection.";
 const firstIssueDateInput = buildDateInputFromToday(0);
 const secondIssueDateInput = buildDateInputFromToday(-(secondDaysPastDue + secondPaymentTermDays));
 const amendedPaymentTermDays = firstPaymentTermDays + 7;
@@ -89,6 +90,7 @@ const stockInQuantity = 12;
 const saleQuantity = 5;
 const editedSaleQuantity = 4;
 const secondSaleQuantity = 2;
+const creditedOrderQuantity = 1;
 const cancelableOrderQuantity = 1;
 const voidableOrderQuantity = 3;
 const invalidQuantity = 20;
@@ -99,6 +101,7 @@ const secondOrderGrossAmount = unitPrice * secondSaleQuantity;
 const voidableOrderGrossAmount = unitPrice * voidableOrderQuantity;
 const firstInvoiceAmount = Math.round(firstOrderGrossAmount * (1 + taxRate / 100));
 const secondInvoiceAmount = Math.round(secondOrderGrossAmount * (1 + taxRate / 100));
+const creditedInvoiceAmount = Math.round(unitPrice * creditedOrderQuantity * (1 + taxRate / 100));
 const voidableInvoiceAmount = Math.round(voidableOrderGrossAmount * (1 + taxRate / 100));
 const expectedGrossSales = firstOrderGrossAmount + secondOrderGrossAmount;
 const expectedInvoicedAmount = firstInvoiceAmount + secondInvoiceAmount;
@@ -110,6 +113,8 @@ const expectedOverdue31To60Amount = secondInvoiceAmount;
 const expectedRemainingStock = stockInQuantity - editedSaleQuantity - secondSaleQuantity;
 const expectedReceivedPurchaseValue = stockInQuantity * purchaseUnitCost;
 const expectedInventoryValueAmount = expectedRemainingStock * purchaseUnitCost;
+const expectedRestoreRemainingStock = expectedRemainingStock - creditedOrderQuantity;
+const expectedRestoreInventoryValueAmount = expectedRestoreRemainingStock * purchaseUnitCost;
 const expectedCashOnHandAmount = partialPaymentAmount;
 const expectedBankAmount = remainingPaymentAmount;
 const expectedReceivablesLedgerAmount = expectedOutstandingReceivablesAmount;
@@ -180,6 +185,7 @@ function isExpectedNegativePath(response) {
         (
           response.url().endsWith("/api/invoices") ||
           response.url().endsWith("/api/invoices/amend") ||
+          response.url().endsWith("/api/invoices/credit") ||
           response.url().endsWith("/api/purchase-orders") ||
           response.url().endsWith("/api/onboarding/import") ||
           response.url().endsWith("/api/onboarding/restore/preview") ||
@@ -208,6 +214,7 @@ function isExpectedNegativePath(response) {
           response.url().endsWith("/api/purchase-orders/receipts") ||
           response.url().endsWith("/api/invoices") ||
           response.url().endsWith("/api/invoices/amend") ||
+          response.url().endsWith("/api/invoices/credit") ||
           response.url().endsWith("/api/invoices/payments") ||
           response.url().endsWith("/api/invoices/collections") ||
           response.url().endsWith("/api/invoices/void") ||
@@ -513,6 +520,8 @@ async function main() {
   let invoiceNumber = "";
   let secondOrderNumber = "";
   let secondInvoiceNumber = "";
+  let creditedOrderNumber = "";
+  let creditedInvoiceNumber = "";
   let voidedOrderNumber = "";
   let voidedInvoiceNumber = "";
   let reissuedInvoiceNumber = "";
@@ -580,6 +589,9 @@ async function main() {
   let invoiceAmendmentNoteUiVerified = false;
   let invoiceAmendmentNoteAuditVerified = false;
   let invoiceReopenVerified = false;
+  let invoiceCreditGuardVerified = false;
+  let invoiceCreditVerified = false;
+  let invoiceCreditAuditVerified = false;
   let invoiceReopenGuardVerified = false;
   let invoiceReopenRevisionGuardVerified = false;
   let invoiceReopenAuditVerified = false;
@@ -588,6 +600,8 @@ async function main() {
   let reissuedInvoiceVoidVerified = false;
   let voidedInvoicePaymentGuardVerified = false;
   let voidedInvoiceCollectionGuardVerified = false;
+  let creditedInvoicePaymentGuardVerified = false;
+  let creditedInvoiceCollectionGuardVerified = false;
   let reopenedInvoiceOrderCancellationGuardVerified = false;
   let voidedInvoiceOrderCancellationVerified = false;
   let backdatedInvoiceApprovalVerified = false;
@@ -3157,6 +3171,246 @@ async function main() {
     invoiceReissueAuditVerified = true;
     invoiceAmendmentNoteAuditVerified = true;
     auditCategoryContextVerified = true;
+    await openSection(page, sidebarIndexes.orders, "/dashboard/orders");
+    await waitForTenantContext(page, tenantName);
+    await waitForFormReady(ordersFormCard);
+    await selectOption(page, ordersFormCard.getByRole("combobox", { name: "* Khách hàng" }), customerName);
+    await selectOption(page, ordersFormCard.getByRole("combobox", { name: "* Sản phẩm" }), productName);
+    await fillNumberInput(ordersFormCard.getByRole("spinbutton", { name: "* Số lượng" }), creditedOrderQuantity);
+    await clickSubmit(ordersFormCard);
+    const creditedOrderRow = getListCard(page)
+      .locator(".record-row")
+      .filter({ hasText: `${productName} x ${creditedOrderQuantity}` })
+      .filter({ hasText: /Đã xác nhận|Da xac nhan|Confirmed/ })
+      .first();
+    await creditedOrderRow.waitFor({ timeout: 15000 });
+    creditedOrderNumber = (await creditedOrderRow.locator("strong").first().textContent())?.trim() ?? "";
+    assert(creditedOrderNumber.length > 0, "Credit-note order number was not rendered after order creation.");
+
+    await openSection(page, sidebarIndexes.invoices, "/dashboard/invoices");
+    await waitForTenantContext(page, tenantName);
+    await waitForFormReady(issueInvoiceCard);
+    await selectOption(page, issueInvoiceCard.getByRole("combobox", { name: /Đơn hàng/ }), creditedOrderNumber);
+    await fillField(issueInvoiceCard, "#issueDate", firstIssueDateInput);
+    await fillField(issueInvoiceCard, "#paymentTermDays", firstPaymentTermDays);
+    await fillField(issueInvoiceCard, "#taxRatePercent", taxRate);
+    await clickSubmit(issueInvoiceCard);
+    const creditedInvoiceRow = getListCard(page).locator(".record-row").filter({ hasText: creditedOrderNumber }).first();
+    await creditedInvoiceRow.waitFor({ timeout: 15000 });
+    creditedInvoiceNumber = await findInvoiceNumberByOrderNumber(page, creditedOrderNumber);
+    assert(creditedInvoiceNumber.length > 0, "Credit-note invoice number was not rendered after invoice creation.");
+
+    await waitForFormReady(paymentCard);
+    await selectOption(page, paymentCard.getByRole("combobox", { name: /Hóa đơn/ }), creditedInvoiceNumber);
+    await selectOption(page, paymentCard.getByRole("combobox", { name: /Phương thức/ }), "Chuyển khoản");
+    await fillNumberInput(paymentCard.getByRole("spinbutton", { name: /Số tiền/ }), creditedInvoiceAmount);
+    await clickSubmit(paymentCard);
+    await creditedInvoiceRow.getByText("Đã thanh toán", { exact: false }).waitFor({ timeout: 15000 });
+
+    const missingCreditNoteResponse = await page.evaluate(
+      async ({ targetInvoiceNumber, method, sessionKey, tenantKey }) => {
+        const rawSession = window.localStorage.getItem(sessionKey);
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
+        const headers = {
+          "content-type": "application/json",
+          authorization: `Bearer ${accessToken}`,
+        };
+
+        const invoicesResponse = await fetch(`/api/invoices?tenantId=${encodeURIComponent(tenantId ?? "")}`, {
+          headers,
+        });
+        const invoicesPayload = await invoicesResponse.json();
+        const targetInvoice = invoicesPayload.items.find((item) => item.invoiceNumber === targetInvoiceNumber);
+
+        if (!targetInvoice || !tenantId) {
+          return { status: 0, body: { error: "Credited invoice lookup failed before credit note guard test." } };
+        }
+
+        const response = await fetch("/api/invoices/credit", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            tenantId,
+            invoiceId: targetInvoice.id,
+            method,
+            creditNote: "",
+          }),
+        });
+
+        return {
+          status: response.status,
+          body: await response.json(),
+        };
+      },
+      {
+        targetInvoiceNumber: creditedInvoiceNumber,
+        method: "bank_transfer",
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+      },
+    );
+    assert(
+      missingCreditNoteResponse.status === 400 &&
+        missingCreditNoteResponse.body?.error === "Credit note is required when crediting a paid invoice.",
+      "Invoice credit note guard did not require a business note.",
+    );
+    invoiceCreditGuardVerified = true;
+
+    await creditedInvoiceRow.locator('[data-testid="invoice-credit-button"]').click();
+    const creditModal = page.locator(".ant-modal:visible").last();
+    await creditModal.waitFor({ timeout: 15000 });
+    await selectOption(page, creditModal.getByRole("combobox").first(), "Chuyển khoản");
+    await fillField(creditModal, "#creditNote", invoiceCreditNote);
+    await creditModal.getByRole("button", { name: "Ghi credit note" }).click();
+    await creditedInvoiceRow.getByText(/Đã ghi giảm|Da ghi giam/, { exact: false }).first().waitFor({
+      timeout: 15000,
+    });
+    await creditedInvoiceRow.getByText(invoiceCreditNote, { exact: false }).first().waitFor({ timeout: 15000 });
+    await creditedInvoiceRow.getByText("Chuyển khoản", { exact: false }).first().waitFor({ timeout: 15000 });
+    invoiceCreditVerified = true;
+
+    const creditedInvoicePaymentResponse = await page.evaluate(
+      async ({ targetInvoiceNumber, amount, sessionKey, tenantKey }) => {
+        const rawSession = window.localStorage.getItem(sessionKey);
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
+        const headers = {
+          "content-type": "application/json",
+          authorization: `Bearer ${accessToken}`,
+        };
+
+        const invoicesResponse = await fetch(`/api/invoices?tenantId=${encodeURIComponent(tenantId ?? "")}`, {
+          headers,
+        });
+        const invoicesPayload = await invoicesResponse.json();
+        const targetInvoice = invoicesPayload.items.find((item) => item.invoiceNumber === targetInvoiceNumber);
+
+        if (!targetInvoice || !tenantId) {
+          return { status: 0, body: { error: "Credited invoice lookup failed before payment guard test." } };
+        }
+
+        const response = await fetch("/api/invoices/payments", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            tenantId,
+            invoiceId: targetInvoice.id,
+            amount,
+            method: "bank_transfer",
+          }),
+        });
+
+        return {
+          status: response.status,
+          body: await response.json(),
+        };
+      },
+      {
+        targetInvoiceNumber: creditedInvoiceNumber,
+        amount: 1000,
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+      },
+    );
+    assert(
+      creditedInvoicePaymentResponse.status === 400 &&
+        creditedInvoicePaymentResponse.body?.error === "The selected invoice has been credited.",
+      "Credited invoice did not reject new payment creation.",
+    );
+    creditedInvoicePaymentGuardVerified = true;
+
+    const creditedInvoiceCollectionResponse = await page.evaluate(
+      async ({ targetInvoiceNumber, sessionKey, tenantKey, nextActionDate }) => {
+        const rawSession = window.localStorage.getItem(sessionKey);
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
+        const headers = {
+          "content-type": "application/json",
+          authorization: `Bearer ${accessToken}`,
+        };
+
+        const invoicesResponse = await fetch(`/api/invoices?tenantId=${encodeURIComponent(tenantId ?? "")}`, {
+          headers,
+        });
+        const invoicesPayload = await invoicesResponse.json();
+        const targetInvoice = invoicesPayload.items.find((item) => item.invoiceNumber === targetInvoiceNumber);
+
+        if (!targetInvoice || !tenantId) {
+          return { status: 0, body: { error: "Credited invoice lookup failed before collection guard test." } };
+        }
+
+        const response = await fetch("/api/invoices/collections", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            tenantId,
+            invoiceId: targetInvoice.id,
+            followUpStatus: "contacted",
+            actionRequired: "call_customer",
+            promisedPaymentDate: null,
+            nextActionDate,
+            collectionNote: "Credited invoice should reject follow-up updates.",
+          }),
+        });
+
+        return {
+          status: response.status,
+          body: await response.json(),
+        };
+      },
+      {
+        targetInvoiceNumber: creditedInvoiceNumber,
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+        nextActionDate: firstIssueDateInput,
+      },
+    );
+    assert(
+      creditedInvoiceCollectionResponse.status === 400 &&
+        creditedInvoiceCollectionResponse.body?.error === "The selected invoice has been credited.",
+      "Credited invoice did not reject collection updates.",
+    );
+    creditedInvoiceCollectionGuardVerified = true;
+
+    await openSection(page, sidebarIndexes.reports, "/dashboard/reports");
+    await waitForTenantContext(page, tenantName);
+    await getStatisticValue(page, "Giá trị đã ghi giảm").getByText(buildAmountPattern(creditedInvoiceAmount)).waitFor({
+      timeout: 15000,
+    });
+    await getStatisticValue(page, "Hóa đơn đã ghi giảm").getByText("1", { exact: true }).waitFor({ timeout: 15000 });
+    const creditAuditSnapshot = await page.evaluate(async ({ sessionKey, tenantKey }) => {
+      const tenantId = window.localStorage.getItem(tenantKey);
+      const session = window.localStorage.getItem(sessionKey);
+      const accessToken = session ? JSON.parse(session).accessToken : "";
+      const response = await fetch(`/api/audit-logs?tenantId=${encodeURIComponent(tenantId ?? "")}`, {
+        headers: {
+          authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      return {
+        status: response.status,
+        body: await response.json(),
+      };
+    }, {
+      sessionKey: sessionStorageKey,
+      tenantKey: tenantStorageKey,
+    });
+    assert(
+      creditAuditSnapshot.status === 200 &&
+        creditAuditSnapshot.body?.items?.some(
+          (item) =>
+            item.actionType === "invoice_credited" &&
+            item.entityNumber === creditedInvoiceNumber &&
+            item.metadata?.productCategoryName === productCategoryName &&
+            item.metadata?.paymentMethod === "bank_transfer" &&
+            item.metadata?.creditNote === invoiceCreditNote,
+        ),
+      "Invoice credit audit entry was not recorded with note, method, and category context.",
+    );
+    await page.getByText(invoiceCreditNote, { exact: false }).first().waitFor({ timeout: 15000 });
+    invoiceCreditAuditVerified = true;
     await openSection(page, sidebarIndexes.operations, "/dashboard/operations");
     await page.getByRole("heading", { name: "Vận hành" }).waitFor({ timeout: 15000 });
     await page.getByText("Mức sẵn sàng pilot", { exact: false }).waitFor({ timeout: 15000 });
@@ -3365,8 +3619,13 @@ async function main() {
     await waitForTenantContext(page, restoredTenantName);
     const restoredInventoryRow = getListCard(page).locator(".record-row").filter({ hasText: productName }).first();
     await restoredInventoryRow.waitFor({ timeout: 15000 });
-    await restoredInventoryRow.getByText(String(expectedRemainingStock), { exact: true }).waitFor({ timeout: 15000 });
-    await restoredInventoryRow.getByText(buildAmountPattern(expectedInventoryValueAmount)).first().waitFor({ timeout: 15000 });
+    await restoredInventoryRow.getByText(String(expectedRestoreRemainingStock), { exact: true }).waitFor({
+      timeout: 15000,
+    });
+    await restoredInventoryRow
+      .getByText(buildAmountPattern(expectedRestoreInventoryValueAmount))
+      .first()
+      .waitFor({ timeout: 15000 });
     baselineRestoreVerified = true;
     await openSection(page, sidebarIndexes.setup, "/dashboard/setup");
     await waitForTenantContext(page, restoredTenantName);
@@ -3829,8 +4088,13 @@ async function main() {
       invoiceReopenGuardVerified,
       invoiceReopenRevisionGuardVerified,
       invoiceReopenAuditVerified,
+      invoiceCreditGuardVerified,
+      invoiceCreditVerified,
+      invoiceCreditAuditVerified,
       invoiceReissueAuditVerified,
       invoiceCategoryContextVerified,
+      creditedInvoicePaymentGuardVerified,
+      creditedInvoiceCollectionGuardVerified,
       reissuedInvoiceVoidVerified,
       voidedInvoicePaymentGuardVerified,
       voidedInvoiceCollectionGuardVerified,
@@ -3867,12 +4131,17 @@ async function main() {
       expectedPurchaseOrderAmount,
       expectedInvoicedAmount,
       expectedCashCollectedAmount,
+      creditedInvoiceAmount,
+      creditedOrderNumber,
+      creditedInvoiceNumber,
       expectedOutstandingReceivablesAmount,
       expectedCurrentReceivablesAmount,
       expectedOverdue31To60Amount,
       expectedRemainingStock,
+      expectedRestoreRemainingStock,
       expectedReceivedPurchaseValue,
       expectedInventoryValueAmount,
+      expectedRestoreInventoryValueAmount,
       expectedCashOnHandAmount,
       expectedBankAmount,
       expectedReceivablesLedgerAmount,

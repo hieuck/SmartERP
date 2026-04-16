@@ -605,11 +605,11 @@ export type CreateInventoryAdjustmentInput = {
   quantity: number;
 };
 
-export type InvoiceStatus = "issued" | "partially_paid" | "paid" | "void";
+export type InvoiceStatus = "issued" | "partially_paid" | "paid" | "credited" | "void";
 
 export type PaymentMethod = "bank_transfer" | "cash" | "card";
 
-export type CollectionStatus = "current" | "due_today" | "overdue" | "settled" | "void";
+export type CollectionStatus = "current" | "due_today" | "overdue" | "settled" | "credited" | "void";
 
 export type CollectionFollowUpStatus = "new" | "contacted" | "promised" | "escalated";
 
@@ -633,7 +633,7 @@ export type AccountBalanceRecord = {
   balanceAmount: number;
 };
 
-export type JournalReferenceType = "invoice" | "payment" | "purchase_receipt" | "order";
+export type JournalReferenceType = "invoice" | "payment" | "credit_note" | "purchase_receipt" | "order";
 
 export type JournalEntryRecord = {
   id: string;
@@ -664,6 +664,7 @@ export type AuditActionType =
   | "invoice_issued"
   | "invoice_reissued"
   | "invoice_amended"
+  | "invoice_credited"
   | "invoice_voided"
   | "invoice_reopened"
   | "order_updated"
@@ -693,6 +694,7 @@ export type AuditLogMetadata = {
   productSku?: string;
   productName?: string;
   amendmentNote?: string;
+  creditNote?: string;
   reissuedFromInvoiceNumber?: string;
   reissuedToInvoiceNumber?: string;
   amendmentRootInvoiceNumber?: string;
@@ -731,6 +733,9 @@ export type InvoiceRecord = {
   amendmentRootInvoiceNumber: string;
   revisionNumber: number;
   amendmentNote: string | null;
+  creditNote: string | null;
+  creditedAt: string | null;
+  creditMethod: PaymentMethod | null;
   reissuedFromInvoiceId: string | null;
   reissuedFromInvoiceNumber: string | null;
   reissuedToInvoiceId: string | null;
@@ -783,6 +788,13 @@ export type AmendInvoiceInput = {
   issueDate: string;
   paymentTermDays: number;
   amendmentNote: string | null;
+};
+
+export type CreditInvoiceInput = {
+  tenantId: string;
+  invoiceId: string;
+  method: PaymentMethod;
+  creditNote: string | null;
 };
 
 export type CreateInvoicePaymentInput = {
@@ -854,9 +866,11 @@ export type ReportSummary = {
   invoiceCount: number;
   paidInvoiceCount: number;
   openInvoiceCount: number;
+  creditedInvoiceCount: number;
   grossSalesAmount: number;
   invoicedAmount: number;
   cashCollectedAmount: number;
+  creditedAmount: number;
   outstandingReceivablesAmount: number;
   currentReceivablesAmount: number;
   overdue31To60Amount: number;

@@ -24,6 +24,7 @@ import {
   type CreateCustomerInput,
   type DeleteCustomerInput,
   type AmendInvoiceInput,
+  type CreditInvoiceInput,
   type CreateInvoiceInput,
   type CreateInvoicePaymentInput,
   type ReopenInvoiceInput,
@@ -234,6 +235,9 @@ type InvoiceRow = {
   amendment_root_invoice_number: string;
   revision_number: number;
   amendment_note: string | null;
+  credit_note: string | null;
+  credited_at: string | null;
+  credit_method: InvoiceRecord["creditMethod"];
   reissued_from_invoice_id: string | null;
   reissued_from_invoice_number: string | null;
   reissued_to_invoice_id: string | null;
@@ -289,9 +293,11 @@ type ReportCountsRow = {
   invoice_count: number;
   paid_invoice_count: number;
   open_invoice_count: number;
+  credited_invoice_count: number;
   gross_sales_amount: number;
   invoiced_amount: number;
   cash_collected_amount: number;
+  credited_amount: number;
   outstanding_receivables_amount: number;
   current_receivables_amount: number;
   overdue_31_to_60_amount: number;
@@ -1202,7 +1208,7 @@ const countInvoicesForOrderStatement = db.prepare(`
 const countUnpaidInvoicesForOrderStatement = db.prepare(`
   SELECT COUNT(*) AS count
   FROM invoices
-  WHERE tenant_id = ? AND order_id = ? AND status <> 'void' AND status <> 'paid'
+  WHERE tenant_id = ? AND order_id = ? AND status NOT IN ('void', 'paid', 'credited')
 `);
 
 const getLatestVoidedInvoiceForOrderStatement = db.prepare(`
@@ -1214,6 +1220,9 @@ const getLatestVoidedInvoiceForOrderStatement = db.prepare(`
     i.amendment_root_invoice_number AS amendment_root_invoice_number,
     i.revision_number AS revision_number,
     i.amendment_note AS amendment_note,
+    i.credit_note AS credit_note,
+    i.credited_at AS credited_at,
+    i.credit_method AS credit_method,
     i.reissued_from_invoice_id AS reissued_from_invoice_id,
     i.reissued_from_invoice_number AS reissued_from_invoice_number,
     i.reissued_to_invoice_id AS reissued_to_invoice_id,
@@ -1267,6 +1276,9 @@ const listInvoicesStatement = db.prepare(`
     i.amendment_root_invoice_number AS amendment_root_invoice_number,
     i.revision_number AS revision_number,
     i.amendment_note AS amendment_note,
+    i.credit_note AS credit_note,
+    i.credited_at AS credited_at,
+    i.credit_method AS credit_method,
     i.reissued_from_invoice_id AS reissued_from_invoice_id,
     i.reissued_from_invoice_number AS reissued_from_invoice_number,
     i.reissued_to_invoice_id AS reissued_to_invoice_id,
@@ -1307,6 +1319,9 @@ const listInvoicesStatement = db.prepare(`
     i.amendment_root_invoice_number,
     i.revision_number,
     i.amendment_note,
+    i.credit_note,
+    i.credited_at,
+    i.credit_method,
     i.reissued_from_invoice_id,
     i.reissued_from_invoice_number,
     i.reissued_to_invoice_id,
@@ -1344,6 +1359,9 @@ const getInvoiceByIdStatement = db.prepare(`
     i.amendment_root_invoice_number AS amendment_root_invoice_number,
     i.revision_number AS revision_number,
     i.amendment_note AS amendment_note,
+    i.credit_note AS credit_note,
+    i.credited_at AS credited_at,
+    i.credit_method AS credit_method,
     i.reissued_from_invoice_id AS reissued_from_invoice_id,
     i.reissued_from_invoice_number AS reissued_from_invoice_number,
     i.reissued_to_invoice_id AS reissued_to_invoice_id,
@@ -1384,6 +1402,9 @@ const getInvoiceByIdStatement = db.prepare(`
     i.amendment_root_invoice_number,
     i.revision_number,
     i.amendment_note,
+    i.credit_note,
+    i.credited_at,
+    i.credit_method,
     i.reissued_from_invoice_id,
     i.reissued_from_invoice_number,
     i.reissued_to_invoice_id,
@@ -1421,6 +1442,9 @@ const createInvoiceStatement = db.prepare(`
     amendment_root_invoice_number,
     revision_number,
     amendment_note,
+    credit_note,
+    credited_at,
+    credit_method,
     reissued_from_invoice_id,
     reissued_from_invoice_number,
     reissued_to_invoice_id,
@@ -1443,12 +1467,28 @@ const createInvoiceStatement = db.prepare(`
     collection_note,
     last_collection_update_at
   )
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `);
 
 const updateInvoiceStatusStatement = db.prepare(`
   UPDATE invoices
   SET status = ?
+  WHERE tenant_id = ? AND id = ?
+`);
+
+const updateInvoiceCreditStatement = db.prepare(`
+  UPDATE invoices
+  SET
+    status = 'credited',
+    credit_note = ?,
+    credited_at = ?,
+    credit_method = ?,
+    follow_up_status = 'new',
+    action_required = 'monitor',
+    promised_payment_date = NULL,
+    next_action_date = NULL,
+    collection_note = '',
+    last_collection_update_at = ?
   WHERE tenant_id = ? AND id = ?
 `);
 
@@ -1531,17 +1571,17 @@ const createInvoicePaymentStatement = db.prepare(`
 const listCustomerStatementsStatement = db.prepare(`
   WITH invoice_balances AS (
     SELECT
-      i.id AS invoice_id,
+      CASE WHEN i.status = 'credited' THEN NULL ELSE i.id END AS invoice_id,
       i.tenant_id AS tenant_id,
       i.customer_id AS customer_id,
-      i.total_amount AS total_amount,
+      CASE WHEN i.status = 'credited' THEN 0 ELSE i.total_amount END AS total_amount,
       i.issued_at AS issued_at,
       i.due_date AS due_date,
-      COALESCE(SUM(p.amount), 0) AS paid_amount
+      CASE WHEN i.status = 'credited' THEN 0 ELSE COALESCE(SUM(p.amount), 0) END AS paid_amount
     FROM invoices i
     LEFT JOIN invoice_payments p ON p.invoice_id = i.id
     WHERE i.tenant_id = ? AND i.status <> 'void'
-    GROUP BY i.id, i.tenant_id, i.customer_id, i.total_amount, i.issued_at, i.due_date
+    GROUP BY i.id, i.tenant_id, i.customer_id, i.total_amount, i.status, i.issued_at, i.due_date
   )
   SELECT
     c.id AS customer_id,
@@ -1627,7 +1667,7 @@ const getReportCountsStatement = db.prepare(`
           COALESCE(SUM(p.amount), 0) AS paid_amount
         FROM invoices i
         LEFT JOIN invoice_payments p ON p.invoice_id = i.id
-        WHERE i.tenant_id = ? AND i.status <> 'void'
+        WHERE i.tenant_id = ? AND i.status NOT IN ('void', 'credited')
         GROUP BY i.id, i.total_amount
       ) invoice_totals
       WHERE paid_amount >= total_amount
@@ -1641,29 +1681,46 @@ const getReportCountsStatement = db.prepare(`
           COALESCE(SUM(p.amount), 0) AS paid_amount
         FROM invoices i
         LEFT JOIN invoice_payments p ON p.invoice_id = i.id
-        WHERE i.tenant_id = ? AND i.status <> 'void'
+        WHERE i.tenant_id = ? AND i.status NOT IN ('void', 'credited')
         GROUP BY i.id, i.total_amount
       ) invoice_totals
       WHERE paid_amount < total_amount
     ) AS open_invoice_count,
-    (SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE tenant_id = ? AND status <> 'canceled') AS gross_sales_amount,
-    (SELECT COALESCE(SUM(total_amount), 0) FROM invoices WHERE tenant_id = ? AND status <> 'void') AS invoiced_amount,
     (
-      SELECT COALESCE(SUM(amount), 0)
-      FROM invoice_payments
-      WHERE tenant_id = ?
+      SELECT COUNT(*)
+      FROM invoices
+      WHERE tenant_id = ? AND status = 'credited'
+    ) AS credited_invoice_count,
+    (SELECT COALESCE(SUM(total_amount), 0) FROM orders WHERE tenant_id = ? AND status <> 'canceled') AS gross_sales_amount,
+    (SELECT COALESCE(SUM(total_amount), 0) FROM invoices WHERE tenant_id = ? AND status NOT IN ('void', 'credited')) AS invoiced_amount,
+    (
+      SELECT COALESCE(SUM(net_paid_amount), 0)
+      FROM (
+        SELECT
+          i.id,
+          CASE WHEN i.status = 'credited' THEN 0 ELSE COALESCE(SUM(p.amount), 0) END AS net_paid_amount
+        FROM invoices i
+        LEFT JOIN invoice_payments p ON p.invoice_id = i.id
+        WHERE i.tenant_id = ? AND i.status <> 'void'
+        GROUP BY i.id, i.status
+      ) invoice_totals
     ) AS cash_collected_amount,
+    (
+      SELECT COALESCE(SUM(total_amount), 0)
+      FROM invoices
+      WHERE tenant_id = ? AND status = 'credited'
+    ) AS credited_amount,
     (
       SELECT COALESCE(SUM(total_amount - paid_amount), 0)
       FROM (
         SELECT
           i.id,
-          i.total_amount,
-          COALESCE(SUM(p.amount), 0) AS paid_amount
+          CASE WHEN i.status = 'credited' THEN 0 ELSE i.total_amount END AS total_amount,
+          CASE WHEN i.status = 'credited' THEN 0 ELSE COALESCE(SUM(p.amount), 0) END AS paid_amount
         FROM invoices i
         LEFT JOIN invoice_payments p ON p.invoice_id = i.id
         WHERE i.tenant_id = ? AND i.status <> 'void'
-        GROUP BY i.id, i.total_amount
+        GROUP BY i.id, i.total_amount, i.status
       ) invoice_totals
     ) AS outstanding_receivables_amount,
     (
@@ -2445,7 +2502,8 @@ function getCollectionPriority(input: {
 function mapInvoice(row: InvoiceRow): InvoiceRecord {
   const paidAmount = row.paid_amount;
   const isVoided = row.status === "void";
-  const outstandingAmount = isVoided ? 0 : Math.max(row.total_amount - paidAmount, 0);
+  const isCredited = row.status === "credited";
+  const outstandingAmount = isVoided || isCredited ? 0 : Math.max(row.total_amount - paidAmount, 0);
   const paymentTermDays = getCalendarDayDifference(row.issued_at, row.due_date);
   const daysUntilDue = getCalendarDayDifference(new Date(), row.due_date);
   const daysPastDue = daysUntilDue < 0 ? Math.abs(daysUntilDue) : 0;
@@ -2466,6 +2524,9 @@ function mapInvoice(row: InvoiceRow): InvoiceRecord {
     amendmentRootInvoiceNumber: row.amendment_root_invoice_number,
     revisionNumber: row.revision_number,
     amendmentNote: row.amendment_note,
+    creditNote: row.credit_note,
+    creditedAt: row.credited_at,
+    creditMethod: row.credit_method,
     reissuedFromInvoiceId: row.reissued_from_invoice_id,
     reissuedFromInvoiceNumber: row.reissued_from_invoice_number,
     reissuedToInvoiceId: row.reissued_to_invoice_id,
@@ -2486,13 +2547,13 @@ function mapInvoice(row: InvoiceRow): InvoiceRecord {
     outstandingAmount,
     paymentCount: row.payment_count,
     lastPaymentAt: row.last_payment_at,
-    status: isVoided ? "void" : getInvoiceStatus(row.total_amount, paidAmount),
+    status: isVoided ? "void" : isCredited ? "credited" : getInvoiceStatus(row.total_amount, paidAmount),
     issuedAt: row.issued_at,
     dueDate: row.due_date,
     paymentTermDays,
     daysUntilDue,
     daysPastDue,
-    collectionStatus: isVoided ? "void" : getCollectionStatus(outstandingAmount, daysUntilDue),
+    collectionStatus: isVoided ? "void" : isCredited ? "credited" : getCollectionStatus(outstandingAmount, daysUntilDue),
     followUpStatus: row.follow_up_status,
     collectionPriority,
     actionRequired: row.action_required,
@@ -2511,6 +2572,19 @@ function normalizeInvoiceAmendmentNote(input: string | null | undefined): string
 
   if (trimmed.length > 240) {
     throw new Error("Amendment note must be 240 characters or fewer.");
+  }
+
+  return trimmed;
+}
+
+function normalizeInvoiceCreditNote(input: string | null | undefined): string | null {
+  const trimmed = input?.trim() ?? "";
+  if (!trimmed) {
+    return null;
+  }
+
+  if (trimmed.length > 240) {
+    throw new Error("Credit note must be 240 characters or fewer.");
   }
 
   return trimmed;
@@ -2559,6 +2633,9 @@ function buildInvoiceRecord(
     amendmentRootInvoiceNumber,
     revisionNumber,
     amendmentNote: input.amendmentNote,
+    creditNote: null,
+    creditedAt: null,
+    creditMethod: null,
     reissuedFromInvoiceId: priorInvoice?.id ?? null,
     reissuedFromInvoiceNumber: priorInvoice?.invoice_number ?? null,
     reissuedToInvoiceId: null,
@@ -2610,6 +2687,9 @@ function insertIssuedInvoiceRecord(
     invoice.amendmentRootInvoiceNumber,
     invoice.revisionNumber,
     invoice.amendmentNote,
+    invoice.creditNote,
+    invoice.creditedAt,
+    invoice.creditMethod,
     invoice.reissuedFromInvoiceId,
     invoice.reissuedFromInvoiceNumber,
     invoice.reissuedToInvoiceId,
@@ -4302,6 +4382,8 @@ export function getReportSummary(tenantId: string): ReportSummary {
     tenantId,
     tenantId,
     tenantId,
+    tenantId,
+    tenantId,
   ) as ReportCountsRow;
   const categoryCount = getCategoryCountStatement.get(tenantId) as CategoryCountRow | undefined;
   const inventory = getInventorySummaryStatement.get(tenantId) as InventorySummaryRow | undefined;
@@ -4322,9 +4404,11 @@ export function getReportSummary(tenantId: string): ReportSummary {
     invoiceCount: counts.invoice_count,
     paidInvoiceCount: counts.paid_invoice_count,
     openInvoiceCount: counts.open_invoice_count,
+    creditedInvoiceCount: counts.credited_invoice_count,
     grossSalesAmount: counts.gross_sales_amount,
     invoicedAmount: counts.invoiced_amount,
     cashCollectedAmount: counts.cash_collected_amount,
+    creditedAmount: counts.credited_amount,
     outstandingReceivablesAmount: counts.outstanding_receivables_amount,
     currentReceivablesAmount: counts.current_receivables_amount,
     overdue31To60Amount: counts.overdue_31_to_60_amount,
@@ -5668,6 +5752,88 @@ export function amendInvoice(
   return createAppliedResult(amendInvoiceInternal(normalizedInput));
 }
 
+export function creditInvoice(input: CreditInvoiceInput): InvoiceRecord {
+  const invoice = getInvoiceByIdStatement.get(input.tenantId, input.invoiceId) as InvoiceRow | undefined;
+  if (!invoice) {
+    throw new Error("The selected invoice does not exist.");
+  }
+
+  if (invoice.status === "credited") {
+    throw new Error("The selected invoice has already been credited.");
+  }
+
+  if (invoice.status === "void") {
+    throw new Error("The selected invoice has been voided.");
+  }
+
+  if (invoice.status !== "paid") {
+    throw new Error("The selected invoice can only be credited after it has been fully paid.");
+  }
+
+  if (!["bank_transfer", "cash", "card"].includes(input.method)) {
+    throw new Error("Payment method is invalid.");
+  }
+
+  const creditNote = normalizeInvoiceCreditNote(input.creditNote);
+  if (!creditNote) {
+    throw new Error("Credit note is required when crediting a paid invoice.");
+  }
+
+  const creditedAt = timestamp();
+
+  db.exec("BEGIN");
+
+  try {
+    updateInvoiceCreditStatement.run(creditNote, creditedAt, input.method, creditedAt, input.tenantId, input.invoiceId);
+
+    createJournalEntryLines({
+      tenantId: input.tenantId,
+      referenceType: "credit_note",
+      referenceId: invoice.id,
+      referenceNumber: invoice.invoice_number,
+      description: `Issue credit note for ${invoice.invoice_number}`,
+      createdAt: creditedAt,
+      lines: [
+        { accountCode: "511", debitAmount: invoice.subtotal_amount, creditAmount: 0 },
+        { accountCode: "3331", debitAmount: invoice.tax_amount, creditAmount: 0 },
+        { accountCode: input.method === "cash" ? "111" : "112", debitAmount: 0, creditAmount: invoice.total_amount },
+      ],
+    });
+
+    const creditedInvoice = getInvoiceByIdStatement.get(input.tenantId, input.invoiceId) as InvoiceRow | undefined;
+    if (!creditedInvoice) {
+      throw new Error("The selected invoice does not exist.");
+    }
+
+    const mappedInvoice = mapInvoice(creditedInvoice);
+    recordAuditLog({
+      tenantId: input.tenantId,
+      entityType: "invoice",
+      entityId: mappedInvoice.id,
+      entityNumber: mappedInvoice.invoiceNumber,
+      actionType: "invoice_credited",
+      summary: `Credited ${mappedInvoice.invoiceNumber}`,
+      metadata: {
+        amount: mappedInvoice.totalAmount,
+        paymentMethod: input.method,
+        productCategoryId: mappedInvoice.productCategoryId,
+        productCategoryName: mappedInvoice.productCategoryName,
+        productSku: mappedInvoice.productSku,
+        productName: mappedInvoice.productName,
+        creditNote,
+        note: creditNote,
+      },
+      createdAt: creditedAt,
+    });
+
+    db.exec("COMMIT");
+    return mappedInvoice;
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
+}
+
 export function voidInvoice(input: VoidInvoiceInput): InvoiceRecord {
   const invoice = getInvoiceByIdStatement.get(input.tenantId, input.invoiceId) as InvoiceRow | undefined;
   if (!invoice) {
@@ -5676,6 +5842,10 @@ export function voidInvoice(input: VoidInvoiceInput): InvoiceRecord {
 
   if (invoice.status === "void") {
     throw new Error("The selected invoice has already been voided.");
+  }
+
+  if (invoice.status === "credited") {
+    throw new Error("The selected invoice has already been credited.");
   }
 
   if (invoice.payment_count > 0 || invoice.paid_amount > 0) {
@@ -5826,6 +5996,10 @@ function createInvoicePaymentInternal(input: CreateInvoicePaymentInput): Invoice
     throw new Error("The selected invoice has been voided.");
   }
 
+  if (invoice.status === "credited") {
+    throw new Error("The selected invoice has been credited.");
+  }
+
   const outstandingAmount = Math.max(invoice.total_amount - invoice.paid_amount, 0);
 
   if (outstandingAmount === 0) {
@@ -5918,6 +6092,10 @@ export function createInvoicePayment(
     throw new Error("The selected invoice has been voided.");
   }
 
+  if (invoice.status === "credited") {
+    throw new Error("The selected invoice has been credited.");
+  }
+
   const outstandingAmount = Math.max(invoice.total_amount - invoice.paid_amount, 0);
 
   if (outstandingAmount === 0) {
@@ -6000,6 +6178,10 @@ export function updateInvoiceCollection(input: UpdateInvoiceCollectionInput): In
     throw new Error("The selected invoice has been voided.");
   }
 
+  if (invoice.status === "credited") {
+    throw new Error("The selected invoice has been credited.");
+  }
+
   const updateTimestamp = timestamp();
 
   db.exec("BEGIN");
@@ -6065,6 +6247,10 @@ export function resolveInvoiceCollectionAction(
 
   if (invoice.status === "void") {
     throw new Error("The selected invoice has been voided.");
+  }
+
+  if (invoice.status === "credited") {
+    throw new Error("The selected invoice has been credited.");
   }
 
   if (invoice.action_required === "monitor" && !invoice.next_action_date) {

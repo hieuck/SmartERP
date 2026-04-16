@@ -179,6 +179,9 @@ db.exec(`
     amendment_root_invoice_number TEXT NOT NULL,
     revision_number INTEGER NOT NULL DEFAULT 1,
     amendment_note TEXT,
+    credit_note TEXT,
+    credited_at TEXT,
+    credit_method TEXT,
     reissued_from_invoice_id TEXT,
     reissued_from_invoice_number TEXT,
     reissued_to_invoice_id TEXT,
@@ -408,6 +411,9 @@ function migrateInvoicesForActiveOrderConstraint(): void {
       amendment_root_invoice_number TEXT NOT NULL,
       revision_number INTEGER NOT NULL DEFAULT 1,
       amendment_note TEXT,
+      credit_note TEXT,
+      credited_at TEXT,
+      credit_method TEXT,
       reissued_from_invoice_id TEXT,
       reissued_from_invoice_number TEXT,
       reissued_to_invoice_id TEXT,
@@ -445,6 +451,9 @@ function migrateInvoicesForActiveOrderConstraint(): void {
         amendment_root_invoice_number,
         revision_number,
         amendment_note,
+        credit_note,
+        credited_at,
+        credit_method,
         reissued_from_invoice_id,
         reissued_from_invoice_number,
         reissued_to_invoice_id,
@@ -477,6 +486,9 @@ function migrateInvoicesForActiveOrderConstraint(): void {
           WHEN reissued_from_invoice_id IS NULL THEN 1
           ELSE 2
         END,
+        NULL,
+        NULL,
+        NULL,
         NULL,
         NULL,
         NULL,
@@ -659,6 +671,18 @@ if (!invoiceColumns.some((column) => column.name === "revision_number")) {
 
 if (!invoiceColumns.some((column) => column.name === "amendment_note")) {
   db.exec("ALTER TABLE invoices ADD COLUMN amendment_note TEXT");
+}
+
+if (!invoiceColumns.some((column) => column.name === "credit_note")) {
+  db.exec("ALTER TABLE invoices ADD COLUMN credit_note TEXT");
+}
+
+if (!invoiceColumns.some((column) => column.name === "credited_at")) {
+  db.exec("ALTER TABLE invoices ADD COLUMN credited_at TEXT");
+}
+
+if (!invoiceColumns.some((column) => column.name === "credit_method")) {
+  db.exec("ALTER TABLE invoices ADD COLUMN credit_method TEXT");
 }
 
 if (!invoiceColumns.some((column) => column.name === "reissued_from_invoice_id")) {
