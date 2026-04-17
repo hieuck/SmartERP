@@ -4572,6 +4572,17 @@ async function main() {
     rbacCollectorActionSplitVerified = true;
     await logout(page);
 
+    await loginAs(page, demoEmail, demoPassword);
+    await page.evaluate(
+      ({ key, tenantId }) => window.localStorage.setItem(key, tenantId),
+      { key: tenantStorageKey, tenantId: originalTenantId },
+    );
+    await openDirectRoute(page, "/dashboard/operations");
+    await waitForTenantContext(page, tenantName);
+    await page.locator("[data-testid='operations-build-summary']").waitFor({ timeout: 15000 });
+    await page.screenshot({ path: screenshotPath, fullPage: true });
+    await logout(page);
+
     const storedWorkspaceStateAfterLogout = await page.evaluate(
       ({ sessionKey, tenantKey }) => ({
         session: window.localStorage.getItem(sessionKey),
@@ -4602,8 +4613,6 @@ async function main() {
     await page.waitForLoadState("networkidle");
     await page.waitForURL(/\/login$/, { timeout: 15000 });
     await page.locator(".login-card").waitFor({ timeout: 15000 });
-
-    await page.screenshot({ path: screenshotPath, fullPage: true });
 
     const summary = {
       checkedAt: new Date().toISOString(),
