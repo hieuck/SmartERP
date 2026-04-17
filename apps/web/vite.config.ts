@@ -33,6 +33,33 @@ export default defineConfig({
           }
 
           if (
+            normalizedId.includes("/rc-util/") ||
+            normalizedId.includes("/rc-motion/") ||
+            normalizedId.includes("/rc-resize-observer/")
+          ) {
+            return "antd-rc-core-vendor";
+          }
+
+          if (
+            normalizedId.includes("/rc-field-form/") ||
+            normalizedId.includes("/rc-input/") ||
+            normalizedId.includes("/rc-textarea/") ||
+            normalizedId.includes("/rc-select/") ||
+            normalizedId.includes("/rc-trigger/") ||
+            normalizedId.includes("/rc-virtual-list/")
+          ) {
+            return "antd-forms-vendor";
+          }
+
+          if (
+            normalizedId.includes("/rc-menu/") ||
+            normalizedId.includes("/rc-drawer/") ||
+            normalizedId.includes("/rc-overflow/")
+          ) {
+            return "antd-shell-vendor";
+          }
+
+          if (
             normalizedId.includes("/antd/") ||
             normalizedId.includes("/@ant-design/") ||
             normalizedId.includes("/rc-")
