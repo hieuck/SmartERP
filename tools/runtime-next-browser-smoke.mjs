@@ -552,9 +552,11 @@ async function main() {
   let onboardingExportVerified = false;
   let baselineRestorePreviewVerified = false;
   let baselineRestoreTransactionReplayVerified = false;
+  let baselineRestoreControlReplayVerified = false;
   let baselineRestoreVerified = false;
   let recoveryDrillVerified = false;
   let recoveryDrillTransactionReplayVerified = false;
+  let recoveryDrillControlReplayVerified = false;
   let customerCrudVerified = false;
   let supplierCrudVerified = false;
   let productCategoryCrudVerified = false;
@@ -3951,8 +3953,11 @@ async function main() {
           handoffPackage.tenantSnapshot?.invoicePayments?.length &&
         handoffPackage.snapshotSummary?.invoiceReturnReceiptCount ===
           handoffPackage.tenantSnapshot?.invoiceReturnReceipts?.length &&
+        handoffPackage.snapshotSummary?.approvalCount === handoffPackage.tenantSnapshot?.approvalRequests?.length &&
+        handoffPackage.snapshotSummary?.auditLogCount === handoffPackage.tenantSnapshot?.auditLogs?.length &&
+        handoffPackage.snapshotSummary?.journalEntryCount === handoffPackage.tenantSnapshot?.journalEntries?.length &&
         handoffPackage.snapshotSummary.invoiceReturnReceiptCount > 0,
-      "Pilot handoff package did not summarize the expected transaction replay counts.",
+      "Pilot handoff package did not summarize the expected transaction and control replay counts.",
     );
     await handoffCard.getByText(tenantName, { exact: false }).waitFor({ timeout: 15000 });
     pilotHandoffPackageVerified = true;
@@ -4064,26 +4069,32 @@ async function main() {
         restorePreviewPayload.restoredScopes.includes("invoices") &&
         restorePreviewPayload.restoredScopes.includes("invoicePayments") &&
         restorePreviewPayload.restoredScopes.includes("invoiceReturnReceipts") &&
-        restorePreviewPayload.restoredScopes.includes("collections"),
+        restorePreviewPayload.restoredScopes.includes("collections") &&
+        restorePreviewPayload.restoredScopes.includes("approvals") &&
+        restorePreviewPayload.restoredScopes.includes("audit") &&
+        restorePreviewPayload.restoredScopes.includes("ledger"),
       "Restore preview did not promote transaction scopes into the baseline replay set.",
     );
     assert(
       Array.isArray(restorePreviewPayload?.pendingScopes) &&
-        restorePreviewPayload.pendingScopes.length === 3 &&
-        !restorePreviewPayload.pendingScopes.includes("invoiceReturnReceipts"),
-      "Restore preview still marked replayable transaction scopes as deferred.",
+        restorePreviewPayload.pendingScopes.length === 0,
+      "Restore preview still reported deferred scopes after full replay was enabled.",
     );
     assert(
       restorePreviewPayload.purchaseOrderReceiptCount === exportedSnapshot.purchaseOrderReceipts.length &&
         restorePreviewPayload.invoicePaymentCount === exportedSnapshot.invoicePayments.length &&
         restorePreviewPayload.invoiceReturnReceiptCount === exportedSnapshot.invoiceReturnReceipts.length &&
-        restorePreviewPayload.collectionActivityCount === exportedSnapshot.collectionActivities.length,
-      "Restore preview counts did not match the exported transaction graph.",
+        restorePreviewPayload.collectionActivityCount === exportedSnapshot.collectionActivities.length &&
+        restorePreviewPayload.approvalCount === exportedSnapshot.approvalRequests.length &&
+        restorePreviewPayload.auditLogCount === exportedSnapshot.auditLogs.length &&
+        restorePreviewPayload.journalEntryCount === exportedSnapshot.journalEntries.length,
+      "Restore preview counts did not match the exported control and transaction graph.",
     );
     const restoreButton = restoreCard.getByRole("button", { name: "Khôi phục baseline" });
     assert(!(await restoreButton.isDisabled()), "Restore button stayed disabled after preview.");
     baselineRestorePreviewVerified = true;
     baselineRestoreTransactionReplayVerified = true;
+    baselineRestoreControlReplayVerified = true;
     const restoreResponse = page.waitForResponse(
       (response) =>
         response.url().endsWith("/api/onboarding/restore") &&
@@ -4101,8 +4112,11 @@ async function main() {
         restoreResultPayload.restoredInvoices === exportedSnapshot.invoices.length &&
         restoreResultPayload.restoredInvoicePayments === exportedSnapshot.invoicePayments.length &&
         restoreResultPayload.restoredInvoiceReturnReceipts === exportedSnapshot.invoiceReturnReceipts.length &&
-        restoreResultPayload.restoredCollectionActivities === exportedSnapshot.collectionActivities.length,
-      "Restore result did not replay the expected transaction graph counts.",
+        restoreResultPayload.restoredCollectionActivities === exportedSnapshot.collectionActivities.length &&
+        restoreResultPayload.restoredApprovalRequests === exportedSnapshot.approvalRequests.length &&
+        restoreResultPayload.restoredAuditLogs === exportedSnapshot.auditLogs.length &&
+        restoreResultPayload.restoredJournalEntries === exportedSnapshot.journalEntries.length,
+      "Restore result did not replay the expected transaction and control graph counts.",
     );
     await restoreCard.getByText(restoredTenantName, { exact: false }).waitFor({ timeout: 15000 });
     await waitForTenantContext(page, restoredTenantName);
@@ -4222,13 +4236,25 @@ async function main() {
     assert(
       recoveryDrillReport.baselineCounts?.invoiceReturnReceipts === exportedSnapshot.invoiceReturnReceipts.length &&
         recoveryDrillReport.restoredCounts?.invoiceReturnReceipts === exportedSnapshot.invoiceReturnReceipts.length &&
+        recoveryDrillReport.baselineCounts?.approvalRequests === exportedSnapshot.approvalRequests.length &&
+        recoveryDrillReport.baselineCounts?.auditLogs === exportedSnapshot.auditLogs.length &&
+        recoveryDrillReport.baselineCounts?.journalEntries === exportedSnapshot.journalEntries.length &&
+        recoveryDrillReport.restoredCounts?.approvalRequests === exportedSnapshot.approvalRequests.length &&
+        recoveryDrillReport.restoredCounts?.auditLogs === exportedSnapshot.auditLogs.length &&
+        recoveryDrillReport.restoredCounts?.journalEntries === exportedSnapshot.journalEntries.length &&
         recoveryDrillReport.checks.some((check) => check.key === "invoice-return-receipts-restored" && check.passed === true) &&
         recoveryDrillReport.checks.some((check) => check.key === "invoice-payments-restored" && check.passed === true) &&
-        recoveryDrillReport.checks.some((check) => check.key === "purchase-order-receipts-restored" && check.passed === true),
-      "Recovery drill report did not confirm restored transaction replay correctly.",
+        recoveryDrillReport.checks.some((check) => check.key === "purchase-order-receipts-restored" && check.passed === true) &&
+        recoveryDrillReport.checks.some((check) => check.key === "approvals-restored" && check.passed === true) &&
+        recoveryDrillReport.checks.some((check) => check.key === "audit-restored" && check.passed === true) &&
+        recoveryDrillReport.checks.some((check) => check.key === "journal-restored" && check.passed === true) &&
+        Array.isArray(recoveryDrillReport.pendingScopes) &&
+        recoveryDrillReport.pendingScopes.length === 0,
+      "Recovery drill report did not confirm restored control and transaction replay correctly.",
     );
     recoveryDrillVerified = true;
     recoveryDrillTransactionReplayVerified = true;
+    recoveryDrillControlReplayVerified = true;
     await page.evaluate(
       ({ key, tenantId }) => {
         if (tenantId) {
@@ -4610,9 +4636,11 @@ async function main() {
       onboardingExportVerified,
       baselineRestorePreviewVerified,
       baselineRestoreTransactionReplayVerified,
+      baselineRestoreControlReplayVerified,
       baselineRestoreVerified,
       recoveryDrillVerified,
       recoveryDrillTransactionReplayVerified,
+      recoveryDrillControlReplayVerified,
       customerCrudVerified,
       supplierCrudVerified,
       productCategoryCrudVerified,

@@ -48,7 +48,7 @@ export const localeOverrides: Record<"vi" | "en", TranslationTree> = {
     },
     tenants: {
       restorePreviewCountsNowValue:
-        "{{customerCount}} khách hàng, {{supplierCount}} nhà cung cấp, {{productCount}} sản phẩm, {{inventoryLineCount}} dòng tồn kho, {{orderCount}} đơn hàng, {{purchaseOrderCount}} đơn mua, {{purchaseOrderReceiptCount}} phiếu nhận hàng, {{invoiceCount}} hóa đơn, {{invoicePaymentCount}} phiếu thanh toán, {{invoiceReturnReceiptCount}} phiếu nhận trả theo hóa đơn, và {{collectionActivityCount}} hoạt động thu hồi.",
+        "{{customerCount}} khách hàng, {{supplierCount}} nhà cung cấp, {{productCount}} sản phẩm, {{inventoryLineCount}} dòng tồn kho, {{orderCount}} đơn hàng, {{purchaseOrderCount}} đơn mua, {{purchaseOrderReceiptCount}} phiếu nhận hàng, {{invoiceCount}} hóa đơn, {{invoicePaymentCount}} phiếu thanh toán, {{invoiceReturnReceiptCount}} phiếu nhận trả theo hóa đơn, {{collectionActivityCount}} hoạt động thu hồi, {{approvalCount}} phê duyệt, {{auditLogCount}} audit log, {{journalEntryCount}} bút toán, và {{accountBalanceCount}} số dư sổ cái.",
       restorePreviewCountsLaterValue:
         "{{approvalCount}} phê duyệt, {{auditLogCount}} audit log, {{journalEntryCount}} bút toán, và {{accountBalanceCount}} số dư sổ cái.",
       restoreLaterValue: "Phê duyệt, audit, và replay sổ cái.",
@@ -57,7 +57,7 @@ export const localeOverrides: Record<"vi" | "en", TranslationTree> = {
       handoffSnapshotValue:
         "{{customers}} khách hàng, {{suppliers}} nhà cung cấp, {{products}} sản phẩm, {{invoices}} hóa đơn, {{invoicePayments}} phiếu thanh toán, {{purchaseOrderReceipts}} phiếu nhận hàng, {{invoiceReturnReceipts}} phiếu nhận trả theo hóa đơn",
       recoveryDrillBaselineCountsValue:
-        "{{customers}} khách hàng, {{suppliers}} nhà cung cấp, {{products}} sản phẩm, {{inventoryLines}} dòng tồn kho, {{orders}} đơn hàng, {{purchaseOrders}} đơn mua, {{purchaseOrderReceipts}} phiếu nhận hàng, {{invoices}} hóa đơn, {{invoicePayments}} phiếu thanh toán, {{invoiceReturnReceipts}} phiếu nhận trả theo hóa đơn",
+        "{{customers}} khách hàng, {{suppliers}} nhà cung cấp, {{products}} sản phẩm, {{inventoryLines}} dòng tồn kho, {{orders}} đơn hàng, {{purchaseOrders}} đơn mua, {{purchaseOrderReceipts}} phiếu nhận hàng, {{invoices}} hóa đơn, {{invoicePayments}} phiếu thanh toán, {{invoiceReturnReceipts}} phiếu nhận trả theo hóa đơn, {{approvalRequests}} phê duyệt, {{auditLogs}} audit log, {{journalEntries}} bút toán, và {{accountBalances}} số dư sổ cái",
       recoveryChecks: {
         "orders-restored": "Đơn hàng đã được replay",
         "purchase-orders-restored": "Đơn mua đã được replay",
@@ -66,6 +66,9 @@ export const localeOverrides: Record<"vi" | "en", TranslationTree> = {
         "invoice-payments-restored": "Phiếu thanh toán đã được replay",
         "invoice-return-receipts-restored": "Phiếu nhận trả theo hóa đơn đã được replay",
         "collections-restored": "Hoạt động thu hồi đã được replay",
+        "approvals-restored": "Phê duyệt đã được replay",
+        "audit-restored": "Audit trail đã được replay",
+        "journal-restored": "Bút toán đã được replay",
       },
     },
     errors: {

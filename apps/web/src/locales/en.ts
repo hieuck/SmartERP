@@ -190,7 +190,7 @@ const en = {
     restorePreviewSlugBlocked: "Slug already belongs to {{conflictingTenantName}}.",
     restorePreviewCountsNowLabel: "Restored in this baseline",
     restorePreviewCountsNowValue:
-      "{{customerCount}} customers, {{supplierCount}} suppliers, {{productCount}} products, {{inventoryLineCount}} inventory lines, {{orderCount}} orders, {{purchaseOrderCount}} purchase orders, {{purchaseOrderReceiptCount}} purchase receipts, {{invoiceCount}} invoices, {{invoicePaymentCount}} invoice payments, {{invoiceReturnReceiptCount}} invoice return receipts, and {{collectionActivityCount}} collection activities.",
+      "{{customerCount}} customers, {{supplierCount}} suppliers, {{productCount}} products, {{inventoryLineCount}} inventory lines, {{orderCount}} orders, {{purchaseOrderCount}} purchase orders, {{purchaseOrderReceiptCount}} purchase receipts, {{invoiceCount}} invoices, {{invoicePaymentCount}} invoice payments, {{invoiceReturnReceiptCount}} invoice return receipts, {{collectionActivityCount}} collection activities, {{approvalCount}} approvals, {{auditLogCount}} audit logs, {{journalEntryCount}} journal entries, and {{accountBalanceCount}} ledger balances.",
     restorePreviewCountsLaterLabel: "Deferred for later replay",
     restorePreviewCountsLaterValue:
       "{{approvalCount}} approvals, {{auditLogCount}} audit logs, {{journalEntryCount}} journal entries, and {{accountBalanceCount}} ledger balances.",
@@ -775,7 +775,7 @@ Object.assign(en.modules, {
       recoveryDrillNoPendingScopes: "No deferred scopes",
       recoveryDrillBaselineCounts: "Baseline counts",
       recoveryDrillBaselineCountsValue:
-        "{{customers}} customers, {{suppliers}} suppliers, {{products}} products, {{inventoryLines}} inventory lines, {{orders}} orders, {{purchaseOrders}} purchase orders, {{purchaseOrderReceipts}} purchase receipts, {{invoices}} invoices, {{invoicePayments}} invoice payments, {{invoiceReturnReceipts}} invoice return receipts",
+        "{{customers}} customers, {{suppliers}} suppliers, {{products}} products, {{inventoryLines}} inventory lines, {{orders}} orders, {{purchaseOrders}} purchase orders, {{purchaseOrderReceipts}} purchase receipts, {{invoices}} invoices, {{invoicePayments}} invoice payments, {{invoiceReturnReceipts}} invoice return receipts, {{approvalRequests}} approvals, {{auditLogs}} audit logs, {{journalEntries}} journal entries, and {{accountBalances}} ledger balances",
       checklistTenantCreated: "Create the pilot tenant",
       checklistTenantCreatedDescription: "A live pilot needs a dedicated tenant with its own slug and industry context.",
       checklistTenantSelected: "Lock the working tenant",
@@ -801,6 +801,9 @@ Object.assign(en.modules, {
         "invoice-payments-restored": "Invoice payments replayed",
         "invoice-return-receipts-restored": "Invoice return receipts replayed",
         "collections-restored": "Collection activity replayed",
+        "approvals-restored": "Approvals replayed",
+        "audit-restored": "Audit trail replayed",
+        "journal-restored": "Journal entries replayed",
         "deferred-scopes-acknowledged": "Deferred scopes acknowledged",
       },
     },

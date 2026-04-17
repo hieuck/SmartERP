@@ -252,6 +252,9 @@ export type RestoreTenantSnapshotResult = {
   restoredInvoicePayments: number;
   restoredInvoiceReturnReceipts: number;
   restoredCollectionActivities: number;
+  restoredApprovalRequests: number;
+  restoredAuditLogs: number;
+  restoredJournalEntries: number;
   restoredScopes: string[];
   pendingScopes: string[];
 };
@@ -537,6 +540,7 @@ export type ApprovalRequestRecord = {
   decisionByEmail: string | null;
   decisionByDisplayName: string | null;
   decisionNote: string | null;
+  payloadJson?: string;
   requestedAt: string;
   decidedAt: string | null;
 };

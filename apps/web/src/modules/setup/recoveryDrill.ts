@@ -27,7 +27,10 @@ export type RecoveryDrillReport = {
     invoices: number;
     invoicePayments: number;
     invoiceReturnReceipts: number;
-    deferredScopes: number;
+    approvalRequests: number;
+    auditLogs: number;
+    journalEntries: number;
+    accountBalances: number;
   };
   restoredCounts: {
     customers: number;
@@ -41,6 +44,9 @@ export type RecoveryDrillReport = {
     invoicePayments: number;
     invoiceReturnReceipts: number;
     collectionActivities: number;
+    approvalRequests: number;
+    auditLogs: number;
+    journalEntries: number;
   };
   pendingScopes: string[];
   checks: RecoveryDrillCheck[];
@@ -121,11 +127,26 @@ export function buildRecoveryDrillReport(args: {
       detail: `${result.restoredCollectionActivities}/${snapshot.collectionActivities.length} collection activities replayed into the restored tenant.`,
     },
     {
+      key: "approvals-restored",
+      passed: result.restoredApprovalRequests === snapshot.approvalRequests.length,
+      detail: `${result.restoredApprovalRequests}/${snapshot.approvalRequests.length} approval requests replayed into the restored tenant.`,
+    },
+    {
+      key: "audit-restored",
+      passed: result.restoredAuditLogs === snapshot.auditLogs.length,
+      detail: `${result.restoredAuditLogs}/${snapshot.auditLogs.length} audit logs replayed into the restored tenant.`,
+    },
+    {
+      key: "journal-restored",
+      passed: result.restoredJournalEntries === snapshot.journalEntries.length,
+      detail: `${result.restoredJournalEntries}/${snapshot.journalEntries.length} journal entries replayed into the restored tenant.`,
+    },
+    {
       key: "deferred-scopes-acknowledged",
-      passed: preview.pendingScopes.length === 3,
+      passed: preview.pendingScopes.length === 0,
       detail:
-        preview.pendingScopes.length === 3
-          ? `${preview.pendingScopes.length} scopes remain deferred: ${preview.pendingScopes.join(", ")}.`
+        preview.pendingScopes.length === 0
+          ? "No recovery scopes remain deferred after replay."
           : `Unexpected deferred scope count: ${preview.pendingScopes.length}.`,
     },
   ];
@@ -155,7 +176,10 @@ export function buildRecoveryDrillReport(args: {
       invoices: snapshot.invoices.length,
       invoicePayments: snapshot.invoicePayments?.length ?? 0,
       invoiceReturnReceipts: snapshot.invoiceReturnReceipts.length,
-      deferredScopes: preview.pendingScopes.length,
+      approvalRequests: snapshot.approvalRequests.length,
+      auditLogs: snapshot.auditLogs.length,
+      journalEntries: snapshot.journalEntries.length,
+      accountBalances: snapshot.accountBalances.length,
     },
     restoredCounts: {
       customers: result.restoredCustomers,
@@ -169,6 +193,9 @@ export function buildRecoveryDrillReport(args: {
       invoicePayments: result.restoredInvoicePayments,
       invoiceReturnReceipts: result.restoredInvoiceReturnReceipts,
       collectionActivities: result.restoredCollectionActivities,
+      approvalRequests: result.restoredApprovalRequests,
+      auditLogs: result.restoredAuditLogs,
+      journalEntries: result.restoredJournalEntries,
     },
     pendingScopes: [...preview.pendingScopes],
     checks,

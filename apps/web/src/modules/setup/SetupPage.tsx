@@ -608,12 +608,14 @@ export function SetupPage(): ReactElement {
                 <div className="compact-record-row">
                   <strong>{t("tenants.restorePreviewCountsLaterLabel")}</strong>
                   <span>
-                    {t("tenants.restorePreviewCountsLaterValue", {
-                      approvalCount: restorePreview.approvalCount,
-                      auditLogCount: restorePreview.auditLogCount,
-                      journalEntryCount: restorePreview.journalEntryCount,
-                      accountBalanceCount: restorePreview.accountBalanceCount,
-                    })}
+                    {restorePreview.pendingScopes.length
+                      ? t("tenants.restorePreviewCountsLaterValue", {
+                          approvalCount: restorePreview.approvalCount,
+                          auditLogCount: restorePreview.auditLogCount,
+                          journalEntryCount: restorePreview.journalEntryCount,
+                          accountBalanceCount: restorePreview.accountBalanceCount,
+                        })
+                      : t("setup.recoveryDrillNoPendingScopes")}
                   </span>
                 </div>
               </div>
@@ -699,6 +701,10 @@ export function SetupPage(): ReactElement {
                         invoices: recoveryDrillReport.baselineCounts.invoices,
                         invoicePayments: recoveryDrillReport.baselineCounts.invoicePayments,
                         invoiceReturnReceipts: recoveryDrillReport.baselineCounts.invoiceReturnReceipts,
+                        approvalRequests: recoveryDrillReport.baselineCounts.approvalRequests,
+                        auditLogs: recoveryDrillReport.baselineCounts.auditLogs,
+                        journalEntries: recoveryDrillReport.baselineCounts.journalEntries,
+                        accountBalances: recoveryDrillReport.baselineCounts.accountBalances,
                       })}
                     </span>
                   </div>

@@ -593,6 +593,25 @@ const listJournalEntriesStatement = db.prepare(`
   LIMIT 24
 `);
 
+const listJournalEntriesForExportStatement = db.prepare(`
+  SELECT
+    id,
+    tenant_id,
+    entry_group_id,
+    reference_type,
+    reference_id,
+    reference_number,
+    account_code,
+    account_name,
+    debit_amount,
+    credit_amount,
+    description,
+    created_at
+  FROM journal_entries
+  WHERE tenant_id = ?
+  ORDER BY datetime(created_at) ASC, rowid ASC
+`);
+
 const listApprovalRequestsStatement = db.prepare(`
   SELECT
     id,
@@ -724,6 +743,25 @@ const listAuditLogsStatement = db.prepare(`
   WHERE tenant_id = ?
   ORDER BY datetime(created_at) DESC, rowid DESC
   LIMIT 60
+`);
+
+const listAuditLogsForExportStatement = db.prepare(`
+  SELECT
+    id,
+    tenant_id,
+    domain,
+    entity_type,
+    entity_id,
+    entity_number,
+    action_type,
+    summary,
+    actor_email,
+    actor_display_name,
+    metadata_json,
+    created_at
+  FROM audit_logs
+  WHERE tenant_id = ?
+  ORDER BY datetime(created_at) ASC, rowid ASC
 `);
 
 const listCustomersStatement = db.prepare(`
@@ -2572,6 +2610,7 @@ function mapApprovalRequest(row: ApprovalRequestRow): ApprovalRequestRecord {
     decisionByEmail: row.decision_by_email,
     decisionByDisplayName: row.decision_by_display_name,
     decisionNote: row.decision_note,
+    payloadJson: row.payload_json,
     requestedAt: row.requested_at,
     decidedAt: row.decided_at,
   };
@@ -3801,8 +3840,11 @@ const restoreImmediateScopes = [
   "invoicePayments",
   "invoiceReturnReceipts",
   "collections",
+  "approvals",
+  "audit",
+  "ledger",
 ] as const;
-const restoreDeferredScopes = ["approvals", "audit", "ledger"] as const;
+const restoreDeferredScopes = [] as const;
 
 function normalizeRestoreTarget(input: RestoreTenantSnapshotInput): {
   targetName: string;
@@ -3857,9 +3899,9 @@ export function exportTenantSnapshot(tenantId: string): TenantExportBundle {
     customerStatements: listCustomerStatements(tenantId),
     collectionActivities: listInvoiceCollectionActivities(tenantId),
     approvalRequests: listApprovalRequests(tenantId),
-    auditLogs: listAuditLogs(tenantId),
+    auditLogs: listAuditLogsForExport(tenantId),
     accountBalances: listAccountBalances(tenantId),
-    journalEntries: listJournalEntries(tenantId),
+    journalEntries: listJournalEntriesForExport(tenantId),
   };
 }
 
@@ -3927,6 +3969,9 @@ export function restoreTenantSnapshot(input: RestoreTenantSnapshotInput): Restor
   let restoredInvoicePayments = 0;
   let restoredInvoiceReturnReceipts = 0;
   let restoredCollectionActivities = 0;
+  let restoredApprovalRequests = 0;
+  let restoredAuditLogs = 0;
+  let restoredJournalEntries = 0;
   const customerIdMap = new Map<string, string>();
   const supplierIdMap = new Map<string, string>();
   const productIdMap = new Map<string, string>();
@@ -4013,6 +4058,197 @@ export function restoreTenantSnapshot(input: RestoreTenantSnapshotInput): Restor
   const purchaseOrderNumberMap = new Map<string, string>();
   const invoiceIdMap = new Map<string, string>();
   const invoiceNumberMap = new Map<string, string>();
+  const approvalIdMap = new Map<string, string>();
+  const journalEntryGroupIdMap = new Map<string, string>();
+
+  const replaceDocumentNumbers = (value: string) => {
+    if (value.length === 0) {
+      return value;
+    }
+
+    let nextValue = value;
+    const replacementMaps = [orderNumberMap, purchaseOrderNumberMap, invoiceNumberMap];
+    for (const replacementMap of replacementMaps) {
+      for (const [sourceValue, restoredValue] of replacementMap.entries()) {
+        if (sourceValue !== restoredValue && nextValue.includes(sourceValue)) {
+          nextValue = nextValue.replaceAll(sourceValue, restoredValue);
+        }
+      }
+    }
+
+    return nextValue;
+  };
+
+  const replaceOptionalDocumentNumbers = (value: string | null | undefined) => {
+    if (value == null) {
+      return value;
+    }
+
+    return replaceDocumentNumbers(value);
+  };
+
+  const requireRestoredId = (entityLabel: string, sourceId: string | null | undefined, idMap: Map<string, string>) => {
+    if (!sourceId) {
+      throw new Error(`Snapshot ${entityLabel} reference is missing.`);
+    }
+
+    const restoredId = idMap.get(sourceId);
+    if (!restoredId) {
+      throw new Error(`Snapshot ${entityLabel} reference ${sourceId} could not be restored.`);
+    }
+
+    return restoredId;
+  };
+
+  const remapApprovalReference = (
+    requestType: ApprovalRequestType,
+    sourceReferenceId: string,
+    sourceReferenceNumber: string,
+  ) => {
+    switch (requestType) {
+      case "inventory_adjustment":
+        return {
+          referenceId: requireRestoredId("product", sourceReferenceId, productIdMap),
+          referenceNumber: sourceReferenceNumber,
+        };
+      case "purchase_order_receipt":
+        return {
+          referenceId: requireRestoredId("purchase order", sourceReferenceId, purchaseOrderIdMap),
+          referenceNumber:
+            purchaseOrderNumberMap.get(sourceReferenceId) ?? replaceDocumentNumbers(sourceReferenceNumber),
+        };
+      case "invoice_issue":
+        return {
+          referenceId: requireRestoredId("order", sourceReferenceId, orderIdMap),
+          referenceNumber: orderNumberMap.get(sourceReferenceId) ?? replaceDocumentNumbers(sourceReferenceNumber),
+        };
+      case "invoice_amend":
+      case "invoice_payment":
+        return {
+          referenceId: requireRestoredId("invoice", sourceReferenceId, invoiceIdMap),
+          referenceNumber: invoiceNumberMap.get(sourceReferenceId) ?? replaceDocumentNumbers(sourceReferenceNumber),
+        };
+      default:
+        return {
+          referenceId: sourceReferenceId,
+          referenceNumber: replaceDocumentNumbers(sourceReferenceNumber),
+        };
+    }
+  };
+
+  const remapApprovalPayload = (requestType: ApprovalRequestType, payloadJson: string) => {
+    const payload = JSON.parse(payloadJson) as Record<string, unknown>;
+    const remappedPayload: Record<string, unknown> = {
+      ...payload,
+      tenantId: restoredTenant.id,
+    };
+
+    switch (requestType) {
+      case "inventory_adjustment":
+        remappedPayload.productId = requireRestoredId(
+          "product",
+          String(payload.productId ?? ""),
+          productIdMap,
+        );
+        break;
+      case "purchase_order_receipt":
+        remappedPayload.purchaseOrderId = requireRestoredId(
+          "purchase order",
+          String(payload.purchaseOrderId ?? ""),
+          purchaseOrderIdMap,
+        );
+        break;
+      case "invoice_issue":
+        remappedPayload.orderId = requireRestoredId("order", String(payload.orderId ?? ""), orderIdMap);
+        break;
+      case "invoice_amend":
+      case "invoice_payment":
+        remappedPayload.invoiceId = requireRestoredId(
+          "invoice",
+          String(payload.invoiceId ?? ""),
+          invoiceIdMap,
+        );
+        break;
+      default:
+        break;
+    }
+
+    return JSON.stringify(remappedPayload);
+  };
+
+  const remapAuditMetadata = (metadataJson: string) => {
+    try {
+      const metadata = JSON.parse(metadataJson) as AuditLogMetadata;
+      return JSON.stringify({
+        ...metadata,
+        reissuedFromInvoiceNumber: replaceOptionalDocumentNumbers(metadata.reissuedFromInvoiceNumber),
+        reissuedToInvoiceNumber: replaceOptionalDocumentNumbers(metadata.reissuedToInvoiceNumber),
+        amendmentRootInvoiceNumber: replaceOptionalDocumentNumbers(metadata.amendmentRootInvoiceNumber),
+        note: replaceOptionalDocumentNumbers(metadata.note),
+      });
+    } catch {
+      return JSON.stringify({});
+    }
+  };
+
+  const remapAuditEntity = (auditLog: AuditLogRecord) => {
+    switch (auditLog.entityType) {
+      case "invoice":
+      case "payment":
+      case "collection":
+        return {
+          entityId: requireRestoredId("invoice", auditLog.entityId, invoiceIdMap),
+          entityNumber: replaceDocumentNumbers(auditLog.entityNumber),
+        };
+      case "order":
+        return {
+          entityId: requireRestoredId("order", auditLog.entityId, orderIdMap),
+          entityNumber: replaceDocumentNumbers(auditLog.entityNumber),
+        };
+      case "purchase_order":
+        return {
+          entityId: requireRestoredId("purchase order", auditLog.entityId, purchaseOrderIdMap),
+          entityNumber: replaceDocumentNumbers(auditLog.entityNumber),
+        };
+      case "approval":
+        return {
+          entityId: requireRestoredId("approval", auditLog.entityId, approvalIdMap),
+          entityNumber: replaceDocumentNumbers(auditLog.entityNumber),
+        };
+      default:
+        return {
+          entityId: auditLog.entityId,
+          entityNumber: replaceDocumentNumbers(auditLog.entityNumber),
+        };
+    }
+  };
+
+  const remapJournalReference = (journalEntry: JournalEntryRecord) => {
+    switch (journalEntry.referenceType) {
+      case "invoice":
+      case "payment":
+      case "credit_note":
+        return {
+          referenceId: requireRestoredId("invoice", journalEntry.referenceId, invoiceIdMap),
+          referenceNumber: replaceDocumentNumbers(journalEntry.referenceNumber),
+        };
+      case "purchase_receipt":
+        return {
+          referenceId: requireRestoredId("purchase order", journalEntry.referenceId, purchaseOrderIdMap),
+          referenceNumber: replaceDocumentNumbers(journalEntry.referenceNumber),
+        };
+      case "order":
+        return {
+          referenceId: requireRestoredId("order", journalEntry.referenceId, orderIdMap),
+          referenceNumber: replaceDocumentNumbers(journalEntry.referenceNumber),
+        };
+      default:
+        return {
+          referenceId: journalEntry.referenceId,
+          referenceNumber: replaceDocumentNumbers(journalEntry.referenceNumber),
+        };
+    }
+  };
 
   const snapshotOrders = [...(input.snapshot.orders ?? [])].sort((left, right) =>
     compareIsoAscending(left.createdAt, right.createdAt),
@@ -4280,6 +4516,102 @@ export function restoreTenantSnapshot(input: RestoreTenantSnapshotInput): Restor
     restoredCollectionActivities += 1;
   }
 
+  const snapshotApprovalRequests = [...(input.snapshot.approvalRequests ?? [])].sort((left, right) =>
+    compareIsoAscending(left.requestedAt, right.requestedAt),
+  );
+
+  for (const approvalRequest of snapshotApprovalRequests) {
+    const restoredApprovalId = randomUUID();
+    approvalIdMap.set(approvalRequest.id, restoredApprovalId);
+    const restoredReference = remapApprovalReference(
+      approvalRequest.requestType,
+      approvalRequest.referenceId,
+      approvalRequest.referenceNumber,
+    );
+
+    createApprovalRequestStatement.run(
+      restoredApprovalId,
+      restoredTenant.id,
+      approvalRequest.requestType,
+      approvalRequest.status,
+      approvalRequest.riskLevel,
+      restoredReference.referenceId,
+      restoredReference.referenceNumber,
+      replaceDocumentNumbers(approvalRequest.summary),
+      replaceDocumentNumbers(approvalRequest.reason),
+      approvalRequest.amount,
+      approvalRequest.quantity,
+      approvalRequest.requestedByEmail,
+      approvalRequest.requestedByDisplayName,
+      approvalRequest.decisionByEmail,
+      approvalRequest.decisionByDisplayName,
+      approvalRequest.decisionNote,
+      remapApprovalPayload(
+        approvalRequest.requestType,
+        approvalRequest.payloadJson ?? JSON.stringify({ tenantId: restoredTenant.id }),
+      ),
+      approvalRequest.requestedAt,
+      approvalRequest.decidedAt,
+    );
+    restoredApprovalRequests += 1;
+  }
+
+  ensureDefaultAccounts(restoredTenant.id);
+  const snapshotJournalEntries = [...(input.snapshot.journalEntries ?? [])].sort((left, right) =>
+    compareIsoAscending(left.createdAt, right.createdAt),
+  );
+
+  for (const journalEntry of snapshotJournalEntries) {
+    const restoredReference = remapJournalReference(journalEntry);
+    const restoredEntryGroupId =
+      journalEntryGroupIdMap.get(journalEntry.entryGroupId) ??
+      (() => {
+        const nextGroupId = randomUUID();
+        journalEntryGroupIdMap.set(journalEntry.entryGroupId, nextGroupId);
+        return nextGroupId;
+      })();
+
+    createJournalEntryStatement.run(
+      randomUUID(),
+      restoredTenant.id,
+      restoredEntryGroupId,
+      journalEntry.referenceType,
+      restoredReference.referenceId,
+      restoredReference.referenceNumber,
+      journalEntry.accountCode,
+      journalEntry.accountName,
+      journalEntry.debitAmount,
+      journalEntry.creditAmount,
+      replaceDocumentNumbers(journalEntry.description),
+      journalEntry.createdAt,
+    );
+    restoredJournalEntries += 1;
+  }
+
+  const snapshotAuditLogs = [...(input.snapshot.auditLogs ?? [])].sort((left, right) =>
+    compareIsoAscending(left.createdAt, right.createdAt),
+  );
+
+  for (const auditLog of snapshotAuditLogs) {
+    const restoredEntity = remapAuditEntity(auditLog);
+
+    createAuditLogStatement.run(
+      randomUUID(),
+      restoredTenant.id,
+      auditLog.domain,
+      auditLog.entityType,
+      restoredEntity.entityId,
+      restoredEntity.entityNumber,
+      auditLog.actionType,
+      replaceDocumentNumbers(auditLog.summary),
+      auditLog.actorEmail,
+      auditLog.actorDisplayName,
+      remapAuditMetadata(JSON.stringify(auditLog.metadata ?? {})),
+      auditLog.createdAt,
+    );
+    restoredAuditLogs += 1;
+  }
+
   return {
     tenant: restoredTenant,
     restoredCustomers,
@@ -4293,6 +4625,9 @@ export function restoreTenantSnapshot(input: RestoreTenantSnapshotInput): Restor
     restoredInvoicePayments,
     restoredInvoiceReturnReceipts,
     restoredCollectionActivities,
+    restoredApprovalRequests,
+    restoredAuditLogs,
+    restoredJournalEntries,
     restoredScopes: [...restoreImmediateScopes],
     pendingScopes: [...restoreDeferredScopes],
   };
@@ -4787,8 +5122,17 @@ export function listJournalEntries(tenantId: string): JournalEntryRecord[] {
   return (listJournalEntriesStatement.all(tenantId) as JournalEntryRow[]).map(mapJournalEntry);
 }
 
+function listJournalEntriesForExport(tenantId: string): JournalEntryRecord[] {
+  ensureDefaultAccounts(tenantId);
+  return (listJournalEntriesForExportStatement.all(tenantId) as JournalEntryRow[]).map(mapJournalEntry);
+}
+
 export function listAuditLogs(tenantId: string): AuditLogRecord[] {
   return (listAuditLogsStatement.all(tenantId) as AuditLogRow[]).map(mapAuditLog);
+}
+
+function listAuditLogsForExport(tenantId: string): AuditLogRecord[] {
+  return (listAuditLogsForExportStatement.all(tenantId) as AuditLogRow[]).map(mapAuditLog);
 }
 
 export function listApprovalRequests(tenantId: string): ApprovalRequestRecord[] {
