@@ -323,6 +323,15 @@ export async function handleCreditInvoice(
     return;
   }
 
+  if (
+    input.creditMode !== undefined &&
+    input.creditMode !== "restock" &&
+    input.creditMode !== "financial_only"
+  ) {
+    badRequest(response, "Credit mode is invalid.");
+    return;
+  }
+
   if (input.creditNote !== null && input.creditNote !== undefined && typeof input.creditNote !== "string") {
     badRequest(response, "Credit note must be 240 characters or fewer.");
     return;
@@ -341,6 +350,7 @@ export async function handleCreditInvoice(
           "The selected invoice can only be credited after it has been fully paid.",
           "Credit quantity must be a positive integer.",
           "Credit quantity cannot exceed the remaining uncredited quantity.",
+          "Credit mode is invalid.",
           "Credit note is required when crediting a paid invoice.",
           "Credit note must be 240 characters or fewer.",
           "Payment method is invalid.",

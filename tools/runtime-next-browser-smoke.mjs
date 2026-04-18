@@ -95,6 +95,7 @@ const secondSaleQuantity = 2;
 const creditedOrderQuantity = 1;
 const partialCreditOrderQuantity = 5;
 const partialCreditQuantity = 2;
+const partialCreditMode = "financial_only";
 const cancelableOrderQuantity = 1;
 const voidableOrderQuantity = 3;
 const invalidQuantity = 20;
@@ -132,7 +133,7 @@ const expectedGrossSalesAfterPartialCredit = expectedGrossSales + partialCreditN
 const expectedInvoicedAmountAfterPartialCredit = expectedInvoicedAmount + partialCreditNetInvoiceAmount;
 const expectedCashCollectedAmountAfterPartialCredit = expectedCashCollectedAmount + partialCreditNetInvoiceAmount;
 const expectedCreditedAmountAfterPartialCredit = creditedInvoiceAmount + partialCreditAmount;
-const expectedRemainingStockAfterPartialCredit = expectedRemainingStock - partialCreditOrderQuantity + partialCreditQuantity;
+const expectedRemainingStockAfterPartialCredit = expectedRemainingStock - partialCreditOrderQuantity;
 const expectedInventoryValueAfterPartialCredit = expectedRemainingStockAfterPartialCredit * purchaseUnitCost;
 const expectedRestoreRemainingStock = expectedRemainingStockAfterPartialCredit;
 const expectedRestoreInventoryValueAmount = expectedInventoryValueAfterPartialCredit;
@@ -643,11 +644,11 @@ async function main() {
   let invoiceReturnReceiptVerified = false;
   let partialInvoiceCreditVerified = false;
   let partialInvoiceCreditAuditVerified = false;
-  let partialInvoiceCreditInventoryRestockVerified = false;
+  let partialInvoiceCreditNoRestockVerified = false;
   let partialInvoiceCreditReportVerified = false;
   let partialInvoiceCreditOrderStateVerified = false;
   let partialInvoiceCreditCollectionGuardVerified = false;
-  let partialInvoiceReturnReceiptVerified = false;
+  let partialInvoiceReturnReceiptSuppressedVerified = false;
   let creditedOrderReturnedVerified = false;
   let creditedOrderReturnAuditVerified = false;
   let creditedOrderExcludedFromSalesVerified = false;
@@ -3751,6 +3752,11 @@ async function main() {
     await partialCreditModal.waitFor({ timeout: 15000 });
     await selectOption(page, partialCreditModal.getByRole("combobox").first(), "Chuyển khoản");
     await fillNumberInput(partialCreditModal.getByRole("spinbutton").first(), partialCreditQuantity);
+    await selectOption(
+      page,
+      partialCreditModal.getByRole("combobox").nth(1),
+      partialCreditMode === "financial_only" ? "Chỉ điều chỉnh tài chính" : "Nhập lại hàng về kho",
+    );
     await fillField(partialCreditModal, "#creditNote", partialInvoiceCreditNote);
     await partialCreditModal.getByRole("button", { name: "Ghi credit note" }).click();
     await partialCreditInvoiceRow.getByText(/Đã ghi giảm một phần|Partially Credited/, { exact: false }).first().waitFor({
@@ -3761,10 +3767,15 @@ async function main() {
     });
     await partialCreditInvoiceRow.getByText(buildAmountPattern(partialCreditAmount)).first().waitFor({ timeout: 15000 });
     await partialCreditInvoiceRow
-      .getByText(/Phiếu nhận trả:\s*1|Return receipts:\s*1/, { exact: false })
+      .getByText(/Số lượng ghi giảm không nhập kho:\s*2|Credited without return:\s*2/, { exact: false })
       .first()
       .waitFor({ timeout: 15000 });
+    assert(
+      (await partialCreditInvoiceRow.getByText(/Phiếu nhận trả:|Return receipts:/, { exact: false }).count()) === 0,
+      "Partial financial credit should not render a return receipt count on the invoice row.",
+    );
     partialInvoiceCreditVerified = true;
+    partialInvoiceReturnReceiptSuppressedVerified = true;
 
     const partialCreditCollectionResponse = await page.evaluate(
       async ({ targetInvoiceNumber, sessionKey, tenantKey, nextActionDate }) => {
@@ -3877,21 +3888,20 @@ async function main() {
             item.metadata?.amount === partialCreditAmount &&
             item.metadata?.creditedQuantity === partialCreditQuantity &&
             item.metadata?.creditedAmount === partialCreditAmount &&
-            item.metadata?.inventoryValue === purchaseUnitCost * partialCreditQuantity &&
+            item.metadata?.returnedQuantity === 0 &&
+            item.metadata?.inventoryValue === 0 &&
+            item.metadata?.inventoryRestocked === false &&
             item.metadata?.creditNote === partialInvoiceCreditNote,
         ),
-      "Partial credit audit entry was not recorded with quantity and amount context.",
+      "Partial financial credit audit entry did not capture the no-restock context.",
     );
     assert(
-      partialCreditAuditSnapshot.body?.items?.some(
+      !partialCreditAuditSnapshot.body?.items?.some(
         (item) =>
           item.actionType === "invoice_return_received" &&
-          item.entityNumber === partialCreditInvoiceNumber &&
-          item.metadata?.quantity === partialCreditQuantity &&
-          item.metadata?.inventoryValue === purchaseUnitCost * partialCreditQuantity &&
-          item.metadata?.creditNote === partialInvoiceCreditNote,
+          item.entityNumber === partialCreditInvoiceNumber,
       ),
-      "Partial credit did not record an invoice return receipt audit entry.",
+      "Partial financial credit must not record an invoice return receipt audit entry.",
     );
     assert(
       !partialCreditAuditSnapshot.body?.items?.some(
@@ -3900,7 +3910,6 @@ async function main() {
       "Partial credit must not mark the order as fully returned.",
     );
     partialInvoiceCreditAuditVerified = true;
-    partialInvoiceReturnReceiptVerified = true;
     partialInvoiceCreditOrderStateVerified = true;
 
     await openSection(page, sidebarIndexes.inventory, "/dashboard/inventory");
@@ -3914,7 +3923,7 @@ async function main() {
       .getByText(buildAmountPattern(expectedInventoryValueAfterPartialCredit))
       .first()
       .waitFor({ timeout: 15000 });
-    partialInvoiceCreditInventoryRestockVerified = true;
+    partialInvoiceCreditNoRestockVerified = true;
 
     await openSection(page, sidebarIndexes.operations, "/dashboard/operations");
     await page.getByRole("heading", { name: "Vận hành" }).waitFor({ timeout: 15000 });
@@ -4115,13 +4124,8 @@ async function main() {
           item.quantityReturned === creditedOrderQuantity &&
           item.inventoryValue === purchaseUnitCost * creditedOrderQuantity,
       ) &&
-        exportedSnapshot?.invoiceReturnReceipts?.some(
-          (item) =>
-            item.invoiceNumber === partialCreditInvoiceNumber &&
-            item.quantityReturned === partialCreditQuantity &&
-            item.inventoryValue === purchaseUnitCost * partialCreditQuantity,
-        ),
-      "Tenant export snapshot did not include the expected invoice return receipts.",
+        !exportedSnapshot?.invoiceReturnReceipts?.some((item) => item.invoiceNumber === partialCreditInvoiceNumber),
+      "Tenant export snapshot did not preserve the expected restock-only return receipt history.",
     );
     onboardingExportVerified = true;
     exportedInvoiceReturnReceiptsVerified = true;
@@ -4802,11 +4806,11 @@ async function main() {
       invoiceReturnReceiptVerified,
       partialInvoiceCreditVerified,
       partialInvoiceCreditAuditVerified,
-      partialInvoiceCreditInventoryRestockVerified,
+      partialInvoiceCreditNoRestockVerified,
       partialInvoiceCreditReportVerified,
       partialInvoiceCreditOrderStateVerified,
       partialInvoiceCreditCollectionGuardVerified,
-      partialInvoiceReturnReceiptVerified,
+      partialInvoiceReturnReceiptSuppressedVerified,
       creditedOrderReturnedVerified,
       creditedOrderReturnAuditVerified,
       creditedOrderExcludedFromSalesVerified,

@@ -654,6 +654,34 @@ export function ReportsPage(): ReactElement {
                           {t("reports.auditAmountLabel")} {formatCurrency(auditLog.metadata.amount)}
                         </div>
                       ) : null}
+                      {typeof auditLog.metadata.quantity === "number" ? (
+                        <div className="record-detail">
+                          {t("reports.auditQuantityLabel")} {auditLog.metadata.quantity}
+                        </div>
+                      ) : null}
+                      {typeof auditLog.metadata.creditedQuantity === "number" ? (
+                        <div className="record-detail">
+                          {t("reports.auditCreditedQuantityLabel")} {auditLog.metadata.creditedQuantity}
+                        </div>
+                      ) : null}
+                      {typeof auditLog.metadata.returnedQuantity === "number" ? (
+                        <div className="record-detail">
+                          {t("reports.auditReturnedQuantityLabel")} {auditLog.metadata.returnedQuantity}
+                        </div>
+                      ) : null}
+                      {typeof auditLog.metadata.inventoryValue === "number" ? (
+                        <div className="record-detail">
+                          {t("reports.auditInventoryValueLabel")} {formatCurrency(auditLog.metadata.inventoryValue)}
+                        </div>
+                      ) : null}
+                      {typeof auditLog.metadata.inventoryRestocked === "boolean" ? (
+                        <div className="record-detail">
+                          {t("reports.auditInventoryImpactLabel")}{" "}
+                          {auditLog.metadata.inventoryRestocked
+                            ? t("reports.auditInventoryRestocked")
+                            : t("reports.auditInventoryNotRestocked")}
+                        </div>
+                      ) : null}
                       {typeof auditLog.metadata.outstandingAmount === "number" ? (
                         <div className="record-detail">
                           {t("reports.auditOutstandingLabel")}{" "}

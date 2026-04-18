@@ -54,6 +54,7 @@ import {
   type RestoreTenantSnapshotResult,
   type CollectionFollowUpStatus,
   type CollectionPriority,
+  type CreditMode,
   type InvoiceCollectionActivityRecord,
   type CustomerStatementRecord,
   type JournalEntryRecord,
@@ -262,6 +263,7 @@ type InvoiceRow = {
   credited_quantity: number;
   credited_subtotal_amount: number;
   credited_tax_amount: number;
+  returned_quantity: number;
   return_receipt_count: number;
   last_return_receipt_at: string | null;
   reissued_from_invoice_id: string | null;
@@ -1365,6 +1367,11 @@ const getLatestVoidedInvoiceForOrderStatement = db.prepare(`
     i.credited_subtotal_amount AS credited_subtotal_amount,
     i.credited_tax_amount AS credited_tax_amount,
     (
+      SELECT COALESCE(SUM(irr.quantity_returned), 0)
+      FROM invoice_return_receipts irr
+      WHERE irr.invoice_id = i.id
+    ) AS returned_quantity,
+    (
       SELECT COUNT(*)
       FROM invoice_return_receipts irr
       WHERE irr.invoice_id = i.id
@@ -1435,6 +1442,11 @@ const listInvoicesStatement = db.prepare(`
     COALESCE(i.credited_quantity, 0) AS credited_quantity,
     COALESCE(i.credited_subtotal_amount, 0) AS credited_subtotal_amount,
     COALESCE(i.credited_tax_amount, 0) AS credited_tax_amount,
+    (
+      SELECT COALESCE(SUM(irr.quantity_returned), 0)
+      FROM invoice_return_receipts irr
+      WHERE irr.invoice_id = i.id
+    ) AS returned_quantity,
     (
       SELECT COUNT(*)
       FROM invoice_return_receipts irr
@@ -1538,6 +1550,11 @@ const getInvoiceByIdStatement = db.prepare(`
     i.credited_quantity AS credited_quantity,
     i.credited_subtotal_amount AS credited_subtotal_amount,
     i.credited_tax_amount AS credited_tax_amount,
+    (
+      SELECT COALESCE(SUM(irr.quantity_returned), 0)
+      FROM invoice_return_receipts irr
+      WHERE irr.invoice_id = i.id
+    ) AS returned_quantity,
     (
       SELECT COUNT(*)
       FROM invoice_return_receipts irr
@@ -2798,6 +2815,7 @@ function mapInvoice(row: InvoiceRow): InvoiceRecord {
     creditMethod: row.credit_method,
     creditedAmount,
     creditedQuantity,
+    returnedQuantity: row.returned_quantity,
     returnReceiptCount: row.return_receipt_count,
     lastReturnReceiptAt: row.last_return_receipt_at,
     reissuedFromInvoiceId: row.reissued_from_invoice_id,
@@ -2872,6 +2890,18 @@ function normalizeInvoiceCreditQuantity(input: number): number {
   return input;
 }
 
+function normalizeInvoiceCreditMode(input: CreditMode | undefined): CreditMode {
+  if (input === undefined) {
+    return "restock";
+  }
+
+  if (input !== "restock" && input !== "financial_only") {
+    throw new Error("Credit mode is invalid.");
+  }
+
+  return input;
+}
+
 type InvoiceDraftInput = Pick<CreateInvoiceInput, "issueDate" | "paymentTermDays" | "taxRatePercent">;
 type NormalizedInvoiceDraftInput = InvoiceDraftInput & { amendmentNote: string | null };
 
@@ -2920,6 +2950,7 @@ function buildInvoiceRecord(
     creditMethod: null,
     creditedAmount: 0,
     creditedQuantity: 0,
+    returnedQuantity: 0,
     returnReceiptCount: 0,
     lastReturnReceiptAt: null,
     reissuedFromInvoiceId: priorInvoice?.id ?? null,
@@ -6724,6 +6755,8 @@ export function creditInvoice(input: CreditInvoiceInput): InvoiceRecord {
   }
 
   const creditQuantity = normalizeInvoiceCreditQuantity(input.creditQuantity);
+  const creditMode = normalizeInvoiceCreditMode(input.creditMode);
+  const restockInventory = creditMode === "restock";
   const creditNote = normalizeInvoiceCreditNote(input.creditNote);
   if (!creditNote) {
     throw new Error("Credit note is required when crediting a paid invoice.");
@@ -6749,11 +6782,13 @@ export function creditInvoice(input: CreditInvoiceInput): InvoiceRecord {
   const nextCreditedQuantity = invoice.credited_quantity + creditQuantity;
   const nextCreditedSubtotalAmount = invoice.credited_subtotal_amount + creditSubtotalAmount;
   const nextCreditedTaxAmount = invoice.credited_tax_amount + creditTaxAmount;
+  const nextReturnedQuantity = invoice.returned_quantity + (restockInventory ? creditQuantity : 0);
   const nextInvoiceStatus: InvoiceRecord["status"] =
     nextCreditedAmount >= invoice.total_amount || nextCreditedQuantity >= order.quantity
       ? "credited"
       : "partially_credited";
-  const shouldMarkOrderReturned = nextInvoiceStatus === "credited" && order.status !== "returned";
+  const shouldMarkOrderReturned =
+    nextInvoiceStatus === "credited" && nextReturnedQuantity >= order.quantity && order.status !== "returned";
   const returnReceiptRow: InvoiceReturnReceiptRow = {
     id: randomUUID(),
     tenant_id: input.tenantId,
@@ -6766,45 +6801,47 @@ export function creditInvoice(input: CreditInvoiceInput): InvoiceRecord {
     product_category_name: order.product_category_name,
     product_sku: order.product_sku,
     product_name: order.product_name,
-    quantity_returned: creditQuantity,
-    inventory_value: creditInventoryValue,
+    quantity_returned: restockInventory ? creditQuantity : 0,
+    inventory_value: restockInventory ? creditInventoryValue : 0,
     received_at: creditedAt,
   };
 
   db.exec("BEGIN");
 
   try {
-    ensureInventoryRow(input.tenantId, order.product_id);
+    if (restockInventory) {
+      ensureInventoryRow(input.tenantId, order.product_id);
 
-    const inventory = getInventoryRowStatement.get(input.tenantId, order.product_id) as InventoryRow | undefined;
-    if (!inventory) {
-      throw new Error("The selected product does not exist.");
+      const inventory = getInventoryRowStatement.get(input.tenantId, order.product_id) as InventoryRow | undefined;
+      if (!inventory) {
+        throw new Error("The selected product does not exist.");
+      }
+
+      persistInventorySnapshot({
+        productId: order.product_id,
+        quantityOnHand: inventory.quantity_on_hand + creditQuantity,
+        inventoryValue: inventory.inventory_value + creditInventoryValue,
+        lastReceiptAt: returnReceiptRow.received_at,
+        updatedAt: creditedAt,
+      });
+
+      createInvoiceReturnReceiptStatement.run(
+        returnReceiptRow.id,
+        returnReceiptRow.tenant_id,
+        returnReceiptRow.invoice_id,
+        returnReceiptRow.invoice_number,
+        returnReceiptRow.order_id,
+        returnReceiptRow.order_number,
+        returnReceiptRow.product_id,
+        returnReceiptRow.product_category_id,
+        returnReceiptRow.product_category_name,
+        returnReceiptRow.product_sku,
+        returnReceiptRow.product_name,
+        returnReceiptRow.quantity_returned,
+        returnReceiptRow.inventory_value,
+        returnReceiptRow.received_at,
+      );
     }
-
-    persistInventorySnapshot({
-      productId: order.product_id,
-      quantityOnHand: inventory.quantity_on_hand + creditQuantity,
-      inventoryValue: inventory.inventory_value + creditInventoryValue,
-      lastReceiptAt: returnReceiptRow.received_at,
-      updatedAt: creditedAt,
-    });
-
-    createInvoiceReturnReceiptStatement.run(
-      returnReceiptRow.id,
-      returnReceiptRow.tenant_id,
-      returnReceiptRow.invoice_id,
-      returnReceiptRow.invoice_number,
-      returnReceiptRow.order_id,
-      returnReceiptRow.order_number,
-      returnReceiptRow.product_id,
-      returnReceiptRow.product_category_id,
-      returnReceiptRow.product_category_name,
-      returnReceiptRow.product_sku,
-      returnReceiptRow.product_name,
-      returnReceiptRow.quantity_returned,
-      returnReceiptRow.inventory_value,
-      returnReceiptRow.received_at,
-    );
 
     updateInvoiceCreditStatement.run(
       nextInvoiceStatus,
@@ -6835,8 +6872,12 @@ export function creditInvoice(input: CreditInvoiceInput): InvoiceRecord {
         { accountCode: "511", debitAmount: creditSubtotalAmount, creditAmount: 0 },
         { accountCode: "3331", debitAmount: creditTaxAmount, creditAmount: 0 },
         { accountCode: input.method === "cash" ? "111" : "112", debitAmount: 0, creditAmount: creditTotalAmount },
-        { accountCode: "156", debitAmount: creditInventoryValue, creditAmount: 0 },
-        { accountCode: "632", debitAmount: 0, creditAmount: creditInventoryValue },
+        ...(restockInventory
+          ? [
+              { accountCode: "156", debitAmount: creditInventoryValue, creditAmount: 0 },
+              { accountCode: "632", debitAmount: 0, creditAmount: creditInventoryValue },
+            ]
+          : []),
       ],
     });
 
@@ -6846,27 +6887,31 @@ export function creditInvoice(input: CreditInvoiceInput): InvoiceRecord {
     }
 
     const mappedInvoice = mapInvoice(creditedInvoice);
-    recordAuditLog({
-      tenantId: input.tenantId,
-      entityType: "invoice",
-      entityId: mappedInvoice.id,
-      entityNumber: mappedInvoice.invoiceNumber,
-      actionType: "invoice_return_received",
-      summary: `Received returned goods for ${mappedInvoice.invoiceNumber}`,
-      metadata: {
-        quantity: returnReceiptRow.quantity_returned,
-        inventoryValue: returnReceiptRow.inventory_value,
-        productCategoryId: mappedInvoice.productCategoryId,
-        productCategoryName: mappedInvoice.productCategoryName,
-        productSku: mappedInvoice.productSku,
-        productName: mappedInvoice.productName,
-        creditedAmount: mappedInvoice.creditedAmount,
-        creditedQuantity: mappedInvoice.creditedQuantity,
-        creditNote,
-        note: `Return receipt ${returnReceiptRow.id}`,
-      },
-      createdAt: creditedAt,
-    });
+    if (restockInventory) {
+      recordAuditLog({
+        tenantId: input.tenantId,
+        entityType: "invoice",
+        entityId: mappedInvoice.id,
+        entityNumber: mappedInvoice.invoiceNumber,
+        actionType: "invoice_return_received",
+        summary: `Received returned goods for ${mappedInvoice.invoiceNumber}`,
+        metadata: {
+          quantity: returnReceiptRow.quantity_returned,
+          returnedQuantity: nextReturnedQuantity,
+          inventoryValue: returnReceiptRow.inventory_value,
+          inventoryRestocked: true,
+          productCategoryId: mappedInvoice.productCategoryId,
+          productCategoryName: mappedInvoice.productCategoryName,
+          productSku: mappedInvoice.productSku,
+          productName: mappedInvoice.productName,
+          creditedAmount: mappedInvoice.creditedAmount,
+          creditedQuantity: mappedInvoice.creditedQuantity,
+          creditNote,
+          note: `Return receipt ${returnReceiptRow.id}`,
+        },
+        createdAt: creditedAt,
+      });
+    }
 
     recordAuditLog({
       tenantId: input.tenantId,
@@ -6883,7 +6928,9 @@ export function creditInvoice(input: CreditInvoiceInput): InvoiceRecord {
         productSku: mappedInvoice.productSku,
         productName: mappedInvoice.productName,
         quantity: creditQuantity,
-        inventoryValue: creditInventoryValue,
+        returnedQuantity: nextReturnedQuantity,
+        inventoryValue: restockInventory ? creditInventoryValue : 0,
+        inventoryRestocked: restockInventory,
         creditedAmount: mappedInvoice.creditedAmount,
         creditedQuantity: mappedInvoice.creditedQuantity,
         creditNote,
@@ -6908,6 +6955,8 @@ export function creditInvoice(input: CreditInvoiceInput): InvoiceRecord {
           productSku: order.product_sku,
           productName: order.product_name,
           inventoryValue: issuedInventoryValue,
+          inventoryRestocked: true,
+          returnedQuantity: nextReturnedQuantity,
           creditedAmount: mappedInvoice.creditedAmount,
           creditedQuantity: mappedInvoice.creditedQuantity,
           note: creditNote,

@@ -652,6 +652,7 @@ export type CreateInventoryAdjustmentInput = {
 export type InvoiceStatus = "issued" | "partially_paid" | "paid" | "partially_credited" | "credited" | "void";
 
 export type PaymentMethod = "bank_transfer" | "cash" | "card";
+export type CreditMode = "restock" | "financial_only";
 
 export type CollectionStatus = "current" | "due_today" | "overdue" | "settled" | "credited" | "void";
 
@@ -734,8 +735,10 @@ export type AuditLogMetadata = {
   quantity?: number;
   creditedAmount?: number;
   creditedQuantity?: number;
+  returnedQuantity?: number;
   unitCost?: number;
   inventoryValue?: number;
+  inventoryRestocked?: boolean;
   paymentMethod?: PaymentMethod;
   outstandingAmount?: number;
   productCategoryId?: string;
@@ -787,6 +790,7 @@ export type InvoiceRecord = {
   creditMethod: PaymentMethod | null;
   creditedAmount: number;
   creditedQuantity: number;
+  returnedQuantity: number;
   returnReceiptCount: number;
   lastReturnReceiptAt: string | null;
   reissuedFromInvoiceId: string | null;
@@ -849,6 +853,7 @@ export type CreditInvoiceInput = {
   invoiceId: string;
   method: PaymentMethod;
   creditQuantity: number;
+  creditMode?: CreditMode;
   creditNote: string | null;
 };
 

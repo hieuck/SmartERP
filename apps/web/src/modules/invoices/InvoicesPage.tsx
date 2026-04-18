@@ -20,6 +20,7 @@ import type {
   CollectionActivityState,
   CollectionFollowUpStatus,
   CollectionPriority,
+  CreditMode,
   CreditInvoiceInput,
   CreateInvoiceInput,
   CreateInvoicePaymentInput,
@@ -38,7 +39,7 @@ const { TextArea } = Input;
 
 type InvoiceFormShape = Omit<CreateInvoiceInput, "tenantId">;
 type AmendInvoiceFormShape = Omit<AmendInvoiceInput, "tenantId">;
-type CreditInvoiceFormShape = Omit<CreditInvoiceInput, "tenantId">;
+type CreditInvoiceFormShape = Omit<CreditInvoiceInput, "tenantId"> & { creditMode: CreditMode };
 type InvoicePaymentFormShape = Omit<CreateInvoicePaymentInput, "tenantId">;
 type InvoiceCollectionFormShape = Omit<UpdateInvoiceCollectionInput, "tenantId">;
 type InvoiceReopenFormShape = Omit<ReopenInvoiceInput, "tenantId">;
@@ -302,6 +303,7 @@ export function InvoicesPage(): ReactElement {
   const selectedCollectionInvoiceId = Form.useWatch("invoiceId", collectionForm);
   const selectedFollowUpStatus = Form.useWatch("followUpStatus", collectionForm);
   const selectedActionRequired = Form.useWatch("actionRequired", collectionForm);
+  const selectedCreditMode = Form.useWatch("creditMode", creditInvoiceForm);
   const todayDateInput = new Date().toISOString().slice(0, 10);
 
   const availableOrders = orders.filter(
@@ -406,6 +408,7 @@ export function InvoicesPage(): ReactElement {
       invoiceId: invoice.id,
       method: "bank_transfer",
       creditQuantity: 1,
+      creditMode: "restock",
       creditNote: "",
     });
   }
@@ -444,6 +447,7 @@ export function InvoicesPage(): ReactElement {
         invoiceId: values.invoiceId,
         method: values.method,
         creditQuantity: values.creditQuantity,
+        creditMode: values.creditMode,
         creditNote: values.creditNote,
       });
       closeCreditInvoiceModal();
@@ -626,6 +630,24 @@ export function InvoicesPage(): ReactElement {
           </Form.Item>
 
           <Form.Item<CreditInvoiceFormShape>
+            label={t("invoices.creditMode")}
+            name="creditMode"
+            rules={[{ required: true }]}
+            extra={
+              selectedCreditMode === "financial_only"
+                ? t("invoices.creditModeFinancialHint")
+                : t("invoices.creditModeRestockHint")
+            }
+          >
+            <Select
+              options={[
+                { value: "restock", label: t("invoices.creditModeRestock") },
+                { value: "financial_only", label: t("invoices.creditModeFinancialOnly") },
+              ]}
+            />
+          </Form.Item>
+
+          <Form.Item<CreditInvoiceFormShape>
             label={t("invoices.creditNote")}
             name="creditNote"
             rules={[{ required: true }, { max: 240 }]}
@@ -635,7 +657,15 @@ export function InvoicesPage(): ReactElement {
                 : t("invoices.creditNoteGenericHint")
             }
           >
-            <TextArea rows={3} maxLength={240} placeholder={t("invoices.creditNotePlaceholder")} />
+            <TextArea
+              rows={3}
+              maxLength={240}
+              placeholder={
+                selectedCreditMode === "financial_only"
+                  ? t("invoices.creditNoteFinancialPlaceholder")
+                  : t("invoices.creditNotePlaceholder")
+              }
+            />
           </Form.Item>
 
           <div className="record-actions">
@@ -1225,6 +1255,17 @@ export function InvoicesPage(): ReactElement {
                         {invoice.creditedQuantity > 0 ? (
                           <div className="record-detail">
                             {t("invoices.creditedQuantityLabel")} {invoice.creditedQuantity}
+                          </div>
+                        ) : null}
+                        {invoice.returnedQuantity > 0 ? (
+                          <div className="record-detail">
+                            {t("invoices.returnedQuantityLabel")} {invoice.returnedQuantity}
+                          </div>
+                        ) : null}
+                        {invoice.creditedQuantity > invoice.returnedQuantity ? (
+                          <div className="record-detail">
+                            {t("invoices.creditWithoutReturnLabel")}{" "}
+                            {invoice.creditedQuantity - invoice.returnedQuantity}
                           </div>
                         ) : null}
                         {invoice.returnReceiptCount > 0 ? (
