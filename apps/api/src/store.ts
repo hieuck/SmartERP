@@ -27,6 +27,7 @@ import {
   type CreditInvoiceInput,
   type CreateInvoiceInput,
   type CreateInvoicePaymentInput,
+  type RecordInvoiceReturnReceiptInput,
   type ReopenInvoiceInput,
   type VoidInvoiceInput,
   type UpdateInvoiceCollectionInput,
@@ -59,6 +60,7 @@ import {
   type CustomerStatementRecord,
   type JournalEntryRecord,
   type JournalReferenceType,
+  type InvoiceReturnReceiptSource,
   type CustomerRecord,
   type InvoiceRecord,
   type InvoicePaymentRecord,
@@ -223,6 +225,8 @@ type InvoiceReturnReceiptRow = {
   product_name: string;
   quantity_returned: number;
   inventory_value: number;
+  source: InvoiceReturnReceiptSource;
+  note: string;
   received_at: string;
 };
 
@@ -1290,6 +1294,8 @@ const listInvoiceReturnReceiptsStatement = db.prepare(`
     product_name,
     quantity_returned,
     inventory_value,
+    source,
+    note,
     received_at
   FROM invoice_return_receipts
   WHERE tenant_id = ?
@@ -1311,9 +1317,11 @@ const createInvoiceReturnReceiptStatement = db.prepare(`
     product_name,
     quantity_returned,
     inventory_value,
+    source,
+    note,
     received_at
   )
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `);
 
 const getOrderByIdStatement = db.prepare(`
@@ -2478,6 +2486,8 @@ function mapInvoiceReturnReceipt(row: InvoiceReturnReceiptRow): InvoiceReturnRec
     productName: row.product_name,
     quantityReturned: row.quantity_returned,
     inventoryValue: row.inventory_value,
+    source: row.source,
+    note: row.note || null,
     receivedAt: row.received_at,
   };
 }
@@ -2882,9 +2892,30 @@ function normalizeInvoiceCreditNote(input: string | null | undefined): string | 
   return trimmed;
 }
 
+function normalizeInvoiceReturnReceiptNote(input: string | null | undefined): string | null {
+  const trimmed = input?.trim() ?? "";
+  if (!trimmed) {
+    return null;
+  }
+
+  if (trimmed.length > 240) {
+    throw new Error("Return receipt note must be 240 characters or fewer.");
+  }
+
+  return trimmed;
+}
+
 function normalizeInvoiceCreditQuantity(input: number): number {
   if (!Number.isInteger(input) || input <= 0) {
     throw new Error("Credit quantity must be a positive integer.");
+  }
+
+  return input;
+}
+
+function normalizeInvoiceReturnReceiptQuantity(input: number): number {
+  if (!Number.isInteger(input) || input <= 0) {
+    throw new Error("Returned quantity must be a positive integer.");
   }
 
   return input;
@@ -4282,6 +4313,11 @@ export function restoreTenantSnapshot(input: RestoreTenantSnapshotInput): Restor
           referenceId: requireRestoredId("invoice", journalEntry.referenceId, invoiceIdMap),
           referenceNumber: replaceDocumentNumbers(journalEntry.referenceNumber),
         };
+      case "return_receipt":
+        return {
+          referenceId: invoiceIdMap.get(journalEntry.referenceId) ?? journalEntry.referenceId,
+          referenceNumber: replaceDocumentNumbers(journalEntry.referenceNumber),
+        };
       case "purchase_receipt":
         return {
           referenceId: requireRestoredId("purchase order", journalEntry.referenceId, purchaseOrderIdMap),
@@ -4530,6 +4566,8 @@ export function restoreTenantSnapshot(input: RestoreTenantSnapshotInput): Restor
       receipt.productName,
       receipt.quantityReturned,
       receipt.inventoryValue,
+      receipt.source ?? "credit_note",
+      receipt.note ?? "",
       receipt.receivedAt,
     );
     restoredInvoiceReturnReceipts += 1;
@@ -6727,6 +6765,179 @@ export function amendInvoice(
   return createAppliedResult(amendInvoiceInternal(normalizedInput));
 }
 
+function createInvoiceReturnReceiptAndRestock(input: {
+  tenantId: string;
+  invoice: InvoiceRecord;
+  order: OrderRow;
+  quantityReturned: number;
+  note: string;
+  source: InvoiceReturnReceiptSource;
+  receivedAt: string;
+}): {
+  receipt: InvoiceReturnReceiptRow;
+  inventoryValue: number;
+  nextReturnedQuantity: number;
+} {
+  const remainingReturnQuantity = Math.max(input.order.quantity - input.invoice.returnedQuantity, 0);
+  if (input.quantityReturned > remainingReturnQuantity) {
+    throw new Error("Returned quantity cannot exceed the remaining unreturned quantity.");
+  }
+
+  ensureInventoryRow(input.tenantId, input.order.product_id);
+
+  const inventory = getInventoryRowStatement.get(input.tenantId, input.order.product_id) as InventoryRow | undefined;
+  if (!inventory) {
+    throw new Error("The selected product does not exist.");
+  }
+
+  const issuedInventoryValue = Number(
+    (getOrderIssuedInventoryValueStatement.get(
+      input.tenantId,
+      input.order.id,
+    ) as { amount?: number } | undefined)?.amount ?? 0,
+  );
+  const inventoryValue = Math.round((issuedInventoryValue / input.order.quantity) * input.quantityReturned);
+  const receipt: InvoiceReturnReceiptRow = {
+    id: randomUUID(),
+    tenant_id: input.tenantId,
+    invoice_id: input.invoice.id,
+    invoice_number: input.invoice.invoiceNumber,
+    order_id: input.order.id,
+    order_number: input.order.order_number,
+    product_id: input.order.product_id,
+    product_category_id: input.order.product_category_id,
+    product_category_name: input.order.product_category_name,
+    product_sku: input.order.product_sku,
+    product_name: input.order.product_name,
+    quantity_returned: input.quantityReturned,
+    inventory_value: inventoryValue,
+    source: input.source,
+    note: input.note,
+    received_at: input.receivedAt,
+  };
+
+  persistInventorySnapshot({
+    productId: input.order.product_id,
+    quantityOnHand: inventory.quantity_on_hand + input.quantityReturned,
+    inventoryValue: inventory.inventory_value + inventoryValue,
+    lastReceiptAt: input.receivedAt,
+    updatedAt: input.receivedAt,
+  });
+
+  createInvoiceReturnReceiptStatement.run(
+    receipt.id,
+    receipt.tenant_id,
+    receipt.invoice_id,
+    receipt.invoice_number,
+    receipt.order_id,
+    receipt.order_number,
+    receipt.product_id,
+    receipt.product_category_id,
+    receipt.product_category_name,
+    receipt.product_sku,
+    receipt.product_name,
+    receipt.quantity_returned,
+    receipt.inventory_value,
+    receipt.source,
+    receipt.note,
+    receipt.received_at,
+  );
+
+  createJournalEntryLines({
+    tenantId: input.tenantId,
+    referenceType: "return_receipt",
+    referenceId: input.invoice.id,
+    referenceNumber: input.invoice.invoiceNumber,
+    description: `Receive returned goods for ${input.invoice.invoiceNumber}`,
+    createdAt: input.receivedAt,
+    lines: [
+      { accountCode: "156", debitAmount: inventoryValue, creditAmount: 0 },
+      { accountCode: "632", debitAmount: 0, creditAmount: inventoryValue },
+    ],
+  });
+
+  const nextReturnedQuantity = input.invoice.returnedQuantity + input.quantityReturned;
+  recordAuditLog({
+    tenantId: input.tenantId,
+    entityType: "invoice",
+    entityId: input.invoice.id,
+    entityNumber: input.invoice.invoiceNumber,
+    actionType: "invoice_return_received",
+    summary: `Received returned goods for ${input.invoice.invoiceNumber}`,
+    metadata: {
+      quantity: receipt.quantity_returned,
+      returnedQuantity: nextReturnedQuantity,
+      inventoryValue: receipt.inventory_value,
+      inventoryRestocked: true,
+      productCategoryId: input.invoice.productCategoryId,
+      productCategoryName: input.invoice.productCategoryName,
+      productSku: input.invoice.productSku,
+      productName: input.invoice.productName,
+      creditedAmount: input.invoice.creditedAmount,
+      creditedQuantity: input.invoice.creditedQuantity,
+      note: input.note,
+    },
+    createdAt: input.receivedAt,
+  });
+
+  return {
+    receipt,
+    inventoryValue,
+    nextReturnedQuantity,
+  };
+}
+
+function markOrderReturnedIfComplete(input: {
+  tenantId: string;
+  order: OrderRow;
+  invoice: InvoiceRecord;
+  note: string;
+  createdAt: string;
+}): boolean {
+  if (input.order.status === "returned") {
+    return false;
+  }
+
+  if (input.invoice.status !== "credited" || input.invoice.returnedQuantity < input.order.quantity) {
+    return false;
+  }
+
+  updateOrderStatusStatement.run("returned", input.tenantId, input.order.id);
+
+  const issuedInventoryValue = Number(
+    (getOrderIssuedInventoryValueStatement.get(
+      input.tenantId,
+      input.order.id,
+    ) as { amount?: number } | undefined)?.amount ?? 0,
+  );
+
+  recordAuditLog({
+    tenantId: input.tenantId,
+    entityType: "order",
+    entityId: input.order.id,
+    entityNumber: input.order.order_number,
+    actionType: "order_returned",
+    summary: `Returned ${input.order.order_number}`,
+    metadata: {
+      amount: input.order.total_amount,
+      quantity: input.order.quantity,
+      productCategoryId: input.order.product_category_id,
+      productCategoryName: input.order.product_category_name,
+      productSku: input.order.product_sku,
+      productName: input.order.product_name,
+      inventoryValue: issuedInventoryValue,
+      inventoryRestocked: true,
+      returnedQuantity: input.invoice.returnedQuantity,
+      creditedAmount: input.invoice.creditedAmount,
+      creditedQuantity: input.invoice.creditedQuantity,
+      note: input.note,
+    },
+    createdAt: input.createdAt,
+  });
+
+  return true;
+}
+
 export function creditInvoice(input: CreditInvoiceInput): InvoiceRecord {
   const invoice = getInvoiceByIdStatement.get(input.tenantId, input.invoiceId) as InvoiceRow | undefined;
   if (!invoice) {
@@ -6768,81 +6979,23 @@ export function creditInvoice(input: CreditInvoiceInput): InvoiceRecord {
   }
 
   const creditedAt = timestamp();
-  const issuedInventoryValue = Number(
-    (getOrderIssuedInventoryValueStatement.get(
-      input.tenantId,
-      invoice.order_id,
-    ) as { amount?: number } | undefined)?.amount ?? 0,
-  );
   const creditSubtotalAmount = order.unit_price * creditQuantity;
   const creditTaxAmount = Math.round((creditSubtotalAmount * invoice.tax_rate_percent) / 100);
   const creditTotalAmount = creditSubtotalAmount + creditTaxAmount;
-  const creditInventoryValue = Math.round((issuedInventoryValue / order.quantity) * creditQuantity);
   const nextCreditedAmount = invoice.credited_amount + creditTotalAmount;
   const nextCreditedQuantity = invoice.credited_quantity + creditQuantity;
   const nextCreditedSubtotalAmount = invoice.credited_subtotal_amount + creditSubtotalAmount;
   const nextCreditedTaxAmount = invoice.credited_tax_amount + creditTaxAmount;
-  const nextReturnedQuantity = invoice.returned_quantity + (restockInventory ? creditQuantity : 0);
+  const remainingReturnQuantity = Math.max(order.quantity - invoice.returned_quantity, 0);
+  const restockQuantity = restockInventory ? Math.min(creditQuantity, remainingReturnQuantity) : 0;
   const nextInvoiceStatus: InvoiceRecord["status"] =
     nextCreditedAmount >= invoice.total_amount || nextCreditedQuantity >= order.quantity
       ? "credited"
       : "partially_credited";
-  const shouldMarkOrderReturned =
-    nextInvoiceStatus === "credited" && nextReturnedQuantity >= order.quantity && order.status !== "returned";
-  const returnReceiptRow: InvoiceReturnReceiptRow = {
-    id: randomUUID(),
-    tenant_id: input.tenantId,
-    invoice_id: invoice.id,
-    invoice_number: invoice.invoice_number,
-    order_id: order.id,
-    order_number: order.order_number,
-    product_id: order.product_id,
-    product_category_id: order.product_category_id,
-    product_category_name: order.product_category_name,
-    product_sku: order.product_sku,
-    product_name: order.product_name,
-    quantity_returned: restockInventory ? creditQuantity : 0,
-    inventory_value: restockInventory ? creditInventoryValue : 0,
-    received_at: creditedAt,
-  };
 
   db.exec("BEGIN");
 
   try {
-    if (restockInventory) {
-      ensureInventoryRow(input.tenantId, order.product_id);
-
-      const inventory = getInventoryRowStatement.get(input.tenantId, order.product_id) as InventoryRow | undefined;
-      if (!inventory) {
-        throw new Error("The selected product does not exist.");
-      }
-
-      persistInventorySnapshot({
-        productId: order.product_id,
-        quantityOnHand: inventory.quantity_on_hand + creditQuantity,
-        inventoryValue: inventory.inventory_value + creditInventoryValue,
-        lastReceiptAt: returnReceiptRow.received_at,
-        updatedAt: creditedAt,
-      });
-
-      createInvoiceReturnReceiptStatement.run(
-        returnReceiptRow.id,
-        returnReceiptRow.tenant_id,
-        returnReceiptRow.invoice_id,
-        returnReceiptRow.invoice_number,
-        returnReceiptRow.order_id,
-        returnReceiptRow.order_number,
-        returnReceiptRow.product_id,
-        returnReceiptRow.product_category_id,
-        returnReceiptRow.product_category_name,
-        returnReceiptRow.product_sku,
-        returnReceiptRow.product_name,
-        returnReceiptRow.quantity_returned,
-        returnReceiptRow.inventory_value,
-        returnReceiptRow.received_at,
-      );
-    }
-
     updateInvoiceCreditStatement.run(
       nextInvoiceStatus,
       creditNote,
@@ -6857,10 +7010,6 @@ export function creditInvoice(input: CreditInvoiceInput): InvoiceRecord {
       input.invoiceId,
     );
 
-    if (shouldMarkOrderReturned) {
-      updateOrderStatusStatement.run("returned", input.tenantId, order.id);
-    }
-
     createJournalEntryLines({
       tenantId: input.tenantId,
       referenceType: "credit_note",
@@ -6872,12 +7021,6 @@ export function creditInvoice(input: CreditInvoiceInput): InvoiceRecord {
         { accountCode: "511", debitAmount: creditSubtotalAmount, creditAmount: 0 },
         { accountCode: "3331", debitAmount: creditTaxAmount, creditAmount: 0 },
         { accountCode: input.method === "cash" ? "111" : "112", debitAmount: 0, creditAmount: creditTotalAmount },
-        ...(restockInventory
-          ? [
-              { accountCode: "156", debitAmount: creditInventoryValue, creditAmount: 0 },
-              { accountCode: "632", debitAmount: 0, creditAmount: creditInventoryValue },
-            ]
-          : []),
       ],
     });
 
@@ -6886,31 +7029,28 @@ export function creditInvoice(input: CreditInvoiceInput): InvoiceRecord {
       throw new Error("The selected invoice does not exist.");
     }
 
-    const mappedInvoice = mapInvoice(creditedInvoice);
-    if (restockInventory) {
-      recordAuditLog({
+    let mappedInvoice = mapInvoice(creditedInvoice);
+    let creditInventoryValue = 0;
+    let inventoryRestocked = false;
+
+    if (restockQuantity > 0) {
+      const restockResult = createInvoiceReturnReceiptAndRestock({
         tenantId: input.tenantId,
-        entityType: "invoice",
-        entityId: mappedInvoice.id,
-        entityNumber: mappedInvoice.invoiceNumber,
-        actionType: "invoice_return_received",
-        summary: `Received returned goods for ${mappedInvoice.invoiceNumber}`,
-        metadata: {
-          quantity: returnReceiptRow.quantity_returned,
-          returnedQuantity: nextReturnedQuantity,
-          inventoryValue: returnReceiptRow.inventory_value,
-          inventoryRestocked: true,
-          productCategoryId: mappedInvoice.productCategoryId,
-          productCategoryName: mappedInvoice.productCategoryName,
-          productSku: mappedInvoice.productSku,
-          productName: mappedInvoice.productName,
-          creditedAmount: mappedInvoice.creditedAmount,
-          creditedQuantity: mappedInvoice.creditedQuantity,
-          creditNote,
-          note: `Return receipt ${returnReceiptRow.id}`,
-        },
-        createdAt: creditedAt,
+        invoice: mappedInvoice,
+        order,
+        quantityReturned: restockQuantity,
+        note: creditNote,
+        source: "credit_note",
+        receivedAt: creditedAt,
       });
+      creditInventoryValue = restockResult.inventoryValue;
+      inventoryRestocked = true;
+
+      const restockedInvoice = getInvoiceByIdStatement.get(input.tenantId, input.invoiceId) as InvoiceRow | undefined;
+      if (!restockedInvoice) {
+        throw new Error("The selected invoice does not exist.");
+      }
+      mappedInvoice = mapInvoice(restockedInvoice);
     }
 
     recordAuditLog({
@@ -6928,9 +7068,9 @@ export function creditInvoice(input: CreditInvoiceInput): InvoiceRecord {
         productSku: mappedInvoice.productSku,
         productName: mappedInvoice.productName,
         quantity: creditQuantity,
-        returnedQuantity: nextReturnedQuantity,
-        inventoryValue: restockInventory ? creditInventoryValue : 0,
-        inventoryRestocked: restockInventory,
+        returnedQuantity: mappedInvoice.returnedQuantity,
+        inventoryValue: creditInventoryValue,
+        inventoryRestocked,
         creditedAmount: mappedInvoice.creditedAmount,
         creditedQuantity: mappedInvoice.creditedQuantity,
         creditNote,
@@ -6939,34 +7079,79 @@ export function creditInvoice(input: CreditInvoiceInput): InvoiceRecord {
       createdAt: creditedAt,
     });
 
-    if (shouldMarkOrderReturned) {
-      recordAuditLog({
-        tenantId: input.tenantId,
-        entityType: "order",
-        entityId: order.id,
-        entityNumber: order.order_number,
-        actionType: "order_returned",
-        summary: `Returned ${order.order_number}`,
-        metadata: {
-          amount: order.total_amount,
-          quantity: order.quantity,
-          productCategoryId: order.product_category_id,
-          productCategoryName: order.product_category_name,
-          productSku: order.product_sku,
-          productName: order.product_name,
-          inventoryValue: issuedInventoryValue,
-          inventoryRestocked: true,
-          returnedQuantity: nextReturnedQuantity,
-          creditedAmount: mappedInvoice.creditedAmount,
-          creditedQuantity: mappedInvoice.creditedQuantity,
-          note: creditNote,
-        },
-        createdAt: creditedAt,
-      });
-    }
+    markOrderReturnedIfComplete({
+      tenantId: input.tenantId,
+      order,
+      invoice: mappedInvoice,
+      note: creditNote,
+      createdAt: creditedAt,
+    });
 
     db.exec("COMMIT");
     return mappedInvoice;
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
+}
+
+export function recordInvoiceReturnReceipt(input: RecordInvoiceReturnReceiptInput): InvoiceRecord {
+  const invoice = getInvoiceByIdStatement.get(input.tenantId, input.invoiceId) as InvoiceRow | undefined;
+  if (!invoice) {
+    throw new Error("The selected invoice does not exist.");
+  }
+
+  if (invoice.status === "void") {
+    throw new Error("The selected invoice has been voided.");
+  }
+
+  const order = getOrderByIdStatement.get(input.tenantId, invoice.order_id) as OrderRow | undefined;
+  if (!order) {
+    throw new Error("The selected order does not exist.");
+  }
+
+  const quantityReturned = normalizeInvoiceReturnReceiptQuantity(input.quantityReturned);
+  const note = normalizeInvoiceReturnReceiptNote(input.note);
+  if (!note) {
+    throw new Error("Return receipt note is required when receiving goods back from an invoice.");
+  }
+
+  if (quantityReturned > order.quantity - invoice.returned_quantity) {
+    throw new Error("Returned quantity cannot exceed the remaining unreturned quantity.");
+  }
+
+  const receivedAt = timestamp();
+
+  db.exec("BEGIN");
+
+  try {
+    const mappedInvoice = mapInvoice(invoice);
+    createInvoiceReturnReceiptAndRestock({
+      tenantId: input.tenantId,
+      invoice: mappedInvoice,
+      order,
+      quantityReturned,
+      note,
+      source: "manual",
+      receivedAt,
+    });
+
+    const refreshedInvoice = getInvoiceByIdStatement.get(input.tenantId, input.invoiceId) as InvoiceRow | undefined;
+    if (!refreshedInvoice) {
+      throw new Error("The selected invoice does not exist.");
+    }
+
+    const mappedRefreshedInvoice = mapInvoice(refreshedInvoice);
+    markOrderReturnedIfComplete({
+      tenantId: input.tenantId,
+      order,
+      invoice: mappedRefreshedInvoice,
+      note,
+      createdAt: receivedAt,
+    });
+
+    db.exec("COMMIT");
+    return mappedRefreshedInvoice;
   } catch (error) {
     db.exec("ROLLBACK");
     throw error;

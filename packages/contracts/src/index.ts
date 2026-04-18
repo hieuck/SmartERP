@@ -506,6 +506,8 @@ export type InvoiceReturnReceiptRecord = {
   productName: string;
   quantityReturned: number;
   inventoryValue: number;
+  source: InvoiceReturnReceiptSource;
+  note: string | null;
   receivedAt: string;
 };
 
@@ -653,6 +655,7 @@ export type InvoiceStatus = "issued" | "partially_paid" | "paid" | "partially_cr
 
 export type PaymentMethod = "bank_transfer" | "cash" | "card";
 export type CreditMode = "restock" | "financial_only";
+export type InvoiceReturnReceiptSource = "credit_note" | "manual";
 
 export type CollectionStatus = "current" | "due_today" | "overdue" | "settled" | "credited" | "void";
 
@@ -678,7 +681,13 @@ export type AccountBalanceRecord = {
   balanceAmount: number;
 };
 
-export type JournalReferenceType = "invoice" | "payment" | "credit_note" | "purchase_receipt" | "order";
+export type JournalReferenceType =
+  | "invoice"
+  | "payment"
+  | "credit_note"
+  | "purchase_receipt"
+  | "return_receipt"
+  | "order";
 
 export type JournalEntryRecord = {
   id: string;
@@ -855,6 +864,13 @@ export type CreditInvoiceInput = {
   creditQuantity: number;
   creditMode?: CreditMode;
   creditNote: string | null;
+};
+
+export type RecordInvoiceReturnReceiptInput = {
+  tenantId: string;
+  invoiceId: string;
+  quantityReturned: number;
+  note: string | null;
 };
 
 export type CreateInvoicePaymentInput = {

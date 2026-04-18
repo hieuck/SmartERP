@@ -25,6 +25,7 @@ import type {
   CreateInvoiceInput,
   CreateInvoicePaymentInput,
   InvoiceRecord,
+  RecordInvoiceReturnReceiptInput,
   ReopenInvoiceInput,
   UpdateInvoiceCollectionInput,
   VoidInvoiceInput,
@@ -40,6 +41,7 @@ const { TextArea } = Input;
 type InvoiceFormShape = Omit<CreateInvoiceInput, "tenantId">;
 type AmendInvoiceFormShape = Omit<AmendInvoiceInput, "tenantId">;
 type CreditInvoiceFormShape = Omit<CreditInvoiceInput, "tenantId"> & { creditMode: CreditMode };
+type ReturnReceiptFormShape = Omit<RecordInvoiceReturnReceiptInput, "tenantId">;
 type InvoicePaymentFormShape = Omit<CreateInvoicePaymentInput, "tenantId">;
 type InvoiceCollectionFormShape = Omit<UpdateInvoiceCollectionInput, "tenantId">;
 type InvoiceReopenFormShape = Omit<ReopenInvoiceInput, "tenantId">;
@@ -275,6 +277,7 @@ export function InvoicesPage(): ReactElement {
     creditInvoiceRecord,
     createInvoicePaymentRecord,
     createInvoiceRecord,
+    recordInvoiceReturnReceiptRecord,
     reopenInvoiceRecord,
     voidInvoiceRecord,
     updateInvoiceCollectionRecord,
@@ -294,10 +297,12 @@ export function InvoicesPage(): ReactElement {
   const [invoiceForm] = Form.useForm<InvoiceFormShape>();
   const [amendInvoiceForm] = Form.useForm<AmendInvoiceFormShape>();
   const [creditInvoiceForm] = Form.useForm<CreditInvoiceFormShape>();
+  const [returnReceiptForm] = Form.useForm<ReturnReceiptFormShape>();
   const [paymentForm] = Form.useForm<InvoicePaymentFormShape>();
   const [collectionForm] = Form.useForm<InvoiceCollectionFormShape>();
   const [invoiceBeingAmended, setInvoiceBeingAmended] = useState<InvoiceRecord | null>(null);
   const [invoiceBeingCredited, setInvoiceBeingCredited] = useState<InvoiceRecord | null>(null);
+  const [invoiceBeingReturned, setInvoiceBeingReturned] = useState<InvoiceRecord | null>(null);
   const selectedInvoiceOrderId = Form.useWatch("orderId", invoiceForm);
   const selectedInvoiceId = Form.useWatch("invoiceId", paymentForm);
   const selectedCollectionInvoiceId = Form.useWatch("invoiceId", collectionForm);
@@ -350,6 +355,16 @@ export function InvoicesPage(): ReactElement {
   const remainingCreditQuantity = invoiceBeingCredited
     ? Math.max((creditTargetOrder?.quantity ?? invoiceBeingCredited.creditedQuantity) - invoiceBeingCredited.creditedQuantity, 0)
     : 0;
+  const returnReceiptTargetOrder = invoiceBeingReturned
+    ? orderLookupById.get(invoiceBeingReturned.orderId) ?? null
+    : null;
+  const remainingReturnReceiptQuantity = invoiceBeingReturned
+    ? Math.max(
+        (returnReceiptTargetOrder?.quantity ?? invoiceBeingReturned.returnedQuantity) -
+          invoiceBeingReturned.returnedQuantity,
+        0,
+      )
+    : 0;
   const selectedPriorVoidedInvoice =
     invoices
       .filter((invoice) => invoice.orderId === selectedInvoiceOrderId && invoice.status === "void")
@@ -360,6 +375,7 @@ export function InvoicesPage(): ReactElement {
     : null;
   const isAmendModalOpen = invoiceBeingAmended !== null;
   const isCreditModalOpen = invoiceBeingCredited !== null;
+  const isReturnReceiptModalOpen = invoiceBeingReturned !== null;
 
   const onCreateInvoice: FormProps<InvoiceFormShape>["onFinish"] = async (values) => {
     try {
@@ -418,6 +434,20 @@ export function InvoicesPage(): ReactElement {
     creditInvoiceForm.resetFields();
   }
 
+  function openReturnReceiptModal(invoice: InvoiceRecord): void {
+    setInvoiceBeingReturned(invoice);
+    returnReceiptForm.setFieldsValue({
+      invoiceId: invoice.id,
+      quantityReturned: 1,
+      note: "",
+    });
+  }
+
+  function closeReturnReceiptModal(): void {
+    setInvoiceBeingReturned(null);
+    returnReceiptForm.resetFields();
+  }
+
   const onAmendInvoice: FormProps<AmendInvoiceFormShape>["onFinish"] = async (values) => {
     try {
       await amendInvoiceRecord({
@@ -451,6 +481,19 @@ export function InvoicesPage(): ReactElement {
         creditNote: values.creditNote,
       });
       closeCreditInvoiceModal();
+    } catch {
+      // Error state is already surfaced via workspace context.
+    }
+  };
+
+  const onRecordReturnReceipt: FormProps<ReturnReceiptFormShape>["onFinish"] = async (values) => {
+    try {
+      await recordInvoiceReturnReceiptRecord({
+        invoiceId: values.invoiceId,
+        quantityReturned: values.quantityReturned,
+        note: values.note,
+      });
+      closeReturnReceiptModal();
     } catch {
       // Error state is already surfaced via workspace context.
     }
@@ -672,6 +715,68 @@ export function InvoicesPage(): ReactElement {
             <Button onClick={closeCreditInvoiceModal}>{t("common.cancel")}</Button>
             <Button type="primary" htmlType="submit" loading={isBusy}>
               {t("invoices.creditSubmit")}
+            </Button>
+          </div>
+        </Form>
+      </Modal>
+      <Modal
+        open={isReturnReceiptModalOpen}
+        title={
+          invoiceBeingReturned
+            ? t("invoices.returnReceiptTitle", { number: invoiceBeingReturned.invoiceNumber })
+            : t("invoices.returnReceiptAction")
+        }
+        onCancel={closeReturnReceiptModal}
+        footer={null}
+        forceRender
+      >
+        <Form<ReturnReceiptFormShape>
+          form={returnReceiptForm}
+          layout="vertical"
+          onFinish={onRecordReturnReceipt}
+        >
+          <Form.Item<ReturnReceiptFormShape> name="invoiceId" hidden>
+            <Input />
+          </Form.Item>
+
+          <Form.Item<ReturnReceiptFormShape>
+            label={t("invoices.returnReceiptQuantity")}
+            name="quantityReturned"
+            rules={[{ required: true }]}
+            extra={
+              invoiceBeingReturned
+                ? t("invoices.returnReceiptQuantityHint", {
+                    number: invoiceBeingReturned.invoiceNumber,
+                    count: remainingReturnReceiptQuantity,
+                  })
+                : t("invoices.returnReceiptQuantityGenericHint")
+            }
+          >
+            <InputNumber
+              min={1}
+              max={Math.max(remainingReturnReceiptQuantity, 1)}
+              precision={0}
+              style={{ width: "100%" }}
+            />
+          </Form.Item>
+
+          <Form.Item<ReturnReceiptFormShape>
+            label={t("invoices.returnReceiptNote")}
+            name="note"
+            rules={[{ required: true }, { max: 240 }]}
+            extra={
+              invoiceBeingReturned
+                ? t("invoices.returnReceiptNoteHint", { number: invoiceBeingReturned.invoiceNumber })
+                : t("invoices.returnReceiptNoteGenericHint")
+            }
+          >
+            <TextArea rows={3} maxLength={240} placeholder={t("invoices.returnReceiptNotePlaceholder")} />
+          </Form.Item>
+
+          <div className="record-actions">
+            <Button onClick={closeReturnReceiptModal}>{t("common.cancel")}</Button>
+            <Button type="primary" htmlType="submit" loading={isBusy}>
+              {t("invoices.returnReceiptSubmit")}
             </Button>
           </div>
         </Form>
@@ -1146,6 +1251,10 @@ export function InvoicesPage(): ReactElement {
                     (relatedOrder?.quantity ?? invoice.creditedQuantity) - invoice.creditedQuantity,
                     0,
                   );
+                  const remainingInvoiceReturnReceiptQuantity = Math.max(
+                    (relatedOrder?.quantity ?? invoice.returnedQuantity) - invoice.returnedQuantity,
+                    0,
+                  );
 
                   return (
                     <div className="record-row record-row--visual" key={invoice.id}>
@@ -1330,6 +1439,21 @@ export function InvoicesPage(): ReactElement {
                                 {t("invoices.voidAction")}
                               </Button>
                             </Popconfirm>
+                          </div>
+                        ) : null}
+                        {canIssueInvoices &&
+                        invoice.status !== "void" &&
+                        remainingInvoiceReturnReceiptQuantity > 0 ? (
+                          <div className="record-actions">
+                            <Button
+                              size="small"
+                              icon={<InboxOutlined />}
+                              loading={isBusy}
+                              data-testid="invoice-return-receipt-button"
+                              onClick={() => openReturnReceiptModal(invoice)}
+                            >
+                              {t("invoices.returnReceiptAction")}
+                            </Button>
                           </div>
                         ) : null}
                         {canIssueInvoices &&

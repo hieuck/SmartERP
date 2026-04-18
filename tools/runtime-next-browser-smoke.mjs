@@ -78,6 +78,7 @@ const escalatedCollectionNote = "Qua ngay hua thanh toan, can founder xu ly truc
 const invoiceAmendmentNote = "Corrected commercial terms before customer payment posting.";
 const reissueAmendmentNote = "Corrected shipping quantity after voiding the previous invoice revision.";
 const invoiceCreditNote = "Returned shipment after full settlement and inspection.";
+const manualReturnReceiptNote = "Warehouse received the returned bottle before finance posted the credit note.";
 const partialInvoiceCreditNote = "Refund one damaged bottle after full settlement.";
 const firstIssueDateInput = buildDateInputFromToday(0);
 const secondIssueDateInput = buildDateInputFromToday(-(secondDaysPastDue + secondPaymentTermDays));
@@ -3380,6 +3381,39 @@ async function main() {
     );
     invoiceCreditGuardVerified = true;
 
+    await creditedInvoiceRow.locator('[data-testid="invoice-return-receipt-button"]').click();
+    const returnReceiptModal = page.locator(".ant-modal:visible").last();
+    await returnReceiptModal.waitFor({ timeout: 15000 });
+    await fillNumberInput(returnReceiptModal.getByRole("spinbutton").first(), creditedOrderQuantity);
+    await fillField(returnReceiptModal, "#note", manualReturnReceiptNote);
+    await returnReceiptModal.getByRole("button", { name: "Ghi phiếu nhận trả" }).click();
+    await creditedInvoiceRow
+      .getByText(/Số lượng đã nhận trả:\s*1|Returned quantity:\s*1/, { exact: false })
+      .first()
+      .waitFor({ timeout: 15000 });
+    await creditedInvoiceRow
+      .getByText(/Phiếu nhận trả:\s*1|Return receipts:\s*1/, { exact: false })
+      .first()
+      .waitFor({ timeout: 15000 });
+    invoiceReturnReceiptVerified = true;
+
+    await openSection(page, sidebarIndexes.inventory, "/dashboard/inventory");
+    await waitForTenantContext(page, tenantName);
+    const creditedInventoryRowAfterManualReturn = getListCard(page)
+      .locator(".record-row")
+      .filter({ hasText: productName })
+      .first();
+    await creditedInventoryRowAfterManualReturn.waitFor({ timeout: 15000 });
+    await creditedInventoryRowAfterManualReturn
+      .getByText(String(expectedRemainingStock), { exact: true })
+      .waitFor({ timeout: 15000 });
+    await creditedInventoryRowAfterManualReturn
+      .getByText(buildAmountPattern(expectedInventoryValueAmount))
+      .first()
+      .waitFor({ timeout: 15000 });
+
+    await openSection(page, sidebarIndexes.invoices, "/dashboard/invoices");
+    await waitForTenantContext(page, tenantName);
     await creditedInvoiceRow.locator('[data-testid="invoice-credit-button"]').click();
     const creditModal = page.locator(".ant-modal:visible").last();
     await creditModal.waitFor({ timeout: 15000 });
@@ -3395,6 +3429,10 @@ async function main() {
       .getByText(/Phiếu nhận trả:\s*1|Return receipts:\s*1/, { exact: false })
       .first()
       .waitFor({ timeout: 15000 });
+    assert(
+      (await creditedInvoiceRow.getByText(/Phiếu nhận trả:\s*2|Return receipts:\s*2/, { exact: false }).count()) === 0,
+      "Credit note restock should not create a second return receipt when goods were already received.",
+    );
     invoiceCreditVerified = true;
 
     const creditedInvoicePaymentResponse = await page.evaluate(
@@ -3558,7 +3596,8 @@ async function main() {
             item.metadata?.productCategoryName === productCategoryName &&
             item.metadata?.paymentMethod === "bank_transfer" &&
             item.metadata?.quantity === creditedOrderQuantity &&
-            item.metadata?.inventoryValue === purchaseUnitCost * creditedOrderQuantity &&
+            item.metadata?.inventoryValue === 0 &&
+            item.metadata?.inventoryRestocked === false &&
             item.metadata?.creditNote === invoiceCreditNote,
         ),
       "Invoice credit audit entry was not recorded with note, method, and category context.",
@@ -3570,9 +3609,18 @@ async function main() {
           item.entityNumber === creditedInvoiceNumber &&
           item.metadata?.quantity === creditedOrderQuantity &&
           item.metadata?.inventoryValue === purchaseUnitCost * creditedOrderQuantity &&
-          item.metadata?.creditNote === invoiceCreditNote,
+          item.metadata?.note === manualReturnReceiptNote,
       ),
-      "Invoice return receipt audit entry was not recorded after the full credit note.",
+      "Invoice return receipt audit entry was not recorded for the independent warehouse receipt.",
+    );
+    assert(
+      !creditAuditSnapshot.body?.items?.some(
+        (item) =>
+          item.actionType === "invoice_return_received" &&
+          item.entityNumber === creditedInvoiceNumber &&
+          item.metadata?.note === invoiceCreditNote,
+      ),
+      "Credit note should not emit a second return receipt audit entry when no extra stock was restocked.",
     );
     assert(
       creditAuditSnapshot.body?.items?.some(
@@ -4122,10 +4170,12 @@ async function main() {
         (item) =>
           item.invoiceNumber === creditedInvoiceNumber &&
           item.quantityReturned === creditedOrderQuantity &&
-          item.inventoryValue === purchaseUnitCost * creditedOrderQuantity,
+          item.inventoryValue === purchaseUnitCost * creditedOrderQuantity &&
+          item.source === "manual" &&
+          item.note === manualReturnReceiptNote,
       ) &&
         !exportedSnapshot?.invoiceReturnReceipts?.some((item) => item.invoiceNumber === partialCreditInvoiceNumber),
-      "Tenant export snapshot did not preserve the expected restock-only return receipt history.",
+      "Tenant export snapshot did not preserve the expected independent return receipt history.",
     );
     onboardingExportVerified = true;
     exportedInvoiceReturnReceiptsVerified = true;

@@ -275,6 +275,8 @@ db.exec(`
     product_name TEXT NOT NULL,
     quantity_returned INTEGER NOT NULL,
     inventory_value INTEGER NOT NULL,
+    source TEXT NOT NULL DEFAULT 'credit_note',
+    note TEXT NOT NULL DEFAULT '',
     received_at TEXT NOT NULL,
     FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
     FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE CASCADE,
@@ -894,6 +896,10 @@ const purchaseOrderReceiptColumns = db
   .prepare("PRAGMA table_info(purchase_order_receipts)")
   .all() as Array<{ name: string }>;
 
+const invoiceReturnReceiptColumns = db
+  .prepare("PRAGMA table_info(invoice_return_receipts)")
+  .all() as Array<{ name: string }>;
+
 if (!productColumns.some((column) => column.name === "category_id")) {
   db.exec("ALTER TABLE products ADD COLUMN category_id TEXT NOT NULL DEFAULT ''");
 }
@@ -928,6 +934,14 @@ if (!purchaseOrderReceiptColumns.some((column) => column.name === "product_categ
 
 if (!purchaseOrderReceiptColumns.some((column) => column.name === "product_category_name")) {
   db.exec("ALTER TABLE purchase_order_receipts ADD COLUMN product_category_name TEXT NOT NULL DEFAULT ''");
+}
+
+if (!invoiceReturnReceiptColumns.some((column) => column.name === "source")) {
+  db.exec("ALTER TABLE invoice_return_receipts ADD COLUMN source TEXT NOT NULL DEFAULT 'credit_note'");
+}
+
+if (!invoiceReturnReceiptColumns.some((column) => column.name === "note")) {
+  db.exec("ALTER TABLE invoice_return_receipts ADD COLUMN note TEXT NOT NULL DEFAULT ''");
 }
 
 if (!inventoryColumns.some((column) => column.name === "average_unit_cost")) {

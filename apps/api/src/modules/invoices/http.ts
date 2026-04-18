@@ -5,6 +5,7 @@ import type {
   CreditInvoiceInput,
   CreateInvoiceInput,
   CreateInvoicePaymentInput,
+  RecordInvoiceReturnReceiptInput,
   ReopenInvoiceInput,
   ResolveInvoiceCollectionActionInput,
   Session,
@@ -21,6 +22,7 @@ import {
   hasTenant,
   listInvoiceCollectionActivities,
   listInvoices,
+  recordInvoiceReturnReceipt,
   reopenInvoice,
   resolveInvoiceCollectionAction,
   runWithSession,
@@ -355,6 +357,63 @@ export async function handleCreditInvoice(
           "Credit note must be 240 characters or fewer.",
           "Payment method is invalid.",
         ].includes(error.message)
+    ) {
+      badRequest(response, error.message);
+      return;
+    }
+
+    throw error;
+  }
+}
+
+export async function handleRecordInvoiceReturnReceipt(
+  request: IncomingMessage,
+  response: ServerResponse,
+  requestSession: Session | null,
+): Promise<void> {
+  const input = await readJson<RecordInvoiceReturnReceiptInput>(request);
+
+  if (!input.tenantId?.trim()) {
+    badRequest(response, "tenantId is required.");
+    return;
+  }
+
+  if (!hasTenant(input.tenantId)) {
+    badRequest(response, "The selected tenant does not exist.");
+    return;
+  }
+
+  if (!input.invoiceId?.trim()) {
+    badRequest(response, "invoiceId is required.");
+    return;
+  }
+
+  if (!Number.isInteger(input.quantityReturned) || input.quantityReturned <= 0) {
+    badRequest(response, "Returned quantity must be a positive integer.");
+    return;
+  }
+
+  if (input.note !== null && input.note !== undefined && typeof input.note !== "string") {
+    badRequest(response, "Return receipt note must be 240 characters or fewer.");
+    return;
+  }
+
+  try {
+    const invoice = runWithSession(requestSession, () => recordInvoiceReturnReceipt(input));
+    sendJson(response, 200, { item: invoice });
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      [
+        "The selected invoice does not exist.",
+        "The selected invoice has been voided.",
+        "The selected order does not exist.",
+        "The selected product does not exist.",
+        "Returned quantity must be a positive integer.",
+        "Returned quantity cannot exceed the remaining unreturned quantity.",
+        "Return receipt note is required when receiving goods back from an invoice.",
+        "Return receipt note must be 240 characters or fewer.",
+      ].includes(error.message)
     ) {
       badRequest(response, error.message);
       return;

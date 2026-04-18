@@ -427,6 +427,17 @@ const en = {
     creditWithoutReturnLabel: "Credited without return:",
     returnReceiptsLabel: "Return receipts:",
     lastReturnReceiptLabel: "Last return receipt:",
+    returnReceiptAction: "Record Return Receipt",
+    returnReceiptTitle: "Receive returns for {{number}}",
+    returnReceiptQuantity: "Returned Quantity",
+    returnReceiptQuantityHint:
+      "Select how many units have physically come back from {{number}}. Remaining receivable quantity: {{count}}.",
+    returnReceiptQuantityGenericHint: "Select how many units have physically come back.",
+    returnReceiptNote: "Return Receipt Note",
+    returnReceiptNoteHint: "Required to explain why {{number}} is being received back into inventory.",
+    returnReceiptNoteGenericHint: "Required warehouse or quality note for the return receipt.",
+    returnReceiptNotePlaceholder: "Customer returned inspected goods back into stock.",
+    returnReceiptSubmit: "Post Return Receipt",
     reissuedFromLabel: "Reissued from:",
     reissuedToLabel: "Reissued as:",
     revisionValue: "Rev {{count}}",
@@ -1057,6 +1068,13 @@ Object.assign(en.errors, {
   invalidInvoiceCreditQuantity: "Credit quantity must be a positive integer.",
   invalidInvoiceCreditMode: "Credit handling option is invalid.",
   invoiceCreditQuantityExceedsRemaining: "Credit quantity cannot exceed the remaining uncredited quantity.",
+  invoiceReturnReceiptFailed: "Invoice return receipt failed.",
+  invoiceReturnReceiptNoteRequired:
+    "A business note is required when receiving goods back from an invoice.",
+  invalidInvoiceReturnReceiptNote: "Return receipt note must be 240 characters or fewer.",
+  invalidInvoiceReturnReceiptQuantity: "Returned quantity must be a positive integer.",
+  invoiceReturnReceiptQuantityExceedsRemaining:
+    "Returned quantity cannot exceed the remaining unreturned quantity.",
   });
 
 Object.assign(en.common, {
