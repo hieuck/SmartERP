@@ -49,7 +49,7 @@ export const onboardingDatasets = [
 export const onboardingCsvTemplates: Record<OnboardingDataset, string> = {
   customers: "name,email,phone,city\nTran Minh Trading,buyer@tranminh.vn,+84 90 123 4567,Ho Chi Minh City",
   suppliers: "supplierCode,name,email,phone,city,leadTimeDays\nSUP-ALPHA,Alpha Packaging,ops@alphapack.example,+84 28 5555 0000,Binh Duong,7",
-  products: "name,category,unitPrice,sku\nPET Bottle 1L,Bottles,25000,",
+  products: "name,category,unitPrice,sku,imageUrl\nPET Bottle 1L,Bottles,25000,,/product-photo-demo.svg",
 };
 
 export const rewriteMessage =
@@ -378,6 +378,7 @@ export type ProductRecord = {
   categoryName: string;
   sku: string;
   name: string;
+  imageUrl: string | null;
   unitPrice: number;
   status: "draft" | "active";
   createdAt: string;
@@ -388,6 +389,7 @@ export type CreateProductInput = {
   categoryId: string;
   sku?: string;
   name: string;
+  imageUrl?: string | null;
   unitPrice: number;
 };
 
@@ -397,6 +399,7 @@ export type UpdateProductInput = {
   categoryId: string;
   sku?: string;
   name: string;
+  imageUrl?: string | null;
   unitPrice: number;
 };
 
@@ -794,6 +797,7 @@ export type InvoiceRecord = {
   orderNumber: string;
   customerId: string;
   customerName: string;
+  productId: string;
   productCategoryId: string;
   productCategoryName: string;
   productSku: string;

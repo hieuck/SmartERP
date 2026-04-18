@@ -127,6 +127,8 @@ const errorKeyByMessage: Record<string, string> = {
   "Product category name is required.": "errors.productCategoryNameRequired",
   "Product category and name are required.": "errors.productFieldsRequired",
   "Product category, name, and unit price are required.": "errors.productImportFieldsRequired",
+  "Product image URL must be an absolute URL, root-relative path, or data image URL.":
+    "errors.invalidProductImageUrl",
   "A supplier with this code already exists for the selected tenant.": "errors.duplicateSupplierCode",
   "A product with this SKU already exists for the selected tenant.": "errors.duplicateProductSku",
   "The selected customer cannot be deleted because orders or invoices already reference it.": "errors.customerDeleteBlocked",

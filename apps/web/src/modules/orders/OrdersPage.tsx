@@ -1,7 +1,6 @@
 import {
   CheckCircleOutlined,
   EditOutlined,
-  InboxOutlined,
   RollbackOutlined,
   ShoppingOutlined,
   StopOutlined,
@@ -27,6 +26,7 @@ import type { CreateOrderInput, OrderRecord } from "@smarterp/contracts";
 
 import { useLocale } from "../../locale/LocaleContext";
 import { useWorkspace } from "../../state/WorkspaceContext";
+import { ProductVisual } from "../products/ProductVisual";
 
 const { Paragraph, Title } = Typography;
 
@@ -106,6 +106,7 @@ export function OrdersPage(): ReactElement {
     selectedCategoryId === "all"
       ? products
       : products.filter((product) => product.categoryId === selectedCategoryId);
+  const selectedProduct = products.find((product) => product.id === selectedProductId) ?? null;
   const filteredOrders =
     selectedCategoryId === "all"
       ? orders
@@ -261,6 +262,17 @@ export function OrdersPage(): ReactElement {
                   }))}
                 />
               </Form.Item>
+              {selectedProduct ? (
+                <div className="product-preview-card">
+                  <ProductVisual imageUrl={selectedProduct.imageUrl} name={selectedProduct.name} />
+                  <div className="product-preview-meta">
+                    <strong>{selectedProduct.name}</strong>
+                    <span className="record-detail">
+                      {selectedProduct.sku} · {selectedProduct.categoryName}
+                    </span>
+                  </div>
+                </div>
+              ) : null}
 
               <Form.Item<OrderFormShape>
                 label={t("orders.quantity")}
@@ -323,12 +335,13 @@ export function OrdersPage(): ReactElement {
                 {filteredOrders.map((order) => (
                   // Keep order actions deterministic: cancel before invoicing, close after full settlement.
                   <div
-                    className={`record-row${editingOrderId === order.id ? " is-editing" : ""}`}
+                    className={`record-row record-row--visual${editingOrderId === order.id ? " is-editing" : ""}`}
                     key={order.id}
                   >
-                    <div className="record-icon">
-                      <InboxOutlined />
-                    </div>
+                    <ProductVisual
+                      imageUrl={products.find((product) => product.id === order.productId)?.imageUrl ?? null}
+                      name={order.productName}
+                    />
                     <div className="record-content">
                       <strong>{order.orderNumber}</strong>
                       <div className="record-detail">

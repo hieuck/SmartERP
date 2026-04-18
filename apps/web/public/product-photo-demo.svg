@@ -1,0 +1,16 @@
+<svg width="640" height="480" viewBox="0 0 640 480" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="640" height="480" rx="40" fill="#F3F7FF"/>
+  <circle cx="494" cy="108" r="88" fill="#DCE9FF"/>
+  <circle cx="132" cy="376" r="96" fill="#E6F4FF"/>
+  <rect x="226" y="76" width="188" height="316" rx="64" fill="#8CC3FF"/>
+  <rect x="266" y="46" width="108" height="62" rx="28" fill="#B6DAFF"/>
+  <rect x="250" y="156" width="140" height="126" rx="24" fill="#FDFEFF"/>
+  <path d="M300 174H340C349.389 174 357 181.611 357 191V247C357 256.389 349.389 264 340 264H300C290.611 264 283 256.389 283 247V191C283 181.611 290.611 174 300 174Z" fill="#DFF0FF"/>
+  <path d="M295 315C295 301.193 306.193 290 320 290C333.807 290 345 301.193 345 315V347H295V315Z" fill="#DFF0FF"/>
+  <text x="320" y="210" text-anchor="middle" fill="#2F6BBD" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="700">
+    SmartERP
+  </text>
+  <text x="320" y="236" text-anchor="middle" fill="#2F6BBD" font-family="Segoe UI, Arial, sans-serif" font-size="16" font-weight="600">
+    Product Photo
+  </text>
+</svg>

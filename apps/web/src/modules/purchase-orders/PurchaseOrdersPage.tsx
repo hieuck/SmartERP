@@ -3,7 +3,6 @@ import {
   CheckCircleOutlined,
   EditOutlined,
   RollbackOutlined,
-  ShoppingCartOutlined,
   StopOutlined,
   TeamOutlined,
 } from "@ant-design/icons";
@@ -32,6 +31,7 @@ import type {
 
 import { useLocale } from "../../locale/LocaleContext";
 import { useWorkspace } from "../../state/WorkspaceContext";
+import { ProductVisual } from "../products/ProductVisual";
 
 const { Paragraph, Title } = Typography;
 
@@ -301,22 +301,33 @@ export function PurchaseOrdersPage(): ReactElement {
                     />
                   </Form.Item>
 
-                  <Form.Item<PurchaseOrderFormShape>
-                    label={t("purchaseOrders.product")}
-                    name="productId"
-                    rules={[{ required: true }]}
-                  >
+              <Form.Item<PurchaseOrderFormShape>
+                label={t("purchaseOrders.product")}
+                name="productId"
+                rules={[{ required: true }]}
+              >
                     <Select
                       placeholder={t("purchaseOrders.productPlaceholder")}
                       options={filteredProducts.map((product) => ({
                         label: `${product.name} (${product.sku}) · ${product.categoryName}`,
                         value: product.id,
-                      }))}
-                    />
-                  </Form.Item>
+                  }))}
+                />
+              </Form.Item>
+              {selectedProduct ? (
+                <div className="product-preview-card">
+                  <ProductVisual imageUrl={selectedProduct.imageUrl} name={selectedProduct.name} />
+                  <div className="product-preview-meta">
+                    <strong>{selectedProduct.name}</strong>
+                    <span className="record-detail">
+                      {selectedProduct.sku} · {selectedProduct.categoryName}
+                    </span>
+                  </div>
+                </div>
+              ) : null}
 
-                  <Form.Item<PurchaseOrderFormShape>
-                    label={t("purchaseOrders.quantityOrdered")}
+              <Form.Item<PurchaseOrderFormShape>
+                label={t("purchaseOrders.quantityOrdered")}
                     name="quantityOrdered"
                     rules={[{ required: true }]}
                   >
@@ -458,11 +469,12 @@ export function PurchaseOrdersPage(): ReactElement {
             filteredPurchaseOrders.length ? (
               <div className="record-stack">
                 {filteredPurchaseOrders.map((purchaseOrder) => (
-                  <div className="record-row" key={purchaseOrder.id}>
-                    <div className="record-icon">
-                      <ShoppingCartOutlined />
-                    </div>
-                  <div className="record-content">
+                  <div className="record-row record-row--visual" key={purchaseOrder.id}>
+                    <ProductVisual
+                      imageUrl={products.find((product) => product.id === purchaseOrder.productId)?.imageUrl ?? null}
+                      name={purchaseOrder.productName}
+                    />
+                    <div className="record-content">
                       <strong>{purchaseOrder.purchaseOrderNumber}</strong>
                       <div className="record-detail">
                         <TeamOutlined /> {purchaseOrder.supplierName} ({purchaseOrder.supplierCode})

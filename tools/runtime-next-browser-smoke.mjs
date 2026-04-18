@@ -36,6 +36,7 @@ const supplierCode = `SUP-${smokeId}`;
 const productCategoryName = `Bottles ${smokeId}`;
 const productName = `Smoke Bottle ${smokeId}`;
 const productSku = `SMK-${smokeId}`;
+const productImageUrl = "/product-photo-demo.svg";
 const restoredTenantName = `Restored Tenant ${smokeId}`;
 const restoredTenantSlug = `restored-${smokeId}`;
 const restoredTenantIndustry = "Restored Smoke QA";
@@ -82,7 +83,7 @@ const firstIssueDateInput = buildDateInputFromToday(0);
 const secondIssueDateInput = buildDateInputFromToday(-(secondDaysPastDue + secondPaymentTermDays));
 const amendedPaymentTermDays = firstPaymentTermDays + 7;
 const unitPrice = 25000;
-const productImportCsv = `name,category,unitPrice,sku\n${productName},${productCategoryName},${unitPrice},${productSku}`;
+const productImportCsv = `name,category,unitPrice,sku,imageUrl\n${productName},${productCategoryName},${unitPrice},${productSku},${productImageUrl}`;
 const purchaseUnitCost = 18000;
 const purchaseQuantity = 24;
 const editedPurchaseQuantity = 26;
@@ -246,6 +247,27 @@ function buildDateInputFromToday(daysOffset) {
   const candidate = new Date();
   candidate.setUTCDate(candidate.getUTCDate() + daysOffset);
   return candidate.toISOString().slice(0, 10);
+}
+
+async function assertImageLoadedInScope(scope, expectedSrc, message) {
+  const visual = scope.locator("[data-testid='product-visual']").first();
+  await visual.waitFor({ timeout: 15000 });
+  const image = visual.locator("img").first();
+  await image.waitFor({ timeout: 15000 });
+  const imageState = await image.evaluate((element) => ({
+    src: element.getAttribute("src") ?? "",
+    complete: element.complete,
+    naturalWidth: element.naturalWidth,
+  }));
+
+  assert(
+    imageState.src.includes(expectedSrc),
+    `${message} Expected "${expectedSrc}" but saw "${imageState.src || "no src"}".`,
+  );
+  assert(
+    imageState.complete && imageState.naturalWidth > 0,
+    `${message} The product image did not finish loading.`,
+  );
 }
 
 async function openApp(page) {
@@ -561,6 +583,11 @@ async function main() {
   let supplierCrudVerified = false;
   let productCategoryCrudVerified = false;
   let productCrudVerified = false;
+  let productImageVerified = false;
+  let purchaseOrderImageVerified = false;
+  let inventoryImageVerified = false;
+  let orderImageVerified = false;
+  let invoiceImageVerified = false;
   let customerDeleteGuardVerified = false;
   let supplierDeleteGuardVerified = false;
   let productCategoryDeleteGuardVerified = false;
@@ -923,6 +950,40 @@ async function main() {
       importedProductRowText.includes(productCategoryName),
       "Imported product row did not include the expected category name.",
     );
+    await assertImageLoadedInScope(
+      importedProductRow,
+      productImageUrl,
+      "Imported product row did not render the product image.",
+    );
+    const importedProductLookup = await page.evaluate(
+      async ({ targetProductName, sessionKey, tenantKey }) => {
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const session = window.localStorage.getItem(sessionKey);
+        const accessToken = session ? JSON.parse(session).accessToken : "";
+        const response = await fetch(`/api/products?tenantId=${encodeURIComponent(tenantId ?? "")}`, {
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+          },
+        });
+        const payload = await response.json();
+        const product = payload.items.find((item) => item.name === targetProductName);
+
+        return {
+          status: response.status,
+          item: product ?? null,
+        };
+      },
+      {
+        targetProductName: productName,
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+      },
+    );
+    assert(
+      importedProductLookup.status === 200 && importedProductLookup.item?.imageUrl === productImageUrl,
+      "Imported product did not persist the expected image URL.",
+    );
+    productImageVerified = true;
     await waitForFormReady(productCategoriesCard);
     await fillField(productCategoriesCard, "#name", editableProductCategoryName);
     await clickSubmit(productCategoriesCard);
@@ -1167,6 +1228,12 @@ async function main() {
     purchaseOrderRow = getListCard(page).locator(".record-row").filter({ hasText: purchaseOrderNumber }).first();
     supplierAndPurchaseOrdersVerified = true;
     purchaseOrderCategoryFlowVerified = true;
+    await assertImageLoadedInScope(
+      purchaseOrderRow,
+      productImageUrl,
+      "Purchase order row did not render the product image.",
+    );
+    purchaseOrderImageVerified = true;
     await purchaseOrderRow.locator('[data-testid="purchase-order-edit-button"]').click();
     await fillField(purchaseOrdersCreateCard, "#quantityOrdered", editedPurchaseQuantity);
     await fillField(purchaseOrdersCreateCard, "#expectedReceiptDate", editedExpectedReceiptDateInput);
@@ -1575,6 +1642,12 @@ async function main() {
     await inventoryRow.getByText(String(stockInQuantity), { exact: true }).waitFor({ timeout: 15000 });
     await inventoryRow.getByText(buildAmountPattern(purchaseUnitCost)).first().waitFor({ timeout: 15000 });
     await inventoryRow.getByText(buildAmountPattern(expectedReceivedPurchaseValue)).first().waitFor({ timeout: 15000 });
+    await assertImageLoadedInScope(
+      inventoryRow,
+      productImageUrl,
+      "Inventory row did not render the product image.",
+    );
+    inventoryImageVerified = true;
     await waitForFormReady(inventoryFormCard);
     await selectOption(page, inventoryFormCard.getByRole("combobox", { name: /Sản phẩm|San pham/ }), productName);
     await selectOption(page, inventoryFormCard.getByRole("combobox", { name: /Loại điều chỉnh|Loai dieu chinh/ }), "Xuất kho");
@@ -1734,6 +1807,12 @@ async function main() {
     await initialOrderRow.waitFor({ timeout: 15000 });
     await initialOrderRow.getByText(customerName, { exact: false }).waitFor({ timeout: 15000 });
     await initialOrderRow.getByText(productCategoryName, { exact: false }).waitFor({ timeout: 15000 });
+    await assertImageLoadedInScope(
+      initialOrderRow,
+      productImageUrl,
+      "Order row did not render the product image.",
+    );
+    orderImageVerified = true;
     orderNumber = (await initialOrderRow.locator("strong").first().textContent())?.trim() ?? "";
     assert(orderNumber.length > 0, "Order number was not rendered after order creation.");
     const orderRow = getListCard(page).locator(".record-row").filter({ hasText: orderNumber }).first();
@@ -1798,6 +1877,12 @@ async function main() {
     await invoiceRow.waitFor({ timeout: 15000 });
     await invoiceRow.getByText(customerName, { exact: false }).waitFor({ timeout: 15000 });
     await invoiceRow.getByText(productCategoryName, { exact: false }).waitFor({ timeout: 15000 });
+    await assertImageLoadedInScope(
+      invoiceRow,
+      productImageUrl,
+      "Invoice row did not render the product image.",
+    );
+    invoiceImageVerified = true;
     invoiceNumber = (await invoiceRow.locator("strong").first().textContent())?.trim() ?? "";
     assert(invoiceNumber.length > 0, "Invoice number was not rendered after invoice creation.");
     initialInvoiceNumber = invoiceNumber;
@@ -4654,6 +4739,11 @@ async function main() {
       supplierCrudVerified,
       productCategoryCrudVerified,
       productCrudVerified,
+      productImageVerified,
+      purchaseOrderImageVerified,
+      inventoryImageVerified,
+      orderImageVerified,
+      invoiceImageVerified,
       customerDeleteGuardVerified,
       supplierDeleteGuardVerified,
       productCategoryDeleteGuardVerified,

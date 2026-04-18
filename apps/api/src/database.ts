@@ -73,6 +73,7 @@ db.exec(`
     category_name TEXT NOT NULL DEFAULT '',
     sku TEXT NOT NULL,
     name TEXT NOT NULL,
+    image_url TEXT,
     unit_price INTEGER NOT NULL,
     status TEXT NOT NULL,
     created_at TEXT NOT NULL,
@@ -899,6 +900,10 @@ if (!productColumns.some((column) => column.name === "category_id")) {
 
 if (!productColumns.some((column) => column.name === "category_name")) {
   db.exec("ALTER TABLE products ADD COLUMN category_name TEXT NOT NULL DEFAULT ''");
+}
+
+if (!productColumns.some((column) => column.name === "image_url")) {
+  db.exec("ALTER TABLE products ADD COLUMN image_url TEXT");
 }
 
 if (!orderColumns.some((column) => column.name === "product_category_id")) {

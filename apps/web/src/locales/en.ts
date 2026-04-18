@@ -926,9 +926,15 @@ Object.assign(en.products, {
   categoryProductCount: "{{count}} product(s)",
   skuOptional: "SKU (Optional)",
   autoSkuHint: "Leave SKU blank and SmartERP Next will generate it from the selected category.",
+  imageUrl: "Image URL",
+  imageAttached: "Image attached",
+  imageEmpty: "No product image yet",
+  previewTitle: "Image Preview",
+  previewHint: "Use an HTTPS URL, a root-relative asset, or a data:image URL.",
   placeholderCategory: "Bottles",
   placeholderCategorySelect: "Select a category",
   placeholderSkuAuto: "Leave blank to auto-generate",
+  placeholderImageUrl: "/product-photo-demo.svg",
   editTitle: "Edit Product",
   deleteConfirm: "Delete {{name}}? This only works while no sales, purchasing, or inventory rows reference it.",
 });
@@ -945,6 +951,8 @@ Object.assign(en.errors, {
   productCategoryDeleteBlocked:
     "The selected product category cannot be deleted because products still reference it.",
   defaultProductCategoryDeleteBlocked: "The default product category cannot be deleted.",
+  invalidProductImageUrl:
+    "Product image URL must be an absolute URL, root-relative path, or data image URL.",
 });
 
 Object.assign(en.products, {

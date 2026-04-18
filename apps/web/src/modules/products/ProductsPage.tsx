@@ -7,7 +7,6 @@ import {
   DeleteOutlined,
   EditOutlined,
   FolderOpenOutlined,
-  ShoppingOutlined,
 } from "@ant-design/icons";
 import {
   Button,
@@ -27,6 +26,7 @@ import type { CreateProductInput } from "@smarterp/contracts";
 
 import { useLocale } from "../../locale/LocaleContext";
 import { useWorkspace } from "../../state/WorkspaceContext";
+import { ProductVisual } from "./ProductVisual";
 
 const { Paragraph, Text, Title } = Typography;
 
@@ -55,6 +55,7 @@ export function ProductsPage(): ReactElement {
   const [categoryForm] = Form.useForm<CategoryFormShape>();
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+  const selectedProductImageUrl = Form.useWatch("imageUrl", productForm);
 
   const productCountByCategoryId = useMemo(() => {
     return products.reduce<Record<string, number>>((result, product) => {
@@ -135,6 +136,7 @@ export function ProductsPage(): ReactElement {
       categoryId: product.categoryId,
       sku: product.sku,
       name: product.name,
+      imageUrl: product.imageUrl ?? "",
       unitPrice: product.unitPrice,
     });
   }
@@ -310,6 +312,22 @@ export function ProductsPage(): ReactElement {
               <Form.Item<ProductFormShape> label={t("products.skuOptional")} name="sku">
                 <Input placeholder={t("products.placeholderSkuAuto")} />
               </Form.Item>
+              <Form.Item<ProductFormShape> label={t("products.imageUrl")} name="imageUrl">
+                <Input placeholder={t("products.placeholderImageUrl")} />
+              </Form.Item>
+              {selectedProductImageUrl ? (
+                <div className="product-preview-card">
+                  <ProductVisual
+                    imageUrl={selectedProductImageUrl}
+                    name={productForm.getFieldValue("name") || t("products.previewTitle")}
+                    size="lg"
+                  />
+                  <div className="product-preview-meta">
+                    <strong>{t("products.previewTitle")}</strong>
+                    <Text type="secondary">{t("products.previewHint")}</Text>
+                  </div>
+                </div>
+              ) : null}
               <Form.Item<ProductFormShape>
                 label={t("products.unitPrice")}
                 name="unitPrice"
@@ -343,12 +361,10 @@ export function ProductsPage(): ReactElement {
               <div className="record-stack">
                 {products.map((product) => (
                   <div
-                    className={`record-row${editingProductId === product.id ? " is-editing" : ""}`}
+                    className={`record-row record-row--visual${editingProductId === product.id ? " is-editing" : ""}`}
                     key={product.id}
                   >
-                    <div className="record-icon">
-                      <ShoppingOutlined />
-                    </div>
+                    <ProductVisual imageUrl={product.imageUrl} name={product.name} />
                     <div className="record-content">
                       <strong>{product.name}</strong>
                       <div className="record-detail">
@@ -356,6 +372,9 @@ export function ProductsPage(): ReactElement {
                       </div>
                       <div className="record-detail">
                         <BarcodeOutlined /> {product.sku}
+                      </div>
+                      <div className="record-detail">
+                        {product.imageUrl ? t("products.imageAttached") : t("products.imageEmpty")}
                       </div>
                       <div className="record-detail">{formatCurrency(product.unitPrice)}</div>
                       <div className="record-tag-stack">

@@ -36,6 +36,19 @@ function isSqliteConstraintError(error: unknown): error is Error & { code?: stri
   );
 }
 
+function isValidProductImageUrl(value: string | null | undefined): boolean {
+  const normalized = value?.trim() ?? "";
+  if (!normalized) {
+    return true;
+  }
+
+  return (
+    normalized.startsWith("data:image/") ||
+    normalized.startsWith("/") ||
+    /^https?:\/\//i.test(normalized)
+  );
+}
+
 export function handleListProducts(response: ServerResponse, tenantId: string): void {
   if (!hasTenant(tenantId)) {
     badRequest(response, "The selected tenant does not exist.");
@@ -83,6 +96,11 @@ export async function handleCreateProduct(
 
   if (!Number.isFinite(input.unitPrice) || input.unitPrice < 0) {
     badRequest(response, "unitPrice must be a valid non-negative number.");
+    return;
+  }
+
+  if (!isValidProductImageUrl(input.imageUrl)) {
+    badRequest(response, "Product image URL must be an absolute URL, root-relative path, or data image URL.");
     return;
   }
 
@@ -138,6 +156,11 @@ export async function handleUpdateProduct(
 
   if (!Number.isFinite(input.unitPrice) || input.unitPrice < 0) {
     badRequest(response, "unitPrice must be a valid non-negative number.");
+    return;
+  }
+
+  if (!isValidProductImageUrl(input.imageUrl)) {
+    badRequest(response, "Product image URL must be an absolute URL, root-relative path, or data image URL.");
     return;
   }
 

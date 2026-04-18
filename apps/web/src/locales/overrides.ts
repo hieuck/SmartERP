@@ -5,6 +5,14 @@ type TranslationTree = {
 export const localeOverrides: Record<"vi" | "en", TranslationTree> = {
   en: {},
   vi: {
+    products: {
+      imageUrl: "Đường dẫn ảnh",
+      imageAttached: "Đã gắn ảnh",
+      imageEmpty: "Chưa có ảnh sản phẩm",
+      previewTitle: "Xem trước ảnh",
+      previewHint: "Dùng URL HTTPS, đường dẫn gốc /..., hoặc data:image URL.",
+      placeholderImageUrl: "/product-photo-demo.svg",
+    },
     approvals: {
       typeInvoiceAmend: "Sửa đổi hóa đơn",
     },
@@ -72,6 +80,8 @@ export const localeOverrides: Record<"vi" | "en", TranslationTree> = {
       },
     },
     errors: {
+      invalidProductImageUrl:
+        "Đường dẫn ảnh sản phẩm phải là URL tuyệt đối, đường dẫn gốc /..., hoặc data:image URL.",
       invoiceAmendFailed: "Sửa đổi hóa đơn thất bại.",
       invoiceCreditFailed: "Ghi giảm hóa đơn thất bại.",
       invoiceAmendBlocked: "Hóa đơn này chỉ được sửa đổi khi còn đang hiệu lực.",

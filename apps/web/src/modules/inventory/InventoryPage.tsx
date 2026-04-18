@@ -1,4 +1,3 @@
-import { DatabaseOutlined } from "@ant-design/icons";
 import type { ReactElement } from "react";
 import { useState } from "react";
 import type { FormProps } from "antd";
@@ -8,6 +7,7 @@ import type { CreateInventoryAdjustmentInput } from "@smarterp/contracts";
 
 import { useLocale } from "../../locale/LocaleContext";
 import { useWorkspace } from "../../state/WorkspaceContext";
+import { ProductVisual } from "../products/ProductVisual";
 
 const { Paragraph, Title } = Typography;
 
@@ -30,6 +30,7 @@ export function InventoryPage(): ReactElement {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("all");
 
   const [form] = Form.useForm<InventoryAdjustmentFormShape>();
+  const selectedProductId = Form.useWatch("productId", form);
   const filteredProducts =
     selectedCategoryId === "all"
       ? products
@@ -38,6 +39,7 @@ export function InventoryPage(): ReactElement {
     selectedCategoryId === "all"
       ? inventories
       : inventories.filter((inventory) => inventory.categoryId === selectedCategoryId);
+  const selectedProduct = products.find((product) => product.id === selectedProductId) ?? null;
 
   const onFinish: FormProps<InventoryAdjustmentFormShape>["onFinish"] = async (values) => {
     try {
@@ -117,6 +119,17 @@ export function InventoryPage(): ReactElement {
                   }))}
                 />
               </Form.Item>
+              {selectedProduct ? (
+                <div className="product-preview-card">
+                  <ProductVisual imageUrl={selectedProduct.imageUrl} name={selectedProduct.name} />
+                  <div className="product-preview-meta">
+                    <strong>{selectedProduct.name}</strong>
+                    <span className="record-detail">
+                      {selectedProduct.sku} · {selectedProduct.categoryName}
+                    </span>
+                  </div>
+                </div>
+              ) : null}
 
               <Form.Item<InventoryAdjustmentFormShape>
                 label={t("inventory.direction")}
@@ -160,11 +173,12 @@ export function InventoryPage(): ReactElement {
             filteredInventories.length ? (
               <div className="record-stack">
                 {filteredInventories.map((item) => (
-                  <div className="record-row" key={item.productId}>
-                    <div className="record-icon">
-                      <DatabaseOutlined />
-                    </div>
-                    <div>
+                  <div className="record-row record-row--visual" key={item.productId}>
+                    <ProductVisual
+                      imageUrl={products.find((product) => product.id === item.productId)?.imageUrl ?? null}
+                      name={item.productName}
+                    />
+                    <div className="record-content">
                       <strong>{item.productName}</strong>
                       <div className="record-detail">
                         <Tag>{item.categoryName}</Tag>

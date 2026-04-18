@@ -133,6 +133,7 @@ type ProductRow = {
   category_name: string;
   sku: string;
   name: string;
+  image_url: string | null;
   unit_price: number;
   status: "draft" | "active";
   created_at: string;
@@ -271,6 +272,7 @@ type InvoiceRow = {
   order_number: string;
   customer_id: string;
   customer_name: string;
+  product_id: string;
   product_category_id: string;
   product_category_name: string;
   product_sku: string;
@@ -925,26 +927,26 @@ const countProductsForTenantStatement = db.prepare(`
 `);
 
 const getProductBySkuStatement = db.prepare(`
-  SELECT id, tenant_id, category_id, category_name, sku, name, unit_price, status, created_at
+  SELECT id, tenant_id, category_id, category_name, sku, name, image_url, unit_price, status, created_at
   FROM products
   WHERE tenant_id = ? AND sku = ?
   LIMIT 1
 `);
 
 const listProductsStatement = db.prepare(`
-  SELECT id, tenant_id, category_id, category_name, sku, name, unit_price, status, created_at
+  SELECT id, tenant_id, category_id, category_name, sku, name, image_url, unit_price, status, created_at
   FROM products
   WHERE tenant_id = ?
   ORDER BY category_name COLLATE NOCASE ASC, name COLLATE NOCASE ASC, datetime(created_at) DESC, rowid DESC
 `);
 
 const createProductStatement = db.prepare(`
-  INSERT INTO products (id, tenant_id, category_id, category_name, sku, name, unit_price, status, created_at)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  INSERT INTO products (id, tenant_id, category_id, category_name, sku, name, image_url, unit_price, status, created_at)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `);
 
 const getProductByIdStatement = db.prepare(`
-  SELECT id, tenant_id, category_id, category_name, sku, name, unit_price, status, created_at
+  SELECT id, tenant_id, category_id, category_name, sku, name, image_url, unit_price, status, created_at
   FROM products
   WHERE tenant_id = ? AND id = ?
   LIMIT 1
@@ -957,6 +959,7 @@ const updateProductStatement = db.prepare(`
     category_name = ?,
     sku = ?,
     name = ?,
+    image_url = ?,
     unit_price = ?
   WHERE tenant_id = ? AND id = ?
 `);
@@ -1379,6 +1382,7 @@ const getLatestVoidedInvoiceForOrderStatement = db.prepare(`
     i.order_number AS order_number,
     i.customer_id AS customer_id,
     i.customer_name AS customer_name,
+    COALESCE(o.product_id, '') AS product_id,
     COALESCE(o.product_category_id, '') AS product_category_id,
     COALESCE(o.product_category_name, '') AS product_category_name,
     COALESCE(o.product_sku, '') AS product_sku,
@@ -1449,6 +1453,7 @@ const listInvoicesStatement = db.prepare(`
     i.order_number AS order_number,
     i.customer_id AS customer_id,
     i.customer_name AS customer_name,
+    COALESCE(o.product_id, '') AS product_id,
     COALESCE(o.product_category_id, '') AS product_category_id,
     COALESCE(o.product_category_name, '') AS product_category_name,
     COALESCE(o.product_sku, '') AS product_sku,
@@ -1496,6 +1501,7 @@ const listInvoicesStatement = db.prepare(`
     i.order_number,
     i.customer_id,
     i.customer_name,
+    o.product_id,
     o.product_category_id,
     o.product_category_name,
     o.product_sku,
@@ -1550,6 +1556,7 @@ const getInvoiceByIdStatement = db.prepare(`
     i.order_number AS order_number,
     i.customer_id AS customer_id,
     i.customer_name AS customer_name,
+    COALESCE(o.product_id, '') AS product_id,
     COALESCE(o.product_category_id, '') AS product_category_id,
     COALESCE(o.product_category_name, '') AS product_category_name,
     COALESCE(o.product_sku, '') AS product_sku,
@@ -1597,6 +1604,7 @@ const getInvoiceByIdStatement = db.prepare(`
     i.order_number,
     i.customer_id,
     i.customer_name,
+    o.product_id,
     o.product_category_id,
     o.product_category_name,
     o.product_sku,
@@ -2338,6 +2346,7 @@ function mapProduct(row: ProductRow): ProductRecord {
     categoryName: row.category_name,
     sku: row.sku,
     name: row.name,
+    imageUrl: row.image_url,
     unitPrice: row.unit_price,
     status: row.status,
     createdAt: row.created_at,
@@ -2799,6 +2808,7 @@ function mapInvoice(row: InvoiceRow): InvoiceRecord {
     orderNumber: row.order_number,
     customerId: row.customer_id,
     customerName: row.customer_name,
+    productId: row.product_id,
     productCategoryId: row.product_category_id,
     productCategoryName: row.product_category_name,
     productSku: row.product_sku,
@@ -2920,6 +2930,7 @@ function buildInvoiceRecord(
     orderNumber: order.order_number,
     customerId: order.customer_id,
     customerName: order.customer_name,
+    productId: order.product_id,
     productCategoryId: order.product_category_id,
     productCategoryName: order.product_category_name,
     productSku: order.product_sku,
@@ -3478,6 +3489,11 @@ function createGeneratedProductSku(tenantId: string, categorySlug: string): stri
   throw new Error("Unable to generate a unique SKU for this tenant.");
 }
 
+function normalizeProductImageUrl(value: string | null | undefined): string | null {
+  const normalized = value?.trim() ?? "";
+  return normalized.length > 0 ? normalized : null;
+}
+
 function ensureDefaultProductCategory(tenantId: string): ProductCategoryRecord {
   const existing = getProductCategoryBySlugStatement.get(tenantId, "general") as
     | ProductCategoryRow
@@ -3775,6 +3791,7 @@ function importProductsCsv(tenantId: string, csvText: string): ImportOnboardingR
     const categoryName = readCsvValue(row, headerIndex, "category");
     const unitPriceRaw = readCsvValue(row, headerIndex, "unitprice");
     const sku = headerIndex.sku !== undefined ? readCsvValue(row, headerIndex, "sku") : "";
+    const imageUrl = headerIndex.imageurl !== undefined ? readCsvValue(row, headerIndex, "imageurl") : "";
     const unitPrice = Number(unitPriceRaw);
 
     if (!name || !categoryName || !unitPriceRaw) {
@@ -3794,6 +3811,7 @@ function importProductsCsv(tenantId: string, csvText: string): ImportOnboardingR
         categoryId: category.id,
         sku,
         name,
+        imageUrl,
         unitPrice,
       });
       createdCount += 1;
@@ -4024,6 +4042,7 @@ export function restoreTenantSnapshot(input: RestoreTenantSnapshotInput): Restor
       categoryId: restoredCategoryId,
       sku: product.sku,
       name: product.name,
+      imageUrl: product.imageUrl,
       unitPrice: product.unitPrice,
     });
     productIdMap.set(product.id, restoredProduct.id);
@@ -4908,6 +4927,7 @@ export function createProduct(input: CreateProductInput): ProductRecord {
     categoryName: category.name,
     sku: manualSku ? manualSku.toUpperCase() : createGeneratedProductSku(input.tenantId, category.slug),
     name: input.name.trim(),
+    imageUrl: normalizeProductImageUrl(input.imageUrl),
     unitPrice: input.unitPrice,
     status: "active",
     createdAt: timestamp(),
@@ -4920,6 +4940,7 @@ export function createProduct(input: CreateProductInput): ProductRecord {
     product.categoryName,
     product.sku,
     product.name,
+    product.imageUrl,
     product.unitPrice,
     product.status,
     product.createdAt,
@@ -4951,6 +4972,7 @@ export function updateProduct(input: UpdateProductInput): ProductRecord {
     categoryName: category.name,
     sku: manualSku ? manualSku.toUpperCase() : existing.sku,
     name: input.name.trim(),
+    imageUrl: normalizeProductImageUrl(input.imageUrl),
     unitPrice: input.unitPrice,
     status: existing.status,
     createdAt: existing.created_at,
@@ -4961,6 +4983,7 @@ export function updateProduct(input: UpdateProductInput): ProductRecord {
     product.categoryName,
     product.sku,
     product.name,
+    product.imageUrl,
     product.unitPrice,
     product.tenantId,
     product.id,

@@ -3,7 +3,6 @@ import {
   BankOutlined,
   CheckCircleOutlined,
   EditOutlined,
-  FileTextOutlined,
   InboxOutlined,
   PhoneOutlined,
   RollbackOutlined,
@@ -32,6 +31,7 @@ import type {
 
 import { useLocale } from "../../locale/LocaleContext";
 import { useWorkspace } from "../../state/WorkspaceContext";
+import { ProductVisual } from "../products/ProductVisual";
 
 const { Paragraph, Title } = Typography;
 const { TextArea } = Input;
@@ -281,6 +281,7 @@ export function InvoicesPage(): ReactElement {
     invoices,
     isBusy,
     orders,
+    products,
     selectedTenantId,
     setSelectedTenantId,
     tenants,
@@ -309,6 +310,7 @@ export function InvoicesPage(): ReactElement {
       !invoices.some((invoice) => invoice.orderId === order.id && invoice.status !== "void"),
   );
   const orderLookupById = new Map(orders.map((order) => [order.id, order] as const));
+  const productLookupById = new Map(products.map((product) => [product.id, product] as const));
   const payableInvoices = invoices.filter((invoice) => invoice.outstandingAmount > 0);
   const collectionQueue = [...payableInvoices].sort((left, right) => {
     if (getPriorityRank(left.collectionPriority) !== getPriorityRank(right.collectionPriority)) {
@@ -350,6 +352,10 @@ export function InvoicesPage(): ReactElement {
     invoices
       .filter((invoice) => invoice.orderId === selectedInvoiceOrderId && invoice.status === "void")
       .sort((left, right) => right.revisionNumber - left.revisionNumber)[0] ?? null;
+  const selectedInvoiceOrder = selectedInvoiceOrderId ? orderLookupById.get(selectedInvoiceOrderId) ?? null : null;
+  const selectedInvoiceProduct = selectedInvoiceOrder
+    ? productLookupById.get(selectedInvoiceOrder.productId) ?? null
+    : null;
   const isAmendModalOpen = invoiceBeingAmended !== null;
   const isCreditModalOpen = invoiceBeingCredited !== null;
 
@@ -691,6 +697,17 @@ export function InvoicesPage(): ReactElement {
                       }))}
                     />
                   </Form.Item>
+                  {selectedInvoiceOrder && selectedInvoiceProduct ? (
+                    <div className="product-preview-card">
+                      <ProductVisual imageUrl={selectedInvoiceProduct.imageUrl} name={selectedInvoiceProduct.name} />
+                      <div className="product-preview-meta">
+                        <strong>{selectedInvoiceProduct.name}</strong>
+                        <span className="record-detail">
+                          {selectedInvoiceOrder.orderNumber} · {selectedInvoiceProduct.sku}
+                        </span>
+                      </div>
+                    </div>
+                  ) : null}
 
                   <Form.Item<InvoiceFormShape>
                     label={t("invoices.issueDate")}
@@ -1101,11 +1118,12 @@ export function InvoicesPage(): ReactElement {
                   );
 
                   return (
-                    <div className="record-row" key={invoice.id}>
-                      <div className="record-icon">
-                        <FileTextOutlined />
-                      </div>
-                      <div>
+                    <div className="record-row record-row--visual" key={invoice.id}>
+                      <ProductVisual
+                        imageUrl={productLookupById.get(invoice.productId)?.imageUrl ?? null}
+                        name={invoice.productName}
+                      />
+                      <div className="record-content">
                         <strong>{invoice.invoiceNumber}</strong>
                         <div className="record-detail">
                           <InboxOutlined /> {invoice.orderNumber}
