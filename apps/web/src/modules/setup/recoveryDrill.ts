@@ -26,6 +26,7 @@ export type RecoveryDrillReport = {
     purchaseOrderReceipts: number;
     invoices: number;
     invoicePayments: number;
+    invoiceReturnAuthorizations: number;
     invoiceReturnReceipts: number;
     approvalRequests: number;
     auditLogs: number;
@@ -42,6 +43,7 @@ export type RecoveryDrillReport = {
     purchaseOrderReceipts: number;
     invoices: number;
     invoicePayments: number;
+    invoiceReturnAuthorizations: number;
     invoiceReturnReceipts: number;
     collectionActivities: number;
     approvalRequests: number;
@@ -117,6 +119,11 @@ export function buildRecoveryDrillReport(args: {
       detail: `${result.restoredInvoicePayments}/${snapshot.invoicePayments?.length ?? 0} invoice payments replayed into the restored tenant.`,
     },
     {
+      key: "invoice-return-authorizations-restored",
+      passed: result.restoredInvoiceReturnAuthorizations === (snapshot.invoiceReturnAuthorizations?.length ?? 0),
+      detail: `${result.restoredInvoiceReturnAuthorizations}/${snapshot.invoiceReturnAuthorizations?.length ?? 0} invoice return authorizations replayed into the restored tenant.`,
+    },
+    {
       key: "invoice-return-receipts-restored",
       passed: result.restoredInvoiceReturnReceipts === snapshot.invoiceReturnReceipts.length,
       detail: `${result.restoredInvoiceReturnReceipts}/${snapshot.invoiceReturnReceipts.length} invoice return receipts replayed into the restored tenant.`,
@@ -175,6 +182,7 @@ export function buildRecoveryDrillReport(args: {
       purchaseOrderReceipts: snapshot.purchaseOrderReceipts?.length ?? 0,
       invoices: snapshot.invoices.length,
       invoicePayments: snapshot.invoicePayments?.length ?? 0,
+      invoiceReturnAuthorizations: snapshot.invoiceReturnAuthorizations?.length ?? 0,
       invoiceReturnReceipts: snapshot.invoiceReturnReceipts.length,
       approvalRequests: snapshot.approvalRequests.length,
       auditLogs: snapshot.auditLogs.length,
@@ -191,6 +199,7 @@ export function buildRecoveryDrillReport(args: {
       purchaseOrderReceipts: result.restoredPurchaseOrderReceipts,
       invoices: result.restoredInvoices,
       invoicePayments: result.restoredInvoicePayments,
+      invoiceReturnAuthorizations: result.restoredInvoiceReturnAuthorizations,
       invoiceReturnReceipts: result.restoredInvoiceReturnReceipts,
       collectionActivities: result.restoredCollectionActivities,
       approvalRequests: result.restoredApprovalRequests,

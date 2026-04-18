@@ -5,6 +5,7 @@ import type {
   CreditInvoiceInput,
   CreateInvoiceInput,
   CreateInvoicePaymentInput,
+  CreateInvoiceReturnAuthorizationInput,
   RecordInvoiceReturnReceiptInput,
   ReopenInvoiceInput,
   ResolveInvoiceCollectionActionInput,
@@ -19,6 +20,7 @@ import {
   creditInvoice,
   createInvoice,
   createInvoicePayment,
+  createInvoiceReturnAuthorization,
   hasTenant,
   listInvoiceCollectionActivities,
   listInvoices,
@@ -409,10 +411,69 @@ export async function handleRecordInvoiceReturnReceipt(
         "The selected invoice has been voided.",
         "The selected order does not exist.",
         "The selected product does not exist.",
+        "An open return authorization is required before receiving goods back from an invoice.",
         "Returned quantity must be a positive integer.",
         "Returned quantity cannot exceed the remaining unreturned quantity.",
+        "Returned quantity cannot exceed the authorized return quantity.",
         "Return receipt note is required when receiving goods back from an invoice.",
         "Return receipt note must be 240 characters or fewer.",
+      ].includes(error.message)
+    ) {
+      badRequest(response, error.message);
+      return;
+    }
+
+    throw error;
+  }
+}
+
+export async function handleCreateInvoiceReturnAuthorization(
+  request: IncomingMessage,
+  response: ServerResponse,
+  requestSession: Session | null,
+): Promise<void> {
+  const input = await readJson<CreateInvoiceReturnAuthorizationInput>(request);
+
+  if (!input.tenantId?.trim()) {
+    badRequest(response, "tenantId is required.");
+    return;
+  }
+
+  if (!hasTenant(input.tenantId)) {
+    badRequest(response, "The selected tenant does not exist.");
+    return;
+  }
+
+  if (!input.invoiceId?.trim()) {
+    badRequest(response, "invoiceId is required.");
+    return;
+  }
+
+  if (!Number.isInteger(input.quantityAuthorized) || input.quantityAuthorized <= 0) {
+    badRequest(response, "Return authorization quantity must be a positive integer.");
+    return;
+  }
+
+  if (input.note !== null && input.note !== undefined && typeof input.note !== "string") {
+    badRequest(response, "Return authorization note must be 240 characters or fewer.");
+    return;
+  }
+
+  try {
+    const invoice = runWithSession(requestSession, () => createInvoiceReturnAuthorization(input));
+    sendJson(response, 200, { item: invoice });
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      [
+        "The selected invoice does not exist.",
+        "The selected invoice has been voided.",
+        "The selected order does not exist.",
+        "Return authorization quantity must be a positive integer.",
+        "Return authorization quantity cannot exceed the remaining unreturned quantity.",
+        "Return authorization note is required before receiving goods back from an invoice.",
+        "Return authorization note must be 240 characters or fewer.",
+        "A return authorization is already open for this invoice.",
       ].includes(error.message)
     ) {
       badRequest(response, error.message);

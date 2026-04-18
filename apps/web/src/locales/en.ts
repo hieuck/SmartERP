@@ -190,7 +190,7 @@ const en = {
     restorePreviewSlugBlocked: "Slug already belongs to {{conflictingTenantName}}.",
     restorePreviewCountsNowLabel: "Restored in this baseline",
     restorePreviewCountsNowValue:
-      "{{customerCount}} customers, {{supplierCount}} suppliers, {{productCount}} products, {{inventoryLineCount}} inventory lines, {{orderCount}} orders, {{purchaseOrderCount}} purchase orders, {{purchaseOrderReceiptCount}} purchase receipts, {{invoiceCount}} invoices, {{invoicePaymentCount}} invoice payments, {{invoiceReturnReceiptCount}} invoice return receipts, {{collectionActivityCount}} collection activities, {{approvalCount}} approvals, {{auditLogCount}} audit logs, {{journalEntryCount}} journal entries, and {{accountBalanceCount}} ledger balances.",
+      "{{customerCount}} customers, {{supplierCount}} suppliers, {{productCount}} products, {{inventoryLineCount}} inventory lines, {{orderCount}} orders, {{purchaseOrderCount}} purchase orders, {{purchaseOrderReceiptCount}} purchase receipts, {{invoiceCount}} invoices, {{invoicePaymentCount}} invoice payments, {{invoiceReturnAuthorizationCount}} invoice return cases, {{invoiceReturnReceiptCount}} invoice return receipts, {{collectionActivityCount}} collection activities, {{approvalCount}} approvals, {{auditLogCount}} audit logs, {{journalEntryCount}} journal entries, and {{accountBalanceCount}} ledger balances.",
     restorePreviewCountsLaterLabel: "Deferred for later replay",
     restorePreviewCountsLaterValue:
       "{{approvalCount}} approvals, {{auditLogCount}} audit logs, {{journalEntryCount}} journal entries, and {{accountBalanceCount}} ledger balances.",
@@ -424,7 +424,26 @@ const en = {
     creditedAmountLabel: "Credited value:",
     creditedQuantityLabel: "Credited quantity:",
     returnedQuantityLabel: "Returned quantity:",
+    returnAuthorizationLabel: "Return case:",
+    returnAuthorizationStatusLabel: "Return case status:",
+    returnAuthorizationNoteLabel: "Return case note:",
     creditWithoutReturnLabel: "Credited without return:",
+    returnAuthorizationAction: "Open Return Case",
+    returnAuthorizationTitle: "Authorize return for {{number}}",
+    returnAuthorizationQuantity: "Authorized Return Quantity",
+    returnAuthorizationQuantityHint:
+      "Select how many units are approved to come back from {{number}}. Remaining eligible quantity: {{count}}.",
+    returnAuthorizationQuantityGenericHint: "Select how many units are approved to come back.",
+    returnAuthorizationNote: "Return Case Note",
+    returnAuthorizationNoteHint:
+      "Required to explain why {{number}} is being approved for warehouse return handling.",
+    returnAuthorizationNoteGenericHint: "Required warehouse or customer-facing note for the return case.",
+    returnAuthorizationNotePlaceholder: "Customer approved to send inspected goods back for receipt.",
+    returnAuthorizationSubmit: "Open Return Case",
+    returnAuthorizationStatusNone: "No active return case",
+    returnAuthorizationStatusAuthorized: "Authorized",
+    returnAuthorizationStatusPartiallyReceived: "Partially received",
+    returnAuthorizationStatusReceived: "Received",
     returnReceiptsLabel: "Return receipts:",
     lastReturnReceiptLabel: "Last return receipt:",
     returnReceiptAction: "Record Return Receipt",
@@ -571,6 +590,7 @@ const en = {
     auditActionInvoiceReissued: "Invoice reissued",
     auditActionInvoiceVoided: "Invoice voided",
     auditActionInvoiceCredited: "Invoice credited",
+    auditActionInvoiceReturnAuthorized: "Invoice return authorized",
     auditActionInvoiceReturnReceived: "Invoice return received",
     auditActionInvoiceReopened: "Invoice reopened",
     auditActionOrderUpdated: "Order updated",
@@ -781,7 +801,7 @@ Object.assign(en.modules, {
     handoffReadinessLabel: "Readiness level",
     handoffSnapshotLabel: "Embedded snapshot",
     handoffSnapshotValue:
-      "{{customers}} customers, {{suppliers}} suppliers, {{products}} products, {{invoices}} invoices, {{invoicePayments}} invoice payments, {{purchaseOrderReceipts}} purchase receipts, {{invoiceReturnReceipts}} invoice return receipts",
+      "{{customers}} customers, {{suppliers}} suppliers, {{products}} products, {{invoices}} invoices, {{invoicePayments}} invoice payments, {{purchaseOrderReceipts}} purchase receipts, {{invoiceReturnAuthorizations}} invoice return cases, {{invoiceReturnReceipts}} invoice return receipts",
     handoffStepFounder: "Founder confirms the target tenant in Setup and keeps the pilot scoped to one explicit tenant.",
     handoffStepOperations: "Founder opens Operations and checks readiness, smoke status, runtime services, and artifacts before user onboarding.",
     handoffStepRoles: "Pilot operators receive role-based demo accounts for finance, sales, warehouse, purchasing, and collections.",
@@ -801,7 +821,7 @@ Object.assign(en.modules, {
       recoveryDrillNoPendingScopes: "No deferred scopes",
       recoveryDrillBaselineCounts: "Baseline counts",
       recoveryDrillBaselineCountsValue:
-        "{{customers}} customers, {{suppliers}} suppliers, {{products}} products, {{inventoryLines}} inventory lines, {{orders}} orders, {{purchaseOrders}} purchase orders, {{purchaseOrderReceipts}} purchase receipts, {{invoices}} invoices, {{invoicePayments}} invoice payments, {{invoiceReturnReceipts}} invoice return receipts, {{approvalRequests}} approvals, {{auditLogs}} audit logs, {{journalEntries}} journal entries, and {{accountBalances}} ledger balances",
+        "{{customers}} customers, {{suppliers}} suppliers, {{products}} products, {{inventoryLines}} inventory lines, {{orders}} orders, {{purchaseOrders}} purchase orders, {{purchaseOrderReceipts}} purchase receipts, {{invoices}} invoices, {{invoicePayments}} invoice payments, {{invoiceReturnAuthorizations}} invoice return cases, {{invoiceReturnReceipts}} invoice return receipts, {{approvalRequests}} approvals, {{auditLogs}} audit logs, {{journalEntries}} journal entries, and {{accountBalances}} ledger balances",
       checklistTenantCreated: "Create the pilot tenant",
       checklistTenantCreatedDescription: "A live pilot needs a dedicated tenant with its own slug and industry context.",
       checklistTenantSelected: "Lock the working tenant",
@@ -1068,11 +1088,23 @@ Object.assign(en.errors, {
   invalidInvoiceCreditQuantity: "Credit quantity must be a positive integer.",
   invalidInvoiceCreditMode: "Credit handling option is invalid.",
   invoiceCreditQuantityExceedsRemaining: "Credit quantity cannot exceed the remaining uncredited quantity.",
+  invoiceReturnAuthorizationFailed: "Invoice return authorization failed.",
+  invoiceReturnAuthorizationNoteRequired:
+    "A business note is required before receiving goods back from an invoice.",
+  invalidInvoiceReturnAuthorizationNote: "Return authorization note must be 240 characters or fewer.",
+  invalidInvoiceReturnAuthorizationQuantity: "Return authorization quantity must be a positive integer.",
+  invoiceReturnAuthorizationQuantityExceedsRemaining:
+    "Return authorization quantity cannot exceed the remaining unreturned quantity.",
+  invoiceReturnAuthorizationAlreadyOpen: "A return case is already open for this invoice.",
+  invoiceReturnAuthorizationRequired:
+    "Open a return case before posting a warehouse return receipt for this invoice.",
   invoiceReturnReceiptFailed: "Invoice return receipt failed.",
   invoiceReturnReceiptNoteRequired:
     "A business note is required when receiving goods back from an invoice.",
   invalidInvoiceReturnReceiptNote: "Return receipt note must be 240 characters or fewer.",
   invalidInvoiceReturnReceiptQuantity: "Returned quantity must be a positive integer.",
+  invoiceReturnReceiptQuantityExceedsAuthorized:
+    "Returned quantity cannot exceed the authorized return quantity.",
   invoiceReturnReceiptQuantityExceedsRemaining:
     "Returned quantity cannot exceed the remaining unreturned quantity.",
   });

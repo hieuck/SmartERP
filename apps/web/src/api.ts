@@ -10,6 +10,7 @@ import type {
   CancelPurchaseOrderInput,
   CloseOrderInput,
   ClosePurchaseOrderInput,
+  CreateInvoiceReturnAuthorizationInput,
   RecordInvoiceReturnReceiptInput,
   ReopenInvoiceInput,
   ReopenOrderInput,
@@ -459,6 +460,16 @@ export async function createInvoicePayment(
 
 export async function creditInvoice(input: CreditInvoiceInput): Promise<InvoiceRecord> {
   const payload = await request<{ item: InvoiceRecord }>("/api/invoices/credit", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  return payload.item;
+}
+
+export async function createInvoiceReturnAuthorization(
+  input: CreateInvoiceReturnAuthorizationInput,
+): Promise<InvoiceRecord> {
+  const payload = await request<{ item: InvoiceRecord }>("/api/invoices/return-authorizations", {
     method: "POST",
     body: JSON.stringify(input),
   });

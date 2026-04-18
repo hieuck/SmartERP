@@ -78,6 +78,7 @@ const escalatedCollectionNote = "Qua ngay hua thanh toan, can founder xu ly truc
 const invoiceAmendmentNote = "Corrected commercial terms before customer payment posting.";
 const reissueAmendmentNote = "Corrected shipping quantity after voiding the previous invoice revision.";
 const invoiceCreditNote = "Returned shipment after full settlement and inspection.";
+const manualReturnAuthorizationNote = "Approved customer return after warehouse inspection request.";
 const manualReturnReceiptNote = "Warehouse received the returned bottle before finance posted the credit note.";
 const partialInvoiceCreditNote = "Refund one damaged bottle after full settlement.";
 const firstIssueDateInput = buildDateInputFromToday(0);
@@ -202,6 +203,8 @@ function isExpectedNegativePath(response) {
           response.url().endsWith("/api/invoices") ||
           response.url().endsWith("/api/invoices/amend") ||
           response.url().endsWith("/api/invoices/credit") ||
+          response.url().endsWith("/api/invoices/return-authorizations") ||
+          response.url().endsWith("/api/invoices/return-receipts") ||
           response.url().endsWith("/api/purchase-orders") ||
           response.url().endsWith("/api/onboarding/import") ||
           response.url().endsWith("/api/onboarding/restore/preview") ||
@@ -233,6 +236,8 @@ function isExpectedNegativePath(response) {
           response.url().endsWith("/api/invoices/credit") ||
           response.url().endsWith("/api/invoices/payments") ||
           response.url().endsWith("/api/invoices/collections") ||
+          response.url().endsWith("/api/invoices/return-authorizations") ||
+          response.url().endsWith("/api/invoices/return-receipts") ||
           response.url().endsWith("/api/invoices/void") ||
           response.url().endsWith("/api/invoices/reopen")
         )
@@ -642,6 +647,9 @@ async function main() {
   let invoiceCreditVerified = false;
   let invoiceCreditAuditVerified = false;
   let invoiceCreditInventoryRestockVerified = false;
+  let invoiceReturnAuthorizationVerified = false;
+  let invoiceReturnAuthorizationAuditVerified = false;
+  let invoiceReturnReceiptAuthorizationGuardVerified = false;
   let invoiceReturnReceiptVerified = false;
   let partialInvoiceCreditVerified = false;
   let partialInvoiceCreditAuditVerified = false;
@@ -679,8 +687,11 @@ async function main() {
   let operationsBuildVerified = false;
   let loginRoleHintsVerified = false;
   let financeRoleOnboardingVerified = false;
+  let pilotHandoffReturnAuthorizationSummaryVerified = false;
+  let exportedInvoiceReturnAuthorizationsVerified = false;
   let exportedInvoiceReturnReceiptsVerified = false;
   let unauthorizedApiBlockedVerified = false;
+  let baselineRestoreReturnAuthorizationScopeVerified = false;
   let rbacSalesVisibilityVerified = false;
   let salesRoleOnboardingVerified = false;
   let rbacSalesBlockedRouteVerified = false;
@@ -692,6 +703,7 @@ async function main() {
   let reportCategoryPerformanceVerified = false;
   let approvalCategoryContextVerified = false;
   let auditCategoryContextVerified = false;
+  let recoveryDrillReturnAuthorizationScopeVerified = false;
 
   try {
     await openApp(page);
@@ -3381,6 +3393,97 @@ async function main() {
     );
     invoiceCreditGuardVerified = true;
 
+    assert(
+      (await creditedInvoiceRow.locator('[data-testid="invoice-return-authorization-button"]').count()) === 1,
+      "Credited invoice did not expose the return authorization action before warehouse receipt.",
+    );
+    assert(
+      (await creditedInvoiceRow.locator('[data-testid="invoice-return-receipt-button"]').count()) === 0,
+      "Return receipt action should stay hidden before a return authorization is opened.",
+    );
+    const missingReturnAuthorizationResponse = await page.evaluate(
+      async ({ targetInvoiceNumber, quantityReturned, note, sessionKey, tenantKey }) => {
+        const rawSession = window.localStorage.getItem(sessionKey);
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
+        const headers = {
+          "content-type": "application/json",
+          authorization: `Bearer ${accessToken}`,
+        };
+
+        const invoicesResponse = await fetch(`/api/invoices?tenantId=${encodeURIComponent(tenantId ?? "")}`, {
+          headers,
+        });
+        const invoicesPayload = await invoicesResponse.json();
+        const targetInvoice = invoicesPayload.items.find((item) => item.invoiceNumber === targetInvoiceNumber);
+
+        if (!targetInvoice || !tenantId) {
+          return {
+            status: 0,
+            body: { error: "Credited invoice lookup failed before return authorization guard test." },
+          };
+        }
+
+        const response = await fetch("/api/invoices/return-receipts", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            tenantId,
+            invoiceId: targetInvoice.id,
+            quantityReturned,
+            note,
+          }),
+        });
+
+        return {
+          status: response.status,
+          body: await response.json(),
+        };
+      },
+      {
+        targetInvoiceNumber: creditedInvoiceNumber,
+        quantityReturned: creditedOrderQuantity,
+        note: manualReturnReceiptNote,
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+      },
+    );
+    assert(
+      missingReturnAuthorizationResponse.status === 400 &&
+        missingReturnAuthorizationResponse.body?.error ===
+          "An open return authorization is required before receiving goods back from an invoice.",
+      "Invoice return receipt guard did not require an open return authorization.",
+    );
+    invoiceReturnReceiptAuthorizationGuardVerified = true;
+
+    await creditedInvoiceRow.locator('[data-testid="invoice-return-authorization-button"]').click();
+    const returnAuthorizationModal = page.locator(".ant-modal:visible").last();
+    await returnAuthorizationModal.waitFor({ timeout: 15000 });
+    await fillNumberInput(returnAuthorizationModal.getByRole("spinbutton").first(), creditedOrderQuantity);
+    await fillField(returnAuthorizationModal, "#note", manualReturnAuthorizationNote);
+    await returnAuthorizationModal
+      .getByRole("button", { name: /Mở case trả hàng|Open Return Case/ })
+      .click();
+    await creditedInvoiceRow
+      .getByText(/Case trả hàng:\s*0\/1|Return case:\s*0\/1/, { exact: false })
+      .first()
+      .waitFor({ timeout: 15000 });
+    await creditedInvoiceRow
+      .getByText(/Trạng thái case trả hàng[:\s]*Đã duyệt|Return case status[:\s]*Authorized/, {
+        exact: false,
+      })
+      .first()
+      .waitFor({ timeout: 15000 });
+    await creditedInvoiceRow.getByText(manualReturnAuthorizationNote, { exact: false }).first().waitFor({
+      timeout: 15000,
+    });
+    assert(
+      (await creditedInvoiceRow.locator('[data-testid="invoice-return-authorization-button"]').count()) === 0,
+      "Return authorization action should disappear while a return case is open.",
+    );
+    await creditedInvoiceRow.locator('[data-testid="invoice-return-receipt-button"]').waitFor({ timeout: 15000 });
+    invoiceReturnAuthorizationVerified = true;
+
     await creditedInvoiceRow.locator('[data-testid="invoice-return-receipt-button"]').click();
     const returnReceiptModal = page.locator(".ant-modal:visible").last();
     await returnReceiptModal.waitFor({ timeout: 15000 });
@@ -3605,6 +3708,17 @@ async function main() {
     assert(
       creditAuditSnapshot.body?.items?.some(
         (item) =>
+          item.actionType === "invoice_return_authorized" &&
+          item.entityNumber === creditedInvoiceNumber &&
+          item.metadata?.productCategoryName === productCategoryName &&
+          item.metadata?.quantity === creditedOrderQuantity &&
+          item.metadata?.note === manualReturnAuthorizationNote,
+      ),
+      "Invoice return authorization audit entry was not recorded before warehouse receipt.",
+    );
+    assert(
+      creditAuditSnapshot.body?.items?.some(
+        (item) =>
           item.actionType === "invoice_return_received" &&
           item.entityNumber === creditedInvoiceNumber &&
           item.metadata?.quantity === creditedOrderQuantity &&
@@ -3636,6 +3750,7 @@ async function main() {
     );
     await page.getByText(invoiceCreditNote, { exact: false }).first().waitFor({ timeout: 15000 });
     invoiceCreditAuditVerified = true;
+    invoiceReturnAuthorizationAuditVerified = true;
     invoiceReturnReceiptVerified = true;
     creditedOrderReturnAuditVerified = true;
     await openSection(page, sidebarIndexes.orders, "/dashboard/orders");
@@ -4093,17 +4208,21 @@ async function main() {
         handoffPackage.tenantSnapshot?.purchaseOrderReceipts?.length &&
         handoffPackage.snapshotSummary?.invoicePaymentCount ===
           handoffPackage.tenantSnapshot?.invoicePayments?.length &&
+        handoffPackage.snapshotSummary?.invoiceReturnAuthorizationCount ===
+          handoffPackage.tenantSnapshot?.invoiceReturnAuthorizations?.length &&
         handoffPackage.snapshotSummary?.invoiceReturnReceiptCount ===
           handoffPackage.tenantSnapshot?.invoiceReturnReceipts?.length &&
         handoffPackage.snapshotSummary?.approvalCount === handoffPackage.tenantSnapshot?.approvalRequests?.length &&
         handoffPackage.snapshotSummary?.auditLogCount === handoffPackage.tenantSnapshot?.auditLogs?.length &&
         handoffPackage.snapshotSummary?.journalEntryCount === handoffPackage.tenantSnapshot?.journalEntries?.length &&
+        handoffPackage.snapshotSummary.invoiceReturnAuthorizationCount > 0 &&
         handoffPackage.snapshotSummary.invoiceReturnReceiptCount > 0,
       "Pilot handoff package did not summarize the expected transaction and control replay counts.",
     );
     await handoffCard.getByText(tenantName, { exact: false }).waitFor({ timeout: 15000 });
     pilotHandoffPackageVerified = true;
     pilotHandoffTransactionSummaryVerified = true;
+    pilotHandoffReturnAuthorizationSummaryVerified = true;
     await openSection(page, sidebarIndexes.setup, "/dashboard/setup");
     await waitForTenantContext(page, tenantName);
     const recoveryCard = page.getByTestId("setup-recovery-card");
@@ -4166,6 +4285,20 @@ async function main() {
       "Tenant export snapshot did not include audit or ledger data.",
     );
     assert(
+      exportedSnapshot?.invoiceReturnAuthorizations?.some(
+        (item) =>
+          item.invoiceNumber === creditedInvoiceNumber &&
+          item.quantityAuthorized === creditedOrderQuantity &&
+          item.quantityReceived === creditedOrderQuantity &&
+          item.status === "received" &&
+          item.note === manualReturnAuthorizationNote,
+      ) &&
+        !exportedSnapshot?.invoiceReturnAuthorizations?.some(
+          (item) => item.invoiceNumber === partialCreditInvoiceNumber,
+        ),
+      "Tenant export snapshot did not preserve the expected invoice return authorization history.",
+    );
+    assert(
       exportedSnapshot?.invoiceReturnReceipts?.some(
         (item) =>
           item.invoiceNumber === creditedInvoiceNumber &&
@@ -4178,6 +4311,7 @@ async function main() {
       "Tenant export snapshot did not preserve the expected independent return receipt history.",
     );
     onboardingExportVerified = true;
+    exportedInvoiceReturnAuthorizationsVerified = true;
     exportedInvoiceReturnReceiptsVerified = true;
     const originalTenantId = await page.evaluate((key) => window.localStorage.getItem(key), tenantStorageKey);
     await openSection(page, sidebarIndexes.setup, "/dashboard/setup");
@@ -4207,6 +4341,7 @@ async function main() {
         restorePreviewPayload.restoredScopes.includes("purchaseOrderReceipts") &&
         restorePreviewPayload.restoredScopes.includes("invoices") &&
         restorePreviewPayload.restoredScopes.includes("invoicePayments") &&
+        restorePreviewPayload.restoredScopes.includes("invoiceReturnAuthorizations") &&
         restorePreviewPayload.restoredScopes.includes("invoiceReturnReceipts") &&
         restorePreviewPayload.restoredScopes.includes("collections") &&
         restorePreviewPayload.restoredScopes.includes("approvals") &&
@@ -4222,6 +4357,8 @@ async function main() {
     assert(
       restorePreviewPayload.purchaseOrderReceiptCount === exportedSnapshot.purchaseOrderReceipts.length &&
         restorePreviewPayload.invoicePaymentCount === exportedSnapshot.invoicePayments.length &&
+        restorePreviewPayload.invoiceReturnAuthorizationCount ===
+          exportedSnapshot.invoiceReturnAuthorizations.length &&
         restorePreviewPayload.invoiceReturnReceiptCount === exportedSnapshot.invoiceReturnReceipts.length &&
         restorePreviewPayload.collectionActivityCount === exportedSnapshot.collectionActivities.length &&
         restorePreviewPayload.approvalCount === exportedSnapshot.approvalRequests.length &&
@@ -4234,6 +4371,7 @@ async function main() {
     baselineRestorePreviewVerified = true;
     baselineRestoreTransactionReplayVerified = true;
     baselineRestoreControlReplayVerified = true;
+    baselineRestoreReturnAuthorizationScopeVerified = true;
     const restoreResponse = page.waitForResponse(
       (response) =>
         response.url().endsWith("/api/onboarding/restore") &&
@@ -4250,6 +4388,8 @@ async function main() {
         restoreResultPayload.restoredPurchaseOrderReceipts === exportedSnapshot.purchaseOrderReceipts.length &&
         restoreResultPayload.restoredInvoices === exportedSnapshot.invoices.length &&
         restoreResultPayload.restoredInvoicePayments === exportedSnapshot.invoicePayments.length &&
+        restoreResultPayload.restoredInvoiceReturnAuthorizations ===
+          exportedSnapshot.invoiceReturnAuthorizations.length &&
         restoreResultPayload.restoredInvoiceReturnReceipts === exportedSnapshot.invoiceReturnReceipts.length &&
         restoreResultPayload.restoredCollectionActivities === exportedSnapshot.collectionActivities.length &&
         restoreResultPayload.restoredApprovalRequests === exportedSnapshot.approvalRequests.length &&
@@ -4316,6 +4456,11 @@ async function main() {
           invoiceCount: invoicesPayload.items?.length ?? 0,
           creditedInvoiceCount:
             invoicesPayload.items?.filter((item) => item.status === "credited").length ?? 0,
+          invoiceReturnAuthorizationCount:
+            invoicesPayload.items?.reduce(
+              (sum, item) => sum + (item.returnAuthorizationCount ?? 0),
+              0,
+            ) ?? 0,
           invoiceReturnReceiptCount:
             invoicesPayload.items?.reduce(
               (sum, item) => sum + (item.returnReceiptCount ?? 0),
@@ -4338,6 +4483,8 @@ async function main() {
         restoredTransactionSnapshot.purchaseOrderCount === exportedSnapshot.purchaseOrders.length &&
         restoredTransactionSnapshot.invoiceCount === exportedSnapshot.invoices.length &&
         restoredTransactionSnapshot.creditedInvoiceCount >= 1 &&
+        restoredTransactionSnapshot.invoiceReturnAuthorizationCount ===
+          exportedSnapshot.invoiceReturnAuthorizations.length &&
         restoredTransactionSnapshot.invoiceReturnReceiptCount === exportedSnapshot.invoiceReturnReceipts.length,
       "Restored tenant API snapshot did not preserve the expected transaction graph.",
     );
@@ -4373,6 +4520,10 @@ async function main() {
       "Recovery drill report did not pass every recovery check.",
     );
     assert(
+      recoveryDrillReport.baselineCounts?.invoiceReturnAuthorizations ===
+        exportedSnapshot.invoiceReturnAuthorizations.length &&
+        recoveryDrillReport.restoredCounts?.invoiceReturnAuthorizations ===
+          exportedSnapshot.invoiceReturnAuthorizations.length &&
       recoveryDrillReport.baselineCounts?.invoiceReturnReceipts === exportedSnapshot.invoiceReturnReceipts.length &&
         recoveryDrillReport.restoredCounts?.invoiceReturnReceipts === exportedSnapshot.invoiceReturnReceipts.length &&
         recoveryDrillReport.baselineCounts?.approvalRequests === exportedSnapshot.approvalRequests.length &&
@@ -4381,6 +4532,9 @@ async function main() {
         recoveryDrillReport.restoredCounts?.approvalRequests === exportedSnapshot.approvalRequests.length &&
         recoveryDrillReport.restoredCounts?.auditLogs === exportedSnapshot.auditLogs.length &&
         recoveryDrillReport.restoredCounts?.journalEntries === exportedSnapshot.journalEntries.length &&
+        recoveryDrillReport.checks.some(
+          (check) => check.key === "invoice-return-authorizations-restored" && check.passed === true,
+        ) &&
         recoveryDrillReport.checks.some((check) => check.key === "invoice-return-receipts-restored" && check.passed === true) &&
         recoveryDrillReport.checks.some((check) => check.key === "invoice-payments-restored" && check.passed === true) &&
         recoveryDrillReport.checks.some((check) => check.key === "purchase-order-receipts-restored" && check.passed === true) &&
@@ -4394,6 +4548,7 @@ async function main() {
     recoveryDrillVerified = true;
     recoveryDrillTransactionReplayVerified = true;
     recoveryDrillControlReplayVerified = true;
+    recoveryDrillReturnAuthorizationScopeVerified = true;
     await page.evaluate(
       ({ key, tenantId }) => {
         if (tenantId) {
@@ -4853,6 +5008,9 @@ async function main() {
       invoiceCreditVerified,
       invoiceCreditAuditVerified,
       invoiceCreditInventoryRestockVerified,
+      invoiceReturnAuthorizationVerified,
+      invoiceReturnAuthorizationAuditVerified,
+      invoiceReturnReceiptAuthorizationGuardVerified,
       invoiceReturnReceiptVerified,
       partialInvoiceCreditVerified,
       partialInvoiceCreditAuditVerified,
@@ -4887,7 +5045,10 @@ async function main() {
       operationsBuildVerified,
       loginRoleHintsVerified,
       financeRoleOnboardingVerified,
+      pilotHandoffReturnAuthorizationSummaryVerified,
+      exportedInvoiceReturnAuthorizationsVerified,
       exportedInvoiceReturnReceiptsVerified,
+      baselineRestoreReturnAuthorizationScopeVerified,
       rbacSalesVisibilityVerified,
       salesRoleOnboardingVerified,
       rbacSalesBlockedRouteVerified,
@@ -4899,6 +5060,7 @@ async function main() {
       reportCategoryPerformanceVerified,
       approvalCategoryContextVerified,
       auditCategoryContextVerified,
+      recoveryDrillReturnAuthorizationScopeVerified,
       directRouteVerified: true,
       logoutClearsStorageVerified: true,
       logoutBlocksProtectedRouteVerified: true,

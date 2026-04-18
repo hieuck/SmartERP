@@ -600,6 +600,7 @@ export function SetupPage(): ReactElement {
                       purchaseOrderReceiptCount: restorePreview.purchaseOrderReceiptCount,
                       invoiceCount: restorePreview.invoiceCount,
                       invoicePaymentCount: restorePreview.invoicePaymentCount,
+                      invoiceReturnAuthorizationCount: restorePreview.invoiceReturnAuthorizationCount,
                       invoiceReturnReceiptCount: restorePreview.invoiceReturnReceiptCount,
                       collectionActivityCount: restorePreview.collectionActivityCount,
                     })}
@@ -700,6 +701,8 @@ export function SetupPage(): ReactElement {
                         purchaseOrderReceipts: recoveryDrillReport.baselineCounts.purchaseOrderReceipts,
                         invoices: recoveryDrillReport.baselineCounts.invoices,
                         invoicePayments: recoveryDrillReport.baselineCounts.invoicePayments,
+                        invoiceReturnAuthorizations:
+                          recoveryDrillReport.baselineCounts.invoiceReturnAuthorizations,
                         invoiceReturnReceipts: recoveryDrillReport.baselineCounts.invoiceReturnReceipts,
                         approvalRequests: recoveryDrillReport.baselineCounts.approvalRequests,
                         auditLogs: recoveryDrillReport.baselineCounts.auditLogs,
@@ -797,6 +800,8 @@ export function SetupPage(): ReactElement {
                   purchaseOrderReceipts: handoffPackage.snapshotSummary.purchaseOrderReceiptCount,
                   invoices: handoffPackage.snapshotSummary.invoiceCount,
                   invoicePayments: handoffPackage.snapshotSummary.invoicePaymentCount,
+                  invoiceReturnAuthorizations:
+                    handoffPackage.snapshotSummary.invoiceReturnAuthorizationCount,
                   invoiceReturnReceipts: handoffPackage.snapshotSummary.invoiceReturnReceiptCount,
                 })}
               </span>

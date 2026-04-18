@@ -41,6 +41,7 @@ export function buildPilotHandoffPackage(input: BuildPilotHandoffPackageInput): 
       purchaseOrderReceiptCount: tenantSnapshot.purchaseOrderReceipts.length,
       invoiceCount: tenantSnapshot.invoices.length,
       invoicePaymentCount: tenantSnapshot.invoicePayments.length,
+      invoiceReturnAuthorizationCount: tenantSnapshot.invoiceReturnAuthorizations.length,
       invoiceReturnReceiptCount: tenantSnapshot.invoiceReturnReceipts.length,
       collectionActivityCount: tenantSnapshot.collectionActivities.length,
       approvalCount: tenantSnapshot.approvalRequests.length,

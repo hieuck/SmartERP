@@ -2,6 +2,7 @@ import {
   AppstoreOutlined,
   BankOutlined,
   CheckCircleOutlined,
+  DeploymentUnitOutlined,
   EditOutlined,
   InboxOutlined,
   PhoneOutlined,
@@ -22,6 +23,7 @@ import type {
   CollectionPriority,
   CreditMode,
   CreditInvoiceInput,
+  CreateInvoiceReturnAuthorizationInput,
   CreateInvoiceInput,
   CreateInvoicePaymentInput,
   InvoiceRecord,
@@ -41,6 +43,7 @@ const { TextArea } = Input;
 type InvoiceFormShape = Omit<CreateInvoiceInput, "tenantId">;
 type AmendInvoiceFormShape = Omit<AmendInvoiceInput, "tenantId">;
 type CreditInvoiceFormShape = Omit<CreditInvoiceInput, "tenantId"> & { creditMode: CreditMode };
+type ReturnAuthorizationFormShape = Omit<CreateInvoiceReturnAuthorizationInput, "tenantId">;
 type ReturnReceiptFormShape = Omit<RecordInvoiceReturnReceiptInput, "tenantId">;
 type InvoicePaymentFormShape = Omit<CreateInvoicePaymentInput, "tenantId">;
 type InvoiceCollectionFormShape = Omit<UpdateInvoiceCollectionInput, "tenantId">;
@@ -220,6 +223,43 @@ function getCollectionPriorityLabel(
   return t("invoices.priorityLow");
 }
 
+function getReturnAuthorizationStatusColor(
+  status: InvoiceRecord["returnAuthorizationStatus"],
+): string {
+  if (status === "received") {
+    return "green";
+  }
+
+  if (status === "partially_received") {
+    return "cyan";
+  }
+
+  if (status === "authorized") {
+    return "gold";
+  }
+
+  return "default";
+}
+
+function getReturnAuthorizationStatusLabel(
+  status: InvoiceRecord["returnAuthorizationStatus"],
+  t: ReturnType<typeof useLocale>["t"],
+): string {
+  if (status === "received") {
+    return t("invoices.returnAuthorizationStatusReceived");
+  }
+
+  if (status === "partially_received") {
+    return t("invoices.returnAuthorizationStatusPartiallyReceived");
+  }
+
+  if (status === "authorized") {
+    return t("invoices.returnAuthorizationStatusAuthorized");
+  }
+
+  return t("invoices.returnAuthorizationStatusNone");
+}
+
 function getActionRequiredLabel(
   actionRequired: CollectionActionRequired,
   t: ReturnType<typeof useLocale>["t"],
@@ -275,6 +315,7 @@ export function InvoicesPage(): ReactElement {
     collectionActivities,
     amendInvoiceRecord,
     creditInvoiceRecord,
+    createInvoiceReturnAuthorizationRecord,
     createInvoicePaymentRecord,
     createInvoiceRecord,
     recordInvoiceReturnReceiptRecord,
@@ -297,11 +338,13 @@ export function InvoicesPage(): ReactElement {
   const [invoiceForm] = Form.useForm<InvoiceFormShape>();
   const [amendInvoiceForm] = Form.useForm<AmendInvoiceFormShape>();
   const [creditInvoiceForm] = Form.useForm<CreditInvoiceFormShape>();
+  const [returnAuthorizationForm] = Form.useForm<ReturnAuthorizationFormShape>();
   const [returnReceiptForm] = Form.useForm<ReturnReceiptFormShape>();
   const [paymentForm] = Form.useForm<InvoicePaymentFormShape>();
   const [collectionForm] = Form.useForm<InvoiceCollectionFormShape>();
   const [invoiceBeingAmended, setInvoiceBeingAmended] = useState<InvoiceRecord | null>(null);
   const [invoiceBeingCredited, setInvoiceBeingCredited] = useState<InvoiceRecord | null>(null);
+  const [invoiceBeingAuthorizedForReturn, setInvoiceBeingAuthorizedForReturn] = useState<InvoiceRecord | null>(null);
   const [invoiceBeingReturned, setInvoiceBeingReturned] = useState<InvoiceRecord | null>(null);
   const selectedInvoiceOrderId = Form.useWatch("orderId", invoiceForm);
   const selectedInvoiceId = Form.useWatch("invoiceId", paymentForm);
@@ -355,13 +398,20 @@ export function InvoicesPage(): ReactElement {
   const remainingCreditQuantity = invoiceBeingCredited
     ? Math.max((creditTargetOrder?.quantity ?? invoiceBeingCredited.creditedQuantity) - invoiceBeingCredited.creditedQuantity, 0)
     : 0;
-  const returnReceiptTargetOrder = invoiceBeingReturned
-    ? orderLookupById.get(invoiceBeingReturned.orderId) ?? null
+  const returnAuthorizationTargetOrder = invoiceBeingAuthorizedForReturn
+    ? orderLookupById.get(invoiceBeingAuthorizedForReturn.orderId) ?? null
     : null;
+  const remainingReturnAuthorizationQuantity = invoiceBeingAuthorizedForReturn
+    ? Math.max(
+        (returnAuthorizationTargetOrder?.quantity ?? invoiceBeingAuthorizedForReturn.returnedQuantity) -
+          invoiceBeingAuthorizedForReturn.returnedQuantity,
+        0,
+      )
+    : 0;
   const remainingReturnReceiptQuantity = invoiceBeingReturned
     ? Math.max(
-        (returnReceiptTargetOrder?.quantity ?? invoiceBeingReturned.returnedQuantity) -
-          invoiceBeingReturned.returnedQuantity,
+        invoiceBeingReturned.returnAuthorizationRequestedQuantity -
+          invoiceBeingReturned.returnAuthorizationReceivedQuantity,
         0,
       )
     : 0;
@@ -375,6 +425,7 @@ export function InvoicesPage(): ReactElement {
     : null;
   const isAmendModalOpen = invoiceBeingAmended !== null;
   const isCreditModalOpen = invoiceBeingCredited !== null;
+  const isReturnAuthorizationModalOpen = invoiceBeingAuthorizedForReturn !== null;
   const isReturnReceiptModalOpen = invoiceBeingReturned !== null;
 
   const onCreateInvoice: FormProps<InvoiceFormShape>["onFinish"] = async (values) => {
@@ -434,6 +485,21 @@ export function InvoicesPage(): ReactElement {
     creditInvoiceForm.resetFields();
   }
 
+  function openReturnAuthorizationModal(invoice: InvoiceRecord): void {
+    const relatedOrder = orderLookupById.get(invoice.orderId) ?? null;
+    setInvoiceBeingAuthorizedForReturn(invoice);
+    returnAuthorizationForm.setFieldsValue({
+      invoiceId: invoice.id,
+      quantityAuthorized: relatedOrder ? Math.max(relatedOrder.quantity - invoice.returnedQuantity, 1) : 1,
+      note: "",
+    });
+  }
+
+  function closeReturnAuthorizationModal(): void {
+    setInvoiceBeingAuthorizedForReturn(null);
+    returnAuthorizationForm.resetFields();
+  }
+
   function openReturnReceiptModal(invoice: InvoiceRecord): void {
     setInvoiceBeingReturned(invoice);
     returnReceiptForm.setFieldsValue({
@@ -481,6 +547,19 @@ export function InvoicesPage(): ReactElement {
         creditNote: values.creditNote,
       });
       closeCreditInvoiceModal();
+    } catch {
+      // Error state is already surfaced via workspace context.
+    }
+  };
+
+  const onCreateReturnAuthorization: FormProps<ReturnAuthorizationFormShape>["onFinish"] = async (values) => {
+    try {
+      await createInvoiceReturnAuthorizationRecord({
+        invoiceId: values.invoiceId,
+        quantityAuthorized: values.quantityAuthorized,
+        note: values.note,
+      });
+      closeReturnAuthorizationModal();
     } catch {
       // Error state is already surfaced via workspace context.
     }
@@ -715,6 +794,74 @@ export function InvoicesPage(): ReactElement {
             <Button onClick={closeCreditInvoiceModal}>{t("common.cancel")}</Button>
             <Button type="primary" htmlType="submit" loading={isBusy}>
               {t("invoices.creditSubmit")}
+            </Button>
+          </div>
+        </Form>
+      </Modal>
+      <Modal
+        open={isReturnAuthorizationModalOpen}
+        title={
+          invoiceBeingAuthorizedForReturn
+            ? t("invoices.returnAuthorizationTitle", { number: invoiceBeingAuthorizedForReturn.invoiceNumber })
+            : t("invoices.returnAuthorizationAction")
+        }
+        onCancel={closeReturnAuthorizationModal}
+        footer={null}
+        forceRender
+      >
+        <Form<ReturnAuthorizationFormShape>
+          form={returnAuthorizationForm}
+          layout="vertical"
+          onFinish={onCreateReturnAuthorization}
+        >
+          <Form.Item<ReturnAuthorizationFormShape> name="invoiceId" hidden>
+            <Input />
+          </Form.Item>
+
+          <Form.Item<ReturnAuthorizationFormShape>
+            label={t("invoices.returnAuthorizationQuantity")}
+            name="quantityAuthorized"
+            rules={[{ required: true }]}
+            extra={
+              invoiceBeingAuthorizedForReturn
+                ? t("invoices.returnAuthorizationQuantityHint", {
+                    number: invoiceBeingAuthorizedForReturn.invoiceNumber,
+                    count: remainingReturnAuthorizationQuantity,
+                  })
+                : t("invoices.returnAuthorizationQuantityGenericHint")
+            }
+          >
+            <InputNumber
+              min={1}
+              max={Math.max(remainingReturnAuthorizationQuantity, 1)}
+              precision={0}
+              style={{ width: "100%" }}
+            />
+          </Form.Item>
+
+          <Form.Item<ReturnAuthorizationFormShape>
+            label={t("invoices.returnAuthorizationNote")}
+            name="note"
+            rules={[{ required: true }, { max: 240 }]}
+            extra={
+              invoiceBeingAuthorizedForReturn
+                ? t("invoices.returnAuthorizationNoteHint", {
+                    number: invoiceBeingAuthorizedForReturn.invoiceNumber,
+                  })
+                : t("invoices.returnAuthorizationNoteGenericHint")
+            }
+          >
+            <TextArea
+              rows={3}
+              maxLength={240}
+              placeholder={t("invoices.returnAuthorizationNotePlaceholder")}
+            />
+          </Form.Item>
+
+          <div className="record-actions">
+            <Button onClick={closeReturnAuthorizationModal}>{t("common.cancel")}</Button>
+            <Button type="primary" htmlType="submit" loading={isBusy}>
+              {t("invoices.returnAuthorizationSubmit")}
             </Button>
           </div>
         </Form>
@@ -1251,8 +1398,12 @@ export function InvoicesPage(): ReactElement {
                     (relatedOrder?.quantity ?? invoice.creditedQuantity) - invoice.creditedQuantity,
                     0,
                   );
-                  const remainingInvoiceReturnReceiptQuantity = Math.max(
+                  const remainingInvoiceReturnAuthorizationQuantity = Math.max(
                     (relatedOrder?.quantity ?? invoice.returnedQuantity) - invoice.returnedQuantity,
+                    0,
+                  );
+                  const remainingInvoiceReturnReceiptQuantity = Math.max(
+                    invoice.returnAuthorizationRequestedQuantity - invoice.returnAuthorizationReceivedQuantity,
                     0,
                   );
 
@@ -1311,6 +1462,11 @@ export function InvoicesPage(): ReactElement {
                           <Tag color={getCollectionPriorityColor(invoice.collectionPriority)}>
                             {getCollectionPriorityLabel(invoice.collectionPriority, t)}
                           </Tag>{" "}
+                          {invoice.returnAuthorizationStatus ? (
+                            <Tag color={getReturnAuthorizationStatusColor(invoice.returnAuthorizationStatus)}>
+                              {getReturnAuthorizationStatusLabel(invoice.returnAuthorizationStatus, t)}
+                            </Tag>
+                          ) : null}{" "}
                           {invoice.revisionNumber > 1 ? (
                             <Tag color="purple">
                               {t("invoices.revisionValue", { count: invoice.revisionNumber })}
@@ -1370,6 +1526,24 @@ export function InvoicesPage(): ReactElement {
                           <div className="record-detail">
                             {t("invoices.returnedQuantityLabel")} {invoice.returnedQuantity}
                           </div>
+                        ) : null}
+                        {invoice.returnAuthorizationStatus ? (
+                          <>
+                            <div className="record-detail">
+                              <DeploymentUnitOutlined /> {t("invoices.returnAuthorizationLabel")}{" "}
+                              {invoice.returnAuthorizationReceivedQuantity}/
+                              {invoice.returnAuthorizationRequestedQuantity}
+                            </div>
+                            <div className="record-detail">
+                              {t("invoices.returnAuthorizationStatusLabel")}{" "}
+                              {getReturnAuthorizationStatusLabel(invoice.returnAuthorizationStatus, t)}
+                            </div>
+                            {invoice.returnAuthorizationNote ? (
+                              <div className="record-detail">
+                                {t("invoices.returnAuthorizationNoteLabel")} {invoice.returnAuthorizationNote}
+                              </div>
+                            ) : null}
+                          </>
                         ) : null}
                         {invoice.creditedQuantity > invoice.returnedQuantity ? (
                           <div className="record-detail">
@@ -1443,6 +1617,23 @@ export function InvoicesPage(): ReactElement {
                         ) : null}
                         {canIssueInvoices &&
                         invoice.status !== "void" &&
+                        !invoice.returnAuthorizationStatus &&
+                        remainingInvoiceReturnAuthorizationQuantity > 0 ? (
+                          <div className="record-actions">
+                            <Button
+                              size="small"
+                              icon={<DeploymentUnitOutlined />}
+                              loading={isBusy}
+                              data-testid="invoice-return-authorization-button"
+                              onClick={() => openReturnAuthorizationModal(invoice)}
+                            >
+                              {t("invoices.returnAuthorizationAction")}
+                            </Button>
+                          </div>
+                        ) : null}
+                        {canIssueInvoices &&
+                        invoice.status !== "void" &&
+                        invoice.returnAuthorizationStatus !== null &&
                         remainingInvoiceReturnReceiptQuantity > 0 ? (
                           <div className="record-actions">
                             <Button

@@ -17,6 +17,7 @@ import type {
   CreateInventoryAdjustmentInput,
   CreateInvoiceInput,
   CreateInvoicePaymentInput,
+  CreateInvoiceReturnAuthorizationInput,
   RecordInvoiceReturnReceiptInput,
   VoidInvoiceInput,
   CreateOrderInput,
@@ -57,6 +58,7 @@ import {
   submitInvoiceCollectionUpdate,
   submitInvoiceIssue,
   submitInvoicePayment,
+  submitInvoiceReturnAuthorization,
   submitInvoiceReturnReceipt,
   submitInvoiceReopen,
   submitInvoiceVoid,
@@ -653,6 +655,22 @@ export function createWorkspaceCommands(dependencies: WorkspaceCommandsDependenc
         "Invoice credit failed.",
         async () => {
           await submitInvoiceCredit({ ...input, tenantId });
+          await refreshTenantWorkspace(tenantId);
+        },
+        { clearNotice: true },
+      );
+    },
+
+    async createInvoiceReturnAuthorizationRecord(
+      input: Omit<CreateInvoiceReturnAuthorizationInput, "tenantId">,
+    ): Promise<void> {
+      const tenantId = getSelectedTenantIdOrThrow();
+
+      await runBusyAction(
+        { setErrorMessage, setIsBusy, setNoticeMessage },
+        "Invoice return authorization failed.",
+        async () => {
+          await submitInvoiceReturnAuthorization({ ...input, tenantId });
           await refreshTenantWorkspace(tenantId);
         },
         { clearNotice: true },

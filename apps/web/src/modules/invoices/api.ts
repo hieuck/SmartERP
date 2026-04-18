@@ -4,6 +4,7 @@ import type {
   CreditInvoiceInput,
   CreateInvoiceInput,
   CreateInvoicePaymentInput,
+  CreateInvoiceReturnAuthorizationInput,
   InvoiceCollectionActivityRecord,
   InvoiceRecord,
   RecordInvoiceReturnReceiptInput,
@@ -18,6 +19,7 @@ import {
   creditInvoice,
   createInvoice,
   createInvoicePayment,
+  createInvoiceReturnAuthorization,
   listInvoiceCollectionActivities,
   listInvoices,
   recordInvoiceReturnReceipt,
@@ -57,6 +59,12 @@ export async function submitInvoicePayment(
 
 export async function submitInvoiceCredit(input: CreditInvoiceInput): Promise<InvoiceRecord> {
   return creditInvoice(input);
+}
+
+export async function submitInvoiceReturnAuthorization(
+  input: CreateInvoiceReturnAuthorizationInput,
+): Promise<InvoiceRecord> {
+  return createInvoiceReturnAuthorization(input);
 }
 
 export async function submitInvoiceReturnReceipt(

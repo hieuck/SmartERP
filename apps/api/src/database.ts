@@ -261,6 +261,36 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_invoice_collection_activities_invoice
   ON invoice_collection_activities (invoice_id, created_at DESC);
 
+  CREATE TABLE IF NOT EXISTS invoice_return_authorizations (
+    id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL,
+    invoice_id TEXT NOT NULL,
+    invoice_number TEXT NOT NULL,
+    order_id TEXT NOT NULL,
+    order_number TEXT NOT NULL,
+    product_id TEXT NOT NULL,
+    product_category_id TEXT NOT NULL DEFAULT '',
+    product_category_name TEXT NOT NULL DEFAULT '',
+    product_sku TEXT NOT NULL,
+    product_name TEXT NOT NULL,
+    quantity_authorized INTEGER NOT NULL,
+    quantity_received INTEGER NOT NULL DEFAULT 0,
+    status TEXT NOT NULL DEFAULT 'authorized',
+    note TEXT NOT NULL DEFAULT '',
+    authorized_at TEXT NOT NULL,
+    closed_at TEXT,
+    FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
+    FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE CASCADE,
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_invoice_return_authorizations_tenant_authorized_at
+  ON invoice_return_authorizations (tenant_id, authorized_at DESC);
+
+  CREATE INDEX IF NOT EXISTS idx_invoice_return_authorizations_invoice
+  ON invoice_return_authorizations (invoice_id, authorized_at DESC);
+
   CREATE TABLE IF NOT EXISTS invoice_return_receipts (
     id TEXT PRIMARY KEY,
     tenant_id TEXT NOT NULL,

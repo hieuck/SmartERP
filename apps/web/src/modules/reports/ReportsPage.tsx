@@ -44,6 +44,10 @@ function getAuditActionColor(actionType: AuditActionType): string {
     return "magenta";
   }
 
+  if (actionType === "invoice_return_authorized") {
+    return "gold";
+  }
+
   if (actionType === "invoice_return_received") {
     return "cyan";
   }
@@ -126,6 +130,10 @@ function getAuditActionLabel(
 
   if (actionType === "invoice_credited") {
     return t("reports.auditActionInvoiceCredited");
+  }
+
+  if (actionType === "invoice_return_authorized") {
+    return t("reports.auditActionInvoiceReturnAuthorized");
   }
 
   if (actionType === "invoice_return_received") {

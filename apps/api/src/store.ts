@@ -27,6 +27,7 @@ import {
   type CreditInvoiceInput,
   type CreateInvoiceInput,
   type CreateInvoicePaymentInput,
+  type CreateInvoiceReturnAuthorizationInput,
   type RecordInvoiceReturnReceiptInput,
   type ReopenInvoiceInput,
   type VoidInvoiceInput,
@@ -60,6 +61,8 @@ import {
   type CustomerStatementRecord,
   type JournalEntryRecord,
   type JournalReferenceType,
+  type InvoiceReturnAuthorizationRecord,
+  type InvoiceReturnAuthorizationStatus,
   type InvoiceReturnReceiptSource,
   type CustomerRecord,
   type InvoiceRecord,
@@ -230,6 +233,26 @@ type InvoiceReturnReceiptRow = {
   received_at: string;
 };
 
+type InvoiceReturnAuthorizationRow = {
+  id: string;
+  tenant_id: string;
+  invoice_id: string;
+  invoice_number: string;
+  order_id: string;
+  order_number: string;
+  product_id: string;
+  product_category_id: string;
+  product_category_name: string;
+  product_sku: string;
+  product_name: string;
+  quantity_authorized: number;
+  quantity_received: number;
+  status: InvoiceReturnAuthorizationStatus;
+  note: string;
+  authorized_at: string;
+  closed_at: string | null;
+};
+
 type ApprovalRequestRow = {
   id: string;
   tenant_id: string;
@@ -268,6 +291,13 @@ type InvoiceRow = {
   credited_subtotal_amount: number;
   credited_tax_amount: number;
   returned_quantity: number;
+  return_authorization_count: number;
+  open_return_authorization_id: string | null;
+  return_authorization_status: InvoiceReturnAuthorizationStatus | null;
+  return_authorization_requested_quantity: number;
+  return_authorization_received_quantity: number;
+  return_authorization_note: string | null;
+  last_return_authorization_at: string | null;
   return_receipt_count: number;
   last_return_receipt_at: string | null;
   reissued_from_invoice_id: string | null;
@@ -1279,6 +1309,87 @@ const listPurchaseOrderReceiptsStatement = db.prepare(`
   ORDER BY datetime(received_at) DESC, rowid DESC
 `);
 
+const listInvoiceReturnAuthorizationsStatement = db.prepare(`
+  SELECT
+    id,
+    tenant_id,
+    invoice_id,
+    invoice_number,
+    order_id,
+    order_number,
+    product_id,
+    product_category_id,
+    product_category_name,
+    product_sku,
+    product_name,
+    quantity_authorized,
+    quantity_received,
+    status,
+    note,
+    authorized_at,
+    closed_at
+  FROM invoice_return_authorizations
+  WHERE tenant_id = ?
+  ORDER BY datetime(authorized_at) DESC, rowid DESC
+`);
+
+const getLatestOpenInvoiceReturnAuthorizationStatement = db.prepare(`
+  SELECT
+    id,
+    tenant_id,
+    invoice_id,
+    invoice_number,
+    order_id,
+    order_number,
+    product_id,
+    product_category_id,
+    product_category_name,
+    product_sku,
+    product_name,
+    quantity_authorized,
+    quantity_received,
+    status,
+    note,
+    authorized_at,
+    closed_at
+  FROM invoice_return_authorizations
+  WHERE tenant_id = ? AND invoice_id = ? AND status <> 'received'
+  ORDER BY datetime(authorized_at) DESC, rowid DESC
+  LIMIT 1
+`);
+
+const createInvoiceReturnAuthorizationStatement = db.prepare(`
+  INSERT INTO invoice_return_authorizations (
+    id,
+    tenant_id,
+    invoice_id,
+    invoice_number,
+    order_id,
+    order_number,
+    product_id,
+    product_category_id,
+    product_category_name,
+    product_sku,
+    product_name,
+    quantity_authorized,
+    quantity_received,
+    status,
+    note,
+    authorized_at,
+    closed_at
+  )
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+`);
+
+const updateInvoiceReturnAuthorizationProgressStatement = db.prepare(`
+  UPDATE invoice_return_authorizations
+  SET
+    quantity_received = ?,
+    status = ?,
+    closed_at = ?
+  WHERE tenant_id = ? AND id = ?
+`);
+
 const listInvoiceReturnReceiptsStatement = db.prepare(`
   SELECT
     id,
@@ -1381,6 +1492,51 @@ const getLatestVoidedInvoiceForOrderStatement = db.prepare(`
     ) AS returned_quantity,
     (
       SELECT COUNT(*)
+      FROM invoice_return_authorizations ira
+      WHERE ira.invoice_id = i.id
+    ) AS return_authorization_count,
+    (
+      SELECT ira.id
+      FROM invoice_return_authorizations ira
+      WHERE ira.invoice_id = i.id AND ira.status <> 'received'
+      ORDER BY datetime(ira.authorized_at) DESC, ira.rowid DESC
+      LIMIT 1
+    ) AS open_return_authorization_id,
+    (
+      SELECT ira.status
+      FROM invoice_return_authorizations ira
+      WHERE ira.invoice_id = i.id AND ira.status <> 'received'
+      ORDER BY datetime(ira.authorized_at) DESC, ira.rowid DESC
+      LIMIT 1
+    ) AS return_authorization_status,
+    (
+      SELECT ira.quantity_authorized
+      FROM invoice_return_authorizations ira
+      WHERE ira.invoice_id = i.id AND ira.status <> 'received'
+      ORDER BY datetime(ira.authorized_at) DESC, ira.rowid DESC
+      LIMIT 1
+    ) AS return_authorization_requested_quantity,
+    (
+      SELECT ira.quantity_received
+      FROM invoice_return_authorizations ira
+      WHERE ira.invoice_id = i.id AND ira.status <> 'received'
+      ORDER BY datetime(ira.authorized_at) DESC, ira.rowid DESC
+      LIMIT 1
+    ) AS return_authorization_received_quantity,
+    (
+      SELECT ira.note
+      FROM invoice_return_authorizations ira
+      WHERE ira.invoice_id = i.id AND ira.status <> 'received'
+      ORDER BY datetime(ira.authorized_at) DESC, ira.rowid DESC
+      LIMIT 1
+    ) AS return_authorization_note,
+    (
+      SELECT MAX(ira.authorized_at)
+      FROM invoice_return_authorizations ira
+      WHERE ira.invoice_id = i.id
+    ) AS last_return_authorization_at,
+    (
+      SELECT COUNT(*)
       FROM invoice_return_receipts irr
       WHERE irr.invoice_id = i.id
     ) AS return_receipt_count,
@@ -1455,6 +1611,51 @@ const listInvoicesStatement = db.prepare(`
       FROM invoice_return_receipts irr
       WHERE irr.invoice_id = i.id
     ) AS returned_quantity,
+    (
+      SELECT COUNT(*)
+      FROM invoice_return_authorizations ira
+      WHERE ira.invoice_id = i.id
+    ) AS return_authorization_count,
+    (
+      SELECT ira.id
+      FROM invoice_return_authorizations ira
+      WHERE ira.invoice_id = i.id AND ira.status <> 'received'
+      ORDER BY datetime(ira.authorized_at) DESC, ira.rowid DESC
+      LIMIT 1
+    ) AS open_return_authorization_id,
+    (
+      SELECT ira.status
+      FROM invoice_return_authorizations ira
+      WHERE ira.invoice_id = i.id AND ira.status <> 'received'
+      ORDER BY datetime(ira.authorized_at) DESC, ira.rowid DESC
+      LIMIT 1
+    ) AS return_authorization_status,
+    (
+      SELECT ira.quantity_authorized
+      FROM invoice_return_authorizations ira
+      WHERE ira.invoice_id = i.id AND ira.status <> 'received'
+      ORDER BY datetime(ira.authorized_at) DESC, ira.rowid DESC
+      LIMIT 1
+    ) AS return_authorization_requested_quantity,
+    (
+      SELECT ira.quantity_received
+      FROM invoice_return_authorizations ira
+      WHERE ira.invoice_id = i.id AND ira.status <> 'received'
+      ORDER BY datetime(ira.authorized_at) DESC, ira.rowid DESC
+      LIMIT 1
+    ) AS return_authorization_received_quantity,
+    (
+      SELECT ira.note
+      FROM invoice_return_authorizations ira
+      WHERE ira.invoice_id = i.id AND ira.status <> 'received'
+      ORDER BY datetime(ira.authorized_at) DESC, ira.rowid DESC
+      LIMIT 1
+    ) AS return_authorization_note,
+    (
+      SELECT MAX(ira.authorized_at)
+      FROM invoice_return_authorizations ira
+      WHERE ira.invoice_id = i.id
+    ) AS last_return_authorization_at,
     (
       SELECT COUNT(*)
       FROM invoice_return_receipts irr
@@ -1563,6 +1764,51 @@ const getInvoiceByIdStatement = db.prepare(`
       FROM invoice_return_receipts irr
       WHERE irr.invoice_id = i.id
     ) AS returned_quantity,
+    (
+      SELECT COUNT(*)
+      FROM invoice_return_authorizations ira
+      WHERE ira.invoice_id = i.id
+    ) AS return_authorization_count,
+    (
+      SELECT ira.id
+      FROM invoice_return_authorizations ira
+      WHERE ira.invoice_id = i.id AND ira.status <> 'received'
+      ORDER BY datetime(ira.authorized_at) DESC, ira.rowid DESC
+      LIMIT 1
+    ) AS open_return_authorization_id,
+    (
+      SELECT ira.status
+      FROM invoice_return_authorizations ira
+      WHERE ira.invoice_id = i.id AND ira.status <> 'received'
+      ORDER BY datetime(ira.authorized_at) DESC, ira.rowid DESC
+      LIMIT 1
+    ) AS return_authorization_status,
+    (
+      SELECT ira.quantity_authorized
+      FROM invoice_return_authorizations ira
+      WHERE ira.invoice_id = i.id AND ira.status <> 'received'
+      ORDER BY datetime(ira.authorized_at) DESC, ira.rowid DESC
+      LIMIT 1
+    ) AS return_authorization_requested_quantity,
+    (
+      SELECT ira.quantity_received
+      FROM invoice_return_authorizations ira
+      WHERE ira.invoice_id = i.id AND ira.status <> 'received'
+      ORDER BY datetime(ira.authorized_at) DESC, ira.rowid DESC
+      LIMIT 1
+    ) AS return_authorization_received_quantity,
+    (
+      SELECT ira.note
+      FROM invoice_return_authorizations ira
+      WHERE ira.invoice_id = i.id AND ira.status <> 'received'
+      ORDER BY datetime(ira.authorized_at) DESC, ira.rowid DESC
+      LIMIT 1
+    ) AS return_authorization_note,
+    (
+      SELECT MAX(ira.authorized_at)
+      FROM invoice_return_authorizations ira
+      WHERE ira.invoice_id = i.id
+    ) AS last_return_authorization_at,
     (
       SELECT COUNT(*)
       FROM invoice_return_receipts irr
@@ -2492,6 +2738,30 @@ function mapInvoiceReturnReceipt(row: InvoiceReturnReceiptRow): InvoiceReturnRec
   };
 }
 
+function mapInvoiceReturnAuthorization(
+  row: InvoiceReturnAuthorizationRow,
+): InvoiceReturnAuthorizationRecord {
+  return {
+    id: row.id,
+    tenantId: row.tenant_id,
+    invoiceId: row.invoice_id,
+    invoiceNumber: row.invoice_number,
+    orderId: row.order_id,
+    orderNumber: row.order_number,
+    productId: row.product_id,
+    productCategoryId: row.product_category_id,
+    productCategoryName: row.product_category_name,
+    productSku: row.product_sku,
+    productName: row.product_name,
+    quantityAuthorized: row.quantity_authorized,
+    quantityReceived: row.quantity_received,
+    status: row.status,
+    note: row.note || null,
+    authorizedAt: row.authorized_at,
+    closedAt: row.closed_at,
+  };
+}
+
 function compareIsoAscending(left: string, right: string): number {
   return left.localeCompare(right);
 }
@@ -2826,6 +3096,13 @@ function mapInvoice(row: InvoiceRow): InvoiceRecord {
     creditedAmount,
     creditedQuantity,
     returnedQuantity: row.returned_quantity,
+    returnAuthorizationCount: row.return_authorization_count,
+    openReturnAuthorizationId: row.open_return_authorization_id,
+    returnAuthorizationStatus: row.return_authorization_status,
+    returnAuthorizationRequestedQuantity: row.return_authorization_requested_quantity ?? 0,
+    returnAuthorizationReceivedQuantity: row.return_authorization_received_quantity ?? 0,
+    returnAuthorizationNote: row.return_authorization_note ?? null,
+    lastReturnAuthorizationAt: row.last_return_authorization_at,
     returnReceiptCount: row.return_receipt_count,
     lastReturnReceiptAt: row.last_return_receipt_at,
     reissuedFromInvoiceId: row.reissued_from_invoice_id,
@@ -2905,6 +3182,19 @@ function normalizeInvoiceReturnReceiptNote(input: string | null | undefined): st
   return trimmed;
 }
 
+function normalizeInvoiceReturnAuthorizationNote(input: string | null | undefined): string | null {
+  const trimmed = input?.trim() ?? "";
+  if (!trimmed) {
+    return null;
+  }
+
+  if (trimmed.length > 240) {
+    throw new Error("Return authorization note must be 240 characters or fewer.");
+  }
+
+  return trimmed;
+}
+
 function normalizeInvoiceCreditQuantity(input: number): number {
   if (!Number.isInteger(input) || input <= 0) {
     throw new Error("Credit quantity must be a positive integer.");
@@ -2916,6 +3206,14 @@ function normalizeInvoiceCreditQuantity(input: number): number {
 function normalizeInvoiceReturnReceiptQuantity(input: number): number {
   if (!Number.isInteger(input) || input <= 0) {
     throw new Error("Returned quantity must be a positive integer.");
+  }
+
+  return input;
+}
+
+function normalizeInvoiceReturnAuthorizationQuantity(input: number): number {
+  if (!Number.isInteger(input) || input <= 0) {
+    throw new Error("Return authorization quantity must be a positive integer.");
   }
 
   return input;
@@ -2982,6 +3280,13 @@ function buildInvoiceRecord(
     creditedAmount: 0,
     creditedQuantity: 0,
     returnedQuantity: 0,
+    returnAuthorizationCount: 0,
+    openReturnAuthorizationId: null,
+    returnAuthorizationStatus: null,
+    returnAuthorizationRequestedQuantity: 0,
+    returnAuthorizationReceivedQuantity: 0,
+    returnAuthorizationNote: null,
+    lastReturnAuthorizationAt: null,
     returnReceiptCount: 0,
     lastReturnReceiptAt: null,
     reissuedFromInvoiceId: priorInvoice?.id ?? null,
@@ -3918,6 +4223,7 @@ const restoreImmediateScopes = [
   "purchaseOrderReceipts",
   "invoices",
   "invoicePayments",
+  "invoiceReturnAuthorizations",
   "invoiceReturnReceipts",
   "collections",
   "approvals",
@@ -3975,6 +4281,7 @@ export function exportTenantSnapshot(tenantId: string): TenantExportBundle {
     purchaseOrderReceipts: listPurchaseOrderReceipts(tenantId),
     invoices: listInvoices(tenantId),
     invoicePayments: listInvoicePayments(tenantId),
+    invoiceReturnAuthorizations: listInvoiceReturnAuthorizations(tenantId),
     invoiceReturnReceipts: listInvoiceReturnReceipts(tenantId),
     customerStatements: listCustomerStatements(tenantId),
     collectionActivities: listInvoiceCollectionActivities(tenantId),
@@ -3990,6 +4297,7 @@ export function previewRestoreTenantSnapshot(input: RestoreTenantSnapshotInput):
   const conflictingTenant = getTenantBySlugStatement.get(targetSlug) as TenantRow | undefined;
   const purchaseOrderReceipts = input.snapshot.purchaseOrderReceipts ?? [];
   const invoicePayments = input.snapshot.invoicePayments ?? [];
+  const invoiceReturnAuthorizations = input.snapshot.invoiceReturnAuthorizations ?? [];
   const invoiceReturnReceipts = input.snapshot.invoiceReturnReceipts ?? [];
   const collectionActivities = input.snapshot.collectionActivities ?? [];
 
@@ -4011,6 +4319,7 @@ export function previewRestoreTenantSnapshot(input: RestoreTenantSnapshotInput):
     purchaseOrderReceiptCount: purchaseOrderReceipts.length,
     invoiceCount: input.snapshot.invoices.length,
     invoicePaymentCount: invoicePayments.length,
+    invoiceReturnAuthorizationCount: invoiceReturnAuthorizations.length,
     invoiceReturnReceiptCount: invoiceReturnReceipts.length,
     collectionActivityCount: collectionActivities.length,
     approvalCount: input.snapshot.approvalRequests.length,
@@ -4047,6 +4356,7 @@ export function restoreTenantSnapshot(input: RestoreTenantSnapshotInput): Restor
   let restoredPurchaseOrderReceipts = 0;
   let restoredInvoices = 0;
   let restoredInvoicePayments = 0;
+  let restoredInvoiceReturnAuthorizations = 0;
   let restoredInvoiceReturnReceipts = 0;
   let restoredCollectionActivities = 0;
   let restoredApprovalRequests = 0;
@@ -4539,6 +4849,41 @@ export function restoreTenantSnapshot(input: RestoreTenantSnapshotInput): Restor
     restoredInvoicePayments += 1;
   }
 
+  const snapshotInvoiceReturnAuthorizations = [
+    ...(input.snapshot.invoiceReturnAuthorizations ?? []),
+  ].sort((left, right) => compareIsoAscending(left.authorizedAt, right.authorizedAt));
+
+  for (const authorization of snapshotInvoiceReturnAuthorizations) {
+    const restoredInvoiceId = invoiceIdMap.get(authorization.invoiceId);
+    const restoredOrderId = orderIdMap.get(authorization.orderId);
+    const restoredProductId = productIdMap.get(authorization.productId);
+    if (!restoredInvoiceId || !restoredOrderId || !restoredProductId) {
+      continue;
+    }
+
+    const restoredProduct = restoredProductsBySourceId.get(authorization.productId);
+    createInvoiceReturnAuthorizationStatement.run(
+      randomUUID(),
+      restoredTenant.id,
+      restoredInvoiceId,
+      invoiceNumberMap.get(authorization.invoiceId) ?? authorization.invoiceNumber,
+      restoredOrderId,
+      orderNumberMap.get(authorization.orderId) ?? authorization.orderNumber,
+      restoredProductId,
+      restoredCategoryIds.get(authorization.productCategoryId) ?? restoredProduct?.categoryId ?? "",
+      authorization.productCategoryName,
+      authorization.productSku,
+      authorization.productName,
+      authorization.quantityAuthorized,
+      authorization.quantityReceived,
+      authorization.status,
+      authorization.note ?? "",
+      authorization.authorizedAt,
+      authorization.closedAt,
+    );
+    restoredInvoiceReturnAuthorizations += 1;
+  }
+
   const snapshotInvoiceReturnReceipts = [...(input.snapshot.invoiceReturnReceipts ?? [])].sort(
     (left, right) => compareIsoAscending(left.receivedAt, right.receivedAt),
   );
@@ -4711,6 +5056,7 @@ export function restoreTenantSnapshot(input: RestoreTenantSnapshotInput): Restor
     restoredPurchaseOrderReceipts,
     restoredInvoices,
     restoredInvoicePayments,
+    restoredInvoiceReturnAuthorizations,
     restoredInvoiceReturnReceipts,
     restoredCollectionActivities,
     restoredApprovalRequests,
@@ -4733,6 +5079,14 @@ export function listCustomerStatements(tenantId: string): CustomerStatementRecor
   return (listCustomerStatementsStatement.all(tenantId, tenantId) as CustomerStatementRow[]).map(
     mapCustomerStatement,
   );
+}
+
+export function listInvoiceReturnAuthorizations(
+  tenantId: string,
+): InvoiceReturnAuthorizationRecord[] {
+  return (
+    listInvoiceReturnAuthorizationsStatement.all(tenantId) as InvoiceReturnAuthorizationRow[]
+  ).map(mapInvoiceReturnAuthorization);
 }
 
 export function listInvoiceReturnReceipts(tenantId: string): InvoiceReturnReceiptRecord[] {
@@ -6777,6 +7131,7 @@ function createInvoiceReturnReceiptAndRestock(input: {
   receipt: InvoiceReturnReceiptRow;
   inventoryValue: number;
   nextReturnedQuantity: number;
+  authorization: InvoiceReturnAuthorizationRecord | null;
 } {
   const remainingReturnQuantity = Math.max(input.order.quantity - input.invoice.returnedQuantity, 0);
   if (input.quantityReturned > remainingReturnQuantity) {
@@ -6880,10 +7235,17 @@ function createInvoiceReturnReceiptAndRestock(input: {
     createdAt: input.receivedAt,
   });
 
+  const authorization = applyInvoiceReturnAuthorizationReceipt({
+    tenantId: input.tenantId,
+    invoiceId: input.invoice.id,
+    quantityReceived: input.quantityReturned,
+  });
+
   return {
     receipt,
     inventoryValue,
     nextReturnedQuantity,
+    authorization,
   };
 }
 
@@ -6936,6 +7298,152 @@ function markOrderReturnedIfComplete(input: {
   });
 
   return true;
+}
+
+function applyInvoiceReturnAuthorizationReceipt(input: {
+  tenantId: string;
+  invoiceId: string;
+  quantityReceived: number;
+}): InvoiceReturnAuthorizationRecord | null {
+  const authorization = getLatestOpenInvoiceReturnAuthorizationStatement.get(
+    input.tenantId,
+    input.invoiceId,
+  ) as InvoiceReturnAuthorizationRow | undefined;
+
+  if (!authorization) {
+    return null;
+  }
+
+  const nextQuantityReceived = authorization.quantity_received + input.quantityReceived;
+  if (nextQuantityReceived > authorization.quantity_authorized) {
+    throw new Error("Returned quantity cannot exceed the authorized return quantity.");
+  }
+
+  const nextStatus: InvoiceReturnAuthorizationStatus =
+    nextQuantityReceived >= authorization.quantity_authorized
+      ? "received"
+      : nextQuantityReceived > 0
+        ? "partially_received"
+        : "authorized";
+  const closedAt = nextStatus === "received" ? timestamp() : null;
+
+  updateInvoiceReturnAuthorizationProgressStatement.run(
+    nextQuantityReceived,
+    nextStatus,
+    closedAt,
+    input.tenantId,
+    authorization.id,
+  );
+
+  return mapInvoiceReturnAuthorization({
+    ...authorization,
+    quantity_received: nextQuantityReceived,
+    status: nextStatus,
+    closed_at: closedAt,
+  });
+}
+
+export function createInvoiceReturnAuthorization(
+  input: CreateInvoiceReturnAuthorizationInput,
+): InvoiceRecord {
+  const invoice = getInvoiceByIdStatement.get(input.tenantId, input.invoiceId) as InvoiceRow | undefined;
+  if (!invoice) {
+    throw new Error("The selected invoice does not exist.");
+  }
+
+  if (invoice.status === "void") {
+    throw new Error("The selected invoice has been voided.");
+  }
+
+  const order = getOrderByIdStatement.get(input.tenantId, invoice.order_id) as OrderRow | undefined;
+  if (!order) {
+    throw new Error("The selected order does not exist.");
+  }
+
+  const quantityAuthorized = normalizeInvoiceReturnAuthorizationQuantity(input.quantityAuthorized);
+  const note = normalizeInvoiceReturnAuthorizationNote(input.note);
+  if (!note) {
+    throw new Error("Return authorization note is required before receiving goods back from an invoice.");
+  }
+
+  const activeAuthorization = getLatestOpenInvoiceReturnAuthorizationStatement.get(
+    input.tenantId,
+    input.invoiceId,
+  ) as InvoiceReturnAuthorizationRow | undefined;
+  if (activeAuthorization) {
+    throw new Error("A return authorization is already open for this invoice.");
+  }
+
+  const remainingReturnQuantity = Math.max(order.quantity - invoice.returned_quantity, 0);
+  if (quantityAuthorized > remainingReturnQuantity) {
+    throw new Error("Return authorization quantity cannot exceed the remaining unreturned quantity.");
+  }
+
+  const authorizedAt = timestamp();
+  const authorization: InvoiceReturnAuthorizationRow = {
+    id: randomUUID(),
+    tenant_id: input.tenantId,
+    invoice_id: invoice.id,
+    invoice_number: invoice.invoice_number,
+    order_id: order.id,
+    order_number: order.order_number,
+    product_id: order.product_id,
+    product_category_id: order.product_category_id,
+    product_category_name: order.product_category_name,
+    product_sku: order.product_sku,
+    product_name: order.product_name,
+    quantity_authorized: quantityAuthorized,
+    quantity_received: 0,
+    status: "authorized",
+    note,
+    authorized_at: authorizedAt,
+    closed_at: null,
+  };
+
+  createInvoiceReturnAuthorizationStatement.run(
+    authorization.id,
+    authorization.tenant_id,
+    authorization.invoice_id,
+    authorization.invoice_number,
+    authorization.order_id,
+    authorization.order_number,
+    authorization.product_id,
+    authorization.product_category_id,
+    authorization.product_category_name,
+    authorization.product_sku,
+    authorization.product_name,
+    authorization.quantity_authorized,
+    authorization.quantity_received,
+    authorization.status,
+    authorization.note,
+    authorization.authorized_at,
+    authorization.closed_at,
+  );
+
+  recordAuditLog({
+    tenantId: input.tenantId,
+    entityType: "invoice",
+    entityId: invoice.id,
+    entityNumber: invoice.invoice_number,
+    actionType: "invoice_return_authorized",
+    summary: `Authorized return for ${invoice.invoice_number}`,
+    metadata: {
+      quantity: quantityAuthorized,
+      productCategoryId: invoice.product_category_id,
+      productCategoryName: invoice.product_category_name,
+      productSku: invoice.product_sku,
+      productName: invoice.product_name,
+      note,
+    },
+    createdAt: authorizedAt,
+  });
+
+  const refreshedInvoice = getInvoiceByIdStatement.get(input.tenantId, input.invoiceId) as InvoiceRow | undefined;
+  if (!refreshedInvoice) {
+    throw new Error("The selected invoice does not exist.");
+  }
+
+  return mapInvoice(refreshedInvoice);
 }
 
 export function creditInvoice(input: CreditInvoiceInput): InvoiceRecord {
@@ -7115,9 +7623,20 @@ export function recordInvoiceReturnReceipt(input: RecordInvoiceReturnReceiptInpu
   if (!note) {
     throw new Error("Return receipt note is required when receiving goods back from an invoice.");
   }
+  const activeAuthorization = getLatestOpenInvoiceReturnAuthorizationStatement.get(
+    input.tenantId,
+    input.invoiceId,
+  ) as InvoiceReturnAuthorizationRow | undefined;
+  if (!activeAuthorization) {
+    throw new Error("An open return authorization is required before receiving goods back from an invoice.");
+  }
 
   if (quantityReturned > order.quantity - invoice.returned_quantity) {
     throw new Error("Returned quantity cannot exceed the remaining unreturned quantity.");
+  }
+
+  if (quantityReturned > activeAuthorization.quantity_authorized - activeAuthorization.quantity_received) {
+    throw new Error("Returned quantity cannot exceed the authorized return quantity.");
   }
 
   const receivedAt = timestamp();

@@ -227,6 +227,7 @@ export type RestoreTenantSnapshotPreview = {
   purchaseOrderReceiptCount: number;
   invoiceCount: number;
   invoicePaymentCount: number;
+  invoiceReturnAuthorizationCount: number;
   invoiceReturnReceiptCount: number;
   collectionActivityCount: number;
   approvalCount: number;
@@ -250,6 +251,7 @@ export type RestoreTenantSnapshotResult = {
   restoredPurchaseOrderReceipts: number;
   restoredInvoices: number;
   restoredInvoicePayments: number;
+  restoredInvoiceReturnAuthorizations: number;
   restoredInvoiceReturnReceipts: number;
   restoredCollectionActivities: number;
   restoredApprovalRequests: number;
@@ -511,6 +513,28 @@ export type InvoiceReturnReceiptRecord = {
   receivedAt: string;
 };
 
+export type InvoiceReturnAuthorizationStatus = "authorized" | "partially_received" | "received";
+
+export type InvoiceReturnAuthorizationRecord = {
+  id: string;
+  tenantId: string;
+  invoiceId: string;
+  invoiceNumber: string;
+  orderId: string;
+  orderNumber: string;
+  productId: string;
+  productCategoryId: string;
+  productCategoryName: string;
+  productSku: string;
+  productName: string;
+  quantityAuthorized: number;
+  quantityReceived: number;
+  status: InvoiceReturnAuthorizationStatus;
+  note: string | null;
+  authorizedAt: string;
+  closedAt: string | null;
+};
+
 export type ApprovalRequestType =
   | "inventory_adjustment"
   | "purchase_order_receipt"
@@ -718,6 +742,7 @@ export type AuditActionType =
   | "invoice_issued"
   | "invoice_reissued"
   | "invoice_amended"
+  | "invoice_return_authorized"
   | "invoice_credited"
   | "invoice_return_received"
   | "invoice_voided"
@@ -800,6 +825,13 @@ export type InvoiceRecord = {
   creditedAmount: number;
   creditedQuantity: number;
   returnedQuantity: number;
+  returnAuthorizationCount: number;
+  openReturnAuthorizationId: string | null;
+  returnAuthorizationStatus: InvoiceReturnAuthorizationStatus | null;
+  returnAuthorizationRequestedQuantity: number;
+  returnAuthorizationReceivedQuantity: number;
+  returnAuthorizationNote: string | null;
+  lastReturnAuthorizationAt: string | null;
   returnReceiptCount: number;
   lastReturnReceiptAt: string | null;
   reissuedFromInvoiceId: string | null;
@@ -870,6 +902,13 @@ export type RecordInvoiceReturnReceiptInput = {
   tenantId: string;
   invoiceId: string;
   quantityReturned: number;
+  note: string | null;
+};
+
+export type CreateInvoiceReturnAuthorizationInput = {
+  tenantId: string;
+  invoiceId: string;
+  quantityAuthorized: number;
   note: string | null;
 };
 
@@ -979,6 +1018,7 @@ export type TenantExportBundle = {
   purchaseOrderReceipts: PurchaseOrderReceiptRecord[];
   invoices: InvoiceRecord[];
   invoicePayments: InvoicePaymentRecord[];
+  invoiceReturnAuthorizations: InvoiceReturnAuthorizationRecord[];
   invoiceReturnReceipts: InvoiceReturnReceiptRecord[];
   customerStatements: CustomerStatementRecord[];
   collectionActivities: InvoiceCollectionActivityRecord[];
@@ -1017,6 +1057,7 @@ export type PilotHandoffPackage = {
     purchaseOrderReceiptCount: number;
     invoiceCount: number;
     invoicePaymentCount: number;
+    invoiceReturnAuthorizationCount: number;
     invoiceReturnReceiptCount: number;
     collectionActivityCount: number;
     approvalCount: number;

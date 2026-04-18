@@ -53,6 +53,7 @@ const errorKeyByMessage: Record<string, string> = {
   "Invoice creation failed.": "errors.createInvoiceFailed",
   "Invoice amendment failed.": "errors.invoiceAmendFailed",
   "Invoice credit failed.": "errors.invoiceCreditFailed",
+  "Invoice return authorization failed.": "errors.invoiceReturnAuthorizationFailed",
   "Invoice return receipt failed.": "errors.invoiceReturnReceiptFailed",
   "Invoice payment failed.": "errors.createInvoicePaymentFailed",
   "Invoice void failed.": "errors.voidInvoiceFailed",
@@ -98,7 +99,21 @@ const errorKeyByMessage: Record<string, string> = {
   "Credit quantity must be a positive integer.": "errors.invalidInvoiceCreditQuantity",
   "Credit mode is invalid.": "errors.invalidInvoiceCreditMode",
   "Credit quantity cannot exceed the remaining uncredited quantity.": "errors.invoiceCreditQuantityExceedsRemaining",
+  "Return authorization quantity must be a positive integer.":
+    "errors.invalidInvoiceReturnAuthorizationQuantity",
+  "Return authorization quantity cannot exceed the remaining unreturned quantity.":
+    "errors.invoiceReturnAuthorizationQuantityExceedsRemaining",
+  "Return authorization note must be 240 characters or fewer.":
+    "errors.invalidInvoiceReturnAuthorizationNote",
+  "Return authorization note is required before receiving goods back from an invoice.":
+    "errors.invoiceReturnAuthorizationNoteRequired",
+  "A return authorization is already open for this invoice.":
+    "errors.invoiceReturnAuthorizationAlreadyOpen",
+  "An open return authorization is required before receiving goods back from an invoice.":
+    "errors.invoiceReturnAuthorizationRequired",
   "Returned quantity must be a positive integer.": "errors.invalidInvoiceReturnReceiptQuantity",
+  "Returned quantity cannot exceed the authorized return quantity.":
+    "errors.invoiceReturnReceiptQuantityExceedsAuthorized",
   "Returned quantity cannot exceed the remaining unreturned quantity.":
     "errors.invoiceReturnReceiptQuantityExceedsRemaining",
   "Amendment note must be 240 characters or fewer.": "errors.invalidInvoiceAmendmentNote",

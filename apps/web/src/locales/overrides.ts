@@ -48,7 +48,26 @@ export const localeOverrides: Record<"vi" | "en", TranslationTree> = {
       creditedAmountLabel: "Giá trị đã ghi giảm:",
       creditedQuantityLabel: "Số lượng đã ghi giảm:",
       returnedQuantityLabel: "Số lượng đã nhận trả:",
+      returnAuthorizationLabel: "Case trả hàng:",
+      returnAuthorizationStatusLabel: "Trạng thái case trả hàng:",
+      returnAuthorizationNoteLabel: "Ghi chú case trả hàng:",
       creditWithoutReturnLabel: "Số lượng ghi giảm không nhập kho:",
+      returnAuthorizationAction: "Mở case trả hàng",
+      returnAuthorizationTitle: "Duyệt trả hàng cho {{number}}",
+      returnAuthorizationQuantity: "Số lượng được duyệt trả",
+      returnAuthorizationQuantityHint:
+        "Chọn số lượng được phép quay lại từ {{number}}. Phần còn có thể duyệt trả: {{count}}.",
+      returnAuthorizationQuantityGenericHint: "Chọn số lượng được phép quay lại.",
+      returnAuthorizationNote: "Ghi chú case trả hàng",
+      returnAuthorizationNoteHint:
+        "Bắt buộc để giải thích vì sao {{number}} được mở case trả hàng cho kho xử lý.",
+      returnAuthorizationNoteGenericHint: "Bắt buộc có ghi chú kho hoặc chăm sóc khách hàng cho case trả hàng.",
+      returnAuthorizationNotePlaceholder: "Khách đã được duyệt gửi hàng về để kho tiếp nhận.",
+      returnAuthorizationSubmit: "Mở case trả hàng",
+      returnAuthorizationStatusNone: "Không có case trả hàng đang mở",
+      returnAuthorizationStatusAuthorized: "Đã duyệt",
+      returnAuthorizationStatusPartiallyReceived: "Đã nhận một phần",
+      returnAuthorizationStatusReceived: "Đã nhận đủ",
       returnReceiptsLabel: "Phiếu nhận trả:",
       lastReturnReceiptLabel: "Nhận trả gần nhất:",
       returnReceiptAction: "Ghi phiếu nhận trả",
@@ -68,6 +87,7 @@ export const localeOverrides: Record<"vi" | "en", TranslationTree> = {
     reports: {
       auditActionInvoiceAmended: "Sửa đổi hóa đơn",
       auditActionInvoiceCredited: "Ghi giảm hóa đơn",
+      auditActionInvoiceReturnAuthorized: "Duyệt case trả hàng",
       auditActionInvoiceReturnReceived: "Nhận hàng trả theo hóa đơn",
       auditActionOrderReturned: "Đơn hàng đã trả lại",
       auditQuantityLabel: "Số lượng:",
@@ -123,11 +143,23 @@ export const localeOverrides: Record<"vi" | "en", TranslationTree> = {
       invalidInvoiceCreditQuantity: "Số lượng ghi giảm phải là số nguyên dương.",
       invalidInvoiceCreditMode: "Cách xử lý credit note không hợp lệ.",
       invoiceCreditQuantityExceedsRemaining: "Số lượng ghi giảm vượt quá phần còn lại chưa được ghi giảm.",
+      invoiceReturnAuthorizationFailed: "Mở case trả hàng thất bại.",
+      invoiceReturnAuthorizationNoteRequired:
+        "Cần có ghi chú nghiệp vụ trước khi nhận hàng trả từ một hóa đơn.",
+      invalidInvoiceReturnAuthorizationNote: "Ghi chú case trả hàng không được vượt quá 240 ký tự.",
+      invalidInvoiceReturnAuthorizationQuantity: "Số lượng duyệt trả phải là số nguyên dương.",
+      invoiceReturnAuthorizationQuantityExceedsRemaining:
+        "Số lượng duyệt trả vượt quá phần còn lại chưa được nhận trả.",
+      invoiceReturnAuthorizationAlreadyOpen: "Hóa đơn này đã có case trả hàng đang mở.",
+      invoiceReturnAuthorizationRequired:
+        "Hãy mở case trả hàng trước khi ghi phiếu nhận trả cho hóa đơn này.",
       invoiceReturnReceiptFailed: "Ghi phiếu nhận trả thất bại.",
       invoiceReturnReceiptNoteRequired:
         "Cần có ghi chú nghiệp vụ khi nhận hàng trả từ một hóa đơn.",
       invalidInvoiceReturnReceiptNote: "Ghi chú nhận trả không được vượt quá 240 ký tự.",
       invalidInvoiceReturnReceiptQuantity: "Số lượng nhận trả phải là số nguyên dương.",
+      invoiceReturnReceiptQuantityExceedsAuthorized:
+        "Số lượng nhận trả vượt quá phần đã được duyệt trong case trả hàng.",
       invoiceReturnReceiptQuantityExceedsRemaining:
         "Số lượng nhận trả vượt quá phần còn lại chưa được nhận trả.",
       orderAlreadyReturned: "Đơn hàng này đã được trả lại.",

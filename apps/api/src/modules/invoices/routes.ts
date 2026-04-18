@@ -5,6 +5,7 @@ import {
   handleCreditInvoice,
   handleCreateInvoice,
   handleCreateInvoicePayment,
+  handleCreateInvoiceReturnAuthorization,
   handleListInvoiceCollectionActivities,
   handleListInvoices,
   handleRecordInvoiceReturnReceipt,
@@ -59,6 +60,13 @@ export const invoiceApiRoutes: ApiRoute[] = [
     path: "/api/invoices/credit",
     handle: withPermission("issue_invoices", ({ request, response, session }) =>
       handleCreditInvoice(request, response, session),
+    ),
+  },
+  {
+    method: "POST",
+    path: "/api/invoices/return-authorizations",
+    handle: withPermission("issue_invoices", ({ request, response, session }) =>
+      handleCreateInvoiceReturnAuthorization(request, response, session),
     ),
   },
   {
