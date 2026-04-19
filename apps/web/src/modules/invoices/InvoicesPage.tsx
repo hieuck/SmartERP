@@ -28,6 +28,7 @@ import type {
   CreateInvoiceInput,
   CreateInvoicePaymentInput,
   InvoiceRecord,
+  InvoiceReturnAuthorizationRecord,
   RecordInvoiceReturnReceiptInput,
   ReopenInvoiceInput,
   UpdateInvoiceCollectionInput,
@@ -326,6 +327,26 @@ function getPriorityRank(priority: CollectionPriority): number {
   return 1;
 }
 
+function getReturnCaseStatusRank(status: InvoiceReturnAuthorizationRecord["status"]): number {
+  if (status === "authorized") {
+    return 5;
+  }
+
+  if (status === "partially_received") {
+    return 4;
+  }
+
+  if (status === "received") {
+    return 3;
+  }
+
+  if (status === "closed") {
+    return 2;
+  }
+
+  return 1;
+}
+
 export function InvoicesPage(): ReactElement {
   const { formatCurrency, localeCode, t } = useLocale();
   const {
@@ -337,6 +358,7 @@ export function InvoicesPage(): ReactElement {
     closeInvoiceReturnAuthorizationRecord,
     createInvoicePaymentRecord,
     createInvoiceRecord,
+    invoiceReturnAuthorizations,
     recordInvoiceReturnReceiptRecord,
     reopenInvoiceRecord,
     voidInvoiceRecord,
@@ -415,6 +437,30 @@ export function InvoicesPage(): ReactElement {
     ? collectionActivities.filter((activity) => activity.invoiceId === selectedCollectionInvoiceId)
     : collectionActivities.slice(0, 8);
   const invoiceLookupById = new Map(invoices.map((invoice) => [invoice.id, invoice] as const));
+  const returnCaseQueue = [...invoiceReturnAuthorizations].sort((left, right) => {
+    if (getReturnCaseStatusRank(left.status) !== getReturnCaseStatusRank(right.status)) {
+      return getReturnCaseStatusRank(right.status) - getReturnCaseStatusRank(left.status);
+    }
+
+    return right.authorizedAt.localeCompare(left.authorizedAt);
+  });
+  const openReturnCaseCount = returnCaseQueue.filter((item) =>
+    ["authorized", "partially_received", "received"].includes(item.status),
+  ).length;
+  const warehousePendingReturnCaseCount = returnCaseQueue.filter(
+    (item) =>
+      item.status !== "closed" &&
+      item.status !== "settled" &&
+      item.quantityReceived < item.quantityAuthorized,
+  ).length;
+  const financePendingReturnCaseCount = returnCaseQueue.filter(
+    (item) =>
+      item.status !== "closed" &&
+      item.status !== "settled" &&
+      item.quantityCredited < item.quantityAuthorized,
+  ).length;
+  const closedReturnCaseCount = returnCaseQueue.filter((item) => item.status === "closed").length;
+  const settledReturnCaseCount = returnCaseQueue.filter((item) => item.status === "settled").length;
   const creditTargetOrder = invoiceBeingCredited ? orderLookupById.get(invoiceBeingCredited.orderId) ?? null : null;
   const remainingCreditQuantity = invoiceBeingCredited
     ? Math.max((creditTargetOrder?.quantity ?? invoiceBeingCredited.creditedQuantity) - invoiceBeingCredited.creditedQuantity, 0)
@@ -1044,7 +1090,7 @@ export function InvoicesPage(): ReactElement {
 
       <div className="two-column">
         <div className="page-column-stack">
-          <Card className="workspace-panel-card" title={t("invoices.createTitle")}>
+          <Card className="workspace-panel-card" title={t("invoices.createTitle")} data-testid="invoice-issue-card">
             {canIssueInvoices ? (
               <>
                 <Form<InvoiceFormShape>
@@ -1149,7 +1195,7 @@ export function InvoicesPage(): ReactElement {
             )}
           </Card>
 
-          <Card className="workspace-panel-card" title={t("invoices.settlementTitle")}>
+          <Card className="workspace-panel-card" title={t("invoices.settlementTitle")} data-testid="invoice-payment-card">
             {canRecordPayments ? (
               <>
                 <Form<InvoicePaymentFormShape>
@@ -1228,7 +1274,7 @@ export function InvoicesPage(): ReactElement {
             )}
           </Card>
 
-          <Card className="workspace-panel-card" title={t("invoices.followUpTitle")}>
+          <Card className="workspace-panel-card" title={t("invoices.followUpTitle")} data-testid="invoice-follow-up-card">
             {canManageCollections ? (
               <Form<InvoiceCollectionFormShape>
                 form={collectionForm}
@@ -1337,7 +1383,7 @@ export function InvoicesPage(): ReactElement {
             ) : null}
           </Card>
 
-          <Card className="workspace-panel-card" title={t("invoices.worklistTitle")}>
+          <Card className="workspace-panel-card" title={t("invoices.worklistTitle")} data-testid="invoice-worklist-card">
             {selectedTenantId ? (
               actionableWorklist.length ? (
                 <div className="collection-queue">
@@ -1409,7 +1455,176 @@ export function InvoicesPage(): ReactElement {
             )}
           </Card>
 
-          <Card className="workspace-panel-card" title={t("invoices.activityTitle")}>
+          <Card
+            className="workspace-panel-card"
+            title={t("invoices.returnCaseQueueTitle")}
+            data-testid="invoice-return-case-queue-card"
+          >
+            {selectedTenantId ? (
+              returnCaseQueue.length ? (
+                <>
+                  <Paragraph type="secondary" style={{ marginTop: 0 }}>
+                    {t("invoices.returnCaseQueueSummary", {
+                      open: openReturnCaseCount,
+                      warehousePending: warehousePendingReturnCaseCount,
+                      financePending: financePendingReturnCaseCount,
+                      closed: closedReturnCaseCount,
+                      settled: settledReturnCaseCount,
+                    })}
+                  </Paragraph>
+
+                  <div className="record-stack">
+                    {returnCaseQueue.map((authorization) => {
+                      const linkedInvoice = invoiceLookupById.get(authorization.invoiceId) ?? null;
+                      const linkedOrder = linkedInvoice
+                        ? orderLookupById.get(linkedInvoice.orderId) ?? null
+                        : null;
+                      const remainingQueueReceiptQuantity = linkedInvoice
+                        ? Math.max(
+                            linkedInvoice.returnAuthorizationRequestedQuantity -
+                              linkedInvoice.returnAuthorizationReceivedQuantity,
+                            0,
+                          )
+                        : 0;
+                      const remainingQueueCreditQuantity = linkedInvoice
+                        ? Math.max(
+                            (linkedOrder?.quantity ?? linkedInvoice.creditedQuantity) -
+                              linkedInvoice.creditedQuantity,
+                            0,
+                          )
+                        : 0;
+
+                      return (
+                        <div
+                          className="record-row"
+                          key={authorization.id}
+                          data-testid={`invoice-return-case-row-${authorization.invoiceNumber}`}
+                        >
+                          <DeploymentUnitOutlined className="record-icon" />
+                          <div className="record-content">
+                            <strong>{authorization.invoiceNumber}</strong>
+                            <div className="record-detail">
+                              <InboxOutlined /> {authorization.orderNumber}
+                            </div>
+                            {linkedInvoice ? (
+                              <div className="record-detail">
+                                <UserOutlined /> {linkedInvoice.customerName}
+                              </div>
+                            ) : null}
+                            <div className="record-detail">
+                              <AppstoreOutlined /> {authorization.productCategoryName} - {authorization.productName} (
+                              {authorization.productSku})
+                            </div>
+                            <div className="record-detail">
+                              <DeploymentUnitOutlined /> {t("invoices.returnAuthorizationLabel")}{" "}
+                              {authorization.quantityReceived}/{authorization.quantityAuthorized}
+                            </div>
+                            <div className="record-detail">
+                              {t("invoices.returnAuthorizationCreditedLabel")}{" "}
+                              {authorization.quantityCredited}/{authorization.quantityAuthorized}
+                            </div>
+                            <div className="record-detail">
+                              {t("invoices.returnAuthorizationAuthorizedAtLabel")}{" "}
+                              {formatTimestamp(authorization.authorizedAt)}
+                            </div>
+                            {authorization.closedAt ? (
+                              <div className="record-detail">
+                                {t("invoices.returnAuthorizationClosedAtLabel")}{" "}
+                                {formatTimestamp(authorization.closedAt)}
+                              </div>
+                            ) : null}
+                            {authorization.note ? (
+                              <div className="record-detail">
+                                {t("invoices.returnAuthorizationNoteLabel")} {authorization.note}
+                              </div>
+                            ) : null}
+                            {linkedInvoice?.creditNote ? (
+                              <div className="record-detail">
+                                {t("invoices.creditNoteLabel")} {linkedInvoice.creditNote}
+                              </div>
+                            ) : null}
+                            {authorization.closeNote ? (
+                              <div className="record-detail">
+                                {t("invoices.returnAuthorizationCloseNoteLabel")} {authorization.closeNote}
+                              </div>
+                            ) : null}
+                            <div className="record-tag-stack">
+                              <Tag color={getReturnAuthorizationStatusColor(authorization.status)}>
+                                {getReturnAuthorizationStatusLabel(authorization.status, t)}
+                              </Tag>
+                              {linkedInvoice ? (
+                                <Tag color={getCollectionStatusColor(linkedInvoice.collectionStatus)}>
+                                  {getCollectionStatusLabel(linkedInvoice, t)}
+                                </Tag>
+                              ) : null}
+                            </div>
+
+                            {canIssueInvoices &&
+                            linkedInvoice &&
+                            linkedInvoice.status !== "void" &&
+                            linkedInvoice.openReturnAuthorizationId === authorization.id &&
+                            remainingQueueReceiptQuantity > 0 ? (
+                              <div className="record-actions">
+                                <Button
+                                  size="small"
+                                  icon={<InboxOutlined />}
+                                  loading={isBusy}
+                                  data-testid="invoice-return-case-receipt-button"
+                                  onClick={() => openReturnReceiptModal(linkedInvoice)}
+                                >
+                                  {t("invoices.returnReceiptAction")}
+                                </Button>
+                              </div>
+                            ) : null}
+
+                            {canIssueInvoices &&
+                            linkedInvoice &&
+                            linkedInvoice.status !== "void" &&
+                            linkedInvoice.openReturnAuthorizationId === authorization.id ? (
+                              <div className="record-actions">
+                                <Button
+                                  size="small"
+                                  icon={<StopOutlined />}
+                                  loading={isBusy}
+                                  data-testid="invoice-return-case-close-button"
+                                  onClick={() => openReturnAuthorizationCloseModal(linkedInvoice)}
+                                >
+                                  {t("invoices.returnAuthorizationCloseAction")}
+                                </Button>
+                              </div>
+                            ) : null}
+
+                            {canIssueInvoices &&
+                            linkedInvoice &&
+                            (linkedInvoice.status === "paid" || linkedInvoice.status === "partially_credited") &&
+                            remainingQueueCreditQuantity > 0 ? (
+                              <div className="record-actions">
+                                <Button
+                                  size="small"
+                                  icon={<RollbackOutlined />}
+                                  loading={isBusy}
+                                  data-testid="invoice-return-case-credit-button"
+                                  onClick={() => openCreditInvoiceModal(linkedInvoice)}
+                                >
+                                  {t("invoices.creditAction")}
+                                </Button>
+                              </div>
+                            ) : null}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              ) : (
+                <Empty description={t("invoices.returnCaseQueueEmpty")} />
+              )
+            ) : (
+              <Empty description={t("invoices.emptyNoTenant")} />
+            )}
+          </Card>
+
+          <Card className="workspace-panel-card" title={t("invoices.activityTitle")} data-testid="invoice-activity-card">
             {selectedTenantId ? (
               visibleCollectionActivities.length ? (
                 <div className="activity-feed">

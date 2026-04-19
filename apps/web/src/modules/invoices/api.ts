@@ -7,6 +7,7 @@ import type {
   CreateInvoicePaymentInput,
   CreateInvoiceReturnAuthorizationInput,
   InvoiceCollectionActivityRecord,
+  InvoiceReturnAuthorizationRecord,
   InvoiceRecord,
   RecordInvoiceReturnReceiptInput,
   ReopenInvoiceInput,
@@ -23,6 +24,7 @@ import {
   createInvoicePayment,
   createInvoiceReturnAuthorization,
   listInvoiceCollectionActivities,
+  listInvoiceReturnAuthorizations,
   listInvoices,
   recordInvoiceReturnReceipt,
   reopenInvoice,
@@ -39,6 +41,12 @@ export async function loadInvoiceCollectionActivities(
   tenantId: string,
 ): Promise<InvoiceCollectionActivityRecord[]> {
   return listInvoiceCollectionActivities(tenantId);
+}
+
+export async function loadInvoiceReturnAuthorizationRecords(
+  tenantId: string,
+): Promise<InvoiceReturnAuthorizationRecord[]> {
+  return listInvoiceReturnAuthorizations(tenantId);
 }
 
 export async function submitInvoiceIssue(

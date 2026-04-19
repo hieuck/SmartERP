@@ -30,6 +30,7 @@ import type {
   ImportOnboardingInput,
   ImportOnboardingResult,
   InvoiceCollectionActivityRecord,
+  InvoiceReturnAuthorizationRecord,
   InvoiceRecord,
   InventoryRecord,
   LoginInput,
@@ -76,6 +77,7 @@ export type WorkspaceContextValue = {
   suppliers: SupplierRecord[];
   customerStatements: CustomerStatementRecord[];
   collectionActivities: InvoiceCollectionActivityRecord[];
+  invoiceReturnAuthorizations: InvoiceReturnAuthorizationRecord[];
   productCategories: ProductCategoryRecord[];
   products: ProductRecord[];
   inventories: InventoryRecord[];

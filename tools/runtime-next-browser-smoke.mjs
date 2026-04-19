@@ -675,6 +675,7 @@ async function main() {
   let invoiceCreditReceivedReturnGuardVerified = false;
   let invoiceReturnAuthorizationVerified = false;
   let invoiceReturnAuthorizationAuditVerified = false;
+  let invoiceReturnCaseQueueVerified = false;
   let invoiceReturnCaseCloseVerified = false;
   let invoiceReturnCaseCloseAuditVerified = false;
   let invoiceReturnCaseSettledVerified = false;
@@ -1907,11 +1908,11 @@ async function main() {
 
     await openSection(page, sidebarIndexes.invoices, "/dashboard/invoices");
     await waitForTenantContext(page, tenantName);
-    const issueInvoiceCard = page.locator(".page-column-stack .ant-card").nth(0);
-    const paymentCard = page.locator(".page-column-stack .ant-card").nth(1);
-    const followUpCard = page.locator(".page-column-stack .ant-card").nth(2);
-    const worklistCard = page.locator(".page-column-stack .ant-card").nth(3);
-    const activityCard = page.locator(".page-column-stack .ant-card").nth(4);
+    const issueInvoiceCard = page.getByTestId("invoice-issue-card");
+    const paymentCard = page.getByTestId("invoice-payment-card");
+    const followUpCard = page.getByTestId("invoice-follow-up-card");
+    const worklistCard = page.getByTestId("invoice-worklist-card");
+    const activityCard = page.getByTestId("invoice-activity-card");
     await waitForFormReady(issueInvoiceCard);
     await selectOption(page, issueInvoiceCard.getByRole("combobox", { name: /Đơn hàng/ }), orderNumber);
     await fillField(issueInvoiceCard, "#issueDate", firstIssueDateInput);
@@ -3724,8 +3725,34 @@ async function main() {
       (await creditedInvoiceRow.getByText(/Phiếu nhận trả:\s*2|Return receipts:\s*2/, { exact: false }).count()) === 0,
       "Credit note restock should not create a second return receipt when goods were already received.",
     );
+    const returnCaseQueueCard = page.getByTestId("invoice-return-case-queue-card");
+    const closedReturnCaseRow = returnCaseQueueCard.locator(
+      `[data-testid="invoice-return-case-row-${secondInvoiceNumber}"]`,
+    );
+    const settledReturnCaseRow = returnCaseQueueCard.locator(
+      `[data-testid="invoice-return-case-row-${creditedInvoiceNumber}"]`,
+    );
+    await closedReturnCaseRow.waitFor({ timeout: 15000 });
+    await closedReturnCaseRow.getByText("Đã đóng", { exact: false }).first().waitFor({ timeout: 15000 });
+    await closedReturnCaseRow.getByText(manualReturnCloseNote, { exact: false }).first().waitFor({
+      timeout: 15000,
+    });
+    await settledReturnCaseRow.waitFor({ timeout: 15000 });
+    await settledReturnCaseRow.getByText("Đã tất toán", { exact: false }).first().waitFor({
+      timeout: 15000,
+    });
+    await settledReturnCaseRow.getByText(invoiceCreditNote, { exact: false }).first().waitFor({
+      timeout: 15000,
+    });
+    await returnCaseQueueCard
+      .getByText("1 case đã đóng", { exact: false })
+      .waitFor({ timeout: 15000 });
+    await returnCaseQueueCard
+      .getByText("1 case đã tất toán", { exact: false })
+      .waitFor({ timeout: 15000 });
     invoiceCreditVerified = true;
     invoiceReturnCaseSettledVerified = true;
+    invoiceReturnCaseQueueVerified = true;
 
     const creditedInvoicePaymentResponse = await page.evaluate(
       async ({ targetInvoiceNumber, amount, sessionKey, tenantKey }) => {
@@ -5268,6 +5295,7 @@ async function main() {
       invoiceCreditReceivedReturnGuardVerified,
       invoiceReturnAuthorizationVerified,
       invoiceReturnAuthorizationAuditVerified,
+      invoiceReturnCaseQueueVerified,
       invoiceReturnCaseCloseVerified,
       invoiceReturnCaseCloseAuditVerified,
       invoiceReturnCaseSettledVerified,

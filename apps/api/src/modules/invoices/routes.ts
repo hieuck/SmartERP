@@ -8,6 +8,7 @@ import {
   handleCreateInvoicePayment,
   handleCreateInvoiceReturnAuthorization,
   handleListInvoiceCollectionActivities,
+  handleListInvoiceReturnAuthorizations,
   handleListInvoices,
   handleRecordInvoiceReturnReceipt,
   handleReopenInvoice,
@@ -32,6 +33,16 @@ export const invoiceApiRoutes: ApiRoute[] = [
       "invoices",
       withTenantQuery(({ response }, tenantId) =>
         handleListInvoiceCollectionActivities(response, tenantId),
+      ),
+    ),
+  },
+  {
+    method: "GET",
+    path: "/api/invoices/return-authorizations",
+    handle: withModuleAccess(
+      "invoices",
+      withTenantQuery(({ response }, tenantId) =>
+        handleListInvoiceReturnAuthorizations(response, tenantId),
       ),
     ),
   },

@@ -4,6 +4,7 @@ import type {
   CustomerRecord,
   FoundationModule,
   InvoiceCollectionActivityRecord,
+  InvoiceReturnAuthorizationRecord,
   InvoiceRecord,
   InventoryRecord,
   OrderRecord,
@@ -18,6 +19,7 @@ import { loadCustomers, loadCustomerStatements } from "../modules/customers/api"
 import { loadInventory } from "../modules/inventory/api";
 import {
   loadInvoiceCollectionActivities,
+  loadInvoiceReturnAuthorizationRecords,
   loadInvoices,
 } from "../modules/invoices/api";
 import { loadOrders } from "../modules/orders/api";
@@ -31,6 +33,7 @@ export type TenantWorkspaceData = {
   suppliers: SupplierRecord[];
   customerStatements: CustomerStatementRecord[];
   collectionActivities: InvoiceCollectionActivityRecord[];
+  invoiceReturnAuthorizations: InvoiceReturnAuthorizationRecord[];
   productCategories: ProductCategoryRecord[];
   products: ProductRecord[];
   inventories: InventoryRecord[];
@@ -46,6 +49,7 @@ export function createEmptyTenantWorkspaceData(): TenantWorkspaceData {
     suppliers: [],
     customerStatements: [],
     collectionActivities: [],
+    invoiceReturnAuthorizations: [],
     productCategories: [],
     products: [],
     inventories: [],
@@ -65,6 +69,7 @@ export async function loadTenantWorkspaceData(
     suppliers,
     customerStatements,
     collectionActivities,
+    invoiceReturnAuthorizations,
     productCategories,
     products,
     inventories,
@@ -77,6 +82,7 @@ export async function loadTenantWorkspaceData(
     canAccessModule("suppliers") ? loadSuppliers(tenantId) : Promise.resolve([]),
     canAccessModule("customers") ? loadCustomerStatements(tenantId) : Promise.resolve([]),
     canAccessModule("invoices") ? loadInvoiceCollectionActivities(tenantId) : Promise.resolve([]),
+    canAccessModule("invoices") ? loadInvoiceReturnAuthorizationRecords(tenantId) : Promise.resolve([]),
     canAccessModule("products") ? loadProductCategories(tenantId) : Promise.resolve([]),
     canAccessModule("products") ? loadProducts(tenantId) : Promise.resolve([]),
     canAccessModule("inventory") ? loadInventory(tenantId) : Promise.resolve([]),
@@ -91,6 +97,7 @@ export async function loadTenantWorkspaceData(
     suppliers,
     customerStatements,
     collectionActivities,
+    invoiceReturnAuthorizations,
     productCategories,
     products,
     inventories,

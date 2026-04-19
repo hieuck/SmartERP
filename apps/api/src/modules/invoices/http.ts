@@ -8,6 +8,7 @@ import type {
   CreateInvoicePaymentInput,
   CreateInvoiceReturnAuthorizationInput,
   RecordInvoiceReturnReceiptInput,
+  InvoiceReturnAuthorizationRecord,
   ReopenInvoiceInput,
   ResolveInvoiceCollectionActionInput,
   Session,
@@ -25,6 +26,7 @@ import {
   createInvoiceReturnAuthorization,
   hasTenant,
   listInvoiceCollectionActivities,
+  listInvoiceReturnAuthorizations,
   listInvoices,
   recordInvoiceReturnReceipt,
   reopenInvoice,
@@ -65,6 +67,18 @@ export function handleListInvoiceCollectionActivities(
   }
 
   sendJson(response, 200, { items: listInvoiceCollectionActivities(tenantId) });
+}
+
+export function handleListInvoiceReturnAuthorizations(
+  response: ServerResponse,
+  tenantId: string,
+): void {
+  if (!hasTenant(tenantId)) {
+    badRequest(response, "The selected tenant does not exist.");
+    return;
+  }
+
+  sendJson(response, 200, { items: listInvoiceReturnAuthorizations(tenantId) satisfies InvoiceReturnAuthorizationRecord[] });
 }
 
 export async function handleCreateInvoice(

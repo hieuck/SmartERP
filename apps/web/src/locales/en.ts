@@ -513,6 +513,12 @@ const en = {
     collectionNotePlaceholder: "Buyer confirmed transfer on Friday afternoon.",
     worklistTitle: "Collection Worklist",
     worklistEmpty: "No collection task is waiting right now.",
+    returnCaseQueueTitle: "Return Case Queue",
+    returnCaseQueueEmpty: "No return cases are being tracked for this tenant yet.",
+    returnCaseQueueSummary:
+      "{{open}} open, {{warehousePending}} waiting on warehouse, {{financePending}} waiting on finance, {{closed}} closed, {{settled}} settled",
+    returnAuthorizationAuthorizedAtLabel: "Authorized at:",
+    returnAuthorizationClosedAtLabel: "Closed at:",
     resolveAction: "Mark Action Done",
     saveFollowUp: "Save Follow-up",
     promisedPaymentDateLabel: "Promised date:",

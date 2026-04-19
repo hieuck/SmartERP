@@ -82,6 +82,12 @@ export const localeOverrides: Record<"vi" | "en", TranslationTree> = {
       returnAuthorizationCloseSubmit: "Đóng case trả hàng",
       returnReceiptsLabel: "Phiếu nhận trả:",
       lastReturnReceiptLabel: "Nhận trả gần nhất:",
+      returnCaseQueueTitle: "Hàng đợi case trả hàng",
+      returnCaseQueueEmpty: "Chưa có case trả hàng nào được theo dõi cho tenant này.",
+      returnCaseQueueSummary:
+        "{{open}} case đang mở, {{warehousePending}} case chờ kho, {{financePending}} case chờ tài chính, {{closed}} case đã đóng, {{settled}} case đã tất toán",
+      returnAuthorizationAuthorizedAtLabel: "Mở case lúc:",
+      returnAuthorizationClosedAtLabel: "Đóng case lúc:",
       returnReceiptAction: "Ghi phiếu nhận trả",
       returnReceiptTitle: "Nhận hàng trả cho {{number}}",
       returnReceiptQuantity: "Số lượng nhận trả",

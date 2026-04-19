@@ -5,6 +5,7 @@ import type {
   CustomerRecord,
   CustomerStatementRecord,
   InvoiceCollectionActivityRecord,
+  InvoiceReturnAuthorizationRecord,
   InvoiceRecord,
   InventoryRecord,
   OrderRecord,
@@ -25,6 +26,7 @@ export type WorkspaceTenantState = {
   suppliers: SupplierRecord[];
   customerStatements: CustomerStatementRecord[];
   collectionActivities: InvoiceCollectionActivityRecord[];
+  invoiceReturnAuthorizations: InvoiceReturnAuthorizationRecord[];
   productCategories: ProductCategoryRecord[];
   products: ProductRecord[];
   inventories: InventoryRecord[];
@@ -41,6 +43,7 @@ export function useWorkspaceTenantState(): WorkspaceTenantState {
   const [suppliers, setSuppliers] = useState<SupplierRecord[]>([]);
   const [customerStatements, setCustomerStatements] = useState<CustomerStatementRecord[]>([]);
   const [collectionActivities, setCollectionActivities] = useState<InvoiceCollectionActivityRecord[]>([]);
+  const [invoiceReturnAuthorizations, setInvoiceReturnAuthorizations] = useState<InvoiceReturnAuthorizationRecord[]>([]);
   const [productCategories, setProductCategories] = useState<ProductCategoryRecord[]>([]);
   const [products, setProducts] = useState<ProductRecord[]>([]);
   const [inventories, setInventories] = useState<InventoryRecord[]>([]);
@@ -54,6 +57,7 @@ export function useWorkspaceTenantState(): WorkspaceTenantState {
     setSuppliers(data.suppliers);
     setCustomerStatements(data.customerStatements);
     setCollectionActivities(data.collectionActivities);
+    setInvoiceReturnAuthorizations(data.invoiceReturnAuthorizations);
     setProductCategories(data.productCategories);
     setProducts(data.products);
     setInventories(data.inventories);
@@ -72,6 +76,7 @@ export function useWorkspaceTenantState(): WorkspaceTenantState {
     suppliers,
     customerStatements,
     collectionActivities,
+    invoiceReturnAuthorizations,
     productCategories,
     products,
     inventories,

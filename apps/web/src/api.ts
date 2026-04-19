@@ -38,6 +38,7 @@ import type {
   ImportOnboardingInput,
   ImportOnboardingResult,
   InvoiceCollectionActivityRecord,
+  InvoiceReturnAuthorizationRecord,
   CustomerStatementRecord,
   CustomerRecord,
   FoundationSnapshot,
@@ -425,6 +426,15 @@ export async function receivePurchaseOrder(
 export async function listInvoices(tenantId: string): Promise<InvoiceRecord[]> {
   const payload = await request<{ items: InvoiceRecord[] }>(
     `/api/invoices?tenantId=${encodeURIComponent(tenantId)}`,
+  );
+  return payload.items;
+}
+
+export async function listInvoiceReturnAuthorizations(
+  tenantId: string,
+): Promise<InvoiceReturnAuthorizationRecord[]> {
+  const payload = await request<{ items: InvoiceReturnAuthorizationRecord[] }>(
+    `/api/invoices/return-authorizations?tenantId=${encodeURIComponent(tenantId)}`,
   );
   return payload.items;
 }
