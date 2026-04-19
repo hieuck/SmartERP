@@ -7,6 +7,7 @@ import type {
   CreateInvoiceInput,
   CreateInvoicePaymentInput,
   CreateInvoiceReturnAuthorizationInput,
+  ReopenInvoiceReturnAuthorizationInput,
   RecordInvoiceReturnReceiptInput,
   InvoiceReturnAuthorizationRecord,
   ReopenInvoiceInput,
@@ -29,6 +30,7 @@ import {
   listInvoiceReturnAuthorizations,
   listInvoices,
   recordInvoiceReturnReceipt,
+  reopenInvoiceReturnAuthorization,
   reopenInvoice,
   resolveInvoiceCollectionAction,
   runWithSession,
@@ -541,6 +543,55 @@ export async function handleCloseInvoiceReturnAuthorization(
         "There is no open return case to close for this invoice.",
         "Return case close note is required before closing the return case.",
         "Return case close note must be 240 characters or fewer.",
+      ].includes(error.message)
+    ) {
+      badRequest(response, error.message);
+      return;
+    }
+
+    throw error;
+  }
+}
+
+export async function handleReopenInvoiceReturnAuthorization(
+  request: IncomingMessage,
+  response: ServerResponse,
+  requestSession: Session | null,
+): Promise<void> {
+  const input = await readJson<ReopenInvoiceReturnAuthorizationInput>(request);
+
+  if (!input.tenantId?.trim()) {
+    badRequest(response, "tenantId is required.");
+    return;
+  }
+
+  if (!hasTenant(input.tenantId)) {
+    badRequest(response, "The selected tenant does not exist.");
+    return;
+  }
+
+  if (!input.invoiceId?.trim()) {
+    badRequest(response, "invoiceId is required.");
+    return;
+  }
+
+  if (input.reopenNote !== null && input.reopenNote !== undefined && typeof input.reopenNote !== "string") {
+    badRequest(response, "Return case reopen note must be 240 characters or fewer.");
+    return;
+  }
+
+  try {
+    const invoice = runWithSession(requestSession, () => reopenInvoiceReturnAuthorization(input));
+    sendJson(response, 200, { item: invoice });
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      [
+        "The selected invoice does not exist.",
+        "The selected invoice has been voided.",
+        "There is no closed return case to reopen for this invoice.",
+        "Return case reopen note is required before reopening the return case.",
+        "Return case reopen note must be 240 characters or fewer.",
       ].includes(error.message)
     ) {
       badRequest(response, error.message);

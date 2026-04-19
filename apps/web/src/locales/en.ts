@@ -456,6 +456,14 @@ const en = {
     returnAuthorizationCloseNoteGenericHint: "Required close-out note for the return case.",
     returnAuthorizationCloseNotePlaceholder: "Customer withdrew the return request after validation.",
     returnAuthorizationCloseSubmit: "Close Return Case",
+    returnAuthorizationReopenAction: "Reopen Return Case",
+    returnAuthorizationReopenTitle: "Reopen return case for {{number}}",
+    returnAuthorizationReopenNote: "Return Case Reopen Note",
+    returnAuthorizationReopenNoteHint:
+      "Required to explain why the closed return case for {{number}} is being reopened for warehouse or finance follow-up.",
+    returnAuthorizationReopenNoteGenericHint: "Required note before reopening a closed return case.",
+    returnAuthorizationReopenNotePlaceholder: "Customer resumed the return after correcting the prior close-out decision.",
+    returnAuthorizationReopenSubmit: "Reopen Return Case",
     returnReceiptsLabel: "Return receipts:",
     lastReturnReceiptLabel: "Last return receipt:",
     returnReceiptAction: "Record Return Receipt",
@@ -622,6 +630,7 @@ const en = {
     auditActionInvoiceCredited: "Invoice credited",
     auditActionInvoiceReturnAuthorized: "Invoice return authorized",
     auditActionInvoiceReturnClosed: "Invoice return case closed",
+    auditActionInvoiceReturnReopened: "Invoice return case reopened",
     auditActionInvoiceReturnSettled: "Invoice return settled",
     auditActionInvoiceReturnReceived: "Invoice return received",
     auditActionInvoiceReopened: "Invoice reopened",
@@ -1124,6 +1133,7 @@ Object.assign(en.errors, {
     "Credit quantity cannot exceed the received return quantity for the open return case.",
   invoiceReturnAuthorizationFailed: "Invoice return authorization failed.",
   invoiceReturnAuthorizationCloseFailed: "Invoice return case close failed.",
+  invoiceReturnAuthorizationReopenFailed: "Invoice return case reopen failed.",
   invoiceReturnAuthorizationNoteRequired:
     "A business note is required before receiving goods back from an invoice.",
   invalidInvoiceReturnAuthorizationNote: "Return authorization note must be 240 characters or fewer.",
@@ -1132,9 +1142,13 @@ Object.assign(en.errors, {
     "Return authorization quantity cannot exceed the remaining unreturned quantity.",
   invoiceReturnAuthorizationAlreadyOpen: "A return case is already open for this invoice.",
   invoiceReturnAuthorizationCloseMissing: "There is no open return case to close for this invoice.",
+  invoiceReturnAuthorizationReopenMissing: "There is no closed return case to reopen for this invoice.",
   invoiceReturnAuthorizationCloseNoteRequired:
     "A close-out note is required before closing the return case.",
   invalidInvoiceReturnAuthorizationCloseNote: "Return case close note must be 240 characters or fewer.",
+  invoiceReturnAuthorizationReopenNoteRequired:
+    "A reopen note is required before reopening the return case.",
+  invalidInvoiceReturnAuthorizationReopenNote: "Return case reopen note must be 240 characters or fewer.",
   invoiceReturnAuthorizationRequired:
     "Open a return case before posting a warehouse return receipt for this invoice.",
   invoiceReturnReceiptFailed: "Invoice return receipt failed.",

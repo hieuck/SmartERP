@@ -55,6 +55,7 @@ const errorKeyByMessage: Record<string, string> = {
   "Invoice credit failed.": "errors.invoiceCreditFailed",
   "Invoice return authorization failed.": "errors.invoiceReturnAuthorizationFailed",
   "Invoice return case close failed.": "errors.invoiceReturnAuthorizationCloseFailed",
+  "Invoice return case reopen failed.": "errors.invoiceReturnAuthorizationReopenFailed",
   "Invoice return receipt failed.": "errors.invoiceReturnReceiptFailed",
   "Invoice payment failed.": "errors.createInvoicePaymentFailed",
   "Invoice void failed.": "errors.voidInvoiceFailed",
@@ -114,10 +115,16 @@ const errorKeyByMessage: Record<string, string> = {
     "errors.invoiceReturnAuthorizationAlreadyOpen",
   "There is no open return case to close for this invoice.":
     "errors.invoiceReturnAuthorizationCloseMissing",
+  "There is no closed return case to reopen for this invoice.":
+    "errors.invoiceReturnAuthorizationReopenMissing",
   "Return case close note is required before closing the return case.":
     "errors.invoiceReturnAuthorizationCloseNoteRequired",
+  "Return case reopen note is required before reopening the return case.":
+    "errors.invoiceReturnAuthorizationReopenNoteRequired",
   "Return case close note must be 240 characters or fewer.":
     "errors.invalidInvoiceReturnAuthorizationCloseNote",
+  "Return case reopen note must be 240 characters or fewer.":
+    "errors.invalidInvoiceReturnAuthorizationReopenNote",
   "An open return authorization is required before receiving goods back from an invoice.":
     "errors.invoiceReturnAuthorizationRequired",
   "Returned quantity must be a positive integer.": "errors.invalidInvoiceReturnReceiptQuantity",

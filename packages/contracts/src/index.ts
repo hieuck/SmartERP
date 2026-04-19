@@ -764,6 +764,7 @@ export type AuditActionType =
   | "invoice_amended"
   | "invoice_return_authorized"
   | "invoice_return_closed"
+  | "invoice_return_reopened"
   | "invoice_return_settled"
   | "invoice_credited"
   | "invoice_return_received"
@@ -940,6 +941,12 @@ export type CloseInvoiceReturnAuthorizationInput = {
   tenantId: string;
   invoiceId: string;
   closeNote: string | null;
+};
+
+export type ReopenInvoiceReturnAuthorizationInput = {
+  tenantId: string;
+  invoiceId: string;
+  reopenNote: string | null;
 };
 
 export type CreateInvoicePaymentInput = {

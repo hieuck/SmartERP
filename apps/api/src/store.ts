@@ -19,6 +19,7 @@ import {
   type CloseInvoiceReturnAuthorizationInput,
   type CloseOrderInput,
   type ClosePurchaseOrderInput,
+  type ReopenInvoiceReturnAuthorizationInput,
   type ReopenOrderInput,
   type ReopenPurchaseOrderInput,
   createDemoSession,
@@ -1364,6 +1365,33 @@ const getLatestOpenInvoiceReturnAuthorizationStatement = db.prepare(`
   FROM invoice_return_authorizations
   WHERE tenant_id = ? AND invoice_id = ? AND status NOT IN ('settled', 'closed')
   ORDER BY datetime(authorized_at) DESC, rowid DESC
+  LIMIT 1
+`);
+
+const getLatestClosedInvoiceReturnAuthorizationStatement = db.prepare(`
+  SELECT
+    id,
+    tenant_id,
+    invoice_id,
+    invoice_number,
+    order_id,
+    order_number,
+    product_id,
+    product_category_id,
+    product_category_name,
+    product_sku,
+    product_name,
+    quantity_authorized,
+    quantity_received,
+    quantity_credited,
+    status,
+    note,
+    close_note,
+    authorized_at,
+    closed_at
+  FROM invoice_return_authorizations
+  WHERE tenant_id = ? AND invoice_id = ? AND status = 'closed'
+  ORDER BY datetime(closed_at) DESC, rowid DESC
   LIMIT 1
 `);
 
@@ -3292,6 +3320,19 @@ function normalizeInvoiceReturnAuthorizationCloseNote(input: string | null | und
 
   if (trimmed.length > 240) {
     throw new Error("Return case close note must be 240 characters or fewer.");
+  }
+
+  return trimmed;
+}
+
+function normalizeInvoiceReturnAuthorizationReopenNote(input: string | null | undefined): string | null {
+  const trimmed = input?.trim() ?? "";
+  if (!trimmed) {
+    return null;
+  }
+
+  if (trimmed.length > 240) {
+    throw new Error("Return case reopen note must be 240 characters or fewer.");
   }
 
   return trimmed;
@@ -7707,6 +7748,76 @@ export function closeInvoiceReturnAuthorization(
       note: closeNote,
     },
     createdAt: closedAt,
+  });
+
+  const refreshedInvoice = getInvoiceByIdStatement.get(input.tenantId, input.invoiceId) as InvoiceRow | undefined;
+  if (!refreshedInvoice) {
+    throw new Error("The selected invoice does not exist.");
+  }
+
+  return mapInvoice(refreshedInvoice);
+}
+
+export function reopenInvoiceReturnAuthorization(
+  input: ReopenInvoiceReturnAuthorizationInput,
+): InvoiceRecord {
+  const invoice = getInvoiceByIdStatement.get(input.tenantId, input.invoiceId) as InvoiceRow | undefined;
+  if (!invoice) {
+    throw new Error("The selected invoice does not exist.");
+  }
+
+  if (invoice.status === "void") {
+    throw new Error("The selected invoice has been voided.");
+  }
+
+  const reopenNote = normalizeInvoiceReturnAuthorizationReopenNote(input.reopenNote);
+  if (!reopenNote) {
+    throw new Error("Return case reopen note is required before reopening the return case.");
+  }
+
+  const authorization = getLatestClosedInvoiceReturnAuthorizationStatement.get(
+    input.tenantId,
+    input.invoiceId,
+  ) as InvoiceReturnAuthorizationRow | undefined;
+  if (!authorization) {
+    throw new Error("There is no closed return case to reopen for this invoice.");
+  }
+
+  const reopenedAt = timestamp();
+  const reopenedStatus = deriveInvoiceReturnAuthorizationStatus({
+    quantityAuthorized: authorization.quantity_authorized,
+    quantityReceived: authorization.quantity_received,
+    quantityCredited: authorization.quantity_credited,
+  });
+
+  updateInvoiceReturnAuthorizationStateStatement.run(
+    authorization.quantity_received,
+    authorization.quantity_credited,
+    reopenedStatus,
+    null,
+    null,
+    input.tenantId,
+    authorization.id,
+  );
+
+  recordAuditLog({
+    tenantId: input.tenantId,
+    entityType: "invoice",
+    entityId: invoice.id,
+    entityNumber: invoice.invoice_number,
+    actionType: "invoice_return_reopened",
+    summary: `Reopened return case for ${invoice.invoice_number}`,
+    metadata: {
+      quantity: authorization.quantity_authorized,
+      returnedQuantity: authorization.quantity_received,
+      creditedQuantity: authorization.quantity_credited,
+      productCategoryId: authorization.product_category_id,
+      productCategoryName: authorization.product_category_name,
+      productSku: authorization.product_sku,
+      productName: authorization.product_name,
+      note: reopenNote,
+    },
+    createdAt: reopenedAt,
   });
 
   const refreshedInvoice = getInvoiceByIdStatement.get(input.tenantId, input.invoiceId) as InvoiceRow | undefined;

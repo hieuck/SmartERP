@@ -32,6 +32,7 @@ import type {
   InvoiceReturnAuthorizationActionRequired,
   InvoiceReturnAuthorizationRecord,
   RecordInvoiceReturnReceiptInput,
+  ReopenInvoiceReturnAuthorizationInput,
   ReopenInvoiceInput,
   UpdateInvoiceCollectionInput,
   VoidInvoiceInput,
@@ -49,6 +50,7 @@ type AmendInvoiceFormShape = Omit<AmendInvoiceInput, "tenantId">;
 type CreditInvoiceFormShape = Omit<CreditInvoiceInput, "tenantId"> & { creditMode: CreditMode };
 type ReturnAuthorizationFormShape = Omit<CreateInvoiceReturnAuthorizationInput, "tenantId">;
 type ReturnAuthorizationCloseFormShape = Omit<CloseInvoiceReturnAuthorizationInput, "tenantId">;
+type ReturnAuthorizationReopenFormShape = Omit<ReopenInvoiceReturnAuthorizationInput, "tenantId">;
 type ReturnReceiptFormShape = Omit<RecordInvoiceReturnReceiptInput, "tenantId">;
 type InvoicePaymentFormShape = Omit<CreateInvoicePaymentInput, "tenantId">;
 type InvoiceCollectionFormShape = Omit<UpdateInvoiceCollectionInput, "tenantId">;
@@ -404,6 +406,7 @@ export function InvoicesPage(): ReactElement {
     creditInvoiceRecord,
     createInvoiceReturnAuthorizationRecord,
     closeInvoiceReturnAuthorizationRecord,
+    reopenInvoiceReturnAuthorizationRecord,
     createInvoicePaymentRecord,
     createInvoiceRecord,
     invoiceReturnAuthorizations,
@@ -429,6 +432,7 @@ export function InvoicesPage(): ReactElement {
   const [creditInvoiceForm] = Form.useForm<CreditInvoiceFormShape>();
   const [returnAuthorizationForm] = Form.useForm<ReturnAuthorizationFormShape>();
   const [returnAuthorizationCloseForm] = Form.useForm<ReturnAuthorizationCloseFormShape>();
+  const [returnAuthorizationReopenForm] = Form.useForm<ReturnAuthorizationReopenFormShape>();
   const [returnReceiptForm] = Form.useForm<ReturnReceiptFormShape>();
   const [paymentForm] = Form.useForm<InvoicePaymentFormShape>();
   const [collectionForm] = Form.useForm<InvoiceCollectionFormShape>();
@@ -436,6 +440,7 @@ export function InvoicesPage(): ReactElement {
   const [invoiceBeingCredited, setInvoiceBeingCredited] = useState<InvoiceRecord | null>(null);
   const [invoiceBeingAuthorizedForReturn, setInvoiceBeingAuthorizedForReturn] = useState<InvoiceRecord | null>(null);
   const [invoiceBeingClosedForReturn, setInvoiceBeingClosedForReturn] = useState<InvoiceRecord | null>(null);
+  const [invoiceBeingReopenedForReturn, setInvoiceBeingReopenedForReturn] = useState<InvoiceRecord | null>(null);
   const [invoiceBeingReturned, setInvoiceBeingReturned] = useState<InvoiceRecord | null>(null);
   const selectedInvoiceOrderId = Form.useWatch("orderId", invoiceForm);
   const selectedInvoiceId = Form.useWatch("invoiceId", paymentForm);
@@ -544,6 +549,7 @@ export function InvoicesPage(): ReactElement {
   const isCreditModalOpen = invoiceBeingCredited !== null;
   const isReturnAuthorizationModalOpen = invoiceBeingAuthorizedForReturn !== null;
   const isReturnAuthorizationCloseModalOpen = invoiceBeingClosedForReturn !== null;
+  const isReturnAuthorizationReopenModalOpen = invoiceBeingReopenedForReturn !== null;
   const isReturnReceiptModalOpen = invoiceBeingReturned !== null;
 
   const onCreateInvoice: FormProps<InvoiceFormShape>["onFinish"] = async (values) => {
@@ -631,6 +637,19 @@ export function InvoicesPage(): ReactElement {
     returnAuthorizationCloseForm.resetFields();
   }
 
+  function openReturnAuthorizationReopenModal(invoice: InvoiceRecord): void {
+    setInvoiceBeingReopenedForReturn(invoice);
+    returnAuthorizationReopenForm.setFieldsValue({
+      invoiceId: invoice.id,
+      reopenNote: "",
+    });
+  }
+
+  function closeReturnAuthorizationReopenModal(): void {
+    setInvoiceBeingReopenedForReturn(null);
+    returnAuthorizationReopenForm.resetFields();
+  }
+
   function openReturnReceiptModal(invoice: InvoiceRecord): void {
     setInvoiceBeingReturned(invoice);
     returnReceiptForm.setFieldsValue({
@@ -703,6 +722,18 @@ export function InvoicesPage(): ReactElement {
         closeNote: values.closeNote,
       });
       closeReturnAuthorizationCloseModal();
+    } catch {
+      // Error state is already surfaced via workspace context.
+    }
+  };
+
+  const onReopenReturnAuthorization: FormProps<ReturnAuthorizationReopenFormShape>["onFinish"] = async (values) => {
+    try {
+      await reopenInvoiceReturnAuthorizationRecord({
+        invoiceId: values.invoiceId,
+        reopenNote: values.reopenNote,
+      });
+      closeReturnAuthorizationReopenModal();
     } catch {
       // Error state is already surfaced via workspace context.
     }
@@ -1048,6 +1079,49 @@ export function InvoicesPage(): ReactElement {
             <Button onClick={closeReturnAuthorizationCloseModal}>{t("common.cancel")}</Button>
             <Button type="primary" htmlType="submit" loading={isBusy}>
               {t("invoices.returnAuthorizationCloseSubmit")}
+            </Button>
+          </div>
+        </Form>
+      </Modal>
+      <Modal
+        open={isReturnAuthorizationReopenModalOpen}
+        title={
+          invoiceBeingReopenedForReturn
+            ? t("invoices.returnAuthorizationReopenTitle", { number: invoiceBeingReopenedForReturn.invoiceNumber })
+            : t("invoices.returnAuthorizationReopenAction")
+        }
+        onCancel={closeReturnAuthorizationReopenModal}
+        footer={null}
+        forceRender
+      >
+        <Form<ReturnAuthorizationReopenFormShape>
+          form={returnAuthorizationReopenForm}
+          layout="vertical"
+          onFinish={onReopenReturnAuthorization}
+        >
+          <Form.Item<ReturnAuthorizationReopenFormShape> name="invoiceId" hidden>
+            <Input />
+          </Form.Item>
+
+          <Form.Item<ReturnAuthorizationReopenFormShape>
+            label={t("invoices.returnAuthorizationReopenNote")}
+            name="reopenNote"
+            rules={[{ required: true }, { max: 240 }]}
+            extra={
+              invoiceBeingReopenedForReturn
+                ? t("invoices.returnAuthorizationReopenNoteHint", {
+                    number: invoiceBeingReopenedForReturn.invoiceNumber,
+                  })
+                : t("invoices.returnAuthorizationReopenNoteGenericHint")
+            }
+          >
+            <TextArea rows={3} maxLength={240} placeholder={t("invoices.returnAuthorizationReopenNotePlaceholder")} />
+          </Form.Item>
+
+          <div className="record-actions">
+            <Button onClick={closeReturnAuthorizationReopenModal}>{t("common.cancel")}</Button>
+            <Button type="primary" htmlType="submit" loading={isBusy}>
+              {t("invoices.returnAuthorizationReopenSubmit")}
             </Button>
           </div>
         </Form>
@@ -1651,6 +1725,23 @@ export function InvoicesPage(): ReactElement {
                             {canIssueInvoices &&
                             linkedInvoice &&
                             linkedInvoice.status !== "void" &&
+                            authorization.status === "closed" ? (
+                              <div className="record-actions">
+                                <Button
+                                  size="small"
+                                  icon={<RollbackOutlined />}
+                                  loading={isBusy}
+                                  data-testid="invoice-return-case-reopen-button"
+                                  onClick={() => openReturnAuthorizationReopenModal(linkedInvoice)}
+                                >
+                                  {t("invoices.returnAuthorizationReopenAction")}
+                                </Button>
+                              </div>
+                            ) : null}
+
+                            {canIssueInvoices &&
+                            linkedInvoice &&
+                            linkedInvoice.status !== "void" &&
                             linkedInvoice.openReturnAuthorizationId === authorization.id ? (
                               <div className="record-actions">
                                 <Button
@@ -2007,6 +2098,23 @@ export function InvoicesPage(): ReactElement {
                         {canIssueInvoices &&
                         invoice.status !== "void" &&
                         !invoice.openReturnAuthorizationId &&
+                        invoice.returnAuthorizationStatus === "closed" ? (
+                          <div className="record-actions">
+                            <Button
+                              size="small"
+                              icon={<RollbackOutlined />}
+                              loading={isBusy}
+                              data-testid="invoice-return-authorization-reopen-button"
+                              onClick={() => openReturnAuthorizationReopenModal(invoice)}
+                            >
+                              {t("invoices.returnAuthorizationReopenAction")}
+                            </Button>
+                          </div>
+                        ) : null}
+                        {canIssueInvoices &&
+                        invoice.status !== "void" &&
+                        !invoice.openReturnAuthorizationId &&
+                        invoice.returnAuthorizationStatus !== "closed" &&
                         remainingInvoiceReturnAuthorizationQuantity > 0 ? (
                           <div className="record-actions">
                             <Button

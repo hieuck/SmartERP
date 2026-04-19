@@ -80,6 +80,7 @@ const reissueAmendmentNote = "Corrected shipping quantity after voiding the prev
 const invoiceCreditNote = "Returned shipment after full settlement and inspection.";
 const manualReturnAuthorizationNote = "Approved customer return after warehouse inspection request.";
 const manualReturnCloseNote = "Customer withdrew the warehouse return request after collections review.";
+const manualReturnReopenNote = "Customer resumed the return after the prior close-out was reversed.";
 const manualReturnReceiptNote = "Warehouse received the returned bottle before finance posted the credit note.";
 const partialInvoiceCreditNote = "Refund one damaged bottle after full settlement.";
 const firstIssueDateInput = buildDateInputFromToday(0);
@@ -238,6 +239,7 @@ function isExpectedNegativePath(response) {
           response.url().endsWith("/api/invoices/payments") ||
           response.url().endsWith("/api/invoices/collections") ||
           response.url().endsWith("/api/invoices/return-authorizations") ||
+          response.url().endsWith("/api/invoices/return-authorizations/reopen") ||
           response.url().endsWith("/api/invoices/return-receipts") ||
           response.url().endsWith("/api/invoices/void") ||
           response.url().endsWith("/api/invoices/reopen")
@@ -680,6 +682,9 @@ async function main() {
   let invoiceReturnCaseActionOwnerVerified = false;
   let invoiceReturnCaseCloseVerified = false;
   let invoiceReturnCaseCloseAuditVerified = false;
+  let invoiceReturnCaseReopenVerified = false;
+  let invoiceReturnCaseReopenGuardVerified = false;
+  let invoiceReturnCaseReopenAuditVerified = false;
   let invoiceReturnCaseSettledVerified = false;
   let invoiceReturnCaseSettlementAuditVerified = false;
   let invoiceReturnReceiptAuthorizationGuardVerified = false;
@@ -3065,7 +3070,114 @@ async function main() {
       state: "detached",
       timeout: 15000,
     });
-    await secondInvoiceRow.locator('[data-testid="invoice-return-authorization-button"]').waitFor({
+    await secondInvoiceRow.locator('[data-testid="invoice-return-authorization-close-button"]').waitFor({
+      state: "detached",
+      timeout: 15000,
+    });
+    await secondInvoiceRow.locator('[data-testid="invoice-return-authorization-reopen-button"]').waitFor({
+      timeout: 15000,
+    });
+
+    await secondInvoiceRow.locator('[data-testid="invoice-return-authorization-reopen-button"]').click();
+    const secondReturnReopenModal = page.getByRole("dialog").filter({ hasText: "Mở lại case trả hàng cho" }).last();
+    await secondReturnReopenModal.waitFor({ timeout: 15000 });
+    await fillField(secondReturnReopenModal, "#reopenNote", manualReturnReopenNote);
+    await clickSubmit(secondReturnReopenModal);
+    await secondInvoiceRow.getByText("Đã duyệt", { exact: false }).first().waitFor({ timeout: 15000 });
+    await secondInvoiceRow.getByText(manualReturnCloseNote, { exact: false }).first().waitFor({
+      state: "detached",
+      timeout: 15000,
+    });
+    await secondInvoiceRow.locator('[data-testid="invoice-return-authorization-reopen-button"]').waitFor({
+      state: "detached",
+      timeout: 15000,
+    });
+    await secondInvoiceRow.locator('[data-testid="invoice-return-receipt-button"]').waitFor({ timeout: 15000 });
+    await secondInvoiceRow.locator('[data-testid="invoice-return-authorization-close-button"]').waitFor({
+      timeout: 15000,
+    });
+    await secondReturnCaseQueueRow.getByText("Kho xử lý", { exact: false }).first().waitFor({
+      timeout: 15000,
+    });
+    await secondReturnCaseQueueRow.getByText("Nhận hàng trả về kho", { exact: false }).first().waitFor({
+      timeout: 15000,
+    });
+    await secondReturnCaseQueueRow.getByText("Còn chờ nhận: 1", { exact: false }).first().waitFor({
+      timeout: 15000,
+    });
+    await secondReturnCaseQueueRow.getByText("Đã đóng", { exact: false }).first().waitFor({
+      state: "detached",
+      timeout: 15000,
+    });
+    invoiceReturnCaseReopenVerified = true;
+
+    const reopenedCaseReopenResponse = await page.evaluate(
+      async ({ targetInvoiceNumber, sessionKey, tenantKey }) => {
+        const rawSession = window.localStorage.getItem(sessionKey);
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
+        const headers = {
+          "content-type": "application/json",
+          authorization: `Bearer ${accessToken}`,
+        };
+
+        const invoicesResponse = await fetch(`/api/invoices?tenantId=${encodeURIComponent(tenantId ?? "")}`, {
+          headers,
+        });
+        const invoicesPayload = await invoicesResponse.json();
+        const targetInvoice = invoicesPayload.items.find((item) => item.invoiceNumber === targetInvoiceNumber);
+
+        if (!targetInvoice || !tenantId) {
+          return { status: 0, body: { error: "Reopened-case invoice lookup failed before reopen guard test." } };
+        }
+
+        const response = await fetch("/api/invoices/return-authorizations/reopen", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            tenantId,
+            invoiceId: targetInvoice.id,
+            reopenNote: "Unexpected duplicate reopen while the return case is already active.",
+          }),
+        });
+
+        return {
+          status: response.status,
+          body: await response.json(),
+        };
+      },
+      {
+        targetInvoiceNumber: secondInvoiceNumber,
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+      },
+    );
+    assert(
+      reopenedCaseReopenResponse.status === 400 &&
+        reopenedCaseReopenResponse.body?.error ===
+          "There is no closed return case to reopen for this invoice.",
+      "Active return case still allowed a duplicate reopen.",
+    );
+    invoiceReturnCaseReopenGuardVerified = true;
+
+    await secondInvoiceRow.locator('[data-testid="invoice-return-authorization-close-button"]').click();
+    const secondReturnRecloseModal = page.getByRole("dialog").filter({ hasText: "Đóng case trả hàng cho" }).last();
+    await secondReturnRecloseModal.waitFor({ timeout: 15000 });
+    await fillField(secondReturnRecloseModal, "#closeNote", manualReturnCloseNote);
+    await clickSubmit(secondReturnRecloseModal);
+    await secondInvoiceRow.getByText("Đã đóng", { exact: false }).first().waitFor({ timeout: 15000 });
+    await secondInvoiceRow.getByText(manualReturnCloseNote, { exact: false }).first().waitFor({
+      timeout: 15000,
+    });
+    await secondInvoiceRow.locator('[data-testid="invoice-return-receipt-button"]').waitFor({
+      state: "detached",
+      timeout: 15000,
+    });
+    await secondInvoiceRow.locator('[data-testid="invoice-return-authorization-close-button"]').waitFor({
+      state: "detached",
+      timeout: 15000,
+    });
+    await secondInvoiceRow.locator('[data-testid="invoice-return-authorization-reopen-button"]').waitFor({
       timeout: 15000,
     });
     invoiceReturnCaseCloseVerified = true;
@@ -3974,6 +4086,16 @@ async function main() {
     assert(
       creditAuditSnapshot.body?.items?.some(
         (item) =>
+          item.actionType === "invoice_return_reopened" &&
+          item.entityNumber === secondInvoiceNumber &&
+          item.metadata?.quantity === 1 &&
+          item.metadata?.note === manualReturnReopenNote,
+      ),
+      "Invoice return reopen audit entry was not recorded.",
+    );
+    assert(
+      creditAuditSnapshot.body?.items?.some(
+        (item) =>
           item.actionType === "invoice_return_settled" &&
           item.entityNumber === creditedInvoiceNumber &&
           item.metadata?.productCategoryName === productCategoryName &&
@@ -4020,6 +4142,7 @@ async function main() {
     invoiceCreditAuditVerified = true;
     invoiceReturnAuthorizationAuditVerified = true;
     invoiceReturnCaseCloseAuditVerified = true;
+    invoiceReturnCaseReopenAuditVerified = true;
     invoiceReturnCaseSettlementAuditVerified = true;
     invoiceReturnReceiptVerified = true;
     creditedOrderReturnAuditVerified = true;
@@ -5356,6 +5479,9 @@ async function main() {
       invoiceReturnCaseActionOwnerVerified,
       invoiceReturnCaseCloseVerified,
       invoiceReturnCaseCloseAuditVerified,
+      invoiceReturnCaseReopenVerified,
+      invoiceReturnCaseReopenGuardVerified,
+      invoiceReturnCaseReopenAuditVerified,
       invoiceReturnCaseSettledVerified,
       invoiceReturnCaseSettlementAuditVerified,
       invoiceReturnReceiptAuthorizationGuardVerified,
