@@ -676,6 +676,7 @@ async function main() {
   let invoiceReturnAuthorizationVerified = false;
   let invoiceReturnAuthorizationAuditVerified = false;
   let invoiceReturnCaseQueueVerified = false;
+  let invoiceReturnCaseActionOwnerVerified = false;
   let invoiceReturnCaseCloseVerified = false;
   let invoiceReturnCaseCloseAuditVerified = false;
   let invoiceReturnCaseSettledVerified = false;
@@ -3035,6 +3036,20 @@ async function main() {
     await secondInvoiceRow.locator('[data-testid="invoice-return-authorization-close-button"]').waitFor({
       timeout: 15000,
     });
+    const returnCaseQueueCard = page.getByTestId("invoice-return-case-queue-card");
+    const secondReturnCaseQueueRow = returnCaseQueueCard.locator(
+      `[data-testid="invoice-return-case-row-${secondInvoiceNumber}"]`,
+    );
+    await secondReturnCaseQueueRow.waitFor({ timeout: 15000 });
+    await secondReturnCaseQueueRow.getByText("Kho xử lý", { exact: false }).first().waitFor({
+      timeout: 15000,
+    });
+    await secondReturnCaseQueueRow.getByText("Nhận hàng trả về kho", { exact: false }).first().waitFor({
+      timeout: 15000,
+    });
+    await secondReturnCaseQueueRow.getByText("Còn chờ nhận: 1", { exact: false }).first().waitFor({
+      timeout: 15000,
+    });
 
     await secondInvoiceRow.locator('[data-testid="invoice-return-authorization-close-button"]').click();
     const secondReturnCloseModal = page.getByRole("dialog").filter({ hasText: "Đóng case trả hàng cho" }).last();
@@ -3677,6 +3692,20 @@ async function main() {
       })
       .first()
       .waitFor({ timeout: 15000 });
+    const creditedReturnCaseQueueRow = returnCaseQueueCard.locator(
+      `[data-testid="invoice-return-case-row-${creditedInvoiceNumber}"]`,
+    );
+    await creditedReturnCaseQueueRow.waitFor({ timeout: 15000 });
+    await creditedReturnCaseQueueRow.getByText("Tài chính xử lý", { exact: false }).first().waitFor({
+      timeout: 15000,
+    });
+    await creditedReturnCaseQueueRow.getByText("Lập credit note", { exact: false }).first().waitFor({
+      timeout: 15000,
+    });
+    await creditedReturnCaseQueueRow.getByText("Còn chờ ghi giảm: 1", { exact: false }).first().waitFor({
+      timeout: 15000,
+    });
+    invoiceReturnCaseActionOwnerVerified = true;
     invoiceReturnReceiptVerified = true;
 
     await openSection(page, sidebarIndexes.inventory, "/dashboard/inventory");
@@ -3725,7 +3754,6 @@ async function main() {
       (await creditedInvoiceRow.getByText(/Phiếu nhận trả:\s*2|Return receipts:\s*2/, { exact: false }).count()) === 0,
       "Credit note restock should not create a second return receipt when goods were already received.",
     );
-    const returnCaseQueueCard = page.getByTestId("invoice-return-case-queue-card");
     const closedReturnCaseRow = returnCaseQueueCard.locator(
       `[data-testid="invoice-return-case-row-${secondInvoiceNumber}"]`,
     );
@@ -5296,6 +5324,7 @@ async function main() {
       invoiceReturnAuthorizationVerified,
       invoiceReturnAuthorizationAuditVerified,
       invoiceReturnCaseQueueVerified,
+      invoiceReturnCaseActionOwnerVerified,
       invoiceReturnCaseCloseVerified,
       invoiceReturnCaseCloseAuditVerified,
       invoiceReturnCaseSettledVerified,

@@ -520,6 +520,14 @@ export type InvoiceReturnAuthorizationStatus =
   | "settled"
   | "closed";
 
+export type InvoiceReturnAuthorizationActionOwner = "warehouse" | "finance" | "none";
+
+export type InvoiceReturnAuthorizationActionRequired =
+  | "receive_return"
+  | "post_credit_note"
+  | "closed"
+  | "settled";
+
 export type InvoiceReturnAuthorizationRecord = {
   id: string;
   tenantId: string;
@@ -536,6 +544,10 @@ export type InvoiceReturnAuthorizationRecord = {
   quantityReceived: number;
   quantityCredited: number;
   status: InvoiceReturnAuthorizationStatus;
+  actionOwner: InvoiceReturnAuthorizationActionOwner;
+  actionRequired: InvoiceReturnAuthorizationActionRequired;
+  quantityPendingReceipt: number;
+  quantityPendingCredit: number;
   note: string | null;
   closeNote: string | null;
   authorizedAt: string;

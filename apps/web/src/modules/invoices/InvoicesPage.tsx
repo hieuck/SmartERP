@@ -28,6 +28,8 @@ import type {
   CreateInvoiceInput,
   CreateInvoicePaymentInput,
   InvoiceRecord,
+  InvoiceReturnAuthorizationActionOwner,
+  InvoiceReturnAuthorizationActionRequired,
   InvoiceReturnAuthorizationRecord,
   RecordInvoiceReturnReceiptInput,
   ReopenInvoiceInput,
@@ -345,6 +347,52 @@ function getReturnCaseStatusRank(status: InvoiceReturnAuthorizationRecord["statu
   }
 
   return 1;
+}
+
+function getReturnCaseOwnerColor(owner: InvoiceReturnAuthorizationActionOwner): string {
+  if (owner === "warehouse") {
+    return "cyan";
+  }
+
+  if (owner === "finance") {
+    return "purple";
+  }
+
+  return "default";
+}
+
+function getReturnCaseOwnerLabel(
+  owner: InvoiceReturnAuthorizationActionOwner,
+  t: ReturnType<typeof useLocale>["t"],
+): string {
+  if (owner === "warehouse") {
+    return t("invoices.returnCaseOwnerWarehouse");
+  }
+
+  if (owner === "finance") {
+    return t("invoices.returnCaseOwnerFinance");
+  }
+
+  return t("invoices.returnCaseOwnerNone");
+}
+
+function getReturnCaseActionRequiredLabel(
+  actionRequired: InvoiceReturnAuthorizationActionRequired,
+  t: ReturnType<typeof useLocale>["t"],
+): string {
+  if (actionRequired === "receive_return") {
+    return t("invoices.returnCaseActionReceiveReturn");
+  }
+
+  if (actionRequired === "post_credit_note") {
+    return t("invoices.returnCaseActionPostCredit");
+  }
+
+  if (actionRequired === "closed") {
+    return t("invoices.returnCaseActionClosed");
+  }
+
+  return t("invoices.returnCaseActionSettled");
 }
 
 export function InvoicesPage(): ReactElement {
@@ -1524,6 +1572,26 @@ export function InvoicesPage(): ReactElement {
                               {authorization.quantityCredited}/{authorization.quantityAuthorized}
                             </div>
                             <div className="record-detail">
+                              {t("invoices.returnCaseActionOwnerLabel")}{" "}
+                              {getReturnCaseOwnerLabel(authorization.actionOwner, t)}
+                            </div>
+                            <div className="record-detail">
+                              {t("invoices.returnCaseActionRequiredLabel")}{" "}
+                              {getReturnCaseActionRequiredLabel(authorization.actionRequired, t)}
+                            </div>
+                            {authorization.quantityPendingReceipt > 0 ? (
+                              <div className="record-detail">
+                                {t("invoices.returnCasePendingReceiptLabel")}{" "}
+                                {authorization.quantityPendingReceipt}
+                              </div>
+                            ) : null}
+                            {authorization.quantityPendingCredit > 0 ? (
+                              <div className="record-detail">
+                                {t("invoices.returnCasePendingCreditLabel")}{" "}
+                                {authorization.quantityPendingCredit}
+                              </div>
+                            ) : null}
+                            <div className="record-detail">
                               {t("invoices.returnAuthorizationAuthorizedAtLabel")}{" "}
                               {formatTimestamp(authorization.authorizedAt)}
                             </div>
@@ -1551,6 +1619,9 @@ export function InvoicesPage(): ReactElement {
                             <div className="record-tag-stack">
                               <Tag color={getReturnAuthorizationStatusColor(authorization.status)}>
                                 {getReturnAuthorizationStatusLabel(authorization.status, t)}
+                              </Tag>
+                              <Tag color={getReturnCaseOwnerColor(authorization.actionOwner)}>
+                                {getReturnCaseOwnerLabel(authorization.actionOwner, t)}
                               </Tag>
                               {linkedInvoice ? (
                                 <Tag color={getCollectionStatusColor(linkedInvoice.collectionStatus)}>

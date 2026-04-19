@@ -2796,6 +2796,23 @@ function mapInvoiceReturnReceipt(row: InvoiceReturnReceiptRow): InvoiceReturnRec
 function mapInvoiceReturnAuthorization(
   row: InvoiceReturnAuthorizationRow,
 ): InvoiceReturnAuthorizationRecord {
+  const quantityPendingReceipt = Math.max(row.quantity_authorized - row.quantity_received, 0);
+  const quantityPendingCredit = Math.max(row.quantity_authorized - row.quantity_credited, 0);
+  const actionOwner =
+    row.status === "closed" || row.status === "settled"
+      ? "none"
+      : quantityPendingReceipt > 0
+        ? "warehouse"
+        : "finance";
+  const actionRequired =
+    row.status === "closed"
+      ? "closed"
+      : row.status === "settled"
+        ? "settled"
+        : quantityPendingReceipt > 0
+          ? "receive_return"
+          : "post_credit_note";
+
   return {
     id: row.id,
     tenantId: row.tenant_id,
@@ -2812,6 +2829,10 @@ function mapInvoiceReturnAuthorization(
     quantityReceived: row.quantity_received,
     quantityCredited: row.quantity_credited,
     status: row.status,
+    actionOwner,
+    actionRequired,
+    quantityPendingReceipt,
+    quantityPendingCredit,
     note: row.note || null,
     closeNote: row.close_note || null,
     authorizedAt: row.authorized_at,
