@@ -99,6 +99,8 @@ const errorKeyByMessage: Record<string, string> = {
   "Credit quantity must be a positive integer.": "errors.invalidInvoiceCreditQuantity",
   "Credit mode is invalid.": "errors.invalidInvoiceCreditMode",
   "Credit quantity cannot exceed the remaining uncredited quantity.": "errors.invoiceCreditQuantityExceedsRemaining",
+  "Credit quantity cannot exceed the received return quantity for the open return case.":
+    "errors.invoiceCreditQuantityExceedsReceivedReturn",
   "Return authorization quantity must be a positive integer.":
     "errors.invalidInvoiceReturnAuthorizationQuantity",
   "Return authorization quantity cannot exceed the remaining unreturned quantity.":

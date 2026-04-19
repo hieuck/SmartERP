@@ -513,7 +513,11 @@ export type InvoiceReturnReceiptRecord = {
   receivedAt: string;
 };
 
-export type InvoiceReturnAuthorizationStatus = "authorized" | "partially_received" | "received";
+export type InvoiceReturnAuthorizationStatus =
+  | "authorized"
+  | "partially_received"
+  | "received"
+  | "settled";
 
 export type InvoiceReturnAuthorizationRecord = {
   id: string;
@@ -529,6 +533,7 @@ export type InvoiceReturnAuthorizationRecord = {
   productName: string;
   quantityAuthorized: number;
   quantityReceived: number;
+  quantityCredited: number;
   status: InvoiceReturnAuthorizationStatus;
   note: string | null;
   authorizedAt: string;
@@ -743,6 +748,7 @@ export type AuditActionType =
   | "invoice_reissued"
   | "invoice_amended"
   | "invoice_return_authorized"
+  | "invoice_return_settled"
   | "invoice_credited"
   | "invoice_return_received"
   | "invoice_voided"
@@ -830,6 +836,7 @@ export type InvoiceRecord = {
   returnAuthorizationStatus: InvoiceReturnAuthorizationStatus | null;
   returnAuthorizationRequestedQuantity: number;
   returnAuthorizationReceivedQuantity: number;
+  returnAuthorizationCreditedQuantity: number;
   returnAuthorizationNote: string | null;
   lastReturnAuthorizationAt: string | null;
   returnReceiptCount: number;

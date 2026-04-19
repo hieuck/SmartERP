@@ -647,8 +647,11 @@ async function main() {
   let invoiceCreditVerified = false;
   let invoiceCreditAuditVerified = false;
   let invoiceCreditInventoryRestockVerified = false;
+  let invoiceCreditReceivedReturnGuardVerified = false;
   let invoiceReturnAuthorizationVerified = false;
   let invoiceReturnAuthorizationAuditVerified = false;
+  let invoiceReturnCaseSettledVerified = false;
+  let invoiceReturnCaseSettlementAuditVerified = false;
   let invoiceReturnReceiptAuthorizationGuardVerified = false;
   let invoiceReturnReceiptVerified = false;
   let partialInvoiceCreditVerified = false;
@@ -3481,6 +3484,64 @@ async function main() {
       (await creditedInvoiceRow.locator('[data-testid="invoice-return-authorization-button"]').count()) === 0,
       "Return authorization action should disappear while a return case is open.",
     );
+    const creditBeforeReceiptResponse = await page.evaluate(
+      async ({ targetInvoiceNumber, method, creditQuantity, creditNote, creditMode, sessionKey, tenantKey }) => {
+        const rawSession = window.localStorage.getItem(sessionKey);
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
+        const headers = {
+          "content-type": "application/json",
+          authorization: `Bearer ${accessToken}`,
+        };
+
+        const invoicesResponse = await fetch(`/api/invoices?tenantId=${encodeURIComponent(tenantId ?? "")}`, {
+          headers,
+        });
+        const invoicesPayload = await invoicesResponse.json();
+        const targetInvoice = invoicesPayload.items.find((item) => item.invoiceNumber === targetInvoiceNumber);
+
+        if (!targetInvoice || !tenantId) {
+          return {
+            status: 0,
+            body: { error: "Credited invoice lookup failed before return-credit guard test." },
+          };
+        }
+
+        const response = await fetch("/api/invoices/credit", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            tenantId,
+            invoiceId: targetInvoice.id,
+            method,
+            creditQuantity,
+            creditMode,
+            creditNote,
+          }),
+        });
+
+        return {
+          status: response.status,
+          body: await response.json(),
+        };
+      },
+      {
+        targetInvoiceNumber: creditedInvoiceNumber,
+        method: "bank_transfer",
+        creditQuantity: creditedOrderQuantity,
+        creditNote: invoiceCreditNote,
+        creditMode: "financial_only",
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+      },
+    );
+    assert(
+      creditBeforeReceiptResponse.status === 400 &&
+        creditBeforeReceiptResponse.body?.error ===
+          "Credit quantity cannot exceed the received return quantity for the open return case.",
+      "Financial-only credit should not settle a return case before warehouse receipt exists.",
+    );
+    invoiceCreditReceivedReturnGuardVerified = true;
     await creditedInvoiceRow.locator('[data-testid="invoice-return-receipt-button"]').waitFor({ timeout: 15000 });
     invoiceReturnAuthorizationVerified = true;
 
@@ -3496,6 +3557,12 @@ async function main() {
       .waitFor({ timeout: 15000 });
     await creditedInvoiceRow
       .getByText(/Phiếu nhận trả:\s*1|Return receipts:\s*1/, { exact: false })
+      .first()
+      .waitFor({ timeout: 15000 });
+    await creditedInvoiceRow
+      .getByText(/Trạng thái case trả hàng[:\s]*Đã nhận đủ|Return case status[:\s]*Received/, {
+        exact: false,
+      })
       .first()
       .waitFor({ timeout: 15000 });
     invoiceReturnReceiptVerified = true;
@@ -3532,11 +3599,22 @@ async function main() {
       .getByText(/Phiếu nhận trả:\s*1|Return receipts:\s*1/, { exact: false })
       .first()
       .waitFor({ timeout: 15000 });
+    await creditedInvoiceRow
+      .getByText(/Trạng thái case trả hàng[:\s]*Đã tất toán|Return case status[:\s]*Settled/, {
+        exact: false,
+      })
+      .first()
+      .waitFor({ timeout: 15000 });
+    await creditedInvoiceRow
+      .getByText(/Số lượng đã tất toán case:\s*1\/1|Return case credited:\s*1\/1/, { exact: false })
+      .first()
+      .waitFor({ timeout: 15000 });
     assert(
       (await creditedInvoiceRow.getByText(/Phiếu nhận trả:\s*2|Return receipts:\s*2/, { exact: false }).count()) === 0,
       "Credit note restock should not create a second return receipt when goods were already received.",
     );
     invoiceCreditVerified = true;
+    invoiceReturnCaseSettledVerified = true;
 
     const creditedInvoicePaymentResponse = await page.evaluate(
       async ({ targetInvoiceNumber, amount, sessionKey, tenantKey }) => {
@@ -3719,6 +3797,19 @@ async function main() {
     assert(
       creditAuditSnapshot.body?.items?.some(
         (item) =>
+          item.actionType === "invoice_return_settled" &&
+          item.entityNumber === creditedInvoiceNumber &&
+          item.metadata?.productCategoryName === productCategoryName &&
+          item.metadata?.quantity === creditedOrderQuantity &&
+          item.metadata?.returnedQuantity === creditedOrderQuantity &&
+          item.metadata?.creditedQuantity === creditedOrderQuantity &&
+          item.metadata?.note === invoiceCreditNote,
+      ),
+      "Invoice return settlement audit entry was not recorded after the credit note.",
+    );
+    assert(
+      creditAuditSnapshot.body?.items?.some(
+        (item) =>
           item.actionType === "invoice_return_received" &&
           item.entityNumber === creditedInvoiceNumber &&
           item.metadata?.quantity === creditedOrderQuantity &&
@@ -3751,6 +3842,7 @@ async function main() {
     await page.getByText(invoiceCreditNote, { exact: false }).first().waitFor({ timeout: 15000 });
     invoiceCreditAuditVerified = true;
     invoiceReturnAuthorizationAuditVerified = true;
+    invoiceReturnCaseSettlementAuditVerified = true;
     invoiceReturnReceiptVerified = true;
     creditedOrderReturnAuditVerified = true;
     await openSection(page, sidebarIndexes.orders, "/dashboard/orders");
@@ -4290,7 +4382,8 @@ async function main() {
           item.invoiceNumber === creditedInvoiceNumber &&
           item.quantityAuthorized === creditedOrderQuantity &&
           item.quantityReceived === creditedOrderQuantity &&
-          item.status === "received" &&
+          item.quantityCredited === creditedOrderQuantity &&
+          item.status === "settled" &&
           item.note === manualReturnAuthorizationNote,
       ) &&
         !exportedSnapshot?.invoiceReturnAuthorizations?.some(
@@ -4490,8 +4583,50 @@ async function main() {
     );
     await openSection(page, sidebarIndexes.invoices, "/dashboard/invoices");
     await waitForTenantContext(page, restoredTenantName);
-    await getListCard(page)
-      .getByText(/Return receipts:|Phiếu nhận trả:/, { exact: false })
+    const restoredCreditedInvoiceNumber = await page.evaluate(
+      async ({ sessionKey, tenantKey, targetCreditNote, targetQuantity }) => {
+        const rawSession = window.localStorage.getItem(sessionKey);
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
+        const response = await fetch(`/api/invoices?tenantId=${encodeURIComponent(tenantId ?? "")}`, {
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+          },
+        });
+        const payload = await response.json();
+        const targetInvoice = payload.items.find(
+          (item) =>
+            item.status === "credited" &&
+            item.creditNote === targetCreditNote &&
+            item.returnAuthorizationStatus === "settled" &&
+            item.returnAuthorizationCreditedQuantity === targetQuantity,
+        );
+        return targetInvoice?.invoiceNumber ?? "";
+      },
+      {
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+        targetCreditNote: invoiceCreditNote,
+        targetQuantity: creditedOrderQuantity,
+      },
+    );
+    assert(
+      restoredCreditedInvoiceNumber.length > 0,
+      "Restored tenant did not expose the settled return-case invoice through the invoices API.",
+    );
+    const restoredCreditedInvoiceRow = getListCard(page)
+      .locator(".record-row")
+      .filter({ hasText: restoredCreditedInvoiceNumber })
+      .first();
+    await restoredCreditedInvoiceRow.waitFor({ timeout: 15000 });
+    await restoredCreditedInvoiceRow
+      .getByText(/Trạng thái case trả hàng[:\s]*Đã tất toán|Return case status[:\s]*Settled/, {
+        exact: false,
+      })
+      .first()
+      .waitFor({ timeout: 15000 });
+    await restoredCreditedInvoiceRow
+      .getByText(/Số lượng đã tất toán case:\s*1\/1|Return case credited:\s*1\/1/, { exact: false })
       .first()
       .waitFor({ timeout: 15000 });
     baselineRestoreVerified = true;
@@ -5008,8 +5143,11 @@ async function main() {
       invoiceCreditVerified,
       invoiceCreditAuditVerified,
       invoiceCreditInventoryRestockVerified,
+      invoiceCreditReceivedReturnGuardVerified,
       invoiceReturnAuthorizationVerified,
       invoiceReturnAuthorizationAuditVerified,
+      invoiceReturnCaseSettledVerified,
+      invoiceReturnCaseSettlementAuditVerified,
       invoiceReturnReceiptAuthorizationGuardVerified,
       invoiceReturnReceiptVerified,
       partialInvoiceCreditVerified,

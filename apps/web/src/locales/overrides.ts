@@ -51,6 +51,7 @@ export const localeOverrides: Record<"vi" | "en", TranslationTree> = {
       returnAuthorizationLabel: "Case trả hàng:",
       returnAuthorizationStatusLabel: "Trạng thái case trả hàng:",
       returnAuthorizationNoteLabel: "Ghi chú case trả hàng:",
+      returnAuthorizationCreditedLabel: "Số lượng đã tất toán case:",
       creditWithoutReturnLabel: "Số lượng ghi giảm không nhập kho:",
       returnAuthorizationAction: "Mở case trả hàng",
       returnAuthorizationTitle: "Duyệt trả hàng cho {{number}}",
@@ -68,6 +69,7 @@ export const localeOverrides: Record<"vi" | "en", TranslationTree> = {
       returnAuthorizationStatusAuthorized: "Đã duyệt",
       returnAuthorizationStatusPartiallyReceived: "Đã nhận một phần",
       returnAuthorizationStatusReceived: "Đã nhận đủ",
+      returnAuthorizationStatusSettled: "Đã tất toán",
       returnReceiptsLabel: "Phiếu nhận trả:",
       lastReturnReceiptLabel: "Nhận trả gần nhất:",
       returnReceiptAction: "Ghi phiếu nhận trả",
@@ -88,6 +90,7 @@ export const localeOverrides: Record<"vi" | "en", TranslationTree> = {
       auditActionInvoiceAmended: "Sửa đổi hóa đơn",
       auditActionInvoiceCredited: "Ghi giảm hóa đơn",
       auditActionInvoiceReturnAuthorized: "Duyệt case trả hàng",
+      auditActionInvoiceReturnSettled: "Tất toán case trả hàng",
       auditActionInvoiceReturnReceived: "Nhận hàng trả theo hóa đơn",
       auditActionOrderReturned: "Đơn hàng đã trả lại",
       auditQuantityLabel: "Số lượng:",
@@ -143,6 +146,8 @@ export const localeOverrides: Record<"vi" | "en", TranslationTree> = {
       invalidInvoiceCreditQuantity: "Số lượng ghi giảm phải là số nguyên dương.",
       invalidInvoiceCreditMode: "Cách xử lý credit note không hợp lệ.",
       invoiceCreditQuantityExceedsRemaining: "Số lượng ghi giảm vượt quá phần còn lại chưa được ghi giảm.",
+      invoiceCreditQuantityExceedsReceivedReturn:
+        "Số lượng ghi giảm vượt quá số lượng đã nhận về cho case trả hàng đang mở.",
       invoiceReturnAuthorizationFailed: "Mở case trả hàng thất bại.",
       invoiceReturnAuthorizationNoteRequired:
         "Cần có ghi chú nghiệp vụ trước khi nhận hàng trả từ một hóa đơn.",

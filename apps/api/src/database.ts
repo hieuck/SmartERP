@@ -275,6 +275,7 @@ db.exec(`
     product_name TEXT NOT NULL,
     quantity_authorized INTEGER NOT NULL,
     quantity_received INTEGER NOT NULL DEFAULT 0,
+    quantity_credited INTEGER NOT NULL DEFAULT 0,
     status TEXT NOT NULL DEFAULT 'authorized',
     note TEXT NOT NULL DEFAULT '',
     authorized_at TEXT NOT NULL,
@@ -930,6 +931,10 @@ const invoiceReturnReceiptColumns = db
   .prepare("PRAGMA table_info(invoice_return_receipts)")
   .all() as Array<{ name: string }>;
 
+const invoiceReturnAuthorizationColumns = db
+  .prepare("PRAGMA table_info(invoice_return_authorizations)")
+  .all() as Array<{ name: string }>;
+
 if (!productColumns.some((column) => column.name === "category_id")) {
   db.exec("ALTER TABLE products ADD COLUMN category_id TEXT NOT NULL DEFAULT ''");
 }
@@ -972,6 +977,10 @@ if (!invoiceReturnReceiptColumns.some((column) => column.name === "source")) {
 
 if (!invoiceReturnReceiptColumns.some((column) => column.name === "note")) {
   db.exec("ALTER TABLE invoice_return_receipts ADD COLUMN note TEXT NOT NULL DEFAULT ''");
+}
+
+if (!invoiceReturnAuthorizationColumns.some((column) => column.name === "quantity_credited")) {
+  db.exec("ALTER TABLE invoice_return_authorizations ADD COLUMN quantity_credited INTEGER NOT NULL DEFAULT 0");
 }
 
 if (!inventoryColumns.some((column) => column.name === "average_unit_cost")) {

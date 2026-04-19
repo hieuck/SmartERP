@@ -226,6 +226,10 @@ function getCollectionPriorityLabel(
 function getReturnAuthorizationStatusColor(
   status: InvoiceRecord["returnAuthorizationStatus"],
 ): string {
+  if (status === "settled") {
+    return "green";
+  }
+
   if (status === "received") {
     return "green";
   }
@@ -245,6 +249,10 @@ function getReturnAuthorizationStatusLabel(
   status: InvoiceRecord["returnAuthorizationStatus"],
   t: ReturnType<typeof useLocale>["t"],
 ): string {
+  if (status === "settled") {
+    return t("invoices.returnAuthorizationStatusSettled");
+  }
+
   if (status === "received") {
     return t("invoices.returnAuthorizationStatusReceived");
   }
@@ -410,8 +418,10 @@ export function InvoicesPage(): ReactElement {
     : 0;
   const remainingReturnReceiptQuantity = invoiceBeingReturned
     ? Math.max(
-        invoiceBeingReturned.returnAuthorizationRequestedQuantity -
-          invoiceBeingReturned.returnAuthorizationReceivedQuantity,
+        invoiceBeingReturned.openReturnAuthorizationId
+          ? invoiceBeingReturned.returnAuthorizationRequestedQuantity -
+              invoiceBeingReturned.returnAuthorizationReceivedQuantity
+          : 0,
         0,
       )
     : 0;
@@ -1535,6 +1545,11 @@ export function InvoicesPage(): ReactElement {
                               {invoice.returnAuthorizationRequestedQuantity}
                             </div>
                             <div className="record-detail">
+                              {t("invoices.returnAuthorizationCreditedLabel")}{" "}
+                              {invoice.returnAuthorizationCreditedQuantity}/
+                              {invoice.returnAuthorizationRequestedQuantity}
+                            </div>
+                            <div className="record-detail">
                               {t("invoices.returnAuthorizationStatusLabel")}{" "}
                               {getReturnAuthorizationStatusLabel(invoice.returnAuthorizationStatus, t)}
                             </div>
@@ -1617,7 +1632,7 @@ export function InvoicesPage(): ReactElement {
                         ) : null}
                         {canIssueInvoices &&
                         invoice.status !== "void" &&
-                        !invoice.returnAuthorizationStatus &&
+                        !invoice.openReturnAuthorizationId &&
                         remainingInvoiceReturnAuthorizationQuantity > 0 ? (
                           <div className="record-actions">
                             <Button
@@ -1633,7 +1648,7 @@ export function InvoicesPage(): ReactElement {
                         ) : null}
                         {canIssueInvoices &&
                         invoice.status !== "void" &&
-                        invoice.returnAuthorizationStatus !== null &&
+                        invoice.openReturnAuthorizationId !== null &&
                         remainingInvoiceReturnReceiptQuantity > 0 ? (
                           <div className="record-actions">
                             <Button

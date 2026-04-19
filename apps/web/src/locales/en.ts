@@ -427,6 +427,7 @@ const en = {
     returnAuthorizationLabel: "Return case:",
     returnAuthorizationStatusLabel: "Return case status:",
     returnAuthorizationNoteLabel: "Return case note:",
+    returnAuthorizationCreditedLabel: "Return case credited:",
     creditWithoutReturnLabel: "Credited without return:",
     returnAuthorizationAction: "Open Return Case",
     returnAuthorizationTitle: "Authorize return for {{number}}",
@@ -444,6 +445,7 @@ const en = {
     returnAuthorizationStatusAuthorized: "Authorized",
     returnAuthorizationStatusPartiallyReceived: "Partially received",
     returnAuthorizationStatusReceived: "Received",
+    returnAuthorizationStatusSettled: "Settled",
     returnReceiptsLabel: "Return receipts:",
     lastReturnReceiptLabel: "Last return receipt:",
     returnReceiptAction: "Record Return Receipt",
@@ -591,6 +593,7 @@ const en = {
     auditActionInvoiceVoided: "Invoice voided",
     auditActionInvoiceCredited: "Invoice credited",
     auditActionInvoiceReturnAuthorized: "Invoice return authorized",
+    auditActionInvoiceReturnSettled: "Invoice return settled",
     auditActionInvoiceReturnReceived: "Invoice return received",
     auditActionInvoiceReopened: "Invoice reopened",
     auditActionOrderUpdated: "Order updated",
@@ -1088,6 +1091,8 @@ Object.assign(en.errors, {
   invalidInvoiceCreditQuantity: "Credit quantity must be a positive integer.",
   invalidInvoiceCreditMode: "Credit handling option is invalid.",
   invoiceCreditQuantityExceedsRemaining: "Credit quantity cannot exceed the remaining uncredited quantity.",
+  invoiceCreditQuantityExceedsReceivedReturn:
+    "Credit quantity cannot exceed the received return quantity for the open return case.",
   invoiceReturnAuthorizationFailed: "Invoice return authorization failed.",
   invoiceReturnAuthorizationNoteRequired:
     "A business note is required before receiving goods back from an invoice.",

@@ -247,6 +247,7 @@ type InvoiceReturnAuthorizationRow = {
   product_name: string;
   quantity_authorized: number;
   quantity_received: number;
+  quantity_credited: number;
   status: InvoiceReturnAuthorizationStatus;
   note: string;
   authorized_at: string;
@@ -296,6 +297,7 @@ type InvoiceRow = {
   return_authorization_status: InvoiceReturnAuthorizationStatus | null;
   return_authorization_requested_quantity: number;
   return_authorization_received_quantity: number;
+  return_authorization_credited_quantity: number;
   return_authorization_note: string | null;
   last_return_authorization_at: string | null;
   return_receipt_count: number;
@@ -1324,6 +1326,7 @@ const listInvoiceReturnAuthorizationsStatement = db.prepare(`
     product_name,
     quantity_authorized,
     quantity_received,
+    quantity_credited,
     status,
     note,
     authorized_at,
@@ -1348,12 +1351,13 @@ const getLatestOpenInvoiceReturnAuthorizationStatement = db.prepare(`
     product_name,
     quantity_authorized,
     quantity_received,
+    quantity_credited,
     status,
     note,
     authorized_at,
     closed_at
   FROM invoice_return_authorizations
-  WHERE tenant_id = ? AND invoice_id = ? AND status <> 'received'
+  WHERE tenant_id = ? AND invoice_id = ? AND status <> 'settled'
   ORDER BY datetime(authorized_at) DESC, rowid DESC
   LIMIT 1
 `);
@@ -1373,18 +1377,20 @@ const createInvoiceReturnAuthorizationStatement = db.prepare(`
     product_name,
     quantity_authorized,
     quantity_received,
+    quantity_credited,
     status,
     note,
     authorized_at,
     closed_at
   )
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `);
 
-const updateInvoiceReturnAuthorizationProgressStatement = db.prepare(`
+const updateInvoiceReturnAuthorizationStateStatement = db.prepare(`
   UPDATE invoice_return_authorizations
   SET
     quantity_received = ?,
+    quantity_credited = ?,
     status = ?,
     closed_at = ?
   WHERE tenant_id = ? AND id = ?
@@ -1498,35 +1504,42 @@ const getLatestVoidedInvoiceForOrderStatement = db.prepare(`
     (
       SELECT ira.id
       FROM invoice_return_authorizations ira
-      WHERE ira.invoice_id = i.id AND ira.status <> 'received'
+      WHERE ira.invoice_id = i.id AND ira.status <> 'settled'
       ORDER BY datetime(ira.authorized_at) DESC, ira.rowid DESC
       LIMIT 1
     ) AS open_return_authorization_id,
     (
       SELECT ira.status
       FROM invoice_return_authorizations ira
-      WHERE ira.invoice_id = i.id AND ira.status <> 'received'
+      WHERE ira.invoice_id = i.id
       ORDER BY datetime(ira.authorized_at) DESC, ira.rowid DESC
       LIMIT 1
     ) AS return_authorization_status,
     (
       SELECT ira.quantity_authorized
       FROM invoice_return_authorizations ira
-      WHERE ira.invoice_id = i.id AND ira.status <> 'received'
+      WHERE ira.invoice_id = i.id
       ORDER BY datetime(ira.authorized_at) DESC, ira.rowid DESC
       LIMIT 1
     ) AS return_authorization_requested_quantity,
     (
       SELECT ira.quantity_received
       FROM invoice_return_authorizations ira
-      WHERE ira.invoice_id = i.id AND ira.status <> 'received'
+      WHERE ira.invoice_id = i.id
       ORDER BY datetime(ira.authorized_at) DESC, ira.rowid DESC
       LIMIT 1
     ) AS return_authorization_received_quantity,
     (
+      SELECT ira.quantity_credited
+      FROM invoice_return_authorizations ira
+      WHERE ira.invoice_id = i.id
+      ORDER BY datetime(ira.authorized_at) DESC, ira.rowid DESC
+      LIMIT 1
+    ) AS return_authorization_credited_quantity,
+    (
       SELECT ira.note
       FROM invoice_return_authorizations ira
-      WHERE ira.invoice_id = i.id AND ira.status <> 'received'
+      WHERE ira.invoice_id = i.id
       ORDER BY datetime(ira.authorized_at) DESC, ira.rowid DESC
       LIMIT 1
     ) AS return_authorization_note,
@@ -1619,35 +1632,42 @@ const listInvoicesStatement = db.prepare(`
     (
       SELECT ira.id
       FROM invoice_return_authorizations ira
-      WHERE ira.invoice_id = i.id AND ira.status <> 'received'
+      WHERE ira.invoice_id = i.id AND ira.status <> 'settled'
       ORDER BY datetime(ira.authorized_at) DESC, ira.rowid DESC
       LIMIT 1
     ) AS open_return_authorization_id,
     (
       SELECT ira.status
       FROM invoice_return_authorizations ira
-      WHERE ira.invoice_id = i.id AND ira.status <> 'received'
+      WHERE ira.invoice_id = i.id
       ORDER BY datetime(ira.authorized_at) DESC, ira.rowid DESC
       LIMIT 1
     ) AS return_authorization_status,
     (
       SELECT ira.quantity_authorized
       FROM invoice_return_authorizations ira
-      WHERE ira.invoice_id = i.id AND ira.status <> 'received'
+      WHERE ira.invoice_id = i.id
       ORDER BY datetime(ira.authorized_at) DESC, ira.rowid DESC
       LIMIT 1
     ) AS return_authorization_requested_quantity,
     (
       SELECT ira.quantity_received
       FROM invoice_return_authorizations ira
-      WHERE ira.invoice_id = i.id AND ira.status <> 'received'
+      WHERE ira.invoice_id = i.id
       ORDER BY datetime(ira.authorized_at) DESC, ira.rowid DESC
       LIMIT 1
     ) AS return_authorization_received_quantity,
     (
+      SELECT ira.quantity_credited
+      FROM invoice_return_authorizations ira
+      WHERE ira.invoice_id = i.id
+      ORDER BY datetime(ira.authorized_at) DESC, ira.rowid DESC
+      LIMIT 1
+    ) AS return_authorization_credited_quantity,
+    (
       SELECT ira.note
       FROM invoice_return_authorizations ira
-      WHERE ira.invoice_id = i.id AND ira.status <> 'received'
+      WHERE ira.invoice_id = i.id
       ORDER BY datetime(ira.authorized_at) DESC, ira.rowid DESC
       LIMIT 1
     ) AS return_authorization_note,
@@ -1772,35 +1792,42 @@ const getInvoiceByIdStatement = db.prepare(`
     (
       SELECT ira.id
       FROM invoice_return_authorizations ira
-      WHERE ira.invoice_id = i.id AND ira.status <> 'received'
+      WHERE ira.invoice_id = i.id AND ira.status <> 'settled'
       ORDER BY datetime(ira.authorized_at) DESC, ira.rowid DESC
       LIMIT 1
     ) AS open_return_authorization_id,
     (
       SELECT ira.status
       FROM invoice_return_authorizations ira
-      WHERE ira.invoice_id = i.id AND ira.status <> 'received'
+      WHERE ira.invoice_id = i.id
       ORDER BY datetime(ira.authorized_at) DESC, ira.rowid DESC
       LIMIT 1
     ) AS return_authorization_status,
     (
       SELECT ira.quantity_authorized
       FROM invoice_return_authorizations ira
-      WHERE ira.invoice_id = i.id AND ira.status <> 'received'
+      WHERE ira.invoice_id = i.id
       ORDER BY datetime(ira.authorized_at) DESC, ira.rowid DESC
       LIMIT 1
     ) AS return_authorization_requested_quantity,
     (
       SELECT ira.quantity_received
       FROM invoice_return_authorizations ira
-      WHERE ira.invoice_id = i.id AND ira.status <> 'received'
+      WHERE ira.invoice_id = i.id
       ORDER BY datetime(ira.authorized_at) DESC, ira.rowid DESC
       LIMIT 1
     ) AS return_authorization_received_quantity,
     (
+      SELECT ira.quantity_credited
+      FROM invoice_return_authorizations ira
+      WHERE ira.invoice_id = i.id
+      ORDER BY datetime(ira.authorized_at) DESC, ira.rowid DESC
+      LIMIT 1
+    ) AS return_authorization_credited_quantity,
+    (
       SELECT ira.note
       FROM invoice_return_authorizations ira
-      WHERE ira.invoice_id = i.id AND ira.status <> 'received'
+      WHERE ira.invoice_id = i.id
       ORDER BY datetime(ira.authorized_at) DESC, ira.rowid DESC
       LIMIT 1
     ) AS return_authorization_note,
@@ -2755,6 +2782,7 @@ function mapInvoiceReturnAuthorization(
     productName: row.product_name,
     quantityAuthorized: row.quantity_authorized,
     quantityReceived: row.quantity_received,
+    quantityCredited: row.quantity_credited,
     status: row.status,
     note: row.note || null,
     authorizedAt: row.authorized_at,
@@ -3101,6 +3129,7 @@ function mapInvoice(row: InvoiceRow): InvoiceRecord {
     returnAuthorizationStatus: row.return_authorization_status,
     returnAuthorizationRequestedQuantity: row.return_authorization_requested_quantity ?? 0,
     returnAuthorizationReceivedQuantity: row.return_authorization_received_quantity ?? 0,
+    returnAuthorizationCreditedQuantity: row.return_authorization_credited_quantity ?? 0,
     returnAuthorizationNote: row.return_authorization_note ?? null,
     lastReturnAuthorizationAt: row.last_return_authorization_at,
     returnReceiptCount: row.return_receipt_count,
@@ -3219,6 +3248,29 @@ function normalizeInvoiceReturnAuthorizationQuantity(input: number): number {
   return input;
 }
 
+function deriveInvoiceReturnAuthorizationStatus(input: {
+  quantityAuthorized: number;
+  quantityReceived: number;
+  quantityCredited: number;
+}): InvoiceReturnAuthorizationStatus {
+  if (
+    input.quantityReceived >= input.quantityAuthorized &&
+    input.quantityCredited >= input.quantityAuthorized
+  ) {
+    return "settled";
+  }
+
+  if (input.quantityReceived >= input.quantityAuthorized) {
+    return "received";
+  }
+
+  if (input.quantityReceived > 0) {
+    return "partially_received";
+  }
+
+  return "authorized";
+}
+
 function normalizeInvoiceCreditMode(input: CreditMode | undefined): CreditMode {
   if (input === undefined) {
     return "restock";
@@ -3285,6 +3337,7 @@ function buildInvoiceRecord(
     returnAuthorizationStatus: null,
     returnAuthorizationRequestedQuantity: 0,
     returnAuthorizationReceivedQuantity: 0,
+    returnAuthorizationCreditedQuantity: 0,
     returnAuthorizationNote: null,
     lastReturnAuthorizationAt: null,
     returnReceiptCount: 0,
@@ -4876,6 +4929,7 @@ export function restoreTenantSnapshot(input: RestoreTenantSnapshotInput): Restor
       authorization.productName,
       authorization.quantityAuthorized,
       authorization.quantityReceived,
+      authorization.quantityCredited,
       authorization.status,
       authorization.note ?? "",
       authorization.authorizedAt,
@@ -7319,16 +7373,17 @@ function applyInvoiceReturnAuthorizationReceipt(input: {
     throw new Error("Returned quantity cannot exceed the authorized return quantity.");
   }
 
-  const nextStatus: InvoiceReturnAuthorizationStatus =
-    nextQuantityReceived >= authorization.quantity_authorized
-      ? "received"
-      : nextQuantityReceived > 0
-        ? "partially_received"
-        : "authorized";
-  const closedAt = nextStatus === "received" ? timestamp() : null;
+  const nextQuantityCredited = authorization.quantity_credited;
+  const nextStatus = deriveInvoiceReturnAuthorizationStatus({
+    quantityAuthorized: authorization.quantity_authorized,
+    quantityReceived: nextQuantityReceived,
+    quantityCredited: nextQuantityCredited,
+  });
+  const closedAt = nextStatus === "settled" ? timestamp() : null;
 
-  updateInvoiceReturnAuthorizationProgressStatement.run(
+  updateInvoiceReturnAuthorizationStateStatement.run(
     nextQuantityReceived,
+    nextQuantityCredited,
     nextStatus,
     closedAt,
     input.tenantId,
@@ -7338,9 +7393,59 @@ function applyInvoiceReturnAuthorizationReceipt(input: {
   return mapInvoiceReturnAuthorization({
     ...authorization,
     quantity_received: nextQuantityReceived,
+    quantity_credited: nextQuantityCredited,
     status: nextStatus,
     closed_at: closedAt,
   });
+}
+
+function applyInvoiceReturnAuthorizationSettlement(input: {
+  tenantId: string;
+  invoiceId: string;
+  quantityCredited: number;
+  settledAt: string;
+}): { authorization: InvoiceReturnAuthorizationRecord; settled: boolean } | null {
+  const authorization = getLatestOpenInvoiceReturnAuthorizationStatement.get(
+    input.tenantId,
+    input.invoiceId,
+  ) as InvoiceReturnAuthorizationRow | undefined;
+
+  if (!authorization) {
+    return null;
+  }
+
+  const remainingSettleableQuantity = authorization.quantity_received - authorization.quantity_credited;
+  if (input.quantityCredited > remainingSettleableQuantity) {
+    throw new Error("Credit quantity cannot exceed the received return quantity for the open return case.");
+  }
+
+  const nextQuantityCredited = authorization.quantity_credited + input.quantityCredited;
+  const nextStatus = deriveInvoiceReturnAuthorizationStatus({
+    quantityAuthorized: authorization.quantity_authorized,
+    quantityReceived: authorization.quantity_received,
+    quantityCredited: nextQuantityCredited,
+  });
+  const settled = nextStatus === "settled" && authorization.status !== "settled";
+  const closedAt = settled ? input.settledAt : null;
+
+  updateInvoiceReturnAuthorizationStateStatement.run(
+    authorization.quantity_received,
+    nextQuantityCredited,
+    nextStatus,
+    closedAt,
+    input.tenantId,
+    authorization.id,
+  );
+
+  return {
+    authorization: mapInvoiceReturnAuthorization({
+      ...authorization,
+      quantity_credited: nextQuantityCredited,
+      status: nextStatus,
+      closed_at: closedAt,
+    }),
+    settled,
+  };
 }
 
 export function createInvoiceReturnAuthorization(
@@ -7394,6 +7499,7 @@ export function createInvoiceReturnAuthorization(
     product_name: order.product_name,
     quantity_authorized: quantityAuthorized,
     quantity_received: 0,
+    quantity_credited: 0,
     status: "authorized",
     note,
     authorized_at: authorizedAt,
@@ -7414,6 +7520,7 @@ export function createInvoiceReturnAuthorization(
     authorization.product_name,
     authorization.quantity_authorized,
     authorization.quantity_received,
+    authorization.quantity_credited,
     authorization.status,
     authorization.note,
     authorization.authorized_at,
@@ -7560,6 +7667,41 @@ export function creditInvoice(input: CreditInvoiceInput): InvoiceRecord {
       }
       mappedInvoice = mapInvoice(restockedInvoice);
     }
+
+    const settlementResult = applyInvoiceReturnAuthorizationSettlement({
+      tenantId: input.tenantId,
+      invoiceId: input.invoiceId,
+      quantityCredited: creditQuantity,
+      settledAt: creditedAt,
+    });
+
+    if (settlementResult?.settled) {
+      recordAuditLog({
+        tenantId: input.tenantId,
+        entityType: "invoice",
+        entityId: mappedInvoice.id,
+        entityNumber: mappedInvoice.invoiceNumber,
+        actionType: "invoice_return_settled",
+        summary: `Settled return case for ${mappedInvoice.invoiceNumber}`,
+        metadata: {
+          quantity: settlementResult.authorization.quantityAuthorized,
+          returnedQuantity: settlementResult.authorization.quantityReceived,
+          creditedQuantity: settlementResult.authorization.quantityCredited,
+          productCategoryId: mappedInvoice.productCategoryId,
+          productCategoryName: mappedInvoice.productCategoryName,
+          productSku: mappedInvoice.productSku,
+          productName: mappedInvoice.productName,
+          note: creditNote,
+        },
+        createdAt: creditedAt,
+      });
+    }
+
+    const settledInvoice = getInvoiceByIdStatement.get(input.tenantId, input.invoiceId) as InvoiceRow | undefined;
+    if (!settledInvoice) {
+      throw new Error("The selected invoice does not exist.");
+    }
+    mappedInvoice = mapInvoice(settledInvoice);
 
     recordAuditLog({
       tenantId: input.tenantId,
