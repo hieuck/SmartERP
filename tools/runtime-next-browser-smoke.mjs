@@ -671,6 +671,7 @@ async function main() {
   let invoiceCreditGuardVerified = false;
   let invoiceCreditVerified = false;
   let invoiceCreditAuditVerified = false;
+  let invoiceCreditApprovalVerified = false;
   let invoiceCreditInventoryRestockVerified = false;
   let invoiceCreditReceivedReturnGuardVerified = false;
   let invoiceReturnAuthorizationVerified = false;
@@ -4191,6 +4192,33 @@ async function main() {
     );
     await fillField(partialCreditModal, "#creditNote", partialInvoiceCreditNote);
     await partialCreditModal.getByRole("button", { name: "Ghi credit note" }).click();
+    await openSection(page, sidebarIndexes.approvals, "/dashboard/approvals");
+    await waitForTenantContext(page, tenantName);
+    const invoiceCreditApprovalRow = approvalsPendingCard
+      .locator(".activity-row")
+      .filter({ hasText: partialCreditInvoiceNumber })
+      .first();
+    await invoiceCreditApprovalRow.waitFor({ timeout: 15000 });
+    await invoiceCreditApprovalRow
+      .getByText("Large financial-only credit note requires founder approval.", { exact: false })
+      .waitFor({ timeout: 15000 });
+    await invoiceCreditApprovalRow.getByText(productCategoryName, { exact: false }).waitFor({
+      timeout: 15000,
+    });
+    await invoiceCreditApprovalRow.getByRole("button", { name: "Duyệt" }).click();
+    await waitForLocatorCount(
+      page,
+      approvalsPendingCard.locator(".activity-row").filter({ hasText: partialCreditInvoiceNumber }),
+      0,
+    );
+    await approvalsHistoryCard.getByText(partialCreditInvoiceNumber, { exact: false }).first().waitFor({
+      timeout: 15000,
+    });
+    await approvalsHistoryCard.getByText("Đã duyệt", { exact: false }).first().waitFor({ timeout: 15000 });
+    invoiceCreditApprovalVerified = true;
+    await dismissGlobalAlerts(page);
+    await openSection(page, sidebarIndexes.invoices, "/dashboard/invoices");
+    await waitForTenantContext(page, tenantName);
     await partialCreditInvoiceRow.getByText(/Đã ghi giảm một phần|Partially Credited/, { exact: false }).first().waitFor({
       timeout: 15000,
     });
@@ -5319,6 +5347,7 @@ async function main() {
       invoiceCreditGuardVerified,
       invoiceCreditVerified,
       invoiceCreditAuditVerified,
+      invoiceCreditApprovalVerified,
       invoiceCreditInventoryRestockVerified,
       invoiceCreditReceivedReturnGuardVerified,
       invoiceReturnAuthorizationVerified,

@@ -67,7 +67,9 @@ export async function submitInvoicePayment(
   return createInvoicePayment(input);
 }
 
-export async function submitInvoiceCredit(input: CreditInvoiceInput): Promise<InvoiceRecord> {
+export async function submitInvoiceCredit(
+  input: CreditInvoiceInput,
+): Promise<ApprovalAwareMutationResult<InvoiceRecord>> {
   return creditInvoice(input);
 }
 

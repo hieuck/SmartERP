@@ -2934,6 +2934,8 @@ function getApprovalRequestProductContext(row: ApprovalRequestRow): ProductConte
       | CreateInventoryAdjustmentInput
       | ReceivePurchaseOrderInput
       | CreateInvoiceInput
+      | AmendInvoiceInput
+      | CreditInvoiceInput
       | CreateInvoicePaymentInput;
 
     switch (row.request_type) {
@@ -2956,9 +2958,16 @@ function getApprovalRequestProductContext(row: ApprovalRequestRow): ProductConte
             | OrderRow
             | undefined,
         );
+      case "invoice_amend":
+      case "invoice_credit":
       case "invoice_payment":
         return getProductContextFromInvoiceRow(
-          getInvoiceByIdStatement.get(row.tenant_id, (payload as CreateInvoicePaymentInput).invoiceId) as
+          getInvoiceByIdStatement.get(
+            row.tenant_id,
+            (
+              payload as AmendInvoiceInput | CreditInvoiceInput | CreateInvoicePaymentInput
+            ).invoiceId,
+          ) as
             | InvoiceRow
             | undefined,
         );
@@ -3871,6 +3880,20 @@ function shouldRequireInvoicePaymentApproval(
     return {
       riskLevel: "high",
       reason: "Large cash receipt requires founder approval.",
+    };
+  }
+
+  return null;
+}
+
+function shouldRequireInvoiceCreditApproval(input: {
+  creditMode: CreditMode;
+  creditTotalAmount: number;
+}): { riskLevel: ApprovalRiskLevel; reason: string } | null {
+  if (input.creditMode === "financial_only" && input.creditTotalAmount >= 50000) {
+    return {
+      riskLevel: "high",
+      reason: "Large financial-only credit note requires founder approval.",
     };
   }
 
@@ -5726,6 +5749,7 @@ export function resolveApprovalRequest(input: ApprovalDecisionInput): ApprovalRe
       | ReceivePurchaseOrderInput
       | CreateInvoiceInput
       | AmendInvoiceInput
+      | CreditInvoiceInput
       | CreateInvoicePaymentInput;
 
     switch (approvalRequest.request_type) {
@@ -5740,6 +5764,9 @@ export function resolveApprovalRequest(input: ApprovalDecisionInput): ApprovalRe
         break;
       case "invoice_amend":
         amendInvoiceInternal(payload as AmendInvoiceInput);
+        break;
+      case "invoice_credit":
+        creditInvoiceInternal(payload as CreditInvoiceInput);
         break;
       case "invoice_payment":
         createInvoicePaymentInternal(payload as CreateInvoicePaymentInput);
@@ -7690,7 +7717,7 @@ export function closeInvoiceReturnAuthorization(
   return mapInvoice(refreshedInvoice);
 }
 
-export function creditInvoice(input: CreditInvoiceInput): InvoiceRecord {
+function creditInvoiceInternal(input: CreditInvoiceInput): InvoiceRecord {
   const invoice = getInvoiceByIdStatement.get(input.tenantId, input.invoiceId) as InvoiceRow | undefined;
   if (!invoice) {
     throw new Error("The selected invoice does not exist.");
@@ -7880,6 +7907,90 @@ export function creditInvoice(input: CreditInvoiceInput): InvoiceRecord {
     db.exec("ROLLBACK");
     throw error;
   }
+}
+
+export function creditInvoice(
+  input: CreditInvoiceInput,
+): ApprovalAwareMutationResult<InvoiceRecord> {
+  const invoice = getInvoiceByIdStatement.get(input.tenantId, input.invoiceId) as InvoiceRow | undefined;
+  if (!invoice) {
+    throw new Error("The selected invoice does not exist.");
+  }
+
+  const order = getOrderByIdStatement.get(input.tenantId, invoice.order_id) as OrderRow | undefined;
+  if (!order) {
+    throw new Error("The selected order does not exist.");
+  }
+
+  if (invoice.status === "credited") {
+    throw new Error("The selected invoice has already been credited.");
+  }
+
+  if (invoice.status === "void") {
+    throw new Error("The selected invoice has been voided.");
+  }
+
+  if (invoice.status !== "paid" && invoice.status !== "partially_credited") {
+    throw new Error("The selected invoice can only be credited after it has been fully paid.");
+  }
+
+  if (!["bank_transfer", "cash", "card"].includes(input.method)) {
+    throw new Error("Payment method is invalid.");
+  }
+
+  const creditQuantity = normalizeInvoiceCreditQuantity(input.creditQuantity);
+  const creditMode = normalizeInvoiceCreditMode(input.creditMode);
+  const creditNote = normalizeInvoiceCreditNote(input.creditNote);
+  if (!creditNote) {
+    throw new Error("Credit note is required when crediting a paid invoice.");
+  }
+
+  const remainingCreditQuantity = order.quantity - invoice.credited_quantity;
+  if (creditQuantity > remainingCreditQuantity) {
+    throw new Error("Credit quantity cannot exceed the remaining uncredited quantity.");
+  }
+
+  const creditSubtotalAmount = order.unit_price * creditQuantity;
+  const creditTaxAmount = Math.round((creditSubtotalAmount * invoice.tax_rate_percent) / 100);
+  const creditTotalAmount = creditSubtotalAmount + creditTaxAmount;
+  const approvalRule = shouldRequireInvoiceCreditApproval({
+    creditMode,
+    creditTotalAmount,
+  });
+
+  if (approvalRule) {
+    return createApprovalRequestedResult(
+      createApprovalRequest({
+        tenantId: input.tenantId,
+        requestType: "invoice_credit",
+        riskLevel: approvalRule.riskLevel,
+        referenceId: invoice.id,
+        referenceNumber: invoice.invoice_number,
+        summary: `Approval requested to credit ${invoice.invoice_number}`,
+        reason: approvalRule.reason,
+        amount: creditTotalAmount,
+        quantity: creditQuantity,
+        productCategoryId: invoice.product_category_id,
+        productCategoryName: invoice.product_category_name,
+        productSku: invoice.product_sku,
+        productName: invoice.product_name,
+        payload: {
+          ...input,
+          creditMode,
+          creditNote,
+        },
+      }),
+    );
+  }
+
+  return createAppliedResult(
+    creditInvoiceInternal({
+      ...input,
+      creditMode,
+      creditNote,
+      creditQuantity,
+    }),
+  );
 }
 
 export function recordInvoiceReturnReceipt(input: RecordInvoiceReturnReceiptInput): InvoiceRecord {

@@ -15,6 +15,7 @@ export const localeOverrides: Record<"vi" | "en", TranslationTree> = {
     },
     approvals: {
       typeInvoiceAmend: "Sửa đổi hóa đơn",
+      typeInvoiceCredit: "Ghi giảm hóa đơn",
     },
     orders: {
       statusReturned: "Đã trả hàng",

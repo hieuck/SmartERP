@@ -566,6 +566,7 @@ const en = {
     typePurchaseReceipt: "Purchase receipt",
     typeInvoiceIssue: "Invoice issue",
     typeInvoiceAmend: "Invoice amendment",
+    typeInvoiceCredit: "Invoice credit",
     typeInvoicePayment: "Invoice payment",
     reasonLabel: "Reason:",
     amountLabel: "Amount:",

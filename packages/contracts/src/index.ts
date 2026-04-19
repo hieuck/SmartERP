@@ -559,6 +559,7 @@ export type ApprovalRequestType =
   | "purchase_order_receipt"
   | "invoice_issue"
   | "invoice_amend"
+  | "invoice_credit"
   | "invoice_payment";
 
 export type ApprovalStatus = "pending" | "approved" | "rejected";

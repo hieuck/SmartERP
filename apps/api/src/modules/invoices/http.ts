@@ -358,24 +358,25 @@ export async function handleCreditInvoice(
   }
 
   try {
-    const invoice = runWithSession(requestSession, () => creditInvoice(input));
-    sendJson(response, 200, { item: invoice });
+    const result = runWithSession(requestSession, () => creditInvoice(input));
+    sendJson(response, result.kind === "approval_requested" ? 202 : 200, { item: result });
   } catch (error) {
     if (
       error instanceof Error &&
       [
         "The selected invoice does not exist.",
-          "The selected invoice has already been credited.",
+        "The selected order does not exist.",
+        "The selected invoice has already been credited.",
         "The selected invoice has been voided.",
         "The selected invoice can only be credited after it has been fully paid.",
         "Credit quantity must be a positive integer.",
         "Credit quantity cannot exceed the remaining uncredited quantity.",
         "Credit quantity cannot exceed the received return quantity for the open return case.",
         "Credit mode is invalid.",
-          "Credit note is required when crediting a paid invoice.",
-          "Credit note must be 240 characters or fewer.",
-          "Payment method is invalid.",
-        ].includes(error.message)
+        "Credit note is required when crediting a paid invoice.",
+        "Credit note must be 240 characters or fewer.",
+        "Payment method is invalid.",
+      ].includes(error.message)
     ) {
       badRequest(response, error.message);
       return;

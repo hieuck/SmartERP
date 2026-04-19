@@ -469,8 +469,10 @@ export async function createInvoicePayment(
   return payload.item;
 }
 
-export async function creditInvoice(input: CreditInvoiceInput): Promise<InvoiceRecord> {
-  const payload = await request<{ item: InvoiceRecord }>("/api/invoices/credit", {
+export async function creditInvoice(
+  input: CreditInvoiceInput,
+): Promise<ApprovalAwareMutationResult<InvoiceRecord>> {
+  const payload = await request<{ item: ApprovalAwareMutationResult<InvoiceRecord> }>("/api/invoices/credit", {
     method: "POST",
     body: JSON.stringify(input),
   });

@@ -72,6 +72,10 @@ export function ApprovalsPage(): ReactElement {
       return t("approvals.typeInvoiceAmend");
     }
 
+    if (requestType === "invoice_credit") {
+      return t("approvals.typeInvoiceCredit");
+    }
+
     return t("approvals.typeInvoicePayment");
   }
 

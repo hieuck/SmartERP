@@ -656,8 +656,12 @@ export function createWorkspaceCommands(dependencies: WorkspaceCommandsDependenc
         { setErrorMessage, setIsBusy, setNoticeMessage },
         "Invoice credit failed.",
         async () => {
-          await submitInvoiceCredit({ ...input, tenantId });
+          const result = await submitInvoiceCredit({ ...input, tenantId });
           await refreshTenantWorkspace(tenantId);
+
+          if (result.kind === "approval_requested") {
+            setNoticeMessage(buildApprovalNotice(result.approvalRequest));
+          }
         },
         { clearNotice: true },
       );
