@@ -6,6 +6,7 @@ import type {
   ApprovalDecisionInput,
   CancelOrderInput,
   CancelPurchaseOrderInput,
+  CloseInvoiceReturnAuthorizationInput,
   CloseOrderInput,
   ClosePurchaseOrderInput,
   ReopenInvoiceInput,
@@ -129,6 +130,9 @@ export type WorkspaceContextValue = {
   creditInvoiceRecord: (input: Omit<CreditInvoiceInput, "tenantId">) => Promise<void>;
   createInvoiceReturnAuthorizationRecord: (
     input: Omit<CreateInvoiceReturnAuthorizationInput, "tenantId">,
+  ) => Promise<void>;
+  closeInvoiceReturnAuthorizationRecord: (
+    input: Omit<CloseInvoiceReturnAuthorizationInput, "tenantId">,
   ) => Promise<void>;
   recordInvoiceReturnReceiptRecord: (
     input: Omit<RecordInvoiceReturnReceiptInput, "tenantId">,

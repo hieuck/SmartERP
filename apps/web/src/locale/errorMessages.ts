@@ -54,6 +54,7 @@ const errorKeyByMessage: Record<string, string> = {
   "Invoice amendment failed.": "errors.invoiceAmendFailed",
   "Invoice credit failed.": "errors.invoiceCreditFailed",
   "Invoice return authorization failed.": "errors.invoiceReturnAuthorizationFailed",
+  "Invoice return case close failed.": "errors.invoiceReturnAuthorizationCloseFailed",
   "Invoice return receipt failed.": "errors.invoiceReturnReceiptFailed",
   "Invoice payment failed.": "errors.createInvoicePaymentFailed",
   "Invoice void failed.": "errors.voidInvoiceFailed",
@@ -111,6 +112,12 @@ const errorKeyByMessage: Record<string, string> = {
     "errors.invoiceReturnAuthorizationNoteRequired",
   "A return authorization is already open for this invoice.":
     "errors.invoiceReturnAuthorizationAlreadyOpen",
+  "There is no open return case to close for this invoice.":
+    "errors.invoiceReturnAuthorizationCloseMissing",
+  "Return case close note is required before closing the return case.":
+    "errors.invoiceReturnAuthorizationCloseNoteRequired",
+  "Return case close note must be 240 characters or fewer.":
+    "errors.invalidInvoiceReturnAuthorizationCloseNote",
   "An open return authorization is required before receiving goods back from an invoice.":
     "errors.invoiceReturnAuthorizationRequired",
   "Returned quantity must be a positive integer.": "errors.invalidInvoiceReturnReceiptQuantity",

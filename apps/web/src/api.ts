@@ -1,6 +1,7 @@
 import type {
   ApprovalAwareMutationResult,
   AmendInvoiceInput,
+  CloseInvoiceReturnAuthorizationInput,
   CreditInvoiceInput,
   ApprovalDecisionInput,
   ApprovalRequestRecord,
@@ -470,6 +471,16 @@ export async function createInvoiceReturnAuthorization(
   input: CreateInvoiceReturnAuthorizationInput,
 ): Promise<InvoiceRecord> {
   const payload = await request<{ item: InvoiceRecord }>("/api/invoices/return-authorizations", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  return payload.item;
+}
+
+export async function closeInvoiceReturnAuthorization(
+  input: CloseInvoiceReturnAuthorizationInput,
+): Promise<InvoiceRecord> {
+  const payload = await request<{ item: InvoiceRecord }>("/api/invoices/return-authorizations/close", {
     method: "POST",
     body: JSON.stringify(input),
   });

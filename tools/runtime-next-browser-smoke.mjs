@@ -79,6 +79,7 @@ const invoiceAmendmentNote = "Corrected commercial terms before customer payment
 const reissueAmendmentNote = "Corrected shipping quantity after voiding the previous invoice revision.";
 const invoiceCreditNote = "Returned shipment after full settlement and inspection.";
 const manualReturnAuthorizationNote = "Approved customer return after warehouse inspection request.";
+const manualReturnCloseNote = "Customer withdrew the warehouse return request after collections review.";
 const manualReturnReceiptNote = "Warehouse received the returned bottle before finance posted the credit note.";
 const partialInvoiceCreditNote = "Refund one damaged bottle after full settlement.";
 const firstIssueDateInput = buildDateInputFromToday(0);
@@ -335,6 +336,30 @@ async function fillField(container, selector, value) {
   await input.click();
   await input.fill("");
   await input.fill(String(value));
+}
+
+async function setLargeFieldValue(container, selector, value) {
+  const input = container.locator(selector);
+  const normalizedValue = String(value);
+  await input.waitFor({ timeout: 15000 });
+  await input.evaluate((element, nextValue) => {
+    const prototype = Object.getPrototypeOf(element);
+    const valueDescriptor =
+      Object.getOwnPropertyDescriptor(prototype, "value") ??
+      Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value") ??
+      Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value");
+
+    if (!valueDescriptor?.set) {
+      throw new Error("Unable to resolve a native value setter for the large form field.");
+    }
+
+    valueDescriptor.set.call(element, "");
+    element.dispatchEvent(new Event("input", { bubbles: true }));
+    valueDescriptor.set.call(element, nextValue);
+    element.dispatchEvent(new Event("input", { bubbles: true }));
+    element.dispatchEvent(new Event("change", { bubbles: true }));
+  }, normalizedValue);
+  await waitForInputValue(input, normalizedValue);
 }
 
 async function fillNumberInput(input, value) {
@@ -650,9 +675,12 @@ async function main() {
   let invoiceCreditReceivedReturnGuardVerified = false;
   let invoiceReturnAuthorizationVerified = false;
   let invoiceReturnAuthorizationAuditVerified = false;
+  let invoiceReturnCaseCloseVerified = false;
+  let invoiceReturnCaseCloseAuditVerified = false;
   let invoiceReturnCaseSettledVerified = false;
   let invoiceReturnCaseSettlementAuditVerified = false;
   let invoiceReturnReceiptAuthorizationGuardVerified = false;
+  let invoiceReturnReceiptClosedCaseGuardVerified = false;
   let invoiceReturnReceiptVerified = false;
   let partialInvoiceCreditVerified = false;
   let partialInvoiceCreditAuditVerified = false;
@@ -2992,6 +3020,89 @@ async function main() {
     await latestResolvedActivity.getByText(escalatedCollectionNote, { exact: false }).waitFor({ timeout: 15000 });
     collectionResolutionVerified = true;
 
+    await secondInvoiceRow.locator('[data-testid="invoice-return-authorization-button"]').click();
+    const secondReturnAuthorizationModal = page.getByRole("dialog").filter({ hasText: "Duyệt trả hàng cho" }).last();
+    await secondReturnAuthorizationModal.waitFor({ timeout: 15000 });
+    await fillNumberInput(secondReturnAuthorizationModal.getByRole("spinbutton").first(), 1);
+    await fillField(secondReturnAuthorizationModal, "#note", manualReturnAuthorizationNote);
+    await clickSubmit(secondReturnAuthorizationModal);
+    await secondInvoiceRow.getByText("Đã duyệt", { exact: false }).first().waitFor({ timeout: 15000 });
+    await secondInvoiceRow.getByText(manualReturnAuthorizationNote, { exact: false }).first().waitFor({
+      timeout: 15000,
+    });
+    await secondInvoiceRow.locator('[data-testid="invoice-return-receipt-button"]').waitFor({ timeout: 15000 });
+    await secondInvoiceRow.locator('[data-testid="invoice-return-authorization-close-button"]').waitFor({
+      timeout: 15000,
+    });
+
+    await secondInvoiceRow.locator('[data-testid="invoice-return-authorization-close-button"]').click();
+    const secondReturnCloseModal = page.getByRole("dialog").filter({ hasText: "Đóng case trả hàng cho" }).last();
+    await secondReturnCloseModal.waitFor({ timeout: 15000 });
+    await fillField(secondReturnCloseModal, "#closeNote", manualReturnCloseNote);
+    await clickSubmit(secondReturnCloseModal);
+    await secondInvoiceRow.getByText("Đã đóng", { exact: false }).first().waitFor({ timeout: 15000 });
+    await secondInvoiceRow.getByText(manualReturnCloseNote, { exact: false }).first().waitFor({
+      timeout: 15000,
+    });
+    await secondInvoiceRow.locator('[data-testid="invoice-return-receipt-button"]').waitFor({
+      state: "detached",
+      timeout: 15000,
+    });
+    await secondInvoiceRow.locator('[data-testid="invoice-return-authorization-button"]').waitFor({
+      timeout: 15000,
+    });
+    invoiceReturnCaseCloseVerified = true;
+
+    const closedCaseReturnReceiptResponse = await page.evaluate(
+      async ({ targetInvoiceNumber, sessionKey, tenantKey }) => {
+        const rawSession = window.localStorage.getItem(sessionKey);
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
+        const headers = {
+          "content-type": "application/json",
+          authorization: `Bearer ${accessToken}`,
+        };
+
+        const invoicesResponse = await fetch(`/api/invoices?tenantId=${encodeURIComponent(tenantId ?? "")}`, {
+          headers,
+        });
+        const invoicesPayload = await invoicesResponse.json();
+        const targetInvoice = invoicesPayload.items.find((item) => item.invoiceNumber === targetInvoiceNumber);
+
+        if (!targetInvoice || !tenantId) {
+          return { status: 0, body: { error: "Closed-case invoice lookup failed before return receipt guard test." } };
+        }
+
+        const response = await fetch("/api/invoices/return-receipts", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            tenantId,
+            invoiceId: targetInvoice.id,
+            quantityReturned: 1,
+            note: "Unexpected warehouse receipt after case closure.",
+          }),
+        });
+
+        return {
+          status: response.status,
+          body: await response.json(),
+        };
+      },
+      {
+        targetInvoiceNumber: secondInvoiceNumber,
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+      },
+    );
+    assert(
+      closedCaseReturnReceiptResponse.status === 400 &&
+        closedCaseReturnReceiptResponse.body?.error ===
+          "An open return authorization is required before receiving goods back from an invoice.",
+      "Closed return case still allowed warehouse receipt posting.",
+    );
+    invoiceReturnReceiptClosedCaseGuardVerified = true;
+
     await openSection(page, sidebarIndexes.customers, "/dashboard/customers");
     await waitForTenantContext(page, tenantName);
     const customerRow = getListCard(page).locator(".record-row").filter({ hasText: customerName }).first();
@@ -3797,6 +3908,16 @@ async function main() {
     assert(
       creditAuditSnapshot.body?.items?.some(
         (item) =>
+          item.actionType === "invoice_return_closed" &&
+          item.entityNumber === secondInvoiceNumber &&
+          item.metadata?.quantity === 1 &&
+          item.metadata?.note === manualReturnCloseNote,
+      ),
+      "Invoice return close audit entry was not recorded.",
+    );
+    assert(
+      creditAuditSnapshot.body?.items?.some(
+        (item) =>
           item.actionType === "invoice_return_settled" &&
           item.entityNumber === creditedInvoiceNumber &&
           item.metadata?.productCategoryName === productCategoryName &&
@@ -3842,6 +3963,7 @@ async function main() {
     await page.getByText(invoiceCreditNote, { exact: false }).first().waitFor({ timeout: 15000 });
     invoiceCreditAuditVerified = true;
     invoiceReturnAuthorizationAuditVerified = true;
+    invoiceReturnCaseCloseAuditVerified = true;
     invoiceReturnCaseSettlementAuditVerified = true;
     invoiceReturnReceiptVerified = true;
     creditedOrderReturnAuditVerified = true;
@@ -4414,7 +4536,7 @@ async function main() {
     await fillField(restoreCard, "#targetName", restoredTenantName);
     await fillField(restoreCard, "#targetSlug", restoredTenantSlug);
     await fillField(restoreCard, "#targetIndustry", restoredTenantIndustry);
-    await fillField(restoreCard, "#snapshotJson", JSON.stringify(exportedSnapshot, null, 2));
+    await setLargeFieldValue(restoreCard, "#snapshotJson", JSON.stringify(exportedSnapshot, null, 2));
     const previewResponse = page.waitForResponse(
       (response) =>
         response.url().endsWith("/api/onboarding/restore/preview") &&
@@ -5146,9 +5268,12 @@ async function main() {
       invoiceCreditReceivedReturnGuardVerified,
       invoiceReturnAuthorizationVerified,
       invoiceReturnAuthorizationAuditVerified,
+      invoiceReturnCaseCloseVerified,
+      invoiceReturnCaseCloseAuditVerified,
       invoiceReturnCaseSettledVerified,
       invoiceReturnCaseSettlementAuditVerified,
       invoiceReturnReceiptAuthorizationGuardVerified,
+      invoiceReturnReceiptClosedCaseGuardVerified,
       invoiceReturnReceiptVerified,
       partialInvoiceCreditVerified,
       partialInvoiceCreditAuditVerified,

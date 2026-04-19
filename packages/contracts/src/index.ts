@@ -517,7 +517,8 @@ export type InvoiceReturnAuthorizationStatus =
   | "authorized"
   | "partially_received"
   | "received"
-  | "settled";
+  | "settled"
+  | "closed";
 
 export type InvoiceReturnAuthorizationRecord = {
   id: string;
@@ -536,6 +537,7 @@ export type InvoiceReturnAuthorizationRecord = {
   quantityCredited: number;
   status: InvoiceReturnAuthorizationStatus;
   note: string | null;
+  closeNote: string | null;
   authorizedAt: string;
   closedAt: string | null;
 };
@@ -748,6 +750,7 @@ export type AuditActionType =
   | "invoice_reissued"
   | "invoice_amended"
   | "invoice_return_authorized"
+  | "invoice_return_closed"
   | "invoice_return_settled"
   | "invoice_credited"
   | "invoice_return_received"
@@ -838,6 +841,7 @@ export type InvoiceRecord = {
   returnAuthorizationReceivedQuantity: number;
   returnAuthorizationCreditedQuantity: number;
   returnAuthorizationNote: string | null;
+  returnAuthorizationCloseNote: string | null;
   lastReturnAuthorizationAt: string | null;
   returnReceiptCount: number;
   lastReturnReceiptAt: string | null;
@@ -917,6 +921,12 @@ export type CreateInvoiceReturnAuthorizationInput = {
   invoiceId: string;
   quantityAuthorized: number;
   note: string | null;
+};
+
+export type CloseInvoiceReturnAuthorizationInput = {
+  tenantId: string;
+  invoiceId: string;
+  closeNote: string | null;
 };
 
 export type CreateInvoicePaymentInput = {

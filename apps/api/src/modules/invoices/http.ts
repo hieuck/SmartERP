@@ -2,6 +2,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 
 import type {
   AmendInvoiceInput,
+  CloseInvoiceReturnAuthorizationInput,
   CreditInvoiceInput,
   CreateInvoiceInput,
   CreateInvoicePaymentInput,
@@ -17,6 +18,7 @@ import type {
 import { readJson, sendJson } from "../../http.js";
 import {
   amendInvoice,
+  closeInvoiceReturnAuthorization,
   creditInvoice,
   createInvoice,
   createInvoicePayment,
@@ -475,6 +477,55 @@ export async function handleCreateInvoiceReturnAuthorization(
         "Return authorization note is required before receiving goods back from an invoice.",
         "Return authorization note must be 240 characters or fewer.",
         "A return authorization is already open for this invoice.",
+      ].includes(error.message)
+    ) {
+      badRequest(response, error.message);
+      return;
+    }
+
+    throw error;
+  }
+}
+
+export async function handleCloseInvoiceReturnAuthorization(
+  request: IncomingMessage,
+  response: ServerResponse,
+  requestSession: Session | null,
+): Promise<void> {
+  const input = await readJson<CloseInvoiceReturnAuthorizationInput>(request);
+
+  if (!input.tenantId?.trim()) {
+    badRequest(response, "tenantId is required.");
+    return;
+  }
+
+  if (!hasTenant(input.tenantId)) {
+    badRequest(response, "The selected tenant does not exist.");
+    return;
+  }
+
+  if (!input.invoiceId?.trim()) {
+    badRequest(response, "invoiceId is required.");
+    return;
+  }
+
+  if (input.closeNote !== null && input.closeNote !== undefined && typeof input.closeNote !== "string") {
+    badRequest(response, "Return case close note must be 240 characters or fewer.");
+    return;
+  }
+
+  try {
+    const invoice = runWithSession(requestSession, () => closeInvoiceReturnAuthorization(input));
+    sendJson(response, 200, { item: invoice });
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      [
+        "The selected invoice does not exist.",
+        "The selected invoice has been voided.",
+        "There is no open return case to close for this invoice.",
+        "Return case close note is required before closing the return case.",
+        "Return case close note must be 240 characters or fewer.",
       ].includes(error.message)
     ) {
       badRequest(response, error.message);

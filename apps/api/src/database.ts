@@ -278,6 +278,7 @@ db.exec(`
     quantity_credited INTEGER NOT NULL DEFAULT 0,
     status TEXT NOT NULL DEFAULT 'authorized',
     note TEXT NOT NULL DEFAULT '',
+    close_note TEXT,
     authorized_at TEXT NOT NULL,
     closed_at TEXT,
     FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE,
@@ -981,6 +982,10 @@ if (!invoiceReturnReceiptColumns.some((column) => column.name === "note")) {
 
 if (!invoiceReturnAuthorizationColumns.some((column) => column.name === "quantity_credited")) {
   db.exec("ALTER TABLE invoice_return_authorizations ADD COLUMN quantity_credited INTEGER NOT NULL DEFAULT 0");
+}
+
+if (!invoiceReturnAuthorizationColumns.some((column) => column.name === "close_note")) {
+  db.exec("ALTER TABLE invoice_return_authorizations ADD COLUMN close_note TEXT");
 }
 
 if (!inventoryColumns.some((column) => column.name === "average_unit_cost")) {

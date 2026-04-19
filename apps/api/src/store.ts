@@ -16,6 +16,7 @@ import {
   type AccountType,
   type CancelOrderInput,
   type CancelPurchaseOrderInput,
+  type CloseInvoiceReturnAuthorizationInput,
   type CloseOrderInput,
   type ClosePurchaseOrderInput,
   type ReopenOrderInput,
@@ -250,6 +251,7 @@ type InvoiceReturnAuthorizationRow = {
   quantity_credited: number;
   status: InvoiceReturnAuthorizationStatus;
   note: string;
+  close_note: string | null;
   authorized_at: string;
   closed_at: string | null;
 };
@@ -299,6 +301,7 @@ type InvoiceRow = {
   return_authorization_received_quantity: number;
   return_authorization_credited_quantity: number;
   return_authorization_note: string | null;
+  return_authorization_close_note: string | null;
   last_return_authorization_at: string | null;
   return_receipt_count: number;
   last_return_receipt_at: string | null;
@@ -1329,6 +1332,7 @@ const listInvoiceReturnAuthorizationsStatement = db.prepare(`
     quantity_credited,
     status,
     note,
+    close_note,
     authorized_at,
     closed_at
   FROM invoice_return_authorizations
@@ -1354,10 +1358,11 @@ const getLatestOpenInvoiceReturnAuthorizationStatement = db.prepare(`
     quantity_credited,
     status,
     note,
+    close_note,
     authorized_at,
     closed_at
   FROM invoice_return_authorizations
-  WHERE tenant_id = ? AND invoice_id = ? AND status <> 'settled'
+  WHERE tenant_id = ? AND invoice_id = ? AND status NOT IN ('settled', 'closed')
   ORDER BY datetime(authorized_at) DESC, rowid DESC
   LIMIT 1
 `);
@@ -1380,10 +1385,11 @@ const createInvoiceReturnAuthorizationStatement = db.prepare(`
     quantity_credited,
     status,
     note,
+    close_note,
     authorized_at,
     closed_at
   )
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `);
 
 const updateInvoiceReturnAuthorizationStateStatement = db.prepare(`
@@ -1392,6 +1398,7 @@ const updateInvoiceReturnAuthorizationStateStatement = db.prepare(`
     quantity_received = ?,
     quantity_credited = ?,
     status = ?,
+    close_note = ?,
     closed_at = ?
   WHERE tenant_id = ? AND id = ?
 `);
@@ -1504,7 +1511,7 @@ const getLatestVoidedInvoiceForOrderStatement = db.prepare(`
     (
       SELECT ira.id
       FROM invoice_return_authorizations ira
-      WHERE ira.invoice_id = i.id AND ira.status <> 'settled'
+      WHERE ira.invoice_id = i.id AND ira.status NOT IN ('settled', 'closed')
       ORDER BY datetime(ira.authorized_at) DESC, ira.rowid DESC
       LIMIT 1
     ) AS open_return_authorization_id,
@@ -1543,6 +1550,13 @@ const getLatestVoidedInvoiceForOrderStatement = db.prepare(`
       ORDER BY datetime(ira.authorized_at) DESC, ira.rowid DESC
       LIMIT 1
     ) AS return_authorization_note,
+    (
+      SELECT ira.close_note
+      FROM invoice_return_authorizations ira
+      WHERE ira.invoice_id = i.id
+      ORDER BY datetime(ira.authorized_at) DESC, ira.rowid DESC
+      LIMIT 1
+    ) AS return_authorization_close_note,
     (
       SELECT MAX(ira.authorized_at)
       FROM invoice_return_authorizations ira
@@ -1632,7 +1646,7 @@ const listInvoicesStatement = db.prepare(`
     (
       SELECT ira.id
       FROM invoice_return_authorizations ira
-      WHERE ira.invoice_id = i.id AND ira.status <> 'settled'
+      WHERE ira.invoice_id = i.id AND ira.status NOT IN ('settled', 'closed')
       ORDER BY datetime(ira.authorized_at) DESC, ira.rowid DESC
       LIMIT 1
     ) AS open_return_authorization_id,
@@ -1671,6 +1685,13 @@ const listInvoicesStatement = db.prepare(`
       ORDER BY datetime(ira.authorized_at) DESC, ira.rowid DESC
       LIMIT 1
     ) AS return_authorization_note,
+    (
+      SELECT ira.close_note
+      FROM invoice_return_authorizations ira
+      WHERE ira.invoice_id = i.id
+      ORDER BY datetime(ira.authorized_at) DESC, ira.rowid DESC
+      LIMIT 1
+    ) AS return_authorization_close_note,
     (
       SELECT MAX(ira.authorized_at)
       FROM invoice_return_authorizations ira
@@ -1792,7 +1813,7 @@ const getInvoiceByIdStatement = db.prepare(`
     (
       SELECT ira.id
       FROM invoice_return_authorizations ira
-      WHERE ira.invoice_id = i.id AND ira.status <> 'settled'
+      WHERE ira.invoice_id = i.id AND ira.status NOT IN ('settled', 'closed')
       ORDER BY datetime(ira.authorized_at) DESC, ira.rowid DESC
       LIMIT 1
     ) AS open_return_authorization_id,
@@ -1831,6 +1852,13 @@ const getInvoiceByIdStatement = db.prepare(`
       ORDER BY datetime(ira.authorized_at) DESC, ira.rowid DESC
       LIMIT 1
     ) AS return_authorization_note,
+    (
+      SELECT ira.close_note
+      FROM invoice_return_authorizations ira
+      WHERE ira.invoice_id = i.id
+      ORDER BY datetime(ira.authorized_at) DESC, ira.rowid DESC
+      LIMIT 1
+    ) AS return_authorization_close_note,
     (
       SELECT MAX(ira.authorized_at)
       FROM invoice_return_authorizations ira
@@ -2785,6 +2813,7 @@ function mapInvoiceReturnAuthorization(
     quantityCredited: row.quantity_credited,
     status: row.status,
     note: row.note || null,
+    closeNote: row.close_note || null,
     authorizedAt: row.authorized_at,
     closedAt: row.closed_at,
   };
@@ -3131,6 +3160,7 @@ function mapInvoice(row: InvoiceRow): InvoiceRecord {
     returnAuthorizationReceivedQuantity: row.return_authorization_received_quantity ?? 0,
     returnAuthorizationCreditedQuantity: row.return_authorization_credited_quantity ?? 0,
     returnAuthorizationNote: row.return_authorization_note ?? null,
+    returnAuthorizationCloseNote: row.return_authorization_close_note ?? null,
     lastReturnAuthorizationAt: row.last_return_authorization_at,
     returnReceiptCount: row.return_receipt_count,
     lastReturnReceiptAt: row.last_return_receipt_at,
@@ -3219,6 +3249,19 @@ function normalizeInvoiceReturnAuthorizationNote(input: string | null | undefine
 
   if (trimmed.length > 240) {
     throw new Error("Return authorization note must be 240 characters or fewer.");
+  }
+
+  return trimmed;
+}
+
+function normalizeInvoiceReturnAuthorizationCloseNote(input: string | null | undefined): string | null {
+  const trimmed = input?.trim() ?? "";
+  if (!trimmed) {
+    return null;
+  }
+
+  if (trimmed.length > 240) {
+    throw new Error("Return case close note must be 240 characters or fewer.");
   }
 
   return trimmed;
@@ -3339,6 +3382,7 @@ function buildInvoiceRecord(
     returnAuthorizationReceivedQuantity: 0,
     returnAuthorizationCreditedQuantity: 0,
     returnAuthorizationNote: null,
+    returnAuthorizationCloseNote: null,
     lastReturnAuthorizationAt: null,
     returnReceiptCount: 0,
     lastReturnReceiptAt: null,
@@ -4932,6 +4976,7 @@ export function restoreTenantSnapshot(input: RestoreTenantSnapshotInput): Restor
       authorization.quantityCredited,
       authorization.status,
       authorization.note ?? "",
+      authorization.closeNote ?? null,
       authorization.authorizedAt,
       authorization.closedAt,
     );
@@ -7385,6 +7430,7 @@ function applyInvoiceReturnAuthorizationReceipt(input: {
     nextQuantityReceived,
     nextQuantityCredited,
     nextStatus,
+    authorization.close_note ?? null,
     closedAt,
     input.tenantId,
     authorization.id,
@@ -7395,6 +7441,7 @@ function applyInvoiceReturnAuthorizationReceipt(input: {
     quantity_received: nextQuantityReceived,
     quantity_credited: nextQuantityCredited,
     status: nextStatus,
+    close_note: authorization.close_note ?? null,
     closed_at: closedAt,
   });
 }
@@ -7432,6 +7479,7 @@ function applyInvoiceReturnAuthorizationSettlement(input: {
     authorization.quantity_received,
     nextQuantityCredited,
     nextStatus,
+    authorization.close_note ?? null,
     closedAt,
     input.tenantId,
     authorization.id,
@@ -7442,6 +7490,7 @@ function applyInvoiceReturnAuthorizationSettlement(input: {
       ...authorization,
       quantity_credited: nextQuantityCredited,
       status: nextStatus,
+      close_note: authorization.close_note ?? null,
       closed_at: closedAt,
     }),
     settled,
@@ -7502,6 +7551,7 @@ export function createInvoiceReturnAuthorization(
     quantity_credited: 0,
     status: "authorized",
     note,
+    close_note: null,
     authorized_at: authorizedAt,
     closed_at: null,
   };
@@ -7523,6 +7573,7 @@ export function createInvoiceReturnAuthorization(
     authorization.quantity_credited,
     authorization.status,
     authorization.note,
+    authorization.close_note,
     authorization.authorized_at,
     authorization.closed_at,
   );
@@ -7543,6 +7594,71 @@ export function createInvoiceReturnAuthorization(
       note,
     },
     createdAt: authorizedAt,
+  });
+
+  const refreshedInvoice = getInvoiceByIdStatement.get(input.tenantId, input.invoiceId) as InvoiceRow | undefined;
+  if (!refreshedInvoice) {
+    throw new Error("The selected invoice does not exist.");
+  }
+
+  return mapInvoice(refreshedInvoice);
+}
+
+export function closeInvoiceReturnAuthorization(
+  input: CloseInvoiceReturnAuthorizationInput,
+): InvoiceRecord {
+  const invoice = getInvoiceByIdStatement.get(input.tenantId, input.invoiceId) as InvoiceRow | undefined;
+  if (!invoice) {
+    throw new Error("The selected invoice does not exist.");
+  }
+
+  if (invoice.status === "void") {
+    throw new Error("The selected invoice has been voided.");
+  }
+
+  const closeNote = normalizeInvoiceReturnAuthorizationCloseNote(input.closeNote);
+  if (!closeNote) {
+    throw new Error("Return case close note is required before closing the return case.");
+  }
+
+  const authorization = getLatestOpenInvoiceReturnAuthorizationStatement.get(
+    input.tenantId,
+    input.invoiceId,
+  ) as InvoiceReturnAuthorizationRow | undefined;
+  if (!authorization) {
+    throw new Error("There is no open return case to close for this invoice.");
+  }
+
+  const closedAt = timestamp();
+
+  updateInvoiceReturnAuthorizationStateStatement.run(
+    authorization.quantity_received,
+    authorization.quantity_credited,
+    "closed",
+    closeNote,
+    closedAt,
+    input.tenantId,
+    authorization.id,
+  );
+
+  recordAuditLog({
+    tenantId: input.tenantId,
+    entityType: "invoice",
+    entityId: invoice.id,
+    entityNumber: invoice.invoice_number,
+    actionType: "invoice_return_closed",
+    summary: `Closed return case for ${invoice.invoice_number}`,
+    metadata: {
+      quantity: authorization.quantity_authorized,
+      returnedQuantity: authorization.quantity_received,
+      creditedQuantity: authorization.quantity_credited,
+      productCategoryId: authorization.product_category_id,
+      productCategoryName: authorization.product_category_name,
+      productSku: authorization.product_sku,
+      productName: authorization.product_name,
+      note: closeNote,
+    },
+    createdAt: closedAt,
   });
 
   const refreshedInvoice = getInvoiceByIdStatement.get(input.tenantId, input.invoiceId) as InvoiceRow | undefined;
