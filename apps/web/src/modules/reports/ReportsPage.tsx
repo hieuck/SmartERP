@@ -755,6 +755,11 @@ export function ReportsPage(): ReactElement {
                           {t("reports.auditAmendmentNoteLabel")} {auditLog.metadata.amendmentNote}
                         </div>
                       ) : null}
+                      {auditLog.metadata.returnCaseNumber ? (
+                        <div className="record-detail">
+                          {t("reports.auditReturnCaseLabel")} {auditLog.metadata.returnCaseNumber}
+                        </div>
+                      ) : null}
                       {typeof auditLog.metadata.revisionNumber === "number" ? (
                         <div className="record-detail">
                           {t("reports.auditRevisionLabel")}{" "}

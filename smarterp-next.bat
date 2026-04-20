@@ -4,7 +4,7 @@ setlocal ENABLEEXTENSIONS
 set "ROOT=%~dp0"
 cd /d "%ROOT%"
 
-if "%~1"=="" goto :help
+if "%~1"=="" goto :oneclick
 
 set "COMMAND=%~1"
 
@@ -29,6 +29,13 @@ echo [SmartERP Next] Starting API and web runtime...
 call npm.cmd run runtime:next:start
 if errorlevel 1 exit /b 1
 echo [SmartERP Next] Runtime started.
+goto :end
+
+:oneclick
+call :start
+if errorlevel 1 exit /b 1
+call :open
+if errorlevel 1 exit /b 1
 goto :end
 
 :stop
@@ -101,6 +108,7 @@ goto :end
 echo SmartERP Next Batch Runner
 echo.
 echo Usage:
+echo   smarterp-next.bat
 echo   smarterp-next.bat start
 echo   smarterp-next.bat stop
 echo   smarterp-next.bat restart
@@ -114,6 +122,7 @@ echo   smarterp-next.bat open
 echo   smarterp-next.bat help
 echo.
 echo Notes:
+echo   no argument: start runtime and open the web app
 echo   start    : boots API ^+ web in background
 echo   smoke    : runs Playwright runtime smoke and stops services after the run
 echo   gate     : type-check ^+ build ^+ Playwright smoke

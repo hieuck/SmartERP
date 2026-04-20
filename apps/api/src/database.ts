@@ -264,6 +264,7 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS invoice_return_authorizations (
     id TEXT PRIMARY KEY,
     tenant_id TEXT NOT NULL,
+    case_number TEXT NOT NULL DEFAULT '',
     invoice_id TEXT NOT NULL,
     invoice_number TEXT NOT NULL,
     order_id TEXT NOT NULL,
@@ -986,6 +987,10 @@ if (!invoiceReturnAuthorizationColumns.some((column) => column.name === "quantit
 
 if (!invoiceReturnAuthorizationColumns.some((column) => column.name === "close_note")) {
   db.exec("ALTER TABLE invoice_return_authorizations ADD COLUMN close_note TEXT");
+}
+
+if (!invoiceReturnAuthorizationColumns.some((column) => column.name === "case_number")) {
+  db.exec("ALTER TABLE invoice_return_authorizations ADD COLUMN case_number TEXT NOT NULL DEFAULT ''");
 }
 
 if (!inventoryColumns.some((column) => column.name === "average_unit_cost")) {

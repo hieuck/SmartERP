@@ -531,6 +531,7 @@ export type InvoiceReturnAuthorizationActionRequired =
 export type InvoiceReturnAuthorizationRecord = {
   id: string;
   tenantId: string;
+  caseNumber: string;
   invoiceId: string;
   invoiceNumber: string;
   orderId: string;
@@ -791,6 +792,7 @@ export type AuditActionType =
 export type AuditLogMetadata = {
   amount?: number;
   quantity?: number;
+  returnCaseNumber?: string;
   creditedAmount?: number;
   creditedQuantity?: number;
   returnedQuantity?: number;
@@ -850,6 +852,7 @@ export type InvoiceRecord = {
   creditedQuantity: number;
   returnedQuantity: number;
   returnAuthorizationCount: number;
+  returnAuthorizationCaseNumber: string | null;
   openReturnAuthorizationId: string | null;
   returnAuthorizationStatus: InvoiceReturnAuthorizationStatus | null;
   returnAuthorizationRequestedQuantity: number;

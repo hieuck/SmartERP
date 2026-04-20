@@ -239,6 +239,7 @@ type InvoiceReturnReceiptRow = {
 type InvoiceReturnAuthorizationRow = {
   id: string;
   tenant_id: string;
+  case_number: string;
   invoice_id: string;
   invoice_number: string;
   order_id: string;
@@ -297,6 +298,7 @@ type InvoiceRow = {
   credited_tax_amount: number;
   returned_quantity: number;
   return_authorization_count: number;
+  return_authorization_case_number: string | null;
   open_return_authorization_id: string | null;
   return_authorization_status: InvoiceReturnAuthorizationStatus | null;
   return_authorization_requested_quantity: number;
@@ -1320,6 +1322,7 @@ const listInvoiceReturnAuthorizationsStatement = db.prepare(`
   SELECT
     id,
     tenant_id,
+    case_number,
     invoice_id,
     invoice_number,
     order_id,
@@ -1346,6 +1349,7 @@ const getLatestOpenInvoiceReturnAuthorizationStatement = db.prepare(`
   SELECT
     id,
     tenant_id,
+    case_number,
     invoice_id,
     invoice_number,
     order_id,
@@ -1373,6 +1377,7 @@ const getLatestClosedInvoiceReturnAuthorizationStatement = db.prepare(`
   SELECT
     id,
     tenant_id,
+    case_number,
     invoice_id,
     invoice_number,
     order_id,
@@ -1400,6 +1405,7 @@ const createInvoiceReturnAuthorizationStatement = db.prepare(`
   INSERT INTO invoice_return_authorizations (
     id,
     tenant_id,
+    case_number,
     invoice_id,
     invoice_number,
     order_id,
@@ -1418,7 +1424,7 @@ const createInvoiceReturnAuthorizationStatement = db.prepare(`
     authorized_at,
     closed_at
   )
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `);
 
 const updateInvoiceReturnAuthorizationStateStatement = db.prepare(`
@@ -1546,6 +1552,13 @@ const getLatestVoidedInvoiceForOrderStatement = db.prepare(`
       FROM invoice_return_authorizations ira
       WHERE ira.invoice_id = i.id
     ) AS return_authorization_count,
+    (
+      SELECT ira.case_number
+      FROM invoice_return_authorizations ira
+      WHERE ira.invoice_id = i.id
+      ORDER BY datetime(ira.authorized_at) DESC, ira.rowid DESC
+      LIMIT 1
+    ) AS return_authorization_case_number,
     (
       SELECT ira.id
       FROM invoice_return_authorizations ira
@@ -1681,6 +1694,13 @@ const listInvoicesStatement = db.prepare(`
       FROM invoice_return_authorizations ira
       WHERE ira.invoice_id = i.id
     ) AS return_authorization_count,
+    (
+      SELECT ira.case_number
+      FROM invoice_return_authorizations ira
+      WHERE ira.invoice_id = i.id
+      ORDER BY datetime(ira.authorized_at) DESC, ira.rowid DESC
+      LIMIT 1
+    ) AS return_authorization_case_number,
     (
       SELECT ira.id
       FROM invoice_return_authorizations ira
@@ -1848,6 +1868,13 @@ const getInvoiceByIdStatement = db.prepare(`
       FROM invoice_return_authorizations ira
       WHERE ira.invoice_id = i.id
     ) AS return_authorization_count,
+    (
+      SELECT ira.case_number
+      FROM invoice_return_authorizations ira
+      WHERE ira.invoice_id = i.id
+      ORDER BY datetime(ira.authorized_at) DESC, ira.rowid DESC
+      LIMIT 1
+    ) AS return_authorization_case_number,
     (
       SELECT ira.id
       FROM invoice_return_authorizations ira
@@ -2854,6 +2881,7 @@ function mapInvoiceReturnAuthorization(
   return {
     id: row.id,
     tenantId: row.tenant_id,
+    caseNumber: row.case_number,
     invoiceId: row.invoice_id,
     invoiceNumber: row.invoice_number,
     orderId: row.order_id,
@@ -3222,6 +3250,7 @@ function mapInvoice(row: InvoiceRow): InvoiceRecord {
     creditedQuantity,
     returnedQuantity: row.returned_quantity,
     returnAuthorizationCount: row.return_authorization_count,
+    returnAuthorizationCaseNumber: row.return_authorization_case_number ?? null,
     openReturnAuthorizationId: row.open_return_authorization_id,
     returnAuthorizationStatus: row.return_authorization_status,
     returnAuthorizationRequestedQuantity: row.return_authorization_requested_quantity ?? 0,
@@ -3457,6 +3486,7 @@ function buildInvoiceRecord(
     creditedQuantity: 0,
     returnedQuantity: 0,
     returnAuthorizationCount: 0,
+    returnAuthorizationCaseNumber: null,
     openReturnAuthorizationId: null,
     returnAuthorizationStatus: null,
     returnAuthorizationRequestedQuantity: 0,
@@ -3745,6 +3775,12 @@ function createPurchaseOrderNumber(): string {
   const datePart = new Date().toISOString().slice(0, 10).replaceAll("-", "");
   const suffix = randomUUID().slice(0, 6).toUpperCase();
   return `PO-${datePart}-${suffix}`;
+}
+
+function createInvoiceReturnCaseNumber(): string {
+  const datePart = new Date().toISOString().slice(0, 10).replaceAll("-", "");
+  const suffix = randomUUID().slice(0, 6).toUpperCase();
+  return `RMA-${datePart}-${suffix}`;
 }
 
 function ensureInventoryRow(tenantId: string, productId: string): void {
@@ -5057,6 +5093,7 @@ export function restoreTenantSnapshot(input: RestoreTenantSnapshotInput): Restor
     createInvoiceReturnAuthorizationStatement.run(
       randomUUID(),
       restoredTenant.id,
+      authorization.caseNumber || createInvoiceReturnCaseNumber(),
       restoredInvoiceId,
       invoiceNumberMap.get(authorization.invoiceId) ?? authorization.invoiceNumber,
       restoredOrderId,
@@ -7420,6 +7457,7 @@ function createInvoiceReturnReceiptAndRestock(input: {
     metadata: {
       quantity: receipt.quantity_returned,
       returnedQuantity: nextReturnedQuantity,
+      returnCaseNumber: input.invoice.returnAuthorizationCaseNumber ?? undefined,
       inventoryValue: receipt.inventory_value,
       inventoryRestocked: true,
       productCategoryId: input.invoice.productCategoryId,
@@ -7636,6 +7674,7 @@ export function createInvoiceReturnAuthorization(
   const authorization: InvoiceReturnAuthorizationRow = {
     id: randomUUID(),
     tenant_id: input.tenantId,
+    case_number: createInvoiceReturnCaseNumber(),
     invoice_id: invoice.id,
     invoice_number: invoice.invoice_number,
     order_id: order.id,
@@ -7658,6 +7697,7 @@ export function createInvoiceReturnAuthorization(
   createInvoiceReturnAuthorizationStatement.run(
     authorization.id,
     authorization.tenant_id,
+    authorization.case_number,
     authorization.invoice_id,
     authorization.invoice_number,
     authorization.order_id,
@@ -7686,6 +7726,7 @@ export function createInvoiceReturnAuthorization(
     summary: `Authorized return for ${invoice.invoice_number}`,
     metadata: {
       quantity: quantityAuthorized,
+      returnCaseNumber: authorization.case_number,
       productCategoryId: invoice.product_category_id,
       productCategoryName: invoice.product_category_name,
       productSku: invoice.product_sku,
@@ -7765,6 +7806,7 @@ export function updateInvoiceReturnAuthorization(
     summary: `Amended return case for ${invoice.invoice_number}`,
     metadata: {
       quantity: quantityAuthorized,
+      returnCaseNumber: authorization.case_number,
       returnedQuantity: authorization.quantity_received,
       creditedQuantity: authorization.quantity_credited,
       productCategoryId: authorization.product_category_id,
@@ -7830,6 +7872,7 @@ export function closeInvoiceReturnAuthorization(
     summary: `Closed return case for ${invoice.invoice_number}`,
     metadata: {
       quantity: authorization.quantity_authorized,
+      returnCaseNumber: authorization.case_number,
       returnedQuantity: authorization.quantity_received,
       creditedQuantity: authorization.quantity_credited,
       productCategoryId: authorization.product_category_id,
@@ -7900,6 +7943,7 @@ export function reopenInvoiceReturnAuthorization(
     summary: `Reopened return case for ${invoice.invoice_number}`,
     metadata: {
       quantity: authorization.quantity_authorized,
+      returnCaseNumber: authorization.case_number,
       returnedQuantity: authorization.quantity_received,
       creditedQuantity: authorization.quantity_credited,
       productCategoryId: authorization.product_category_id,
@@ -8053,6 +8097,7 @@ function creditInvoiceInternal(input: CreditInvoiceInput): InvoiceRecord {
           quantity: settlementResult.authorization.quantityAuthorized,
           returnedQuantity: settlementResult.authorization.quantityReceived,
           creditedQuantity: settlementResult.authorization.quantityCredited,
+          returnCaseNumber: settlementResult.authorization.caseNumber,
           productCategoryId: mappedInvoice.productCategoryId,
           productCategoryName: mappedInvoice.productCategoryName,
           productSku: mappedInvoice.productSku,

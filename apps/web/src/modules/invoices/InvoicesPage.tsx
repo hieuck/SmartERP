@@ -1717,6 +1717,9 @@ export function InvoicesPage(): ReactElement {
                           <div className="record-content">
                             <strong>{authorization.invoiceNumber}</strong>
                             <div className="record-detail">
+                              {t("invoices.returnAuthorizationCaseLabel")} {authorization.caseNumber}
+                            </div>
+                            <div className="record-detail">
                               <InboxOutlined /> {authorization.orderNumber}
                             </div>
                             {linkedInvoice ? (
@@ -2106,6 +2109,12 @@ export function InvoicesPage(): ReactElement {
                         ) : null}
                         {invoice.returnAuthorizationStatus ? (
                           <>
+                            {invoice.returnAuthorizationCaseNumber ? (
+                              <div className="record-detail">
+                                {t("invoices.returnAuthorizationCaseLabel")}{" "}
+                                {invoice.returnAuthorizationCaseNumber}
+                              </div>
+                            ) : null}
                             <div className="record-detail">
                               <DeploymentUnitOutlined /> {t("invoices.returnAuthorizationLabel")}{" "}
                               {invoice.returnAuthorizationReceivedQuantity}/

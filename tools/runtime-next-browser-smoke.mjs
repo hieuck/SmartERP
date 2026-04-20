@@ -591,8 +591,10 @@ async function main() {
   let invoiceNumber = "";
   let secondOrderNumber = "";
   let secondInvoiceNumber = "";
+  let secondReturnCaseNumber = "";
   let creditedOrderNumber = "";
   let creditedInvoiceNumber = "";
+  let creditedReturnCaseNumber = "";
   let partialCreditOrderNumber = "";
   let partialCreditInvoiceNumber = "";
   let voidedOrderNumber = "";
@@ -682,6 +684,7 @@ async function main() {
   let invoiceReturnAuthorizationAuditVerified = false;
   let invoiceReturnCaseQueueVerified = false;
   let invoiceReturnCaseActionOwnerVerified = false;
+  let invoiceReturnCaseNumberVerified = false;
   let invoiceReturnCaseAmendVerified = false;
   let invoiceReturnCaseAmendGuardVerified = false;
   let invoiceReturnCaseAmendAuditVerified = false;
@@ -940,7 +943,15 @@ async function main() {
     await fillField(suppliersFormCard, "#phone", editedSupplierPhone);
     await fillField(suppliersFormCard, "#city", editedSupplierCity);
     await fillField(suppliersFormCard, "#leadTimeDays", 9);
+    const supplierUpdateResponse = page.waitForResponse(
+      (response) =>
+        response.url().endsWith("/api/suppliers/update") &&
+        response.request().method() === "POST" &&
+        response.status() === 200,
+      { timeout: 15000 },
+    );
     await clickSubmit(suppliersFormCard);
+    await supplierUpdateResponse;
     const editedSupplierRow = suppliersListCard.locator(".record-row").filter({ hasText: editedSupplierName }).first();
     await editedSupplierRow.waitFor({ timeout: 15000 });
     await editedSupplierRow.getByText(editedSupplierCode, { exact: false }).waitFor({ timeout: 15000 });
@@ -2835,7 +2846,15 @@ async function main() {
     await selectOption(page, ordersFormCard.getByRole("combobox", { name: "* Khách hàng" }), customerName);
     await selectOption(page, ordersFormCard.getByRole("combobox", { name: "* Sản phẩm" }), productName);
     await fillNumberInput(ordersFormCard.getByRole("spinbutton", { name: "* Số lượng" }), secondSaleQuantity);
+    const secondOrderCreateResponse = page.waitForResponse(
+      (response) =>
+        response.url().endsWith("/api/orders") &&
+        response.request().method() === "POST" &&
+        response.status() === 201,
+      { timeout: 15000 },
+    );
     await clickSubmit(ordersFormCard);
+    await secondOrderCreateResponse;
     const secondOrderRow = getListCard(page)
       .locator(".record-row")
       .filter({ hasText: `${productName} x ${secondSaleQuantity}` })
@@ -3059,6 +3078,15 @@ async function main() {
       `[data-testid="invoice-return-case-row-${secondInvoiceNumber}"]`,
     );
     await secondReturnCaseQueueRow.waitFor({ timeout: 15000 });
+    const secondReturnCaseQueueText = (await secondReturnCaseQueueRow.textContent()) ?? "";
+    secondReturnCaseNumber = secondReturnCaseQueueText.match(/RMA-\d{8}-[A-Z0-9]{6}/)?.[0] ?? "";
+    assert(secondReturnCaseNumber.length > 0, "Second invoice return case number was not rendered.");
+    await secondReturnCaseQueueRow.getByText(secondReturnCaseNumber, { exact: false }).first().waitFor({
+      timeout: 15000,
+    });
+    await secondInvoiceRow.getByText(secondReturnCaseNumber, { exact: false }).first().waitFor({
+      timeout: 15000,
+    });
     await secondReturnCaseQueueRow.getByText("Kho xử lý", { exact: false }).first().waitFor({
       timeout: 15000,
     });
@@ -3085,6 +3113,12 @@ async function main() {
       timeout: 15000,
     });
     await secondReturnCaseQueueRow.getByText(/Case trả hàng:\s*0\/2/, { exact: false }).first().waitFor({
+      timeout: 15000,
+    });
+    await secondReturnCaseQueueRow.getByText(secondReturnCaseNumber, { exact: false }).first().waitFor({
+      timeout: 15000,
+    });
+    await secondInvoiceRow.getByText(secondReturnCaseNumber, { exact: false }).first().waitFor({
       timeout: 15000,
     });
     await secondReturnCaseQueueRow.getByText("Còn chờ nhận: 2", { exact: false }).first().waitFor({
@@ -3188,6 +3222,12 @@ async function main() {
       timeout: 15000,
     });
     await secondReturnCaseQueueRow.getByText("Còn chờ nhận: 2", { exact: false }).first().waitFor({
+      timeout: 15000,
+    });
+    await secondReturnCaseQueueRow.getByText(secondReturnCaseNumber, { exact: false }).first().waitFor({
+      timeout: 15000,
+    });
+    await secondInvoiceRow.getByText(secondReturnCaseNumber, { exact: false }).first().waitFor({
       timeout: 15000,
     });
     await secondReturnCaseQueueRow.getByText("Đã đóng", { exact: false }).first().waitFor({
@@ -3894,6 +3934,15 @@ async function main() {
       `[data-testid="invoice-return-case-row-${creditedInvoiceNumber}"]`,
     );
     await creditedReturnCaseQueueRow.waitFor({ timeout: 15000 });
+    const creditedReturnCaseQueueText = (await creditedReturnCaseQueueRow.textContent()) ?? "";
+    creditedReturnCaseNumber = creditedReturnCaseQueueText.match(/RMA-\d{8}-[A-Z0-9]{6}/)?.[0] ?? "";
+    assert(creditedReturnCaseNumber.length > 0, "Credited invoice return case number was not rendered.");
+    await creditedReturnCaseQueueRow.getByText(creditedReturnCaseNumber, { exact: false }).first().waitFor({
+      timeout: 15000,
+    });
+    await creditedInvoiceRow.getByText(creditedReturnCaseNumber, { exact: false }).first().waitFor({
+      timeout: 15000,
+    });
     await creditedReturnCaseQueueRow.getByText("Tài chính xử lý", { exact: false }).first().waitFor({
       timeout: 15000,
     });
@@ -3967,6 +4016,9 @@ async function main() {
     await settledReturnCaseRow.getByText("Đã tất toán", { exact: false }).first().waitFor({
       timeout: 15000,
     });
+    await settledReturnCaseRow.getByText(creditedReturnCaseNumber, { exact: false }).first().waitFor({
+      timeout: 15000,
+    });
     await settledReturnCaseRow.getByText(invoiceCreditNote, { exact: false }).first().waitFor({
       timeout: 15000,
     });
@@ -3976,6 +4028,7 @@ async function main() {
     await returnCaseQueueCard
       .getByText("1 case đã tất toán", { exact: false })
       .waitFor({ timeout: 15000 });
+    invoiceReturnCaseNumberVerified = true;
     invoiceCreditVerified = true;
     invoiceReturnCaseSettledVerified = true;
     invoiceReturnCaseQueueVerified = true;
@@ -4152,6 +4205,7 @@ async function main() {
         (item) =>
           item.actionType === "invoice_return_authorized" &&
           item.entityNumber === creditedInvoiceNumber &&
+          item.metadata?.returnCaseNumber === creditedReturnCaseNumber &&
           item.metadata?.productCategoryName === productCategoryName &&
           item.metadata?.quantity === creditedOrderQuantity &&
           item.metadata?.note === manualReturnAuthorizationNote,
@@ -4163,6 +4217,7 @@ async function main() {
         (item) =>
           item.actionType === "invoice_return_amended" &&
           item.entityNumber === secondInvoiceNumber &&
+          item.metadata?.returnCaseNumber === secondReturnCaseNumber &&
           item.metadata?.quantity === 2 &&
           item.metadata?.note === manualReturnAuthorizationAmendNote,
       ),
@@ -4173,6 +4228,7 @@ async function main() {
         (item) =>
           item.actionType === "invoice_return_closed" &&
           item.entityNumber === secondInvoiceNumber &&
+          item.metadata?.returnCaseNumber === secondReturnCaseNumber &&
           item.metadata?.quantity === 2 &&
           item.metadata?.note === manualReturnCloseNote,
       ),
@@ -4183,6 +4239,7 @@ async function main() {
         (item) =>
           item.actionType === "invoice_return_reopened" &&
           item.entityNumber === secondInvoiceNumber &&
+          item.metadata?.returnCaseNumber === secondReturnCaseNumber &&
           item.metadata?.quantity === 2 &&
           item.metadata?.note === manualReturnReopenNote,
       ),
@@ -4193,6 +4250,7 @@ async function main() {
         (item) =>
           item.actionType === "invoice_return_settled" &&
           item.entityNumber === creditedInvoiceNumber &&
+          item.metadata?.returnCaseNumber === creditedReturnCaseNumber &&
           item.metadata?.productCategoryName === productCategoryName &&
           item.metadata?.quantity === creditedOrderQuantity &&
           item.metadata?.returnedQuantity === creditedOrderQuantity &&
@@ -4206,6 +4264,7 @@ async function main() {
         (item) =>
           item.actionType === "invoice_return_received" &&
           item.entityNumber === creditedInvoiceNumber &&
+          item.metadata?.returnCaseNumber === creditedReturnCaseNumber &&
           item.metadata?.quantity === creditedOrderQuantity &&
           item.metadata?.inventoryValue === purchaseUnitCost * creditedOrderQuantity &&
           item.metadata?.note === manualReturnReceiptNote,
@@ -4804,11 +4863,21 @@ async function main() {
       exportedSnapshot?.invoiceReturnAuthorizations?.some(
         (item) =>
           item.invoiceNumber === creditedInvoiceNumber &&
+          item.caseNumber === creditedReturnCaseNumber &&
           item.quantityAuthorized === creditedOrderQuantity &&
           item.quantityReceived === creditedOrderQuantity &&
           item.quantityCredited === creditedOrderQuantity &&
           item.status === "settled" &&
           item.note === manualReturnAuthorizationNote,
+      ) &&
+        exportedSnapshot?.invoiceReturnAuthorizations?.some(
+          (item) =>
+            item.invoiceNumber === secondInvoiceNumber &&
+            item.caseNumber === secondReturnCaseNumber &&
+            item.quantityAuthorized === 2 &&
+            item.status === "closed" &&
+            item.note === manualReturnAuthorizationAmendNote &&
+            item.closeNote === manualReturnCloseNote,
       ) &&
         !exportedSnapshot?.invoiceReturnAuthorizations?.some(
           (item) => item.invoiceNumber === partialCreditInvoiceNumber,
@@ -5053,6 +5122,9 @@ async function main() {
       .getByText(/Số lượng đã tất toán case:\s*1\/1|Return case credited:\s*1\/1/, { exact: false })
       .first()
       .waitFor({ timeout: 15000 });
+    await restoredCreditedInvoiceRow.getByText(creditedReturnCaseNumber, { exact: false }).first().waitFor({
+      timeout: 15000,
+    });
     baselineRestoreVerified = true;
     await openSection(page, sidebarIndexes.setup, "/dashboard/setup");
     await waitForTenantContext(page, restoredTenantName);
@@ -5573,6 +5645,7 @@ async function main() {
       invoiceReturnAuthorizationAuditVerified,
       invoiceReturnCaseQueueVerified,
       invoiceReturnCaseActionOwnerVerified,
+      invoiceReturnCaseNumberVerified,
       invoiceReturnCaseAmendVerified,
       invoiceReturnCaseAmendGuardVerified,
       invoiceReturnCaseAmendAuditVerified,
