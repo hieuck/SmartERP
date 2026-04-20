@@ -534,8 +534,12 @@ const en = {
     worklistEmpty: "No collection task is waiting right now.",
     returnCaseQueueTitle: "Return Case Queue",
     returnCaseQueueEmpty: "No return cases are being tracked for this tenant yet.",
+    returnCaseQueueEmptyFiltered: "No return cases matched the current filters.",
     returnCaseQueueSummary:
       "{{open}} open, {{warehousePending}} waiting on warehouse, {{financePending}} waiting on finance, {{closed}} closed, {{settled}} settled",
+    returnCaseFilterAll: "All return cases",
+    returnCaseSearchPlaceholder: "Search by RMA, invoice, order, customer, or product",
+    returnCaseShownCount: "{{shown}} of {{total}} cases shown",
     returnCaseOwnerWarehouse: "Warehouse owns next step",
     returnCaseOwnerFinance: "Finance owns next step",
     returnCaseOwnerNone: "No open owner",

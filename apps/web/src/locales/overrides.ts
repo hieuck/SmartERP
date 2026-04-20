@@ -106,8 +106,12 @@ export const localeOverrides: Record<"vi" | "en", TranslationTree> = {
       lastReturnReceiptLabel: "Nhận trả gần nhất:",
       returnCaseQueueTitle: "Hàng đợi case trả hàng",
       returnCaseQueueEmpty: "Chưa có case trả hàng nào được theo dõi cho tenant này.",
+      returnCaseQueueEmptyFiltered: "Không có case trả hàng nào khớp bộ lọc hiện tại.",
       returnCaseQueueSummary:
         "{{open}} case đang mở, {{warehousePending}} case chờ kho, {{financePending}} case chờ tài chính, {{closed}} case đã đóng, {{settled}} case đã tất toán",
+      returnCaseFilterAll: "Tất cả case trả hàng",
+      returnCaseSearchPlaceholder: "Tìm theo RMA, hóa đơn, đơn hàng, khách hàng, hoặc sản phẩm",
+      returnCaseShownCount: "Hiển thị {{shown}} / {{total}} case",
       returnCaseOwnerWarehouse: "Kho xử lý",
       returnCaseOwnerFinance: "Tài chính xử lý",
       returnCaseOwnerNone: "Không còn owner mở",

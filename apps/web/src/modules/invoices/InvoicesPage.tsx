@@ -58,6 +58,8 @@ type InvoicePaymentFormShape = Omit<CreateInvoicePaymentInput, "tenantId">;
 type InvoiceCollectionFormShape = Omit<UpdateInvoiceCollectionInput, "tenantId">;
 type InvoiceReopenFormShape = Omit<ReopenInvoiceInput, "tenantId">;
 type InvoiceVoidFormShape = Omit<VoidInvoiceInput, "tenantId">;
+type ReturnCaseQueueStatusFilter = "all" | InvoiceReturnAuthorizationRecord["status"];
+type ReturnCaseQueueOwnerFilter = "all" | InvoiceReturnAuthorizationActionOwner;
 
 function getTodayDateInputValue(): string {
   return new Date().toISOString().slice(0, 10);
@@ -447,6 +449,9 @@ export function InvoicesPage(): ReactElement {
   const [invoiceBeingClosedForReturn, setInvoiceBeingClosedForReturn] = useState<InvoiceRecord | null>(null);
   const [invoiceBeingReopenedForReturn, setInvoiceBeingReopenedForReturn] = useState<InvoiceRecord | null>(null);
   const [invoiceBeingReturned, setInvoiceBeingReturned] = useState<InvoiceRecord | null>(null);
+  const [returnCaseStatusFilter, setReturnCaseStatusFilter] = useState<ReturnCaseQueueStatusFilter>("all");
+  const [returnCaseOwnerFilter, setReturnCaseOwnerFilter] = useState<ReturnCaseQueueOwnerFilter>("all");
+  const [returnCaseSearch, setReturnCaseSearch] = useState("");
   const selectedInvoiceOrderId = Form.useWatch("orderId", invoiceForm);
   const selectedInvoiceId = Form.useWatch("invoiceId", paymentForm);
   const selectedCollectionInvoiceId = Form.useWatch("invoiceId", collectionForm);
@@ -502,6 +507,38 @@ export function InvoicesPage(): ReactElement {
 
     return right.authorizedAt.localeCompare(left.authorizedAt);
   });
+  const normalizedReturnCaseSearch = returnCaseSearch.trim().toLowerCase();
+  const visibleReturnCaseQueue = returnCaseQueue.filter((authorization) => {
+    if (returnCaseStatusFilter !== "all" && authorization.status !== returnCaseStatusFilter) {
+      return false;
+    }
+
+    if (returnCaseOwnerFilter !== "all" && authorization.actionOwner !== returnCaseOwnerFilter) {
+      return false;
+    }
+
+    if (!normalizedReturnCaseSearch) {
+      return true;
+    }
+
+    const linkedInvoice = invoiceLookupById.get(authorization.invoiceId);
+    const searchableText = [
+      authorization.caseNumber,
+      authorization.invoiceNumber,
+      authorization.orderNumber,
+      linkedInvoice?.customerName,
+      authorization.productCategoryName,
+      authorization.productName,
+      authorization.productSku,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
+    return searchableText.includes(normalizedReturnCaseSearch);
+  });
+  const returnCaseFiltersActive =
+    returnCaseStatusFilter !== "all" || returnCaseOwnerFilter !== "all" || normalizedReturnCaseSearch.length > 0;
   const openReturnCaseCount = returnCaseQueue.filter((item) =>
     ["authorized", "partially_received", "received"].includes(item.status),
   ).length;
@@ -1686,8 +1723,55 @@ export function InvoicesPage(): ReactElement {
                     })}
                   </Paragraph>
 
-                  <div className="record-stack">
-                    {returnCaseQueue.map((authorization) => {
+                  <div className="page-toolbar" data-testid="invoice-return-case-filters">
+                    <Select<ReturnCaseQueueOwnerFilter>
+                      data-testid="invoice-return-case-owner-filter"
+                      onChange={setReturnCaseOwnerFilter}
+                      options={[
+                        { label: t("invoices.returnCaseFilterAll"), value: "all" },
+                        { label: getReturnCaseOwnerLabel("warehouse", t), value: "warehouse" },
+                        { label: getReturnCaseOwnerLabel("finance", t), value: "finance" },
+                        { label: getReturnCaseOwnerLabel("none", t), value: "none" },
+                      ]}
+                      style={{ minWidth: 220 }}
+                      value={returnCaseOwnerFilter}
+                    />
+                    <Select<ReturnCaseQueueStatusFilter>
+                      data-testid="invoice-return-case-status-filter"
+                      onChange={setReturnCaseStatusFilter}
+                      options={[
+                        { label: t("invoices.returnCaseFilterAll"), value: "all" },
+                        { label: getReturnAuthorizationStatusLabel("authorized", t), value: "authorized" },
+                        {
+                          label: getReturnAuthorizationStatusLabel("partially_received", t),
+                          value: "partially_received",
+                        },
+                        { label: getReturnAuthorizationStatusLabel("received", t), value: "received" },
+                        { label: getReturnAuthorizationStatusLabel("settled", t), value: "settled" },
+                        { label: getReturnAuthorizationStatusLabel("closed", t), value: "closed" },
+                      ]}
+                      style={{ minWidth: 220 }}
+                      value={returnCaseStatusFilter}
+                    />
+                    <Input
+                      allowClear
+                      data-testid="invoice-return-case-search-input"
+                      onChange={(event) => setReturnCaseSearch(event.target.value)}
+                      placeholder={t("invoices.returnCaseSearchPlaceholder")}
+                      style={{ flex: "1 1 280px", minWidth: 240 }}
+                      value={returnCaseSearch}
+                    />
+                    <Tag color={returnCaseFiltersActive ? "blue" : "default"}>
+                      {t("invoices.returnCaseShownCount", {
+                        shown: visibleReturnCaseQueue.length,
+                        total: returnCaseQueue.length,
+                      })}
+                    </Tag>
+                  </div>
+
+                  {visibleReturnCaseQueue.length ? (
+                    <div className="record-stack">
+                      {visibleReturnCaseQueue.map((authorization) => {
                       const linkedInvoice = invoiceLookupById.get(authorization.invoiceId) ?? null;
                       const linkedOrder = linkedInvoice
                         ? orderLookupById.get(linkedInvoice.orderId) ?? null
@@ -1886,8 +1970,11 @@ export function InvoicesPage(): ReactElement {
                           </div>
                         </div>
                       );
-                    })}
-                  </div>
+                      })}
+                    </div>
+                  ) : (
+                    <Empty description={t("invoices.returnCaseQueueEmptyFiltered")} />
+                  )}
                 </>
               ) : (
                 <Empty description={t("invoices.returnCaseQueueEmpty")} />

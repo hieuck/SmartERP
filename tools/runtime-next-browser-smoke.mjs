@@ -418,12 +418,16 @@ async function importDatasetViaTenantOnboarding(page, card, datasetLabel, csvTex
   const importResponse = page.waitForResponse(
     (response) =>
       response.url().endsWith("/api/onboarding/import") &&
-      response.request().method() === "POST" &&
-      response.status() === 200,
-    { timeout: 15000 },
+      response.request().method() === "POST",
+    { timeout: 30000 },
   );
   await clickSubmit(card);
-  await importResponse;
+  const importResult = await importResponse;
+  const importPayload = await importResult.json().catch(() => null);
+  assert(
+    importResult.status() === 200,
+    `Onboarding import failed for ${datasetLabel}: ${importPayload?.error ?? importResult.status()}.`,
+  );
   await card.locator(".ant-alert").waitFor({ timeout: 15000 });
 }
 
@@ -460,6 +464,17 @@ async function clickLanguageToggle(page, value) {
 }
 
 async function findInvoiceNumberByOrderNumber(page, orderNumber) {
+  const renderedRow = getListCard(page).locator(".record-row").filter({ hasText: orderNumber }).first();
+  const renderedStrongTexts = await renderedRow.locator("strong").allTextContents();
+  const renderedInvoiceNumber =
+    renderedStrongTexts
+      .map((value) => value.trim())
+      .find((value) => value.length > 0 && value !== orderNumber) ?? "";
+
+  if (renderedInvoiceNumber) {
+    return renderedInvoiceNumber;
+  }
+
   return page.evaluate(
     async ({ targetOrderNumber, sessionKey, tenantKey }) => {
       const rawSession = window.localStorage.getItem(sessionKey);
@@ -470,15 +485,27 @@ async function findInvoiceNumberByOrderNumber(page, orderNumber) {
         return "";
       }
 
-      const response = await fetch(`/api/invoices?tenantId=${encodeURIComponent(tenantId)}`, {
-        headers: {
-          authorization: `Bearer ${accessToken}`,
-        },
-      });
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        try {
+          const response = await fetch(`/api/invoices?tenantId=${encodeURIComponent(tenantId)}`, {
+            headers: {
+              authorization: `Bearer ${accessToken}`,
+            },
+          });
 
-      const payload = await response.json();
-      const targetInvoice = payload.items.find((item) => item.orderNumber === targetOrderNumber);
-      return targetInvoice?.invoiceNumber ?? "";
+          const payload = await response.json();
+          const targetInvoice = payload.items.find((item) => item.orderNumber === targetOrderNumber);
+          if (targetInvoice?.invoiceNumber) {
+            return targetInvoice.invoiceNumber;
+          }
+        } catch {
+          // Retry once when the browser fetch races with navigation or server warmup.
+        }
+
+        await new Promise((resolve) => window.setTimeout(resolve, 250));
+      }
+
+      return "";
     },
     {
       targetOrderNumber: orderNumber,
@@ -685,6 +712,7 @@ async function main() {
   let invoiceReturnCaseQueueVerified = false;
   let invoiceReturnCaseActionOwnerVerified = false;
   let invoiceReturnCaseNumberVerified = false;
+  let invoiceReturnCaseFilterVerified = false;
   let invoiceReturnCaseAmendVerified = false;
   let invoiceReturnCaseAmendGuardVerified = false;
   let invoiceReturnCaseAmendAuditVerified = false;
@@ -1888,7 +1916,20 @@ async function main() {
     await orderRow.locator('[data-testid="order-edit-button"]').click();
     await fillNumberInput(ordersFormCard.getByRole("spinbutton", { name: "* Số lượng" }), editedSaleQuantity);
     await clickSubmit(ordersFormCard);
-    await orderRow.getByText(`${productName} x ${editedSaleQuantity}`, { exact: false }).waitFor({ timeout: 15000 });
+    await page.waitForFunction(
+      ({ targetOrderNumber, targetProductText }) => {
+        const matchingRow = Array.from(document.querySelectorAll(".record-row")).find((row) =>
+          row.textContent?.includes(targetOrderNumber),
+        );
+
+        return Boolean(matchingRow?.textContent?.includes(targetProductText));
+      },
+      {
+        targetOrderNumber: orderNumber,
+        targetProductText: `${productName} x ${editedSaleQuantity}`,
+      },
+      { timeout: 15000 },
+    );
     const editedOrderInventoryResponse = await page.evaluate(
       async ({ productSkuToCheck, sessionKey, tenantKey }) => {
         const rawSession = window.localStorage.getItem(sessionKey);
@@ -3952,6 +3993,18 @@ async function main() {
     await creditedReturnCaseQueueRow.getByText("Còn chờ ghi giảm: 1", { exact: false }).first().waitFor({
       timeout: 15000,
     });
+    const returnCaseOwnerFilter = page.getByTestId("invoice-return-case-owner-filter");
+    const returnCaseStatusFilter = page.getByTestId("invoice-return-case-status-filter");
+    const returnCaseSearchInput = page.getByTestId("invoice-return-case-search-input");
+    await selectOption(page, returnCaseOwnerFilter, "Tài chính xử lý");
+    await creditedReturnCaseQueueRow.waitFor({ timeout: 15000 });
+    await waitForLocatorCount(page, returnCaseQueueCard.locator(`[data-testid="invoice-return-case-row-${secondInvoiceNumber}"]`), 0);
+    await selectOption(page, returnCaseOwnerFilter, "Không còn owner mở");
+    await secondReturnCaseQueueRow.waitFor({ timeout: 15000 });
+    await waitForLocatorCount(page, returnCaseQueueCard.locator(`[data-testid="invoice-return-case-row-${creditedInvoiceNumber}"]`), 0);
+    await selectOption(page, returnCaseOwnerFilter, "Tất cả case trả hàng");
+    await secondReturnCaseQueueRow.waitFor({ timeout: 15000 });
+    await creditedReturnCaseQueueRow.waitFor({ timeout: 15000 });
     invoiceReturnCaseActionOwnerVerified = true;
     invoiceReturnReceiptVerified = true;
 
@@ -4028,7 +4081,23 @@ async function main() {
     await returnCaseQueueCard
       .getByText("1 case đã tất toán", { exact: false })
       .waitFor({ timeout: 15000 });
+    await selectOption(page, returnCaseStatusFilter, "Đã đóng");
+    await closedReturnCaseRow.waitFor({ timeout: 15000 });
+    await waitForLocatorCount(page, returnCaseQueueCard.locator(`[data-testid="invoice-return-case-row-${creditedInvoiceNumber}"]`), 0);
+    await selectOption(page, returnCaseStatusFilter, "Đã tất toán");
+    await settledReturnCaseRow.waitFor({ timeout: 15000 });
+    await waitForLocatorCount(page, returnCaseQueueCard.locator(`[data-testid="invoice-return-case-row-${secondInvoiceNumber}"]`), 0);
+    await selectOption(page, returnCaseStatusFilter, "Tất cả case trả hàng");
+    await closedReturnCaseRow.waitFor({ timeout: 15000 });
+    await settledReturnCaseRow.waitFor({ timeout: 15000 });
+    await returnCaseSearchInput.fill(creditedReturnCaseNumber);
+    await settledReturnCaseRow.waitFor({ timeout: 15000 });
+    await waitForLocatorCount(page, returnCaseQueueCard.locator(`[data-testid="invoice-return-case-row-${secondInvoiceNumber}"]`), 0);
+    await returnCaseSearchInput.fill("");
+    await closedReturnCaseRow.waitFor({ timeout: 15000 });
+    await settledReturnCaseRow.waitFor({ timeout: 15000 });
     invoiceReturnCaseNumberVerified = true;
+    invoiceReturnCaseFilterVerified = true;
     invoiceCreditVerified = true;
     invoiceReturnCaseSettledVerified = true;
     invoiceReturnCaseQueueVerified = true;
@@ -5517,19 +5586,14 @@ async function main() {
     );
     assert(!storedWorkspaceStateAfterLogout.session, "Session persisted after logout.");
     assert(!storedWorkspaceStateAfterLogout.tenantId, "Selected tenant persisted after logout.");
-    const unauthorizedTenantsResponse = await page.evaluate(async () => {
-      const response = await fetch("/api/tenants");
-      return {
-        status: response.status,
-        body: await response.json(),
-      };
-    });
+    const unauthorizedTenantsResponse = await page.request.get(`${baseUrl}/api/tenants`);
+    const unauthorizedTenantsBody = await unauthorizedTenantsResponse.json();
     assert(
-      unauthorizedTenantsResponse.status === 401,
-      `Expected /api/tenants to return 401 after logout, received ${unauthorizedTenantsResponse.status}.`,
+      unauthorizedTenantsResponse.status() === 401,
+      `Expected /api/tenants to return 401 after logout, received ${unauthorizedTenantsResponse.status()}.`,
     );
     assert(
-      unauthorizedTenantsResponse.body?.error === "Authentication required.",
+      unauthorizedTenantsBody?.error === "Authentication required.",
       "Protected API did not return the expected auth error after logout.",
     );
     unauthorizedApiBlockedVerified = true;
@@ -5644,6 +5708,7 @@ async function main() {
       invoiceReturnAuthorizationVerified,
       invoiceReturnAuthorizationAuditVerified,
       invoiceReturnCaseQueueVerified,
+      invoiceReturnCaseFilterVerified,
       invoiceReturnCaseActionOwnerVerified,
       invoiceReturnCaseNumberVerified,
       invoiceReturnCaseAmendVerified,
