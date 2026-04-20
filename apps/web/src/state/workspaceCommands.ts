@@ -21,6 +21,7 @@ import type {
   CreateInvoiceReturnAuthorizationInput,
   RecordInvoiceReturnReceiptInput,
   ReopenInvoiceReturnAuthorizationInput,
+  UpdateInvoiceReturnAuthorizationInput,
   VoidInvoiceInput,
   CreateOrderInput,
   CreateProductCategoryInput,
@@ -63,6 +64,7 @@ import {
   submitInvoiceReturnAuthorization,
   submitInvoiceReturnAuthorizationClose,
   submitInvoiceReturnAuthorizationReopen,
+  submitInvoiceReturnAuthorizationUpdate,
   submitInvoiceReturnReceipt,
   submitInvoiceReopen,
   submitInvoiceVoid,
@@ -682,6 +684,21 @@ export function createWorkspaceCommands(dependencies: WorkspaceCommandsDependenc
           await refreshTenantWorkspace(tenantId);
         },
         { clearNotice: true },
+      );
+    },
+
+    async updateInvoiceReturnAuthorizationRecord(
+      input: Omit<UpdateInvoiceReturnAuthorizationInput, "tenantId">,
+    ): Promise<void> {
+      const tenantId = getSelectedTenantIdOrThrow();
+
+      await runBusyAction(
+        { setErrorMessage, setIsBusy, setNoticeMessage },
+        "Invoice return authorization amend failed.",
+        async () => {
+          await submitInvoiceReturnAuthorizationUpdate({ ...input, tenantId });
+          await refreshTenantWorkspace(tenantId);
+        },
       );
     },
 

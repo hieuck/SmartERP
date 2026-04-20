@@ -79,6 +79,7 @@ const invoiceAmendmentNote = "Corrected commercial terms before customer payment
 const reissueAmendmentNote = "Corrected shipping quantity after voiding the previous invoice revision.";
 const invoiceCreditNote = "Returned shipment after full settlement and inspection.";
 const manualReturnAuthorizationNote = "Approved customer return after warehouse inspection request.";
+const manualReturnAuthorizationAmendNote = "Customer confirmed a larger approved return quantity after the initial case was opened.";
 const manualReturnCloseNote = "Customer withdrew the warehouse return request after collections review.";
 const manualReturnReopenNote = "Customer resumed the return after the prior close-out was reversed.";
 const manualReturnReceiptNote = "Warehouse received the returned bottle before finance posted the credit note.";
@@ -239,6 +240,7 @@ function isExpectedNegativePath(response) {
           response.url().endsWith("/api/invoices/payments") ||
           response.url().endsWith("/api/invoices/collections") ||
           response.url().endsWith("/api/invoices/return-authorizations") ||
+          response.url().endsWith("/api/invoices/return-authorizations/update") ||
           response.url().endsWith("/api/invoices/return-authorizations/reopen") ||
           response.url().endsWith("/api/invoices/return-receipts") ||
           response.url().endsWith("/api/invoices/void") ||
@@ -680,6 +682,9 @@ async function main() {
   let invoiceReturnAuthorizationAuditVerified = false;
   let invoiceReturnCaseQueueVerified = false;
   let invoiceReturnCaseActionOwnerVerified = false;
+  let invoiceReturnCaseAmendVerified = false;
+  let invoiceReturnCaseAmendGuardVerified = false;
+  let invoiceReturnCaseAmendAuditVerified = false;
   let invoiceReturnCaseCloseVerified = false;
   let invoiceReturnCaseCloseAuditVerified = false;
   let invoiceReturnCaseReopenVerified = false;
@@ -2283,25 +2288,33 @@ async function main() {
     );
     await openSection(page, sidebarIndexes.orders, "/dashboard/orders");
     await waitForTenantContext(page, tenantName);
-    await settledOrderRow.getByText(/Đã chốt|Closed/).waitFor({ timeout: 15000 });
+    const closedOrderRow = getListCard(page).locator(".record-row").filter({ hasText: orderNumber }).first();
+    await closedOrderRow.waitFor({ timeout: 15000 });
+    await closedOrderRow.getByText(/Đã chốt|Closed/).waitFor({ timeout: 15000 });
     orderCloseVerified = true;
     const orderReopenResponse = page.waitForResponse(
       (response) =>
         response.url().endsWith("/api/orders/reopen") &&
-        response.request().method() === "POST" &&
-        response.status() === 200,
+        response.request().method() === "POST",
       { timeout: 15000 },
     );
-    await settledOrderRow.locator('[data-testid="order-reopen-button"]').click();
+    await closedOrderRow.locator('[data-testid="order-reopen-button"]').click();
     await page
       .locator(".ant-popconfirm-buttons")
       .last()
       .getByRole("button", { name: /Mở lại đơn hàng|Reopen Order/ })
       .click();
-    await orderReopenResponse;
+    const orderReopenResult = await orderReopenResponse;
+    const orderReopenPayload = await orderReopenResult.json();
+    assert(
+      orderReopenResult.status() === 200,
+      `Closed order reopen failed: ${orderReopenPayload?.error ?? orderReopenResult.status()}.`,
+    );
     await openSection(page, sidebarIndexes.orders, "/dashboard/orders");
     await waitForTenantContext(page, tenantName);
-    await settledOrderRow.getByText(/Đã xác nhận|Confirmed/).waitFor({ timeout: 15000 });
+    const reopenedOrderRow = getListCard(page).locator(".record-row").filter({ hasText: orderNumber }).first();
+    await reopenedOrderRow.waitFor({ timeout: 15000 });
+    await reopenedOrderRow.getByText(/Đã xác nhận|Confirmed/).waitFor({ timeout: 15000 });
     orderReopenVerified = true;
     const reopenedOrderReopenResponse = await page.evaluate(
       async ({ targetOrderNumber, sessionKey, tenantKey }) => {
@@ -2353,11 +2366,10 @@ async function main() {
     const orderRecloseResponse = page.waitForResponse(
       (response) =>
         response.url().endsWith("/api/orders/close") &&
-        response.request().method() === "POST" &&
-        response.status() === 200,
+        response.request().method() === "POST",
       { timeout: 15000 },
     );
-    await settledOrderRow.locator('[data-testid="order-close-button"]').click();
+    await reopenedOrderRow.locator('[data-testid="order-close-button"]').click();
     await page
       .locator(".ant-popconfirm-buttons")
       .last()
@@ -3056,6 +3068,79 @@ async function main() {
     await secondReturnCaseQueueRow.getByText("Còn chờ nhận: 1", { exact: false }).first().waitFor({
       timeout: 15000,
     });
+    await secondInvoiceRow.locator('[data-testid="invoice-return-authorization-amend-button"]').click();
+    const secondReturnAmendModal = page.getByRole("dialog").filter({ hasText: "Sửa case trả hàng cho" }).last();
+    await secondReturnAmendModal.waitFor({ timeout: 15000 });
+    await fillNumberInput(secondReturnAmendModal.getByRole("spinbutton").first(), 2);
+    await fillField(secondReturnAmendModal, "#note", manualReturnAuthorizationAmendNote);
+    await clickSubmit(secondReturnAmendModal);
+    await secondInvoiceRow.getByText(manualReturnAuthorizationAmendNote, { exact: false }).first().waitFor({
+      timeout: 15000,
+    });
+    await secondInvoiceRow.getByText(manualReturnAuthorizationNote, { exact: false }).first().waitFor({
+      state: "detached",
+      timeout: 15000,
+    });
+    await secondInvoiceRow.getByText(/Case trả hàng:\s*0\/2/, { exact: false }).first().waitFor({
+      timeout: 15000,
+    });
+    await secondReturnCaseQueueRow.getByText(/Case trả hàng:\s*0\/2/, { exact: false }).first().waitFor({
+      timeout: 15000,
+    });
+    await secondReturnCaseQueueRow.getByText("Còn chờ nhận: 2", { exact: false }).first().waitFor({
+      timeout: 15000,
+    });
+    invoiceReturnCaseAmendVerified = true;
+
+    const amendedCaseInvalidQuantityResponse = await page.evaluate(
+      async ({ targetInvoiceNumber, sessionKey, tenantKey }) => {
+        const rawSession = window.localStorage.getItem(sessionKey);
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
+        const headers = {
+          "content-type": "application/json",
+          authorization: `Bearer ${accessToken}`,
+        };
+
+        const invoicesResponse = await fetch(`/api/invoices?tenantId=${encodeURIComponent(tenantId ?? "")}`, {
+          headers,
+        });
+        const invoicesPayload = await invoicesResponse.json();
+        const targetInvoice = invoicesPayload.items.find((item) => item.invoiceNumber === targetInvoiceNumber);
+
+        if (!targetInvoice || !tenantId) {
+          return { status: 0, body: { error: "Amended-case invoice lookup failed before quantity guard test." } };
+        }
+
+        const response = await fetch("/api/invoices/return-authorizations/update", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            tenantId,
+            invoiceId: targetInvoice.id,
+            quantityAuthorized: 3,
+            note: "Unexpected quantity beyond the order size.",
+          }),
+        });
+
+        return {
+          status: response.status,
+          body: await response.json(),
+        };
+      },
+      {
+        targetInvoiceNumber: secondInvoiceNumber,
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+      },
+    );
+    assert(
+      amendedCaseInvalidQuantityResponse.status === 400 &&
+        amendedCaseInvalidQuantityResponse.body?.error ===
+          "Return authorization quantity cannot exceed the order quantity.",
+      "Return case amend allowed a quantity larger than the order.",
+    );
+    invoiceReturnCaseAmendGuardVerified = true;
 
     await secondInvoiceRow.locator('[data-testid="invoice-return-authorization-close-button"]').click();
     const secondReturnCloseModal = page.getByRole("dialog").filter({ hasText: "Đóng case trả hàng cho" }).last();
@@ -3102,7 +3187,7 @@ async function main() {
     await secondReturnCaseQueueRow.getByText("Nhận hàng trả về kho", { exact: false }).first().waitFor({
       timeout: 15000,
     });
-    await secondReturnCaseQueueRow.getByText("Còn chờ nhận: 1", { exact: false }).first().waitFor({
+    await secondReturnCaseQueueRow.getByText("Còn chờ nhận: 2", { exact: false }).first().waitFor({
       timeout: 15000,
     });
     await secondReturnCaseQueueRow.getByText("Đã đóng", { exact: false }).first().waitFor({
@@ -4076,9 +4161,19 @@ async function main() {
     assert(
       creditAuditSnapshot.body?.items?.some(
         (item) =>
+          item.actionType === "invoice_return_amended" &&
+          item.entityNumber === secondInvoiceNumber &&
+          item.metadata?.quantity === 2 &&
+          item.metadata?.note === manualReturnAuthorizationAmendNote,
+      ),
+      "Invoice return amend audit entry was not recorded.",
+    );
+    assert(
+      creditAuditSnapshot.body?.items?.some(
+        (item) =>
           item.actionType === "invoice_return_closed" &&
           item.entityNumber === secondInvoiceNumber &&
-          item.metadata?.quantity === 1 &&
+          item.metadata?.quantity === 2 &&
           item.metadata?.note === manualReturnCloseNote,
       ),
       "Invoice return close audit entry was not recorded.",
@@ -4088,7 +4183,7 @@ async function main() {
         (item) =>
           item.actionType === "invoice_return_reopened" &&
           item.entityNumber === secondInvoiceNumber &&
-          item.metadata?.quantity === 1 &&
+          item.metadata?.quantity === 2 &&
           item.metadata?.note === manualReturnReopenNote,
       ),
       "Invoice return reopen audit entry was not recorded.",
@@ -4141,6 +4236,7 @@ async function main() {
     await page.getByText(invoiceCreditNote, { exact: false }).first().waitFor({ timeout: 15000 });
     invoiceCreditAuditVerified = true;
     invoiceReturnAuthorizationAuditVerified = true;
+    invoiceReturnCaseAmendAuditVerified = true;
     invoiceReturnCaseCloseAuditVerified = true;
     invoiceReturnCaseReopenAuditVerified = true;
     invoiceReturnCaseSettlementAuditVerified = true;
@@ -5477,6 +5573,9 @@ async function main() {
       invoiceReturnAuthorizationAuditVerified,
       invoiceReturnCaseQueueVerified,
       invoiceReturnCaseActionOwnerVerified,
+      invoiceReturnCaseAmendVerified,
+      invoiceReturnCaseAmendGuardVerified,
+      invoiceReturnCaseAmendAuditVerified,
       invoiceReturnCaseCloseVerified,
       invoiceReturnCaseCloseAuditVerified,
       invoiceReturnCaseReopenVerified,

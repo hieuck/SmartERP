@@ -11,6 +11,7 @@ import {
   handleListInvoiceReturnAuthorizations,
   handleListInvoices,
   handleRecordInvoiceReturnReceipt,
+  handleUpdateInvoiceReturnAuthorization,
   handleReopenInvoiceReturnAuthorization,
   handleReopenInvoice,
   handleResolveInvoiceCollectionAction,
@@ -80,6 +81,13 @@ export const invoiceApiRoutes: ApiRoute[] = [
     path: "/api/invoices/return-authorizations",
     handle: withPermission("issue_invoices", ({ request, response, session }) =>
       handleCreateInvoiceReturnAuthorization(request, response, session),
+    ),
+  },
+  {
+    method: "POST",
+    path: "/api/invoices/return-authorizations/update",
+    handle: withPermission("issue_invoices", ({ request, response, session }) =>
+      handleUpdateInvoiceReturnAuthorization(request, response, session),
     ),
   },
   {

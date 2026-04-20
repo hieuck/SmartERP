@@ -14,6 +14,7 @@ import type {
   CreateInvoiceReturnAuthorizationInput,
   RecordInvoiceReturnReceiptInput,
   ReopenInvoiceReturnAuthorizationInput,
+  UpdateInvoiceReturnAuthorizationInput,
   ReopenInvoiceInput,
   ReopenOrderInput,
   ReopenPurchaseOrderInput,
@@ -484,6 +485,16 @@ export async function createInvoiceReturnAuthorization(
   input: CreateInvoiceReturnAuthorizationInput,
 ): Promise<InvoiceRecord> {
   const payload = await request<{ item: InvoiceRecord }>("/api/invoices/return-authorizations", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  return payload.item;
+}
+
+export async function updateInvoiceReturnAuthorization(
+  input: UpdateInvoiceReturnAuthorizationInput,
+): Promise<InvoiceRecord> {
+  const payload = await request<{ item: InvoiceRecord }>("/api/invoices/return-authorizations/update", {
     method: "POST",
     body: JSON.stringify(input),
   });

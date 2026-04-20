@@ -20,6 +20,7 @@ import {
   type CloseOrderInput,
   type ClosePurchaseOrderInput,
   type ReopenInvoiceReturnAuthorizationInput,
+  type UpdateInvoiceReturnAuthorizationInput,
   type ReopenOrderInput,
   type ReopenPurchaseOrderInput,
   createDemoSession,
@@ -1428,6 +1429,15 @@ const updateInvoiceReturnAuthorizationStateStatement = db.prepare(`
     status = ?,
     close_note = ?,
     closed_at = ?
+  WHERE tenant_id = ? AND id = ?
+`);
+
+const updateInvoiceReturnAuthorizationDetailsStatement = db.prepare(`
+  UPDATE invoice_return_authorizations
+  SET
+    quantity_authorized = ?,
+    status = ?,
+    note = ?
   WHERE tenant_id = ? AND id = ?
 `);
 
@@ -7683,6 +7693,87 @@ export function createInvoiceReturnAuthorization(
       note,
     },
     createdAt: authorizedAt,
+  });
+
+  const refreshedInvoice = getInvoiceByIdStatement.get(input.tenantId, input.invoiceId) as InvoiceRow | undefined;
+  if (!refreshedInvoice) {
+    throw new Error("The selected invoice does not exist.");
+  }
+
+  return mapInvoice(refreshedInvoice);
+}
+
+export function updateInvoiceReturnAuthorization(
+  input: UpdateInvoiceReturnAuthorizationInput,
+): InvoiceRecord {
+  const invoice = getInvoiceByIdStatement.get(input.tenantId, input.invoiceId) as InvoiceRow | undefined;
+  if (!invoice) {
+    throw new Error("The selected invoice does not exist.");
+  }
+
+  if (invoice.status === "void") {
+    throw new Error("The selected invoice has been voided.");
+  }
+
+  const quantityAuthorized = normalizeInvoiceReturnAuthorizationQuantity(input.quantityAuthorized);
+  const note = normalizeInvoiceReturnAuthorizationNote(input.note);
+  if (!note) {
+    throw new Error("Return case note is required before updating the return case.");
+  }
+
+  const authorization = getLatestOpenInvoiceReturnAuthorizationStatement.get(
+    input.tenantId,
+    input.invoiceId,
+  ) as InvoiceReturnAuthorizationRow | undefined;
+  if (!authorization) {
+    throw new Error("There is no open return case to amend for this invoice.");
+  }
+
+  const order = getOrderByIdStatement.get(input.tenantId, authorization.order_id) as OrderRow | undefined;
+  if (!order) {
+    throw new Error("The selected order does not exist.");
+  }
+
+  if (quantityAuthorized > order.quantity) {
+    throw new Error("Return authorization quantity cannot exceed the order quantity.");
+  }
+
+  if (quantityAuthorized < authorization.quantity_received || quantityAuthorized < authorization.quantity_credited) {
+    throw new Error("Return authorization quantity cannot be lower than the quantity already received or credited.");
+  }
+
+  const nextStatus = deriveInvoiceReturnAuthorizationStatus({
+    quantityAuthorized,
+    quantityReceived: authorization.quantity_received,
+    quantityCredited: authorization.quantity_credited,
+  });
+
+  updateInvoiceReturnAuthorizationDetailsStatement.run(
+    quantityAuthorized,
+    nextStatus,
+    note,
+    input.tenantId,
+    authorization.id,
+  );
+
+  recordAuditLog({
+    tenantId: input.tenantId,
+    entityType: "invoice",
+    entityId: invoice.id,
+    entityNumber: invoice.invoice_number,
+    actionType: "invoice_return_amended",
+    summary: `Amended return case for ${invoice.invoice_number}`,
+    metadata: {
+      quantity: quantityAuthorized,
+      returnedQuantity: authorization.quantity_received,
+      creditedQuantity: authorization.quantity_credited,
+      productCategoryId: authorization.product_category_id,
+      productCategoryName: authorization.product_category_name,
+      productSku: authorization.product_sku,
+      productName: authorization.product_name,
+      note,
+    },
+    createdAt: timestamp(),
   });
 
   const refreshedInvoice = getInvoiceByIdStatement.get(input.tenantId, input.invoiceId) as InvoiceRow | undefined;

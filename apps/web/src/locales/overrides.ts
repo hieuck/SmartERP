@@ -81,6 +81,17 @@ export const localeOverrides: Record<"vi" | "en", TranslationTree> = {
       returnAuthorizationCloseNoteGenericHint: "Bắt buộc có ghi chú kết thúc cho case trả hàng.",
       returnAuthorizationCloseNotePlaceholder: "Khách rút yêu cầu trả hàng sau khi hai bên đối soát.",
       returnAuthorizationCloseSubmit: "Đóng case trả hàng",
+      returnAuthorizationAmendAction: "Sửa case trả hàng",
+      returnAuthorizationAmendTitle: "Sửa case trả hàng cho {{number}}",
+      returnAuthorizationAmendQuantityHint:
+        "Điều chỉnh số lượng được duyệt trả của {{number}} khi case vẫn còn mở. Số lượng đơn hàng: {{count}}.",
+      returnAuthorizationAmendQuantityGenericHint: "Điều chỉnh số lượng được duyệt trả khi case vẫn còn mở.",
+      returnAuthorizationAmendNoteHint:
+        "Bắt buộc để giải thích vì sao case trả hàng đang mở của {{number}} được thay đổi trước khi kho hoặc tài chính xử lý xong.",
+      returnAuthorizationAmendNoteGenericHint: "Bắt buộc có ghi chú trước khi sửa case trả hàng đang mở.",
+      returnAuthorizationAmendNotePlaceholder:
+        "Khách xác nhận lại số lượng trả hàng sau quyết định duyệt ban đầu.",
+      returnAuthorizationAmendSubmit: "Áp dụng thay đổi case",
       returnAuthorizationReopenAction: "Mở lại case trả hàng",
       returnAuthorizationReopenTitle: "Mở lại case trả hàng cho {{number}}",
       returnAuthorizationReopenNote: "Ghi chú mở lại case",
@@ -127,6 +138,7 @@ export const localeOverrides: Record<"vi" | "en", TranslationTree> = {
       auditActionInvoiceAmended: "Sửa đổi hóa đơn",
       auditActionInvoiceCredited: "Ghi giảm hóa đơn",
       auditActionInvoiceReturnAuthorized: "Duyệt case trả hàng",
+      auditActionInvoiceReturnAmended: "Sửa case trả hàng",
       auditActionInvoiceReturnClosed: "Đóng case trả hàng",
       auditActionInvoiceReturnReopened: "Mở lại case trả hàng",
       auditActionInvoiceReturnSettled: "Tất toán case trả hàng",
@@ -188,6 +200,7 @@ export const localeOverrides: Record<"vi" | "en", TranslationTree> = {
       invoiceCreditQuantityExceedsReceivedReturn:
         "Số lượng ghi giảm vượt quá số lượng đã nhận về cho case trả hàng đang mở.",
       invoiceReturnAuthorizationFailed: "Mở case trả hàng thất bại.",
+      invoiceReturnAuthorizationAmendFailed: "Sửa case trả hàng thất bại.",
       invoiceReturnAuthorizationCloseFailed: "Đóng case trả hàng thất bại.",
       invoiceReturnAuthorizationReopenFailed: "Mở lại case trả hàng thất bại.",
       invoiceReturnAuthorizationNoteRequired:
@@ -196,9 +209,16 @@ export const localeOverrides: Record<"vi" | "en", TranslationTree> = {
       invalidInvoiceReturnAuthorizationQuantity: "Số lượng duyệt trả phải là số nguyên dương.",
       invoiceReturnAuthorizationQuantityExceedsRemaining:
         "Số lượng duyệt trả vượt quá phần còn lại chưa được nhận trả.",
+      invoiceReturnAuthorizationQuantityExceedsOrder:
+        "Số lượng duyệt trả vượt quá số lượng của đơn hàng.",
+      invoiceReturnAuthorizationQuantityBelowProcessed:
+        "Số lượng duyệt trả không được thấp hơn phần đã nhận hoặc đã ghi giảm.",
       invoiceReturnAuthorizationAlreadyOpen: "Hóa đơn này đã có case trả hàng đang mở.",
+      invoiceReturnAuthorizationAmendMissing: "Không có case trả hàng đang mở để sửa cho hóa đơn này.",
       invoiceReturnAuthorizationCloseMissing: "Không có case trả hàng đang mở để đóng cho hóa đơn này.",
       invoiceReturnAuthorizationReopenMissing: "Không có case trả hàng đã đóng để mở lại cho hóa đơn này.",
+      invoiceReturnAuthorizationAmendNoteRequired:
+        "Cần có ghi chú nghiệp vụ trước khi sửa case trả hàng đang mở.",
       invoiceReturnAuthorizationCloseNoteRequired:
         "Cần có ghi chú kết thúc trước khi đóng case trả hàng.",
       invoiceReturnAuthorizationReopenNoteRequired:

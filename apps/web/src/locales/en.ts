@@ -456,6 +456,16 @@ const en = {
     returnAuthorizationCloseNoteGenericHint: "Required close-out note for the return case.",
     returnAuthorizationCloseNotePlaceholder: "Customer withdrew the return request after validation.",
     returnAuthorizationCloseSubmit: "Close Return Case",
+    returnAuthorizationAmendAction: "Amend Return Case",
+    returnAuthorizationAmendTitle: "Amend return case for {{number}}",
+    returnAuthorizationAmendQuantityHint:
+      "Adjust the authorized quantity for {{number}} while the case is still open. Order quantity: {{count}}.",
+    returnAuthorizationAmendQuantityGenericHint: "Adjust the authorized quantity while the return case is still open.",
+    returnAuthorizationAmendNoteHint:
+      "Required to explain why the open return case for {{number}} is being changed before warehouse or finance completion.",
+    returnAuthorizationAmendNoteGenericHint: "Required note before amending an open return case.",
+    returnAuthorizationAmendNotePlaceholder: "Customer confirmed a different quantity after the initial return approval.",
+    returnAuthorizationAmendSubmit: "Apply Return Case Change",
     returnAuthorizationReopenAction: "Reopen Return Case",
     returnAuthorizationReopenTitle: "Reopen return case for {{number}}",
     returnAuthorizationReopenNote: "Return Case Reopen Note",
@@ -629,6 +639,7 @@ const en = {
     auditActionInvoiceVoided: "Invoice voided",
     auditActionInvoiceCredited: "Invoice credited",
     auditActionInvoiceReturnAuthorized: "Invoice return authorized",
+    auditActionInvoiceReturnAmended: "Invoice return amended",
     auditActionInvoiceReturnClosed: "Invoice return case closed",
     auditActionInvoiceReturnReopened: "Invoice return case reopened",
     auditActionInvoiceReturnSettled: "Invoice return settled",
@@ -991,6 +1002,55 @@ Object.assign(en.common, {
   saveChanges: "Save Changes",
 });
 
+Object.assign(en.shell, {
+  setup: "Setup",
+  noTenantSelected: "No tenant locked",
+  quickOpen: "Quick open {{module}}",
+  navFoundation: "Starting Point",
+  navCommercial: "Commercial",
+  navSupply: "Supply & Stock",
+  navControl: "Finance & Control",
+});
+
+Object.assign(en.modules, {
+  setup: "Setup",
+});
+
+Object.assign(en.dashboard, {
+  heroTenant: "Current tenant: {{name}}",
+  heroSelectTenant: "Tenant still needs to be locked",
+  heroCoverage: "{{ready}} / {{total}} stages covered",
+  heroTitleReady: "The workspace now has enough context to continue the pilot without making users guess where to go next.",
+  heroTitleNoTenant: "Start by locking the correct tenant so every action and report stays inside one clear workspace context.",
+  heroSubtitleReady:
+    "Use the flow below to see which stages already have data, which stage is next, and which module should be opened from here.",
+  heroSubtitleNoTenant:
+    "The next shell now prioritizes clear tenant-scoped work: choose the tenant first, then move through the operational flow without context drift.",
+  heroMetricOpenInvoices: "Open invoices",
+  heroMetricTodayWork: "Due today",
+  heroMetricApprovals: "Pending approvals",
+  heroMetricReceivable: "Overdue receivables",
+  primaryAction: "Open {{module}}",
+  secondaryAction: "Next: {{module}}",
+  flowTitle: "Core Working Flow",
+  flowSubtitle:
+    "These stages follow the current rewrite priority so users can see what data is still missing and which module should be opened next.",
+  flowReady: "Data ready",
+  flowNext: "Do this next",
+  flowTenant: "Needs tenant",
+  flowWaiting: "Waiting on earlier stage",
+  flowOpen: "Open module",
+  flowCount: "{{count}} record(s)",
+  flowDescriptions: {
+    customers: "{{count}} customer record(s) are available for this tenant.",
+    products: "{{count}} product record(s) are shared across sales, inventory, and invoicing.",
+    orders: "{{count}} order(s) have been created in the current tenant.",
+    inventory: "{{count}} live inventory line(s) are available for stock review.",
+    invoices: "{{count}} invoice record(s) have been issued or remain open.",
+    reports: "{{count}} baseline signal(s) are available for the reporting workspace.",
+  },
+});
+
 Object.assign(en.customers, {
   editTitle: "Edit Customer",
   deleteConfirm: "Delete {{name}}? This only works while no orders or invoices reference this customer.",
@@ -1132,6 +1192,7 @@ Object.assign(en.errors, {
   invoiceCreditQuantityExceedsReceivedReturn:
     "Credit quantity cannot exceed the received return quantity for the open return case.",
   invoiceReturnAuthorizationFailed: "Invoice return authorization failed.",
+  invoiceReturnAuthorizationAmendFailed: "Invoice return authorization amend failed.",
   invoiceReturnAuthorizationCloseFailed: "Invoice return case close failed.",
   invoiceReturnAuthorizationReopenFailed: "Invoice return case reopen failed.",
   invoiceReturnAuthorizationNoteRequired:
@@ -1140,9 +1201,16 @@ Object.assign(en.errors, {
   invalidInvoiceReturnAuthorizationQuantity: "Return authorization quantity must be a positive integer.",
   invoiceReturnAuthorizationQuantityExceedsRemaining:
     "Return authorization quantity cannot exceed the remaining unreturned quantity.",
+  invoiceReturnAuthorizationQuantityExceedsOrder:
+    "Return authorization quantity cannot exceed the order quantity.",
+  invoiceReturnAuthorizationQuantityBelowProcessed:
+    "Return authorization quantity cannot be lower than the quantity already received or credited.",
   invoiceReturnAuthorizationAlreadyOpen: "A return case is already open for this invoice.",
+  invoiceReturnAuthorizationAmendMissing: "There is no open return case to amend for this invoice.",
   invoiceReturnAuthorizationCloseMissing: "There is no open return case to close for this invoice.",
   invoiceReturnAuthorizationReopenMissing: "There is no closed return case to reopen for this invoice.",
+  invoiceReturnAuthorizationAmendNoteRequired:
+    "A note is required before amending the return case.",
   invoiceReturnAuthorizationCloseNoteRequired:
     "A close-out note is required before closing the return case.",
   invalidInvoiceReturnAuthorizationCloseNote: "Return case close note must be 240 characters or fewer.",

@@ -54,6 +54,7 @@ const errorKeyByMessage: Record<string, string> = {
   "Invoice amendment failed.": "errors.invoiceAmendFailed",
   "Invoice credit failed.": "errors.invoiceCreditFailed",
   "Invoice return authorization failed.": "errors.invoiceReturnAuthorizationFailed",
+  "Invoice return authorization amend failed.": "errors.invoiceReturnAuthorizationAmendFailed",
   "Invoice return case close failed.": "errors.invoiceReturnAuthorizationCloseFailed",
   "Invoice return case reopen failed.": "errors.invoiceReturnAuthorizationReopenFailed",
   "Invoice return receipt failed.": "errors.invoiceReturnReceiptFailed",
@@ -107,14 +108,22 @@ const errorKeyByMessage: Record<string, string> = {
     "errors.invalidInvoiceReturnAuthorizationQuantity",
   "Return authorization quantity cannot exceed the remaining unreturned quantity.":
     "errors.invoiceReturnAuthorizationQuantityExceedsRemaining",
+  "Return authorization quantity cannot exceed the order quantity.":
+    "errors.invoiceReturnAuthorizationQuantityExceedsOrder",
+  "Return authorization quantity cannot be lower than the quantity already received or credited.":
+    "errors.invoiceReturnAuthorizationQuantityBelowProcessed",
   "Return authorization note must be 240 characters or fewer.":
     "errors.invalidInvoiceReturnAuthorizationNote",
   "Return authorization note is required before receiving goods back from an invoice.":
     "errors.invoiceReturnAuthorizationNoteRequired",
   "A return authorization is already open for this invoice.":
     "errors.invoiceReturnAuthorizationAlreadyOpen",
+  "There is no open return case to amend for this invoice.":
+    "errors.invoiceReturnAuthorizationAmendMissing",
   "There is no open return case to close for this invoice.":
     "errors.invoiceReturnAuthorizationCloseMissing",
+  "Return case note is required before updating the return case.":
+    "errors.invoiceReturnAuthorizationAmendNoteRequired",
   "There is no closed return case to reopen for this invoice.":
     "errors.invoiceReturnAuthorizationReopenMissing",
   "Return case close note is required before closing the return case.":

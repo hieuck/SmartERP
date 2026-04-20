@@ -7,6 +7,7 @@ import type {
   CreateInvoiceInput,
   CreateInvoicePaymentInput,
   CreateInvoiceReturnAuthorizationInput,
+  UpdateInvoiceReturnAuthorizationInput,
   ReopenInvoiceReturnAuthorizationInput,
   RecordInvoiceReturnReceiptInput,
   InvoiceReturnAuthorizationRecord,
@@ -31,6 +32,7 @@ import {
   listInvoices,
   recordInvoiceReturnReceipt,
   reopenInvoiceReturnAuthorization,
+  updateInvoiceReturnAuthorization,
   reopenInvoice,
   resolveInvoiceCollectionAction,
   runWithSession,
@@ -543,6 +545,64 @@ export async function handleCloseInvoiceReturnAuthorization(
         "There is no open return case to close for this invoice.",
         "Return case close note is required before closing the return case.",
         "Return case close note must be 240 characters or fewer.",
+      ].includes(error.message)
+    ) {
+      badRequest(response, error.message);
+      return;
+    }
+
+    throw error;
+  }
+}
+
+export async function handleUpdateInvoiceReturnAuthorization(
+  request: IncomingMessage,
+  response: ServerResponse,
+  requestSession: Session | null,
+): Promise<void> {
+  const input = await readJson<UpdateInvoiceReturnAuthorizationInput>(request);
+
+  if (!input.tenantId?.trim()) {
+    badRequest(response, "tenantId is required.");
+    return;
+  }
+
+  if (!hasTenant(input.tenantId)) {
+    badRequest(response, "The selected tenant does not exist.");
+    return;
+  }
+
+  if (!input.invoiceId?.trim()) {
+    badRequest(response, "invoiceId is required.");
+    return;
+  }
+
+  if (!Number.isInteger(input.quantityAuthorized) || input.quantityAuthorized <= 0) {
+    badRequest(response, "Return authorization quantity must be a positive integer.");
+    return;
+  }
+
+  if (input.note !== null && input.note !== undefined && typeof input.note !== "string") {
+    badRequest(response, "Return authorization note must be 240 characters or fewer.");
+    return;
+  }
+
+  try {
+    const invoice = runWithSession(requestSession, () => updateInvoiceReturnAuthorization(input));
+    sendJson(response, 200, { item: invoice });
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      [
+        "The selected invoice does not exist.",
+        "The selected invoice has been voided.",
+        "The selected order does not exist.",
+        "There is no open return case to amend for this invoice.",
+        "Return authorization quantity must be a positive integer.",
+        "Return authorization quantity cannot exceed the order quantity.",
+        "Return authorization quantity cannot be lower than the quantity already received or credited.",
+        "Return case note is required before updating the return case.",
+        "Return authorization note must be 240 characters or fewer.",
       ].includes(error.message)
     ) {
       badRequest(response, error.message);

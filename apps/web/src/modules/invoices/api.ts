@@ -11,6 +11,7 @@ import type {
   InvoiceRecord,
   RecordInvoiceReturnReceiptInput,
   ReopenInvoiceReturnAuthorizationInput,
+  UpdateInvoiceReturnAuthorizationInput,
   ReopenInvoiceInput,
   ResolveInvoiceCollectionActionInput,
   UpdateInvoiceCollectionInput,
@@ -29,6 +30,7 @@ import {
   listInvoices,
   recordInvoiceReturnReceipt,
   reopenInvoiceReturnAuthorization,
+  updateInvoiceReturnAuthorization,
   reopenInvoice,
   resolveInvoiceCollectionAction,
   updateInvoiceCollection,
@@ -79,6 +81,12 @@ export async function submitInvoiceReturnAuthorization(
   input: CreateInvoiceReturnAuthorizationInput,
 ): Promise<InvoiceRecord> {
   return createInvoiceReturnAuthorization(input);
+}
+
+export async function submitInvoiceReturnAuthorizationUpdate(
+  input: UpdateInvoiceReturnAuthorizationInput,
+): Promise<InvoiceRecord> {
+  return updateInvoiceReturnAuthorization(input);
 }
 
 export async function submitInvoiceReturnAuthorizationClose(
