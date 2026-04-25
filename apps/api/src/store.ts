@@ -2860,6 +2860,7 @@ function mapInvoiceReturnReceipt(row: InvoiceReturnReceiptRow): InvoiceReturnRec
 
 function mapInvoiceReturnAuthorization(
   row: InvoiceReturnAuthorizationRow,
+  pendingCreditApproval?: ApprovalRequestRow | null,
 ): InvoiceReturnAuthorizationRecord {
   const quantityPendingReceipt = Math.max(row.quantity_authorized - row.quantity_received, 0);
   const quantityPendingCredit = Math.max(row.quantity_authorized - row.quantity_credited, 0);
@@ -2868,7 +2869,9 @@ function mapInvoiceReturnAuthorization(
       ? "none"
       : quantityPendingReceipt > 0
         ? "warehouse"
-        : "finance";
+        : pendingCreditApproval
+          ? "founder"
+          : "finance";
   const actionRequired =
     row.status === "closed"
       ? "closed"
@@ -2876,7 +2879,9 @@ function mapInvoiceReturnAuthorization(
         ? "settled"
         : quantityPendingReceipt > 0
           ? "receive_return"
-          : "post_credit_note";
+          : pendingCreditApproval
+            ? "approve_credit_note"
+            : "post_credit_note";
 
   return {
     id: row.id,
@@ -2899,6 +2904,9 @@ function mapInvoiceReturnAuthorization(
     actionRequired,
     quantityPendingReceipt,
     quantityPendingCredit,
+    pendingApprovalRequestId: pendingCreditApproval?.id ?? null,
+    pendingApprovalReason: pendingCreditApproval?.reason ?? null,
+    pendingApprovalRequestedAt: pendingCreditApproval?.requested_at ?? null,
     note: row.note || null,
     closeNote: row.close_note || null,
     authorizedAt: row.authorized_at,
@@ -5315,9 +5323,22 @@ export function listCustomerStatements(tenantId: string): CustomerStatementRecor
 export function listInvoiceReturnAuthorizations(
   tenantId: string,
 ): InvoiceReturnAuthorizationRecord[] {
-  return (
-    listInvoiceReturnAuthorizationsStatement.all(tenantId) as InvoiceReturnAuthorizationRow[]
-  ).map(mapInvoiceReturnAuthorization);
+  const pendingCreditApprovals = new Map<string, ApprovalRequestRow>();
+
+  for (const approvalRequest of listApprovalRequestsStatement.all(tenantId) as ApprovalRequestRow[]) {
+    if (approvalRequest.request_type !== "invoice_credit" || approvalRequest.status !== "pending") {
+      continue;
+    }
+
+    const existing = pendingCreditApprovals.get(approvalRequest.reference_id);
+    if (!existing || approvalRequest.requested_at > existing.requested_at) {
+      pendingCreditApprovals.set(approvalRequest.reference_id, approvalRequest);
+    }
+  }
+
+  return (listInvoiceReturnAuthorizationsStatement.all(tenantId) as InvoiceReturnAuthorizationRow[]).map((row) =>
+    mapInvoiceReturnAuthorization(row, pendingCreditApprovals.get(row.invoice_id) ?? null),
+  );
 }
 
 export function listInvoiceReturnReceipts(tenantId: string): InvoiceReturnReceiptRecord[] {

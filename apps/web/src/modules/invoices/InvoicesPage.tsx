@@ -360,6 +360,10 @@ function getReturnCaseOwnerColor(owner: InvoiceReturnAuthorizationActionOwner): 
     return "cyan";
   }
 
+  if (owner === "founder") {
+    return "gold";
+  }
+
   if (owner === "finance") {
     return "purple";
   }
@@ -379,6 +383,10 @@ function getReturnCaseOwnerLabel(
     return t("invoices.returnCaseOwnerFinance");
   }
 
+  if (owner === "founder") {
+    return t("invoices.returnCaseOwnerFounder");
+  }
+
   return t("invoices.returnCaseOwnerNone");
 }
 
@@ -392,6 +400,10 @@ function getReturnCaseActionRequiredLabel(
 
   if (actionRequired === "post_credit_note") {
     return t("invoices.returnCaseActionPostCredit");
+  }
+
+  if (actionRequired === "approve_credit_note") {
+    return t("invoices.returnCaseActionApproveCredit");
   }
 
   if (actionRequired === "closed") {
@@ -543,16 +555,13 @@ export function InvoicesPage(): ReactElement {
     ["authorized", "partially_received", "received"].includes(item.status),
   ).length;
   const warehousePendingReturnCaseCount = returnCaseQueue.filter(
-    (item) =>
-      item.status !== "closed" &&
-      item.status !== "settled" &&
-      item.quantityReceived < item.quantityAuthorized,
+    (item) => item.actionOwner === "warehouse",
+  ).length;
+  const founderPendingReturnCaseCount = returnCaseQueue.filter(
+    (item) => item.actionOwner === "founder",
   ).length;
   const financePendingReturnCaseCount = returnCaseQueue.filter(
-    (item) =>
-      item.status !== "closed" &&
-      item.status !== "settled" &&
-      item.quantityCredited < item.quantityAuthorized,
+    (item) => item.actionOwner === "finance",
   ).length;
   const closedReturnCaseCount = returnCaseQueue.filter((item) => item.status === "closed").length;
   const settledReturnCaseCount = returnCaseQueue.filter((item) => item.status === "settled").length;
@@ -1717,6 +1726,7 @@ export function InvoicesPage(): ReactElement {
                     {t("invoices.returnCaseQueueSummary", {
                       open: openReturnCaseCount,
                       warehousePending: warehousePendingReturnCaseCount,
+                      founderPending: founderPendingReturnCaseCount,
                       financePending: financePendingReturnCaseCount,
                       closed: closedReturnCaseCount,
                       settled: settledReturnCaseCount,
@@ -1730,6 +1740,7 @@ export function InvoicesPage(): ReactElement {
                       options={[
                         { label: t("invoices.returnCaseFilterAll"), value: "all" },
                         { label: getReturnCaseOwnerLabel("warehouse", t), value: "warehouse" },
+                        { label: getReturnCaseOwnerLabel("founder", t), value: "founder" },
                         { label: getReturnCaseOwnerLabel("finance", t), value: "finance" },
                         { label: getReturnCaseOwnerLabel("none", t), value: "none" },
                       ]}
@@ -1866,6 +1877,18 @@ export function InvoicesPage(): ReactElement {
                             {authorization.closeNote ? (
                               <div className="record-detail">
                                 {t("invoices.returnAuthorizationCloseNoteLabel")} {authorization.closeNote}
+                              </div>
+                            ) : null}
+                            {authorization.pendingApprovalReason ? (
+                              <div className="record-detail">
+                                {t("invoices.returnAuthorizationPendingApprovalLabel")}{" "}
+                                {authorization.pendingApprovalReason}
+                              </div>
+                            ) : null}
+                            {authorization.pendingApprovalRequestedAt ? (
+                              <div className="record-detail">
+                                {t("invoices.returnAuthorizationPendingApprovalAtLabel")}{" "}
+                                {formatTimestamp(authorization.pendingApprovalRequestedAt)}
                               </div>
                             ) : null}
                             <div className="record-tag-stack">

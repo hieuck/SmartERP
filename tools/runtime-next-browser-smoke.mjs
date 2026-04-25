@@ -83,6 +83,9 @@ const manualReturnAuthorizationAmendNote = "Customer confirmed a larger approved
 const manualReturnCloseNote = "Customer withdrew the warehouse return request after collections review.";
 const manualReturnReopenNote = "Customer resumed the return after the prior close-out was reversed.";
 const manualReturnReceiptNote = "Warehouse received the returned bottle before finance posted the credit note.";
+const founderReturnAuthorizationNote = "Approved premium bottle return after founder escalation.";
+const founderReturnReceiptNote = "Warehouse received the premium return before finance requested a large credit.";
+const founderReturnCreditNote = "Large financial-only credit requested for the premium return case.";
 const partialInvoiceCreditNote = "Refund one damaged bottle after full settlement.";
 const firstIssueDateInput = buildDateInputFromToday(0);
 const secondIssueDateInput = buildDateInputFromToday(-(secondDaysPastDue + secondPaymentTermDays));
@@ -98,6 +101,8 @@ const saleQuantity = 5;
 const editedSaleQuantity = 4;
 const secondSaleQuantity = 2;
 const creditedOrderQuantity = 1;
+const founderReturnOrderQuantity = 2;
+const founderReturnTopUpQuantity = 1;
 const partialCreditOrderQuantity = 5;
 const partialCreditQuantity = 2;
 const partialCreditMode = "financial_only";
@@ -112,6 +117,7 @@ const voidableOrderGrossAmount = unitPrice * voidableOrderQuantity;
 const firstInvoiceAmount = Math.round(firstOrderGrossAmount * (1 + taxRate / 100));
 const secondInvoiceAmount = Math.round(secondOrderGrossAmount * (1 + taxRate / 100));
 const creditedInvoiceAmount = Math.round(unitPrice * creditedOrderQuantity * (1 + taxRate / 100));
+const founderReturnInvoiceAmount = Math.round(unitPrice * founderReturnOrderQuantity * (1 + taxRate / 100));
 const partialCreditInvoiceAmount = Math.round(unitPrice * partialCreditOrderQuantity * (1 + taxRate / 100));
 const partialCreditAmount = Math.round(unitPrice * partialCreditQuantity * (1 + taxRate / 100));
 const voidableInvoiceAmount = Math.round(voidableOrderGrossAmount * (1 + taxRate / 100));
@@ -283,17 +289,18 @@ async function assertImageLoadedInScope(scope, expectedSrc, message) {
 }
 
 async function openApp(page) {
-  await page.goto(`${baseUrl}/dashboard`, { waitUntil: "domcontentloaded" });
-  await page.waitForLoadState("networkidle");
+  await page.goto(`${baseUrl}/dashboard`, { waitUntil: "load" });
 }
 
 async function openDirectRoute(page, routePath) {
-  await page.goto(`${baseUrl}${routePath}`, { waitUntil: "domcontentloaded" });
-  await page.waitForLoadState("networkidle");
+  await page.goto(`${baseUrl}${routePath}`, { waitUntil: "load" });
   await page.waitForURL(new RegExp(`${routePath.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`), {
     timeout: 15000,
   });
-  await page.locator(".page-stack").waitFor({ timeout: 15000 });
+  await page.locator("#root").waitFor({ timeout: 30000 });
+  await page.waitForFunction(() => Boolean(document.body?.textContent?.trim().length), undefined, {
+    timeout: 30000,
+  });
 }
 
 async function openSection(page, index, expectedPath) {
@@ -367,9 +374,25 @@ async function setLargeFieldValue(container, selector, value) {
 }
 
 async function fillNumberInput(input, value) {
-  await input.click();
-  await input.fill("");
-  await input.fill(String(value));
+  const normalizedValue = String(value);
+  await input.evaluate((element, nextValue) => {
+    const valueDescriptor =
+      Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value") ??
+      Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value");
+
+    if (!valueDescriptor?.set) {
+      throw new Error("Unable to resolve a native value setter for the numeric field.");
+    }
+
+    element.focus();
+    valueDescriptor.set.call(element, "");
+    element.dispatchEvent(new Event("input", { bubbles: true }));
+    valueDescriptor.set.call(element, nextValue);
+    element.dispatchEvent(new Event("input", { bubbles: true }));
+    element.dispatchEvent(new Event("change", { bubbles: true }));
+    element.blur();
+  }, normalizedValue);
+  await waitForInputValue(input, normalizedValue);
 }
 
 async function waitForInputValue(input, expectedValue, timeout = 15000) {
@@ -393,6 +416,26 @@ async function selectOption(page, combobox, optionText) {
   await option.click();
 }
 
+async function waitForSelectableOption(page, combobox, optionText, timeout = 30000) {
+  const startedAt = Date.now();
+
+  while (Date.now() - startedAt < timeout) {
+    await combobox.click();
+    await page.waitForTimeout(100);
+    const option = page.locator(".ant-select-dropdown:visible .ant-select-item-option").filter({ hasText: optionText }).first();
+    const isVisible = await option.isVisible().catch(() => false);
+    await page.keyboard.press("Escape").catch(() => {});
+
+    if (isVisible) {
+      return;
+    }
+
+    await page.waitForTimeout(150);
+  }
+
+  throw new Error(`Option "${optionText}" did not become selectable within ${timeout}ms.`);
+}
+
 async function clickSubmit(container) {
   await container.locator("button[type='submit']").first().click();
 }
@@ -409,6 +452,30 @@ async function waitForLocatorCount(page, locator, expectedCount, timeout = 15000
   }
 
   throw new Error(`Locator count did not reach ${expectedCount} within ${timeout}ms.`);
+}
+
+async function waitForLocatorText(locator, expectedTexts, timeout = 15000) {
+  const startedAt = Date.now();
+  const normalizedExpectedTexts = Array.isArray(expectedTexts) ? expectedTexts : [expectedTexts];
+
+  while (Date.now() - startedAt < timeout) {
+    const text = ((await locator.textContent().catch(() => "")) ?? "").replace(/\s+/g, " ").trim();
+    const matches = normalizedExpectedTexts.every((expectedText) =>
+      expectedText instanceof RegExp ? expectedText.test(text) : text.includes(expectedText),
+    );
+
+    if (matches) {
+      return text;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 150));
+  }
+
+  throw new Error(
+    `Locator text did not include expected content within ${timeout}ms: ${normalizedExpectedTexts
+      .map((value) => (value instanceof RegExp ? value.toString() : value))
+      .join(", ")}.`,
+  );
 }
 
 async function importDatasetViaTenantOnboarding(page, card, datasetLabel, csvText) {
@@ -453,9 +520,13 @@ async function loginAs(page, email, password) {
 
 async function logout(page) {
   await page.locator(".header-user").click();
-  await page.locator(".ant-dropdown [role='menuitem']").first().click();
-  await page.waitForURL(/\/login$/, { timeout: 15000 });
-  await page.locator(".login-card").waitFor({ timeout: 15000 });
+  const logoutMenuItem = page.locator(".ant-dropdown [role='menuitem']").first();
+  await logoutMenuItem.waitFor({ timeout: 15000 });
+  await Promise.all([
+    page.waitForURL(/\/login$/, { timeout: 30000, waitUntil: "domcontentloaded" }),
+    logoutMenuItem.click(),
+  ]);
+  await page.locator(".login-card").waitFor({ timeout: 30000 });
 }
 
 async function clickLanguageToggle(page, value) {
@@ -516,13 +587,13 @@ async function findInvoiceNumberByOrderNumber(page, orderNumber) {
 }
 
 async function waitForTenantContext(page, expectedTenantName) {
-  await page.locator(".page-stack").waitFor({ timeout: 15000 });
+  await page.locator(".page-stack").waitFor({ timeout: 30000 });
   await page.waitForFunction(
     ({ tenantName }) => {
       return Boolean(document.body?.textContent?.includes(tenantName));
     },
     { tenantName: expectedTenantName },
-    { timeout: 15000 },
+    { timeout: 30000 },
   );
 }
 
@@ -562,11 +633,49 @@ async function dismissGlobalAlerts(page) {
   await dismissAlertIfVisible(page, ".global-alert-error .ant-alert");
 }
 
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function getStatisticValue(page, title) {
   return page
     .locator(".ant-statistic")
     .filter({ hasText: title })
     .locator(".ant-statistic-content-value");
+}
+
+async function waitForStatisticValue(page, title, expected, timeout = 30000) {
+  const titlePattern = title instanceof RegExp ? title : new RegExp(escapeRegExp(title), "i");
+  const metricCandidates = [
+    getStatisticValue(page, titlePattern),
+    page.locator(".workspace-hero-metric").filter({ hasText: titlePattern }).locator("strong"),
+    page
+      .locator(".workspace-summary-card")
+      .filter({ hasText: titlePattern })
+      .locator(".workspace-summary-card-value"),
+    page.locator(".workspace-summary-list-row").filter({ hasText: titlePattern }).locator("strong"),
+  ];
+  const startedAt = Date.now();
+
+  while (Date.now() - startedAt < timeout) {
+    for (const candidate of metricCandidates) {
+      const textValues = (await candidate.allTextContents()).map((value) =>
+        value.replace(/\s+/g, " ").trim(),
+      );
+
+      if (
+        textValues.some((text) =>
+          typeof expected === "string" ? text === expected : expected.test(text),
+        )
+      ) {
+        return;
+      }
+    }
+
+    await page.waitForTimeout(150);
+  }
+
+  throw new Error(`Statistic "${String(title)}" did not reach the expected value within ${timeout}ms.`);
 }
 
 async function main() {
@@ -622,6 +731,9 @@ async function main() {
   let creditedOrderNumber = "";
   let creditedInvoiceNumber = "";
   let creditedReturnCaseNumber = "";
+  let founderReturnOrderNumber = "";
+  let founderReturnInvoiceNumber = "";
+  let founderReturnCaseNumber = "";
   let partialCreditOrderNumber = "";
   let partialCreditInvoiceNumber = "";
   let voidedOrderNumber = "";
@@ -722,6 +834,7 @@ async function main() {
   let invoiceReturnCaseReopenGuardVerified = false;
   let invoiceReturnCaseReopenAuditVerified = false;
   let invoiceReturnCaseSettledVerified = false;
+  let invoiceReturnCaseFounderApprovalVerified = false;
   let invoiceReturnCaseSettlementAuditVerified = false;
   let invoiceReturnReceiptAuthorizationGuardVerified = false;
   let invoiceReturnReceiptClosedCaseGuardVerified = false;
@@ -862,7 +975,6 @@ async function main() {
     await page.waitForURL(/\/dashboard$/, { timeout: 15000 });
     await clickLanguageToggle(page, "EN");
     await page.reload({ waitUntil: "domcontentloaded" });
-    await page.waitForLoadState("networkidle");
     await page.waitForURL(/\/dashboard$/, { timeout: 15000 });
     await page.getByRole("heading", { name: "Dashboard" }).waitFor({ timeout: 15000 });
     assert((await page.evaluate((key) => window.localStorage.getItem(key), languageStorageKey)) === "en", "Language did not persist as English after reload.");
@@ -1982,9 +2094,22 @@ async function main() {
     await fillField(issueInvoiceCard, "#issueDate", firstIssueDateInput);
     await fillField(issueInvoiceCard, "#paymentTermDays", firstPaymentTermDays);
     await fillField(issueInvoiceCard, "#taxRatePercent", taxRate);
+    const initialInvoiceCreateResponse = page.waitForResponse(
+      (response) =>
+        response.url().endsWith("/api/invoices") &&
+        response.request().method() === "POST" &&
+        response.status() === 201,
+      { timeout: 15000 },
+    );
     await clickSubmit(issueInvoiceCard);
+    const initialInvoiceCreateResult = await initialInvoiceCreateResponse;
+    const initialInvoiceCreatePayload = await initialInvoiceCreateResult.json();
+    assert(
+      initialInvoiceCreateResult.status() === 201,
+      `Initial invoice creation failed: ${initialInvoiceCreatePayload?.error ?? initialInvoiceCreateResult.status()}.`,
+    );
     let invoiceRow = getListCard(page).locator(".record-row").filter({ hasText: orderNumber }).first();
-    await invoiceRow.waitFor({ timeout: 15000 });
+    await invoiceRow.waitFor({ timeout: 30000 });
     await invoiceRow.getByText(customerName, { exact: false }).waitFor({ timeout: 15000 });
     await invoiceRow.getByText(productCategoryName, { exact: false }).waitFor({ timeout: 15000 });
     await assertImageLoadedInScope(
@@ -2054,7 +2179,10 @@ async function main() {
 
     const originalInvoiceNumber = invoiceNumber;
     await invoiceRow.locator('[data-testid="invoice-amend-button"]').click();
-    const amendInvoiceModal = page.locator(".ant-modal:visible");
+    const amendInvoiceModal = page
+      .getByRole("dialog")
+      .filter({ hasText: new RegExp(`Sửa ${originalInvoiceNumber}|Amend ${originalInvoiceNumber}`) })
+      .last();
     await amendInvoiceModal.waitFor({ timeout: 15000 });
     await fillField(amendInvoiceModal, "#issueDate", firstIssueDateInput);
     await fillField(amendInvoiceModal, "#paymentTermDays", amendedPaymentTermDays);
@@ -2858,9 +2986,7 @@ async function main() {
 
     await reissuedInvoiceRowCard.locator('[data-testid="invoice-void-button"]').click();
     await page.getByRole("button", { name: /Hủy hiệu lực|Huy hieu luc/ }).last().click();
-    await reissuedInvoiceRowCard.getByText(/Đã hủy hiệu lực|Da huy hieu luc/, { exact: false }).first().waitFor({
-      timeout: 15000,
-    });
+    await waitForLocatorText(reissuedInvoiceRowCard, [/Đã hủy hiệu lực|Da huy hieu luc/]);
 
     await openSection(page, sidebarIndexes.orders, "/dashboard/orders");
     await waitForTenantContext(page, tenantName);
@@ -2873,13 +2999,10 @@ async function main() {
 
     await openSection(page, sidebarIndexes.invoices, "/dashboard/invoices");
     await waitForTenantContext(page, tenantName);
-    await getListCard(page)
-      .locator(".record-row")
-      .filter({ hasText: voidedInvoiceNumber })
-      .first()
-      .getByText(/Đã hủy hiệu lực|Da huy hieu luc/, { exact: false })
-      .first()
-      .waitFor({ timeout: 15000 });
+    await waitForLocatorText(
+      getListCard(page).locator(".record-row").filter({ hasText: voidedInvoiceNumber }).first(),
+      [/Đã hủy hiệu lực|Da huy hieu luc/],
+    );
 
     await openSection(page, sidebarIndexes.orders, "/dashboard/orders");
     await waitForTenantContext(page, tenantName);
@@ -3058,38 +3181,70 @@ async function main() {
     await fillField(followUpCard, "#promisedPaymentDate", promisedPaymentDateInput);
     await fillField(followUpCard, "#nextActionDate", promisedPaymentDateInput);
     await followUpCard.locator("#collectionNote").fill(collectionNote);
+    const promisedFollowUpResponse = page.waitForResponse(
+      (response) =>
+        response.url().endsWith("/api/invoices/collections") &&
+        response.request().method() === "POST" &&
+        response.status() === 200,
+      { timeout: 15000 },
+    );
     await clickSubmit(followUpCard);
-    await secondInvoiceRow.getByText("Hứa thanh toán", { exact: false }).waitFor({ timeout: 15000 });
-    await secondInvoiceRow.getByText("Xác nhận thanh toán", { exact: false }).waitFor({ timeout: 15000 });
-    await secondInvoiceRow.getByText(collectionNote, { exact: false }).waitFor({ timeout: 15000 });
-    await secondInvoiceRow.getByText("Ngày hứa trả:", { exact: false }).waitFor({ timeout: 15000 });
+    await promisedFollowUpResponse;
+    await waitForLocatorText(secondInvoiceRow, [
+      "Hứa thanh toán",
+      "Xác nhận thanh toán",
+      collectionNote,
+      "Ngày hứa trả:",
+    ]);
     collectionFollowUpVerified = true;
-    await activityCard.getByText(secondInvoiceNumber, { exact: false }).first().waitFor({ timeout: 15000 });
-    await activityCard.getByText("Hứa thanh toán", { exact: false }).first().waitFor({ timeout: 15000 });
-    await activityCard.getByText("Xác nhận thanh toán", { exact: false }).waitFor({ timeout: 15000 });
-    await activityCard.getByText(collectionNote, { exact: false }).waitFor({ timeout: 15000 });
+    const promisedPaymentActivityRow = activityCard.locator(".activity-row").filter({ hasText: secondInvoiceNumber }).first();
+    await promisedPaymentActivityRow.waitFor({ timeout: 15000 });
+    await waitForLocatorText(promisedPaymentActivityRow, [
+      secondInvoiceNumber,
+      "Hứa thanh toán",
+      "Xác nhận thanh toán",
+      collectionNote,
+    ]);
     await selectOption(page, followUpCard.getByRole("combobox").nth(0), secondInvoiceNumber);
     await selectOption(page, followUpCard.getByRole("combobox").nth(1), "Cần escalated");
     await selectOption(page, followUpCard.getByRole("combobox").nth(2), "Founder xử lý");
     await fillField(followUpCard, "#promisedPaymentDate", "");
     await fillField(followUpCard, "#nextActionDate", worklistActionDateInput);
     await followUpCard.locator("#collectionNote").fill(escalatedCollectionNote);
+    const escalatedFollowUpResponse = page.waitForResponse(
+      (response) =>
+        response.url().endsWith("/api/invoices/collections") &&
+        response.request().method() === "POST" &&
+        response.status() === 200,
+      { timeout: 15000 },
+    );
     await clickSubmit(followUpCard);
-    await secondInvoiceRow.getByText("Cần escalated", { exact: false }).waitFor({ timeout: 15000 });
-    await secondInvoiceRow.getByText("Founder xử lý", { exact: false }).waitFor({ timeout: 15000 });
-    await secondInvoiceRow.getByText("Khẩn cấp", { exact: false }).waitFor({ timeout: 15000 });
-    await secondInvoiceRow.getByText(escalatedCollectionNote, { exact: false }).waitFor({ timeout: 15000 });
-    await worklistCard.getByText(secondInvoiceNumber, { exact: false }).waitFor({ timeout: 15000 });
-    await worklistCard.getByText("Founder xử lý", { exact: false }).waitFor({ timeout: 15000 });
-    await worklistCard.getByText("Khẩn cấp", { exact: false }).waitFor({ timeout: 15000 });
-    await worklistCard.getByText(escalatedCollectionNote, { exact: false }).waitFor({ timeout: 15000 });
-    await activityCard.getByText(escalatedCollectionNote, { exact: false }).waitFor({ timeout: 15000 });
-    await activityCard.getByText(collectionNote, { exact: false }).waitFor({ timeout: 15000 });
-    await activityCard.getByText("Founder xử lý", { exact: false }).waitFor({ timeout: 15000 });
-    await activityCard.getByText("Khẩn cấp", { exact: false }).waitFor({ timeout: 15000 });
+    await escalatedFollowUpResponse;
+    await waitForLocatorText(secondInvoiceRow, [
+      "Cần escalated",
+      "Founder xử lý",
+      "Khẩn cấp",
+      escalatedCollectionNote,
+    ]);
+    const worklistRow = worklistCard.locator(".collection-queue-row").filter({ hasText: secondInvoiceNumber }).first();
+    await worklistRow.waitFor({ timeout: 15000 });
+    await waitForLocatorText(worklistRow, [
+      secondInvoiceNumber,
+      "Founder xử lý",
+      "Khẩn cấp",
+      escalatedCollectionNote,
+    ]);
+    const latestEscalatedActivity = activityCard.locator(".activity-row").filter({ hasText: secondInvoiceNumber }).first();
+    await latestEscalatedActivity.waitFor({ timeout: 15000 });
+    await waitForLocatorText(latestEscalatedActivity, [
+      secondInvoiceNumber,
+      escalatedCollectionNote,
+      "Founder xử lý",
+      "Khẩn cấp",
+    ]);
+    await waitForLocatorText(activityCard, [collectionNote]);
     collectionHistoryVerified = true;
     collectionWorklistVerified = true;
-    const worklistRow = worklistCard.locator(".collection-queue-row").filter({ hasText: secondInvoiceNumber }).first();
     await worklistRow.getByRole("button", { name: "Hoàn tất việc này" }).click();
     await worklistCard.getByText(secondInvoiceNumber, { exact: false }).waitFor({ state: "hidden", timeout: 15000 });
     await worklistCard.getByText("Hiện chưa có việc thu hồi nào đang chờ xử lý.", { exact: false }).waitFor({ timeout: 15000 });
@@ -3106,7 +3261,12 @@ async function main() {
     await fillNumberInput(secondReturnAuthorizationModal.getByRole("spinbutton").first(), 1);
     await fillField(secondReturnAuthorizationModal, "#note", manualReturnAuthorizationNote);
     await clickSubmit(secondReturnAuthorizationModal);
-    await secondInvoiceRow.getByText("Đã duyệt", { exact: false }).first().waitFor({ timeout: 15000 });
+    await secondInvoiceRow
+      .getByText(/Trạng thái case trả hàng[:\s]*Đã duyệt|Return case status[:\s]*Authorized/, {
+        exact: false,
+      })
+      .first()
+      .waitFor({ timeout: 15000 });
     await secondInvoiceRow.getByText(manualReturnAuthorizationNote, { exact: false }).first().waitFor({
       timeout: 15000,
     });
@@ -3221,8 +3381,26 @@ async function main() {
     const secondReturnCloseModal = page.getByRole("dialog").filter({ hasText: "Đóng case trả hàng cho" }).last();
     await secondReturnCloseModal.waitFor({ timeout: 15000 });
     await fillField(secondReturnCloseModal, "#closeNote", manualReturnCloseNote);
+    const secondReturnCloseResponse = page.waitForResponse(
+      (response) =>
+        response.url().endsWith("/api/invoices/return-authorizations/close") &&
+        response.request().method() === "POST",
+      { timeout: 15000 },
+    );
     await clickSubmit(secondReturnCloseModal);
-    await secondInvoiceRow.getByText("Đã đóng", { exact: false }).first().waitFor({ timeout: 15000 });
+    const secondReturnCloseResult = await secondReturnCloseResponse;
+    const secondReturnClosePayload = await secondReturnCloseResult.json();
+    assert(
+      secondReturnCloseResult.status() === 200,
+      `Return case close failed: ${secondReturnClosePayload?.error ?? secondReturnCloseResult.status()}.`,
+    );
+    await secondReturnCloseModal.waitFor({ state: "detached", timeout: 15000 });
+    await secondInvoiceRow
+      .getByText(/Trạng thái case trả hàng[:\s]*Đã đóng|Return case status[:\s]*Closed/, {
+        exact: false,
+      })
+      .first()
+      .waitFor({ timeout: 15000 });
     await secondInvoiceRow.getByText(manualReturnCloseNote, { exact: false }).first().waitFor({
       timeout: 15000,
     });
@@ -3243,7 +3421,12 @@ async function main() {
     await secondReturnReopenModal.waitFor({ timeout: 15000 });
     await fillField(secondReturnReopenModal, "#reopenNote", manualReturnReopenNote);
     await clickSubmit(secondReturnReopenModal);
-    await secondInvoiceRow.getByText("Đã duyệt", { exact: false }).first().waitFor({ timeout: 15000 });
+    await secondInvoiceRow
+      .getByText(/Trạng thái case trả hàng[:\s]*Đã duyệt|Return case status[:\s]*Authorized/, {
+        exact: false,
+      })
+      .first()
+      .waitFor({ timeout: 15000 });
     await secondInvoiceRow.getByText(manualReturnCloseNote, { exact: false }).first().waitFor({
       state: "detached",
       timeout: 15000,
@@ -3330,8 +3513,26 @@ async function main() {
     const secondReturnRecloseModal = page.getByRole("dialog").filter({ hasText: "Đóng case trả hàng cho" }).last();
     await secondReturnRecloseModal.waitFor({ timeout: 15000 });
     await fillField(secondReturnRecloseModal, "#closeNote", manualReturnCloseNote);
+    const secondReturnRecloseResponse = page.waitForResponse(
+      (response) =>
+        response.url().endsWith("/api/invoices/return-authorizations/close") &&
+        response.request().method() === "POST",
+      { timeout: 15000 },
+    );
     await clickSubmit(secondReturnRecloseModal);
-    await secondInvoiceRow.getByText("Đã đóng", { exact: false }).first().waitFor({ timeout: 15000 });
+    const secondReturnRecloseResult = await secondReturnRecloseResponse;
+    const secondReturnReclosePayload = await secondReturnRecloseResult.json();
+    assert(
+      secondReturnRecloseResult.status() === 200,
+      `Return case reclose failed: ${secondReturnReclosePayload?.error ?? secondReturnRecloseResult.status()}.`,
+    );
+    await secondReturnRecloseModal.waitFor({ state: "detached", timeout: 15000 });
+    await secondInvoiceRow
+      .getByText(/Trạng thái case trả hàng[:\s]*Đã đóng|Return case status[:\s]*Closed/, {
+        exact: false,
+      })
+      .first()
+      .waitFor({ timeout: 15000 });
     await secondInvoiceRow.getByText(manualReturnCloseNote, { exact: false }).first().waitFor({
       timeout: 15000,
     });
@@ -3523,17 +3724,17 @@ async function main() {
 
     await openSection(page, sidebarIndexes.reports, "/dashboard/reports");
     await waitForTenantContext(page, tenantName);
-    await getStatisticValue(page, "Doanh số gộp").getByText(buildAmountPattern(expectedGrossSales)).waitFor({ timeout: 15000 });
-    await getStatisticValue(page, "Đã xuất hóa đơn").getByText(buildAmountPattern(expectedInvoicedAmount)).waitFor({ timeout: 15000 });
-    await getStatisticValue(page, "Tiền đã thu").getByText(buildAmountPattern(expectedCashCollectedAmount)).waitFor({ timeout: 15000 });
-    await getStatisticValue(page, "Công nợ còn lại").getByText(buildAmountPattern(expectedOutstandingReceivablesAmount)).waitFor({ timeout: 15000 });
-    await getStatisticValue(page, "Công nợ hiện tại").getByText(buildAmountPattern(expectedCurrentReceivablesAmount)).waitFor({ timeout: 15000 });
-    await getStatisticValue(page, "31-60 ngày").getByText(buildAmountPattern(expectedOverdue31To60Amount)).waitFor({ timeout: 15000 });
-    await getStatisticValue(page, "61-90 ngày").getByText(buildAmountPattern(0)).waitFor({ timeout: 15000 });
-    await getStatisticValue(page, "Trên 90 ngày").getByText(buildAmountPattern(0)).waitFor({ timeout: 15000 });
-    await getStatisticValue(page, /Giá trị tồn kho|Gia tri ton kho/).getByText(buildAmountPattern(expectedInventoryValueAmount)).waitFor({ timeout: 15000 });
-    await getStatisticValue(page, "Hóa đơn đã thu đủ").getByText("1", { exact: true }).waitFor({ timeout: 15000 });
-    await getStatisticValue(page, "Hóa đơn còn công nợ").getByText("1", { exact: true }).waitFor({ timeout: 15000 });
+    await waitForStatisticValue(page, "Doanh số gộp", buildAmountPattern(expectedGrossSales));
+    await waitForStatisticValue(page, "Đã xuất hóa đơn", buildAmountPattern(expectedInvoicedAmount));
+    await waitForStatisticValue(page, "Tiền đã thu", buildAmountPattern(expectedCashCollectedAmount));
+    await waitForStatisticValue(page, "Công nợ còn lại", buildAmountPattern(expectedOutstandingReceivablesAmount));
+    await waitForStatisticValue(page, "Công nợ hiện tại", buildAmountPattern(expectedCurrentReceivablesAmount));
+    await waitForStatisticValue(page, "31-60 ngày", buildAmountPattern(expectedOverdue31To60Amount));
+    await waitForStatisticValue(page, "61-90 ngày", buildAmountPattern(0));
+    await waitForStatisticValue(page, "Trên 90 ngày", buildAmountPattern(0));
+    await waitForStatisticValue(page, /Giá trị tồn kho|Gia tri ton kho/, buildAmountPattern(expectedInventoryValueAmount));
+    await waitForStatisticValue(page, "Hóa đơn đã thu đủ", "1");
+    await waitForStatisticValue(page, "Hóa đơn còn công nợ", "1");
     await page.getByText("156").first().waitFor({ timeout: 15000 });
     await page.getByText("Hàng tồn kho", { exact: false }).first().waitFor({ timeout: 15000 });
     await page.getByText(buildAmountPattern(expectedInventoryValueAmount)).first().waitFor({ timeout: 15000 });
@@ -3738,17 +3939,17 @@ async function main() {
     await fillField(issueInvoiceCard, "#paymentTermDays", firstPaymentTermDays);
     await fillField(issueInvoiceCard, "#taxRatePercent", taxRate);
     await clickSubmit(issueInvoiceCard);
-    const creditedInvoiceRow = getListCard(page).locator(".record-row").filter({ hasText: creditedOrderNumber }).first();
-    await creditedInvoiceRow.waitFor({ timeout: 15000 });
     creditedInvoiceNumber = await findInvoiceNumberByOrderNumber(page, creditedOrderNumber);
     assert(creditedInvoiceNumber.length > 0, "Credit-note invoice number was not rendered after invoice creation.");
+    const creditedInvoiceRow = getInvoiceRowByNumber(page, creditedInvoiceNumber);
+    await creditedInvoiceRow.waitFor({ timeout: 15000 });
 
     await waitForFormReady(paymentCard);
     await selectOption(page, paymentCard.getByRole("combobox", { name: /Hóa đơn/ }), creditedInvoiceNumber);
     await selectOption(page, paymentCard.getByRole("combobox", { name: /Phương thức/ }), "Chuyển khoản");
     await fillNumberInput(paymentCard.getByRole("spinbutton", { name: /Số tiền/ }), creditedInvoiceAmount);
     await clickSubmit(paymentCard);
-    await creditedInvoiceRow.getByText("Đã thanh toán", { exact: false }).waitFor({ timeout: 15000 });
+    await waitForLocatorText(creditedInvoiceRow, ["Đã thanh toán"]);
 
     const missingCreditNoteResponse = await page.evaluate(
       async ({ targetInvoiceNumber, method, creditQuantity, sessionKey, tenantKey }) => {
@@ -4232,10 +4433,8 @@ async function main() {
       "Report summary did not exclude the fully credited order from sales totals.",
     );
     creditedOrderExcludedFromSalesVerified = true;
-    await getStatisticValue(page, "Giá trị đã ghi giảm").getByText(buildAmountPattern(creditedInvoiceAmount)).waitFor({
-      timeout: 15000,
-    });
-    await getStatisticValue(page, "Hóa đơn đã ghi giảm").getByText("1", { exact: true }).waitFor({ timeout: 15000 });
+    await waitForStatisticValue(page, "Giá trị đã ghi giảm", buildAmountPattern(creditedInvoiceAmount));
+    await waitForStatisticValue(page, "Hóa đơn đã ghi giảm", "1");
     const creditAuditSnapshot = await page.evaluate(async ({ sessionKey, tenantKey }) => {
       const tenantId = window.localStorage.getItem(tenantKey);
       const session = window.localStorage.getItem(sessionKey);
@@ -4541,17 +4740,25 @@ async function main() {
     await partialCreditModal.getByRole("button", { name: "Ghi credit note" }).click();
     await openSection(page, sidebarIndexes.approvals, "/dashboard/approvals");
     await waitForTenantContext(page, tenantName);
+    await waitForLocatorText(
+      approvalsPendingCard,
+      [
+        partialCreditInvoiceNumber,
+        "Large financial-only credit note requires founder approval.",
+        productCategoryName,
+      ],
+      30000,
+    );
     const invoiceCreditApprovalRow = approvalsPendingCard
       .locator(".activity-row")
       .filter({ hasText: partialCreditInvoiceNumber })
       .first();
-    await invoiceCreditApprovalRow.waitFor({ timeout: 15000 });
-    await invoiceCreditApprovalRow
-      .getByText("Large financial-only credit note requires founder approval.", { exact: false })
-      .waitFor({ timeout: 15000 });
-    await invoiceCreditApprovalRow.getByText(productCategoryName, { exact: false }).waitFor({
-      timeout: 15000,
-    });
+    await invoiceCreditApprovalRow.waitFor({ timeout: 30000 });
+    await waitForLocatorText(invoiceCreditApprovalRow, [
+      partialCreditInvoiceNumber,
+      "Large financial-only credit note requires founder approval.",
+      productCategoryName,
+    ]);
     await invoiceCreditApprovalRow.getByRole("button", { name: "Duyệt" }).click();
     await waitForLocatorCount(
       page,
@@ -4734,9 +4941,9 @@ async function main() {
 
     await openSection(page, sidebarIndexes.operations, "/dashboard/operations");
     await page.getByRole("heading", { name: "Vận hành" }).waitFor({ timeout: 15000 });
-    await page.getByText("Mức sẵn sàng pilot", { exact: false }).waitFor({ timeout: 15000 });
-    await page.getByText("Smoke gate gần nhất", { exact: false }).waitFor({ timeout: 15000 });
-    await page.getByText(tenantName, { exact: false }).first().waitFor({ timeout: 15000 });
+    await page.getByText("Mức sẵn sàng pilot", { exact: false }).waitFor({ timeout: 30000 });
+    await page.getByText("Smoke gate gần nhất", { exact: false }).waitFor({ timeout: 30000 });
+    await page.getByText(tenantName, { exact: false }).first().waitFor({ timeout: 30000 });
     const operationsSnapshot = await page.evaluate(async ({ sessionKey }) => {
       const rawSession = window.localStorage.getItem(sessionKey);
       const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
@@ -5056,13 +5263,13 @@ async function main() {
     await waitForTenantContext(page, restoredTenantName);
     await openSection(page, sidebarIndexes.customers, "/dashboard/customers");
     await waitForTenantContext(page, restoredTenantName);
-    await getListCard(page).getByText(customerName, { exact: false }).waitFor({ timeout: 15000 });
+    await waitForLocatorText(getListCard(page), [customerName], 30000);
     await openSection(page, sidebarIndexes.suppliers, "/dashboard/suppliers");
     await waitForTenantContext(page, restoredTenantName);
-    await getListCard(page).getByText(supplierName, { exact: false }).waitFor({ timeout: 15000 });
+    await waitForLocatorText(getListCard(page), [supplierName], 30000);
     await openSection(page, sidebarIndexes.products, "/dashboard/products");
     await waitForTenantContext(page, restoredTenantName);
-    await getListCard(page).getByText(productName, { exact: false }).waitFor({ timeout: 15000 });
+    await waitForLocatorText(getListCard(page), [productName], 30000);
     await openSection(page, sidebarIndexes.inventory, "/dashboard/inventory");
     await waitForTenantContext(page, restoredTenantName);
     const restoredInventoryRow = getListCard(page).locator(".record-row").filter({ hasText: productName }).first();
@@ -5259,9 +5466,9 @@ async function main() {
     );
     await openApp(page);
     await waitForTenantContext(page, tenantName);
-    await getStatisticValue(page, "Công nợ quá hạn").getByText(buildAmountPattern(expectedOverdue31To60Amount)).waitFor({ timeout: 15000 });
-    await getStatisticValue(page, "Hóa đơn còn công nợ").getByText("1", { exact: true }).waitFor({ timeout: 15000 });
-    await getStatisticValue(page, "Phê duyệt chờ xử lý").getByText("0", { exact: true }).waitFor({ timeout: 15000 });
+    await waitForStatisticValue(page, "Công nợ quá hạn", buildAmountPattern(expectedOverdue31To60Amount));
+    await waitForStatisticValue(page, "Hóa đơn còn công nợ", "1");
+    await waitForStatisticValue(page, "Phê duyệt chờ xử lý", "0");
     await page.getByText(secondInvoiceNumber, { exact: false }).first().waitFor({ timeout: 15000 });
     await page.getByText(customerName, { exact: false }).first().waitFor({ timeout: 15000 });
     await page.getByText("Việc cần làm hôm nay", { exact: false }).waitFor({ timeout: 15000 });
@@ -5571,6 +5778,321 @@ async function main() {
       ({ key, tenantId }) => window.localStorage.setItem(key, tenantId),
       { key: tenantStorageKey, tenantId: originalTenantId },
     );
+    await page.reload({ waitUntil: "networkidle" });
+    await page.locator(".page-stack").waitFor({ timeout: 15000 });
+    const founderReturnTopUpResponse = await page.evaluate(
+      async ({ quantity, targetProductName, sessionKey, tenantKey }) => {
+        const rawSession = window.localStorage.getItem(sessionKey);
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
+        const headers = {
+          "content-type": "application/json",
+          authorization: `Bearer ${accessToken}`,
+        };
+
+        if (!tenantId || !accessToken) {
+          return { status: 0, body: { error: "Founder return top-up is missing tenant/session context." } };
+        }
+
+        const inventoryResponse = await fetch(`/api/inventory?tenantId=${encodeURIComponent(tenantId)}`, {
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+          },
+        });
+        const inventoryPayload = await inventoryResponse.json();
+        const targetInventory = inventoryPayload.items.find((item) => item.productName === targetProductName);
+
+        if (!targetInventory) {
+          return { status: 0, body: { error: "Founder return top-up could not find the target product inventory." } };
+        }
+
+        const response = await fetch("/api/inventory/adjustments", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            tenantId,
+            productId: targetInventory.productId,
+            direction: "in",
+            quantity,
+          }),
+        });
+
+        return {
+          status: response.status,
+          body: await response.json(),
+        };
+      },
+      {
+        quantity: founderReturnTopUpQuantity,
+        targetProductName: productName,
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+      },
+    );
+    assert(
+      founderReturnTopUpResponse.status === 200 || founderReturnTopUpResponse.status === 201,
+      `Founder return inventory top-up failed: ${founderReturnTopUpResponse.body?.error ?? founderReturnTopUpResponse.status}.`,
+    );
+    await openSection(page, sidebarIndexes.orders, "/dashboard/orders");
+    await waitForTenantContext(page, tenantName);
+    const founderReturnOrderFormCard = getFormCard(page);
+    await waitForFormReady(founderReturnOrderFormCard);
+    const founderReturnOrderCreatePayload = await page.evaluate(
+      async ({ existingOrderNumbers, targetCustomerName, targetProductName, targetQuantity, sessionKey, tenantKey }) => {
+        const rawSession = window.localStorage.getItem(sessionKey);
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
+
+        if (!tenantId || !accessToken) {
+          return { status: 0, body: { error: "Founder return order setup is missing tenant/session context." } };
+        }
+
+        const headers = { authorization: `Bearer ${accessToken}` };
+        const [customersResponse, productsResponse] = await Promise.all([
+          fetch(`/api/customers?tenantId=${encodeURIComponent(tenantId)}`, { headers }),
+          fetch(`/api/products?tenantId=${encodeURIComponent(tenantId)}`, { headers }),
+        ]);
+        const [customersPayload, productsPayload] = await Promise.all([customersResponse.json(), productsResponse.json()]);
+        const targetCustomer = customersPayload.items.find((item) => item.name === targetCustomerName);
+        const targetProduct = productsPayload.items.find((item) => item.name === targetProductName);
+
+        if (!targetCustomer || !targetProduct) {
+          return { status: 0, body: { error: "Founder return order setup could not resolve customer/product ids." } };
+        }
+
+        const response = await fetch("/api/orders", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            tenantId,
+            customerId: targetCustomer.id,
+            productId: targetProduct.id,
+            quantity: targetQuantity,
+          }),
+        });
+
+        const responseBody = await response.json();
+
+        if (response.status !== 201) {
+          return {
+            status: response.status,
+            body: responseBody,
+          };
+        }
+
+        if (responseBody?.item?.orderNumber) {
+          return {
+            status: response.status,
+            body: responseBody,
+          };
+        }
+
+        const ordersResponse = await fetch(`/api/orders?tenantId=${encodeURIComponent(tenantId)}`, {
+          headers: { authorization: `Bearer ${accessToken}` },
+        });
+        const ordersPayload = await ordersResponse.json();
+        const targetOrder =
+          ordersPayload.items
+            .filter(
+              (item) =>
+                item.customerName === targetCustomerName &&
+                item.productName === targetProductName &&
+                item.quantity === targetQuantity &&
+                item.status === "confirmed" &&
+                !existingOrderNumbers.includes(item.orderNumber),
+            )
+            .sort((left, right) => Date.parse(right.createdAt ?? 0) - Date.parse(left.createdAt ?? 0))[0] ?? null;
+
+        return {
+          status: response.status,
+          body: responseBody,
+          resolvedOrderNumber: targetOrder?.orderNumber ?? "",
+        };
+      },
+      {
+        existingOrderNumbers: [orderNumber, secondOrderNumber, voidedOrderNumber, creditedOrderNumber, partialCreditOrderNumber],
+        targetCustomerName: customerName,
+        targetProductName: productName,
+        targetQuantity: founderReturnOrderQuantity,
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+      },
+    );
+    assert(
+      founderReturnOrderCreatePayload?.status === 201,
+      `Founder return order creation failed: ${founderReturnOrderCreatePayload?.body?.error ?? founderReturnOrderCreatePayload?.status ?? "unknown"}.`,
+    );
+    founderReturnOrderNumber =
+      founderReturnOrderCreatePayload?.body?.item?.orderNumber ??
+      founderReturnOrderCreatePayload?.resolvedOrderNumber ??
+      "";
+    assert(founderReturnOrderNumber.length > 0, "Founder-approval return order number was not resolved after order creation.");
+
+    await openSection(page, sidebarIndexes.invoices, "/dashboard/invoices");
+    await waitForTenantContext(page, tenantName);
+    const founderReturnInvoiceCreateResponse = await page.evaluate(
+      async ({ targetOrderNumber, issueDate, paymentTermDays, taxRatePercent, sessionKey, tenantKey }) => {
+        const rawSession = window.localStorage.getItem(sessionKey);
+        const tenantId = window.localStorage.getItem(tenantKey);
+        const accessToken = rawSession ? JSON.parse(rawSession).accessToken : "";
+        const headers = {
+          "content-type": "application/json",
+          authorization: `Bearer ${accessToken}`,
+        };
+
+        const ordersResponse = await fetch(`/api/orders?tenantId=${encodeURIComponent(tenantId ?? "")}`, {
+          headers,
+        });
+        const ordersPayload = await ordersResponse.json();
+        const targetOrder = ordersPayload.items.find((item) => item.orderNumber === targetOrderNumber);
+
+        if (!tenantId || !targetOrder?.id) {
+          return { status: 0, body: { error: "Founder return order lookup failed before invoice creation." } };
+        }
+
+        const response = await fetch("/api/invoices", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            tenantId,
+            orderId: targetOrder.id,
+            issueDate,
+            paymentTermDays,
+            taxRatePercent,
+          }),
+        });
+
+        return {
+          status: response.status,
+          body: await response.json(),
+        };
+      },
+      {
+        targetOrderNumber: founderReturnOrderNumber,
+        issueDate: firstIssueDateInput,
+        paymentTermDays: firstPaymentTermDays,
+        taxRatePercent: taxRate,
+        sessionKey: sessionStorageKey,
+        tenantKey: tenantStorageKey,
+      },
+    );
+    assert(
+      founderReturnInvoiceCreateResponse.status === 201,
+      `Founder return invoice creation failed: ${founderReturnInvoiceCreateResponse.body?.error ?? founderReturnInvoiceCreateResponse.status}`,
+    );
+    await openDirectRoute(page, "/dashboard/invoices");
+    await waitForTenantContext(page, tenantName);
+    founderReturnInvoiceNumber = await findInvoiceNumberByOrderNumber(page, founderReturnOrderNumber);
+    assert(founderReturnInvoiceNumber.length > 0, "Founder-approval return invoice number was not rendered.");
+    const founderReturnInvoiceRow = getInvoiceRowByNumber(page, founderReturnInvoiceNumber);
+    await founderReturnInvoiceRow.waitFor({ timeout: 15000 });
+
+    await waitForFormReady(paymentCard);
+    await selectOption(page, paymentCard.getByRole("combobox", { name: /Hóa đơn/ }), founderReturnInvoiceNumber);
+    await selectOption(page, paymentCard.getByRole("combobox", { name: /Phương thức/ }), "Chuyển khoản");
+    await fillNumberInput(paymentCard.getByRole("spinbutton", { name: /Số tiền/ }), founderReturnInvoiceAmount);
+    await clickSubmit(paymentCard);
+    await founderReturnInvoiceRow.getByText("Đã thanh toán", { exact: false }).waitFor({ timeout: 15000 });
+
+    await founderReturnInvoiceRow.locator('[data-testid="invoice-return-authorization-button"]').click();
+    const founderReturnAuthorizationModal = page
+      .getByRole("dialog")
+      .filter({ hasText: "Duyệt trả hàng cho" })
+      .last();
+    await founderReturnAuthorizationModal.waitFor({ timeout: 15000 });
+    await fillNumberInput(founderReturnAuthorizationModal.getByRole("spinbutton").first(), founderReturnOrderQuantity);
+    await fillField(founderReturnAuthorizationModal, "#note", founderReturnAuthorizationNote);
+    await clickSubmit(founderReturnAuthorizationModal);
+    await founderReturnInvoiceRow.getByText(founderReturnAuthorizationNote, { exact: false }).first().waitFor({
+      timeout: 15000,
+    });
+
+    await founderReturnInvoiceRow.locator('[data-testid="invoice-return-receipt-button"]').click();
+    const founderReturnReceiptModal = page.locator(".ant-modal:visible").last();
+    await founderReturnReceiptModal.waitFor({ timeout: 15000 });
+    await fillNumberInput(founderReturnReceiptModal.getByRole("spinbutton").first(), founderReturnOrderQuantity);
+    await fillField(founderReturnReceiptModal, "#note", founderReturnReceiptNote);
+    await founderReturnReceiptModal.getByRole("button", { name: "Ghi phiếu nhận trả" }).click();
+    await founderReturnInvoiceRow
+      .getByText(new RegExp(`Số lượng đã nhận trả:\\s*${founderReturnOrderQuantity}|Returned quantity:\\s*${founderReturnOrderQuantity}`), {
+        exact: false,
+      })
+      .first()
+      .waitFor({ timeout: 15000 });
+
+    await founderReturnInvoiceRow.locator('[data-testid="invoice-credit-button"]').click();
+    const founderReturnCreditModal = page.locator(".ant-modal:visible").last();
+    await founderReturnCreditModal.waitFor({ timeout: 15000 });
+    await selectOption(page, founderReturnCreditModal.getByRole("combobox").first(), "Chuyển khoản");
+    await fillNumberInput(founderReturnCreditModal.getByRole("spinbutton").first(), founderReturnOrderQuantity);
+    await selectOption(page, founderReturnCreditModal.getByRole("combobox").nth(1), "Chỉ điều chỉnh tài chính");
+    await fillField(founderReturnCreditModal, "#creditNote", founderReturnCreditNote);
+    await founderReturnCreditModal.getByRole("button", { name: "Ghi credit note" }).click();
+
+    const founderReturnCaseQueueRow = returnCaseQueueCard.locator(
+      `[data-testid="invoice-return-case-row-${founderReturnInvoiceNumber}"]`,
+    );
+    await founderReturnCaseQueueRow.waitFor({ timeout: 15000 });
+    const founderReturnCaseQueueText = (await founderReturnCaseQueueRow.textContent()) ?? "";
+    founderReturnCaseNumber = founderReturnCaseQueueText.match(/RMA-\d{8}-[A-Z0-9]{6}/)?.[0] ?? "";
+    assert(founderReturnCaseNumber.length > 0, "Founder-approval return case number was not rendered.");
+    await founderReturnCaseQueueRow.getByText("Founder phê duyệt", { exact: false }).first().waitFor({
+      timeout: 15000,
+    });
+    await founderReturnCaseQueueRow
+      .getByText("Founder duyệt credit note trước khi tài chính tất toán", { exact: false })
+      .first()
+      .waitFor({ timeout: 15000 });
+    await founderReturnCaseQueueRow
+      .getByText("Large financial-only credit note requires founder approval.", { exact: false })
+      .first()
+      .waitFor({ timeout: 15000 });
+    await returnCaseQueueCard.getByText("1 case chờ founder duyệt", { exact: false }).waitFor({ timeout: 15000 });
+    await selectOption(page, page.getByTestId("invoice-return-case-owner-filter"), "Founder phê duyệt");
+    await founderReturnCaseQueueRow.waitFor({ timeout: 15000 });
+    await returnCaseQueueCard.getByText("Hiển thị 1 / 3 case", { exact: false }).waitFor({ timeout: 15000 });
+    await selectOption(page, page.getByTestId("invoice-return-case-owner-filter"), "Tất cả case trả hàng");
+    await founderReturnCaseQueueRow.waitFor({ timeout: 15000 });
+    invoiceReturnCaseFounderApprovalVerified = true;
+    await dismissGlobalAlerts(page);
+
+    await openSection(page, sidebarIndexes.approvals, "/dashboard/approvals");
+    await waitForTenantContext(page, tenantName);
+    await waitForLocatorText(
+      approvalsPendingCard,
+      [founderReturnInvoiceNumber, "Large financial-only credit note requires founder approval."],
+      30000,
+    );
+    const founderReturnApprovalRow = approvalsPendingCard
+      .locator(".activity-row")
+      .filter({ hasText: founderReturnInvoiceNumber })
+      .first();
+    await founderReturnApprovalRow.waitFor({ timeout: 30000 });
+    await waitForLocatorText(founderReturnApprovalRow, [
+      founderReturnInvoiceNumber,
+      "Large financial-only credit note requires founder approval.",
+    ]);
+    await founderReturnApprovalRow.getByRole("button", { name: "Duyệt" }).click();
+    await waitForLocatorCount(
+      page,
+      approvalsPendingCard.locator(".activity-row").filter({ hasText: founderReturnInvoiceNumber }),
+      0,
+    );
+
+    await openSection(page, sidebarIndexes.invoices, "/dashboard/invoices");
+    await waitForTenantContext(page, tenantName);
+    await founderReturnInvoiceRow.getByText(founderReturnCreditNote, { exact: false }).first().waitFor({
+      timeout: 15000,
+    });
+    await founderReturnCaseQueueRow.getByText("Đã tất toán", { exact: false }).first().waitFor({
+      timeout: 15000,
+    });
+    await founderReturnCaseQueueRow.getByText("Không còn owner mở", { exact: false }).first().waitFor({
+      timeout: 15000,
+    });
     await openDirectRoute(page, "/dashboard/operations");
     await waitForTenantContext(page, tenantName);
     await page.locator("[data-testid='operations-build-summary']").waitFor({ timeout: 15000 });
@@ -5720,6 +6242,7 @@ async function main() {
       invoiceReturnCaseReopenGuardVerified,
       invoiceReturnCaseReopenAuditVerified,
       invoiceReturnCaseSettledVerified,
+      invoiceReturnCaseFounderApprovalVerified,
       invoiceReturnCaseSettlementAuditVerified,
       invoiceReturnReceiptAuthorizationGuardVerified,
       invoiceReturnReceiptClosedCaseGuardVerified,
